@@ -574,7 +574,7 @@ class SmasherTestCase(TransactionTestCase):
         computed_file.filename = "logquant.tsv"
         computed_file.is_smashable = True
         computed_file.size_in_bytes = 123123
-        computed_file.result = result        
+        computed_file.result = result
         computed_file.save()
 
         assoc = SampleComputedFileAssociation()
@@ -1290,8 +1290,12 @@ class AggregationTestCase(TransactionTestCase):
     @tag("smasher")
     def test_all_samples(self):
         """Check tsv file that includes all sample metadata."""
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
 
         job_context = {
+            'job': pj,
             'dataset': Dataset.objects.create(aggregate_by='ALL',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
@@ -1322,8 +1326,12 @@ class AggregationTestCase(TransactionTestCase):
     @tag("smasher")
     def test_experiment(self):
         """Check tsv file that is aggregated by experiment."""
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
 
         job_context = {
+            'job': pj,
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
@@ -1371,7 +1379,12 @@ class AggregationTestCase(TransactionTestCase):
         }
         self.smash_path = "/tmp/"
 
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
         job_context = {
+            'job': pj,
             'dataset': Dataset.objects.create(aggregate_by='ALL'),
             'input_files': {
             }
@@ -1384,6 +1397,7 @@ class AggregationTestCase(TransactionTestCase):
                 print(str(row).encode('utf-8'))
 
         job_context = {
+            'job': pj,
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT'),
             'input_files': {
             }
@@ -1396,6 +1410,7 @@ class AggregationTestCase(TransactionTestCase):
                 print(str(row).encode('utf-8'))
 
         job_context = {
+            'job': pj,
             'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
             'input_files': {
                 'homo_sapiens': [], # only the key matters in this test
@@ -1413,7 +1428,12 @@ class AggregationTestCase(TransactionTestCase):
     def test_species(self):
         """Check tsv file that is aggregated by species."""
 
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
         job_context = {
+            'job': pj,
             'dataset': Dataset.objects.create(aggregate_by='SPECIES',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']}),

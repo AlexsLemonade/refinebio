@@ -39,22 +39,23 @@ logger = get_and_configure_logger(__name__)
 logger.setLevel(logging.getLevelName('DEBUG'))
 
 
-def log_state(message, start_time=False):
+
+def log_state(message, job, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
-        logger.debug("%s: total-cpu:%s - ram:%s" % (
-            message,
-            psutil.cpu_percent(),
-            ram_in_GB,
-        ))
+        logger.debug(message,
+                     total_cpu=psutil.cpu_percent(),
+                     process_ram=ram_in_GB,
+                     job_id=job.id)
+
         if start_time:
-            logger.debug('Duration: %s' % (time.time() - start_time))
+            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job.id)
         else:
             return time.time()
 
 def _prepare_input(job_context: Dict) -> Dict:
-    start_time = log_state("prepare input")
+    start_time = log_state("prepare input", job_context["job"])
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
@@ -87,7 +88,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context['smashed_file'] = outfile
     job_context['target_file'] = outfile_base + '_target.tsv'
 
-    log_state("prepare input done", start_time)
+    log_state("prepare input done", job_context["job"], start_time)
     return job_context
 
 def _perform_imputation(job_context: Dict) -> Dict:
@@ -114,7 +115,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
 
     """
-    imputation_start = log_state("start perform imputation")
+    imputation_start = log_state("start perform imputation", job_context["job"])
     job_context['time_start'] = timezone.now()
 
     # Combine all microarray samples with a full join to form a microarray_expression_matrix (this may end up being a DataFrame)
@@ -129,7 +130,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Calculate the 10th percentile of rnaseq_row_sums
     rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
 
-    drop_start = log_state("drop all rows")
+    drop_start = log_state("drop all rows", job_context["job"])
     # Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of rnaseq_row_sums; this is now filtered_rnaseq_matrix
     # TODO: This is probably a better way to do this with `np.where`
     rows_to_filter = []
@@ -137,14 +138,16 @@ def _perform_imputation(job_context: Dict) -> Dict:
         if sum_val < rnaseq_tenth_percentile:
             rows_to_filter.append(x)
 
-    filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
-    log_state("end drop all rows", drop_start)
+    del rnaseq_row_sums, job_context['rnaseq_inputs']
 
+    filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
+    log_state("end drop all rows", job_context["job"], drop_start)
 
     # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
     log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
     del filtered_rnaseq_matrix_plus_one
+    del filtered_rnaseq_matrix
 
     # Cache our RNA-Seq zero values
     cached_zeroes = {}
@@ -156,7 +159,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
-    del microarray_expression_matrix
+    del microarray_expression_matrix, job_context['microarray_inputs']
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
@@ -165,6 +168,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Remove genes (rows) with <=70% present values in combined_matrix
     thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
     row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh) # Everything below `thresh` is dropped
+    del thresh
 
     # # Visualize Row Filtered
     # output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
@@ -247,6 +251,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
     untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples_index
     untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples_columns
+    del untransposed_imputed_matrix
     del row_col_filtered_combined_matrix_samples_index
     del row_col_filtered_combined_matrix_samples_columns
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
@@ -265,7 +270,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     job_context['time_end'] = timezone.now()
     job_context['formatted_command'] = "create_compendia.py"
-    log_state("end prepare imputation", imputation_start)
+    log_state("end prepare imputation", job_context["job"], imputation_start)
     return job_context
 
 
@@ -273,7 +278,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
     """
-    result_start = log_state("start create result object")
+    result_start = log_state("start create result object", job_context["job"])
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
@@ -378,7 +383,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     job_context['computed_files'] = [compendia_tsv_computed_file, metadata_computed_file, archive_computed_file]
     job_context['success'] = True
 
-    log_state("end create result object", result_start)
+    log_state("end create result object", job_context["job"], result_start)
 
     return job_context
 
