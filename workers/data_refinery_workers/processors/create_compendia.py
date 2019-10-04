@@ -138,14 +138,16 @@ def _perform_imputation(job_context: Dict) -> Dict:
         if sum_val < rnaseq_tenth_percentile:
             rows_to_filter.append(x)
 
+    del rnaseq_row_sums, job_context['rnaseq_inputs']
+
     filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
     log_state("end drop all rows", job_context["job"], drop_start)
-
 
     # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
     log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
     del filtered_rnaseq_matrix_plus_one
+    del filtered_rnaseq_matrix
 
     # Cache our RNA-Seq zero values
     cached_zeroes = {}
@@ -157,7 +159,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
-    del microarray_expression_matrix
+    del microarray_expression_matrix, job_context['microarray_inputs']
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
@@ -166,6 +168,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Remove genes (rows) with <=70% present values in combined_matrix
     thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
     row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh) # Everything below `thresh` is dropped
+    del thresh
 
     # # Visualize Row Filtered
     # output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
@@ -248,6 +251,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
     untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples_index
     untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples_columns
+    del untransposed_imputed_matrix
     del row_col_filtered_combined_matrix_samples_index
     del row_col_filtered_combined_matrix_samples_columns
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
