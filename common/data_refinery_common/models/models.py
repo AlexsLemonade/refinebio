@@ -738,6 +738,14 @@ class OriginalFile(models.Model):
         else:
             return self.filename
 
+    def get_extension(self):
+        return self.filename.split(".")[-1].lower()
+
+    def is_blacklisted(self):
+        # TODO: extend this list.
+        BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
+        return self.get_extension() in BLACKLISTED_EXTENSIONS
+
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
         try:

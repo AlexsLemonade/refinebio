@@ -27,10 +27,6 @@ from data_refinery_common.job_management import create_processor_jobs_for_origin
 
 logger = get_and_configure_logger(__name__)
 
-BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
-
-
-
 def find_volume_index_for_dl_job(job: DownloaderJob) -> int:
     pjs = ProcessorJob.objects.filter(worker_id=job.worker_id)
 
