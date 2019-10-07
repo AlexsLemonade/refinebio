@@ -3,6 +3,7 @@ volume
 test_volume
 */test_volume
 volume
+.git
 dr_env
 nomad_dir
 nomad_dir_test
