@@ -629,7 +629,7 @@ def _process_frames_for_key(key: str, input_files: List[ComputedFile], job_conte
             rnaseq_frames.append(frame['dataframe'])
 
         if frame['unsmashable']:
-            unsmashable_files.append(frame['unsmashable_file'])
+            job_context['unsmashable_files'].append(frame['unsmashable_file'])
 
     # These indices can be used to slice the dataframe and get
     # a view of only one technology.
@@ -664,7 +664,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         # Prepare the output directory
         smash_path = job_context["output_dir"]
 
-        unsmashable_files = []
+        job_context['unsmashable_files'] = []
         job_context['num_samples'] = 0
 
         # Smash all of the sample sets
@@ -744,7 +744,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         merged = merged_backup
                         new_len_merged = len(merged)
                         try:
-                            unsmashable_files.append(frame.columns[0])
+                            job_context['unsmashable_files'].append(frame.columns[0])
                         except Exception:
                             # Something is really, really wrong with this frame.
                             pass
@@ -858,7 +858,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             metadata['aggregate_by'] = job_context["dataset"].aggregate_by
             metadata['scale_by'] = job_context["dataset"].scale_by
             # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
-            metadata['non_aggregated_files'] = unsmashable_files
+            metadata['non_aggregated_files'] = job_context['unsmashable_files']
             metadata['ks_statistic'] = job_context.get("ks_statistic", None)
             metadata['ks_pvalue'] = job_context.get("ks_pvalue", None)
             metadata['ks_warning'] = job_context.get("ks_warning", None)
@@ -908,7 +908,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['failure_reason'] = str(e)
         return job_context
     job_context['metadata'] = metadata
-    job_context['unsmashable_files'] = unsmashable_files
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
