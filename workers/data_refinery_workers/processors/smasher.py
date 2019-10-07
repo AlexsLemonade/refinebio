@@ -24,7 +24,7 @@ from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
 from sklearn import preprocessing
-from typing import Dict
+from typing import Dict, List
 import numpy as np
 import pandas as pd
 
@@ -50,6 +50,13 @@ BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
+
+
+SCALERS = {
+    'MINMAX': preprocessing.MinMaxScaler,
+    'STANDARD': preprocessing.StandardScaler,
+    'ROBUST': preprocessing.RobustScaler,
+}
 
 
 def log_state(message, job, start_time=False):
@@ -497,9 +504,8 @@ def process_frame(inputs) -> Dict:
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
-        "column_type": None,
-        "columns": None,
-        "data": None
+        "technology": None,
+        "dataframe": None
     }
 
     def unsmashable(path):
@@ -508,7 +514,7 @@ def process_frame(inputs) -> Dict:
       return frame
 
     def smashable(data):
-      frame['data'] = data
+      frame['dataframe'] = data
       return frame
 
     try:
@@ -576,7 +582,7 @@ def process_frame(inputs) -> Dict:
             return unsmashable(computed_file.filename)
 
         is_rnaseq = computed_file_path.endswith("lengthScaledTPM.tsv")
-        frame['column_type'] = 'rnaseq' if is_rnaseq else 'microarray'
+        frame['technology'] = 'rnaseq' if is_rnaseq else 'microarray'
 
     except Exception as e:
         logger.exception("Unable to smash file",
@@ -590,6 +596,54 @@ def process_frame(inputs) -> Dict:
             os.remove(computed_file_path)
 
     return smashable(data)
+
+
+def _process_frames_for_key(key: str, input_files: List[ComputedFile], job_context: Dict) -> Dict:
+    job_context['original_merged'] = pd.DataFrame()
+
+    start_frames = log_state("building frames for species or experiment {}".format(key), job_context["job"])
+    # Merge all the frames into one
+    #cpus = max(1, psutil.cpu_count()/2)
+    #with multiprocessing.Pool(int(cpus)) as pool:
+    #    processed_frames = pool.map(
+    mapped_frames = map(
+        process_frame,
+        [(
+            job_context,
+            computed_file,
+            sample,
+            i
+        ) for i, (computed_file, sample) in enumerate(input_files)
+    ])
+    processed_frames = list(mapped_frames)
+
+    # Build up a list of microarray frames and a list of
+    # rnaseq frames and then combine them so they're sorted
+    # out.
+    microarray_frames = []
+    rnaseq_frames = []
+    for frame in processed_frames:
+        if frame['technology'] is 'microarray':
+            microarray_frames.append(frame['dataframe'])
+        elif frame['technology'] is 'rnaseq':
+            rnaseq_frames.append(frame['dataframe'])
+
+        if frame['unsmashable']:
+            unsmashable_files.append(frame['unsmashable_file'])
+
+    # These indices can be used to slice the dataframe and get
+    # a view of only one technology.
+    job_context['microarray_start_index'] = 0
+    job_context['microarray_end_index'] = len(microarray_frames) - 1
+    job_context['rnaseq_start_index'] = job_context['microarray_end_index'] + 1
+    job_context['rnaseq_end_index'] = len(rnaseq_frames) - 1
+    job_context['all_frames'] = microarray_frames + rnaseq_frames
+    job_context['num_samples'] = job_context['num_samples'] + len(job_context['all_frames'])
+
+    log_state("set frames for key {}".format(key), job_context["job"], start_frames)
+
+    return job_context
+
 
 def _smash(job_context: Dict, how="inner") -> Dict:
     """
@@ -610,22 +664,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         # Prepare the output directory
         smash_path = job_context["output_dir"]
 
-        scalers = {
-            'MINMAX': preprocessing.MinMaxScaler,
-            'STANDARD': preprocessing.StandardScaler,
-            'ROBUST': preprocessing.RobustScaler,
-        }
-
         unsmashable_files = []
-        num_samples = 0
+        job_context['num_samples'] = 0
 
         # Smash all of the sample sets
         logger.debug("About to smash!",
                      dataset_count=len(job_context['dataset'].data),
         )
-
-        job_context['technologies'] = {'microarray': [], 'rnaseq': []}
-        job_context['original_merged'] = pd.DataFrame()
 
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
@@ -633,43 +678,20 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             if job_context['dataset'].quant_sf_only:
                 outfile_dir = smash_path + key + "/"
                 os.makedirs(outfile_dir, exist_ok=True)
-                num_samples += sync_quant_files(outfile_dir, input_files, job_context)
+                job_context['num_samples'] += sync_quant_files(outfile_dir, input_files, job_context)
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
-            start_frames = log_state("build frames for species or experiment", job_context["job"])
-            # Merge all the frames into one
-            #cpus = max(1, psutil.cpu_count()/2)
-            #with multiprocessing.Pool(int(cpus)) as pool:
-            #    processed_frames = pool.map(
-            mapped_frames = map(
-                process_frame,
-                [(
-                    job_context,
-                    computed_file,
-                    sample,
-                    i
-                ) for i, (computed_file, sample) in enumerate(input_files)
-            ])
-            processed_frames = list(mapped_frames)
-            all_frames = [f['data'] for f in processed_frames if f['data'] is not None]
-            num_samples = num_samples + len([x for x in all_frames])
-            unsmashable_files = unsmashable_files + [f['unsmashable_file'] for f in processed_frames if f['unsmashable']]
-            job_context['all_frames'] = all_frames
-            job_context['technologies'] = {
-                'microarray': [f['data'].columns for f in processed_frames if f['column_type'] is 'microarray'],
-                'rnaseq': [f['data'].columns for f in processed_frames if f['column_type'] is 'rnaseq']
-            }
-            log_state("set all frames", job_context["job"], start_frames)
-            if len(all_frames) < 1:
+            job_context = _process_frames_for_key(key, input_files, job_context)
+            if len(job_context['all_frames']) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
-                    key=key
-                )
+                               job_id=job_context['job'].id,
+                               key=key)
                 continue
 
             # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
             # TODO: If the very first frame is the wrong platform, are we boned?
-            merged = all_frames[0]
+            merged = job_context['all_frames'][0]
             i = 1
 
             old_len_merged = len(merged)
@@ -677,8 +699,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             merged_backup = merged
 
             if how == "inner":
-                while i < len(all_frames):
-                    frame = all_frames[i]
+                while i < len(job_context['all_frames']):
+                    frame = job_context['all_frames'][i]
                     i = i + 1
 
                     if i % 1000 == 0:
@@ -730,11 +752,17 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     old_len_merged = len(merged)
                     merged_backup = merged
             else:
-                merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
+                merged = pd.concat(job_context['all_frames'],
+                                   axis=1,
+                                   keys=None,
+                                   join='outer',
+                                   copy=False,
+                                   sort=True)
 
             job_context['original_merged'] = merged
-            log_state("end build frames", job_context["job"], start_frames)
-            start_qn = log_state("start qn", job_context["job"], start_frames)
+            log_state("end build all frames", job_context["job"], start_smash)
+            start_qn = log_state("start qn", job_context["job"], start_smash)
+
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
@@ -771,6 +799,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     job_context['job'].success = False
                     job_context['failure_reason'] = str(e)
                     return job_context
+
             # End QN
             log_state("end qn", job_context["job"], start_qn)
             # Transpose before scaling
@@ -781,7 +810,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             start_scaler = log_state("starting scaler", job_context["job"])
             # Scaler
             if job_context['dataset'].scale_by != "NONE":
-                scale_funtion = scalers[job_context['dataset'].scale_by]
+                scale_funtion = SCALERS[job_context['dataset'].scale_by]
                 scaler = scale_funtion(copy=True)
                 scaler.fit(transposed)
                 scaled = pd.DataFrame(  scaler.transform(transposed),
@@ -821,7 +850,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         # Create metadata file.
         metadata = {}
 
-        metadata['num_samples'] = num_samples
+        metadata['num_samples'] = job_context['num_samples']
         metadata['num_experiments'] = job_context["experiments"].count()
         metadata['quant_sf_only'] = job_context['dataset'].quant_sf_only
 

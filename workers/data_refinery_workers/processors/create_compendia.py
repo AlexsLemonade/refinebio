@@ -56,30 +56,23 @@ def log_state(message, job, start_time=False):
 
 def _prepare_input(job_context: Dict) -> Dict:
     start_time = log_state("prepare input", job_context["job"])
-    # We're going to use the smasher outside of the smasher.
-    # I'm not crazy about this yet. Maybe refactor later,
-    # but I need the data now.
-    job_context = smasher._prepare_files(job_context)
-    job_context = smasher._smash(job_context, how="outer")
 
-    if not 'final_frame' in job_context.keys():
-        logger.warn("Unable to prepare files for creating compendia.",
-            job_id=job_context['job'].id)
+    def log_failure(failure_reason: str) -> None:
         if not job_context["job"].failure_reason:
-            job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
+            job_context["job"].failure_reason = failure_reason
+
         job_context['success'] = False
+        logger.warn(job_context["job"].failure_reason, job_id=job_context['job'].id)
+
+    job_context = smasher._prepare_files(job_context)
+    if not job_context['job'].success:
+        log_failure("Unable to run smasher.prepare_files.")
         return job_context
 
-    # Prep the two data types for imputation
-    og_merged = job_context['original_merged']
-    job_context['microarray_inputs'] = og_merged.copy()
-    job_context['rnaseq_inputs'] = og_merged.copy()
-
-    for column_name in og_merged.columns:
-        if column_name in job_context['technologies']['microarray']:
-            del job_context['rnaseq_inputs'][column_name]
-        else:
-            del job_context['microarray_inputs'][column_name]
+    job_context = smasher._smash(job_context, how="outer")
+    if not job_context['job'].success or not 'final_frame' in job_context.keys():
+        log_failure("Unable to run smasher.smash.")
+        return job_context
 
     # work_dir is already created by smasher._prepare_files
     outfile_base = job_context['work_dir'] + str(time.time()).split('.')[0]
@@ -119,10 +112,14 @@ def _perform_imputation(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
 
     # Combine all microarray samples with a full join to form a microarray_expression_matrix (this may end up being a DataFrame)
-    microarray_expression_matrix = job_context['microarray_inputs']
+    microarray_start = job_context['microarray_start_index']
+    microarray_end = job_context['microarray_end_index']
+    microarray_expression_matrix = job_context['original_merged'].iloc[:, microarray_start:microarray_end]
 
     # Combine all RNA-seq samples (lengthScaledTPM) with a full outer join to form a rnaseq_expression_matrix
-    rnaseq_expression_matrix = job_context['rnaseq_inputs']
+    rnaseq_start = job_context['rnaseq_start_index']
+    rnaseq_end = job_context['rnaseq_end_index']
+    rnaseq_expression_matrix = job_context['original_merged'].iloc[:, rnaseq_start:rnaseq_end]
 
     # Calculate the sum of the lengthScaledTPM values for each row (gene) of the rnaseq_expression_matrix (rnaseq_row_sums)
     rnaseq_row_sums = np.sum(rnaseq_expression_matrix, axis=1)
@@ -138,7 +135,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
         if sum_val < rnaseq_tenth_percentile:
             rows_to_filter.append(x)
 
-    del rnaseq_row_sums, job_context['rnaseq_inputs']
+    del rnaseq_row_sums
 
     filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
     log_state("end drop all rows", job_context["job"], drop_start)
@@ -159,7 +156,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
-    del microarray_expression_matrix, job_context['microarray_inputs']
+    del microarray_expression_matrix
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
