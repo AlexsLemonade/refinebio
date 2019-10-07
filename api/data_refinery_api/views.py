@@ -46,7 +46,7 @@ from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from .serializers import (
+from data_refinery_api.serializers import (
     ComputationalResultSerializer,
     ComputationalResultWithUrlSerializer,
     DetailedExperimentSerializer,
