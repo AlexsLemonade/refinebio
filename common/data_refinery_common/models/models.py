@@ -719,6 +719,17 @@ class OriginalFile(models.Model):
         self.last_modified = current_time
         return super(OriginalFile, self).save(*args, **kwargs)
 
+    def set_downloaded(self, absolute_file_path, filename = None):
+        """ Marks the file as downloaded, if `filename` is not provided it will
+        be parsed from the `absolute_file_path` """
+        self.is_downloaded = True
+        self.is_archive = False
+        self.absolute_file_path = absolute_file_path
+        self.filename = filename if filename else absolute_file_path.split('/')[-1]
+        self.calculate_size()
+        self.calculate_sha1()
+        self.save()
+
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
@@ -781,12 +792,12 @@ class OriginalFile(models.Model):
         # processing attempt.
         blocking_jobs = no_retry_processor_jobs | incomplete_processor_jobs
 
-        return blocking_jobs.first() is None
+        return blocking_jobs.first() is not None
 
     def needs_processing(self, own_processor_id=None) -> bool:
-        """Returns True if original_file has been or is being processed.
+        """Returns False if original_file has been or is being processed.
 
-        Returns False otherwise.
+        Returns True otherwise.
 
         If own_processor_id is supplied then it will be ignored so
         that processor jobs can use this function without their job
@@ -826,12 +837,12 @@ class OriginalFile(models.Model):
             # samples in the archive will happen elsewhere before
             # dispatching.
             for sample in self.samples.all():
+                if not sample.is_processed:
+                    return True
                 computed_file = sample.get_most_recent_smashable_result_file()
                 if not computed_file:
                     return True
-                if not sample.is_processed:
-                    return True
-                if not settings.RUNNING_IN_CLOUD \
+                if settings.RUNNING_IN_CLOUD \
                     and (computed_file.s3_bucket is None or computed_file.s3_key is None):
                     return True
 
