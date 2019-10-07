@@ -675,7 +675,8 @@ class SampleList(generics.ListAPIView):
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
         filter_by = self.request.query_params.get('filter_by', None)
         if filter_by:
-            queryset = queryset.filter(Q(title__icontains=filter_by) |
+            queryset = queryset.filter(Q(accession_code__icontains=filter_by) |
+                                       Q(title__icontains=filter_by) |
                                        Q(sex__icontains=filter_by) |
                                        Q(age__icontains=filter_by) |
                                        Q(specimen_part__icontains=filter_by) |
