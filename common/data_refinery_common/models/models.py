@@ -750,11 +750,13 @@ class OriginalFile(models.Model):
             return self.filename
 
     def get_extension(self):
-        return self.filename.split(".")[-1].lower()
+        """ Returns the lowercased extension of the filename
+        Thanks to https://stackoverflow.com/a/541408/763705 """
+        return os.path.splitext(self.filename)[1].lower()
 
     def is_blacklisted(self):
         # TODO: extend this list.
-        BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
+        BLACKLISTED_EXTENSIONS = [".xml", ".chp", ".exp"]
         return self.get_extension() in BLACKLISTED_EXTENSIONS
 
     def delete_local_file(self):
