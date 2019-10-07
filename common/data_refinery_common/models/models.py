@@ -725,7 +725,7 @@ class OriginalFile(models.Model):
         self.is_downloaded = True
         self.is_archive = False
         self.absolute_file_path = absolute_file_path
-        self.filename = filename if filename else absolute_file_path.split('/')[-1]
+        self.filename = filename if filename else os.path.basename(absolute_file_path)
         self.calculate_size()
         self.calculate_sha1()
         self.save()
