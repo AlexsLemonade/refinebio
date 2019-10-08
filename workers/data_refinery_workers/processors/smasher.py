@@ -38,7 +38,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
-from data_refinery_workers.processors import utils
+from data_refinery_workers.processors import utils, smashing_utils
 from urllib.parse import quote
 
 
@@ -79,7 +79,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     Fetches and prepares the files to smash.
     """
     start_prepare_files = log_state("start prepare files", job_context["job"])
-    all_sample_files = []
+    found_files = False
     job_context['input_files'] = {}
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
@@ -90,14 +90,11 @@ def _prepare_files(job_context: Dict) -> Dict:
             if smashable_file is not None and smashable_file not in seen_files:
                 smashable_files = smashable_files + [(smashable_file, sample)]
                 seen_files.add(smashable_file)
-        smashable_files = list(set(smashable_files))
+                found_files = True
+
         job_context['input_files'][key] = smashable_files
-        all_sample_files = all_sample_files + smashable_files
 
-    # Filter empty results. This shouldn't get here, but it's possible, so we filter just in case it does.
-    all_sample_files = [sf for sf in all_sample_files if sf is not None]
-
-    if all_sample_files == []:
+    if not found_files:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
                      dataset_id=job_context['dataset'].id,
@@ -290,7 +287,7 @@ def _get_tsv_row_data(sample_metadata, dataset_data):
     return row_data
 
 
-def _write_tsv_json(job_context, metadata, smash_path):
+def _write_tsv_json(job_context, metadata):
     """Writes tsv files on disk.
     If the dataset is aggregated by species, also write species-level
     JSON file.
@@ -303,7 +300,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
     if job_context["dataset"].aggregate_by == "EXPERIMENT":
         tsv_paths = []
         for experiment_title, experiment_data in metadata['experiments'].items():
-            experiment_dir = smash_path + experiment_title + '/'
+            experiment_dir = job_context["output_dir"] + experiment_title + '/'
             experiment_dir = experiment_dir.encode('ascii', 'ignore')
             os.makedirs(experiment_dir, exist_ok=True)
             tsv_path = experiment_dir.decode("utf-8") + 'metadata_' + experiment_title + '.tsv'
@@ -321,7 +318,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
     elif job_context["dataset"].aggregate_by == "SPECIES":
         tsv_paths = []
         for species in job_context['input_files'].keys():
-            species_dir = smash_path + species + '/'
+            species_dir = job_context["output_dir"] + species + '/'
             os.makedirs(species_dir, exist_ok=True)
             samples_in_species = []
             tsv_path = species_dir + "metadata_" + species + '.tsv'
@@ -347,7 +344,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
         return tsv_paths
     # All Metadata
     else:
-        all_dir = smash_path + "ALL/"
+        all_dir = job_context["output_dir"] + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
         tsv_path = all_dir + 'metadata_ALL.tsv'
         with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
@@ -498,156 +495,88 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
         latest_computed_file.get_synced_file_path(path=output_file_path)
     return num_samples
 
-def process_frame(inputs) -> Dict:
-    (job_context, computed_file, sample, index) = inputs
-    log_state('processing frame {}'.format(index), job_context["job"])
-    frame = {
-        "unsmashable": False,
-        "unsmashable_file": None,
-        "technology": None,
-        "dataframe": None
-    }
+def _inner_join(job_context: Dict) -> pd.DataFrame:
+    """Performs an inner join across the all_frames key of job_context.
 
-    def unsmashable(path):
-      frame['unsmashable'] = True
-      frame['unsmashable_file'] = path
-      return frame
-
-    def smashable(data):
-      frame['dataframe'] = data
-      return frame
-
-    try:
-        # Download the file to a job-specific location so it
-        # won't disappear while we're using it.
-        computed_file_path = job_context["work_dir"] + computed_file.filename
-        computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
-
-        # Bail appropriately if this isn't a real file.
-        if not computed_file_path or not os.path.exists(computed_file_path):
-            logger.warning("Smasher received non-existent file path.",
-                computed_file_path=computed_file_path,
-                computed_file=computed_file,
-                dataset_id=job_context['dataset'].id,
-            )
-            return unsmashable(computed_file_path)
-
-        data = _load_and_sanitize_file(computed_file_path)
-
-        if len(data.columns) > 2:
-            # Most of the time, >1 is actually bad, but we also need to support
-            # two-channel samples. I think ultimately those should be given some kind of
-            # special consideration.
-            logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
-                computed_file_path=computed_file_path,
-                computed_file_id=computed_file.id
-            )
-            return unsmashable(computed_file_path)
-
-        # via https://github.com/AlexsLemonade/refinebio/issues/330:
-        #   aggregating by experiment -> return untransformed output from tximport
-        #   aggregating by species -> log2(x + 1) tximport output
-        if job_context['dataset'].aggregate_by == 'SPECIES' \
-        and computed_file_path.endswith("lengthScaledTPM.tsv"):
-            data = data + 1
-            data = np.log2(data)
-
-        # Detect if this data hasn't been log2 scaled yet.
-        # Ideally done in the NO-OPPER, but sanity check here.
-        if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
-            logger.info("Detected non-log2 microarray data.", file=computed_file)
-            data = np.log2(data)
-
-        # Explicitly title this dataframe
-        try:
-            # Unfortuantely, we can't use this as `title` can cause a collision
-            # data.columns = [computed_file.samples.all()[0].title]
-            # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
-            data.columns = [sample.accession_code]
-        except ValueError as e:
-            # This sample might have multiple channels, or something else.
-            # Don't mess with it.
-            logger.warn("Smasher found multi-channel column (probably) - skipping!",
-                        exc_info=1,
-                        computed_file_path=computed_file_path,
-            )
-            return unsmashable(computed_file.filename)
-        except Exception as e:
-            # Okay, somebody probably forgot to create a SampleComputedFileAssociation
-            # Don't mess with it.
-            logger.warn("Smasher found very bad column title - skipping!",
-                        exc_info=1,
-                        computed_file_path=computed_file_path
-            )
-            return unsmashable(computed_file.filename)
-
-        is_rnaseq = computed_file_path.endswith("lengthScaledTPM.tsv")
-        frame['technology'] = 'rnaseq' if is_rnaseq else 'microarray'
-
-    except Exception as e:
-        logger.exception("Unable to smash file",
-            file=computed_file_path,
-            dataset_id=job_context['dataset'].id,
-        )
-        return unsmashable(computed_file_path)
-    finally:
-        # Delete before archiving the work dir
-        if computed_file_path and os.path.exists(computed_file_path):
-            os.remove(computed_file_path)
-
-    return smashable(data)
-
-
-def _process_frames_for_key(key: str, input_files: List[ComputedFile], job_context: Dict) -> Dict:
-    job_context['original_merged'] = pd.DataFrame()
-
-    start_frames = log_state("building frames for species or experiment {}".format(key), job_context["job"])
-    # Merge all the frames into one
-    #cpus = max(1, psutil.cpu_count()/2)
-    #with multiprocessing.Pool(int(cpus)) as pool:
-    #    processed_frames = pool.map(
-    mapped_frames = map(
-        process_frame,
-        [(
-            job_context,
-            computed_file,
-            sample,
-            i
-        ) for i, (computed_file, sample) in enumerate(input_files)
-    ])
-    processed_frames = list(mapped_frames)
-
-    # Build up a list of microarray frames and a list of
-    # rnaseq frames and then combine them so they're sorted
-    # out.
-    microarray_frames = []
-    rnaseq_frames = []
-    for frame in processed_frames:
-        if frame['technology'] is 'microarray':
-            microarray_frames.append(frame['dataframe'])
-        elif frame['technology'] is 'rnaseq':
-            rnaseq_frames.append(frame['dataframe'])
-
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
-
-    # These indices can be used to slice the dataframe and get
-    # a view of only one technology.
-    job_context['microarray_start_index'] = 0
-    job_context['microarray_end_index'] = len(microarray_frames) - 1
-    job_context['rnaseq_start_index'] = job_context['microarray_end_index'] + 1
-    job_context['rnaseq_end_index'] = len(rnaseq_frames) - 1
-    job_context['all_frames'] = microarray_frames + rnaseq_frames
-    job_context['num_samples'] = job_context['num_samples'] + len(job_context['all_frames'])
-
-    log_state("set frames for key {}".format(key), job_context["job"], start_frames)
-
-    return job_context
-
-
-def _smash(job_context: Dict, how="inner") -> Dict:
+    Returns a new dict containing the metadata, not the job_context.
     """
-    Smash all of the samples together!
+    # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
+    # TODO: If the very first frame is the wrong platform, are we boned?
+    # TODO: I think I'd like to not have all_frames be directly on the job context and overwritten.
+    # Hmm, now I'm less sure because I think that means we wouldn't overwrite them. Perhaps if I do in the
+    merged = job_context['all_frames'][0]
+    i = 1
+
+    old_len_merged = len(merged)
+    merged_backup = merged
+
+    while i < len(job_context['all_frames']):
+        frame = job_context['all_frames'][i]
+        i = i + 1
+
+        if i % 1000 == 0:
+            logger.info("Smashing keyframe",
+                        i=i,
+                        job_id=job_context['job'].id)
+
+        # I'm not sure where these are sneaking in from, but we don't want them.
+        # Related: https://github.com/AlexsLemonade/refinebio/issues/390
+        breaker = False
+        for column in frame.columns:
+            if column in merged.columns:
+                breaker = True
+
+        if breaker:
+            logger.warning("Column repeated for smash job!",
+                           input_files=str(input_files),
+                           dataset_id=job_context["dataset"].id,
+                           job_id=job_context["job"].id,
+                           column=column)
+            continue
+
+        # This is the inner join, the main "Smash" operation
+        merged = merged.merge(frame, how='inner', left_index=True, right_index=True)
+
+        new_len_merged = len(merged)
+        if new_len_merged < old_len_merged:
+            logger.warning("Dropped rows while smashing!",
+                dataset_id=job_context["dataset"].id,
+                old_len_merged=old_len_merged,
+                new_len_merged=new_len_merged
+            )
+        if new_len_merged == 0:
+            logger.warning("Skipping a bad merge frame!",
+                           dataset_id=job_context["dataset"].id,
+                           job_id=job_context["job"].id,
+                           old_len_merged=old_len_merged,
+                           new_len_merged=new_len_merged,
+                           bad_frame_number=i,)
+            merged = merged_backup
+            new_len_merged = len(merged)
+            try:
+                job_context['unsmashable_files'].append(frame.columns[0])
+            except Exception:
+                # Something is really, really wrong with this frame.
+                pass
+
+        old_len_merged = len(merged)
+        merged_backup = merged
+
+    return merged
+
+
+# 'how' can almost certainly be removed because I think it's just used
+# to switch the behavior between smasher/compendi
+# But I think maybe this is actually the function I wanna call from
+# compendia so the switching behaviour is needed?
+# Nooooo, I think I wanna call process frame from compendia, not this.
+# Therefore this can just always do an inner join and then the
+# compendia can do its own joining.
+def smash_key(job_context: Dict,
+              key: str,
+              input_files: List[ComputedFile],
+              how="inner") -> Dict:
+    """Smash all of the input files together for a given key.
 
     Steps:
         Combine common genes (pandas merge)
@@ -655,244 +584,170 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
+    # Check if we need to copy the quant.sf files
+    if job_context['dataset'].quant_sf_only:
+        outfile_dir = job_context["output_dir"] + key + "/"
+        os.makedirs(outfile_dir, exist_ok=True)
+        job_context['num_samples'] += sync_quant_files(outfile_dir, input_files, job_context)
+        # we ONLY want to give quant sf files to the user if that's what they requested
+        return job_context
+
+    job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
+    if len(job_context['all_frames']) < 1:
+        logger.error("Was told to smash a key with no frames!",
+                       job_id=job_context['job'].id,
+                       key=key)
+        # TODO: is this the proper way to handle this? I can see us
+        # not wanting to fail an entire dataset because one experiment
+        # had a problem, but I also think it could be problematic to
+        # just skip an experiment and pretend nothing went wrong.
+        return job_context
+
+    # Combine the two technologies into a single list of dataframes.
+    ## Extend one list rather than adding the two together so we don't
+    ## the memory both are using.
+    job_context['rnaseq_frames'].extend(job_context['microarray_frames'])
+    ## Free up the the memory the microarray-only list was using.
+    job_context.pop('microarray_frames')
+    ## Change the key of the now-extended list
+    job_context['all_frames'] = job_context.pop('rnaseq_frames')
+
+    if how == "inner":
+        merged = _inner_join(job_context)
+    else:
+        merged = pd.concat(job_context['all_frames'],
+                           axis=1,
+                           keys=None,
+                           join='outer',
+                           copy=False,
+                           sort=True)
+
+    job_context['original_merged'] = merged
+    log_state("end build all frames", job_context["job"], start_smash)
+    start_qn = log_state("start qn", job_context["job"], start_smash)
+
+    # Quantile Normalization
+    if job_context['dataset'].quantile_normalize:
+        try:
+            job_context['merged_no_qn'] = merged
+            job_context['organism'] = job_context['dataset'].get_samples().first().organism
+            job_context = _quantile_normalize(job_context)
+            merged = job_context.get('merged_qn', None)
+
+            # We probably don't have an QN target or there is another error,
+            # so let's fail gracefully.
+            assert merged is not None, "Problem occured during quantile normalization: No merged_qn"
+        except Exception as e:
+            logger.exception("Problem occured during quantile normalization",
+                dataset_id=job_context['dataset'].id,
+                processor_job_id=job_context["job"].id,
+            )
+            job_context['dataset'].success = False
+
+            if not job_context['job'].failure_reason:
+                job_context['job'].failure_reason = "Failure reason: " + str(e)
+                job_context['dataset'].failure_reason = "Failure reason: " + str(e)
+
+            job_context['dataset'].save()
+            # Delay failing this pipeline until the failure notify has been sent
+            job_context['job'].success = False
+            job_context['failure_reason'] = str(e)
+            return job_context
+
+    # End QN
+    log_state("end qn", job_context["job"], start_qn)
+    # Transpose before scaling
+    # Do this even if we don't want to scale in case transpose
+    # modifies the data in any way. (Which it shouldn't but
+    # we're paranoid.)
+    # TODO: stop the paranoia because Josh has alleviated it.
+    transposed = merged.transpose()
+    start_scaler = log_state("starting scaler", job_context["job"])
+    # Scaler
+    if job_context['dataset'].scale_by != "NONE":
+        scale_funtion = SCALERS[job_context['dataset'].scale_by]
+        scaler = scale_funtion(copy=True)
+        scaler.fit(transposed)
+        scaled = pd.DataFrame(  scaler.transform(transposed),
+                                index=transposed.index,
+                                columns=transposed.columns
+                            )
+        # Untranspose
+        untransposed = scaled.transpose()
+    else:
+        # Wheeeeeeeeeee
+        untransposed = transposed.transpose()
+    log_state("end scaler", job_context["job"], start_scaler)
+
+    # This is just for quality assurance in tests.
+    job_context['final_frame'] = untransposed
+
+    # Write to temp file with dataset UUID in filename.
+    subdir = ''
+    if job_context['dataset'].aggregate_by in ["SPECIES", "EXPERIMENT"]:
+        subdir = key
+    elif job_context['dataset'].aggregate_by == "ALL":
+        subdir = "ALL"
+
+    # Normalize the Header format
+    untransposed.index.rename('Gene', inplace=True)
+
+    outfile_dir = job_context["output_dir"] + key + "/"
+    os.makedirs(outfile_dir, exist_ok=True)
+    outfile = outfile_dir + key + ".tsv"
+    job_context['smash_outfile'] = outfile
+    untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
+
+    return job_context
+
+
+# 'how' can almost certainly be removed because I think it's just used
+# to switch the behavior between smasher/compendia
+def _smash_all(job_context: Dict, how="inner") -> Dict:
+    """Perform smashing on all species/experiments in the dataset.
+    """
     start_smash = log_state("start smash", job_context["job"])
     # We have already failed - return now so we can send our fail email.
     if job_context['dataset'].failure_reason not in ['', None]:
         return job_context
 
     try:
-        # Prepare the output directory
-        smash_path = job_context["output_dir"]
-
         job_context['unsmashable_files'] = []
         job_context['num_samples'] = 0
 
         # Smash all of the sample sets
         logger.debug("About to smash!",
                      dataset_count=len(job_context['dataset'].data),
-        )
+                     job_id=job_context['job'].id)
 
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
-            # Check if we need to copy the quant.sf files
-            if job_context['dataset'].quant_sf_only:
-                outfile_dir = smash_path + key + "/"
-                os.makedirs(outfile_dir, exist_ok=True)
-                job_context['num_samples'] += sync_quant_files(outfile_dir, input_files, job_context)
-                # we ONLY want to give quant sf files to the user if that's what they requested
-                continue
-
-            job_context = _process_frames_for_key(key, input_files, job_context)
-            if len(job_context['all_frames']) < 1:
-                logger.warning("Was told to smash a frame with no frames!",
-                               job_id=job_context['job'].id,
-                               key=key)
-                continue
-
-            # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
-            # TODO: If the very first frame is the wrong platform, are we boned?
-            merged = job_context['all_frames'][0]
-            i = 1
-
-            old_len_merged = len(merged)
-            new_len_merged = len(merged)
-            merged_backup = merged
-
-            if how == "inner":
-                while i < len(job_context['all_frames']):
-                    frame = job_context['all_frames'][i]
-                    i = i + 1
-
-                    if i % 1000 == 0:
-                        logger.info("Smashing keyframe",
-                            i=i
-                        )
-
-                    # I'm not sure where these are sneaking in from, but we don't want them.
-                    # Related: https://github.com/AlexsLemonade/refinebio/issues/390
-                    breaker = False
-                    for column in frame.columns:
-                        if column in merged.columns:
-                            breaker = True
-
-                    if breaker:
-                        logger.warning("Column repeated for smash job!",
-                                       input_files=str(input_files),
-                                       dataset_id=job_context["dataset"].id,
-                                       processor_job_id=job_context["job"].id,
-                                       column=column,
-                        )
-                        continue
-
-                    # This is the inner join, the main "Smash" operation
-                    merged = merged.merge(frame, how='inner', left_index=True, right_index=True)
-
-                    new_len_merged = len(merged)
-                    if new_len_merged < old_len_merged:
-                        logger.warning("Dropped rows while smashing!",
-                            dataset_id=job_context["dataset"].id,
-                            old_len_merged=old_len_merged,
-                            new_len_merged=new_len_merged
-                        )
-                    if new_len_merged == 0:
-                        logger.warning("Skipping a bad merge frame!",
-                            dataset_id=job_context["dataset"].id,
-                            old_len_merged=old_len_merged,
-                            new_len_merged=new_len_merged,
-                            bad_frame_number=i,
-                        )
-                        merged = merged_backup
-                        new_len_merged = len(merged)
-                        try:
-                            job_context['unsmashable_files'].append(frame.columns[0])
-                        except Exception:
-                            # Something is really, really wrong with this frame.
-                            pass
-
-                    old_len_merged = len(merged)
-                    merged_backup = merged
-            else:
-                merged = pd.concat(job_context['all_frames'],
-                                   axis=1,
-                                   keys=None,
-                                   join='outer',
-                                   copy=False,
-                                   sort=True)
-
-            job_context['original_merged'] = merged
-            log_state("end build all frames", job_context["job"], start_smash)
-            start_qn = log_state("start qn", job_context["job"], start_smash)
-
-            # Quantile Normalization
-            if job_context['dataset'].quantile_normalize:
-                try:
-                    job_context['merged_no_qn'] = merged
-                    job_context['organism'] = job_context['dataset'].get_samples().first().organism
-                    job_context = _quantile_normalize(job_context)
-                    merged = job_context.get('merged_qn', None)
-                    # We probably don't have an QN target or there is another error,
-                    # so let's fail gracefully.
-                    if merged is None:
-                        e = "Problem occured during quantile normalization: No merged_qn"
-                        logger.error(e,
-                            dataset_id=job_context['dataset'].id,
-                            processor_job_id=job_context["job"].id,
-                        )
-                        job_context['dataset'].success = False
-                        job_context['job'].failure_reason = "Failure reason: " + str(e)
-                        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
-                        job_context['dataset'].save()
-                        # Delay failing this pipeline until the failure notify has been sent
-                        job_context['job'].success = False
-                        job_context['failure_reason'] = str(e)
-                        return job_context
-                except Exception as e:
-                    logger.exception("Problem occured during quantile normalization",
-                        dataset_id=job_context['dataset'].id,
-                        processor_job_id=job_context["job"].id,
-                    )
-                    job_context['dataset'].success = False
-                    job_context['job'].failure_reason = "Failure reason: " + str(e)
-                    job_context['dataset'].failure_reason = "Failure reason: " + str(e)
-                    job_context['dataset'].save()
-                    # Delay failing this pipeline until the failure notify has been sent
-                    job_context['job'].success = False
-                    job_context['failure_reason'] = str(e)
-                    return job_context
-
-            # End QN
-            log_state("end qn", job_context["job"], start_qn)
-            # Transpose before scaling
-            # Do this even if we don't want to scale in case transpose
-            # modifies the data in any way. (Which it shouldn't but
-            # we're paranoid.)
-            transposed = merged.transpose()
-            start_scaler = log_state("starting scaler", job_context["job"])
-            # Scaler
-            if job_context['dataset'].scale_by != "NONE":
-                scale_funtion = SCALERS[job_context['dataset'].scale_by]
-                scaler = scale_funtion(copy=True)
-                scaler.fit(transposed)
-                scaled = pd.DataFrame(  scaler.transform(transposed),
-                                        index=transposed.index,
-                                        columns=transposed.columns
-                                    )
-                # Untranspose
-                untransposed = scaled.transpose()
-            else:
-                # Wheeeeeeeeeee
-                untransposed = transposed.transpose()
-            log_state("end scaler", job_context["job"], start_scaler)
-
-            # This is just for quality assurance in tests.
-            job_context['final_frame'] = untransposed
-
-            # Write to temp file with dataset UUID in filename.
-            subdir = ''
-            if job_context['dataset'].aggregate_by in ["SPECIES", "EXPERIMENT"]:
-                subdir = key
-            elif job_context['dataset'].aggregate_by == "ALL":
-                subdir = "ALL"
-
-            # Normalize the Header format
-            untransposed.index.rename('Gene', inplace=True)
-
-            outfile_dir = smash_path + key + "/"
-            os.makedirs(outfile_dir, exist_ok=True)
-            outfile = outfile_dir + key + ".tsv"
-            job_context['smash_outfile'] = outfile
-            untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
+            job_context = _smash_key(job_context, key, input_files, how)
 
         # Copy LICENSE.txt and README.md files
-        shutil.copy("README_DATASET.md", smash_path + "README.md")
-        shutil.copy("LICENSE_DATASET.txt", smash_path + "LICENSE.TXT")
+        shutil.copy("README_DATASET.md", job_context["output_dir"] + "README.md")
+        shutil.copy("LICENSE_DATASET.txt", job_context["output_dir"] + "LICENSE.TXT")
 
-        # Create metadata file.
-        metadata = {}
-
-        metadata['num_samples'] = job_context['num_samples']
-        metadata['num_experiments'] = job_context["experiments"].count()
-        metadata['quant_sf_only'] = job_context['dataset'].quant_sf_only
-
-        if not job_context['dataset'].quant_sf_only:
-            metadata['aggregate_by'] = job_context["dataset"].aggregate_by
-            metadata['scale_by'] = job_context["dataset"].scale_by
-            # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
-            metadata['non_aggregated_files'] = job_context['unsmashable_files']
-            metadata['ks_statistic'] = job_context.get("ks_statistic", None)
-            metadata['ks_pvalue'] = job_context.get("ks_pvalue", None)
-            metadata['ks_warning'] = job_context.get("ks_warning", None)
-            metadata['quantile_normalized'] = job_context['dataset'].quantile_normalize
-
-        samples = {}
-        for sample in job_context["dataset"].get_samples():
-            samples[sample.accession_code] = sample.to_metadata_dict()
-        metadata['samples'] = samples
-
-        experiments = {}
-        for experiment in job_context["dataset"].get_experiments():
-            exp_dict = experiment.to_metadata_dict()
-            exp_dict['sample_accession_codes'] = [v for v in experiment.samples.all().values_list('accession_code', flat=True)]
-            experiments[experiment.accession_code] = exp_dict
-        metadata['experiments'] = experiments
+        metadata = smashing_utils.compile_metadata(job_context)
 
         # Write samples metadata to TSV
         try:
-            tsv_paths = _write_tsv_json(job_context, metadata, smash_path)
+            tsv_paths = _write_tsv_json(job_context, metadata, job_context["output_dir"])
             job_context['metadata_tsv_paths'] = tsv_paths
             # Metadata to JSON
             metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-            with open(smash_path + 'aggregated_metadata.json', 'w', encoding='utf-8') as metadata_file:
+            json_metadata_path = job_context["output_dir"] + 'aggregated_metadata.json'
+            with open(json_metadata_path, 'w', encoding='utf-8') as metadata_file:
                 json.dump(metadata, metadata_file, indent=4, sort_keys=True)
         except Exception as e:
             logger.exception("Failed to write metadata TSV!",
                 job_id = job_context['job'].id)
             job_context['metadata_tsv_paths'] = None
-        metadata['files'] = os.listdir(smash_path)
+        metadata['files'] = os.listdir(job_context["output_dir"])
 
         # Finally, compress all files into a zip
         final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
-        shutil.make_archive(final_zip_base, 'zip', smash_path)
+        shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
         job_context["output_file"] = final_zip_base + ".zip"
     except Exception as e:
         logger.exception("Could not smash dataset.",
@@ -917,46 +772,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
     log_state("end smash", job_context["job"], start_smash);
     return job_context
 
-def _load_and_sanitize_file(computed_file_path):
-    """ Read and sanitize a computed file """
-
-    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
-
-    # Strip any funky whitespace
-    data.columns = data.columns.str.strip()
-    data = data.dropna(axis='columns', how='all')
-
-    # Make sure the index type is correct
-    data.index = data.index.map(str)
-
-    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
-    # BA likes to leave '_at', signifying probe identifiers,
-    # on their converted, non-probe identifiers. It makes no sense.
-    # So, we chop them off and don't worry about it.
-    data.index = data.index.str.replace('_at', '')
-
-    # Remove any lingering Affymetrix control probes ("AFFX-")
-    data = data[~data.index.str.contains('AFFX-')]
-
-    # If there are any _versioned_ gene identifiers, remove that
-    # version information. We're using the latest brainarray for everything anyway.
-    # Jackie says this is okay.
-    # She also says that in the future, we may only want to do this
-    # for cross-technology smashes.
-
-    # This regex needs to be able to handle EGIDs in the form:
-    #       ENSGXXXXYYYZZZZ.6
-    # and
-    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
-    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
-
-    # Squish duplicated rows together.
-    # XXX/TODO: Is mean the appropriate method here?
-    #           We can make this an option in future.
-    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
-    data = data.groupby(data.index, sort=False).mean()
-
-    return data
 
 def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
@@ -1157,7 +972,7 @@ def smash(job_id: int, upload=True) -> None:
                                 "pipeline": pipeline
                             },
                        [utils.start_job,
-                        _prepare_files,
+                        smashing_utils.prepare_files,
                         _smash,
                         _upload,
                         _notify,
