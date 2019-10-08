@@ -30,7 +30,7 @@ class PipelineEnum(Enum):
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"
-    COMPENDIA = "Compendia"
+    CREATE_COMPENDIA = "Compendia"
 
 
 @unique
@@ -102,7 +102,7 @@ class ProcessorEnum(Enum):
         "yml_file": "qn.yml"
     }
 
-    COMPENDIA = {
+    CREATE_COMPENDIA = {
         "name": "Compendia Creation",
         "docker_img": "dr_compendia",
         "yml_file": "compendia.yml"
@@ -126,11 +126,17 @@ class ProcessorPipeline(Enum):
     TRANSCRIPTOME_INDEX_SHORT = "TRANSCRIPTOME_INDEX_SHORT"
     SMASHER = "SMASHER"
     NO_OP = "NO_OP"
-    QN_REFERENCE = "RUN_QN_JOB"
-    RUN_QN_JOB = "RUN_QN_JOB"
+    QN_REFERENCE = "QN_REFERENCE"
     JANITOR = "JANITOR"
     NONE = "NONE"
     CREATE_COMPENDIA = "CREATE_COMPENDIA"
+
+
+SMASHER_JOB_TYPES = [
+    ProcessorPipeline.SMASHER,
+    ProcessorPipeline.QN_REFERENCE,
+    ProcessorPipeline.CREATE_COMPENDIA,
+]
 
 
 def does_processor_job_have_samples(job: ProcessorJob):

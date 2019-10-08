@@ -47,28 +47,32 @@ RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-b
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
 BODY_ERROR_HTML = Path('data_refinery_workers/processors/smasher_email_error.min.html').read_text().replace('\n', '')
+BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
 
 
-def log_state(message, start_time=False):
+def log_state(message, job, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("%s: cpu:%s - ram:%s" % (
-            message,
-            psutil.cpu_percent(),
-            psutil.virtual_memory().percent,
-        ))
+        process = psutil.Process(os.getpid())
+        ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+        logger.debug(message,
+                     total_cpu=psutil.cpu_percent(),
+                     process_ram=ram_in_GB,
+                     job_id=job.id)
+
         if start_time:
-            logger.debug('Duration: %s' % (time.time() - start_time))
+            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job.id)
         else:
             return time.time()
+
 
 def _prepare_files(job_context: Dict) -> Dict:
     """
     Fetches and prepares the files to smash.
     """
-    start_prepare_files = log_state("start prepare files")
+    start_prepare_files = log_state("start prepare files", job_context["job"])
     all_sample_files = []
     job_context['input_files'] = {}
     # `key` can either be the species name or experiment accession.
@@ -91,7 +95,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
                      dataset_id=job_context['dataset'].id,
-                     samples=job_context["samples"])
+                     num_samples=len(job_context["samples"]))
 
         # Delay failing this pipeline until the failure notify has been sent
         job_context['dataset'].failure_reason = error_message
@@ -108,7 +112,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     job_context["output_dir"] = job_context["work_dir"] + "output/"
     os.makedirs(job_context["output_dir"])
-    log_state("end prepare files", start_prepare_files)
+    log_state("end prepare files", job_context["job"], start_prepare_files)
     return job_context
 
 
@@ -121,14 +125,14 @@ def _add_annotation_column(annotation_columns, column_name):
         annotation_columns.add(column_name)
 
 
-def _get_tsv_columns(samples_metadata):
+def _get_tsv_columns(job_context, samples_metadata):
     """Returns an array of strings that will be written as a TSV file's
     header. The columns are based on fields found in samples_metadata.
 
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-    tsv_start = log_state("start get tsv columns")
+    tsv_start = log_state("start get tsv columns", job_context["job"])
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -174,7 +178,7 @@ def _get_tsv_columns(samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    log_state("end get tsv columns", tsv_start)
+    log_state("end get tsv columns", job_context["job"], tsv_start)
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -184,7 +188,6 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     If col_name already exists in row_data with different value, print
     out a warning message.
     """
-    annotation_start = log_state("start add annotation value")
     # Generate a warning message if annotation field name starts with
     # "refinebio_".  This should rarely (if ever) happen.
     if col_name.startswith("refinebio_"):
@@ -204,7 +207,6 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
                 col_name, row_data[col_name], col_value),
             sample_accession_code=sample_accession_code
         )
-    log_state("end add annotation value", annotation_start)
 
 
 def _get_experiment_accession(sample_accession_code, dataset_data):
@@ -289,7 +291,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
     """
 
     # Uniform TSV header per dataset
-    columns = _get_tsv_columns(metadata['samples'])
+    columns = _get_tsv_columns(job_context, metadata['samples'])
 
     # Per-Experiment Metadata
     if job_context["dataset"].aggregate_by == "EXPERIMENT":
@@ -501,8 +503,7 @@ def process_frame(inputs) -> Dict:
         index
     ) = inputs
 
-    logger.debug('processing frame %s', index)
-
+    log_state('processing frame {}'.format(index), job_context["job"])
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
@@ -526,7 +527,7 @@ def process_frame(inputs) -> Dict:
 
         # Bail appropriately if this isn't a real file.
         if not computed_file_path or not os.path.exists(computed_file_path):
-            logger.error("Smasher received non-existent file path.",
+            logger.warning("Smasher received non-existent file path.",
                 computed_file_path=computed_file_path,
                 computed_file_id=computed_file_id,
                 dataset_id=dataset_id,
@@ -568,15 +569,17 @@ def process_frame(inputs) -> Dict:
         except ValueError as e:
             # This sample might have multiple channels, or something else.
             # Don't mess with it.
-            logger.exception("Smasher found multi-channel column (probably) - skipping!",
-                computed_file_path=computed_file_path,
+            logger.warn("Smasher found multi-channel column (probably) - skipping!",
+                        exc_info=1,
+                        computed_file_path=computed_file_path,
             )
             return unsmashable(computed_file_filename)
         except Exception as e:
             # Okay, somebody probably forgot to create a SampleComputedFileAssociation
             # Don't mess with it.
-            logger.exception("Smasher found very bad column title - skipping!",
-                computed_file_path=computed_file_path
+            logger.warn("Smasher found very bad column title - skipping!",
+                        exc_info=1,
+                        computed_file_path=computed_file_path
             )
             return unsmashable(computed_file_filename)
 
@@ -606,7 +609,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-    start_smash = log_state("start smash")
+    start_smash = log_state("start smash", job_context["job"])
     # We have already failed - return now so we can send our fail email.
     if job_context['dataset'].failure_reason not in ['', None]:
         return job_context
@@ -650,8 +653,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
-            start_frames = log_state("build frames for species or experiment")
-
             # make db calls on the main thread
             def get_frame_inputs():
                 for index, (computed_file, sample) in enumerate(input_files):
@@ -673,6 +674,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     )
             frame_inputs = get_frame_inputs()
 
+            start_frames = log_state("build frames for species or experiment", job_context["job"])
             # Merge all the frames into one
             processed_frames = pool.map(process_frame, frame_inputs, chunksize=2000);
 
@@ -684,7 +686,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 'microarray': [f['data'].columns for f in processed_frames if f['column_type'] is 'microarray'],
                 'rnaseq': [f['data'].columns for f in processed_frames if f['column_type'] is 'rnaseq']
             }
-            log_state("set all frames", start_frames)
+            log_state("set all frames", job_context["job"], start_frames)
             if len(all_frames) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
                     key=key
@@ -757,8 +759,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
 
             job_context['original_merged'] = merged
-            log_state("end build frames", start_frames)
-            start_qn = log_state("start qn", start_frames)
+            log_state("end build frames", job_context["job"], start_frames)
+            start_qn = log_state("start qn", job_context["job"], start_frames)
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
@@ -796,13 +798,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     job_context['failure_reason'] = str(e)
                     return job_context
             # End QN
-            log_state("end qn", start_qn)
+            log_state("end qn", job_context["job"], start_qn)
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
             # modifies the data in any way. (Which it shouldn't but
             # we're paranoid.)
             transposed = merged.transpose()
-            start_scaler = log_state("starting scaler")
+            start_scaler = log_state("starting scaler", job_context["job"])
             # Scaler
             if job_context['dataset'].scale_by != "NONE":
                 scale_funtion = scalers[job_context['dataset'].scale_by]
@@ -817,7 +819,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             else:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
-            log_state("end scaler", start_scaler)
+            log_state("end scaler", job_context["job"], start_scaler)
 
             # This is just for quality assurance in tests.
             job_context['final_frame'] = untransposed
@@ -893,7 +895,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         processor_job_id=job_context['job_id'],
-                        input_files=len(job_context['input_files']))
+                        num_input_files=len(job_context['input_files']))
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
@@ -916,7 +918,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
     logger.debug("Created smash output!",
         archive_location=job_context["output_file"])
 
-    log_state("end smash", start_smash);
+    log_state("end smash", job_context["job"], start_smash);
     return job_context
 
 def _load_and_sanitize_file(computed_file_path):
@@ -1048,7 +1050,7 @@ def _notify(job_context: Dict) -> Dict:
                     timeout=10
                 )
             except Exception as e:
-                logger.error(e) # It doens't really matter if this didn't work
+                logger.warn(e) # It doens't really matter if this didn't work
                 pass
 
         # Don't send an email if we don't have address.
@@ -1115,13 +1117,13 @@ def _notify(job_context: Dict) -> Dict:
                 )
             # Display an error if something goes wrong.
             except ClientError as e:
-                logger.exception("ClientError while notifying.", client_error_message=e.response['Error']['Message'])
+                logger.warn("ClientError while notifying.", exc_info=1, client_error_message=e.response['Error']['Message'])
                 job_context['job'].success = False
                 job_context['job'].failure_reason = e.response['Error']['Message']
                 job_context['success'] = False
                 return job_context
             except Exception as e:
-                logger.exception("General failure when trying to send email.", result_url=job_context["result_url"])
+                logger.warn("General failure when trying to send email.", exc_info=1, result_url=job_context["result_url"])
                 job_context['job'].success = False
                 job_context['job'].failure_reason = str(e)
                 job_context['success'] = False
