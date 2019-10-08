@@ -145,13 +145,13 @@ def prepare_dataset(job_context):
     dataset.save()
 
     # Get the samples to smash
-    job_context["dataset"] = dataset
-    job_context["samples"] = dataset.get_aggregated_samples()
-    job_context["experiments"] = dataset.get_experiments()
+    job_context['dataset'] = dataset
+    job_context['samples'] = dataset.get_aggregated_samples()
+    job_context['experiments'] = dataset.get_experiments()
 
     # Just in case
-    job_context["original_files"] = []
-    job_context["computed_files"] = []
+    job_context['original_files'] = []
+    job_context['computed_files'] = []
     return job_context
 
 def start_job(job_context: Dict):

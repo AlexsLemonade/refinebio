@@ -283,6 +283,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Write the compendia dataframe to a file, overwriting the previous smash
     job_context['merged_qn'].to_csv(job_context['smash_outfile'], sep='\t', encoding='utf-8')
+    
     compendia_tsv_computed_file = ComputedFile()
     compendia_tsv_computed_file.absolute_file_path = job_context['smash_outfile']
     compendia_tsv_computed_file.filename = job_context['smash_outfile'].split('/')[-1]
@@ -353,8 +354,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_qn_target = False
     archive_computed_file.result = result
     archive_computed_file.is_compendia = True
-    archive_computed_file.quant_sf_only = job_context["dataset"].quant_sf_only
-    archive_computed_file.svd_algorithm = job_context["dataset"].svd_algorithm
+    archive_computed_file.quant_sf_only = job_context['dataset'].quant_sf_only
+    archive_computed_file.svd_algorithm = job_context['dataset'].svd_algorithm
     archive_computed_file.compendia_organism = job_context['samples'][organism_key][0].organism
     archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
