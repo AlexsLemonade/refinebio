@@ -9,7 +9,7 @@ services:
       - 8000:8000
     volumes:
       - ..:/workspace
-      - ../.git:/workspace/git # git is excluded .dockerignore
+      - ../.git:/workspace/.git # git is excluded .dockerignore
       - ~/.ssh:/root/.ssh-localhost:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
