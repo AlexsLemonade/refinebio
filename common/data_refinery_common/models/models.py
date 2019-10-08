@@ -915,11 +915,9 @@ class ComputedFile(models.Model):
         default="NONE",
         help_text='The SVD algorithm that was used to generate the file.'
     )
-    compendia_organism = models.ForeignKey(Organism,
-                                        blank=True,
-                                        null=True,
-                                        on_delete=models.CASCADE
-                                    )
+    compendia_organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.CASCADE)
+    # Compendia computed files can be associated with multiple organisms
+    compendia_organisms = models.ManyToManyField('Organism', through='OrganismComputedFileAssociation', related_name='new_compendia_organisms')
     compendia_version = models.IntegerField(blank=True, null=True)
 
     # AWS
@@ -1151,6 +1149,17 @@ class ComputedFile(models.Model):
             )
         else:
             return None
+
+class OrganismComputedFileAssociation(models.Model):
+    """ Compendia computed files be associated with multiple organisms through this table """
+    organism = models.ForeignKey(
+        Organism, blank=False, null=False, on_delete=models.CASCADE)
+    computed_file = models.ForeignKey(
+        ComputedFile, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "organism_computed_file_associations"
+        unique_together = ('organism', 'computed_file')
 
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
