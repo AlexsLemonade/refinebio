@@ -1281,7 +1281,14 @@ class AggregationTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_columns(self):
-        columns = smasher._get_tsv_columns(self.metadata['samples'])
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+        job_context = {
+            'job': pj
+        }
+
+        columns = smasher._get_tsv_columns(job_context, self.metadata['samples'])
         self.assertEqual(len(columns), 22)
         self.assertEqual(columns[0], 'refinebio_accession_code')
         self.assertTrue('refinebio_accession_code' in columns)

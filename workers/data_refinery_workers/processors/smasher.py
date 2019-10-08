@@ -500,10 +500,11 @@ def process_frame(inputs) -> Dict:
         sample_accession_code,
         dataset_id,
         aggregate_by,
-        index
+        index,
+        job_id
     ) = inputs
 
-    log_state('processing frame {}'.format(index), job_context["job"])
+    logger.debug('processing frame {}'.format(index), job_id=job_id)
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
@@ -640,7 +641,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         connections.close_all()
         # shared worker pool
         cpus = max(1, psutil.cpu_count()/2)
-        logger.debug("Using pool of depth: %s to process frames" % cpus)
         pool = multiprocessing.Pool(processes=int(cpus))
 
         # Once again, `key` is either a species name or an experiment accession
@@ -670,11 +670,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         sample.accession_code,
                         job_context['dataset'].id,
                         job_context['dataset'].aggregate_by,
-                        index
+                        index,
+                        job_context["job"].id
                     )
             frame_inputs = get_frame_inputs()
 
             start_frames = log_state("build frames for species or experiment", job_context["job"])
+            log_state("Using {} cpus".format(cpus), job_context["job"])
             # Merge all the frames into one
             processed_frames = pool.map(process_frame, frame_inputs, chunksize=2000);
 
