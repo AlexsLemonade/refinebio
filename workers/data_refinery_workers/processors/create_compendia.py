@@ -1,35 +1,24 @@
-import os
-import random
-import shutil
-import string
-import subprocess
-import time
-import warnings
-import psutil
 import logging
+import os
+import shutil
+import time
+from typing import Dict
+
+from django.utils import timezone
 
 import numpy as np
 import pandas as pd
-pd.set_option('mode.chained_assignment', None)
-from fancyimpute import KNN, BiScaler, SoftImpute, IterativeSVD
-
-from django.utils import timezone
-from typing import Dict
-
+import psutil
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    ComputedFile,
-    Pipeline,
-    Processor,
-    SampleComputedFileAssociation,
-    SampleResultAssociation,
-    Organism
-)
+from data_refinery_common.models import (ComputationalResult,
+                                         ComputationalResultAnnotation,
+                                         ComputedFile, Organism, Pipeline)
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, smasher#, visualize
+from data_refinery_workers.processors import smasher, utils  # , visualize
+from fancyimpute import KNN, BiScaler, IterativeSVD, SoftImpute
+
+pd.set_option('mode.chained_assignment', None)
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
