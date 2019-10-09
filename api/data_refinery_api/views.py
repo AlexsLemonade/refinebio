@@ -922,6 +922,7 @@ class Stats(APIView):
     @classmethod
     def calculate_stats(cls, range_param):
         data = {}
+        data['generated_on'] = timezone.now()
         data['survey_jobs'] = cls._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = cls._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = cls._get_job_stats(ProcessorJob.objects, range_param)
