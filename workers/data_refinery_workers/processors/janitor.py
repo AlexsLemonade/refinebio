@@ -87,7 +87,7 @@ def _find_and_remove_expired_jobs(job_context):
             # Delete it!
             try:
                 to_delete = LOCAL_ROOT_DIR + '/' + item
-                logger.info("Janitor deleting " + to_delete, contents=str(os.listdir(to_delete)), job_id=job_id)
+                logger.debug("Janitor deleting " + to_delete, contents=str(os.listdir(to_delete)), job_id=job_id)
                 shutil.rmtree(to_delete)
                 job_context['deleted_items'].append(to_delete)
             except Exception as e:
@@ -112,7 +112,7 @@ def _find_and_remove_expired_jobs(job_context):
 
                 try:
                     sub_item_path = os.path.join(sub_path, sub_item)
-                    logger.info("Janitor deleting " + sub_item_path, contents=str(os.listdir(sub_item_path)))
+                    logger.debug("Janitor deleting " + sub_item_path, contents=str(os.listdir(sub_item_path)))
                     shutil.rmtree(sub_item_path)
                     job_context['deleted_items'].append(sub_item_path)
                 except Exception as e:
