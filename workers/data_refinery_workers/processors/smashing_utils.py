@@ -9,6 +9,7 @@ import psutil
 import logging
 import time
 
+from django.utils import timezone
 from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
@@ -97,7 +98,8 @@ def prepare_files(job_context: Dict) -> Dict:
                                              " - empty all_sample_files")
         return job_context
 
-    job_context["work_dir"] = "/home/user/data_store/smashed/" + job_context["dataset"].pk + "/"
+    dataset_id = str(job_context["dataset"].pk)
+    job_context["work_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
     # Ensure we have a fresh smash directory
     shutil.rmtree(job_context["work_dir"], ignore_errors=True)
     os.makedirs(job_context["work_dir"])
@@ -457,6 +459,35 @@ def compile_metadata(job_context: Dict) -> Dict:
     return metadata
 
 
+def write_non_data_files(job_context: Dict) -> Dict:
+    """Writes the files that are not the actual data of the dataset.
+
+    This include LICENSE.txt and README.md files and the metadata.
+
+    Expects the key `metadata` in job_context to be populated with all
+    the metadata that needs to be written.
+    """
+    shutil.copy("README_DATASET.md", job_context["output_dir"] + "README.md")
+    shutil.copy("LICENSE_DATASET.txt", job_context["output_dir"] + "LICENSE.TXT")
+
+    # Write samples metadata to TSV
+    try:
+        tsv_paths = write_tsv_json(job_context)
+        job_context['metadata_tsv_paths'] = tsv_paths
+        # Metadata to JSON
+        job_context['metadata']['created_at'] = timezone.now().strftime('%Y-%m-%dT%H:%M:%S')
+        with open(job_context["output_dir"] + 'aggregated_metadata.json',
+                  'w',
+                  encoding='utf-8') as metadata_file:
+            json.dump(job_context['metadata'], metadata_file, indent=4, sort_keys=True)
+    except Exception as e:
+        logger.exception("Failed to write metadata TSV!",
+                         job_id=job_context['job'].id)
+        job_context['metadata_tsv_paths'] = None
+
+    return job_context
+
+
 def get_experiment_accession(sample_accession_code, dataset_data):
     for experiment_accession, samples in dataset_data.items():
         if sample_accession_code in samples:
@@ -625,11 +656,13 @@ def get_tsv_columns(job_context, samples_metadata):
         + sorted(annotation_columns)
 
 
-def write_tsv_json(job_context, metadata):
+def write_tsv_json(job_context):
     """Writes tsv files on disk.
     If the dataset is aggregated by species, also write species-level
     JSON file.
     """
+    # Avoid pulling this out of job_context repeatedly.
+    metadata = job_context['metadata']
 
     # Uniform TSV header per dataset
     columns = get_tsv_columns(job_context, metadata['samples'])

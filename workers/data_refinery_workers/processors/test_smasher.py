@@ -1305,11 +1305,12 @@ class AggregationTestCase(TransactionTestCase):
         job_context = {
             'job': pj,
             'output_dir': self.smash_path,
+            'metadata': self.metadata,
             'dataset': Dataset.objects.create(aggregate_by='ALL',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
         }
-        smashing_utils.write_tsv_json(job_context, self.metadata)
+        smashing_utils.write_tsv_json(job_context)
         tsv_filename = self.smash_path + "ALL/metadata_ALL.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
 
@@ -1342,11 +1343,12 @@ class AggregationTestCase(TransactionTestCase):
         job_context = {
             'job': pj,
             'output_dir': self.smash_path,
+            'metadata': self.metadata,
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
         }
-        smashing_utils.write_tsv_json(job_context, self.metadata)
+        smashing_utils.write_tsv_json(job_context)
 
         tsv_filename = self.smash_path + "E-GEOD-44719/metadata_E-GEOD-44719.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
@@ -1396,11 +1398,12 @@ class AggregationTestCase(TransactionTestCase):
         job_context = {
             'job': pj,
             'output_dir': self.smash_path,
+            'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='ALL'),
             'input_files': {
             }
         }
-        final_context = smashing_utils.write_tsv_json(job_context, self.unicode_metadata)
+        final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
         with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1410,11 +1413,12 @@ class AggregationTestCase(TransactionTestCase):
         job_context = {
             'job': pj,
             'output_dir': self.smash_path,
+            'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT'),
             'input_files': {
             }
         }
-        final_context = smashing_utils.write_tsv_json(job_context, self.unicode_metadata)
+        final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
         with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1424,13 +1428,14 @@ class AggregationTestCase(TransactionTestCase):
         job_context = {
             'job': pj,
             'output_dir': self.smash_path,
+            'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
             'input_files': {
                 'homo_sapiens': [], # only the key matters in this test
                 'fake_species': []  # only the key matters in this test
             }
         }
-        final_context = smashing_utils.write_tsv_json(job_context, self.unicode_metadata)
+        final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
         with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1448,6 +1453,7 @@ class AggregationTestCase(TransactionTestCase):
         job_context = {
             'job': pj,
             'output_dir': self.smash_path,
+            'metadata': self.metadata,
             'dataset': Dataset.objects.create(aggregate_by='SPECIES',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']}),
@@ -1458,7 +1464,7 @@ class AggregationTestCase(TransactionTestCase):
         }
         # Generate two TSV files, one should include only "GSM1361050",
         # and the other should include only "E-GEOD-44719-GSM1089311".
-        smashing_utils.write_tsv_json(job_context, self.metadata)
+        smashing_utils.write_tsv_json(job_context)
 
         # Test tsv file of "homo_sapiens"
         tsv_filename = self.smash_path + "homo_sapiens/metadata_homo_sapiens.tsv"

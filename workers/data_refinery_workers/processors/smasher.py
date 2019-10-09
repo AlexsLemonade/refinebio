@@ -16,7 +16,7 @@ import logging
 import time
 
 from botocore.exceptions import ClientError
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 from pathlib import Path
@@ -141,8 +141,6 @@ def _inner_join(job_context: Dict) -> pd.DataFrame:
     """
     # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
     # TODO: If the very first frame is the wrong platform, are we boned?
-    # TODO: I think I'd like to not have all_frames be directly on the job context and overwritten.
-    # Hmm, now I'm less sure because I think that means we wouldn't overwrite them. Perhaps if I do in the
     merged = job_context['all_frames'][0]
     i = 1
 
@@ -204,17 +202,7 @@ def _inner_join(job_context: Dict) -> pd.DataFrame:
     return merged
 
 
-# 'how' can almost certainly be removed because I think it's just used
-# to switch the behavior between smasher/compendi
-# But I think maybe this is actually the function I wanna call from
-# compendia so the switching behaviour is needed?
-# Nooooo, I think I wanna call process frame from compendia, not this.
-# Therefore this can just always do an inner join and then the
-# compendia can do its own joining.
-def _smash_key(job_context: Dict,
-              key: str,
-              input_files: List[ComputedFile],
-              how="inner") -> Dict:
+def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> Dict:
     """Smash all of the input files together for a given key.
 
     Steps:
@@ -254,15 +242,7 @@ def _smash_key(job_context: Dict,
         # just skip an experiment and pretend nothing went wrong.
         return job_context
 
-    if how == "inner":
-        merged = _inner_join(job_context)
-    else:
-        merged = pd.concat(job_context['all_frames'],
-                           axis=1,
-                           keys=None,
-                           join='outer',
-                           copy=False,
-                           sort=True)
+    merged = _inner_join(job_context)
 
     job_context['original_merged'] = merged
     log_state("end build all frames", job_context["job"], start_smash)
@@ -343,9 +323,7 @@ def _smash_key(job_context: Dict,
     return job_context
 
 
-# 'how' can almost certainly be removed because I think it's just used
-# to switch the behavior between smasher/compendia
-def _smash_all(job_context: Dict, how="inner") -> Dict:
+def _smash_all(job_context: Dict) -> Dict:
     """Perform smashing on all species/experiments in the dataset.
     """
     start_smash = log_state("start smash", job_context["job"])
@@ -364,28 +342,10 @@ def _smash_all(job_context: Dict, how="inner") -> Dict:
 
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
-            job_context = _smash_key(job_context, key, input_files, how)
+            job_context = _smash_key(job_context, key, input_files)
 
-        # Copy LICENSE.txt and README.md files
-        shutil.copy("README_DATASET.md", job_context["output_dir"] + "README.md")
-        shutil.copy("LICENSE_DATASET.txt", job_context["output_dir"] + "LICENSE.TXT")
-
-        metadata = smashing_utils.compile_metadata(job_context)
-
-        # Write samples metadata to TSV
-        try:
-            tsv_paths = smashing_utils.write_tsv_json(job_context, metadata)
-            job_context['metadata_tsv_paths'] = tsv_paths
-            # Metadata to JSON
-            metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-            json_metadata_path = job_context["output_dir"] + 'aggregated_metadata.json'
-            with open(json_metadata_path, 'w', encoding='utf-8') as metadata_file:
-                json.dump(metadata, metadata_file, indent=4, sort_keys=True)
-        except Exception as e:
-            logger.exception("Failed to write metadata TSV!",
-                job_id = job_context['job'].id)
-            job_context['metadata_tsv_paths'] = None
-        metadata['files'] = os.listdir(job_context["output_dir"])
+        job_context['metadata'] = smashing_utils.compile_metadata(job_context)
+        smashing_utils.write_non_data_files(job_context)
 
         # Finally, compress all files into a zip
         final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
@@ -404,7 +364,7 @@ def _smash_all(job_context: Dict, how="inner") -> Dict:
         job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
-    job_context['metadata'] = metadata
+
     job_context['dataset'].success = True
     job_context['dataset'].save()
 

@@ -90,34 +90,9 @@ def _prepare_frames(job_context: Dict) -> Dict:
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
 
-        #####################
-        # <Duplicated Code> #
-        #####################
-        # Copy LICENSE.txt and README.md files
-        shutil.copy("README_DATASET.md", smash_path + "README.md")
-        shutil.copy("LICENSE_DATASET.txt", smash_path + "LICENSE.TXT")
+        job_context['metadata'] = smashing_utils.compile_metadata(job_context)
+        smashing_utils.write_non_data_files(job_context)
 
-        metadata = smashing_utils.compile_metadata(job_context)
-
-        # Write samples metadata to TSV
-        try:
-            tsv_paths = smashing_utils.write_tsv_json(job_context, metadata)
-            job_context['metadata_tsv_paths'] = tsv_paths
-            # Metadata to JSON
-            metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-            with open(smash_path + 'aggregated_metadata.json',
-                      'w',
-                      encoding='utf-8') as metadata_file:
-                json.dump(metadata, metadata_file, indent=4, sort_keys=True)
-        except Exception as e:
-            logger.exception("Failed to write metadata TSV!",
-                             job_id=job_context['job'].id)
-            job_context['metadata_tsv_paths'] = None
-        metadata['files'] = os.listdir(smash_path)
-
-        ######################
-        # </Duplicated Code> #
-        ######################
     except Exception as e:
         logger.exception("Could not prepare frames for compendia.",
                          dataset_id=job_context['dataset'].id,
@@ -293,8 +268,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
     combined_matrix_zero = row_col_filtered_matrix_samples
     del row_col_filtered_matrix_samples
 
-    # transposed_matrix_with_zeros = combined_matrix_zero.transpose()
-    # Apparently .T transposes the matrix in place. TODO: remove comment.
     transposed_matrix_with_zeros = combined_matrix_zero.T
     del combined_matrix_zero
 
@@ -330,12 +303,10 @@ def _perform_imputation(job_context: Dict) -> Dict:
     del transposed_matrix
 
     # Untranspose imputed_matrix (genes are now rows, samples are now columns)
-    # Apparently .T transposes the matrix in place. TODO: remove comment.
     untransposed_imputed_matrix = imputed_matrix.T
     del imputed_matrix
 
     # Convert back to Pandas
-    # What does this mean? What are we converting back from?
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
     untransposed_imputed_matrix_df.index = row_col_filtered_matrix_samples_index
     untransposed_imputed_matrix_df.columns = row_col_filtered_matrix_samples_columns
@@ -343,7 +314,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
     del row_col_filtered_matrix_samples_index
     del row_col_filtered_matrix_samples_columns
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
-    # XXX: Refactor QN target acquisition and application before doing this
     job_context['organism'] = Organism.get_object_for_name(job_context['organism_name'])
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
     # output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
