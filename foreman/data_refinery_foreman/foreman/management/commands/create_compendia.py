@@ -70,17 +70,17 @@ def get_organism_platforms(organism):
                    .order_by('-count')\
                    .values_list('platform_accession_code', flat=True)
 
-def group_organisms_by_biggest_platform(all_organisms):
+def group_organisms_by_biggest_platform(target_organisms, all_organisms):
     """ Create groups of organisms that share the same platform
     ref https://github.com/AlexsLemonade/refinebio/issues/1736 """
     result = []
 
     # process the organisms with the most platforms first
-    all_organisms_sorted = all_organisms\
+    target_organisms_sorted = target_organisms\
         .annotate(num_platforms=Count('sample__platform_accession_code', distinct=True))\
         .order_by('-num_platforms')
 
-    for organism in all_organisms_sorted:
+    for organism in target_organisms_sorted:
         added_with_another_organism = any(any(item == organism for item in group) for group in result)
         if added_with_another_organism:
             continue
@@ -94,7 +94,7 @@ def group_organisms_by_biggest_platform(all_organisms):
             continue
 
         # Check to see if it is used for any other organism.
-        organisms_using_platform = Organism.objects\
+        organisms_using_platform = all_organisms\
             .exclude(pk=organism.pk)\
             .filter(sample__platform_accession_code=biggest_platform_accession_code)\
             .distinct()
@@ -117,6 +117,11 @@ def group_organisms_by_biggest_platform(all_organisms):
 
     return result
 
+def get_compendia_organisms():
+    return Organism.objects\
+            .annotate(num_samples=Count('sample', filter=Q(sample__is_processed=True), distinct=True))\
+            .filter(num_samples__gt=100)
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -137,13 +142,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Create a compendium for one or more organisms."""
+        all_organisms = list(get_compendia_organisms().values_list('id', flat=True))
+        all_organisms = Organism.objects.filter(id__in=all_organisms)
+
         if options["organisms"] is None:
-            all_organisms = Organism.objects.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
+            target_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
         else:
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
-            all_organisms = Organism.objects.filter(name__in=organisms)
+            target_organisms = all_organisms.filter(name__in=organisms)
 
-        grouped_organisms = group_organisms_by_biggest_platform(all_organisms)
+        grouped_organisms = group_organisms_by_biggest_platform(target_organisms, all_organisms)
 
         quant_sf_only = options["quant_sf_only"] is True
 
