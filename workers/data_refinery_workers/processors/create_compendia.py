@@ -106,7 +106,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
         job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
-    job_context['metadata'] = metadata
+
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
