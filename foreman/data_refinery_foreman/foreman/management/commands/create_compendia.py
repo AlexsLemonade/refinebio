@@ -75,7 +75,12 @@ def group_organisms_by_biggest_platform(all_organisms):
     ref https://github.com/AlexsLemonade/refinebio/issues/1736 """
     result = []
 
-    for organism in all_organisms:
+    # process the organisms with the most platforms first
+    all_organisms_sorted = all_organisms\
+        .annotate(num_platforms=Count('sample__platform_accession_code', distinct=True))\
+        .order_by('-num_platforms')
+
+    for organism in all_organisms_sorted:
         added_with_another_organism = any(any(item == organism for item in group) for group in result)
         if added_with_another_organism:
             continue
@@ -103,7 +108,7 @@ def group_organisms_by_biggest_platform(all_organisms):
                 logger.debug('Found two organisms that share the same platform but one has also other platforms',
                                  organism=organism, organism_biggest_platform=biggest_platform_accession_code,
                                  other_organism=organism_with_same_platform)
-                break
+                continue
             else:
                 # If it doesn't then we should add all samples from that organism to the dataset.
                 organism_group.append(organism_with_same_platform)
