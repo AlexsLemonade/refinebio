@@ -1,18 +1,20 @@
+import logging
 import os
+import psutil
 import random
 import shutil
 import string
 import subprocess
 import time
 import warnings
-import psutil
-import logging
 
 import numpy as np
 import pandas as pd
 pd.set_option('mode.chained_assignment', None)
 from fancyimpute import KNN, BiScaler, SoftImpute, IterativeSVD
+import simplejson as json
 
+from datetime import datetime, timedelta
 from django.utils import timezone
 from typing import Dict
 
@@ -62,12 +64,17 @@ def _prepare_input(job_context: Dict) -> Dict:
         smashing_utils.log_failure("Unable to run smashing_utils.prepare_files.")
         return job_context
 
+    # Compendia jobs only run for one organism, so we know the only
+    # key will be the organism name, unless of course we've already failed.
+    if job_context['job'].success != False:
+        job_context["organism_name"] = list(job_context['input_files'].keys())[0]
+
     log_state("prepare input done", job_context["job"], start_time)
     return job_context
 
 
 def _prepare_frames(job_context: Dict) -> Dict:
-    start_smash = log_state("start _prepare_frames", job_context["job"])
+    start_prepare_frames = log_state("start _prepare_frames", job_context["job"])
 
     try:
         # Prepare the output directory
@@ -98,7 +105,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
 
         # Write samples metadata to TSV
         try:
-            tsv_paths = _write_tsv_json(job_context, metadata, smash_path)
+            tsv_paths = smashing_utils.write_tsv_json(job_context, metadata)
             job_context['metadata_tsv_paths'] = tsv_paths
             # Metadata to JSON
             metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
@@ -130,10 +137,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
-    logger.debug("Created smash output!",
-        archive_location=job_context["output_file"])
-
-    log_state("end smash", job_context["job"], start_smash);
+    log_state("end _prepare_frames", job_context["job"], start_prepare_frames);
     return job_context
 
 
@@ -232,6 +236,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
      # Everything below `thresh` is dropped
     row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh)
+    del combined_matrix
     del thresh
 
     # # Visualize Row Filtered
@@ -246,7 +251,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
     row_col_filtered_combined_matrix_samples_index = row_col_filtered_combined_matrix_samples.index
     row_col_filtered_combined_matrix_samples_columns = row_col_filtered_combined_matrix_samples.columns
 
-    del combined_matrix
     del row_filtered_combined_matrix
 
     # # Visualize Row and Column Filtered
@@ -327,7 +331,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(), output_path)
 
     # Perform the Quantile Normalization
-    job_context = smasher._quantile_normalize(job_context, ks_check=False)
+    job_context = smashing_utils.quantile_normalize(job_context, ks_check=False)
 
     # Visualize Final Compendia
     # output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
@@ -357,11 +361,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
         return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
 
-    # Write the compendia dataframe to a file, overwriting the previous smash
-    job_context['merged_qn'].to_csv(job_context['smash_outfile'], sep='\t', encoding='utf-8')
+    # Write the compendia dataframe to a file
+    job_context['csv_outfile'] = job_context['output_dir'] + job_context['organism_name'] + '.tsv'
+    job_context['merged_qn'].to_csv(job_context['csv_outfile'], sep='\t', encoding='utf-8')
     compendia_tsv_computed_file = ComputedFile()
-    compendia_tsv_computed_file.absolute_file_path = job_context['smash_outfile']
-    compendia_tsv_computed_file.filename = job_context['smash_outfile'].split('/')[-1]
+    compendia_tsv_computed_file.absolute_file_path = job_context['csv_outfile']
+    compendia_tsv_computed_file.filename = job_context['csv_outfile'].split('/')[-1]
     compendia_tsv_computed_file.calculate_sha1()
     compendia_tsv_computed_file.calculate_size()
     compendia_tsv_computed_file.is_smashable = False
