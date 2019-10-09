@@ -1,20 +1,15 @@
 import logging
 import os
 import psutil
-import random
 import shutil
-import string
-import subprocess
 import time
-import warnings
 
 import numpy as np
 import pandas as pd
-pd.set_option('mode.chained_assignment', None)
-from fancyimpute import KNN, BiScaler, SoftImpute, IterativeSVD
+from fancyimpute import IterativeSVD
 import simplejson as json
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.utils import timezone
 from typing import Dict
 
@@ -25,17 +20,18 @@ from data_refinery_common.models import (
     ComputationalResultAnnotation,
     ComputedFile,
     Pipeline,
-    Processor,
-    SampleComputedFileAssociation,
-    SampleResultAssociation,
     Organism
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils, smashing_utils
 
 
+pd.set_option('mode.chained_assignment', None)
+
+
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BYTES_IN_GB = 1024 * 1024 * 1024
+SMASHING_DIR = "/home/user/data_store/smashed/"
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -60,13 +56,13 @@ def _prepare_input(job_context: Dict) -> Dict:
     start_time = log_state("prepare input", job_context["job"])
 
     job_context = smashing_utils.prepare_files(job_context)
-    if job_context['job'].success == False:
+    if job_context['job'].success is False:
         smashing_utils.log_failure("Unable to run smashing_utils.prepare_files.")
         return job_context
 
     # Compendia jobs only run for one organism, so we know the only
     # key will be the organism name, unless of course we've already failed.
-    if job_context['job'].success != False:
+    if job_context['job'].success is not False:
         job_context["organism_name"] = list(job_context['input_files'].keys())[0]
 
     log_state("prepare input done", job_context["job"], start_time)
@@ -109,11 +105,13 @@ def _prepare_frames(job_context: Dict) -> Dict:
             job_context['metadata_tsv_paths'] = tsv_paths
             # Metadata to JSON
             metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-            with open(smash_path + 'aggregated_metadata.json', 'w', encoding='utf-8') as metadata_file:
+            with open(smash_path + 'aggregated_metadata.json',
+                      'w',
+                      encoding='utf-8') as metadata_file:
                 json.dump(metadata, metadata_file, indent=4, sort_keys=True)
         except Exception as e:
             logger.exception("Failed to write metadata TSV!",
-                job_id = job_context['job'].id)
+                             job_id=job_context['job'].id)
             job_context['metadata_tsv_paths'] = None
         metadata['files'] = os.listdir(smash_path)
 
@@ -122,9 +120,9 @@ def _prepare_frames(job_context: Dict) -> Dict:
         ######################
     except Exception as e:
         logger.exception("Could not prepare frames for compendia.",
-                        dataset_id=job_context['dataset'].id,
-                        processor_job_id=job_context['job_id'],
-                        num_input_files=len(job_context['input_files']))
+                         dataset_id=job_context['dataset'].id,
+                         processor_job_id=job_context['job_id'],
+                         num_input_files=len(job_context['input_files']))
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
@@ -137,7 +135,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
-    log_state("end _prepare_frames", job_context["job"], start_prepare_frames);
+    log_state("end _prepare_frames", job_context["job"], start_prepare_frames)
     return job_context
 
 
@@ -147,19 +145,27 @@ def _perform_imputation(job_context: Dict) -> Dict:
     Take the inputs and perform the primary imputation.
 
     Via https://github.com/AlexsLemonade/refinebio/issues/508#issuecomment-435879283:
-     - Combine all microarray samples with a full join to form a microarray_expression_matrix (this may end up being a DataFrame)
-     - Combine all RNA-seq samples (lengthScaledTPM) with a full outer join to form a rnaseq_expression_matrix
-     - Calculate the sum of the lengthScaledTPM values for each row (gene) of the rnaseq_expression_matrix (rnaseq_row_sums)
+     - Combine all microarray samples with a full join to form a
+       microarray_expression_matrix (this may end up being a DataFrame).
+     - Combine all RNA-seq samples (lengthScaledTPM) with a full outer join
+       to form a rnaseq_expression_matrix.
+     - Calculate the sum of the lengthScaledTPM values for each row (gene) of
+       the rnaseq_expression_matrix (rnaseq_row_sums).
      - Calculate the 10th percentile of rnaseq_row_sums
-     - Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of rnaseq_row_sums; this is now filtered_rnaseq_matrix
+     - Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of
+       rnaseq_row_sums; this is now filtered_rnaseq_matrix
      - log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
-     - Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of where these zeroes are
-     - Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
+     - Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of
+       where these zeroes are
+     - Perform a full outer join of microarray_expression_matrix and
+       log2_rnaseq_matrix; combined_matrix
      - Remove genes (rows) with >30% missing values in combined_matrix
      - Remove samples (columns) with >50% missing values in combined_matrix
-     - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
+     - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero
+       again) in combined_matrix
      - Transpose combined_matrix; transposed_matrix
-     - Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
+     - Perform imputation of missing values with IterativeSVD (rank=10) on
+       the transposed_matrix; imputed_matrix
         -- with specified svd algorithm or skip
      - Untranspose imputed_matrix (genes are now rows, samples are now columns)
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
@@ -180,11 +186,11 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Combine all RNA-seq samples (lengthScaledTPM) with a full outer
     # join to form a rnaseq_expression_matrix (a DataFrame).
     rnaseq_expression_matrix = pd.concat(job_context['rnaseq_frames'],
-                                             axis=1,
-                                             keys=None,
-                                             join='outer',
-                                             copy=False,
-                                             sort=True)
+                                         axis=1,
+                                         keys=None,
+                                         join='outer',
+                                         copy=False,
+                                         sort=True)
 
     # Calculate the sum of the lengthScaledTPM values for each row
     # (gene) of the rnaseq_expression_matrix (rnaseq_row_sums)
@@ -221,11 +227,14 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Set all zero values in log2_rnaseq_matrix to NA, but make sure
     # to keep track of where these zeroes are
-    log2_rnaseq_matrix[log2_rnaseq_matrix==0]=np.nan
+    log2_rnaseq_matrix[log2_rnaseq_matrix == 0] = np.nan
 
     # Perform a full outer join of microarray_expression_matrix and
     # log2_rnaseq_matrix; combined_matrix
-    combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
+    combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix,
+                                                         how='outer',
+                                                         left_index=True,
+                                                         right_index=True)
     del microarray_expression_matrix
 
     # # Visualize Prefiltered
@@ -233,29 +242,31 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # visualized_prefilter = visualize.visualize(combined_matrix.copy(), output_path)
 
     # Remove genes (rows) with <=70% present values in combined_matrix
-    thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
-     # Everything below `thresh` is dropped
-    row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh)
+    thresh = combined_matrix.shape[1] * .7  # (Rows, Columns)
+    # Everything below `thresh` is dropped
+    row_filtered_matrix = combined_matrix.dropna(axis='index',
+                                                 thresh=thresh)
     del combined_matrix
     del thresh
 
     # # Visualize Row Filtered
     # output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
-    # visualized_rowfilter = visualize.visualize(row_filtered_combined_matrix.copy(), output_path)
+    # visualized_rowfilter = visualize.visualize(row_filtered_matrix.copy(), output_path)
 
     # Remove samples (columns) with <50% present values in combined_matrix
     # XXX: Find better test data for this!
-    col_thresh = row_filtered_combined_matrix.shape[0] * .5
-    row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns',
-                                                                                   thresh=col_thresh)
-    row_col_filtered_combined_matrix_samples_index = row_col_filtered_combined_matrix_samples.index
-    row_col_filtered_combined_matrix_samples_columns = row_col_filtered_combined_matrix_samples.columns
+    col_thresh = row_filtered_matrix.shape[0] * .5
+    row_col_filtered_matrix_samples = row_filtered_matrix.dropna(axis='columns',
+                                                                 thresh=col_thresh)
+    row_col_filtered_matrix_samples_index = row_col_filtered_matrix_samples.index
+    row_col_filtered_matrix_samples_columns = row_col_filtered_matrix_samples.columns
 
-    del row_filtered_combined_matrix
+    del row_filtered_matrix
 
     # # Visualize Row and Column Filtered
     # output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
-    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_combined_matrix_samples.copy(), output_path)
+    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_matrix_samples.copy(),
+    #                                               output_path)
 
     # "Reset" zero values that were set to NA in RNA-seq samples
     # (i.e., make these zero again) in combined_matrix
@@ -263,24 +274,24 @@ def _perform_imputation(job_context: Dict) -> Dict:
         zeroes = cached_zeroes[column]
 
         # Skip purged columns
-        if column not in row_col_filtered_combined_matrix_samples:
+        if column not in row_col_filtered_matrix_samples:
             continue
 
         # Place the zero
         try:
             # This generates a warning, so use loc[] instead
-            #row_col_filtered_combined_matrix_samples[column].replace(zeroes, 0.0, inplace=True)
+            # row_col_filtered_matrix_samples[column].replace(zeroes, 0.0, inplace=True)
             zeroes_list = zeroes.tolist()
-            new_index_list = row_col_filtered_combined_matrix_samples_index.tolist()
+            new_index_list = row_col_filtered_matrix_samples_index.tolist()
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
-            row_col_filtered_combined_matrix_samples[column].loc[new_zeroes] = 0.0
+            row_col_filtered_matrix_samples[column].loc[new_zeroes] = 0.0
         except Exception as e:
             logger.warn("Error when replacing zero")
             continue
 
     # Label our new replaced data
-    combined_matrix_zero = row_col_filtered_combined_matrix_samples
-    del row_col_filtered_combined_matrix_samples
+    combined_matrix_zero = row_col_filtered_matrix_samples
+    del row_col_filtered_matrix_samples
 
     # transposed_matrix_with_zeros = combined_matrix_zero.transpose()
     # Apparently .T transposes the matrix in place. TODO: remove comment.
@@ -293,19 +304,26 @@ def _perform_imputation(job_context: Dict) -> Dict:
     del transposed_matrix_with_zeros
 
     # Store the absolute/percentages of imputed values
-    total = transposed_matrix.isnull().sum().sort_values(ascending=False)
-    percent = (transposed_matrix.isnull().sum()/transposed_matrix.isnull().count()).sort_values(ascending=False)
+    matrix_sum = transposed_matrix.isnull().sum()
+    percent = (matrix_sum / transposed_matrix.isnull().count()).sort_values(ascending=False)
     total_percent_imputed = sum(percent) / len(transposed_matrix.count())
     job_context['total_percent_imputed'] = total_percent_imputed
     logger.info("Total percentage of data to impute!", total_percent_imputed=total_percent_imputed)
 
-    # Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
+    # Perform imputation of missing values with IterativeSVD (rank=10) on the
+    # transposed_matrix; imputed_matrix
     svd_algorithm = job_context['dataset'].svd_algorithm
     if svd_algorithm != 'NONE':
-        svd_start = time.time()
+        svd_start = log_state("start SVD", job_context["job"])
+
         logger.info("IterativeSVD algorithm: %s" % svd_algorithm)
         svd_algorithm = str.lower(svd_algorithm)
-        imputed_matrix = IterativeSVD(rank=10, svd_algorithm=svd_algorithm).fit_transform(transposed_matrix)
+        imputed_matrix = IterativeSVD(
+            rank=10,
+            svd_algorithm=svd_algorithm
+        ).fit_transform(transposed_matrix)
+
+        svd_start = log_state("end SVD", job_context["job"], svd_start)
     else:
         imputed_matrix = transposed_matrix
         logger.info("Skipping IterativeSVD")
@@ -317,18 +335,20 @@ def _perform_imputation(job_context: Dict) -> Dict:
     del imputed_matrix
 
     # Convert back to Pandas
+    # What does this mean? What are we converting back from?
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
-    untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples_index
-    untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples_columns
+    untransposed_imputed_matrix_df.index = row_col_filtered_matrix_samples_index
+    untransposed_imputed_matrix_df.columns = row_col_filtered_matrix_samples_columns
     del untransposed_imputed_matrix
-    del row_col_filtered_combined_matrix_samples_index
-    del row_col_filtered_combined_matrix_samples_columns
+    del row_col_filtered_matrix_samples_index
+    del row_col_filtered_matrix_samples_columns
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
     # XXX: Refactor QN target acquisition and application before doing this
-    job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
+    job_context['organism'] = Organism.get_object_for_name(job_context['organism_name'])
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
     # output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
-    # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(), output_path)
+    # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(),
+    #                                               output_path)
 
     # Perform the Quantile Normalization
     job_context = smashing_utils.quantile_normalize(job_context, ks_check=False)
@@ -380,7 +400,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     annotation.data = {
         "organism_id": job_context['samples'][organism_key][0].organism_id,
-        "organism_name": job_context['samples'][organism_key][0].organism.name,
+        "organism_name": job_context['organism_name'],
         "is_qn": False,
         "is_compendia": True,
         "samples": [sample.accession_code for sample in job_context["samples"][organism_key]],
@@ -402,7 +422,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     metadata_computed_file.save()
 
     # Create the resulting archive
-    final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "_compendia"
+    final_zip_base = SMASHING_DIR + str(job_context["dataset"].pk) + "_compendia"
     # Copy LICENSE.txt and correct README.md files.
     if job_context["dataset"].quant_sf_only:
         readme_file = "/home/user/README_QUANT.md"
@@ -441,29 +461,32 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.save()
 
     logger.info("Compendia created!",
-        archive_path=archive_path,
-        organism_name=job_context['samples'][organism_key][0].organism.name
-    )
+                archive_path=archive_path,
+                organism_name=job_context['organism_name'])
 
     # Upload the result to S3
-    key = job_context['samples'][organism_key][0].organism.name + "_" + str(compendia_version) + "_" + str(int(time.time())) + ".zip"
+    timestamp = str(int(time.time()))
+    key = job_context['organism_name'] + "_" + str(compendia_version) + "_" + timestamp + ".zip"
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
 
     job_context['result'] = result
-    job_context['computed_files'] = [compendia_tsv_computed_file, metadata_computed_file, archive_computed_file]
+    job_context['computed_files'] = [compendia_tsv_computed_file,
+                                     metadata_computed_file,
+                                     archive_computed_file]
     job_context['success'] = True
 
     log_state("end create result object", job_context["job"], result_start)
 
     return job_context
 
+
 def create_compendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_COMPENDIA.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
-                       [utils.start_job,
-                        _prepare_input,
-                        _prepare_frames,
-                        _perform_imputation,
-                        _create_result_objects,
-                        utils.end_job])
+                                     [utils.start_job,
+                                      _prepare_input,
+                                      _prepare_frames,
+                                      _perform_imputation,
+                                      _create_result_objects,
+                                      utils.end_job])
     return job_context
