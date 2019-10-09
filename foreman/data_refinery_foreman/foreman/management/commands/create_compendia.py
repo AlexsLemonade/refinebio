@@ -62,9 +62,10 @@ def get_dataset(organisms: List[Organism]):
     return dataset
 
 def get_organism_platforms(organism):
-    """ Returns the accession codes of the platforms associated with the given
+    """ Returns the accession codes of the Affymetrix microarray platforms associated with an
     organism. Ordered by the number of samples for each platform in descending order """
-    return organism.sample_set.values('platform_accession_code')\
+    return organism.sample_set.filter(has_raw=True, technology="MICROARRAY", is_processed=True)\
+                   .values('platform_accession_code')\
                    .annotate(count=Count('id'))\
                    .order_by('-count')\
                    .values_list('platform_accession_code', flat=True)
@@ -82,13 +83,16 @@ def group_organisms_by_biggest_platform(all_organisms):
         organism_group = [organism]
 
         platform_list = get_organism_platforms(organism)
-
         # Check what the biggest platform is for that organism.
         biggest_platform_accession_code = platform_list.first()
+        if not biggest_platform_accession_code:
+            continue
+
         # Check to see if it is used for any other organism.
         organisms_using_platform = Organism.objects\
             .exclude(pk=organism.pk)\
-            .filter(sample_set__platform_accession_code=biggest_platform_accession_code)
+            .filter(sample__platform_accession_code=biggest_platform_accession_code)\
+            .distinct()
 
         for organism_with_same_platform in organisms_using_platform:
             # Check to see if that organism has any other platforms.
@@ -96,7 +100,7 @@ def group_organisms_by_biggest_platform(all_organisms):
                 .exclude(platform_accession_code__in=platform_list)
             if platforms.exists():
                 # If it does then we should scream about it so we know these mixed cases exist.
-                logger.exception('Found two organisms that share the same platform but one has also other platforms',
+                logger.debug('Found two organisms that share the same platform but one has also other platforms',
                                  organism=organism, organism_biggest_platform=biggest_platform_accession_code,
                                  other_organism=organism_with_same_platform)
                 break
