@@ -1,56 +1,40 @@
 # -*- coding: utf-8 -*-
 
-import boto3
 import csv
 import os
-import rpy2
 import rpy2.robjects as ro
 import shutil
 import simplejson as json
-import string
-import warnings
-import requests
 import psutil
-import multiprocessing
 import logging
 import time
 
-from botocore.exceptions import ClientError
-from datetime import datetime, timedelta
-from django.conf import settings
-from django.utils import timezone
 from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
-from sklearn import preprocessing
 from typing import Dict, List
 import numpy as np
 import pandas as pd
 
-from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputedFile,
-    OriginalFile,
-    Pipeline,
-    SampleResultAssociation,
-)
-from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
+from data_refinery_common.models import ComputedFile
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
-from urllib.parse import quote
 
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
-BODY_ERROR_HTML = Path('data_refinery_workers/processors/smasher_email_error.min.html').read_text().replace('\n', '')
+BODY_HTML = Path(
+    'data_refinery_workers/processors/smasher_email.min.html'
+).read_text().replace('\n', '')
+BODY_ERROR_HTML = Path(
+    'data_refinery_workers/processors/smasher_email_error.min.html'
+).read_text().replace('\n', '')
 BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
-
 
 
 def log_failure(job_context: Dict, failure_reason: str) -> Dict:
@@ -109,10 +93,11 @@ def prepare_files(job_context: Dict) -> Dict:
         job_context['dataset'].success = False
         job_context['dataset'].save()
         job_context['job'].success = False
-        job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
+        job_context["job"].failure_reason = ("Couldn't get any files to smash for Smash job"
+                                             " - empty all_sample_files")
         return job_context
 
-    job_context["work_dir"] = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
+    job_context["work_dir"] = "/home/user/data_store/smashed/" + job_context["dataset"].pk + "/"
     # Ensure we have a fresh smash directory
     shutil.rmtree(job_context["work_dir"], ignore_errors=True)
     os.makedirs(job_context["work_dir"])
@@ -153,7 +138,9 @@ def _load_and_sanitize_file(computed_file_path):
     # This regex needs to be able to handle EGIDs in the form:
     #       ENSGXXXXYYYZZZZ.6
     # and
-    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/ \
+    #       Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg. \
+    #       7__3016__AT5G35080.1;db=core)
     data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
     # Squish duplicated rows together.
@@ -176,13 +163,13 @@ def process_frame(inputs) -> Dict:
     }
 
     def unsmashable(path):
-      frame['unsmashable'] = True
-      frame['unsmashable_file'] = path
-      return frame
+        frame['unsmashable'] = True
+        frame['unsmashable_file'] = path
+        return frame
 
     def smashable(data):
-      frame['dataframe'] = data
-      return frame
+        frame['dataframe'] = data
+        return frame
 
     try:
         # Download the file to a job-specific location so it
@@ -193,10 +180,9 @@ def process_frame(inputs) -> Dict:
         # Bail appropriately if this isn't a real file.
         if not computed_file_path or not os.path.exists(computed_file_path):
             logger.warning("Smasher received non-existent file path.",
-                computed_file_path=computed_file_path,
-                computed_file=computed_file,
-                dataset_id=job_context['dataset'].id,
-            )
+                           computed_file_path=computed_file_path,
+                           computed_file=computed_file,
+                           dataset_id=job_context['dataset'].id)
             return unsmashable(computed_file_path)
 
         data = _load_and_sanitize_file(computed_file_path)
@@ -206,16 +192,15 @@ def process_frame(inputs) -> Dict:
             # two-channel samples. I think ultimately those should be given some kind of
             # special consideration.
             logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
-                computed_file_path=computed_file_path,
-                computed_file_id=computed_file.id
-            )
+                        computed_file_path=computed_file_path,
+                        computed_file_id=computed_file.id)
             return unsmashable(computed_file_path)
 
         # via https://github.com/AlexsLemonade/refinebio/issues/330:
         #   aggregating by experiment -> return untransformed output from tximport
         #   aggregating by species -> log2(x + 1) tximport output
         if job_context['dataset'].aggregate_by == 'SPECIES' \
-        and computed_file_path.endswith("lengthScaledTPM.tsv"):
+           and computed_file_path.endswith("lengthScaledTPM.tsv"):
             data = data + 1
             data = np.log2(data)
 
@@ -229,23 +214,22 @@ def process_frame(inputs) -> Dict:
         try:
             # Unfortuantely, we can't use this as `title` can cause a collision
             # data.columns = [computed_file.samples.all()[0].title]
-            # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
+            # So we use this, which also helps us support the case of missing
+            # SampleComputedFileAssociation
             data.columns = [sample.accession_code]
         except ValueError as e:
             # This sample might have multiple channels, or something else.
             # Don't mess with it.
             logger.warn("Smasher found multi-channel column (probably) - skipping!",
                         exc_info=1,
-                        computed_file_path=computed_file_path,
-            )
+                        computed_file_path=computed_file_path,)
             return unsmashable(computed_file.filename)
         except Exception as e:
             # Okay, somebody probably forgot to create a SampleComputedFileAssociation
             # Don't mess with it.
             logger.warn("Smasher found very bad column title - skipping!",
                         exc_info=1,
-                        computed_file_path=computed_file_path
-            )
+                        computed_file_path=computed_file_path)
             return unsmashable(computed_file.filename)
 
         is_rnaseq = computed_file_path.endswith("lengthScaledTPM.tsv")
@@ -253,9 +237,8 @@ def process_frame(inputs) -> Dict:
 
     except Exception as e:
         logger.exception("Unable to smash file",
-            file=computed_file_path,
-            dataset_id=job_context['dataset'].id,
-        )
+                         file=computed_file_path,
+                         dataset_id=job_context['dataset'].id,)
         return unsmashable(computed_file_path)
     finally:
         # Delete before archiving the work dir
@@ -268,10 +251,11 @@ def process_frame(inputs) -> Dict:
 def process_frames_for_key(key: str, input_files: List[ComputedFile], job_context: Dict) -> Dict:
     job_context['original_merged'] = pd.DataFrame()
 
-    start_frames = log_state("building frames for species or experiment {}".format(key), job_context["job"])
+    start_frames = log_state("building frames for species or experiment {}".format(key),
+                             job_context["job"])
     # Merge all the frames into one
-    #cpus = max(1, psutil.cpu_count()/2)
-    #with multiprocessing.Pool(int(cpus)) as pool:
+    # cpus = max(1, psutil.cpu_count()/2)
+    # with multiprocessing.Pool(int(cpus)) as pool:
     #    processed_frames = pool.map(
     mapped_frames = map(
         process_frame,
@@ -317,13 +301,13 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
 
     if not qn_target:
         logger.error("Could not find QN target for Organism!",
-            organism=organism,
-            dataset_id=job_context['dataset'].id,
-            processor_job_id=job_context["job"].id,
-        )
+                     organism=organism,
+                     dataset_id=job_context['dataset'].id,
+                     processor_job_id=job_context["job"].id,)
         job_context['dataset'].success = False
-        job_context['job'].failure_reason = "Could not find QN target for Organism: " + str(organism)
-        job_context['dataset'].failure_reason = "Could not find QN target for Organism: " + str(organism)
+        failure_reason = "Could not find QN target for Organism: " + str(organism)
+        job_context['job'].failure_reason = failure_reason
+        job_context['dataset'].failure_reason = failure_reason
         job_context['dataset'].save()
         job_context['job'].success = False
         job_context['failure_reason'] = "Could not find QN target for Organism: " + str(organism)
@@ -351,7 +335,8 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
                                             copy=True
                                         )
 
-        # Verify this QN, related: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
+        # Verify this QN, related:
+        # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
         set_seed = rlang("set.seed")
         combn = rlang("combn")
         ncol = rlang("ncol")
@@ -415,19 +400,20 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
                 # We're unsure of how strigent to be about
                 # the pvalue just yet, so we're extra lax
                 # rather than failing tons of tests. This may need tuning.
-                if ks_check:
-                    if statistic > ks_stat or pvalue < 0.8:
-                        job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
-                                        str(statistic) + ", PVal: " + str(pvalue))
+                if ks_check and (statistic > ks_stat or pvalue < 0.8):
+                    job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
+                                                 str(statistic) + ", PVal: " + str(pvalue))
         else:
-            logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
-                dataset_id=job_context['dataset'].id)
+            logger.warning(("Not enough columns to perform KS test -"
+                            " either bad smash or single saple smash."),
+                           dataset_id=job_context['dataset'].id)
 
         # And finally convert back to Pandas
         ar = np.array(reso)
-        new_merged = pd.DataFrame(ar, columns=job_context['merged_no_qn'].columns, index=job_context['merged_no_qn'].index)
+        new_merged = pd.DataFrame(ar,
+                                  columns=job_context['merged_no_qn'].columns,
+                                  index=job_context['merged_no_qn'].index)
         job_context['merged_qn'] = new_merged
-        merged = new_merged
     return job_context
 
 
@@ -462,7 +448,8 @@ def compile_metadata(job_context: Dict) -> Dict:
     experiments = {}
     for experiment in job_context["dataset"].get_experiments():
         exp_dict = experiment.to_metadata_dict()
-        exp_dict['sample_accession_codes'] = [v for v in experiment.samples.all().values_list('accession_code', flat=True)]
+        sample_accessions = experiment.samples.all().values_list('accession_code', flat=True)
+        exp_dict['sample_accession_codes'] = [v for v in sample_accessions]
         experiments[experiment.accession_code] = exp_dict
 
     metadata['experiments'] = experiments
@@ -532,28 +519,28 @@ def get_tsv_row_data(sample_metadata, dataset_data):
         for annotation in meta_value:
             for annotation_key, annotation_value in annotation.items():
                 # "characteristic" in ArrayExpress annotation
-                if (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
-                    and annotation_key == "characteristic"):
+                if sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS" \
+                   and annotation_key == "characteristic":
                     for pair_dict in annotation_value:
                         if 'category' in pair_dict and 'value' in pair_dict:
                             col_name, col_value = pair_dict['category'], pair_dict['value']
                             _add_annotation_value(row_data, col_name, col_value,
                                                   sample_accession_code)
                 # "variable" in ArrayExpress annotation
-                elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
-                      and annotation_key == "variable"):
+                elif sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS" \
+                     and annotation_key == "variable":
                     for pair_dict in annotation_value:
                         if 'name' in pair_dict and 'value' in pair_dict:
                             col_name, col_value = pair_dict['name'], pair_dict['value']
                             _add_annotation_value(row_data, col_name, col_value,
                                                   sample_accession_code)
-                 # Skip "source" field ArrayExpress sample's annotation
-                elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
-                      and annotation_key == "source"):
+                # Skip "source" field ArrayExpress sample's annotation
+                elif sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS" \
+                     and annotation_key == "source":
                     continue
                 # "characteristics_ch1" in GEO annotation
-                elif (sample_metadata.get('refinebio_source_database', '') == "GEO"
-                      and annotation_key == "characteristics_ch1"): # array of strings
+                elif sample_metadata.get('refinebio_source_database', '') == "GEO" \
+                     and annotation_key == "characteristics_ch1":  # array of strings
                     for pair_str in annotation_value:
                         if ':' in pair_str:
                             col_name, col_value = pair_str.split(':', 1)
@@ -561,8 +548,8 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                             _add_annotation_value(row_data, col_name, col_value,
                                                   sample_accession_code)
                 # If annotation_value includes only a 'name' key, extract its value directly:
-                elif (isinstance(annotation_value, dict)
-                      and len(annotation_value) == 1 and 'name' in annotation_value):
+                elif isinstance(annotation_value, dict) \
+                     and len(annotation_value) == 1 and 'name' in annotation_value:
                     _add_annotation_value(row_data, annotation_key, annotation_value['name'],
                                           sample_accession_code)
                 # If annotation_value is a single-element array, extract the element directly:
@@ -575,7 +562,7 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                                           sample_accession_code)
 
     row_data["experiment_accession"] = get_experiment_accession(sample_accession_code,
-                                                                 dataset_data)
+                                                                dataset_data)
 
     return row_data
 
@@ -601,26 +588,26 @@ def get_tsv_columns(job_context, samples_metadata):
                 for annotation_key, annotation_value in annotation.items():
                     # For ArrayExpress samples, take out the fields
                     # nested in "characteristic" as separate columns.
-                    if (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
-                        and annotation_key == "characteristic"):
+                    if sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS" \
+                       and annotation_key == "characteristic":
                         for pair_dict in annotation_value:
                             if 'category' in pair_dict and 'value' in pair_dict:
                                 _add_annotation_column(annotation_columns, pair_dict['category'])
                     # For ArrayExpress samples, also take out the fields
                     # nested in "variable" as separate columns.
-                    elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
-                          and annotation_key == "variable"):
+                    elif sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS" \
+                         and annotation_key == "variable":
                         for pair_dict in annotation_value:
                             if 'name' in pair_dict and 'value' in pair_dict:
                                 _add_annotation_column(annotation_columns, pair_dict['name'])
                     # For ArrayExpress samples, skip "source" field
-                    elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
-                          and annotation_key == "source"):
+                    elif sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS" \
+                         and annotation_key == "source":
                         continue
                     # For GEO samples, take out the fields nested in
                     # "characteristics_ch1" as separate columns.
-                    elif (sample_metadata.get('refinebio_source_database', '') == "GEO"
-                          and annotation_key == "characteristics_ch1"): # array of strings
+                    elif sample_metadata.get('refinebio_source_database', '') == "GEO" \
+                         and annotation_key == "characteristics_ch1":  # array of strings
                         for pair_str in annotation_value:
                             if ':' in pair_str:
                                 tokens = pair_str.split(':', 1)
