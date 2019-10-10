@@ -340,6 +340,11 @@ def _smash_all(job_context: Dict) -> Dict:
                      dataset_count=len(job_context['dataset'].data),
                      job_id=job_context['job'].id)
 
+
+        # shared worker pool
+        cpus = max(1, psutil.cpu_count()/2)
+        pool = multiprocessing.Pool(processes=int(cpus))
+
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
             job_context = _smash_key(job_context, key, input_files)
