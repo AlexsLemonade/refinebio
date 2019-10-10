@@ -19,7 +19,8 @@ from data_refinery_common.performant_pagination.pagination import PerformantPagi
 
 logger = get_and_configure_logger(__name__)
 
-def remove_qn_targets():
+def remove_invalid_qn_targets():
+
     pass
 
 class Command(BaseCommand):
@@ -33,5 +34,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """ Re-queues all unprocessed RNA-Seq samples for an organism. """
         if options["qn_targets"]:
-            remove_qn_targets()
+            remove_invalid_qn_targets()
 
