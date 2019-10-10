@@ -193,10 +193,15 @@ class Sample(models.Model):
     def get_most_recent_smashable_result_file(self):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         try:
-            return self.computed_files.filter(
-                            is_public=True,
-                            is_smashable=True,
-                        ).latest()
+            latest_computed_file = self.computed_files.filter(
+                is_public=True,
+                is_smashable=True,
+            ).latest()
+
+            # Access a property to make the query fire now.
+            latest_computed_file.id
+
+            return latest_computed_file
         except Exception as e:
             # This sample has no smashable files yet.
             return None
