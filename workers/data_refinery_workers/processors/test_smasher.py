@@ -139,6 +139,90 @@ def prepare_job():
 
     return pj
 
+def prepare_dual_tech_job():
+    pj = ProcessorJob()
+    pj.pipeline_applied = "SMASHER"
+    pj.save()
+
+    # MICROARRAY TECH
+    experiment = Experiment()
+    experiment.accession_code = "GSE1487313"
+    experiment.save()
+
+    result = ComputationalResult()
+    result.save()
+
+    gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+
+    sample = Sample()
+    sample.accession_code = 'GSM1487313'
+    sample.title = 'GSM1487313'
+    sample.organism = gallus_gallus
+    sample.technology="MICROARRAY"
+    sample.save()
+
+    sra = SampleResultAssociation()
+    sra.sample = sample
+    sra.result = result
+    sra.save()
+
+    esa = ExperimentSampleAssociation()
+    esa.experiment = experiment
+    esa.sample = sample
+    esa.save()
+
+    computed_file = ComputedFile()
+    computed_file.filename = "GSM1487313_liver.PCL"
+    computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+    computed_file.result = result
+    computed_file.size_in_bytes = 123
+    computed_file.is_smashable = True
+    computed_file.save()
+
+    assoc = SampleComputedFileAssociation()
+    assoc.sample = sample
+    assoc.computed_file = computed_file
+    assoc.save()
+
+    # RNASEQ TECH
+    experiment2 = Experiment()
+    experiment2.accession_code = "SRP332914"
+    experiment2.save()
+
+    result2 = ComputationalResult()
+    result2.save()
+
+    sample2 = Sample()
+    sample2.accession_code = 'SRR332914'
+    sample2.title = 'SRR332914'
+    sample2.organism = gallus_gallus
+    sample2.technology = "RNA-SEQ"
+    sample2.save()
+
+    sra2 = SampleResultAssociation()
+    sra2.sample = sample2
+    sra2.result = result2
+    sra2.save()
+
+    esa2 = ExperimentSampleAssociation()
+    esa2.experiment = experiment2
+    esa2.sample = sample2
+    esa2.save()
+
+    computed_file2 = ComputedFile()
+    computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
+    computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
+    computed_file2.result = result2
+    computed_file2.size_in_bytes = 234
+    computed_file2.is_smashable = True
+    computed_file2.save()
+
+    assoc2 = SampleComputedFileAssociation()
+    assoc2.sample = sample2
+    assoc2.computed_file = computed_file2
+    assoc2.save()
+    return pj
+
 class SmasherTestCase(TransactionTestCase):
 
     @tag("smasher")
@@ -940,88 +1024,7 @@ class SmasherTestCase(TransactionTestCase):
     def test_dualtech_smash(self):
         """ """
 
-        pj = ProcessorJob()
-        pj.pipeline_applied = "SMASHER"
-        pj.save()
-
-        # MICROARRAY TECH
-        experiment = Experiment()
-        experiment.accession_code = "GSE1487313"
-        experiment.save()
-
-        result = ComputationalResult()
-        result.save()
-
-        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
-
-        sample = Sample()
-        sample.accession_code = 'GSM1487313'
-        sample.title = 'GSM1487313'
-        sample.organism = gallus_gallus
-        sample.technology="MICROARRAY"
-        sample.save()
-
-        sra = SampleResultAssociation()
-        sra.sample = sample
-        sra.result = result
-        sra.save()
-
-        esa = ExperimentSampleAssociation()
-        esa.experiment = experiment
-        esa.sample = sample
-        esa.save()
-
-        computed_file = ComputedFile()
-        computed_file.filename = "GSM1487313_liver.PCL"
-        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
-        computed_file.result = result
-        computed_file.size_in_bytes = 123
-        computed_file.is_smashable = True
-        computed_file.save()
-
-        assoc = SampleComputedFileAssociation()
-        assoc.sample = sample
-        assoc.computed_file = computed_file
-        assoc.save()
-
-        # RNASEQ TECH
-        experiment2 = Experiment()
-        experiment2.accession_code = "SRP332914"
-        experiment2.save()
-
-        result2 = ComputationalResult()
-        result2.save()
-
-        sample2 = Sample()
-        sample2.accession_code = 'SRR332914'
-        sample2.title = 'SRR332914'
-        sample2.organism = gallus_gallus
-        sample2.technology = "RNA-SEQ"
-        sample2.save()
-
-        sra2 = SampleResultAssociation()
-        sra2.sample = sample2
-        sra2.result = result2
-        sra2.save()
-
-        esa2 = ExperimentSampleAssociation()
-        esa2.experiment = experiment2
-        esa2.sample = sample2
-        esa2.save()
-
-        computed_file2 = ComputedFile()
-        computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
-        computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
-        computed_file2.result = result2
-        computed_file2.size_in_bytes = 234
-        computed_file2.is_smashable = True
-        computed_file2.save()
-
-        assoc2 = SampleComputedFileAssociation()
-        assoc2.sample = sample2
-        assoc2.computed_file = computed_file2
-        assoc2.save()
-
+        pj = prepare_dual_tech_job()
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
         ds.data = {'GSE1487313': ['GSM1487313'], 'SRP332914': ['SRR332914']}
@@ -1278,7 +1281,14 @@ class AggregationTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_columns(self):
-        columns = smasher._get_tsv_columns(self.metadata['samples'])
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+        job_context = {
+            'job': pj
+        }
+
+        columns = smasher._get_tsv_columns(job_context, self.metadata['samples'])
         self.assertEqual(len(columns), 22)
         self.assertEqual(columns[0], 'refinebio_accession_code')
         self.assertTrue('refinebio_accession_code' in columns)

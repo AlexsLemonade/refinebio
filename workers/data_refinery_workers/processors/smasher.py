@@ -492,8 +492,17 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
     return num_samples
 
 def process_frame(inputs) -> Dict:
-    (job_context, computed_file, sample, index) = inputs
-    log_state('processing frame {}'.format(index), job_context["job"])
+    (
+        work_dir,
+        computed_file,
+        sample_accession_code,
+        dataset_id,
+        aggregate_by,
+        index,
+        job_id
+    ) = inputs
+
+    logger.debug('processing frame {}'.format(index), job_id=job_id)
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
@@ -514,17 +523,18 @@ def process_frame(inputs) -> Dict:
     try:
         # Download the file to a job-specific location so it
         # won't disappear while we're using it.
-        computed_file_path = job_context["work_dir"] + computed_file.filename
-        computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
+        computed_file_path = computed_file.get_synced_file_path(
+            path="%s%s" % (work_dir, computed_file.filename)
+        )
 
         # Bail appropriately if this isn't a real file.
         if not computed_file_path or not os.path.exists(computed_file_path):
             logger.warning("Smasher received non-existent file path.",
                 computed_file_path=computed_file_path,
-                computed_file=computed_file,
-                dataset_id=job_context['dataset'].id,
+                computed_file_id=computed_file.id,
+                dataset_id=dataset_id,
             )
-            return unsmashable(computed_file_path)
+            return unsmashable(computed_file.filename)
 
         data = _load_and_sanitize_file(computed_file_path)
 
@@ -534,14 +544,14 @@ def process_frame(inputs) -> Dict:
             # special consideration.
             logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
                 computed_file_path=computed_file_path,
-                computed_file_id=computed_file.id
+                computed_file_id=computed_file_.id
             )
-            return unsmashable(computed_file_path)
+            return unsmashable(computed_file.filename)
 
         # via https://github.com/AlexsLemonade/refinebio/issues/330:
         #   aggregating by experiment -> return untransformed output from tximport
         #   aggregating by species -> log2(x + 1) tximport output
-        if job_context['dataset'].aggregate_by == 'SPECIES' \
+        if aggregate_by == 'SPECIES' \
         and computed_file_path.endswith("lengthScaledTPM.tsv"):
             data = data + 1
             data = np.log2(data)
@@ -549,7 +559,7 @@ def process_frame(inputs) -> Dict:
         # Detect if this data hasn't been log2 scaled yet.
         # Ideally done in the NO-OPPER, but sanity check here.
         if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
-            logger.info("Detected non-log2 microarray data.", file=computed_file)
+            logger.info("Detected non-log2 microarray data.", file=computed_file.id)
             data = np.log2(data)
 
         # Explicitly title this dataframe
@@ -557,7 +567,7 @@ def process_frame(inputs) -> Dict:
             # Unfortuantely, we can't use this as `title` can cause a collision
             # data.columns = [computed_file.samples.all()[0].title]
             # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
-            data.columns = [sample.accession_code]
+            data.columns = [sample_accession_code]
         except ValueError as e:
             # This sample might have multiple channels, or something else.
             # Don't mess with it.
@@ -581,9 +591,9 @@ def process_frame(inputs) -> Dict:
     except Exception as e:
         logger.exception("Unable to smash file",
             file=computed_file_path,
-            dataset_id=job_context['dataset'].id,
+            dataset_id=dataset_id,
         )
-        return unsmashable(computed_file_path)
+        return unsmashable(computed_file.filename)
     finally:
         # Delete before archiving the work dir
         if computed_file_path and os.path.exists(computed_file_path):
@@ -627,6 +637,11 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
         job_context['original_merged'] = pd.DataFrame()
 
+
+        # shared worker pool
+        cpus = max(1, psutil.cpu_count()/2)
+        pool = multiprocessing.Pool(processes=int(cpus))
+
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
             # Check if we need to copy the quant.sf files
@@ -637,21 +652,31 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
+            def get_frame_inputs():
+                for index, (computed_file, sample) in enumerate(input_files):
+                    # Trigger a database call so it doesn't happen in the worker.
+                    # (Because that breaks the tests' database cleanup process.)
+                    computed_file.id
+
+                    # Don't pass job_context to worker threads because
+                    # for some reason it causes them to open database
+                    # connections. Not yet sure why...
+                    yield (
+                        job_context["work_dir"],
+                        computed_file,
+                        sample.accession_code,
+                        job_context['dataset'].id,
+                        job_context['dataset'].aggregate_by,
+                        index,
+                        job_context["job"].id
+                    )
+            frame_inputs = get_frame_inputs()
+
             start_frames = log_state("build frames for species or experiment", job_context["job"])
+            log_state("Using {} cpus".format(cpus), job_context["job"])
             # Merge all the frames into one
-            #cpus = max(1, psutil.cpu_count()/2)
-            #with multiprocessing.Pool(int(cpus)) as pool:
-            #    processed_frames = pool.map(
-            mapped_frames = map(
-                process_frame,
-                [(
-                    job_context,
-                    computed_file,
-                    sample,
-                    i
-                ) for i, (computed_file, sample) in enumerate(input_files)
-            ])
-            processed_frames = list(mapped_frames)
+            processed_frames = pool.map(process_frame, frame_inputs, chunksize=2000);
+
             all_frames = [f['data'] for f in processed_frames if f['data'] is not None]
             num_samples = num_samples + len([x for x in all_frames])
             unsmashable_files = unsmashable_files + [f['unsmashable_file'] for f in processed_frames if f['unsmashable']]
@@ -878,6 +903,11 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
+    finally:
+        # clean up worker pool
+        pool.close()
+        pool.join()
+
     job_context['metadata'] = metadata
     job_context['unsmashable_files'] = unsmashable_files
     job_context['dataset'].success = True
