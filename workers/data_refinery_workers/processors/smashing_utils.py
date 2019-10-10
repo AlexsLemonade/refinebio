@@ -275,10 +275,6 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     def get_frame_inputs():
         """Helper method to create a generator."""
         for index, (computed_file, sample) in enumerate(input_files):
-            # Trigger a database call so it doesn't happen in the worker.
-            # (Because that breaks the tests' database cleanup process.)
-            computed_file.id
-
             # Don't pass job_context to worker threads because
             # for some reason it causes them to open database
             # connections. Not yet sure why...
