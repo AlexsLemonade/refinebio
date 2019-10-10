@@ -133,14 +133,16 @@ def download_array_express(job_id: int) -> None:
             # another experiment, that we don't want associated with
             # this one.
             logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?",
-                        file_name = original_file.filename, downloader_job=job_id)
+                        file_name=original_file.filename,
+                        downloader_job=job_id)
             os.remove(extracted_file["absolute_path"])
             continue
 
         sample_objects = original_file.samples.order_by('created_at')
         if sample_objects.count() > 1:
             logger.warn("Found an Array Express OriginalFile with more than one sample",
-                        original_file = original_file, downloader_job=job_id)
+                        original_file = original_file,
+                        downloader_job=job_id)
 
         # If the file is a .CEL file, it is the ultimate
         # source of truth about the sample's platform.
@@ -194,7 +196,8 @@ def download_array_express(job_id: int) -> None:
 
     if success:
         logger.debug("File downloaded and extracted successfully.",
-                     url=url, downloader_job=job_id)
+                     url=url,
+                     downloader_job=job_id)
 
         create_processor_jobs_for_original_files(unprocessed_original_files, job)
 
