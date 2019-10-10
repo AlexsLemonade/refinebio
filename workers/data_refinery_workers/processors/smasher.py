@@ -11,7 +11,6 @@ import string
 import warnings
 import requests
 import psutil
-import multiprocessing
 import logging
 import time
 
@@ -339,11 +338,6 @@ def _smash_all(job_context: Dict) -> Dict:
         logger.debug("About to smash!",
                      dataset_count=len(job_context['dataset'].data),
                      job_id=job_context['job'].id)
-
-
-        # shared worker pool
-        cpus = max(1, psutil.cpu_count()/2)
-        pool = multiprocessing.Pool(processes=int(cpus))
 
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():

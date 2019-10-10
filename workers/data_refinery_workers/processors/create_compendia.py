@@ -73,9 +73,6 @@ def _prepare_frames(job_context: Dict) -> Dict:
     start_prepare_frames = log_state("start _prepare_frames", job_context["job"])
 
     try:
-        # Prepare the output directory
-        smash_path = job_context["output_dir"]
-
         job_context['unsmashable_files'] = []
         job_context['num_samples'] = 0
 

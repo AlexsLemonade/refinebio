@@ -5,6 +5,7 @@ import os
 import rpy2.robjects as ro
 import shutil
 import simplejson as json
+import multiprocessing
 import psutil
 import logging
 import time
@@ -155,8 +156,18 @@ def _load_and_sanitize_file(computed_file_path):
 
 
 def process_frame(inputs) -> Dict:
-    (job_context, computed_file, sample, index) = inputs
-    log_state('processing frame {}'.format(index), job_context["job"])
+    (
+        work_dir,
+        computed_file,
+        sample_accession_code,
+        dataset_id,
+        aggregate_by,
+        index,
+        job_id
+    ) = inputs
+
+    logger.debug('processing frame {}'.format(index), job_id=job_id)
+
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
@@ -176,16 +187,17 @@ def process_frame(inputs) -> Dict:
     try:
         # Download the file to a job-specific location so it
         # won't disappear while we're using it.
-        computed_file_path = job_context["work_dir"] + computed_file.filename
-        computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
+        computed_file_path = computed_file.get_synced_file_path(
+            path="%s%s" % (work_dir, computed_file.filename)
+        )
 
         # Bail appropriately if this isn't a real file.
         if not computed_file_path or not os.path.exists(computed_file_path):
             logger.warning("Smasher received non-existent file path.",
                            computed_file_path=computed_file_path,
-                           computed_file=computed_file,
-                           dataset_id=job_context['dataset'].id)
-            return unsmashable(computed_file_path)
+                           computed_file_id=computed_file.id,
+                           dataset_id=dataset_id)
+            return unsmashable(computed_file.filename)
 
         data = _load_and_sanitize_file(computed_file_path)
 
@@ -201,7 +213,7 @@ def process_frame(inputs) -> Dict:
         # via https://github.com/AlexsLemonade/refinebio/issues/330:
         #   aggregating by experiment -> return untransformed output from tximport
         #   aggregating by species -> log2(x + 1) tximport output
-        if job_context['dataset'].aggregate_by == 'SPECIES' \
+        if aggregate_by == 'SPECIES' \
            and computed_file_path.endswith("lengthScaledTPM.tsv"):
             data = data + 1
             data = np.log2(data)
@@ -209,7 +221,7 @@ def process_frame(inputs) -> Dict:
         # Detect if this data hasn't been log2 scaled yet.
         # Ideally done in the NO-OPPER, but sanity check here.
         if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
-            logger.info("Detected non-log2 microarray data.", file=computed_file)
+            logger.info("Detected non-log2 microarray data.", computed_file_id=computed_file.id)
             data = np.log2(data)
 
         # Explicitly title this dataframe
@@ -218,7 +230,7 @@ def process_frame(inputs) -> Dict:
             # data.columns = [computed_file.samples.all()[0].title]
             # So we use this, which also helps us support the case of missing
             # SampleComputedFileAssociation
-            data.columns = [sample.accession_code]
+            data.columns = [sample_accession_code]
         except ValueError as e:
             # This sample might have multiple channels, or something else.
             # Don't mess with it.
@@ -240,8 +252,8 @@ def process_frame(inputs) -> Dict:
     except Exception as e:
         logger.exception("Unable to smash file",
                          file=computed_file_path,
-                         dataset_id=job_context['dataset'].id,)
-        return unsmashable(computed_file_path)
+                         dataset_id=dataset_id)
+        return unsmashable(computed_file.filename)
     finally:
         # Delete before archiving the work dir
         if computed_file_path and os.path.exists(computed_file_path):
@@ -256,40 +268,61 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
     # Merge all the frames into one
-    # cpus = max(1, psutil.cpu_count()/2)
-    # with multiprocessing.Pool(int(cpus)) as pool:
-    #    processed_frames = pool.map(
-    mapped_frames = map(
-        process_frame,
-        [(
-            job_context,
-            computed_file,
-            sample,
-            i
-        ) for i, (computed_file, sample) in enumerate(input_files)
-    ])
-    processed_frames = list(mapped_frames)
+    cpus = max(1, psutil.cpu_count()/2)
+    log_state("Using {} cpus".format(cpus), job_context["job"])
+    pool = multiprocessing.Pool(processes=int(cpus))
 
-    # Build up a list of microarray frames and a list of
-    # rnaseq frames and then combine them so they're sorted
-    # out.
-    job_context['microarray_frames'] = []
-    job_context['rnaseq_frames'] = []
-    for frame in processed_frames:
-        if frame['technology'] is 'microarray':
-            job_context['microarray_frames'].append(frame['dataframe'])
-        elif frame['technology'] is 'rnaseq':
-            job_context['rnaseq_frames'].append(frame['dataframe'])
+    def get_frame_inputs():
+        """Helper method to create a generator."""
+        for index, (computed_file, sample) in enumerate(input_files):
+            # Trigger a database call so it doesn't happen in the worker.
+            # (Because that breaks the tests' database cleanup process.)
+            computed_file.id
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+            # Don't pass job_context to worker threads because
+            # for some reason it causes them to open database
+            # connections. Not yet sure why...
+            yield (
+                job_context["work_dir"],
+                computed_file,
+                sample.accession_code,
+                job_context['dataset'].id,
+                job_context['dataset'].aggregate_by,
+                index,
+                job_context["job"].id
+            )
 
-    job_context['num_samples'] = job_context['num_samples'] + len(job_context['microarray_frames'])
-    job_context['num_samples'] = job_context['num_samples'] + len(job_context['rnaseq_frames'])
+    frame_inputs = get_frame_inputs()
 
-    log_state("set frames for key {}".format(key), job_context["job"], start_frames)
+    try:
+        processed_frames = pool.map(process_frame, frame_inputs, chunksize=2000)
 
-    return job_context
+        # Build up a list of microarray frames and a list of
+        # rnaseq frames and then combine them so they're sorted
+        # out.
+        job_context['microarray_frames'] = []
+        job_context['rnaseq_frames'] = []
+        for frame in processed_frames:
+            if frame['technology'] is 'microarray':
+                job_context['microarray_frames'].append(frame['dataframe'])
+            elif frame['technology'] is 'rnaseq':
+                job_context['rnaseq_frames'].append(frame['dataframe'])
+
+            if frame['unsmashable']:
+                job_context['unsmashable_files'].append(frame['unsmashable_file'])
+
+        job_context['num_samples'] = job_context['num_samples'] \
+                                     + len(job_context['microarray_frames'])
+        job_context['num_samples'] = job_context['num_samples'] + len(job_context['rnaseq_frames'])
+
+        log_state("set frames for key {}".format(key), job_context["job"], start_frames)
+
+        return job_context
+    finally:
+        # Let whoever calls this function handle the exception, we
+        # just need to make sure we clean up the worker pool.
+        pool.close()
+        pool.join()
 
 
 def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
