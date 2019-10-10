@@ -637,6 +637,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
         job_context['original_merged'] = pd.DataFrame()
 
+
         # shared worker pool
         cpus = max(1, psutil.cpu_count()/2)
         pool = multiprocessing.Pool(processes=int(cpus))
@@ -902,6 +903,10 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
+    finally:
+        # clean up worker pool
+        pool.close()
+        pool.join()
 
     job_context['metadata'] = metadata
     job_context['unsmashable_files'] = unsmashable_files
