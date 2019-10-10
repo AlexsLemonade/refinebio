@@ -19,7 +19,6 @@ from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils import timezone
-from django.db import connections, close_old_connections
 from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
@@ -638,9 +637,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
         job_context['original_merged'] = pd.DataFrame()
 
-
-        # close connections before spawning workers
-        connections.close_all()
         # shared worker pool
         cpus = max(1, psutil.cpu_count()/2)
         pool = multiprocessing.Pool(processes=int(cpus))
@@ -906,11 +902,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
-    finally:
-        # clean up worker pool and connections
-        pool.close()
-        pool.join()
-        close_old_connections()
 
     job_context['metadata'] = metadata
     job_context['unsmashable_files'] = unsmashable_files
