@@ -494,9 +494,8 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
 
 def process_frame(inputs) -> Dict:
     (
-        computed_file_id,
-        computed_file_path,
-        computed_file_filename,
+        work_dir,
+        computed_file,
         sample_accession_code,
         dataset_id,
         aggregate_by,
@@ -525,6 +524,9 @@ def process_frame(inputs) -> Dict:
     try:
         # Download the file to a job-specific location so it
         # won't disappear while we're using it.
+        computed_file_path = computed_file.get_synced_file_path(
+            path="%s%s" % (work_dir, computed_file.filename)
+        )
 
         # Bail appropriately if this isn't a real file.
         if not computed_file_path or not os.path.exists(computed_file_path):
@@ -653,20 +655,18 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
-            # make db calls on the main thread
             def get_frame_inputs():
                 for index, (computed_file, sample) in enumerate(input_files):
-                    try:
-                        computed_file_path = computed_file.get_synced_file_path(
-                            path="%s%s" % (job_context["work_dir"], computed_file.filename)
-                        )
-                    except:
-                        computed_file_path = None
+                    # Trigger a database call so it doesn't happen in the worker.
+                    # (Because that breaks the tests' database cleanup process.)
+                    computed_file.id
 
+                    # Don't pass job_context to worker threads because
+                    # for some reason it causes them to open database
+                    # connections. Not yet sure why...
                     yield (
-                        computed_file.id,
-                        computed_file_path,
-                        computed_file.filename,
+                        job_context["work_dir"],
+                        computed_file,
                         sample.accession_code,
                         job_context['dataset'].id,
                         job_context['dataset'].aggregate_by,
