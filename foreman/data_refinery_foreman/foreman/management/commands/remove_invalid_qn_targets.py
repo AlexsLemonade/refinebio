@@ -10,10 +10,22 @@ from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
 
-# Minimum number of microarray samples required to create a QN Target
-QN_TARGET_SAMPLE_THRESHOLD = 100
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('--dry-run',
+                            help='Prints resulting actions without actually running them.',
+                            action='store_true')
+        parser.add_argument("--min",
+                            type=int,
+                            default=100,
+                            help=("Minimum number of processed microarray samples for each organism"))
 
-def remove_invalid_qn_targets(dry_run):
+    def handle(self, *args, **options):
+        """ Takes care of removing all qn targets that have less than `min`
+        processed microarray samples. """
+        remove_invalid_qn_targets(options['min'], options['dry_run'])
+
+def remove_invalid_qn_targets(min_samples, dry_run):
     computational_result_annotations = ComputationalResultAnnotation.objects\
         .filter(data__is_qn=True)\
         .order_by('-created_at')
@@ -21,7 +33,7 @@ def remove_invalid_qn_targets(dry_run):
     for annotation in computational_result_annotations:
         organism = Organism.objects.get(id=annotation.data.organism_id)
         samples = Sample.objects.filter(organism=organism, has_raw=True, technology="MICROARRAY", is_processed=True)
-        if samples.count() < QN_TARGET_SAMPLE_THRESHOLD:
+        if samples.count() < min_samples:
             # remove the referenced QN Target because it doesn't have enough samples
             logger.debug('Removing QN Target because it did not have enough microarray samples',
                          computational_result=annotation.result,
@@ -33,18 +45,3 @@ def remove_invalid_qn_targets(dry_run):
         ComputationalResult.objects.filter(id__in=qn_target_ids).delete()
     else:
         logger.info("Would have removed computational results with ids %s", str(qn_target_ids))
-
-class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument('--dry-run',
-                            help='Prints resulting actions without actually running them.',
-                            action='store_true')
-        parser.add_argument('--qn-targets',
-                            action='store_true',
-                            help='Finds any invalid QN Targets that got generated and removes them from the db.')
-
-    def handle(self, *args, **options):
-        """ Re-queues all unprocessed RNA-Seq samples for an organism. """
-        if options["qn_targets"]:
-            remove_invalid_qn_targets(options['dry_run'])
-
