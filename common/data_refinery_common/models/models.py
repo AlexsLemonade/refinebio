@@ -22,7 +22,7 @@ from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1
+from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1, FileUtils
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -723,7 +723,7 @@ class OriginalFile(models.Model):
         """ Marks the file as downloaded, if `filename` is not provided it will
         be parsed from the `absolute_file_path` """
         self.is_downloaded = True
-        self.is_archive = False
+        self.is_archive = FileUtils.is_archive(absolute_file_path)
         self.absolute_file_path = absolute_file_path
         self.filename = filename if filename else os.path.basename(absolute_file_path)
         self.calculate_size()
@@ -752,12 +752,10 @@ class OriginalFile(models.Model):
     def get_extension(self):
         """ Returns the lowercased extension of the filename
         Thanks to https://stackoverflow.com/a/541408/763705 """
-        return os.path.splitext(self.filename)[1].lower()
+        return FileUtils.get_extension(self.filename)
 
     def is_blacklisted(self):
-        # TODO: extend this list.
-        BLACKLISTED_EXTENSIONS = [".xml", ".chp", ".exp"]
-        return self.get_extension() in BLACKLISTED_EXTENSIONS
+        return self.get_extension() in [".xml", ".chp", ".exp"]
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
