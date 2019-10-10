@@ -302,10 +302,11 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
         # out.
         job_context['microarray_frames'] = []
         job_context['rnaseq_frames'] = []
+
         for frame in processed_frames:
-            if frame['technology'] is 'microarray':
+            if frame['technology'] == 'microarray':
                 job_context['microarray_frames'].append(frame['dataframe'])
-            elif frame['technology'] is 'rnaseq':
+            elif frame['technology'] == 'rnaseq':
                 job_context['rnaseq_frames'].append(frame['dataframe'])
 
             if frame['unsmashable']:

@@ -225,16 +225,15 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     # Combine the two technologies into a single list of dataframes.
     ## Extend one list rather than adding the two together so we don't
     ## the memory both are using.
-    job_context['rnaseq_frames'].extend(job_context['microarray_frames'])
-    ## Free up the the memory the microarray-only list was using.
-    job_context.pop('microarray_frames')
+    ## Also free up the the memory the microarray-only list was using with pop.
+    job_context['rnaseq_frames'].extend(job_context.pop('microarray_frames'))
     ## Change the key of the now-extended list
     job_context['all_frames'] = job_context.pop('rnaseq_frames')
 
     if len(job_context['all_frames']) < 1:
         logger.error("Was told to smash a key with no frames!",
-                       job_id=job_context['job'].id,
-                       key=key)
+                     job_id=job_context['job'].id,
+                     key=key)
         # TODO: is this the proper way to handle this? I can see us
         # not wanting to fail an entire dataset because one experiment
         # had a problem, but I also think it could be problematic to
