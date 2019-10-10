@@ -532,10 +532,10 @@ def process_frame(inputs) -> Dict:
         if not computed_file_path or not os.path.exists(computed_file_path):
             logger.warning("Smasher received non-existent file path.",
                 computed_file_path=computed_file_path,
-                computed_file_id=computed_file_id,
+                computed_file_id=computed_file.id,
                 dataset_id=dataset_id,
             )
-            return unsmashable(computed_file_filename)
+            return unsmashable(computed_file.filename)
 
         data = _load_and_sanitize_file(computed_file_path)
 
@@ -545,9 +545,9 @@ def process_frame(inputs) -> Dict:
             # special consideration.
             logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
                 computed_file_path=computed_file_path,
-                computed_file_id=computed_file_id
+                computed_file_id=computed_file_.id
             )
-            return unsmashable(computed_file_filename)
+            return unsmashable(computed_file.filename)
 
         # via https://github.com/AlexsLemonade/refinebio/issues/330:
         #   aggregating by experiment -> return untransformed output from tximport
@@ -560,7 +560,7 @@ def process_frame(inputs) -> Dict:
         # Detect if this data hasn't been log2 scaled yet.
         # Ideally done in the NO-OPPER, but sanity check here.
         if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
-            logger.info("Detected non-log2 microarray data.", file=computed_file_id)
+            logger.info("Detected non-log2 microarray data.", file=computed_file.id)
             data = np.log2(data)
 
         # Explicitly title this dataframe
@@ -576,7 +576,7 @@ def process_frame(inputs) -> Dict:
                         exc_info=1,
                         computed_file_path=computed_file_path,
             )
-            return unsmashable(computed_file_filename)
+            return unsmashable(computed_file.filename)
         except Exception as e:
             # Okay, somebody probably forgot to create a SampleComputedFileAssociation
             # Don't mess with it.
@@ -584,7 +584,7 @@ def process_frame(inputs) -> Dict:
                         exc_info=1,
                         computed_file_path=computed_file_path
             )
-            return unsmashable(computed_file_filename)
+            return unsmashable(computed_file.filename)
 
         is_rnaseq = computed_file_path.endswith("lengthScaledTPM.tsv")
         frame['column_type'] = 'rnaseq' if is_rnaseq else 'microarray'
@@ -594,7 +594,7 @@ def process_frame(inputs) -> Dict:
             file=computed_file_path,
             dataset_id=dataset_id,
         )
-        return unsmashable(computed_file_filename)
+        return unsmashable(computed_file.filename)
     finally:
         # Delete before archiving the work dir
         if computed_file_path and os.path.exists(computed_file_path):
