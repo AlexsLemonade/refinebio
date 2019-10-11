@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import csv
+import itertools
+import logging
+import multiprocessing
 import os
+import psutil
 import rpy2.robjects as ro
 import shutil
 import simplejson as json
-import multiprocessing
-import psutil
-import logging
 import time
 
 from django.utils import timezone
@@ -37,6 +38,9 @@ BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
+
+
+MULTIPROCESSING_CHUNK_SIZE = 2000
 
 
 def log_failure(job_context: Dict, failure_reason: str) -> Dict:
@@ -268,7 +272,7 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
     # Merge all the frames into one
-    cpus = max(1, psutil.cpu_count()/2)
+    cpus = max(1, psutil.cpu_count()/2 - 1)
     log_state("Using {} cpus".format(cpus), job_context["job"])
     pool = multiprocessing.Pool(processes=int(cpus), maxtasksperchild=100)
 
@@ -291,7 +295,17 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     frame_inputs = get_frame_inputs()
 
     try:
-        processed_frames = pool.map(process_frame, frame_inputs, chunksize=2000)
+        i = 0
+        processed_frames = []
+        # Non-empty list so we get into the loop to start.
+        chunk_of_frames = list(itertools.islice(frame_inputs, 0, MULTIPROCESSING_CHUNK_SIZE))
+        while len(chunk_of_frames) > 0:
+            processed_frames.extend(pool.map(process_frame, chunk_of_frames))
+
+            i += 1
+            start = i * MULTIPROCESSING_CHUNK_SIZE
+            end = start + MULTIPROCESSING_CHUNK_SIZE
+            chunk_of_frames = list(itertools.islice(frame_inputs, start, end))
 
         # Build up a list of microarray frames and a list of
         # rnaseq frames and then combine them so they're sorted
