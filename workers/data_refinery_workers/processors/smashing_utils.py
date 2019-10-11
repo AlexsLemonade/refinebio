@@ -270,7 +270,7 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     # Merge all the frames into one
     cpus = max(1, psutil.cpu_count()/2)
     log_state("Using {} cpus".format(cpus), job_context["job"])
-    pool = multiprocessing.Pool(processes=int(cpus))
+    pool = multiprocessing.Pool(processes=int(cpus), maxtasksperchild=100)
 
     def get_frame_inputs():
         """Helper method to create a generator."""
