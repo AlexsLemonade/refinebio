@@ -305,7 +305,7 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
             i += 1
             start = i * MULTIPROCESSING_CHUNK_SIZE
             end = start + MULTIPROCESSING_CHUNK_SIZE
-            log_state("Chunk start: {0}, chunk end: {1}".format(start, end) job_context['job'])
+            log_state("Chunk start: {0}, chunk end: {1}".format(start, end), job_context['job'])
             chunk_of_frames = list(itertools.islice(frame_inputs, start, end))
 
         # Build up a list of microarray frames and a list of
