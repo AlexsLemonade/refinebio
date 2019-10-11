@@ -271,10 +271,6 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
 
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
-    # Merge all the frames into one
-    cpus = max(1, psutil.cpu_count()/2 - 1)
-    log_state("Using {} cpus".format(cpus), job_context["job"])
-    pool = multiprocessing.Pool(processes=int(cpus))
 
     def get_frame_inputs():
         """Helper method to create a generator."""
@@ -294,47 +290,30 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
 
     frame_inputs = get_frame_inputs()
 
-    try:
-        i = 0
-        processed_frames = []
-        # Non-empty list so we get into the loop to start.
-        chunk_of_frames = list(itertools.islice(frame_inputs, 0, MULTIPROCESSING_CHUNK_SIZE))
-        while len(chunk_of_frames) > 0:
-            processed_frames.extend(pool.map(process_frame, chunk_of_frames))
+    processed_frames = map(process_frame, frame_inputs)
 
-            i += 1
-            start = i * MULTIPROCESSING_CHUNK_SIZE
-            end = start + MULTIPROCESSING_CHUNK_SIZE
-            log_state("Chunk start: {0}, chunk end: {1}".format(start, end), job_context['job'])
-            chunk_of_frames = list(itertools.islice(frame_inputs, start, end))
+    # Build up a list of microarray frames and a list of
+    # rnaseq frames and then combine them so they're sorted
+    # out.
+    job_context['microarray_frames'] = []
+    job_context['rnaseq_frames'] = []
 
-        # Build up a list of microarray frames and a list of
-        # rnaseq frames and then combine them so they're sorted
-        # out.
-        job_context['microarray_frames'] = []
-        job_context['rnaseq_frames'] = []
+    for frame in processed_frames:
+        if frame['technology'] == 'microarray':
+            job_context['microarray_frames'].append(frame['dataframe'])
+        elif frame['technology'] == 'rnaseq':
+            job_context['rnaseq_frames'].append(frame['dataframe'])
 
-        for frame in processed_frames:
-            if frame['technology'] == 'microarray':
-                job_context['microarray_frames'].append(frame['dataframe'])
-            elif frame['technology'] == 'rnaseq':
-                job_context['rnaseq_frames'].append(frame['dataframe'])
+        if frame['unsmashable']:
+            job_context['unsmashable_files'].append(frame['unsmashable_file'])
 
-            if frame['unsmashable']:
-                job_context['unsmashable_files'].append(frame['unsmashable_file'])
+    job_context['num_samples'] = job_context['num_samples'] \
+                                 + len(job_context['microarray_frames'])
+    job_context['num_samples'] = job_context['num_samples'] + len(job_context['rnaseq_frames'])
 
-        job_context['num_samples'] = job_context['num_samples'] \
-                                     + len(job_context['microarray_frames'])
-        job_context['num_samples'] = job_context['num_samples'] + len(job_context['rnaseq_frames'])
+    log_state("set frames for key {}".format(key), job_context["job"], start_frames)
 
-        log_state("set frames for key {}".format(key), job_context["job"], start_frames)
-
-        return job_context
-    finally:
-        # Let whoever calls this function handle the exception, we
-        # just need to make sure we clean up the worker pool.
-        pool.close()
-        pool.join()
+    return job_context
 
 
 def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
