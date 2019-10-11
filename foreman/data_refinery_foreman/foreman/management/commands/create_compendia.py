@@ -100,9 +100,12 @@ def group_organisms_by_biggest_platform(target_organisms):
         platform_list = list(get_organism_microarray_platforms(organism))
 
         genus_prefix = organism.get_genus() + '_'
-        organisms_sharing_genus = Organism.objects.filter(name__startswith=genus_prefix)
+        organisms_sharing_genus = Organism.objects\
+            .exclude(id=organism.id)\
+            .filter(name__startswith=genus_prefix)
         for genus_organism in organisms_sharing_genus:
-            # Group together the orgenisms that share at least one microarray platform
+            # Group together the orgenisms that share at least one processed
+            # sample in a microarray platform
             platforms = get_organism_microarray_platforms(genus_organism)\
                 .filter(platform_accession_code__in=platform_list)
             if platforms.exists():
