@@ -72,19 +72,18 @@ class Command(BaseCommand):
                 organisms = Organism.objects.all()
 
             for organism in organisms:
-                samples = Sample.processed_objects.filter(organism=organism, has_raw=True, technology="MICROARRAY", is_processed=True)
+                if not organism_can_have_qn_target(organism):
+                    logger.error("Organism does not have any platform with enough samples to generate a qn target",
+                                 organism=organism,
+                                 min=options["min"])
+                    continue
+
+                samples = organism.sample_set.filter(has_raw=True, technology="MICROARRAY", is_processed=True)
                 if samples.count() == 0:
                     logger.error("No processed samples for organism.",
                         organism=organism,
                         count=samples.count()
                         )
-                    continue
-                if samples.count() < options['min']:
-                    logger.error("Proccessed samples don't meet minimum threshhold",
-                        organism=organism,
-                        count=samples.count(),
-                        min=options["min"]
-                    )
                     continue
 
                 if options["platform"] is None:
@@ -127,3 +126,15 @@ class Command(BaseCommand):
                     print(":(")
         else:
             qn_reference.create_qn_reference(options["job_id"])
+
+
+def organism_can_have_qn_target(organism: Organism, sample_threshold=100):
+    """ Check that the organism has more than `sample_threshold` samples on
+    some microarray platform """
+    microarray_platforms = organism.sample_set\
+        .filter(has_raw=True, technology="MICROARRAY", is_processed=True)\
+        .annotate(num_samples=Count('platform_accession_code', distinct=True))\
+        .filter(num_samples__gt=sample_threshold)
+
+    return microarray_platforms.exist()
+
