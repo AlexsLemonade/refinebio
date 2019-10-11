@@ -7,7 +7,7 @@ from data_refinery_common.models import (
     Organism
 )
 from data_refinery_common.logging import get_and_configure_logger
-
+from .create_qn_target import organism_can_have_qn_target
 logger = get_and_configure_logger(__name__)
 
 class Command(BaseCommand):
@@ -32,10 +32,9 @@ def remove_invalid_qn_targets(min_samples, dry_run):
     qn_target_ids = []
     for annotation in computational_result_annotations:
         organism = Organism.objects.get(id=annotation.data.organism_id)
-        samples = Sample.objects.filter(organism=organism, has_raw=True, technology="MICROARRAY", is_processed=True)
-        if samples.count() < min_samples:
-            # remove the referenced QN Target because it doesn't have enough samples
-            logger.debug('Removing QN Target because it did not have enough microarray samples',
+        if not organism_can_have_qn_target(organism, min_samples):
+            # remove the referenced QN Target because it shouldn't have a qn target
+            logger.debug('Removing QN Target because it does not have enough samples on its biggest microarray platform',
                          computational_result=annotation.result,
                          organism=organism)
             qn_target_ids.append(annotation.result.id)
