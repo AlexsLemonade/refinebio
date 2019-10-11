@@ -133,8 +133,9 @@ def organism_can_have_qn_target(organism: Organism, sample_threshold=100):
     some microarray platform """
     microarray_platforms = organism.sample_set\
         .filter(has_raw=True, technology="MICROARRAY", is_processed=True)\
-        .annotate(num_samples=Count('platform_accession_code', distinct=True))\
-        .filter(num_samples__gt=sample_threshold)
+        .values('platform_accession_code')\
+        .annotate(count=Count('id'))\
+        .filter(count__gt=sample_threshold)
 
     return microarray_platforms.exist()
 
