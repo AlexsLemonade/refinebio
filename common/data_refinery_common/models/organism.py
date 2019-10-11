@@ -101,8 +101,8 @@ class Organism(models.Model):
     with any missing values by accessing the NCBI API.
     """
 
-    def __str__ (self):
-        return str(self.name)
+    class Meta:
+        db_table = "organisms"
 
     name = models.CharField(max_length=256, unique=True)
     taxonomy_id = models.IntegerField(unique=True)
@@ -113,6 +113,9 @@ class Organism(models.Model):
     experiments = models.ManyToManyField('Experiment', through='ExperimentOrganismAssociation')
     qn_target = models.ForeignKey('ComputationalResult', blank=True, null=True, on_delete=models.SET_NULL)
 
+    def __str__ (self):
+        return str(self.name)
+
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
         current_time = timezone.now()
@@ -120,6 +123,9 @@ class Organism(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(Organism, self).save(*args, **kwargs)
+
+    def get_genus(self):
+        return self.name.split('_')[0]
 
     @classmethod
     def get_name_for_id(cls, taxonomy_id: int) -> str:
@@ -187,5 +193,4 @@ class Organism(models.Model):
         """ Return a list of Organisms who already have valid QN targets associated with them. """
         return Organism.objects.all().filter(qn_target__isnull=False)
 
-    class Meta:
-        db_table = "organisms"
+
