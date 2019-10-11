@@ -298,12 +298,12 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
         i = 0
         processed_frames = []
         # Non-empty list so we get into the loop to start.
-        chunk_of_frames = itertools.islice(frame_inputs, 0, MULTIPROCESSING_CHUNK_SIZE)
+        chunk_of_frames = list(itertools.islice(frame_inputs, 0, MULTIPROCESSING_CHUNK_SIZE))
         while len(chunk_of_frames) > 0:
             i += 1
             start = i * MULTIPROCESSING_CHUNK_SIZE
             end = start + MULTIPROCESSING_CHUNK_SIZE
-            chunk_of_frames = itertools.islice(frame_inputs, start, end)
+            chunk_of_frames = list(itertools.islice(frame_inputs, start, end))
 
             processed_frames.extend(pool.map(process_frame, chunk_of_frames))
 
