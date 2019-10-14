@@ -137,5 +137,5 @@ def organism_can_have_qn_target(organism: Organism, sample_threshold=100):
         .annotate(count=Count('id'))\
         .filter(count__gt=sample_threshold)
 
-    return microarray_platforms.exist()
+    return microarray_platforms.exists()
 
