@@ -59,6 +59,9 @@ class Command(BaseCommand):
         elif job_type is ProcessorPipeline.SMASHER:
             from data_refinery_workers.processors.smasher import smash
             smash(options["job_id"])
+        elif job_type is ProcessorPipeline.CREATE_COMPENDIA:
+            from data_refinery_workers.processors.create_compendia import create_compendia
+            create_compendia(options["job_id"])
         elif job_type is ProcessorPipeline.NO_OP:
             from data_refinery_workers.processors.no_op import no_op_processor
             no_op_processor(options["job_id"])

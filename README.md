@@ -568,25 +568,25 @@ nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 Creating species-wide compendia for a given species can be done in a production environment by running the following on the Foreman instance:
 
 ```bash
-./run_management_commands.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=False --svd-algorithm=ARPACK
 ```
 
 or for a list of organisms:
 
 ```bash
-./run_management_commands.sh create_compendia --organisms=DANIO_RERIO,HOMO_SAPIENS --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --organisms=DANIO_RERIO,HOMO_SAPIENS --quant-sf-only=False --svd-algorithm=ARPACK
 ```
 
 or for all organisms with sufficient data:
 
 ```bash
-./run_management_commands.sh create_compendia --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --quant-sf-only=False --svd-algorithm=ARPACK
 ```
 
 Alternatively a compendium can be created which only includes quant.sf files by specifying the nomad meta field `QUANT_SF_ONLY=True` like so:
 
 ```
-./run_management_commands.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=True --svd-algorithm=None
+./run_management_command.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=True --svd-algorithm=None
 ```
 
 Compendia jobs run on the smasher instance.
