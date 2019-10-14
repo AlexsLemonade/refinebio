@@ -285,7 +285,7 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
         chunk_of_frames = []
 
         # Create a tuple containing the inputs for process_frame.
-        chunk_of_frames.append((
+        frame_input = (
             job_context["work_dir"],
             computed_file,
             sample.accession_code,
@@ -293,10 +293,12 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
             job_context['dataset'].aggregate_by,
             index,
             job_context["job"].id
-        ))
+        )
+
+        chunk_of_frames.append(frame_input)
 
         # Make sure to handle the last chunk even if it's not a full chunk.
-        if index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
+        if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
             processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
             chunk_of_frames = []
 
