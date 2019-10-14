@@ -73,7 +73,7 @@ class QNRefTestCase(TransactionTestCase):
             exsa.sample = sample
             exsa.save()
 
-        
+
         dataset = Dataset()
         dataset.data = {"12345": ["1", "2", "3", "4", "5", "6"]}
         dataset.aggregate_by = "ALL"
@@ -89,10 +89,10 @@ class QNRefTestCase(TransactionTestCase):
         final_context = qn_reference.create_qn_reference(job.pk)
         self.assertTrue(final_context['success'])
         self.assertTrue(os.path.exists(final_context['target_file']))
-        self.assertEqual(os.path.getsize(final_context['target_file']), 559)
+        self.assertEqual(os.path.getsize(final_context['target_file']), 556)
 
         target = utils.get_most_recent_qn_target_for_organism(homo_sapiens)
-        self.assertEqual(target.sha1, '7e97c077dbbda3eb5fbbf0e306a151eb6d233135')
+        self.assertEqual(target.sha1, '636d72d5cbf4b9785b0bd271a1430b615feaa7ea')
 
         ###
         # Smasher with QN
@@ -121,7 +121,7 @@ class QNRefTestCase(TransactionTestCase):
         self.assertEqual(final_context['merged_qn']['1'][0], -0.4379488528812934)
         self.assertEqual(final_context['original_merged']['1'][0], -0.576210936113982)
 
-        ## 
+        ##
         # Test via management command
         ##
 

@@ -9,7 +9,7 @@ job "CREATE_COMPENDIA" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = ["ORGANISMS", "QUANT_SF_ONLY", "SVD_ALGORITHM"]
+    meta_required = ["JOB_NAME", "JOB_ID"]
   }
 
   group "jobs" {
@@ -54,6 +54,7 @@ job "CREATE_COMPENDIA" {
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
+        S3_RESULTS_BUCKET_NAME = "${{S3_RESULTS_BUCKET_NAME}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         MAX_DOWNLOADER_JOBS_PER_NODE = "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"
@@ -69,7 +70,7 @@ job "CREATE_COMPENDIA" {
         # CPU is in AWS's CPU units.
         cpu =   4000
         # Memory is in MB of RAM.
-        memory = 220000
+        memory = 940000
       }
 
       logs {
@@ -87,10 +88,9 @@ job "CREATE_COMPENDIA" {
         args = [
           "python3",
           "manage.py",
-          "create_compendia",
-          "--organisms", "${NOMAD_META_ORGANISMS}",
-          "--quant-sf-only", "${NOMAD_META_QUANT_SF_ONLY}",
-          "--svd-algorithm", "${NOMAD_META_SVD_ALGORITHM}",
+          "run_processor_job",
+          "--job-name", "${NOMAD_META_JOB_NAME}",
+          "--job-id", "${NOMAD_META_JOB_ID}"
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]

@@ -1,5 +1,6 @@
 import datetime
 import nomad
+import random
 import socket
 import sys
 import time
@@ -20,6 +21,7 @@ from data_refinery_common.job_lookup import (
     Downloaders,
     ProcessorPipeline,
     SurveyJobTypes,
+    SMASHER_JOB_TYPES,
     does_processor_job_have_samples,
     is_file_rnaseq,
 )
@@ -708,10 +710,23 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             elif new_ram_amount == 4096:
                 new_ram_amount = 8192
 
+    volume_index = last_job.volume_index
+    # Make sure volume_index is set to something, unless it's a
+    # smasher job type because the smasher instance doesn't have a
+    # volume_index.
+    if (not volume_index or volume_index == "-1") \
+       and ProcessorPipeline[last_job.pipeline_applied] not in SMASHER_JOB_TYPES:
+        active_volumes = get_active_volumes()
+        if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD:
+            logger.debug("No active volumes to requeue processor job.", job_id=last_job.id)
+            return
+        else:
+            volume_index = random.choice(list(active_volumes))
+
     new_job = ProcessorJob(num_retries=num_retries,
                            pipeline_applied=last_job.pipeline_applied,
                            ram_amount=new_ram_amount,
-                           volume_index=last_job.volume_index)
+                           volume_index=volume_index)
     new_job.save()
 
     for original_file in last_job.original_files.all():
@@ -735,9 +750,10 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
     except:
-        logger.error("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
-                     last_job.id,
-                     new_job.id)
+        logger.warn("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
+                    last_job.id,
+                    new_job.id,
+                    exc_info=1)
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
 
@@ -1291,7 +1307,7 @@ def cleanup_the_queue():
     logger.info("Removing all jobs from Nomad queue whose volumes are not mounted.")
 
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
-    indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
+    indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE", "CREATE_COMPENDIA"]]
     # Special case for downloader jobs because they only have one
     # nomad job type for all downloader tasks.
     indexed_job_types.append("DOWNLOADER")
@@ -1338,21 +1354,19 @@ def cleanup_the_queue():
                 # will be incremented when it is requeued).
                 try:
                     nomad_client.job.deregister_job(job["ID"], purge=True)
-                    processor_jobs = ProcessorJob.objects.filter(nomad_job_id=job["ID"])
+                    logger.debug('Foreman Killed nomad job because it had a volume that was not active',
+                                  nomad_job_id=job['ID'], job_type=job_type)
+                    processor_job = ProcessorJob.objects.filter(nomad_job_id=job["ID"]).first()
 
-                    if processor_jobs.count() > 0:
-                        job_record = processor_jobs[0]
-                    else:
+                    if not processor_job:
                         # If it's not a processor job, it's probably a downloader job.
                         job_record = DownloaderJob.objects.filter(nomad_job_id=job["ID"])[0]
-
                         # If it's a downloader job, then it doesn't
                         # have to run on the volume it was assigned
                         # to. We can let the foreman reassign it.
                         job_record.volume_index = None
+                        job_record.save()
 
-                    job_record.num_retries = job_record.num_retries - 1
-                    job_record.save()
                     num_jobs_killed += 1
                 except:
                     logger.exception("Could not remove Nomad job from the Nomad queue.",

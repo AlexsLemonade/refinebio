@@ -25,7 +25,7 @@ from data_refinery_common.models import (
     Organism,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, smasher
+from data_refinery_workers.processors import utils, smasher, smashing_utils
 
 
 logger = get_and_configure_logger(__name__)
@@ -52,7 +52,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
     # Get the gene list from the first input
     (computed_file, _) =  job_context['input_files']['ALL'][0]
     computed_file_path = computed_file.get_synced_file_path()
-    geneset_target_frame = smasher._load_and_sanitize_file(computed_file_path)
+    geneset_target_frame = smashing_utils._load_and_sanitize_file(computed_file_path)
 
     # Get the geneset
     geneset = set(geneset_target_frame.index.values)
@@ -67,23 +67,24 @@ def _build_qn_target(job_context: Dict) -> Dict:
     for file, sample in job_context['input_files']['ALL']:
         try:
             input_filepath = file.get_synced_file_path()
-            input_frame = smasher._load_and_sanitize_file(input_filepath)
+            input_frame = smashing_utils._load_and_sanitize_file(input_filepath)
         except Exception as e:
-            logger.exception("No file loaded for input file",
-                bad_file=file,
-                num_valid_inputs_so_far=num_valid_inputs
-                )
+            logger.warn("No file loaded for input file",
+                        exc_info=1,
+                        bad_file=file,
+                        num_valid_inputs_so_far=num_valid_inputs
+            )
             continue
 
         # If this input doesn't have the same geneset, we don't want it!
         if set(input_frame.index.values) != geneset:
-            logger.error("Input frame doesn't match target geneset, skipping!",
-                bad_file=file,
-                target_geneset_len=len(geneset),
-                bad_geneset_len=len(input_frame.index.values),
-                difference=list(geneset ^ set(input_frame.index.values)),
-                num_valid_inputs_so_far=num_valid_inputs
-                )
+            logger.warn("Input frame doesn't match target geneset, skipping!",
+                        bad_file=file,
+                        target_geneset_len=len(geneset),
+                        bad_geneset_len=len(input_frame.index.values),
+                        geneset_difference=list(geneset ^ set(input_frame.index.values))[:3],
+                        num_valid_inputs_so_far=num_valid_inputs
+            )
             continue
 
         # Sort the input
@@ -132,7 +133,7 @@ def _quantile_normalize(job_context: Dict) -> Dict:
         error_template = ("Encountered error in R code while running qn_reference.R"
                           " pipeline during processing of {0}: {1}")
         error_message = error_template.format(job_context['smashed_file'], str(e))
-        logger.error(error_message, processor_job=job_context["job_id"])
+        logger.warn(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
 
@@ -218,7 +219,7 @@ def _update_caches(job_context: Dict) -> Dict:
     """ Experiments have a cached value with the number of samples that have QN targets
         generated, this value should be updated after generating new QN targets. """
     organism_name = job_context['samples']['ALL'][0].organism.name
-    
+
     if job_context['result']:
         # Associate the organism with the latest qn target that was generated for it
         organism = Organism.get_object_for_name(organism_name)
@@ -226,7 +227,7 @@ def _update_caches(job_context: Dict) -> Dict:
         organism.save()
 
     unique_experiments = Experiment.objects.all().filter(organism_names__contains=[organism_name])
-    
+
     for experiment in unique_experiments:
         experiment.update_num_samples()
 

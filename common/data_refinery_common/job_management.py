@@ -13,6 +13,7 @@ from data_refinery_common.utils import (
     get_env_variable,
     get_env_variable_gracefully,
     get_instance_id,
+    get_volume_index,
 )
 from data_refinery_common.job_lookup import determine_processor_pipeline, determine_ram_amount, ProcessorEnum, ProcessorPipeline, Downloaders
 from data_refinery_common.message_queue import send_job
@@ -146,23 +147,6 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
 
     return True
 
-# TODO: extend this list.
-BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
-
-def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
-    extension = original_file.filename.split(".")[-1]
-    if extension.lower() in BLACKLISTED_EXTENSIONS:
-        logger.debug("Original file had a blacklisted extension of %s, skipping",
-                     extension,
-                     original_file=original_file.id)
-
-        original_file.delete_local_file()
-        original_file.is_downloaded = False
-        original_file.save()
-        return None
-
-    return original_file
-
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
                                              downloader_job: DownloaderJob=None,
                                              volume_index: str=None):
@@ -172,8 +156,11 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
     for original_file in original_files:
         sample_object = original_file.samples.first()
 
-        if not delete_if_blacklisted(original_file):
-            continue
+        if original_file.is_blacklisted():
+            logger.debug("Original file had a blacklisted extension of %s, skipping",
+                         extension=original_file.get_extension(),
+                         original_file=original_file.id)
+            original_file.delete_local_file()
 
         # Fix for: https://github.com/AlexsLemonade/refinebio/issues/968
         # Basically, we incorrectly detected technology/manufacturers
@@ -201,6 +188,10 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
 
             if volume_index:
                 processor_job.volume_index = volume_index
+            elif downloader_job.volume_index:
+                processor_job.volume_index = downloader_job.volume_index
+            else:
+                processor_job.volume_index = get_volume_index()
 
             processor_job.save()
 
@@ -257,6 +248,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
 
         if volume_index:
             processor_job.volume_index = volume_index
+        elif downloader_job.volume_index:
+            processor_job.volume_index = downloader_job.volume_index
+        else:
+            processor_job.volume_index = get_volume_index()
 
         processor_job.save()
 
