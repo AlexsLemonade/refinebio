@@ -721,6 +721,8 @@ def write_tsv_json(job_context):
             tsv_path = species_dir + "metadata_" + species + '.tsv'
             tsv_paths.append(tsv_path)
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
+                # See http://www.lucainvernizzi.net/blog/2015/08/03/8x-speed-up-for-python-s-csv-dictwriter/
+                # about extrasaction.
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
                 dw.writeheader()
                 i = 0
