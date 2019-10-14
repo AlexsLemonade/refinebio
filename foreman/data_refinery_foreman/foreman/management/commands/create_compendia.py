@@ -90,7 +90,7 @@ class Command(BaseCommand):
         logger.debug('Generating compendia for organisms', organisms=all_organisms)
 
         for organism in all_organisms:
-            if organism.get_most_recent_qn_target():
+            if organism.qn_target:
                 job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
                 logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
                 send_job(ProcessorPipeline.CREATE_COMPENDIA, job)

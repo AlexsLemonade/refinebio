@@ -91,7 +91,8 @@ class QNRefTestCase(TransactionTestCase):
         self.assertTrue(os.path.exists(final_context['target_file']))
         self.assertEqual(os.path.getsize(final_context['target_file']), 556)
 
-        target = homo_sapiens.get_most_recent_qn_target()
+        homo_sapiens.refresh_from_db()
+        target = homo_sapiens.qn_target.computedfile_set.latest()
         self.assertEqual(target.sha1, '636d72d5cbf4b9785b0bd271a1430b615feaa7ea')
 
         ###
@@ -139,4 +140,6 @@ class QNRefTestCase(TransactionTestCase):
         self.assertTrue('Target file' in stdout)
         path = stdout.split('\n')[0].split(':')[1].strip()
         self.assertTrue(os.path.exists(path))
-        self.assertEqual(path, homo_sapiens.get_most_recent_qn_target().absolute_file_path)
+        homo_sapiens.refresh_from_db()
+        qn_file = homo_sapiens.qn_target.computedfile_set.latest()
+        self.assertEqual(path, qn_file.absolute_file_path)

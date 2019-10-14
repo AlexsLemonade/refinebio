@@ -14,9 +14,6 @@ from data_refinery_common.utils import get_env_variable
 logger = get_and_configure_logger(__name__)
 
 
-ComputationalResultAnnotation = apps.get_model(app_label='data_refinery', model_name='ComputationalResultAnnotation')
-
-
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 NCBI_API_KEY = get_env_variable("NCBI_API_KEY", "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09") # This is only used by eUtils and for organisms that aren't cached yet - it's harmless to share.
 ESEARCH_URL = NCBI_ROOT_URL + "esearch.fcgi"
@@ -190,21 +187,6 @@ class Organism(models.Model):
     def get_objects_with_qn_targets(cls):
         """ Return a list of Organisms who already have valid QN targets associated with them. """
         return Organism.objects.all().filter(qn_target__isnull=False)
-
-    def get_most_recent_qn_target(self):
-        """Returns a ComputedFile for QN run for an Organism
-        """
-        try:
-            annotation = ComputationalResultAnnotation.objects.filter(
-                data__organism_id=self.id,
-                data__is_qn=True
-            ).order_by(
-                '-created_at'
-            ).first()
-            file = annotation.result.computedfile_set.first()
-            return file
-        except Exception:
-            return None
 
     class Meta:
         db_table = "organisms"
