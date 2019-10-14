@@ -30,7 +30,7 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     ComputationalResultAnnotation
 )
-from data_refinery_workers.processors import smasher
+from data_refinery_workers.processors import smasher, smashing_utils
 
 
 def prepare_job():
@@ -137,6 +137,90 @@ def prepare_job():
     pjda.dataset = ds
     pjda.save()
 
+    return pj
+
+def prepare_dual_tech_job():
+    pj = ProcessorJob()
+    pj.pipeline_applied = "SMASHER"
+    pj.save()
+
+    # MICROARRAY TECH
+    experiment = Experiment()
+    experiment.accession_code = "GSE1487313"
+    experiment.save()
+
+    result = ComputationalResult()
+    result.save()
+
+    gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+
+    sample = Sample()
+    sample.accession_code = 'GSM1487313'
+    sample.title = 'GSM1487313'
+    sample.organism = gallus_gallus
+    sample.technology="MICROARRAY"
+    sample.save()
+
+    sra = SampleResultAssociation()
+    sra.sample = sample
+    sra.result = result
+    sra.save()
+
+    esa = ExperimentSampleAssociation()
+    esa.experiment = experiment
+    esa.sample = sample
+    esa.save()
+
+    computed_file = ComputedFile()
+    computed_file.filename = "GSM1487313_liver.PCL"
+    computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+    computed_file.result = result
+    computed_file.size_in_bytes = 123
+    computed_file.is_smashable = True
+    computed_file.save()
+
+    assoc = SampleComputedFileAssociation()
+    assoc.sample = sample
+    assoc.computed_file = computed_file
+    assoc.save()
+
+    # RNASEQ TECH
+    experiment2 = Experiment()
+    experiment2.accession_code = "SRP332914"
+    experiment2.save()
+
+    result2 = ComputationalResult()
+    result2.save()
+
+    sample2 = Sample()
+    sample2.accession_code = 'SRR332914'
+    sample2.title = 'SRR332914'
+    sample2.organism = gallus_gallus
+    sample2.technology = "RNA-SEQ"
+    sample2.save()
+
+    sra2 = SampleResultAssociation()
+    sra2.sample = sample2
+    sra2.result = result2
+    sra2.save()
+
+    esa2 = ExperimentSampleAssociation()
+    esa2.experiment = experiment2
+    esa2.sample = sample2
+    esa2.save()
+
+    computed_file2 = ComputedFile()
+    computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
+    computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
+    computed_file2.result = result2
+    computed_file2.size_in_bytes = 234
+    computed_file2.is_smashable = True
+    computed_file2.save()
+
+    assoc2 = SampleComputedFileAssociation()
+    assoc2.sample = sample2
+    assoc2.computed_file = computed_file2
+    assoc2.save()
     return pj
 
 class SmasherTestCase(TransactionTestCase):
@@ -940,88 +1024,7 @@ class SmasherTestCase(TransactionTestCase):
     def test_dualtech_smash(self):
         """ """
 
-        pj = ProcessorJob()
-        pj.pipeline_applied = "SMASHER"
-        pj.save()
-
-        # MICROARRAY TECH
-        experiment = Experiment()
-        experiment.accession_code = "GSE1487313"
-        experiment.save()
-
-        result = ComputationalResult()
-        result.save()
-
-        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
-
-        sample = Sample()
-        sample.accession_code = 'GSM1487313'
-        sample.title = 'GSM1487313'
-        sample.organism = gallus_gallus
-        sample.technology="MICROARRAY"
-        sample.save()
-
-        sra = SampleResultAssociation()
-        sra.sample = sample
-        sra.result = result
-        sra.save()
-
-        esa = ExperimentSampleAssociation()
-        esa.experiment = experiment
-        esa.sample = sample
-        esa.save()
-
-        computed_file = ComputedFile()
-        computed_file.filename = "GSM1487313_liver.PCL"
-        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
-        computed_file.result = result
-        computed_file.size_in_bytes = 123
-        computed_file.is_smashable = True
-        computed_file.save()
-
-        assoc = SampleComputedFileAssociation()
-        assoc.sample = sample
-        assoc.computed_file = computed_file
-        assoc.save()
-
-        # RNASEQ TECH
-        experiment2 = Experiment()
-        experiment2.accession_code = "SRP332914"
-        experiment2.save()
-
-        result2 = ComputationalResult()
-        result2.save()
-
-        sample2 = Sample()
-        sample2.accession_code = 'SRR332914'
-        sample2.title = 'SRR332914'
-        sample2.organism = gallus_gallus
-        sample2.technology = "RNA-SEQ"
-        sample2.save()
-
-        sra2 = SampleResultAssociation()
-        sra2.sample = sample2
-        sra2.result = result2
-        sra2.save()
-
-        esa2 = ExperimentSampleAssociation()
-        esa2.experiment = experiment2
-        esa2.sample = sample2
-        esa2.save()
-
-        computed_file2 = ComputedFile()
-        computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
-        computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
-        computed_file2.result = result2
-        computed_file2.size_in_bytes = 234
-        computed_file2.is_smashable = True
-        computed_file2.save()
-
-        assoc2 = SampleComputedFileAssociation()
-        assoc2.sample = sample2
-        assoc2.computed_file = computed_file2
-        assoc2.save()
-
+        pj = prepare_dual_tech_job()
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
         ds.data = {'GSE1487313': ['GSM1487313'], 'SRP332914': ['SRR332914']}
@@ -1278,7 +1281,15 @@ class AggregationTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_columns(self):
-        columns = smasher._get_tsv_columns(self.metadata['samples'])
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
+        job_context = {
+            'job': pj
+        }
+
+        columns = smashing_utils.get_tsv_columns(job_context, self.metadata['samples'])
         self.assertEqual(len(columns), 22)
         self.assertEqual(columns[0], 'refinebio_accession_code')
         self.assertTrue('refinebio_accession_code' in columns)
@@ -1296,11 +1307,13 @@ class AggregationTestCase(TransactionTestCase):
 
         job_context = {
             'job': pj,
+            'output_dir': self.smash_path,
+            'metadata': self.metadata,
             'dataset': Dataset.objects.create(aggregate_by='ALL',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
         }
-        smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
+        smashing_utils.write_tsv_json(job_context)
         tsv_filename = self.smash_path + "ALL/metadata_ALL.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
 
@@ -1332,11 +1345,13 @@ class AggregationTestCase(TransactionTestCase):
 
         job_context = {
             'job': pj,
+            'output_dir': self.smash_path,
+            'metadata': self.metadata,
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
         }
-        smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
+        smashing_utils.write_tsv_json(job_context)
 
         tsv_filename = self.smash_path + "E-GEOD-44719/metadata_E-GEOD-44719.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
@@ -1385,11 +1400,13 @@ class AggregationTestCase(TransactionTestCase):
 
         job_context = {
             'job': pj,
+            'output_dir': self.smash_path,
+            'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='ALL'),
             'input_files': {
             }
         }
-        final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
+        final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
         with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1398,11 +1415,13 @@ class AggregationTestCase(TransactionTestCase):
 
         job_context = {
             'job': pj,
+            'output_dir': self.smash_path,
+            'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT'),
             'input_files': {
             }
         }
-        final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
+        final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
         with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1411,13 +1430,15 @@ class AggregationTestCase(TransactionTestCase):
 
         job_context = {
             'job': pj,
+            'output_dir': self.smash_path,
+            'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
             'input_files': {
                 'homo_sapiens': [], # only the key matters in this test
                 'fake_species': []  # only the key matters in this test
             }
         }
-        final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
+        final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
         with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1434,6 +1455,8 @@ class AggregationTestCase(TransactionTestCase):
 
         job_context = {
             'job': pj,
+            'output_dir': self.smash_path,
+            'metadata': self.metadata,
             'dataset': Dataset.objects.create(aggregate_by='SPECIES',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']}),
@@ -1444,7 +1467,7 @@ class AggregationTestCase(TransactionTestCase):
         }
         # Generate two TSV files, one should include only "GSM1361050",
         # and the other should include only "E-GEOD-44719-GSM1089311".
-        smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
+        smashing_utils.write_tsv_json(job_context)
 
         # Test tsv file of "homo_sapiens"
         tsv_filename = self.smash_path + "homo_sapiens/metadata_homo_sapiens.tsv"
