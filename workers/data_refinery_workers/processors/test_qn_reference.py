@@ -89,10 +89,10 @@ class QNRefTestCase(TransactionTestCase):
         final_context = qn_reference.create_qn_reference(job.pk)
         self.assertTrue(final_context['success'])
         self.assertTrue(os.path.exists(final_context['target_file']))
-        self.assertEqual(os.path.getsize(final_context['target_file']), 559)
+        self.assertEqual(os.path.getsize(final_context['target_file']), 556)
 
         target = homo_sapiens.get_most_recent_qn_target()
-        self.assertEqual(target.sha1, '7e97c077dbbda3eb5fbbf0e306a151eb6d233135')
+        self.assertEqual(target.sha1, '636d72d5cbf4b9785b0bd271a1430b615feaa7ea')
 
         ###
         # Smasher with QN

@@ -675,7 +675,8 @@ class SampleList(generics.ListAPIView):
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
         filter_by = self.request.query_params.get('filter_by', None)
         if filter_by:
-            queryset = queryset.filter(Q(title__icontains=filter_by) |
+            queryset = queryset.filter(Q(accession_code__icontains=filter_by) |
+                                       Q(title__icontains=filter_by) |
                                        Q(sex__icontains=filter_by) |
                                        Q(age__icontains=filter_by) |
                                        Q(specimen_part__icontains=filter_by) |
@@ -922,6 +923,7 @@ class Stats(APIView):
     @classmethod
     def calculate_stats(cls, range_param):
         data = {}
+        data['generated_on'] = timezone.now()
         data['survey_jobs'] = cls._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = cls._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = cls._get_job_stats(ProcessorJob.objects, range_param)

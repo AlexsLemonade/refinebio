@@ -460,3 +460,24 @@ def queryset_iterator(queryset, page_size = 2000):
     for page in queryset_page_iterator(queryset, page_size):
         for item in page:
             yield item
+
+class FileUtils:
+    @staticmethod
+    def is_archive(file_path):
+        extension = FileUtils.get_extension(file_path)
+        if not extension:
+            return False
+
+        return extension in ['.tar', '.tgz', '.gz', '.zip']
+
+    @staticmethod
+    def get_filename(file_path):
+        return os.path.basename(file_path)
+
+    @staticmethod
+    def get_extension(file_path):
+        if not file_path:
+            return None
+
+        return os.path.splitext(file_path)[1].lower()
+

@@ -154,6 +154,7 @@ def prepare_dataset(job_context):
     job_context["computed_files"] = []
     return job_context
 
+
 def start_job(job_context: Dict):
     """A processor function to start jobs.
 
@@ -170,8 +171,7 @@ def start_job(job_context: Dict):
                           "so it doesn't need to be downloaded! Aborting!")
         logger.error(failure_reason,
                      job_id=job.id,
-                     original_file=original_file
-        )
+                     original_file=original_file)
         job_context["original_files"] = []
         job_context["computed_files"] = []
         job_context['abort'] = True
@@ -191,11 +191,11 @@ def start_job(job_context: Dict):
         # Let's just log the event and let the job run instead of failing
         # and also reset the endtime and failure reason, since those fields might have been set
         logger.warn('ProcessorJob was restarted by Nomad. We do not know why this happened',
-                        processor_job=job.id,
-                        success=job.success,
-                        failure_reason=job.failure_reason,
-                        start_time=job.start_time,
-                        end_time=job.end_time)
+                    processor_job=job.id,
+                    success=job.success,
+                    failure_reason=job.failure_reason,
+                    start_time=job.start_time,
+                    end_time=job.end_time)
         job.end_time = None
         job.failure_reason = None
 

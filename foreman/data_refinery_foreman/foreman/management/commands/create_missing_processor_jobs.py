@@ -27,10 +27,6 @@ from data_refinery_common.job_management import create_processor_jobs_for_origin
 
 logger = get_and_configure_logger(__name__)
 
-BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
-
-
-
 def find_volume_index_for_dl_job(job: DownloaderJob) -> int:
     pjs = ProcessorJob.objects.filter(worker_id=job.worker_id)
 
@@ -63,8 +59,8 @@ class Command(BaseCommand):
                                     sample_accession=sample_object.accession_code,
                                     sample_id=sample_object.id
                         )
-                        find_volume_index_for_dl_job(dl_job)
-                        create_processor_job_for_original_files(original_files, volume_index)
+                        volume_index = find_volume_index_for_dl_job(dl_job)
+                        create_processor_job_for_original_files(original_files, dl_job, volume_index)
                     except:
                         # Already logged.
                         pass
@@ -97,6 +93,7 @@ class Command(BaseCommand):
                                 volume_index = find_volume_index_for_dl_job(dl_job)
                                 create_processor_jobs_for_original_files(
                                     files_for_sample,
+                                    dl_job,
                                     volume_index
                                 )
                             except:
