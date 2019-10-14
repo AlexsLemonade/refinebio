@@ -281,8 +281,8 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     # also make the minimum threads 1
     worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
 
+    chunk_of_frames = []
     for index, (computed_file, sample) in enumerate(input_files):
-        chunk_of_frames = []
 
         # Create a tuple containing the inputs for process_frame.
         frame_input = (
