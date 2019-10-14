@@ -57,31 +57,25 @@ def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> L
     """Extract zip and return a list of the raw files.
     """
     logger.debug("Extracting %s!", file_path, file_path=file_path, downloader_job=job.id)
+    abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
 
     try:
         # This is technically an unsafe operation.
         # However, we're trusting AE as a data source.
-        zip_ref = zipfile.ZipFile(file_path, "r")
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
-        zip_ref.extractall(abs_with_code_raw)
-        # Other zips for this same accession will go into this
-        # directory too, so look at what's in the zip file rather than
-        # what's in the directory it's being extracted to.
-        files_in_zip = zip_ref.namelist()
-        zip_ref.close()
+        with zipfile.ZipFile(file_path, "r") as zip_ref:
+            zip_ref.extractall(abs_with_code_raw)
+            # Other zips for this same accession will go into this
+            # directory too, so look at what's in the zip file rather than
+            # what's in the directory it's being extracted to.
+            files_in_zip = zip_ref.namelist()
 
-        # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in files_in_zip]
+        return [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in files_in_zip]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), str(file_path)
         logger.exception(reason, downloader_job=job.id)
         job.failure_reason = reason
         raise
-
-    os.remove(file_path)
-
-    return files
 
 
 def download_array_express(job_id: int) -> None:
@@ -107,7 +101,7 @@ def download_array_express(job_id: int) -> None:
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
 
-    og_files = []
+    unprocessed_original_files = []
     # The files for all of the samples are
     # contained within the same zip file. Therefore only
     # download the one.
@@ -119,12 +113,12 @@ def download_array_express(job_id: int) -> None:
     _download_file(url, dl_file_path, job)
 
     extracted_files = _extract_files(dl_file_path, accession_code, job)
+    os.remove(dl_file_path) # remove zip file
 
-    for og_file in extracted_files:
+    for extracted_file in extracted_files:
         try:
             original_file = OriginalFile.objects.get(
-                source_filename=og_file['filename'], source_url=original_file.source_url)
-
+                source_filename=extracted_file['filename'], source_url=original_file.source_url)
             # Sometimes a file needs to be redownloaded and processed,
             # but if a file is part of an archive and then we requeue
             # all of the files to be processed, we might end up
@@ -132,38 +126,28 @@ def download_array_express(job_id: int) -> None:
             # haven't actually been processed before marking them as
             # downloaded and queuing processor jobs.
             if original_file.needs_processing():
-                original_file.is_downloaded = True
-                original_file.is_archive = False
-                original_file.absolute_file_path = og_file['absolute_path']
-                original_file.filename = og_file['absolute_path'].split('/')[-1]
-                original_file.calculate_size()
-                original_file.calculate_sha1()
-                original_file.save()
-                og_files.append(original_file)
-            else:
-                # Clear out the files we don't actually need.
-                os.remove(og_file['absolute_path'])
-                continue
+                original_file.set_downloaded(extracted_file['absolute_path'])
+                unprocessed_original_files.append(original_file)
         except Exception:
             # The suspicion is that there are extra files related to
             # another experiment, that we don't want associated with
             # this one.
-            logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
-                        + og_file['filename'],
+            logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?",
+                        file_name=original_file.filename,
                         downloader_job=job_id)
-            os.remove(og_file["absolute_path"])
+            os.remove(extracted_file["absolute_path"])
             continue
 
-        sample_objects = Sample.objects.filter(originalfile=original_file).order_by('created_at')
+        sample_objects = original_file.samples.order_by('created_at')
         if sample_objects.count() > 1:
-            logger.warn("Found an Array Express OriginalFile with more than one sample: %s",
-                        filename,
+            logger.warn("Found an Array Express OriginalFile with more than one sample",
+                        original_file = original_file,
                         downloader_job=job_id)
 
         # If the file is a .CEL file, it is the ultimate
         # source of truth about the sample's platform.
-        sample_object = sample_objects[0]
-        if og_file["filename"].upper()[-4:] == ".CEL" and sample_object.has_raw:
+        sample_object = sample_objects.first()
+        if extracted_file["filename"].upper()[-4:] == ".CEL" and sample_object.has_raw:
             cel_file_platform = None
             platform_accession_code = "UNSUPPORTED"
             try:
@@ -215,6 +199,6 @@ def download_array_express(job_id: int) -> None:
                      url=url,
                      downloader_job=job_id)
 
-        create_processor_jobs_for_original_files(og_files, job)
+        create_processor_jobs_for_original_files(unprocessed_original_files, job)
 
     utils.end_downloader_job(job, success)

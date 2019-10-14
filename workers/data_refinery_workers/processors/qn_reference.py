@@ -25,7 +25,7 @@ from data_refinery_common.models import (
     Organism,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, smasher
+from data_refinery_workers.processors import utils, smasher, smashing_utils
 
 
 logger = get_and_configure_logger(__name__)
@@ -52,7 +52,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
     # Get the gene list from the first input
     (computed_file, _) =  job_context['input_files']['ALL'][0]
     computed_file_path = computed_file.get_synced_file_path()
-    geneset_target_frame = smasher._load_and_sanitize_file(computed_file_path)
+    geneset_target_frame = smashing_utils._load_and_sanitize_file(computed_file_path)
 
     # Get the geneset
     geneset = set(geneset_target_frame.index.values)
@@ -67,7 +67,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
     for file, sample in job_context['input_files']['ALL']:
         try:
             input_filepath = file.get_synced_file_path()
-            input_frame = smasher._load_and_sanitize_file(input_filepath)
+            input_frame = smashing_utils._load_and_sanitize_file(input_filepath)
         except Exception as e:
             logger.warn("No file loaded for input file",
                         exc_info=1,

@@ -22,7 +22,7 @@ from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1
+from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1, FileUtils
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -193,10 +193,15 @@ class Sample(models.Model):
     def get_most_recent_smashable_result_file(self):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         try:
-            return self.computed_files.filter(
-                            is_public=True,
-                            is_smashable=True,
-                        ).latest()
+            latest_computed_file = self.computed_files.filter(
+                is_public=True,
+                is_smashable=True,
+            ).latest()
+
+            # Access a property to make the query fire now.
+            latest_computed_file.id
+
+            return latest_computed_file
         except Exception as e:
             # This sample has no smashable files yet.
             return None
@@ -719,6 +724,17 @@ class OriginalFile(models.Model):
         self.last_modified = current_time
         return super(OriginalFile, self).save(*args, **kwargs)
 
+    def set_downloaded(self, absolute_file_path, filename = None):
+        """ Marks the file as downloaded, if `filename` is not provided it will
+        be parsed from the `absolute_file_path` """
+        self.is_downloaded = True
+        self.is_archive = FileUtils.is_archive(absolute_file_path)
+        self.absolute_file_path = absolute_file_path
+        self.filename = filename if filename else os.path.basename(absolute_file_path)
+        self.calculate_size()
+        self.calculate_sha1()
+        self.save()
+
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
@@ -738,6 +754,14 @@ class OriginalFile(models.Model):
         else:
             return self.filename
 
+    def get_extension(self):
+        """ Returns the lowercased extension of the filename
+        Thanks to https://stackoverflow.com/a/541408/763705 """
+        return FileUtils.get_extension(self.filename)
+
+    def is_blacklisted(self):
+        return self.get_extension() in [".xml", ".chp", ".exp"]
+
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
         try:
@@ -753,20 +777,7 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
-
-    def needs_processing(self, own_processor_id=None) -> bool:
-        """Returns True if original_file has been or is being processed.
-
-        Returns False otherwise.
-
-        If own_processor_id is supplied then it will be ignored so
-        that processor jobs can use this function without their job
-        being counted as currently processing this file.
-        """
-        sample = self.samples.first()
-        if not sample:
-            return True
-
+    def has_blocking_jobs(self, own_processor_id=None) -> bool:
         # If the file has a processor job that should not have been
         # retried, then it still shouldn't be retried.
         no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True)
@@ -785,7 +796,23 @@ class OriginalFile(models.Model):
         # Check if there's any jobs which should block another
         # processing attempt.
         blocking_jobs = no_retry_processor_jobs | incomplete_processor_jobs
-        if blocking_jobs.count() > 0:
+
+        return blocking_jobs.first() is not None
+
+    def needs_processing(self, own_processor_id=None) -> bool:
+        """Returns False if original_file has been or is being processed.
+
+        Returns True otherwise.
+
+        If own_processor_id is supplied then it will be ignored so
+        that processor jobs can use this function without their job
+        being counted as currently processing this file.
+        """
+        sample = self.samples.first()
+        if not sample:
+            return True
+
+        if self.has_blocking_jobs(own_processor_id):
             return False
 
         if sample.source_database == "SRA":
@@ -815,12 +842,13 @@ class OriginalFile(models.Model):
             # samples in the archive will happen elsewhere before
             # dispatching.
             for sample in self.samples.all():
+                if not sample.is_processed:
+                    return True
                 computed_file = sample.get_most_recent_smashable_result_file()
                 if not computed_file:
                     return True
-                if not sample.is_processed \
-                   or computed_file.s3_bucket is None \
-                   or computed_file.s3_key is None:
+                if settings.RUNNING_IN_CLOUD \
+                    and (computed_file.s3_bucket is None or computed_file.s3_key is None):
                     return True
 
             return False
