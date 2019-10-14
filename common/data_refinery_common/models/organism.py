@@ -1,6 +1,7 @@
 import requests
 from xml.etree import ElementTree
 
+from django.apps import apps
 from django.db import models
 from django.utils import timezone
 
@@ -11,6 +12,9 @@ from data_refinery_common.models.base_models import TimeTrackedModel
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
 logger = get_and_configure_logger(__name__)
+
+
+ComputationalResultAnnotation = apps.get_model(app_label='data_refinery', model_name='ComputationalResultAnnotation')
 
 
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
@@ -186,6 +190,21 @@ class Organism(models.Model):
     def get_objects_with_qn_targets(cls):
         """ Return a list of Organisms who already have valid QN targets associated with them. """
         return Organism.objects.all().filter(qn_target__isnull=False)
+
+    def get_most_recent_qn_target(self):
+        """Returns a ComputedFile for QN run for an Organism
+        """
+        try:
+            annotation = ComputationalResultAnnotation.objects.filter(
+                data__organism_id=self.id,
+                data__is_qn=True
+            ).order_by(
+                '-created_at'
+            ).first()
+            file = annotation.result.computedfile_set.first()
+            return file
+        except Exception:
+            return None
 
     class Meta:
         db_table = "organisms"

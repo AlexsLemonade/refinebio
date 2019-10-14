@@ -18,7 +18,6 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation
 )
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_most_recent_qn_target_for_organism
 from data_refinery_workers.processors import qn_reference, smasher, utils
 
 
@@ -92,7 +91,7 @@ class QNRefTestCase(TransactionTestCase):
         self.assertTrue(os.path.exists(final_context['target_file']))
         self.assertEqual(os.path.getsize(final_context['target_file']), 559)
 
-        target = get_most_recent_qn_target_for_organism(homo_sapiens)
+        target = homo_sapiens.get_most_recent_qn_target()
         self.assertEqual(target.sha1, '7e97c077dbbda3eb5fbbf0e306a151eb6d233135')
 
         ###
@@ -140,4 +139,4 @@ class QNRefTestCase(TransactionTestCase):
         self.assertTrue('Target file' in stdout)
         path = stdout.split('\n')[0].split(':')[1].strip()
         self.assertTrue(os.path.exists(path))
-        self.assertEqual(path, get_most_recent_qn_target_for_organism(homo_sapiens).absolute_file_path)
+        self.assertEqual(path, homo_sapiens.get_most_recent_qn_target().absolute_file_path)

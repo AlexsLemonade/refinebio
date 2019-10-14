@@ -460,19 +460,3 @@ def queryset_iterator(queryset, page_size = 2000):
     for page in queryset_page_iterator(queryset, page_size):
         for item in page:
             yield item
-
-
-def get_most_recent_qn_target_for_organism(organism):
-    """ Returns a ComputedFile for QN run for an Organism """
-
-    try:
-        annotation = ComputationalResultAnnotation.objects.filter(
-            data__organism_id=organism.id,
-            data__is_qn=True
-        ).order_by(
-            '-created_at'
-        ).first()
-        file = annotation.result.computedfile_set.first()
-        return file
-    except Exception:
-        return None
