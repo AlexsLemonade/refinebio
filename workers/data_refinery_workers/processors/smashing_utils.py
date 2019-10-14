@@ -488,9 +488,11 @@ def write_non_data_files(job_context: Dict) -> Dict:
 
     This include LICENSE.txt and README.md files and the metadata.
 
-    Expects the key `metadata` in job_context to be populated with all
+    Adds the key `metadata` to job_context and populates it with all
     the metadata that needs to be written.
     """
+    job_context['metadata'] = compile_metadata(job_context)
+
     shutil.copy("README_DATASET.md", job_context["output_dir"] + "README.md")
     shutil.copy("LICENSE_DATASET.txt", job_context["output_dir"] + "LICENSE.TXT")
 
@@ -721,11 +723,19 @@ def write_tsv_json(job_context):
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
+                i = 0
                 for sample_metadata in metadata['samples'].values():
                     if sample_metadata.get('refinebio_organism', '') == species:
                         row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
                         samples_in_species.append(sample_metadata)
+
+                    i = i + 1
+                    if i % 1000 == 0:
+                        progress_template = ('Done with {0} out of {1} lines of metadata '
+                                             'for species {2}')
+                        log_state(progress_template.format(i, len(metadata['samples']), species),
+                                  job_context['job'])
 
             # Writes a json file for current species:
             if len(samples_in_species):
