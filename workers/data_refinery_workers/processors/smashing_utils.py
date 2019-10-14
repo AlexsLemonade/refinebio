@@ -295,6 +295,7 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
             job_context["job"].id
         ))
 
+        # Make sure to handle the last chunk even if it's not a full chunk.
         if index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
             processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
             chunk_of_frames = []
