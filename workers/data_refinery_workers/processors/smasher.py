@@ -119,19 +119,18 @@ def _prepare_files(job_context: Dict) -> Dict:
     log_state("end prepare files", job_context["job"], start_prepare_files)
     return job_context
 
-def downlad_computed_file(download_tuple: Tuple[str, ComputedFile]):
-    """ this function downloads the latest computed file. Receives a tuple as its first parameter
-    where the first item is the path where the computed file needs to be downloaded, and the second
-    parameter is the computed file.
+def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
+    """ this function downloads the latest computed file. Receives a tuple with
+    the computed file and the path where it needs to be downloaded
     This is used to parallelize downloading quantsf files. """
-    (output_file_path, latest_computed_file) = download_tuple
+    (latest_computed_file, output_file_path) = download_tuple
     try:
         latest_computed_file.get_synced_file_path(path=output_file_path)
     except:
         # Let's not fail if there's an error syncing one of the quant.sf files
         logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
 
-def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
+def sync_quant_files(output_path, files_sample_tuple):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
         Returns the total number of samples that were included """
     num_samples = 0
@@ -147,9 +146,10 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
         sample_and_computed_files = []
         for sample in sample_page:
             latest_computed_file = sample.get_most_recent_quant_sf_file()
-            if not latest_computed_file: continue
+            if not latest_computed_file:
+                continue
             output_file_path = output_path + sample.accession_code + "_quant.sf"
-            sample_and_computed_files.append((output_file_path, latest_computed_file))
+            sample_and_computed_files.append((latest_computed_file, output_file_path))
 
         # download this set of files, this will take a few seconds that should also help the db recover
         pool.map(downlad_computed_file, sample_and_computed_files)
@@ -243,7 +243,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     if job_context['dataset'].quant_sf_only:
         outfile_dir = job_context["output_dir"] + key + "/"
         os.makedirs(outfile_dir, exist_ok=True)
-        job_context['num_samples'] += sync_quant_files(outfile_dir, input_files, job_context)
+        job_context['num_samples'] += sync_quant_files(outfile_dir, input_files)
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
