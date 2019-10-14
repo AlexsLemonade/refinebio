@@ -24,7 +24,7 @@ from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
 from sklearn import preprocessing
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
@@ -119,10 +119,12 @@ def _prepare_files(job_context: Dict) -> Dict:
     log_state("end prepare files", job_context["job"], start_prepare_files)
     return job_context
 
-def downlad_computed_file(item):
-    """ this function downloads the latest computed file sent in it's arguments,
-    its used to parallelize the download of all files. """
-    (output_file_path, latest_computed_file) = item
+def downlad_computed_file(download_tuple: Tuple[str, ComputedFile]):
+    """ this function downloads the latest computed file. Receives a tuple as its first parameter
+    where the first item is the path where the computed file needs to be downloaded, and the second
+    parameter is the computed file.
+    This is used to parallelize downloading quantsf files. """
+    (output_file_path, latest_computed_file) = download_tuple
     try:
         latest_computed_file.get_synced_file_path(path=output_file_path)
     except:
