@@ -51,7 +51,7 @@ logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
 
-PROCESS_POOL_SIZE = max(1, int(psutil.cpu_count()/2))
+PROCESS_POOL_SIZE = max(1, int(psutil.cpu_count()/2 - 1))
 
 SCALERS = {
     'MINMAX': preprocessing.MinMaxScaler,
@@ -128,7 +128,6 @@ def downlad_computed_file(item):
     except:
         # Let's not fail if there's an error syncing one of the quant.sf files
         logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
-        pass
 
 def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
@@ -137,21 +136,25 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
     samples = [sample for (_, sample) in files_sample_tuple]
     page_size = 100
     # split the samples in groups and download each one individually
-    with Pool(processes=PROCESS_POOL_SIZE) as pool:
-        # for each sample we need it's latest quant.sf file we don't want to query the db
-        # for all of them, so we do it in groups of 100, and then download all of the computed_files
-        # in parallel
-        for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
-            sample_and_computed_files = []
-            for sample in sample_page:
-                latest_computed_file = sample.get_most_recent_quant_sf_file()
-                if not latest_computed_file: continue
-                output_file_path = output_path + sample.accession_code + "_quant.sf"
-                sample_and_computed_files.append((output_file_path, latest_computed_file))
+    pool = Pool(processes=PROCESS_POOL_SIZE)
 
-            # download this set of files, this will take a few seconds that should also help the db recover
-            pool.map(downlad_computed_file, sample_and_computed_files)
-            num_samples += len(sample_and_computed_files)
+    # for each sample we need it's latest quant.sf file we don't want to query the db
+    # for all of them, so we do it in groups of 100, and then download all of the computed_files
+    # in parallel
+    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
+        sample_and_computed_files = []
+        for sample in sample_page:
+            latest_computed_file = sample.get_most_recent_quant_sf_file()
+            if not latest_computed_file: continue
+            output_file_path = output_path + sample.accession_code + "_quant.sf"
+            sample_and_computed_files.append((output_file_path, latest_computed_file))
+
+        # download this set of files, this will take a few seconds that should also help the db recover
+        pool.map(downlad_computed_file, sample_and_computed_files)
+        num_samples += len(sample_and_computed_files)
+
+    pool.close()
+    pool.join()
 
     return num_samples
 
