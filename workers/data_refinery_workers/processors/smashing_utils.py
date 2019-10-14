@@ -39,7 +39,7 @@ logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
 
-
+MULTIPROCESSING_WORKER_COUNT = max(1, multiprocessing.cpu_count()/2 - 1)
 MULTIPROCESSING_CHUNK_SIZE = 2000
 
 
@@ -272,40 +272,48 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
 
-    def get_frame_inputs():
-        """Helper method to create a generator."""
-        for index, (computed_file, sample) in enumerate(input_files):
-            # Don't pass job_context to worker threads because
-            # for some reason it causes them to open database
-            # connections. Not yet sure why...
-            yield (
-                job_context["work_dir"],
-                computed_file,
-                sample.accession_code,
-                job_context['dataset'].id,
-                job_context['dataset'].aggregate_by,
-                index,
-                job_context["job"].id
-            )
-
-    frame_inputs = get_frame_inputs()
-
-    processed_frames = map(process_frame, frame_inputs)
-
     # Build up a list of microarray frames and a list of
-    # rnaseq frames and then combine them so they're sorted
-    # out.
+    # rnaseq frames.
     job_context['microarray_frames'] = []
     job_context['rnaseq_frames'] = []
 
-    for frame in processed_frames:
-        if frame['technology'] == 'microarray':
-            job_context['microarray_frames'].append(frame['dataframe'])
-        elif frame['technology'] == 'rnaseq':
-            job_context['rnaseq_frames'].append(frame['dataframe'])
+    # take one fewer than 1/2 the total available threads
+    # also make the minimum threads 1
+    worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+    chunk_of_frames = []
+    for index, (computed_file, sample) in enumerate(input_files):
+
+        # Create a tuple containing the inputs for process_frame.
+        frame_input = (
+            job_context["work_dir"],
+            computed_file,
+            sample.accession_code,
+            job_context['dataset'].id,
+            job_context['dataset'].aggregate_by,
+            index,
+            job_context["job"].id
+        )
+
+        chunk_of_frames.append(frame_input)
+
+        # Make sure to handle the last chunk even if it's not a full chunk.
+        if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
+            processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
+            chunk_of_frames = []
+
+            for frame in processed_chunk:
+                if frame['technology'] == 'microarray':
+                    job_context['microarray_frames'].append(frame['dataframe'])
+                elif frame['technology'] == 'rnaseq':
+                    job_context['rnaseq_frames'].append(frame['dataframe'])
+
+                if frame['unsmashable']:
+                    job_context['unsmashable_files'].append(frame['unsmashable_file'])
+
+    # clean up the pool when we are done
+    worker_pool.close()
+    worker_pool.join()
 
     job_context['num_samples'] = job_context['num_samples'] \
                                  + len(job_context['microarray_frames'])
