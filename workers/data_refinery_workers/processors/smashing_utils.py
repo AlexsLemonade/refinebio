@@ -39,7 +39,7 @@ logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
 
-
+MULTIPROCESSING_WORKER_COUNT = max(1, multiprocessing.cpu_count()/2 - 1)
 MULTIPROCESSING_CHUNK_SIZE = 2000
 
 
@@ -288,9 +288,29 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
                 job_context["job"].id
             )
 
-    frame_inputs = get_frame_inputs()
+    def get_chunked_frame_inputs():
+        """Helper method to create generator for chunking get_frame_inputs
+        chunked into generators that return a slice with size
+        MULTIPROCESSING_CHUNK_SIZE"""
+        source = get_frame_inputs()
+        iterator = itertools.islice(source, MULTIPROCESSING_CHUNK_SIZE)
+        while True:
+            item = next(iterator, None)
+            if item is None:
+                return
+            source, iterator = itertools.tee(itertools.chain([item], source))
+            yield itertools.islice(iterator, MULTIPROCESSING_CHUNK_SIZE)
+            # consume the source iterator to keep track of current chunk
+            next(itertools.islice(
+                 source,
+                 MULTIPROCESSING_CHUNK_SIZE,
+                 MULTIPROCESSING_CHUNK_SIZE+1
+            ), None)
 
-    processed_frames = map(process_frame, frame_inputs)
+    # send a chunk to the pool and get a chunk from the pool
+    def get_processed_frames_with_pool(pool):
+        for chunk_of_frames in get_chunked_frame_inputs():
+            yield pool.map(process_frame, chunk_of_frames)
 
     # Build up a list of microarray frames and a list of
     # rnaseq frames and then combine them so they're sorted
@@ -298,7 +318,14 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     job_context['microarray_frames'] = []
     job_context['rnaseq_frames'] = []
 
-    for frame in processed_frames:
+    # take one fewer than 1/2 the total available threads
+    # also make the minimum threads 1
+    worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+
+    chunks_from_pool = get_processed_frames_with_pool(worker_pool)
+
+    # use the results from each frame from each chunk
+    for frame in itertools.chain.from_iterable(chunks_from_pool):
         if frame['technology'] == 'microarray':
             job_context['microarray_frames'].append(frame['dataframe'])
         elif frame['technology'] == 'rnaseq':
@@ -306,6 +333,10 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
 
         if frame['unsmashable']:
             job_context['unsmashable_files'].append(frame['unsmashable_file'])
+
+    # clean up the pool when we are done
+    worker_pool.close()
+    worker_pool.join()
 
     job_context['num_samples'] = job_context['num_samples'] \
                                  + len(job_context['microarray_frames'])
