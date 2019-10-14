@@ -273,7 +273,10 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
                              job_context["job"])
 
     def get_frame_inputs():
-        """Helper method to create a generator."""
+        """Helper method to create a generator object that when iterated on returns
+        a tuple for smashing_utils.process_frame method to process a single frame.
+        It returns a tuple becuase process_frame is called with multiprocessing.Pool.map
+        which restricts how arguments are passed"""
         for index, (computed_file, sample) in enumerate(input_files):
             # Don't pass job_context to worker threads because
             # for some reason it causes them to open database
@@ -289,25 +292,43 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
             )
 
     def get_chunked_frame_inputs():
-        """Helper method to create generator for chunking get_frame_inputs
-        chunked into generators that return a slice with size
-        MULTIPROCESSING_CHUNK_SIZE"""
+        """Helper method for chunking the generator retured from get_frame_inputs.
+        We want to be able to pass a single generator that returns a chunk of
+        frame_inputs to a multiprocessing.Pool.map and we want a generator that will
+        return those generators. This function returns a generator that returns the chunked
+        generator which returns a single frame_input tuple.
+        Essentially it returns a lazily loaded list of lists of tuples.
+        """
+        # get the resulting generator that returns all tuples for
+        # smashing_utils.process_frame
         source = get_frame_inputs()
+        # get a generator for the first chunk - at this point we might only have one
         iterator = itertools.islice(source, MULTIPROCESSING_CHUNK_SIZE)
         while True:
-            item = next(iterator, None)
-            if item is None:
+            # we need to look and see if there is a value in the chunk
+            # if there is nothing return None and we can exit this loop
+            first_item_in_next_chunk = next(iterator, None)
+            if first_item_in_next_chunk is None:
                 return
-            source, iterator = itertools.tee(itertools.chain([item], source))
+            # at this point we know that our chunk has at least one item in it
+            # we want to add back the result that we took out and reset what we had
+            source, iterator = itertools.tee(itertools.chain(
+                [first_item_in_next_chunk],
+                source
+            ))
+            # yield a generator for the current chunk which terminates
+            # at MULTIPROCESSING_CHUNK_SIZE
             yield itertools.islice(iterator, MULTIPROCESSING_CHUNK_SIZE)
-            # consume the source iterator to keep track of current chunk
+            # we want to move the source generator to start where
+            # the last chunk left off
             next(itertools.islice(
                  source,
                  MULTIPROCESSING_CHUNK_SIZE,
                  MULTIPROCESSING_CHUNK_SIZE+1
             ), None)
 
-    # send a chunk to the pool and get a chunk from the pool
+    # here we create a generator that as it consumes a chunk generator
+    # it passes that to a worker pool and yields the processed frames
     def get_processed_frames_with_pool(pool):
         for chunk_of_frames in get_chunked_frame_inputs():
             yield pool.map(process_frame, chunk_of_frames)
@@ -325,6 +346,8 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     chunks_from_pool = get_processed_frames_with_pool(worker_pool)
 
     # use the results from each frame from each chunk
+    # we are using itertool.chain.from_iterable as a
+    # way to flatten the results
     for frame in itertools.chain.from_iterable(chunks_from_pool):
         if frame['technology'] == 'microarray':
             job_context['microarray_frames'].append(frame['dataframe'])
