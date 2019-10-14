@@ -38,14 +38,13 @@ CURRENT_JOB = None
 def signal_handler(sig, frame):
     """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
-    if not CURRENT_JOB:
-        sys.exit(0)
-    else:
-        CURRENT_JOB.start_time = None
+    if CURRENT_JOB:
+        CURRENT_JOB.end_time = timezone.now()
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
         CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT: " + str(sig)
         CURRENT_JOB.save()
-        sys.exit(0)
+
+    sys.exit(0)
 
 
 def start_job(job_id: int) -> DownloaderJob:
