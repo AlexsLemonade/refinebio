@@ -704,7 +704,7 @@ def write_tsv_json(job_context):
             tsv_path = tsv_path.encode('ascii', 'ignore')
             tsv_paths.append(tsv_path)
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
                 dw.writeheader()
                 for sample_accession_code, sample_metadata in metadata['samples'].items():
                     if sample_accession_code in experiment_data['sample_accession_codes']:
@@ -721,7 +721,7 @@ def write_tsv_json(job_context):
             tsv_path = species_dir + "metadata_" + species + '.tsv'
             tsv_paths.append(tsv_path)
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
                 dw.writeheader()
                 i = 0
                 for sample_metadata in metadata['samples'].values():
@@ -753,7 +753,7 @@ def write_tsv_json(job_context):
         os.makedirs(all_dir, exist_ok=True)
         tsv_path = all_dir + 'metadata_ALL.tsv'
         with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-            dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+            dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
                 row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
