@@ -292,11 +292,11 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
             )
 
     def get_chunked_frame_inputs():
-        """Helper method for chunking the generator retured from get_frame_inputs.
+        """Helper method for chunking the generator results returned from get_frame_inputs.
         We want to be able to pass a single generator that returns a chunk of
         frame_inputs to a multiprocessing.Pool.map and we want a generator that will
         return those generators. This function returns a generator that returns the chunked
-        generator which returns a single frame_input tuple.
+        generator when iterated on which returns a single frame_input tuple when iterated on.
         Essentially it returns a lazily loaded list of lists of tuples.
         """
         # get the resulting generator that returns all tuples for
