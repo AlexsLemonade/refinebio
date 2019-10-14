@@ -13,6 +13,7 @@ import requests
 import psutil
 import logging
 import time
+from multiprocessing import Pool
 
 from botocore.exceptions import ClientError
 from datetime import timedelta
@@ -23,7 +24,7 @@ from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
 from sklearn import preprocessing
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
@@ -50,6 +51,7 @@ logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
 
+PROCESS_POOL_SIZE = max(1, int(psutil.cpu_count()/2 - 1))
 
 SCALERS = {
     'MINMAX': preprocessing.MinMaxScaler,
@@ -117,20 +119,45 @@ def _prepare_files(job_context: Dict) -> Dict:
     log_state("end prepare files", job_context["job"], start_prepare_files)
     return job_context
 
+def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
+    """ this function downloads the latest computed file. Receives a tuple with
+    the computed file and the path where it needs to be downloaded
+    This is used to parallelize downloading quantsf files. """
+    (latest_computed_file, output_file_path) = download_tuple
+    try:
+        latest_computed_file.get_synced_file_path(path=output_file_path)
+    except:
+        # Let's not fail if there's an error syncing one of the quant.sf files
+        logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
 
-def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
+def sync_quant_files(output_path, files_sample_tuple):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
         Returns the total number of samples that were included """
     num_samples = 0
-    for (_, sample) in files_sample_tuple:
-        latest_computed_file = sample.get_most_recent_quant_sf_file()
-        # we just want to output the quant.sf files
-        if not latest_computed_file: continue
-        accession_code = sample.accession_code
-        # copy file to the output path
-        output_file_path = output_path + accession_code + "_quant.sf"
-        num_samples += 1
-        latest_computed_file.get_synced_file_path(path=output_file_path)
+    samples = [sample for (_, sample) in files_sample_tuple]
+    page_size = 100
+    # split the samples in groups and download each one individually
+    pool = Pool(processes=PROCESS_POOL_SIZE)
+
+    # for each sample we need it's latest quant.sf file we don't want to query the db
+    # for all of them, so we do it in groups of 100, and then download all of the computed_files
+    # in parallel
+    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
+        sample_and_computed_files = []
+        for sample in sample_page:
+            latest_computed_file = sample.get_most_recent_quant_sf_file()
+            if not latest_computed_file:
+                continue
+            output_file_path = output_path + sample.accession_code + "_quant.sf"
+            sample_and_computed_files.append((latest_computed_file, output_file_path))
+
+        # download this set of files, this will take a few seconds that should also help the db recover
+        pool.map(downlad_computed_file, sample_and_computed_files)
+        num_samples += len(sample_and_computed_files)
+
+    pool.close()
+    pool.join()
+
     return num_samples
 
 def _inner_join(job_context: Dict) -> pd.DataFrame:
@@ -216,7 +243,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     if job_context['dataset'].quant_sf_only:
         outfile_dir = job_context["output_dir"] + key + "/"
         os.makedirs(outfile_dir, exist_ok=True)
-        job_context['num_samples'] += sync_quant_files(outfile_dir, input_files, job_context)
+        job_context['num_samples'] += sync_quant_files(outfile_dir, input_files)
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
