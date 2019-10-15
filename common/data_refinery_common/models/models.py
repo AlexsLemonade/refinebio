@@ -211,7 +211,8 @@ class Sample(models.Model):
         Note: We don't associate that file to the computed_files of this sample, that's
         why we have to go through the computational results. """
         return ComputedFile.objects\
-            .filter(result__in=self.results.all(), filename='quant.sf')\
+            .filter(result__in=self.results.all(), filename='quant.sf',
+                    s3_key__isnull=False, s3_bucket__isnull=False)\
             .order_by('-created_at')\
             .first()
 
