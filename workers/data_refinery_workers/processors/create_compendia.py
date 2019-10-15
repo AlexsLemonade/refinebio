@@ -57,7 +57,7 @@ def _prepare_input(job_context: Dict) -> Dict:
 
     job_context = smashing_utils.prepare_files(job_context)
     if job_context['job'].success is False:
-        smashing_utils.log_failure("Unable to run smashing_utils.prepare_files.")
+        smashing_utils.log_failure(job_context, "Unable to run smashing_utils.prepare_files.")
         return job_context
 
     # Compendia jobs only run for one organism, so we know the only
@@ -86,9 +86,6 @@ def _prepare_frames(job_context: Dict) -> Dict:
             job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
-
-        job_context['metadata'] = smashing_utils.compile_metadata(job_context)
-        smashing_utils.write_non_data_files(job_context)
 
     except Exception as e:
         logger.exception("Could not prepare frames for compendia.",
@@ -454,6 +451,7 @@ def create_compendia(job_id: int) -> None:
                                       _prepare_input,
                                       _prepare_frames,
                                       _perform_imputation,
+                                      smashing_utils.write_non_data_files,
                                       _create_result_objects,
                                       utils.end_job])
     return job_context

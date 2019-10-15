@@ -1663,10 +1663,9 @@ class AggregationTestCase(TransactionTestCase):
 
         ds = Dataset()
         ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812', 'GSM999']}
-        ds.aggregate_by = 'ALL' # [ALL or SPECIES or EXPERIMENT]
-        ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
+        ds.aggregate_by = 'ALL'
+        ds.scale_by = 'NONE'
         ds.email_address = "null@derp.com"
-        #ds.email_address = "miserlou+heyo@gmail.com"
         ds.quantile_normalize = False
         ds.save()
 

@@ -3,6 +3,7 @@
 import csv
 import itertools
 import logging
+import math
 import multiprocessing
 import os
 import psutil
@@ -26,6 +27,9 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
 
+# Use floor here because multiprocessing raises an exception if this isn't an int.
+MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
+MULTIPROCESSING_CHUNK_SIZE = 2000
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -38,9 +42,6 @@ BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
-
-
-MULTIPROCESSING_CHUNK_SIZE = 2000
 
 
 def log_failure(job_context: Dict, failure_reason: str) -> Dict:
@@ -272,40 +273,48 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
 
-    def get_frame_inputs():
-        """Helper method to create a generator."""
-        for index, (computed_file, sample) in enumerate(input_files):
-            # Don't pass job_context to worker threads because
-            # for some reason it causes them to open database
-            # connections. Not yet sure why...
-            yield (
-                job_context["work_dir"],
-                computed_file,
-                sample.accession_code,
-                job_context['dataset'].id,
-                job_context['dataset'].aggregate_by,
-                index,
-                job_context["job"].id
-            )
-
-    frame_inputs = get_frame_inputs()
-
-    processed_frames = map(process_frame, frame_inputs)
-
     # Build up a list of microarray frames and a list of
-    # rnaseq frames and then combine them so they're sorted
-    # out.
+    # rnaseq frames.
     job_context['microarray_frames'] = []
     job_context['rnaseq_frames'] = []
 
-    for frame in processed_frames:
-        if frame['technology'] == 'microarray':
-            job_context['microarray_frames'].append(frame['dataframe'])
-        elif frame['technology'] == 'rnaseq':
-            job_context['rnaseq_frames'].append(frame['dataframe'])
+    # take one fewer than 1/2 the total available threads
+    # also make the minimum threads 1
+    worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+    chunk_of_frames = []
+    for index, (computed_file, sample) in enumerate(input_files):
+
+        # Create a tuple containing the inputs for process_frame.
+        frame_input = (
+            job_context["work_dir"],
+            computed_file,
+            sample.accession_code,
+            job_context['dataset'].id,
+            job_context['dataset'].aggregate_by,
+            index,
+            job_context["job"].id
+        )
+
+        chunk_of_frames.append(frame_input)
+
+        # Make sure to handle the last chunk even if it's not a full chunk.
+        if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
+            processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
+            chunk_of_frames = []
+
+            for frame in processed_chunk:
+                if frame['technology'] == 'microarray':
+                    job_context['microarray_frames'].append(frame['dataframe'])
+                elif frame['technology'] == 'rnaseq':
+                    job_context['rnaseq_frames'].append(frame['dataframe'])
+
+                if frame['unsmashable']:
+                    job_context['unsmashable_files'].append(frame['unsmashable_file'])
+
+    # clean up the pool when we are done
+    worker_pool.close()
+    worker_pool.join()
 
     job_context['num_samples'] = job_context['num_samples'] \
                                  + len(job_context['microarray_frames'])
@@ -487,9 +496,11 @@ def write_non_data_files(job_context: Dict) -> Dict:
 
     This include LICENSE.txt and README.md files and the metadata.
 
-    Expects the key `metadata` in job_context to be populated with all
+    Adds the key `metadata` to job_context and populates it with all
     the metadata that needs to be written.
     """
+    job_context['metadata'] = compile_metadata(job_context)
+
     shutil.copy("README_DATASET.md", job_context["output_dir"] + "README.md")
     shutil.copy("LICENSE_DATASET.txt", job_context["output_dir"] + "LICENSE.TXT")
 
@@ -701,7 +712,7 @@ def write_tsv_json(job_context):
             tsv_path = tsv_path.encode('ascii', 'ignore')
             tsv_paths.append(tsv_path)
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
                 dw.writeheader()
                 for sample_accession_code, sample_metadata in metadata['samples'].items():
                     if sample_accession_code in experiment_data['sample_accession_codes']:
@@ -718,13 +729,23 @@ def write_tsv_json(job_context):
             tsv_path = species_dir + "metadata_" + species + '.tsv'
             tsv_paths.append(tsv_path)
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+                # See http://www.lucainvernizzi.net/blog/2015/08/03/8x-speed-up-for-python-s-csv-dictwriter/
+                # about extrasaction.
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
                 dw.writeheader()
+                i = 0
                 for sample_metadata in metadata['samples'].values():
                     if sample_metadata.get('refinebio_organism', '') == species:
                         row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
                         samples_in_species.append(sample_metadata)
+
+                    i = i + 1
+                    if i % 1000 == 0:
+                        progress_template = ('Done with {0} out of {1} lines of metadata '
+                                             'for species {2}')
+                        log_state(progress_template.format(i, len(metadata['samples']), species),
+                                  job_context['job'])
 
             # Writes a json file for current species:
             if len(samples_in_species):
@@ -742,7 +763,7 @@ def write_tsv_json(job_context):
         os.makedirs(all_dir, exist_ok=True)
         tsv_path = all_dir + 'metadata_ALL.tsv'
         with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-            dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+            dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
                 row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
