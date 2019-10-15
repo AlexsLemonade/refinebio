@@ -31,6 +31,7 @@ class PipelineEnum(Enum):
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"
     CREATE_COMPENDIA = "Compendia"
+    CREATE_QUANTPENDIA = "Quantpendia"
 
 
 @unique
@@ -108,6 +109,12 @@ class ProcessorEnum(Enum):
         "yml_file": "compendia.yml"
     }
 
+    CREATE_QUANTPENDIA = {
+        "name": "Quantpendia Creation",
+        "docker_img": "dr_compendia",
+        "yml_file": "compendia.yml"
+    }
+
     @classmethod
     def has_key(cls, key):
         """Class method that tells whether a certain key exists."""
@@ -130,6 +137,7 @@ class ProcessorPipeline(Enum):
     JANITOR = "JANITOR"
     NONE = "NONE"
     CREATE_COMPENDIA = "CREATE_COMPENDIA"
+    CREATE_QUANTPENDIA = "CREATE_COMPENDIA"
 
 
 SMASHER_JOB_TYPES = [
