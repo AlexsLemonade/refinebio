@@ -1362,16 +1362,7 @@ def cleanup_the_queue():
             # `num_retries` will be decremented when the job receives the SIGKILL
             try:
                 nomad_client.job.deregister_job(job["ID"], purge=True)
-
-                if job_type == DOWNLOADER:
-                    job_record = DownloaderJob.objects.filter(nomad_job_id=job["ID"]).first()
-                    # If it's a downloader job, then it doesn't
-                    # have to run on the volume it was assigned
-                    # to. We can let the foreman reassign it.
-                    job_record.volume_index = None
-                    job_record.save()
-
-                logger.info('Foreman Killed nomad job because it did not have a volume assigned',
+                logger.info('Foreman Killed nomad job because it had a volume that was not active',
                             nomad_job_id=job['ID'], job_type=job_type)
                 num_jobs_killed += 1
             except:
