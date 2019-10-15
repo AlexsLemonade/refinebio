@@ -1024,7 +1024,7 @@ class ComputedFile(models.Model):
         os.makedirs(target_directory, exist_ok=True)
 
         if not self.s3_bucket or not self.s3_key:
-            raise Exception('Tried to download a computed file with no s3_bucket or s3_key')
+            raise ValueError('Tried to download a computed file with no s3_bucket or s3_key')
 
         try:
             S3.download_file(
