@@ -237,7 +237,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-    start_smash = log_state("end build all frames", job_context["job"])
+    start_smash = log_state("start _smash_key for {}".format(key), job_context["job"])
 
     # Check if we need to copy the quant.sf files
     if job_context['dataset'].quant_sf_only:
@@ -345,6 +345,8 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     job_context['smash_outfile'] = outfile
     untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
+    log_state("end _smash_key for {}".format(key), job_context["job"], start_smash)
+
     return job_context
 
 
@@ -353,7 +355,7 @@ def _smash_all(job_context: Dict) -> Dict:
     """
     start_smash = log_state("start smash", job_context["job"])
     # We have already failed - return now so we can send our fail email.
-    if job_context['dataset'].failure_reason not in ['', None]:
+    if job_context['job'].success is False:
         return job_context
 
     try:
@@ -405,7 +407,8 @@ def _upload(job_context: Dict) -> Dict:
 
     # There has been a failure already, don't try to upload anything.
     if not job_context.get("output_file", None):
-        logger.error("Was told to upload a smash result without an output_file.")
+        logger.error("Was told to upload a smash result without an output_file.",
+                     job_id=job_context['job'].id)
         return job_context
 
     try:
@@ -462,7 +465,7 @@ def _notify(job_context: Dict) -> Dict:
         dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
 
         # Send a notification to slack when a dataset fails to be processed
-        if job_context['job'].failure_reason not in ['', None]:
+        if job_context['job'].success is False:
             try:
                 requests.post(
                     "https://hooks.slack.com/services/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",
@@ -499,7 +502,7 @@ def _notify(job_context: Dict) -> Dict:
             CHARSET = "UTF-8"
 
 
-            if job_context['job'].failure_reason not in ['', None]:
+            if job_context['job'].success is False:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
 
@@ -569,10 +572,6 @@ def _notify(job_context: Dict) -> Dict:
 
             job_context["dataset"].email_sent = True
             job_context["dataset"].save()
-
-    # Handle non-cloud too
-    if job_context['job'].failure_reason:
-        job_context['success'] = False
 
     return job_context
 
