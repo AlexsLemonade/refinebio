@@ -3,6 +3,7 @@
 import csv
 import itertools
 import logging
+import math
 import multiprocessing
 import os
 import psutil
@@ -39,7 +40,7 @@ logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
 
-MULTIPROCESSING_WORKER_COUNT = max(1, multiprocessing.cpu_count()/2 - 1)
+MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 MULTIPROCESSING_CHUNK_SIZE = 2000
 
 
