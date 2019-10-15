@@ -3,6 +3,7 @@
 import csv
 import itertools
 import logging
+import math
 import multiprocessing
 import os
 import psutil
@@ -26,6 +27,9 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
 
+# Use floor here because multiprocessing raises an exception if this isn't an int.
+MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
+MULTIPROCESSING_CHUNK_SIZE = 2000
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -38,9 +42,6 @@ BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
-
-MULTIPROCESSING_WORKER_COUNT = max(1, multiprocessing.cpu_count()/2 - 1)
-MULTIPROCESSING_CHUNK_SIZE = 2000
 
 
 def log_failure(job_context: Dict, failure_reason: str) -> Dict:
