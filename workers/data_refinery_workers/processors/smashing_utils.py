@@ -44,6 +44,16 @@ logger = get_and_configure_logger(__name__)
 logger.setLevel(logging.getLevelName('DEBUG'))
 
 
+def log_failure(job_context: Dict, failure_reason: str) -> Dict:
+    if not job_context["job"].failure_reason:
+        job_context["job"].failure_reason = failure_reason
+
+    job_context['success'] = False
+    logger.warn(job_context["job"].failure_reason, job_id=job_context['job'].id)
+
+    return job_context
+
+
 def log_state(message, job, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
         process = psutil.Process(os.getpid())
