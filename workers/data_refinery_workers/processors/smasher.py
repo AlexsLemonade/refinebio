@@ -371,7 +371,6 @@ def _smash_all(job_context: Dict) -> Dict:
         for key, input_files in job_context['input_files'].items():
             job_context = _smash_key(job_context, key, input_files)
 
-        job_context['metadata'] = smashing_utils.compile_metadata(job_context)
         smashing_utils.write_non_data_files(job_context)
 
         # Finally, compress all files into a zip
