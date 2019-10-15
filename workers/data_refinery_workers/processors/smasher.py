@@ -237,7 +237,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-    start_smash = log_state("end build all frames", job_context["job"])
+    start_smash = log_state("start _smash_key for {}".format(key), job_context["job"])
 
     # Check if we need to copy the quant.sf files
     if job_context['dataset'].quant_sf_only:
@@ -344,6 +344,8 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     outfile = outfile_dir + key + ".tsv"
     job_context['smash_outfile'] = outfile
     untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
+
+    log_state("end _smash_key for {}".format(key), job_context["job"], start_smash)
 
     return job_context
 
