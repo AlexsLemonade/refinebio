@@ -36,11 +36,16 @@ def remove_invalid_qn_targets(min_samples, dry_run):
             logger.debug('Remove all QN targets for organism', organism=organism)
 
     if not dry_run:
-        # delete all invalid qn targets
+        # delete all invalid qn targets from S3
         qn_targets = ComputationalResult.objects.filter(id__in=qn_target_ids)
         for qn_target in qn_targets:
-            qn_target.remove_from_s3()
+            for computed_file in qn_target.computedfile_set.all():
+                computed_file.delete_s3_file()
 
         ComputationalResult.objects.filter(id__in=qn_target_ids).delete()
     else:
         logger.info("Would have removed computational results with ids %s", str(qn_target_ids))
+        computed_file_ids = ComputationalResult.objects\
+            .filter(id__in=qn_target_ids)\
+            .values_list('computedfile_set__id', flat=True)
+        logger.info("Would have removed computed files with ids %s", str(computed_file_ids))
