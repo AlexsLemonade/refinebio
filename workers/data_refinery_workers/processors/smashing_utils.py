@@ -448,6 +448,12 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         new_merged = pd.DataFrame(ar,
                                   columns=job_context['merged_no_qn'].columns,
                                   index=job_context['merged_no_qn'].index)
+
+        # Remove un-quantiled normalized matrix from job_context
+        # because we no longer need it.
+        job_context.pop('merged_no_qn')
+
+        # And add the quantile normalized matrix to job_context.
         job_context['merged_qn'] = new_merged
     return job_context
 
