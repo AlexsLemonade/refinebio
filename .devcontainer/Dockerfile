@@ -39,7 +39,8 @@ RUN \
   procps \
   unzip \
   jq \
-  iproute2
+  iproute2 \
+  exuberant-ctags
 
 # Docker on Docker
 RUN apt-get update \
