@@ -70,16 +70,8 @@ class Command(BaseCommand):
 
 
 def get_compendia_organisms():
-    """ We start with the organisms that have QN targets associated with them.
-    Here we are filtering out the ones with invalid QN targets. This can be removed once
-    https://github.com/AlexsLemonade/refinebio/issues/1757 is addressed """
-    # We have some invalid qn targets, that's why we check that each organism needs to have
-    # at least 100 processed samples. This condition can be removed once
-    # https://github.com/AlexsLemonade/refinebio/issues/1757 is addressed
-    return Organism.objects\
-        .filter(qn_target__isnull=False)\
-        .annotate(num_samples=Count('sample', filter=Q(sample__is_processed=True, sample__technology='MICROARRAY'), distinct=True))\
-        .filter(num_samples__gt=100)
+    """ We start with the organisms that have QN targets associated with them. """
+    return Organism.objects.filter(qn_target__isnull=False)
 
 
 def group_organisms_by_biggest_platform(target_organisms):
