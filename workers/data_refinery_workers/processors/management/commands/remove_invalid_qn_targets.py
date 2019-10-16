@@ -1,7 +1,6 @@
 
 from django.core.management.base import BaseCommand
 from data_refinery_common.models import (
-    Sample,
     ComputationalResult,
     ComputationalResultAnnotation,
     Organism
@@ -26,21 +25,22 @@ class Command(BaseCommand):
         remove_invalid_qn_targets(options['min'], options['dry_run'])
 
 def remove_invalid_qn_targets(min_samples, dry_run):
-    computational_result_annotations = ComputationalResultAnnotation.objects\
-        .filter(data__is_qn=True)\
-        .order_by('-created_at')
     qn_target_ids = []
-    for annotation in computational_result_annotations:
-        organism = Organism.objects.get(id=annotation.data.organism_id)
+
+    for organism in Organism.object.filter(qn_target__isnull=False):
         if not organism_can_have_qn_target(organism, min_samples):
-            # remove the referenced QN Target because it shouldn't have a qn target
-            logger.debug('Removing QN Target because it does not have enough samples on its biggest microarray platform',
-                         computational_result=annotation.result,
-                         organism=organism)
-            qn_target_ids.append(annotation.result.id)
+            # Remove all qn targets associated with this object
+            qn_target_ids += ComputationalResultAnnotation.objects\
+                                .filter(data__is_qn=True, organism_id=organism.id)\
+                                .values_list('result__id', flat=True)
+            logger.debug('Remove all QN targets for organism', organism=organism)
 
     if not dry_run:
         # delete all invalid qn targets
+        qn_targets = ComputationalResult.objects.filter(id__in=qn_target_ids)
+        for qn_target in qn_targets:
+            qn_target.remove_from_s3()
+
         ComputationalResult.objects.filter(id__in=qn_target_ids).delete()
     else:
         logger.info("Would have removed computational results with ids %s", str(qn_target_ids))
