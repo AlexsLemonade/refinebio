@@ -137,13 +137,14 @@ class ProcessorPipeline(Enum):
     JANITOR = "JANITOR"
     NONE = "NONE"
     CREATE_COMPENDIA = "CREATE_COMPENDIA"
-    CREATE_QUANTPENDIA = "CREATE_COMPENDIA"
+    CREATE_QUANTPENDIA = "CREATE_QUANTPENDIA"
 
 
 SMASHER_JOB_TYPES = [
     ProcessorPipeline.SMASHER,
     ProcessorPipeline.QN_REFERENCE,
     ProcessorPipeline.CREATE_COMPENDIA,
+    ProcessorPipeline.CREATE_QUANTPENDIA,
 ]
 
 

@@ -279,6 +279,7 @@ def end_job(job_context: Dict, abort=False):
            and not (job_context["job"].pipeline_applied in [ProcessorPipeline.SMASHER.value,
                                                             ProcessorPipeline.QN_REFERENCE.value,
                                                             ProcessorPipeline.CREATE_COMPENDIA.value,
+                                                            ProcessorPipeline.CREATE_QUANTPENDIA.value,
                                                             ProcessorPipeline.JANITOR.value]):
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True

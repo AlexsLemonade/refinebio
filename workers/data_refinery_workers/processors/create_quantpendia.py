@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+from django.utils import timezone
 from typing import Dict, List, Tuple
 
 from data_refinery_common.job_lookup import PipelineEnum
@@ -28,6 +29,9 @@ def create_quantpendia(job_id: int) -> None:
 
 
 def download_files(job_context: Dict) -> Dict:
+    job_context['time_start'] = timezone.now()
+    _make_dirs(job_context)
+
     num_samples = 0
     for key, samples in job_context['samples'].items():
         outfile_dir = job_context['output_dir'] + key + '/'
@@ -36,6 +40,9 @@ def download_files(job_context: Dict) -> Dict:
         num_samples += smashing_utils.sync_quant_files(outfile_dir, samples)
 
     job_context['num_samples'] = num_samples
+    job_context['time_end'] = timezone.now()
+    job_context['formatted_command'] = "create_quantpendia.py"
+
     return job_context
 
 
@@ -57,10 +64,9 @@ def create_result_objects(job_context: Dict) -> Dict:
     result.save()
 
     # Create the resulting archive
+    smashing_utils.write_non_data_files(job_context)
     final_zip_base = SMASHING_DIR + str(job_context["dataset"].pk) + "_compendia"
-
     shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
-    shutil.copy("/home/user/LICENSE_DATASET.txt", job_context["output_dir"] + "/LICENSE.TXT")
 
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
@@ -98,9 +104,17 @@ def create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 
-def _get_organisms(aggregated_samples: List[Tuple[str, Sample]]) -> List[Organism]:
+def _make_dirs(job_context: Dict):
+    dataset_id = str(job_context["dataset"].pk)
+    job_context["work_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
+    os.makedirs(job_context["work_dir"])
+    job_context["output_dir"] = job_context["work_dir"] + "output/"
+    os.makedirs(job_context["output_dir"])
+
+
+def _get_organisms(aggregated_samples: Dict[str, Sample]) -> List[Organism]:
     organisms = set()
-    for key, samples in aggregated_samples:
+    for key, samples in aggregated_samples.items():
         organism_ids = samples.values_list('organism__id', flat=True).distinct()
         organisms.update(organism_ids)
 
