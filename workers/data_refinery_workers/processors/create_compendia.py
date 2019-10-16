@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import psutil
@@ -154,6 +155,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
                                              copy=False,
                                              sort=True)
 
+    gc.collect()
+
     log_state("end microarray concatenation", job_context["job"], microarray_start)
     rnaseq_start = log_state("start rnaseq concatenation", job_context["job"])
 
@@ -165,6 +168,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
                                          join='outer',
                                          copy=False,
                                          sort=True)
+
+    gc.collect()
 
     log_state("end rnaseq concatenation", job_context["job"], rnaseq_start)
     rnaseq_row_sums_start = log_state("start rnaseq row sums", job_context["job"])
