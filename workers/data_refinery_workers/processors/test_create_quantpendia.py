@@ -97,7 +97,7 @@ class QuantpendiaTestCase(TransactionTestCase):
 
         self.assertTrue(os.path.exists(final_context['output_dir'] + '/GSE51088/GSM1237818_quant.sf'))
         self.assertTrue(os.path.exists(final_context['output_dir'] + '/README.md'))
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/LICENSE.txt'))
+        self.assertTrue(os.path.exists(final_context['output_dir'] + '/LICENSE.TXT'))
         self.assertTrue(os.path.exists(final_context['output_dir'] + '/aggregated_metadata.json'))
 
         self.assertTrue(final_context['metadata']['quant_sf_only'])
