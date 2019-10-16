@@ -147,7 +147,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Combine all microarray samples with a full outer join to form a
     # microarray_expression_matrix (a DataFrame).
-    microarray_expression_matrix = pd.concat(job_context['microarray_frames'],
+    microarray_expression_matrix = pd.concat(job_context.pop('microarray_frames'),
                                              axis=1,
                                              keys=None,
                                              join='outer',
@@ -159,7 +159,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Combine all RNA-seq samples (lengthScaledTPM) with a full outer
     # join to form a rnaseq_expression_matrix (a DataFrame).
-    rnaseq_expression_matrix = pd.concat(job_context['rnaseq_frames'],
+    rnaseq_expression_matrix = pd.concat(job_context.pop('rnaseq_frames'),
                                          axis=1,
                                          keys=None,
                                          join='outer',
