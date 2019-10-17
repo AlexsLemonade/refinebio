@@ -247,7 +247,10 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
-    job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
+    job_context = smashing_utils.process_frames_for_key(key,
+                                                        input_files,
+                                                        job_context,
+                                                        merge_strategy='inner')
 
     # Combine the two technologies into a single list of dataframes.
     ## Extend one list rather than adding the two together so we don't

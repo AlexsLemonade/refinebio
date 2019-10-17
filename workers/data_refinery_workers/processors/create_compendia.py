@@ -84,7 +84,10 @@ def _prepare_frames(job_context: Dict) -> Dict:
 
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
-            job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
+            job_context = smashing_utils.process_frames_for_key(key,
+                                                                input_files,
+                                                                job_context,
+                                                                merge_strategy='outer')
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
 
@@ -155,6 +158,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
                                              copy=False,
                                              sort=True)
 
+    # Should happen automatically but if we start allocating more data
+    # before this actually fires we're gonna increase our peak RAM
+    # usage.
     gc.collect()
 
     log_state("end microarray concatenation", job_context["job"], microarray_start)
@@ -169,6 +175,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
                                          copy=False,
                                          sort=True)
 
+    # Should happen automatically but if we start allocating more data
+    # before this actually fires we're gonna increase our peak RAM
+    # usage.
     gc.collect()
 
     log_state("end rnaseq concatenation", job_context["job"], rnaseq_start)
