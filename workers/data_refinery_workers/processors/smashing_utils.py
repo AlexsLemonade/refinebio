@@ -350,23 +350,25 @@ def process_frames_for_key(key: str,
             # Merge the two types of frames from the chunk into only
             # two data frames so the gene identifiers aren't
             # duplicated for each sample.
-            job_context['microarray_frames'].append(
-                pd.concat(microarray_frames,
-                          axis=1,
-                          keys=None,
-                          join=merge_strategy,
-                          copy=False,
-                          sort=True))
+            if len(microarray_frames) > 0:
+                job_context['microarray_frames'].append(
+                    pd.concat(microarray_frames,
+                              axis=1,
+                              keys=None,
+                              join=merge_strategy,
+                              copy=False,
+                              sort=True))
 
             del microarray_frames
 
-            job_context['rnaseq_frames'].append(
-                pd.concat(rnaseq_frames,
-                          axis=1,
-                          keys=None,
-                          join=merge_strategy,
-                          copy=False,
-                          sort=True))
+            if len(rnaseq_frames) > 0:
+                job_context['rnaseq_frames'].append(
+                    pd.concat(rnaseq_frames,
+                              axis=1,
+                              keys=None,
+                              join=merge_strategy,
+                              copy=False,
+                              sort=True))
 
             del rnaseq_frames
 
