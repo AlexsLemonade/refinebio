@@ -91,6 +91,9 @@ def prepare_files(job_context: Dict) -> Dict:
 
         job_context['input_files'][key] = smashable_files
 
+    job_context['num_input_files'] = len(job_context['input_files'])
+    job_context['group_by_keys'] = list(job_context['input_files'].keys())
+
     if not found_files:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
@@ -337,6 +340,13 @@ def process_frames_for_key(key: str,
                 elif frame['unsmashable']:
                     job_context['unsmashable_files'].append(frame['unsmashable_file'])
 
+            del processed_chunk
+
+            job_context['num_samples'] = job_context['num_samples'] \
+                                         + len(job_context['microarray_frames'])
+            job_context['num_samples'] = job_context['num_samples'] \
+                                         + len(job_context['rnaseq_frames'])
+
             # Merge the two types of frames from the chunk into only
             # two data frames so the gene identifiers aren't
             # duplicated for each sample.
@@ -348,6 +358,8 @@ def process_frames_for_key(key: str,
                           copy=False,
                           sort=True))
 
+            del microarray_frames
+
             job_context['rnaseq_frames'].append(
                 pd.concat(rnaseq_frames,
                           axis=1,
@@ -356,13 +368,11 @@ def process_frames_for_key(key: str,
                           copy=False,
                           sort=True))
 
+            del rnaseq_frames
+
     # clean up the pool when we are done
     worker_pool.close()
     worker_pool.join()
-
-    job_context['num_samples'] = job_context['num_samples'] \
-                                 + len(job_context['microarray_frames'])
-    job_context['num_samples'] = job_context['num_samples'] + len(job_context['rnaseq_frames'])
 
     log_state("set frames for key {}".format(key), job_context["job"], start_frames)
 
@@ -773,7 +783,7 @@ def write_tsv_json(job_context):
     # Per-Species Metadata
     elif job_context["dataset"].aggregate_by == "SPECIES":
         tsv_paths = []
-        for species in job_context['input_files'].keys():
+        for species in job_context['group_by_keys']:
             species_dir = job_context["output_dir"] + species + '/'
             os.makedirs(species_dir, exist_ok=True)
             samples_in_species = []
