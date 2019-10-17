@@ -120,15 +120,12 @@ def prepare_files(job_context: Dict) -> Dict:
 
 def _load_and_sanitize_file(computed_file_path):
     """ Read and sanitize a computed file """
-    with open(computed_file_path, 'r') as input_file:
-        header = input_file.readline().strip()
 
     data = pd.read_csv(computed_file_path,
                        sep='\t',
                        header=0,
                        index_col=0,
-                       error_bad_lines=False,
-                       dtype={header: np.float32})
+                       error_bad_lines=False)
 
     # Strip any funky whitespace
     data.columns = data.columns.str.strip()
