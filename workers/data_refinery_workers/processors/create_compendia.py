@@ -64,7 +64,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     # Compendia jobs only run for one organism, so we know the only
     # key will be the organism name, unless of course we've already failed.
     if job_context['job'].success is not False:
-        job_context["organism_name"] = list(job_context['input_files'].keys())[0]
+        job_context["organism_name"] = job_context['group_by_keys'][0]
 
     log_state("prepare input done", job_context["job"], start_time)
     return job_context
@@ -83,8 +83,11 @@ def _prepare_frames(job_context: Dict) -> Dict:
                      job_id=job_context['job'].id)
 
         # Once again, `key` is either a species name or an experiment accession
-        for key, input_files in job_context['input_files'].items():
-            job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
+        for key, input_files in job_context.pop('input_files').items():
+            job_context = smashing_utils.process_frames_for_key(key,
+                                                                input_files,
+                                                                job_context,
+                                                                merge_strategy='outer')
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
 
@@ -92,7 +95,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
         logger.exception("Could not prepare frames for compendia.",
                          dataset_id=job_context['dataset'].id,
                          processor_job_id=job_context['job_id'],
-                         num_input_files=len(job_context['input_files']))
+                         num_input_files=job_context['num_input_files'])
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
@@ -155,6 +158,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
                                              copy=False,
                                              sort=True)
 
+    # Should happen automatically but if we start allocating more data
+    # before this actually fires we're gonna increase our peak RAM
+    # usage.
     gc.collect()
 
     log_state("end microarray concatenation", job_context["job"], microarray_start)
@@ -169,6 +175,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
                                          copy=False,
                                          sort=True)
 
+    # Should happen automatically but if we start allocating more data
+    # before this actually fires we're gonna increase our peak RAM
+    # usage.
     gc.collect()
 
     log_state("end rnaseq concatenation", job_context["job"], rnaseq_start)
@@ -200,6 +209,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
     log_state("actually calling drop()", job_context["job"])
 
     filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
+
+    del rows_to_filter
 
     log_state("end drop all rows", job_context["job"], drop_start)
     log2_start = log_state("start log2", job_context["job"])
