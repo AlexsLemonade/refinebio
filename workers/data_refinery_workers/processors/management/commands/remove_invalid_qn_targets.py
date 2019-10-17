@@ -31,7 +31,7 @@ def remove_invalid_qn_targets(min_samples, dry_run):
         if not organism_can_have_qn_target(organism, min_samples):
             # Remove all qn targets associated with this object
             qn_target_ids += ComputationalResultAnnotation.objects\
-                                .filter(data__is_qn=True, organism_id=organism.id)\
+                                .filter(data__is_qn=True, data__organism_id=organism.id)\
                                 .values_list('result__id', flat=True)
             logger.debug('Remove all QN targets for organism', organism=organism)
 
