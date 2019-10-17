@@ -560,6 +560,11 @@ class ComputationalResult(models.Model):
         self.last_modified = current_time
         return super(ComputationalResult, self).save(*args, **kwargs)
 
+    def remove_computed_files_from_s3(self):
+        """ Removes all associated computed files from S3. Use this before deleting a computational result. """
+        for computed_file in self.computedfile_set.all():
+                computed_file.delete_s3_file()
+
 
 class ComputationalResultAnnotation(models.Model):
     """ Non-standard information associated with an ComputationalResult """
@@ -1128,12 +1133,16 @@ class ComputedFile(models.Model):
 
         try:
             S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
-            return True
         except:
             logger.exception("Failed to delete S3 object for Computed File.",
                              computed_file=self.id,
                              s3_object=self.s3_key)
             return False
+
+        self.s3_key = None
+        self.s3_bucket = None
+        self.save()
+        return True
 
     def get_synced_file_path(self, force=False, path=None):
         """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
