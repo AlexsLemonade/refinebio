@@ -1,6 +1,5 @@
-import os
-
-from django.test import TransactionTestCase, tag
+from django.test import TransactionTestCase
+from django.utils import timezone
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (ComputationalResult, ComputedFile,
@@ -10,13 +9,26 @@ from data_refinery_common.models import (ComputationalResult, ComputedFile,
                                          ProcessorJobDatasetAssociation,
                                          Sample, SampleComputedFileAssociation,
                                          SampleResultAssociation)
-from data_refinery_workers.processors.create_quantpendia import \
-    create_quantpendia
+from data_refinery_foreman.surveyor.test_end_to_end import wait_for_job
+
+from .create_compendia import create_job_for_organism
 
 
-class QuantpendiaTestCase(TransactionTestCase):
-    @tag("compendia")
-    def test_create_quantpendia(self):
+class CompendiaCommandTestCase(TransactionTestCase):
+    def test_quantpendia_command(self):
+        self.make_test_data()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        start_time = timezone.now()
+        compendia_job = create_job_for_organism(homo_sapiens, True)
+        wait_for_job(compendia_job, ProcessorJob, start_time)
+
+        # assert we have a quantpendia for human
+        quantpendias = ComputedFile.objects.filter(is_compendia=True, quant_sf_only=True, compendia_organism=homo_sapiens).first()
+        self.assertTrue(quantpendias)
+
+    def make_test_data(self):
         job = ProcessorJob()
         job.pipeline_applied = ProcessorPipeline.CREATE_QUANTPENDIA.value
         job.save()
@@ -81,14 +93,3 @@ class QuantpendiaTestCase(TransactionTestCase):
         pjda.processor_job = job
         pjda.dataset = ds
         pjda.save()
-
-        final_context = create_quantpendia(job.id)
-
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/GSE51088/GSM1237818_quant.sf'))
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/README.md'))
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/LICENSE.TXT'))
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/aggregated_metadata.json'))
-
-        self.assertTrue(final_context['metadata']['quant_sf_only'])
-        self.assertEqual(final_context['metadata']['num_samples'], 1)
-        self.assertEqual(final_context['metadata']['num_experiments'], 1)
