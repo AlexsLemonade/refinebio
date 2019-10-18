@@ -148,8 +148,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
     rnaseq_row_sums_start = log_state("start rnaseq row sums", job_context["job"])
 
+    # We potentially can have a microarray-only compendia but not a RNASeq-only compendia
     log2_rnaseq_matrix = None
-    if job_context['rnaseq_matrix']:
+    if job_context['rnaseq_matrix'] is not None:
         # Calculate the sum of the lengthScaledTPM values for each row
         # (gene) of the rnaseq_matrix (rnaseq_row_sums)
         rnaseq_row_sums = np.sum(job_context['rnaseq_matrix'], axis=1)
