@@ -207,7 +207,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform a full outer join of microarray_matrix and
     # log2_rnaseq_matrix; combined_matrix
-    if log2_rnaseq_matrix:
+    if log2_rnaseq_matrix is not None:
         combined_matrix = job_context.pop('microarray_matrix').merge(log2_rnaseq_matrix,
                                                                      how='outer',
                                                                      left_index=True,
