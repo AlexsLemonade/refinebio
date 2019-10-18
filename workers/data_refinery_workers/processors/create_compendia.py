@@ -146,103 +146,79 @@ def _perform_imputation(job_context: Dict) -> Dict:
     """
     imputation_start = log_state("start perform imputation", job_context["job"])
     job_context['time_start'] = timezone.now()
-
-    microarray_start = log_state("start microarray concatenation", job_context["job"])
-
-    # Combine all microarray samples with a full outer join to form a
-    # microarray_expression_matrix (a DataFrame).
-    microarray_expression_matrix = pd.concat(job_context.pop('microarray_frames'),
-                                             axis=1,
-                                             keys=None,
-                                             join='outer',
-                                             copy=False,
-                                             sort=True)
-
-    # Should happen automatically but if we start allocating more data
-    # before this actually fires we're gonna increase our peak RAM
-    # usage.
-    gc.collect()
-
-    log_state("end microarray concatenation", job_context["job"], microarray_start)
-    rnaseq_start = log_state("start rnaseq concatenation", job_context["job"])
-
-    # Combine all RNA-seq samples (lengthScaledTPM) with a full outer
-    # join to form a rnaseq_expression_matrix (a DataFrame).
-    rnaseq_expression_matrix = pd.concat(job_context.pop('rnaseq_frames'),
-                                         axis=1,
-                                         keys=None,
-                                         join='outer',
-                                         copy=False,
-                                         sort=True)
-
-    # Should happen automatically but if we start allocating more data
-    # before this actually fires we're gonna increase our peak RAM
-    # usage.
-    gc.collect()
-
-    log_state("end rnaseq concatenation", job_context["job"], rnaseq_start)
     rnaseq_row_sums_start = log_state("start rnaseq row sums", job_context["job"])
 
-    # Calculate the sum of the lengthScaledTPM values for each row
-    # (gene) of the rnaseq_expression_matrix (rnaseq_row_sums)
-    rnaseq_row_sums = np.sum(rnaseq_expression_matrix, axis=1)
+    # We potentially can have a microarray-only compendia but not a RNASeq-only compendia
+    log2_rnaseq_matrix = None
+    if job_context['rnaseq_matrix'] is not None:
+        # Calculate the sum of the lengthScaledTPM values for each row
+        # (gene) of the rnaseq_matrix (rnaseq_row_sums)
+        rnaseq_row_sums = np.sum(job_context['rnaseq_matrix'], axis=1)
 
-    log_state("end rnaseq row sums", job_context["job"], rnaseq_row_sums_start)
-    rnaseq_decile_start = log_state("start rnaseq decile", job_context["job"])
+        log_state("end rnaseq row sums", job_context["job"], rnaseq_row_sums_start)
+        rnaseq_decile_start = log_state("start rnaseq decile", job_context["job"])
 
-    # Calculate the 10th percentile of rnaseq_row_sums
-    rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
+        # Calculate the 10th percentile of rnaseq_row_sums
+        rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
 
-    log_state("end rnaseq decile", job_context["job"], rnaseq_decile_start)
-    drop_start = log_state("drop all rows", job_context["job"])
-    # Drop all rows in rnaseq_expression_matrix with a row sum < 10th
-    # percentile of rnaseq_row_sums; this is now
-    # filtered_rnaseq_matrix
-    # TODO: This is probably a better way to do this with `np.where`
-    rows_to_filter = []
-    for (x, sum_val) in rnaseq_row_sums.items():
-        if sum_val < rnaseq_tenth_percentile:
-            rows_to_filter.append(x)
+        log_state("end rnaseq decile", job_context["job"], rnaseq_decile_start)
+        drop_start = log_state("drop all rows", job_context["job"])
+        # Drop all rows in rnaseq_matrix with a row sum < 10th
+        # percentile of rnaseq_row_sums; this is now
+        # filtered_rnaseq_matrix
+        # TODO: This is probably a better way to do this with `np.where`
+        rows_to_filter = []
+        for (x, sum_val) in rnaseq_row_sums.items():
+            if sum_val < rnaseq_tenth_percentile:
+                rows_to_filter.append(x)
 
-    del rnaseq_row_sums
+        del rnaseq_row_sums
 
-    log_state("actually calling drop()", job_context["job"])
+        log_state("actually calling drop()", job_context["job"])
 
-    filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
+        filtered_rnaseq_matrix = job_context.pop('rnaseq_matrix').drop(rows_to_filter)
 
-    del rows_to_filter
+        del rows_to_filter
 
-    log_state("end drop all rows", job_context["job"], drop_start)
-    log2_start = log_state("start log2", job_context["job"])
+        log_state("end drop all rows", job_context["job"], drop_start)
+        log2_start = log_state("start log2", job_context["job"])
 
-    # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
-    filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
-    log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
-    del filtered_rnaseq_matrix_plus_one
-    del filtered_rnaseq_matrix
+        # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
+        filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
+        log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
+        del filtered_rnaseq_matrix_plus_one
+        del filtered_rnaseq_matrix
 
-    log_state("end log2", job_context["job"], log2_start)
-    cache_start = log_state("start caching zeroes", job_context["job"])
+        log_state("end log2", job_context["job"], log2_start)
+        cache_start = log_state("start caching zeroes", job_context["job"])
 
-    # Cache our RNA-Seq zero values
-    cached_zeroes = {}
-    for column in log2_rnaseq_matrix.columns:
-        cached_zeroes[column] = log2_rnaseq_matrix.index[np.where(log2_rnaseq_matrix[column] == 0)]
+        # Cache our RNA-Seq zero values
+        cached_zeroes = {}
+        for column in log2_rnaseq_matrix.columns:
+            cached_zeroes[column] = log2_rnaseq_matrix.index[np.where(log2_rnaseq_matrix[column] == 0)]
 
-    log_state("end caching zeroes", job_context["job"], cache_start)
+        # Set all zero values in log2_rnaseq_matrix to NA, but make sure
+        # to keep track of where these zeroes are
+        log2_rnaseq_matrix[log2_rnaseq_matrix == 0] = np.nan
+
+        log_state("end caching zeroes", job_context["job"], cache_start)
+
     outer_merge_start = log_state("start outer merge", job_context["job"])
 
-    # Set all zero values in log2_rnaseq_matrix to NA, but make sure
-    # to keep track of where these zeroes are
-    log2_rnaseq_matrix[log2_rnaseq_matrix == 0] = np.nan
-
-    # Perform a full outer join of microarray_expression_matrix and
+    # Perform a full outer join of microarray_matrix and
     # log2_rnaseq_matrix; combined_matrix
-    combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix,
-                                                         how='outer',
-                                                         left_index=True,
-                                                         right_index=True)
-    del microarray_expression_matrix
+    if log2_rnaseq_matrix is not None:
+        combined_matrix = job_context.pop('microarray_matrix').merge(log2_rnaseq_matrix,
+                                                                     how='outer',
+                                                                     left_index=True,
+                                                                     right_index=True)
+    else:
+        logger.info("Building compendia with only microarray data.", job_id=job_context["job"].id)
+        combined_matrix = job_context.pop('microarray_matrix')
+
+    log_state("ran outer merge, now deleteing log2_rnaseq_matrix", job_context["job"])
+
+    del log2_rnaseq_matrix
 
     log_state("end outer merge", job_context["job"], outer_merge_start)
     drop_na_genes_start = log_state("start drop NA genes", job_context["job"])

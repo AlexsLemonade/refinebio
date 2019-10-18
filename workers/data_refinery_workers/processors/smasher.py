@@ -122,6 +122,10 @@ def _inner_join(job_context: Dict) -> pd.DataFrame:
     """Performs an inner join across the all_frames key of job_context.
 
     Returns a new dict containing the metadata, not the job_context.
+
+    TODO: This function should be mostly unnecessary now because we
+    pretty much do this in the smashing utils but I don't want to rip
+    it out right now .
     """
     # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
     # TODO: If the very first frame is the wrong platform, are we boned?
@@ -211,11 +215,13 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
 
     # Combine the two technologies into a single list of dataframes.
     ## Extend one list rather than adding the two together so we don't
-    ## the memory both are using.
+    ## copy the memory both are using.
     ## Also free up the the memory the microarray-only list was using with pop.
-    job_context['rnaseq_frames'].extend(job_context.pop('microarray_frames'))
-    ## Change the key of the now-extended list
-    job_context['all_frames'] = job_context.pop('rnaseq_frames')
+    job_context['all_frames'] = []
+    if job_context['rnaseq_matrix'] is not None:
+        job_context['all_frames'] = [job_context.pop('rnaseq_matrix')]
+    if job_context['microarray_matrix'] is not None:
+        job_context['all_frames'].append(job_context.pop('microarray_matrix'))
 
     if len(job_context['all_frames']) < 1:
         logger.error("Was told to smash a key with no frames!",
