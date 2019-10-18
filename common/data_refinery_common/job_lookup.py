@@ -1,7 +1,6 @@
 import re
 
 from enum import Enum, unique
-from typing import List
 
 from data_refinery_common import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -140,8 +139,8 @@ SMASHER_JOB_TYPES = [
 
 
 def does_processor_job_have_samples(job: ProcessorJob):
-    return not (job.pipeline_applied == ProcessorPipeline.SMASHER.value \
-                or job.pipeline_applied == ProcessorPipeline.JANITOR.value \
+    return not (job.pipeline_applied == ProcessorPipeline.SMASHER.value
+                or job.pipeline_applied == ProcessorPipeline.JANITOR.value
                 or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value)
 
 
@@ -283,8 +282,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
                          platform_accession=sample_object.platform_accession_code,
                          accession=sample_object.accession_code,
                          manufacturer=sample_object.manufacturer,
-                         platform_name=sample_object.platform_name
-                        )
+                         platform_name=sample_object.platform_name)
             return ProcessorPipeline.NONE
 
     elif sample_object.has_raw:
@@ -292,6 +290,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
 
     # Shouldn't get here, but just in case
     return ProcessorPipeline.NONE
+
 
 def determine_ram_amount(sample: Sample, job) -> int:
     """
@@ -310,9 +309,11 @@ def determine_ram_amount(sample: Sample, job) -> int:
         if 'gene' in platform:
             return 3072
         if 'hta20' in platform:
-            return 12288
+            return 32768
         # Not sure what the ram usage of this platform is! Investigate!
-        logger.debug("Unsure of RAM usage for platform! Using default.", platform=platform, job=job)
+        logger.debug("Unsure of RAM usage for platform! Using default.",
+                     platform=platform,
+                     job=job)
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value:
         return 2048
@@ -323,5 +324,7 @@ def determine_ram_amount(sample: Sample, job) -> int:
     elif job.pipeline_applied == ProcessorPipeline.NONE.value:
         return 1024
     else:
-        logger.error("Found a job without an expected pipeline!", job=job, pipeline=job.pipeline_applied)
+        logger.error("Found a job without an expected pipeline!",
+                     job=job,
+                     pipeline=job.pipeline_applied)
         return 1024
