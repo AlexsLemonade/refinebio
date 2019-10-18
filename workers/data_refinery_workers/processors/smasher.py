@@ -219,9 +219,9 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     ## Also free up the the memory the microarray-only list was using with pop.
     job_context['all_frames'] = []
     if job_context['rnaseq_matrix'] is not None:
-        job_context['all_frames'] = job_context.pop('rnaseq_matrix')
+        job_context['all_frames'] = [job_context.pop('rnaseq_matrix')]
     if job_context['microarray_matrix'] is not None:
-        job_context['all_frames'].extend(job_context.pop('microarray_matrix'))
+        job_context['all_frames'].append(job_context.pop('microarray_matrix'))
 
     if len(job_context['all_frames']) < 1:
         logger.error("Was told to smash a key with no frames!",
