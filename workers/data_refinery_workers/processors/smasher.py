@@ -75,50 +75,6 @@ def log_state(message, job, start_time=False):
             return time.time()
 
 
-def _prepare_files(job_context: Dict) -> Dict:
-    """
-    Fetches and prepares the files to smash.
-    """
-    start_prepare_files = log_state("start prepare files", job_context["job"])
-    found_files = False
-    job_context['input_files'] = {}
-    # `key` can either be the species name or experiment accession.
-    for key, samples in job_context["samples"].items():
-        smashable_files = []
-        seen_files = set()
-        for sample in samples:
-            smashable_file = sample.get_most_recent_smashable_result_file()
-            if smashable_file is not None and smashable_file not in seen_files:
-                smashable_files = smashable_files + [(smashable_file, sample)]
-                seen_files.add(smashable_file)
-                found_files = True
-
-        job_context['input_files'][key] = smashable_files
-
-    if not found_files:
-        error_message = "Couldn't get any files to smash for Smash job!!"
-        logger.error(error_message,
-                     dataset_id=job_context['dataset'].id,
-                     num_samples=len(job_context["samples"]))
-
-        # Delay failing this pipeline until the failure notify has been sent
-        job_context['dataset'].failure_reason = error_message
-        job_context['dataset'].success = False
-        job_context['dataset'].save()
-        job_context['job'].success = False
-        job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
-        return job_context
-
-    job_context["work_dir"] = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
-    # Ensure we have a fresh smash directory
-    shutil.rmtree(job_context["work_dir"], ignore_errors=True)
-    os.makedirs(job_context["work_dir"])
-
-    job_context["output_dir"] = job_context["work_dir"] + "output/"
-    os.makedirs(job_context["output_dir"])
-    log_state("end prepare files", job_context["job"], start_prepare_files)
-    return job_context
-
 def _inner_join(job_context: Dict) -> pd.DataFrame:
     """Performs an inner join across the all_frames key of job_context.
 
@@ -150,7 +106,6 @@ def _inner_join(job_context: Dict) -> pd.DataFrame:
 
         if breaker:
             logger.warning("Column repeated for smash job!",
-                           input_files=str(input_files),
                            dataset_id=job_context["dataset"].id,
                            job_id=job_context["job"].id,
                            column=column)
@@ -207,7 +162,10 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
-    job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
+    job_context = smashing_utils.process_frames_for_key(key,
+                                                        input_files,
+                                                        job_context,
+                                                        merge_strategy='inner')
 
     # Combine the two technologies into a single list of dataframes.
     ## Extend one list rather than adding the two together so we don't
@@ -328,7 +286,7 @@ def _smash_all(job_context: Dict) -> Dict:
                      job_id=job_context['job'].id)
 
         # Once again, `key` is either a species name or an experiment accession
-        for key, input_files in job_context['input_files'].items():
+        for key, input_files in job_context.pop('input_files').items():
             job_context = _smash_key(job_context, key, input_files)
 
         smashing_utils.write_non_data_files(job_context)
@@ -339,9 +297,9 @@ def _smash_all(job_context: Dict) -> Dict:
         job_context["output_file"] = final_zip_base + ".zip"
     except Exception as e:
         logger.exception("Could not smash dataset.",
-                        dataset_id=job_context['dataset'].id,
-                        processor_job_id=job_context['job_id'],
-                        num_input_files=len(job_context['input_files']))
+                         dataset_id=job_context['dataset'].id,
+                         processor_job_id=job_context['job_id'],
+                         num_input_files=job_context['num_input_files'])
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)

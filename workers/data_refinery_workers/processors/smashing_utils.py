@@ -27,6 +27,8 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
 
+# Take one fewer than 1/2 the total available threads
+# also make the minimum threads 1.
 # Use floor here because multiprocessing raises an exception if this isn't an int.
 MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 MULTIPROCESSING_CHUNK_SIZE = 2000
@@ -89,6 +91,9 @@ def prepare_files(job_context: Dict) -> Dict:
 
         job_context['input_files'][key] = smashable_files
 
+    job_context['num_input_files'] = len(job_context['input_files'])
+    job_context['group_by_keys'] = list(job_context['input_files'].keys())
+
     if not found_files:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
@@ -119,7 +124,11 @@ def prepare_files(job_context: Dict) -> Dict:
 def _load_and_sanitize_file(computed_file_path):
     """ Read and sanitize a computed file """
 
-    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+    data = pd.read_csv(computed_file_path,
+                       sep='\t',
+                       header=0,
+                       index_col=0,
+                       error_bad_lines=False)
 
     # Strip any funky whitespace
     data.columns = data.columns.str.strip()
@@ -267,19 +276,37 @@ def process_frame(inputs) -> Dict:
     return smashable(data)
 
 
-def process_frames_for_key(key: str, input_files: List[ComputedFile], job_context: Dict) -> Dict:
+def process_frames_for_key(key: str,
+                           input_files: List[ComputedFile],
+                           job_context: Dict,
+                           merge_strategy: str) -> Dict:
+    """Download, read, and chunk processed sample files from s3.
+
+    `key` is the species or experiment whose samples are contained in `input_files`.
+
+    Will populate add to job_context the keys 'microarray_frames' and
+    'rnaseq_frames' with pandas dataframes containing
+    MULTIPROCESSING_CHUNK_SIZE samples worth of data. Also adds the
+    key 'unsmashable_files' containing a list of paths that were
+    determined to be unsmashable.
+
+    `merge_strategy` dictates how the chunks will be merged and must be
+    one of the two values `inner` or `outer.
+    """
+    if merge_strategy != 'inner' and merge_strategy != 'outer':
+        raise ValueError("merge_strategy must be either of the values 'inner' or 'outer'.")
+
     job_context['original_merged'] = pd.DataFrame()
 
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
 
-    # Build up a list of microarray frames and a list of
-    # rnaseq frames.
+    # Build up a list of microarray frames and a list of rnaseq
+    # frames. Each one will have MULTIPROCESSING_CHUNK_SIZE samples
+    # worth of data in them.
     job_context['microarray_frames'] = []
     job_context['rnaseq_frames'] = []
 
-    # take one fewer than 1/2 the total available threads
-    # also make the minimum threads 1
     worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
 
     chunk_of_frames = []
@@ -303,22 +330,51 @@ def process_frames_for_key(key: str, input_files: List[ComputedFile], job_contex
             processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
             chunk_of_frames = []
 
+            microarray_frames = []
+            rnaseq_frames = []
             for frame in processed_chunk:
                 if frame['technology'] == 'microarray':
-                    job_context['microarray_frames'].append(frame['dataframe'])
+                    microarray_frames.append(frame['dataframe'])
                 elif frame['technology'] == 'rnaseq':
-                    job_context['rnaseq_frames'].append(frame['dataframe'])
-
-                if frame['unsmashable']:
+                    rnaseq_frames.append(frame['dataframe'])
+                elif frame['unsmashable']:
                     job_context['unsmashable_files'].append(frame['unsmashable_file'])
+
+            del processed_chunk
+
+            job_context['num_samples'] = job_context['num_samples'] \
+                                         + len(job_context['microarray_frames'])
+            job_context['num_samples'] = job_context['num_samples'] \
+                                         + len(job_context['rnaseq_frames'])
+
+            # Merge the two types of frames from the chunk into only
+            # two data frames so the gene identifiers aren't
+            # duplicated for each sample.
+            if len(microarray_frames) > 0:
+                job_context['microarray_frames'].append(
+                    pd.concat(microarray_frames,
+                              axis=1,
+                              keys=None,
+                              join=merge_strategy,
+                              copy=False,
+                              sort=True))
+
+            del microarray_frames
+
+            if len(rnaseq_frames) > 0:
+                job_context['rnaseq_frames'].append(
+                    pd.concat(rnaseq_frames,
+                              axis=1,
+                              keys=None,
+                              join=merge_strategy,
+                              copy=False,
+                              sort=True))
+
+            del rnaseq_frames
 
     # clean up the pool when we are done
     worker_pool.close()
     worker_pool.join()
-
-    job_context['num_samples'] = job_context['num_samples'] \
-                                 + len(job_context['microarray_frames'])
-    job_context['num_samples'] = job_context['num_samples'] + len(job_context['rnaseq_frames'])
 
     log_state("set frames for key {}".format(key), job_context["job"], start_frames)
 
@@ -448,6 +504,12 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         new_merged = pd.DataFrame(ar,
                                   columns=job_context['merged_no_qn'].columns,
                                   index=job_context['merged_no_qn'].index)
+
+        # Remove un-quantiled normalized matrix from job_context
+        # because we no longer need it.
+        job_context.pop('merged_no_qn')
+
+        # And add the quantile normalized matrix to job_context.
         job_context['merged_qn'] = new_merged
     return job_context
 
@@ -723,7 +785,7 @@ def write_tsv_json(job_context):
     # Per-Species Metadata
     elif job_context["dataset"].aggregate_by == "SPECIES":
         tsv_paths = []
-        for species in job_context['input_files'].keys():
+        for species in job_context['group_by_keys']:
             species_dir = job_context["output_dir"] + species + '/'
             os.makedirs(species_dir, exist_ok=True)
             samples_in_species = []
