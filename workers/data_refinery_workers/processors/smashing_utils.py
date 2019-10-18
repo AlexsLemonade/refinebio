@@ -325,6 +325,8 @@ def process_frames_for_key(key: str,
 
         chunk_of_frames.append(frame_input)
 
+        job_context['microarray_matrix'] = None
+        job_context['rnaseq_matrix'] = None
         # Make sure to handle the last chunk even if it's not a full chunk.
         if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
             processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
@@ -342,39 +344,62 @@ def process_frames_for_key(key: str,
 
             del processed_chunk
 
-            job_context['num_samples'] = job_context['num_samples'] \
-                                         + len(job_context['microarray_frames'])
-            job_context['num_samples'] = job_context['num_samples'] \
-                                         + len(job_context['rnaseq_frames'])
-
             # Merge the two types of frames from the chunk into only
             # two data frames so the gene identifiers aren't
             # duplicated for each sample.
             if len(microarray_frames) > 0:
-                job_context['microarray_frames'].append(
-                    pd.concat(microarray_frames,
-                              axis=1,
-                              keys=None,
-                              join=merge_strategy,
-                              copy=False,
-                              sort=True))
+                microarray_chunk_frame = pd.concat(microarray_frames,
+                                                   axis=1,
+                                                   keys=None,
+                                                   join=merge_strategy,
+                                                   copy=False,
+                                                   sort=True)
 
-            del microarray_frames
+                del microarray_frames
+
+                if job_context['microarray_matrix']:
+                    job_context['microarray_matrix'] = job_context['microarray_matrix'].merge(
+                        microarray_chunk_frame,
+                        how=merge_strategy,
+                        left_index=True,
+                        right_index=True
+                    )
+                else:
+                    job_context['microarray_matrix'] = microarray_chunk_frame
+
+                del microarray_chunk_frame
 
             if len(rnaseq_frames) > 0:
-                job_context['rnaseq_frames'].append(
-                    pd.concat(rnaseq_frames,
-                              axis=1,
-                              keys=None,
-                              join=merge_strategy,
-                              copy=False,
-                              sort=True))
+                rnaseq_chunk_frame = pd.concat(rnaseq_frames,
+                                               axis=1,
+                                               keys=None,
+                                               join=merge_strategy,
+                                               copy=False,
+                                               sort=True)
 
-            del rnaseq_frames
+                del rnaseq_frames
+
+                if job_context['rnaseq_matrix']:
+                    job_context['rnaseq_matrix'] = job_context['rnaseq_matrix'].merge(
+                        rnaseq_chunk_frame,
+                        how=merge_strategy,
+                        left_index=True,
+                        right_index=True
+                    )
+                else:
+                    job_context['rnaseq_matrix'] = rnaseq_chunk_frame
+
+                del rnaseq_chunk_frame
 
     # clean up the pool when we are done
     worker_pool.close()
     worker_pool.join()
+
+    job_context['num_samples'] = 0
+    if job_context['microarray_matrix'] is not None:
+        job_context['num_samples'] += len(job_context['microarray_matrix'].index)
+    if job_context['rnaseq_matrix'] is not None:
+        job_context['num_samples'] += len(job_context['rnaseq_matrix'].index)
 
     log_state("set frames for key {}".format(key), job_context["job"], start_frames)
 
