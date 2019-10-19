@@ -394,9 +394,9 @@ def process_frames_for_key(key: str,
 
     job_context['num_samples'] = 0
     if job_context['microarray_matrix'] is not None:
-        job_context['num_samples'] += len(job_context['microarray_matrix'].index)
+        job_context['num_samples'] += len(job_context['microarray_matrix'].columns)
     if job_context['rnaseq_matrix'] is not None:
-        job_context['num_samples'] += len(job_context['rnaseq_matrix'].index)
+        job_context['num_samples'] += len(job_context['rnaseq_matrix'].columns)
 
     log_state("set frames for key {}".format(key), job_context["job"], start_frames)
 
