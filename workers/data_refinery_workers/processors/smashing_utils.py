@@ -354,7 +354,7 @@ def process_frames_for_key(key: str,
 
                 del microarray_frames
 
-                if job_context['microarray_matrix']:
+                if job_context['microarray_matrix'] is not None:
                     job_context['microarray_matrix'] = job_context['microarray_matrix'].merge(
                         microarray_chunk_frame,
                         how=merge_strategy,
@@ -376,7 +376,7 @@ def process_frames_for_key(key: str,
 
                 del rnaseq_frames
 
-                if job_context['rnaseq_matrix']:
+                if job_context['rnaseq_matrix'] is not None:
                     job_context['rnaseq_matrix'] = job_context['rnaseq_matrix'].merge(
                         rnaseq_chunk_frame,
                         how=merge_strategy,
