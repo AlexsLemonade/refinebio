@@ -304,8 +304,8 @@ def process_frames_for_key(key: str,
     # Build up a list of microarray frames and a list of rnaseq
     # frames. Each one will have MULTIPROCESSING_CHUNK_SIZE samples
     # worth of data in them.
-    job_context['microarray_frames'] = []
-    job_context['rnaseq_frames'] = []
+    job_context['microarray_matrix'] = None
+    job_context['rnaseq_matrix'] = None
 
     worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
 
@@ -324,9 +324,6 @@ def process_frames_for_key(key: str,
         )
 
         chunk_of_frames.append(frame_input)
-
-        job_context['microarray_matrix'] = None
-        job_context['rnaseq_matrix'] = None
         # Make sure to handle the last chunk even if it's not a full chunk.
         if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
             processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
