@@ -20,6 +20,7 @@ from rpy2.robjects.packages import importr
 from typing import Dict, List
 import numpy as np
 import pandas as pd
+import dask.dataframe as dd
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile
@@ -326,6 +327,9 @@ def process_frames_for_key(key: str,
         chunk_of_frames.append(frame_input)
         # Make sure to handle the last chunk even if it's not a full chunk.
         if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
+
+            start_frame_chunk = log_state("merging chunk of frames",
+                                     job_context["job"])
             processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
             chunk_of_frames = []
 
@@ -362,7 +366,7 @@ def process_frames_for_key(key: str,
                         right_index=True
                     )
                 else:
-                    job_context['microarray_matrix'] = microarray_chunk_frame
+                    job_context['microarray_matrix'] = dd.from_pandas(microarray_chunk_frame, npartitions=4)
 
                 del microarray_chunk_frame
 
@@ -384,9 +388,19 @@ def process_frames_for_key(key: str,
                         right_index=True
                     )
                 else:
-                    job_context['rnaseq_matrix'] = rnaseq_chunk_frame
+                    job_context['rnaseq_matrix'] = dd.from_pandas(rnaseq_chunk_frame, npartitions=4)
 
                 del rnaseq_chunk_frame
+
+            log_state("end merging chunk of frames",
+                      job_context["job"],
+                      start_frame_chunk)
+
+    # convert from dask to pandas dataframe
+    if job_context['microarray_matrix'] is not None:
+        job_context['microarray_matrix'] = job_context.pop('microarray_matrix').compute()
+    if job_context['rnaseq_matrix'] is not None:
+        job_context['rnaseq_matrix'] = job_context.pop('rnaseq_matrix').compute()
 
     # clean up the pool when we are done
     worker_pool.close()
