@@ -100,5 +100,3 @@ class Command(BaseCommand):
                         organism=str(organism),
                         quant_sf_only=quant_sf_only)
             send_job(job_pipeline, job)
-
-        sys.exit(0)
