@@ -17,13 +17,13 @@ from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 import dask.dataframe as dd
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputedFile
+from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
@@ -878,3 +878,45 @@ def write_tsv_json(job_context):
                 row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                 dw.writerow(row_data)
         return [tsv_path]
+
+
+def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
+    """ this function downloads the latest computed file. Receives a tuple with
+    the computed file and the path where it needs to be downloaded
+    This is used to parallelize downloading quantsf files. """
+    (latest_computed_file, output_file_path) = download_tuple
+    try:
+        latest_computed_file.get_synced_file_path(path=output_file_path)
+    except:
+        # Let's not fail if there's an error syncing one of the quant.sf files
+        logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
+
+def sync_quant_files(output_path, samples: List[Sample]):
+    """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
+        Returns the total number of samples that were included """
+    num_samples = 0
+
+    page_size = 100
+    # split the samples in groups and download each one individually
+    pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+
+    # for each sample we need it's latest quant.sf file we don't want to query the db
+    # for all of them, so we do it in groups of 100, and then download all of the computed_files
+    # in parallel
+    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
+        sample_and_computed_files = []
+        for sample in sample_page:
+            latest_computed_file = sample.get_most_recent_quant_sf_file()
+            if not latest_computed_file:
+                continue
+            output_file_path = output_path + sample.accession_code + "_quant.sf"
+            sample_and_computed_files.append((latest_computed_file, output_file_path))
+
+        # download this set of files, this will take a few seconds that should also help the db recover
+        pool.map(downlad_computed_file, sample_and_computed_files)
+        num_samples += len(sample_and_computed_files)
+
+    pool.close()
+    pool.join()
+
+    return num_samples
