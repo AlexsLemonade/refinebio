@@ -3,12 +3,16 @@ import os
 from django.test import TransactionTestCase, tag
 
 from data_refinery_common.job_lookup import ProcessorPipeline
-from data_refinery_common.models import (ComputationalResult, ComputedFile,
-                                         Dataset, Experiment,
-                                         ExperimentSampleAssociation, Organism,
+from data_refinery_common.models import (ComputationalResult,
+                                         ComputedFile,
+                                         Dataset,
+                                         Experiment,
+                                         ExperimentSampleAssociation,
+                                         Organism,
                                          ProcessorJob,
                                          ProcessorJobDatasetAssociation,
-                                         Sample, SampleComputedFileAssociation,
+                                         Sample,
+                                         SampleComputedFileAssociation,
                                          SampleResultAssociation)
 from data_refinery_workers.processors.create_quantpendia import \
     create_quantpendia

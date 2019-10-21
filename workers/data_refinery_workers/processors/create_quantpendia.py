@@ -7,7 +7,9 @@ from typing import Dict, List, Tuple
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (ComputationalResult,
-                                         ComputedFile, Organism, Pipeline,
+                                         ComputedFile,
+                                         Organism,
+                                         Pipeline,
                                          Sample)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import smashing_utils, utils

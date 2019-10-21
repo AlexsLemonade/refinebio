@@ -2,12 +2,16 @@ from django.test import TransactionTestCase
 from django.utils import timezone
 
 from data_refinery_common.job_lookup import ProcessorPipeline
-from data_refinery_common.models import (ComputationalResult, ComputedFile,
-                                         Dataset, Experiment,
-                                         ExperimentSampleAssociation, Organism,
+from data_refinery_common.models import (ComputationalResult,
+                                         ComputedFile,
+                                         Dataset,
+                                         Experiment,
+                                         ExperimentSampleAssociation,
+                                         Organism,
                                          ProcessorJob,
                                          ProcessorJobDatasetAssociation,
-                                         Sample, SampleComputedFileAssociation,
+                                         Sample,
+                                         SampleComputedFileAssociation,
                                          SampleResultAssociation)
 from data_refinery_foreman.surveyor.test_end_to_end import wait_for_job
 
