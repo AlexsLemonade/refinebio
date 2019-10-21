@@ -91,9 +91,14 @@ class Command(BaseCommand):
 
         logger.debug('Generating compendia for organisms', organisms=all_organisms)
 
+        job_pipeline = ProcessorPipeline.CREATE_QUANTPENDIA if quant_sf_only else ProcessorPipeline.CREATE_COMPENDIA
+
         for organism in all_organisms:
             job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
-            logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
-            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
+            logger.info("Sending compendia job for Organism",
+                        job_id=str(job.pk),
+                        organism=str(organism),
+                        quant_sf_only=quant_sf_only)
+            send_job(job_pipeline, job)
 
         sys.exit(0)
