@@ -1,5 +1,6 @@
 from django.test import TransactionTestCase
 from django.utils import timezone
+from django.core.management import call_command
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (ComputationalResult,
@@ -22,13 +23,17 @@ class CompendiaCommandTestCase(TransactionTestCase):
     def test_quantpendia_command(self):
         self.make_test_data()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        args = []
+        options = {'organisms': 'HOMO_SAPIENS', 'quant_sf_only': True}
+        call_command('create_compendia', *args, **options)
 
         start_time = timezone.now()
-        compendia_job = create_job_for_organism(homo_sapiens, True)
-        wait_for_job(compendia_job, ProcessorJob, start_time)
+        processor_job = ProcessorJob.objects.filter(pipeline_applied='CREATE_QUANTPENDIA').first()
+        wait_for_job(processor_job, ProcessorJob, start_time)
+        self.assertTrue(processor_job.success)
 
         # assert we have a quantpendia for human
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         quantpendias = ComputedFile.objects.filter(is_compendia=True, quant_sf_only=True, compendia_organism=homo_sapiens).first()
         self.assertTrue(quantpendias)
 
