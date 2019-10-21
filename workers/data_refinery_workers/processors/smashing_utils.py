@@ -20,6 +20,7 @@ from rpy2.robjects.packages import importr
 from typing import Dict, List
 import numpy as np
 import pandas as pd
+import dask.dataframe as dd
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile
@@ -32,6 +33,7 @@ from data_refinery_workers.processors import utils
 # Use floor here because multiprocessing raises an exception if this isn't an int.
 MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 MULTIPROCESSING_CHUNK_SIZE = 2000
+INDEX_DASK_START = 200000
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -307,7 +309,8 @@ def process_frames_for_key(key: str,
     job_context['microarray_matrix'] = None
     job_context['rnaseq_matrix'] = None
 
-    worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+    worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT,
+                                       maxtasksperchild=MULTIPROCESSING_CHUNK_SIZE)
 
     chunk_of_frames = []
     for index, (computed_file, sample) in enumerate(input_files):
@@ -326,6 +329,9 @@ def process_frames_for_key(key: str,
         chunk_of_frames.append(frame_input)
         # Make sure to handle the last chunk even if it's not a full chunk.
         if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
+
+            start_frame_chunk = log_state("merging chunk of frames",
+                                     job_context["job"])
             processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
             chunk_of_frames = []
 
@@ -365,6 +371,10 @@ def process_frames_for_key(key: str,
                     job_context['microarray_matrix'] = microarray_chunk_frame
 
                 del microarray_chunk_frame
+                # start using dask to save ram at scale
+                if index > INDEX_DASK_START and type(job_context['microarray_matrix']) is pd.DataFrame:
+                    job_context['microarray_matrix'] = dd.from_pandas(job_context.pop('microarray_matrix'),
+                                                                      npartitions=MULTIPROCESSING_WORKER_COUNT)
 
             if len(rnaseq_frames) > 0:
                 rnaseq_chunk_frame = pd.concat(rnaseq_frames,
@@ -387,6 +397,20 @@ def process_frames_for_key(key: str,
                     job_context['rnaseq_matrix'] = rnaseq_chunk_frame
 
                 del rnaseq_chunk_frame
+                # start using dask to save ram at scale
+                if index > INDEX_DASK_START and type(job_context['rnaseq_matrix']) is pd.DataFrame:
+                    job_context['rnaseq_matrix'] = dd.from_pandas(job_context.pop('rnaseq_matrix'),
+                                                                      npartitions=MULTIPROCESSING_WORKER_COUNT)
+
+            log_state("end merging chunk of frames",
+                      job_context["job"],
+                      start_frame_chunk)
+
+    # convert from dask to pandas dataframe if it is dask
+    if type(job_context['microarray_matrix']) is dd.DataFrame:
+        job_context['microarray_matrix'] = job_context.pop('microarray_matrix').compute()
+    if type(job_context['rnaseq_matrix']) is dd.DataFrame:
+        job_context['rnaseq_matrix'] = job_context.pop('rnaseq_matrix').compute()
 
     # clean up the pool when we are done
     worker_pool.close()
