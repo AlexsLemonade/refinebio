@@ -62,6 +62,9 @@ class Command(BaseCommand):
         elif job_type is ProcessorPipeline.CREATE_COMPENDIA:
             from data_refinery_workers.processors.create_compendia import create_compendia
             create_compendia(options["job_id"])
+        elif job_type is ProcessorPipeline.CREATE_QUANTPENDIA:
+            from data_refinery_workers.processors.create_quantpendia import create_quantpendia
+            create_quantpendia(options["job_id"])
         elif job_type is ProcessorPipeline.NO_OP:
             from data_refinery_workers.processors.no_op import no_op_processor
             no_op_processor(options["job_id"])

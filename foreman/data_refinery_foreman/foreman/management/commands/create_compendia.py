@@ -25,13 +25,15 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorith
             .values_list('accession_code', flat=True))
 
     job = ProcessorJob()
-    job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+    if quant_sf_only:
+        job.pipeline_applied = ProcessorPipeline.CREATE_QUANTPENDIA.value
+    else:
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
     job.save()
 
     dset = Dataset()
     dset.data = data
     dset.scale_by = 'NONE'
-    # The quantpendias should be aggregated by species
     dset.aggregate_by = 'EXPERIMENT' if quant_sf_only else 'SPECIES'
     dset.quantile_normalize = False
     dset.quant_sf_only = quant_sf_only
