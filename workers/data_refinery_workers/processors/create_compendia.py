@@ -1,31 +1,24 @@
-import gc
 import logging
 import os
-import psutil
 import shutil
 import time
+from typing import Dict
 
+from django.utils import timezone
+from fancyimpute import IterativeSVD
 import numpy as np
 import pandas as pd
-from fancyimpute import IterativeSVD
-import simplejson as json
-
-from datetime import datetime
-from django.utils import timezone
-from typing import Dict
+import psutil
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    ComputedFile,
-    Pipeline,
-    Organism
-)
+from data_refinery_common.models import (ComputationalResult,
+                                         ComputationalResultAnnotation,
+                                         ComputedFile,
+                                         Organism,
+                                         Pipeline)
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, smashing_utils
-
+from data_refinery_workers.processors import smashing_utils, utils
 
 pd.set_option('mode.chained_assignment', None)
 
@@ -65,6 +58,14 @@ def _prepare_input(job_context: Dict) -> Dict:
     # key will be the organism name, unless of course we've already failed.
     if job_context['job'].success is not False:
         job_context["organism_name"] = job_context['group_by_keys'][0]
+
+        # TEMPORARY for iterating on compendia more quickly. Rather
+        # than downloading the data from S3 each run we're just gonna
+        # use the same directory every job.
+        job_context["old_work_dir"] = job_context["work_dir"]
+        job_context["work_dir"] = SMASHING_DIR + job_context["organism_name"] + "/"
+        if not os.path.exists(job_context["work_dir"]):
+            os.makedirs(job_context["work_dir"])
 
     log_state("prepare input done", job_context["job"], start_time)
     return job_context
@@ -475,6 +476,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
     job_context['success'] = True
 
     log_state("end create result object", job_context["job"], result_start)
+
+    # TEMPORARY for iterating on compendia more quickly.
+    # Reset this so the end_job does clean up the job's non-input-data stuff.
+    job_context["work_dir"] = job_context["old_work_dir"]
 
     return job_context
 

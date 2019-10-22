@@ -71,7 +71,6 @@ def create_result_objects(job_context: Dict) -> Dict:
     shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
 
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
-
     compendia_organism = _get_organisms(job_context['samples']).first()
     compendia_version = _get_next_compendia_version(compendia_organism)
 
