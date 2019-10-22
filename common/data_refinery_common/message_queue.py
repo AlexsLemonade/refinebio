@@ -56,6 +56,8 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         nomad_job = ProcessorPipeline.QN_REFERENCE.value
     elif job_type is ProcessorPipeline.CREATE_COMPENDIA:
         nomad_job = ProcessorPipeline.CREATE_COMPENDIA.value
+    elif job_type is ProcessorPipeline.CREATE_QUANTPENDIA:
+        nomad_job = ProcessorPipeline.CREATE_QUANTPENDIA.value
     elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
         # Agilent twocolor uses the same job specification as Affy.
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value

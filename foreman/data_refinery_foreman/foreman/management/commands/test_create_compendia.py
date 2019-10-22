@@ -1,5 +1,6 @@
 from django.test import TransactionTestCase
 from django.utils import timezone
+from django.core.management import call_command
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (ComputationalResult,
@@ -12,7 +13,8 @@ from data_refinery_common.models import (ComputationalResult,
                                          ProcessorJobDatasetAssociation,
                                          Sample,
                                          SampleComputedFileAssociation,
-                                         SampleResultAssociation)
+                                         SampleResultAssociation,
+                                         ExperimentOrganismAssociation)
 from data_refinery_foreman.surveyor.test_end_to_end import wait_for_job
 
 from .create_compendia import create_job_for_organism
@@ -22,29 +24,37 @@ class CompendiaCommandTestCase(TransactionTestCase):
     def test_quantpendia_command(self):
         self.make_test_data()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        args = []
+        options = {'organisms': 'HOMO_SAPIENS', 'quant_sf_only': True}
+        call_command('create_compendia', *args, **options)
 
         start_time = timezone.now()
-        compendia_job = create_job_for_organism(homo_sapiens, True)
-        wait_for_job(compendia_job, ProcessorJob, start_time)
+        processor_job = ProcessorJob.objects\
+            .filter(pipeline_applied='CREATE_QUANTPENDIA')\
+            .order_by('-created_at')\
+            .first()
+        processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+        self.assertTrue(processor_job.success)
 
         # assert we have a quantpendia for human
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         quantpendias = ComputedFile.objects.filter(is_compendia=True, quant_sf_only=True, compendia_organism=homo_sapiens).first()
         self.assertTrue(quantpendias)
 
     def make_test_data(self):
-        job = ProcessorJob()
-        job.pipeline_applied = ProcessorPipeline.CREATE_QUANTPENDIA.value
-        job.save()
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         experiment = Experiment()
         experiment.accession_code = "GSE51088"
         experiment.save()
 
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=experiment
+        xoa.organism=homo_sapiens
+        xoa.save()
+
         result = ComputationalResult()
         result.save()
-
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
         sample.accession_code = 'GSM1237818'
@@ -84,16 +94,3 @@ class CompendiaCommandTestCase(TransactionTestCase):
         assoc.sample = sample
         assoc.computed_file = computed_file
         assoc.save()
-
-        ds = Dataset()
-        ds.data = {'GSE51088': ['GSM1237818']}
-        ds.aggregate_by = 'EXPERIMENT'
-        ds.scale_by = 'STANDARD'
-        ds.email_address = "null@derp.com"
-        ds.quant_sf_only = True # Make the dataset include quant.sf files only
-        ds.save()
-
-        pjda = ProcessorJobDatasetAssociation()
-        pjda.processor_job = job
-        pjda.dataset = ds
-        pjda.save()
