@@ -69,6 +69,7 @@ fi
 
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
+tag=compendia
 if [ -z "$tag" ] || [ "$tag" = "salmon" ]; then
     # Download "salmon quant" test data The `newer` file was to
     # signify that we using updated data. However the data has been

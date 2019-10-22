@@ -30,7 +30,7 @@ from data_refinery_workers.processors import utils
 # also make the minimum threads 1.
 # Use floor here because multiprocessing raises an exception if this isn't an int.
 MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
-MULTIPROCESSING_CHUNK_SIZE = 2000
+MULTIPROCESSING_CHUNK_SIZE = 200
 INDEX_DASK_START = 200000
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
@@ -167,7 +167,7 @@ def _load_and_sanitize_file(computed_file_path, index=None):
     data = data.groupby(data.index, sort=False).mean()
 
     if index is not None:
-        data.reindex(index)
+        data = data.reindex(index)
 
     return data
 
