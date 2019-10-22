@@ -1,31 +1,29 @@
 # -*- coding: utf-8 -*-
 
 import csv
-import itertools
 import logging
 import math
 import multiprocessing
 import os
-import psutil
-import rpy2.robjects as ro
 import shutil
-import simplejson as json
 import time
+from pathlib import Path
+from typing import Dict, List
 
 from django.utils import timezone
-from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
-from typing import Dict, List
 import numpy as np
 import pandas as pd
+import psutil
+import rpy2.robjects as ro
+import simplejson as json
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
-
 
 # Take one fewer than 1/2 the total available threads
 # also make the minimum threads 1.
@@ -121,7 +119,7 @@ def prepare_files(job_context: Dict) -> Dict:
     return job_context
 
 
-def _load_and_sanitize_file(computed_file_path):
+def _load_and_sanitize_file(computed_file_path, index=None):
     """ Read and sanitize a computed file """
 
     data = pd.read_csv(computed_file_path,
@@ -166,6 +164,9 @@ def _load_and_sanitize_file(computed_file_path):
     # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
     data = data.groupby(data.index, sort=False).mean()
 
+    if index is not None:
+        data.reindex(index)
+
     return data
 
 
@@ -177,6 +178,7 @@ def process_frame(inputs) -> Dict:
         dataset_id,
         aggregate_by,
         index,
+        gene_ids,
         job_id
     ) = inputs
 
@@ -213,7 +215,7 @@ def process_frame(inputs) -> Dict:
                            dataset_id=dataset_id)
             return unsmashable(computed_file.filename)
 
-        data = _load_and_sanitize_file(computed_file_path)
+        data = _load_and_sanitize_file(computed_file_path, gene_ids)
 
         if len(data.columns) > 2:
             # Most of the time, >1 is actually bad, but we also need to support
@@ -268,10 +270,11 @@ def process_frame(inputs) -> Dict:
                          file=computed_file_path,
                          dataset_id=dataset_id)
         return unsmashable(computed_file.filename)
-    finally:
-        # Delete before archiving the work dir
-        if computed_file_path and os.path.exists(computed_file_path):
-            os.remove(computed_file_path)
+    # TEMPORARY for iterating on compendia more quickly.
+    # finally:
+    #     # Delete before archiving the work dir
+    #     if computed_file_path and os.path.exists(computed_file_path):
+    #         os.remove(computed_file_path)
 
     return smashable(data)
 
@@ -301,13 +304,12 @@ def process_frames_for_key(key: str,
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
 
-    # Build up a list of microarray frames and a list of rnaseq
-    # frames. Each one will have MULTIPROCESSING_CHUNK_SIZE samples
-    # worth of data in them.
-    job_context['microarray_matrix'] = None
-    job_context['rnaseq_matrix'] = None
-
     worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+
+    # Build up a list of gene identifiers because these will be the
+    # rows of our matrices, and we want to preallocate them so we need
+    # to know them all.
+    all_gene_identifiers = set()
 
     chunk_of_frames = []
     for index, (computed_file, sample) in enumerate(input_files):
@@ -320,6 +322,43 @@ def process_frames_for_key(key: str,
             job_context['dataset'].id,
             job_context['dataset'].aggregate_by,
             index,
+            None,
+            job_context["job"].id
+        )
+
+        chunk_of_frames.append(frame_input)
+        # Make sure to handle the last chunk even if it's not a full chunk.
+        if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
+            processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
+            chunk_of_frames = []
+
+            for frame in processed_chunk:
+                if not frame['unsmashable']:
+                    all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
+
+            del processed_chunk
+
+    all_gene_identifiers = list(all_gene_identifiers)
+    all_gene_identifiers.sort()
+
+    # Build up a list of microarray frames and a list of rnaseq
+    # frames. Each one will have MULTIPROCESSING_CHUNK_SIZE samples
+    # worth of data in them.
+    job_context['microarray_matrix'] = None
+    job_context['rnaseq_matrix'] = None
+
+    chunk_of_frames = []
+    for index, (computed_file, sample) in enumerate(input_files):
+
+        # Create a tuple containing the inputs for process_frame.
+        frame_input = (
+            job_context["work_dir"],
+            computed_file,
+            sample.accession_code,
+            job_context['dataset'].id,
+            job_context['dataset'].aggregate_by,
+            index,
+            all_gene_identifiers,
             job_context["job"].id
         )
 
