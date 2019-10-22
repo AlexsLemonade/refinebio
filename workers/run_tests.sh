@@ -429,7 +429,7 @@ fi
 if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     # Download RNASEQ and MICROARRAY data from prod S3
     micro_list_file="microarray.txt"
-    micro_list_dir="$volume_directory/COMPENDIA_TEST"
+    micro_list_dir="$volume_directory/raw/TEST/MICROARRAY"
     if [ ! -e "$micro_list_dir/$micro_list_file" ]; then
         mkdir -p "$micro_list_dir"
         cp "$micro_list_file" "$micro_list_dir/$micro_list_file"
@@ -439,7 +439,7 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
         cd -
     fi
     rnaseq_list_file="rnaseq.txt"
-    rnaseq_list_dir="$volume_directory/COMPENDIA_TEST"
+    rnaseq_list_dir="$volume_directory/raw/TEST/RNASEQ"
     if [ ! -e "$rnaseq_list_dir/$rnaseq_list_file" ]; then
         mkdir -p "$rnaseq_list_dir"
         cp "$rnaseq_list_file" "$rnaseq_list_dir/$rnaseq_list_file"

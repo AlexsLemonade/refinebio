@@ -45,8 +45,7 @@ class CompendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        # Will be used as the work_dir.
-        gallus_gallus = Organism(name="COMPENDIA_TEST", taxonomy_id=1)
+        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
 
         sample = Sample()
         sample.accession_code = 'GSM1487313'
@@ -149,8 +148,7 @@ class CompendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        # Will be used as the work_dir.
-        danio_rerio = Organism(name="COMPENDIA_TEST", taxonomy_id=1)
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1)
         danio_rerio.save()
 
         micros = []

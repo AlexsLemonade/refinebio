@@ -64,6 +64,8 @@ def _prepare_input(job_context: Dict) -> Dict:
         # use the same directory every job.
         job_context["old_work_dir"] = job_context["work_dir"]
         job_context["work_dir"] = "/home/user/data_store/" + job_context["organism_name"] + "/"
+        if not os.path.exists(job_context["work_dir"]):
+            os.makedirs(job_context["work_dir"])
 
     log_state("prepare input done", job_context["job"], start_time)
     return job_context
