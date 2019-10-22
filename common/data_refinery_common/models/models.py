@@ -211,7 +211,8 @@ class Sample(models.Model):
         Note: We don't associate that file to the computed_files of this sample, that's
         why we have to go through the computational results. """
         return ComputedFile.objects\
-            .filter(result__in=self.results.all(), filename='quant.sf')\
+            .filter(result__in=self.results.all(), filename='quant.sf',
+                    s3_key__isnull=False, s3_bucket__isnull=False)\
             .order_by('-created_at')\
             .first()
 
@@ -1021,6 +1022,9 @@ class ComputedFile(models.Model):
 
         target_directory = os.path.dirname(self.absolute_file_path)
         os.makedirs(target_directory, exist_ok=True)
+
+        if not self.s3_bucket or not self.s3_key:
+            raise ValueError('Tried to download a computed file with no s3_bucket or s3_key')
 
         try:
             S3.download_file(

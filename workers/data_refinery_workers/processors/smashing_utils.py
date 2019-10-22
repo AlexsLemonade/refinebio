@@ -3,6 +3,7 @@
 import csv
 import itertools
 import logging
+import math
 import multiprocessing
 import os
 import psutil
@@ -16,16 +17,23 @@ from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
+import dask.dataframe as dd
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputedFile
+from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
 
+# Take one fewer than 1/2 the total available threads
+# also make the minimum threads 1.
+# Use floor here because multiprocessing raises an exception if this isn't an int.
+MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
+MULTIPROCESSING_CHUNK_SIZE = 2000
+INDEX_DASK_START = 200000
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -38,9 +46,6 @@ BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
-
-
-MULTIPROCESSING_CHUNK_SIZE = 2000
 
 
 def log_failure(job_context: Dict, failure_reason: str) -> Dict:
@@ -88,6 +93,9 @@ def prepare_files(job_context: Dict) -> Dict:
 
         job_context['input_files'][key] = smashable_files
 
+    job_context['num_input_files'] = len(job_context['input_files'])
+    job_context['group_by_keys'] = list(job_context['input_files'].keys())
+
     if not found_files:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
@@ -118,7 +126,11 @@ def prepare_files(job_context: Dict) -> Dict:
 def _load_and_sanitize_file(computed_file_path):
     """ Read and sanitize a computed file """
 
-    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+    data = pd.read_csv(computed_file_path,
+                       sep='\t',
+                       header=0,
+                       index_col=0,
+                       error_bad_lines=False)
 
     # Strip any funky whitespace
     data.columns = data.columns.str.strip()
@@ -266,50 +278,149 @@ def process_frame(inputs) -> Dict:
     return smashable(data)
 
 
-def process_frames_for_key(key: str, input_files: List[ComputedFile], job_context: Dict) -> Dict:
+def process_frames_for_key(key: str,
+                           input_files: List[ComputedFile],
+                           job_context: Dict,
+                           merge_strategy: str) -> Dict:
+    """Download, read, and chunk processed sample files from s3.
+
+    `key` is the species or experiment whose samples are contained in `input_files`.
+
+    Will populate add to job_context the keys 'microarray_frames' and
+    'rnaseq_frames' with pandas dataframes containing
+    MULTIPROCESSING_CHUNK_SIZE samples worth of data. Also adds the
+    key 'unsmashable_files' containing a list of paths that were
+    determined to be unsmashable.
+
+    `merge_strategy` dictates how the chunks will be merged and must be
+    one of the two values `inner` or `outer.
+    """
+    if merge_strategy != 'inner' and merge_strategy != 'outer':
+        raise ValueError("merge_strategy must be either of the values 'inner' or 'outer'.")
+
     job_context['original_merged'] = pd.DataFrame()
 
     start_frames = log_state("building frames for species or experiment {}".format(key),
                              job_context["job"])
 
-    def get_frame_inputs():
-        """Helper method to create a generator."""
-        for index, (computed_file, sample) in enumerate(input_files):
-            # Don't pass job_context to worker threads because
-            # for some reason it causes them to open database
-            # connections. Not yet sure why...
-            yield (
-                job_context["work_dir"],
-                computed_file,
-                sample.accession_code,
-                job_context['dataset'].id,
-                job_context['dataset'].aggregate_by,
-                index,
-                job_context["job"].id
-            )
+    # Build up a list of microarray frames and a list of rnaseq
+    # frames. Each one will have MULTIPROCESSING_CHUNK_SIZE samples
+    # worth of data in them.
+    job_context['microarray_matrix'] = None
+    job_context['rnaseq_matrix'] = None
 
-    frame_inputs = get_frame_inputs()
+    worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT,
+                                       maxtasksperchild=MULTIPROCESSING_CHUNK_SIZE)
 
-    processed_frames = map(process_frame, frame_inputs)
+    chunk_of_frames = []
+    for index, (computed_file, sample) in enumerate(input_files):
 
-    # Build up a list of microarray frames and a list of
-    # rnaseq frames and then combine them so they're sorted
-    # out.
-    job_context['microarray_frames'] = []
-    job_context['rnaseq_frames'] = []
+        # Create a tuple containing the inputs for process_frame.
+        frame_input = (
+            job_context["work_dir"],
+            computed_file,
+            sample.accession_code,
+            job_context['dataset'].id,
+            job_context['dataset'].aggregate_by,
+            index,
+            job_context["job"].id
+        )
 
-    for frame in processed_frames:
-        if frame['technology'] == 'microarray':
-            job_context['microarray_frames'].append(frame['dataframe'])
-        elif frame['technology'] == 'rnaseq':
-            job_context['rnaseq_frames'].append(frame['dataframe'])
+        chunk_of_frames.append(frame_input)
+        # Make sure to handle the last chunk even if it's not a full chunk.
+        if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+            start_frame_chunk = log_state("merging chunk of frames",
+                                     job_context["job"])
+            processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
+            chunk_of_frames = []
 
-    job_context['num_samples'] = job_context['num_samples'] \
-                                 + len(job_context['microarray_frames'])
-    job_context['num_samples'] = job_context['num_samples'] + len(job_context['rnaseq_frames'])
+            microarray_frames = []
+            rnaseq_frames = []
+            for frame in processed_chunk:
+                if frame['technology'] == 'microarray':
+                    microarray_frames.append(frame['dataframe'])
+                elif frame['technology'] == 'rnaseq':
+                    rnaseq_frames.append(frame['dataframe'])
+                elif frame['unsmashable']:
+                    job_context['unsmashable_files'].append(frame['unsmashable_file'])
+
+            del processed_chunk
+
+            # Merge the two types of frames from the chunk into only
+            # two data frames so the gene identifiers aren't
+            # duplicated for each sample.
+            if len(microarray_frames) > 0:
+                microarray_chunk_frame = pd.concat(microarray_frames,
+                                                   axis=1,
+                                                   keys=None,
+                                                   join=merge_strategy,
+                                                   copy=False,
+                                                   sort=True)
+
+                del microarray_frames
+
+                if job_context['microarray_matrix'] is not None:
+                    job_context['microarray_matrix'] = job_context['microarray_matrix'].merge(
+                        microarray_chunk_frame,
+                        how=merge_strategy,
+                        left_index=True,
+                        right_index=True
+                    )
+                else:
+                    job_context['microarray_matrix'] = microarray_chunk_frame
+
+                del microarray_chunk_frame
+                # start using dask to save ram at scale
+                if index > INDEX_DASK_START and type(job_context['microarray_matrix']) is pd.DataFrame:
+                    job_context['microarray_matrix'] = dd.from_pandas(job_context.pop('microarray_matrix'),
+                                                                      npartitions=MULTIPROCESSING_WORKER_COUNT)
+
+            if len(rnaseq_frames) > 0:
+                rnaseq_chunk_frame = pd.concat(rnaseq_frames,
+                                               axis=1,
+                                               keys=None,
+                                               join=merge_strategy,
+                                               copy=False,
+                                               sort=True)
+
+                del rnaseq_frames
+
+                if job_context['rnaseq_matrix'] is not None:
+                    job_context['rnaseq_matrix'] = job_context['rnaseq_matrix'].merge(
+                        rnaseq_chunk_frame,
+                        how=merge_strategy,
+                        left_index=True,
+                        right_index=True
+                    )
+                else:
+                    job_context['rnaseq_matrix'] = rnaseq_chunk_frame
+
+                del rnaseq_chunk_frame
+                # start using dask to save ram at scale
+                if index > INDEX_DASK_START and type(job_context['rnaseq_matrix']) is pd.DataFrame:
+                    job_context['rnaseq_matrix'] = dd.from_pandas(job_context.pop('rnaseq_matrix'),
+                                                                      npartitions=MULTIPROCESSING_WORKER_COUNT)
+
+            log_state("end merging chunk of frames",
+                      job_context["job"],
+                      start_frame_chunk)
+
+    # convert from dask to pandas dataframe if it is dask
+    if type(job_context['microarray_matrix']) is dd.DataFrame:
+        job_context['microarray_matrix'] = job_context.pop('microarray_matrix').compute()
+    if type(job_context['rnaseq_matrix']) is dd.DataFrame:
+        job_context['rnaseq_matrix'] = job_context.pop('rnaseq_matrix').compute()
+
+    # clean up the pool when we are done
+    worker_pool.close()
+    worker_pool.join()
+
+    job_context['num_samples'] = 0
+    if job_context['microarray_matrix'] is not None:
+        job_context['num_samples'] += len(job_context['microarray_matrix'].columns)
+    if job_context['rnaseq_matrix'] is not None:
+        job_context['num_samples'] += len(job_context['rnaseq_matrix'].columns)
 
     log_state("set frames for key {}".format(key), job_context["job"], start_frames)
 
@@ -439,6 +550,12 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         new_merged = pd.DataFrame(ar,
                                   columns=job_context['merged_no_qn'].columns,
                                   index=job_context['merged_no_qn'].index)
+
+        # Remove un-quantiled normalized matrix from job_context
+        # because we no longer need it.
+        job_context.pop('merged_no_qn')
+
+        # And add the quantile normalized matrix to job_context.
         job_context['merged_qn'] = new_merged
     return job_context
 
@@ -488,9 +605,11 @@ def write_non_data_files(job_context: Dict) -> Dict:
 
     This include LICENSE.txt and README.md files and the metadata.
 
-    Expects the key `metadata` in job_context to be populated with all
+    Adds the key `metadata` to job_context and populates it with all
     the metadata that needs to be written.
     """
+    job_context['metadata'] = compile_metadata(job_context)
+
     shutil.copy("README_DATASET.md", job_context["output_dir"] + "README.md")
     shutil.copy("LICENSE_DATASET.txt", job_context["output_dir"] + "LICENSE.TXT")
 
@@ -702,7 +821,7 @@ def write_tsv_json(job_context):
             tsv_path = tsv_path.encode('ascii', 'ignore')
             tsv_paths.append(tsv_path)
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
                 dw.writeheader()
                 for sample_accession_code, sample_metadata in metadata['samples'].items():
                     if sample_accession_code in experiment_data['sample_accession_codes']:
@@ -712,20 +831,30 @@ def write_tsv_json(job_context):
     # Per-Species Metadata
     elif job_context["dataset"].aggregate_by == "SPECIES":
         tsv_paths = []
-        for species in job_context['input_files'].keys():
+        for species in job_context['group_by_keys']:
             species_dir = job_context["output_dir"] + species + '/'
             os.makedirs(species_dir, exist_ok=True)
             samples_in_species = []
             tsv_path = species_dir + "metadata_" + species + '.tsv'
             tsv_paths.append(tsv_path)
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+                # See http://www.lucainvernizzi.net/blog/2015/08/03/8x-speed-up-for-python-s-csv-dictwriter/
+                # about extrasaction.
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
                 dw.writeheader()
+                i = 0
                 for sample_metadata in metadata['samples'].values():
                     if sample_metadata.get('refinebio_organism', '') == species:
                         row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
                         samples_in_species.append(sample_metadata)
+
+                    i = i + 1
+                    if i % 1000 == 0:
+                        progress_template = ('Done with {0} out of {1} lines of metadata '
+                                             'for species {2}')
+                        log_state(progress_template.format(i, len(metadata['samples']), species),
+                                  job_context['job'])
 
             # Writes a json file for current species:
             if len(samples_in_species):
@@ -743,9 +872,51 @@ def write_tsv_json(job_context):
         os.makedirs(all_dir, exist_ok=True)
         tsv_path = all_dir + 'metadata_ALL.tsv'
         with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
-            dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
+            dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
                 row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                 dw.writerow(row_data)
         return [tsv_path]
+
+
+def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
+    """ this function downloads the latest computed file. Receives a tuple with
+    the computed file and the path where it needs to be downloaded
+    This is used to parallelize downloading quantsf files. """
+    (latest_computed_file, output_file_path) = download_tuple
+    try:
+        latest_computed_file.get_synced_file_path(path=output_file_path)
+    except:
+        # Let's not fail if there's an error syncing one of the quant.sf files
+        logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
+
+def sync_quant_files(output_path, samples: List[Sample]):
+    """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
+        Returns the total number of samples that were included """
+    num_samples = 0
+
+    page_size = 100
+    # split the samples in groups and download each one individually
+    pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+
+    # for each sample we need it's latest quant.sf file we don't want to query the db
+    # for all of them, so we do it in groups of 100, and then download all of the computed_files
+    # in parallel
+    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
+        sample_and_computed_files = []
+        for sample in sample_page:
+            latest_computed_file = sample.get_most_recent_quant_sf_file()
+            if not latest_computed_file:
+                continue
+            output_file_path = output_path + sample.accession_code + "_quant.sf"
+            sample_and_computed_files.append((latest_computed_file, output_file_path))
+
+        # download this set of files, this will take a few seconds that should also help the db recover
+        pool.map(downlad_computed_file, sample_and_computed_files)
+        num_samples += len(sample_and_computed_files)
+
+    pool.close()
+    pool.join()
+
+    return num_samples

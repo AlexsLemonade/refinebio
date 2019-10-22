@@ -148,7 +148,8 @@ class CompendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1)
+        danio_rerio.save()
 
         micros = []
         for file in os.listdir('/home/user/data_store/raw/TEST/MICROARRAY/'):

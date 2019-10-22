@@ -15,7 +15,6 @@ from data_refinery_common.utils import queryset_iterator
 
 logger = get_and_configure_logger(__name__)
 
-
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -48,13 +47,15 @@ class Command(BaseCommand):
 
         logger.debug('Generating compendia for organisms', organism_groups=str(grouped_organisms))
 
-        for organism_group in grouped_organisms:
-            job = create_job_for_organism(organism_group, quant_sf_only, svd_algorithm)
-            logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk),
-                        organism_group=str(organism_group))
-            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
+        job_pipeline = ProcessorPipeline.CREATE_QUANTPENDIA if quant_sf_only else ProcessorPipeline.CREATE_COMPENDIA
 
-        sys.exit(0)
+        for organism in grouped_organisms:
+            job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
+            logger.info("Sending compendia job for Organism",
+                        job_id=str(job.pk),
+                        organism=str(organism),
+                        quant_sf_only=quant_sf_only)
+            send_job(job_pipeline, job)
 
     def _get_target_organisms(self, options):
         all_organisms = list(get_compendia_organisms().values_list('id', flat=True))
@@ -127,7 +128,10 @@ def create_job_for_organism(organisms: List[Organism], quant_sf_only=False, svd_
     Fetch all of the experiments and compile large but normally formated Dataset.
     """
     job = ProcessorJob()
-    job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+    if quant_sf_only:
+        job.pipeline_applied = ProcessorPipeline.CREATE_QUANTPENDIA.value
+    else:
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
     job.save()
 
     dataset = Dataset()
@@ -167,3 +171,4 @@ def get_dataset(organisms: List[Organism]):
                                                   .values_list('accession_code', flat=True))
 
     return dataset
+

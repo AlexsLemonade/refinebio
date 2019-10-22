@@ -49,6 +49,7 @@ def signal_handler(sig, frame):
     """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
     if CURRENT_JOB:
+        CURRENT_JOB.success = False
         CURRENT_JOB.end_time = timezone.now()
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
         CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT: " + str(sig)
@@ -278,6 +279,7 @@ def end_job(job_context: Dict, abort=False):
            and not (job_context["job"].pipeline_applied in [ProcessorPipeline.SMASHER.value,
                                                             ProcessorPipeline.QN_REFERENCE.value,
                                                             ProcessorPipeline.CREATE_COMPENDIA.value,
+                                                            ProcessorPipeline.CREATE_QUANTPENDIA.value,
                                                             ProcessorPipeline.JANITOR.value]):
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True

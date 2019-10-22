@@ -1,4 +1,4 @@
-job "CREATE_COMPENDIA" {
+job "CREATE_QUANTPENDIA" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -27,7 +27,7 @@ job "CREATE_COMPENDIA" {
       size = "10"
     }
 
-    task "create_compendia" {
+    task "create_quantpendia" {
       driver = "docker"
 
       kill_timeout = "30s"
@@ -70,15 +70,13 @@ job "CREATE_COMPENDIA" {
         # CPU is in AWS's CPU units.
         cpu =   4000
         # Memory is in MB of RAM. Instance has 1,952GB of RAM.
-        memory = 3800000
+        memory = 8192
       }
 
       logs {
         max_files = 1
         max_file_size = 1
       }
-
-      ${{SMASHER_CONSTRAINT}}
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"

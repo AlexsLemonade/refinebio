@@ -1403,6 +1403,7 @@ class AggregationTestCase(TransactionTestCase):
             'output_dir': self.smash_path,
             'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='ALL'),
+            'group_by_keys': [],
             'input_files': {
             }
         }
@@ -1417,6 +1418,7 @@ class AggregationTestCase(TransactionTestCase):
             'job': pj,
             'output_dir': self.smash_path,
             'metadata': self.unicode_metadata,
+            'group_by_keys': [],
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT'),
             'input_files': {
             }
@@ -1433,6 +1435,7 @@ class AggregationTestCase(TransactionTestCase):
             'output_dir': self.smash_path,
             'metadata': self.unicode_metadata,
             'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
+            'group_by_keys': ['homo_sapiens', 'fake_species'],
             'input_files': {
                 'homo_sapiens': [], # only the key matters in this test
                 'fake_species': []  # only the key matters in this test
@@ -1460,6 +1463,7 @@ class AggregationTestCase(TransactionTestCase):
             'dataset': Dataset.objects.create(aggregate_by='SPECIES',
                                               data={'GSE56409': ['GSM1361050'],
                                                     'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']}),
+            'group_by_keys': ['homo_sapiens', 'fake_species'],
             'input_files': {
                 'homo_sapiens': [], # only the key matters in this test
                 'fake_species': []  # only the key matters in this test
@@ -1522,7 +1526,7 @@ class AggregationTestCase(TransactionTestCase):
         os.remove(json_filename)
 
     @tag("smasher")
-    def test_bad_overlap(self):
+    def test_bad_smash(self):
 
         pj = ProcessorJob()
         pj.pipeline_applied = "SMASHER"
@@ -1535,7 +1539,8 @@ class AggregationTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606)
+        homo_sapiens.save()
 
         sample = Sample()
         sample.accession_code = 'GSM1237810'
@@ -1621,10 +1626,24 @@ class AggregationTestCase(TransactionTestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
+        self.assertTrue(ds.is_processed)
+
+    @tag("smasher")
+    def test_bad_overlap(self):
+
+        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606)
+        homo_sapiens.save()
 
         pj = ProcessorJob()
         pj.pipeline_applied = "SMASHER"
         pj.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE51081"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
 
         # Now, make sure the bad can't zero this out.
         sample = Sample()
@@ -1637,11 +1656,6 @@ class AggregationTestCase(TransactionTestCase):
         esa.experiment = experiment
         esa.sample = sample
         esa.save()
-
-        assoc = SampleComputedFileAssociation()
-        assoc.sample = sample
-        assoc.computed_file = computed_file
-        assoc.save()
 
         sra = SampleResultAssociation()
         sra.sample = sample
@@ -1663,10 +1677,9 @@ class AggregationTestCase(TransactionTestCase):
 
         ds = Dataset()
         ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812', 'GSM999']}
-        ds.aggregate_by = 'ALL' # [ALL or SPECIES or EXPERIMENT]
-        ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
+        ds.aggregate_by = 'ALL'
+        ds.scale_by = 'NONE'
         ds.email_address = "null@derp.com"
-        #ds.email_address = "miserlou+heyo@gmail.com"
         ds.quantile_normalize = False
         ds.save()
 
