@@ -3,9 +3,10 @@ import shutil
 import time
 from django.utils import timezone
 from typing import Dict, List, Tuple
+import psutil
 
 from data_refinery_common.job_lookup import PipelineEnum
-from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common. import get_and_configure_logger
 from data_refinery_common.models import (ComputationalResult,
                                          ComputedFile,
                                          Organism,
@@ -30,6 +31,13 @@ def create_quantpendia(job_id: int) -> None:
     return job_context
 
 
+def get_process_stats():
+    BYTES_IN_GB = 1024 * 1024 * 1024
+    process = psutil.Process(os.getpid())
+    ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+    return { 'total_cpu': psutil.cpu_percent(), 'process_ram': ram_in_GB }
+
+
 def download_files(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
     _make_dirs(job_context)
@@ -38,14 +46,14 @@ def download_files(job_context: Dict) -> Dict:
     for key, samples in job_context['samples'].items():
         outfile_dir = job_context['output_dir'] + key + '/'
         os.makedirs(outfile_dir, exist_ok=True)
-        # download quant.sf files directly into the dataset folder
-        downloaded_files = smashing_utils.sync_quant_files(outfile_dir, samples)
-        num_samples += download_files
 
-        logger.debug("Building quantpendia. Downloaded new quant.sf files",
-                accession_code=key,
-                job_id=job_context['job_id'],
-                total_downloaded_files=downloaded_files)
+        logger.debug("Downloading quant.sf files for quantpendia.",
+                    accession_code=key,
+                    job_id=job_context['job_id'],
+                    **get_process_stats())
+
+        # download quant.sf files directly into the dataset folder
+        num_samples += smashing_utils.sync_quant_files(outfile_dir, samples)
 
     job_context['num_samples'] = num_samples
     job_context['time_end'] = timezone.now()
@@ -53,7 +61,8 @@ def download_files(job_context: Dict) -> Dict:
 
     logger.debug("Finished downloading quant.sf files for quantpendia.",
                 job_id=job_context['job_id'],
-                total_downloaded_files=num_samples)
+                total_downloaded_files=num_samples,
+                **get_process_stats())
 
     return job_context
 
