@@ -176,7 +176,7 @@ def process_frames_for_key(key: str,
         if frame['unsmashable']:
             job_context['unsmashable_files'].append(frame['unsmashable_file'])
         else:
-            job_context['all_frames'].append(frame)
+            job_context['all_frames'].append(frame['dataframe'])
 
     log_state("Finished building list of all_frames key {}".format(key),
               job_context["job"].id,
