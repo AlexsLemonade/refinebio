@@ -39,11 +39,21 @@ def download_files(job_context: Dict) -> Dict:
         outfile_dir = job_context['output_dir'] + key + '/'
         os.makedirs(outfile_dir, exist_ok=True)
         # download quant.sf files directly into the dataset folder
-        num_samples += smashing_utils.sync_quant_files(outfile_dir, samples)
+        downloaded_files = smashing_utils.sync_quant_files(outfile_dir, samples)
+        num_samples += download_files
+
+        logger.debug("Building quantpendia. Downloaded new quant.sf files",
+                accession_code=key,
+                job_id=job_context['job_id'],
+                total_downloaded_files=downloaded_files)
 
     job_context['num_samples'] = num_samples
     job_context['time_end'] = timezone.now()
     job_context['formatted_command'] = "create_quantpendia.py"
+
+    logger.debug("Finished downloading quant.sf files for quantpendia.",
+                job_id=job_context['job_id'],
+                total_downloaded_files=num_samples)
 
     return job_context
 
