@@ -13,7 +13,6 @@ import requests
 import psutil
 import logging
 import time
-from multiprocessing import Pool
 
 from botocore.exceptions import ClientError
 from datetime import timedelta
@@ -60,17 +59,17 @@ SCALERS = {
 }
 
 
-def log_state(message, job, start_time=False):
+def log_state(message, job_id, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
         logger.debug(message,
                      total_cpu=psutil.cpu_percent(),
                      process_ram=ram_in_GB,
-                     job_id=job.id)
+                     job_id=job_id)
 
         if start_time:
-            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job.id)
+            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job_id)
         else:
             return time.time()
 
@@ -155,7 +154,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-    start_smash = log_state("start _smash_key for {}".format(key), job_context["job"])
+    start_smash = log_state("start _smash_key for {}".format(key), job_context["job"].id)
 
     # Check if we need to copy the quant.sf files
     if job_context['dataset'].quant_sf_only:
@@ -194,8 +193,8 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     merged = _inner_join(job_context)
 
     job_context['original_merged'] = merged
-    log_state("end build all frames", job_context["job"], start_smash)
-    start_qn = log_state("start qn", job_context["job"], start_smash)
+    log_state("end build all frames", job_context["job"].id, start_smash)
+    start_qn = log_state("start qn", job_context["job"].id, start_smash)
 
     # Quantile Normalization
     if job_context['dataset'].quantile_normalize:
@@ -226,14 +225,14 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
             return job_context
 
     # End QN
-    log_state("end qn", job_context["job"], start_qn)
+    log_state("end qn", job_context["job"].id, start_qn)
     # Transpose before scaling
     # Do this even if we don't want to scale in case transpose
     # modifies the data in any way. (Which it shouldn't but
     # we're paranoid.)
     # TODO: stop the paranoia because Josh has alleviated it.
     transposed = merged.transpose()
-    start_scaler = log_state("starting scaler", job_context["job"])
+    start_scaler = log_state("starting scaler", job_context["job"].id)
     # Scaler
     if job_context['dataset'].scale_by != "NONE":
         scale_funtion = SCALERS[job_context['dataset'].scale_by]
@@ -248,7 +247,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     else:
         # Wheeeeeeeeeee
         untransposed = transposed.transpose()
-    log_state("end scaler", job_context["job"], start_scaler)
+    log_state("end scaler", job_context["job"].id, start_scaler)
 
     # This is just for quality assurance in tests.
     job_context['final_frame'] = untransposed
@@ -269,7 +268,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     job_context['smash_outfile'] = outfile
     untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
-    log_state("end _smash_key for {}".format(key), job_context["job"], start_smash)
+    log_state("end _smash_key for {}".format(key), job_context["job"].id, start_smash)
 
     return job_context
 
@@ -277,7 +276,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
 def _smash_all(job_context: Dict) -> Dict:
     """Perform smashing on all species/experiments in the dataset.
     """
-    start_smash = log_state("start smash", job_context["job"])
+    start_smash = log_state("start smash", job_context["job"].id)
     # We have already failed - return now so we can send our fail email.
     if job_context['job'].success is False:
         return job_context
@@ -321,7 +320,7 @@ def _smash_all(job_context: Dict) -> Dict:
     logger.debug("Created smash output!",
         archive_location=job_context["output_file"])
 
-    log_state("end smash", job_context["job"], start_smash);
+    log_state("end smash", job_context["job"].id, start_smash);
     return job_context
 
 
