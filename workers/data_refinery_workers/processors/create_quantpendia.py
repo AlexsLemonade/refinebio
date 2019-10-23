@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 import psutil
 
 from data_refinery_common.job_lookup import PipelineEnum
-from data_refinery_common. import get_and_configure_logger
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (ComputationalResult,
                                          ComputedFile,
                                          Organism,
