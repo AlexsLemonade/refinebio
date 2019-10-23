@@ -278,25 +278,16 @@ def process_frame(work_dir,
 
 def process_frames_for_key(key: str,
                            input_files: List[ComputedFile],
-                           job_context: Dict,
-                           merge_strategy: str) -> Dict:
+                           job_context: Dict) -> Dict:
     """Download, read, and chunk processed sample files from s3.
 
     `key` is the species or experiment whose samples are contained in `input_files`.
 
-    Will populate add to job_context the keys 'microarray_frames' and
-    'rnaseq_frames' with pandas dataframes containing
-    MULTIPROCESSING_CHUNK_SIZE samples worth of data. Also adds the
-    key 'unsmashable_files' containing a list of paths that were
-    determined to be unsmashable.
-
-    `merge_strategy` dictates how the chunks will be merged and must be
-    one of the two values `inner` or `outer.
+    Will add to job_context the keys 'microarray_matrix' and
+    'rnaseq_matrix' with pandas dataframes containing all of the
+    samples' data. Also adds the key 'unsmashable_files' containing a
+    list of paths that were determined to be unsmashable.
     """
-    if merge_strategy != 'inner' and merge_strategy != 'outer':
-        raise ValueError("merge_strategy must be either of the values 'inner' or 'outer'.")
-
-    job_context['original_merged'] = pd.DataFrame()
 
     start_gene_ids = log_state("Collecting all gene identifiers for key {}".format(key),
                                job_context["job"].id)

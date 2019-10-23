@@ -87,8 +87,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
         for key, input_files in job_context.pop('input_files').items():
             job_context = smashing_utils.process_frames_for_key(key,
                                                                 input_files,
-                                                                job_context,
-                                                                merge_strategy='outer')
+                                                                job_context)
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
 
