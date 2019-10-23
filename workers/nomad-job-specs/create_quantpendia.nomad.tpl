@@ -69,14 +69,15 @@ job "CREATE_QUANTPENDIA" {
       resources {
         # CPU is in AWS's CPU units.
         cpu =   4000
-        # Memory is in MB of RAM. Instance has 1,952GB of RAM.
-        memory = 8192
+        memory = 16384
       }
 
       logs {
         max_files = 1
         max_file_size = 1
       }
+
+      ${{SMASHER_CONSTRAINT}}
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"
