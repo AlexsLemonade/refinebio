@@ -330,7 +330,7 @@ def process_frames_for_key(key: str,
     log_state(log_template.format(len(all_gene_identifiers),
                                   key,
                                   len(microarray_columns),
-                                  len(rnaseq_columns))
+                                  len(rnaseq_columns)),
               job_context["job"].id,
               start_gene_ids)
     start_build_matrix = log_state("Beginning to build the full matrices.",
