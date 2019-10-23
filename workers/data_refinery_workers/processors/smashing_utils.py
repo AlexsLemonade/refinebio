@@ -2,6 +2,8 @@
 
 import csv
 import logging
+import math
+import multiprocessing
 import os
 import shutil
 import time
@@ -23,6 +25,11 @@ from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
+# Take one fewer than 1/2 the total available threads
+# also make the minimum threads 1.
+# Use floor here because multiprocessing raises an exception if this isn't an int.
+MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
+MULTIPROCESSING_CHUNK_SIZE = 2000
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -847,6 +854,7 @@ def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
     except:
         # Let's not fail if there's an error syncing one of the quant.sf files
         logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
+
 
 def sync_quant_files(output_path, samples: List[Sample]):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
