@@ -1,4 +1,5 @@
 import os
+import logging
 import shutil
 import time
 from django.utils import timezone
@@ -19,7 +20,7 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 SMASHING_DIR = "/home/user/data_store/smashed/"
 
 logger = get_and_configure_logger(__name__)
-
+logger.setLevel(logging.getLevelName('DEBUG'))
 
 def create_quantpendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_QUANTPENDIA.value)
@@ -127,9 +128,9 @@ def create_result_objects(job_context: Dict) -> Dict:
 def _make_dirs(job_context: Dict):
     dataset_id = str(job_context["dataset"].pk)
     job_context["work_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
-    os.makedirs(job_context["work_dir"])
+    os.makedirs(job_context["work_dir"], exist_ok=True)
     job_context["output_dir"] = job_context["work_dir"] + "output/"
-    os.makedirs(job_context["output_dir"])
+    os.makedirs(job_context["output_dir"], exist_ok=True)
 
 
 def _get_organisms(aggregated_samples: Dict[str, Sample]) -> List[Organism]:
@@ -143,8 +144,8 @@ def _get_organisms(aggregated_samples: Dict[str, Sample]) -> List[Organism]:
 
 def _get_next_compendia_version(organism: Organism) -> int:
     last_compendia = ComputedFile.objects\
-        .filter(is_compendia=True, compendia_organism=organism)\
-        .order_by('compendia_version').first()
+        .filter(is_compendia=True, quant_sf_only=True, compendia_organism=organism)\
+        .order_by('-compendia_version').first()
 
     if last_compendia:
         return last_compendia.compendia_version + 1
