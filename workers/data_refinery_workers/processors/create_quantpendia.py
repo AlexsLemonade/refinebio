@@ -124,6 +124,7 @@ def remove_job_dir(job_context: Dict):
     """ remove the directory when the job is successful. At this point
     the quantpendia was already zipped and uploaded. """
     shutil.rmtree(job_context["job_dir"], ignore_errors=True)
+    return job_context
 
 
 def get_process_stats():
