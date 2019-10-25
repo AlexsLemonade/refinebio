@@ -77,7 +77,11 @@ job "CREATE_QUANTPENDIA" {
         max_file_size = 1
       }
 
-      ${{SMASHER_CONSTRAINT}}
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "!="
+        value = "true"
+      }
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"
