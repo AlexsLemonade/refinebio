@@ -69,7 +69,7 @@ job "CREATE_QUANTPENDIA" {
       resources {
         # CPU is in AWS's CPU units.
         cpu =   4000
-        memory = 16384
+        memory = 32768
       }
 
       logs {
@@ -77,7 +77,11 @@ job "CREATE_QUANTPENDIA" {
         max_file_size = 1
       }
 
-      ${{SMASHER_CONSTRAINT}}
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "!="
+        value = "true"
+      }
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"

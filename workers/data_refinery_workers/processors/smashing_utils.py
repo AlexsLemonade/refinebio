@@ -276,6 +276,44 @@ def process_frame(work_dir,
     return smashable(data)
 
 
+def load_first_pass_data_if_cached(work_dir: str):
+    path = os.path.join(work_dir, 'first_pass.csv')
+    try:
+        with open(path, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            gene_ids = next(reader)
+            microarray_columns = next(reader)
+            rnaseq_columns = next(reader)
+            return {'gene_ids': gene_ids,
+                    'microarray_columns': microarray_columns,
+                    'rnaseq_columns': rnaseq_columns}
+    # If the file doesn't exist then the gene ids aren't cached. Any
+    # other exception should be handled and higher in the stack.
+    except FileNotFoundError:
+        return None
+
+
+def cache_first_pass(job_context: Dict,
+                     gene_ids: List[str],
+                     microarray_columns: List[str],
+                     rnaseq_columns: List[str]):
+    try:
+        path = os.path.join(job_context['work_dir'], 'first_pass.csv')
+        logger.info("Caching gene_ids, microarray_columns, and rnaseq_columns to %s",
+                    path,
+                    job_id=job_context['job'].id)
+        with open(path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(gene_ids)
+            writer.writerow(microarray_columns)
+            writer.writerow(rnaseq_columns)
+    # Nothing in the above try should raise an exception, but if it
+    # does don't waste the work we did in the first pass.
+    except Exception:
+        logger.exception('Error writing gene identifiers to CSV file.',
+                         job_id=job_context['job'].id)
+
+
 def process_frames_for_key(key: str,
                            input_files: List[ComputedFile],
                            job_context: Dict) -> Dict:
@@ -295,44 +333,65 @@ def process_frames_for_key(key: str,
     # Build up a list of gene identifiers because these will be the
     # rows of our matrices, and we want to preallocate them so we need
     # to know them all.
-    all_gene_identifiers = set()
+    ## We may have built this list in a previous job, check to see if it's cached:
+    cached_data = load_first_pass_data_if_cached(job_context['work_dir'])
+    first_pass_was_cached = False
 
-    microarray_columns = []
-    rnaseq_columns = []
-    for index, (computed_file, sample) in enumerate(input_files):
-        frame = process_frame(job_context["work_dir"],
-                              computed_file,
-                              sample.accession_code,
-                              job_context['dataset'].id,
-                              job_context['dataset'].aggregate_by,
-                              index,
-                              None,
-                              job_context["job"].id)
+    if cached_data:
+        logger.info(("The data from the first pass was cached, so we're using "
+                     "that and skipping the first pass."),
+                    job_id=job_context['job'].id)
+        first_pass_was_cached = True
+        all_gene_identifiers = cached_data["gene_ids"]
+        microarray_columns = cached_data["microarray_columns"]
+        rnaseq_columns = cached_data["rnaseq_columns"]
+    else:
+        all_gene_identifiers = set()
+        microarray_columns = []
+        rnaseq_columns = []
+        for index, (computed_file, sample) in enumerate(input_files):
+            frame = process_frame(job_context["work_dir"],
+                                  computed_file,
+                                  sample.accession_code,
+                                  job_context['dataset'].id,
+                                  job_context['dataset'].aggregate_by,
+                                  index,
+                                  None,
+                                  job_context["job"].id)
 
-        # Count how many frames are in each tech so we can preallocate
-        # the matrices in both directions.
-        if not frame['unsmashable']:
-            all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
+            # Count how many frames are in each tech so we can preallocate
+            # the matrices in both directions.
+            if not frame['unsmashable']:
+                all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
 
-            # Each dataframe should only have 1 column, but it's returned as a list so use extend.
-            if frame['technology'] == 'microarray':
-                microarray_columns.extend(frame['dataframe'].columns)
-            elif frame['technology'] == 'rnaseq':
-                rnaseq_columns.extend(frame['dataframe'].columns)
+                # Each dataframe should only have 1 column, but it's
+                # returned as a list so use extend.
+                if frame['technology'] == 'microarray':
+                    microarray_columns.extend(frame['dataframe'].columns)
+                elif frame['technology'] == 'rnaseq':
+                    rnaseq_columns.extend(frame['dataframe'].columns)
 
-    all_gene_identifiers = list(all_gene_identifiers)
-    all_gene_identifiers.sort()
+        all_gene_identifiers = list(all_gene_identifiers)
+        all_gene_identifiers.sort()
 
-    log_template = ("Collected {0} gene identifiers for {1} across"
-                    " {2} micrarry samples and {3} RNA-Seq samples.")
-    log_state(log_template.format(len(all_gene_identifiers),
-                                  key,
-                                  len(microarray_columns),
-                                  len(rnaseq_columns)),
-              job_context["job"].id,
-              start_gene_ids)
+        log_template = ("Collected {0} gene identifiers for {1} across"
+                        " {2} micrarry samples and {3} RNA-Seq samples.")
+        log_state(log_template.format(len(all_gene_identifiers),
+                                      key,
+                                      len(microarray_columns),
+                                      len(rnaseq_columns)),
+                  job_context["job"].id,
+                  start_gene_ids)
+
+    if not first_pass_was_cached:
+        cache_first_pass(job_context, all_gene_identifiers, microarray_columns, rnaseq_columns)
+
     start_build_matrix = log_state("Beginning to build the full matrices.",
                                    job_context["job"].id)
+
+    # Sort the columns so that the matrices are in predictable orders.
+    microarray_columns.sort()
+    rnaseq_columns.sort()
 
     # Preallocate the matrices to be the exact size we will need. This
     # should prevent any operations from happening while we build it
@@ -347,27 +406,27 @@ def process_frames_for_key(key: str,
                                                 dtype=np.float64)
 
     for index, (computed_file, sample) in enumerate(input_files):
-        processed_frame = process_frame(job_context["work_dir"],
-                                        computed_file,
-                                        sample.accession_code,
-                                        job_context['dataset'].id,
-                                        job_context['dataset'].aggregate_by,
-                                        index,
-                                        all_gene_identifiers,
-                                        job_context["job"].id)
+        frame = process_frame(job_context["work_dir"],
+                              computed_file,
+                              sample.accession_code,
+                              job_context['dataset'].id,
+                              job_context['dataset'].aggregate_by,
+                              index,
+                              all_gene_identifiers,
+                              job_context["job"].id)
 
         if frame['unsmashable']:
             job_context['unsmashable_files'].append(frame['unsmashable_file'])
         else:
             # The dataframe for each sample will only have one column
             # whose header will be the accession code.
-            column = processed_frame['dataframe'].columns[0]
-            if processed_frame['technology'] == 'microarray':
-                job_context['microarray_matrix'][column] = processed_frame['dataframe'].values
-            elif processed_frame['technology'] == 'rnaseq':
-                job_context['rnaseq_matrix'][column] = processed_frame['dataframe'].values
+            column = frame['dataframe'].columns[0]
+            if frame['technology'] == 'microarray':
+                job_context['microarray_matrix'][column] = frame['dataframe'].values
+            elif frame['technology'] == 'rnaseq':
+                job_context['rnaseq_matrix'][column] = frame['dataframe'].values
 
-        del processed_frame
+        del frame
 
     job_context['num_samples'] = 0
     if job_context['microarray_matrix'] is not None:
