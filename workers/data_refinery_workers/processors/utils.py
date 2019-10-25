@@ -61,7 +61,7 @@ def prepare_original_files(job_context):
     """ Provision in the Job context for OriginalFile-driven processors
     """
     job = job_context["job"]
-    original_files = job.original_files
+    original_files = job.original_files.all()
 
     if original_files.count() == 0:
         logger.error("No files found.", processor_job=job.id)
