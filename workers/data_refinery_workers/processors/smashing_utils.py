@@ -406,27 +406,27 @@ def process_frames_for_key(key: str,
                                                 dtype=np.float64)
 
     for index, (computed_file, sample) in enumerate(input_files):
-        processed_frame = process_frame(job_context["work_dir"],
-                                        computed_file,
-                                        sample.accession_code,
-                                        job_context['dataset'].id,
-                                        job_context['dataset'].aggregate_by,
-                                        index,
-                                        all_gene_identifiers,
-                                        job_context["job"].id)
+        frame = process_frame(job_context["work_dir"],
+                              computed_file,
+                              sample.accession_code,
+                              job_context['dataset'].id,
+                              job_context['dataset'].aggregate_by,
+                              index,
+                              all_gene_identifiers,
+                              job_context["job"].id)
 
         if frame['unsmashable']:
             job_context['unsmashable_files'].append(frame['unsmashable_file'])
         else:
             # The dataframe for each sample will only have one column
             # whose header will be the accession code.
-            column = processed_frame['dataframe'].columns[0]
-            if processed_frame['technology'] == 'microarray':
-                job_context['microarray_matrix'][column] = processed_frame['dataframe'].values
-            elif processed_frame['technology'] == 'rnaseq':
-                job_context['rnaseq_matrix'][column] = processed_frame['dataframe'].values
+            column = frame['dataframe'].columns[0]
+            if frame['technology'] == 'microarray':
+                job_context['microarray_matrix'][column] = frame['dataframe'].values
+            elif frame['technology'] == 'rnaseq':
+                job_context['rnaseq_matrix'][column] = frame['dataframe'].values
 
-        del processed_frame
+        del frame
 
     job_context['num_samples'] = 0
     if job_context['microarray_matrix'] is not None:
