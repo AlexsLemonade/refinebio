@@ -100,8 +100,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
-        # Delay failing this pipeline until the failure notify has been sent
-        job_context['job'].success = False
+        job_context['success'] = False
         job_context['failure_reason'] = str(e)
         return job_context
 
