@@ -26,6 +26,7 @@ def create_quantpendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_QUANTPENDIA.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                                      [utils.start_job,
+                                      make_dirs,
                                       download_files,
                                       create_result_objects,
                                       remove_job_dir,
@@ -35,7 +36,6 @@ def create_quantpendia(job_id: int) -> None:
 
 def download_files(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
-    _make_dirs(job_context)
 
     num_samples = 0
     for key, samples in job_context['samples'].items():
@@ -126,19 +126,19 @@ def remove_job_dir(job_context: Dict):
     shutil.rmtree(job_context["job_dir"], ignore_errors=True)
     return job_context
 
+def make_dirs(job_context: Dict):
+    dataset_id = str(job_context["dataset"].pk)
+    job_context["job_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
+    os.makedirs(job_context["job_dir"], exist_ok=True)
+    job_context["output_dir"] = job_context["job_dir"] + "output/"
+    os.makedirs(job_context["output_dir"], exist_ok=True)
+    return job_context
 
 def get_process_stats():
     BYTES_IN_GB = 1024 * 1024 * 1024
     process = psutil.Process(os.getpid())
     ram_in_GB = process.memory_info().rss / BYTES_IN_GB
     return { 'total_cpu': psutil.cpu_percent(), 'process_ram': ram_in_GB }
-
-def _make_dirs(job_context: Dict):
-    dataset_id = str(job_context["dataset"].pk)
-    job_context["job_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
-    os.makedirs(job_context["job_dir"], exist_ok=True)
-    job_context["output_dir"] = job_context["job_dir"] + "output/"
-    os.makedirs(job_context["output_dir"], exist_ok=True)
 
 
 def _get_organisms(aggregated_samples: Dict[str, Sample]) -> List[Organism]:
