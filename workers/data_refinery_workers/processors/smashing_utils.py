@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from django.utils import timezone
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
@@ -170,14 +171,17 @@ def _load_and_sanitize_file(computed_file_path, index=None):
     return data
 
 
-def process_frame(work_dir,
-                  computed_file,
-                  sample_accession_code,
-                  dataset_id,
-                  aggregate_by,
-                  index,
-                  gene_ids,
-                  job_id) -> Dict:
+def process_frame(inputs) -> Dict:
+    (
+        work_dir,
+        computed_file,
+        sample_accession_code,
+        dataset_id,
+        aggregate_by,
+        index,
+        gene_ids,
+        job_id
+    ) = inputs
 
     log_state('processing frame {}'.format(index), job_id)
 
@@ -299,26 +303,45 @@ def process_frames_for_key(key: str,
 
     microarray_columns = []
     rnaseq_columns = []
+    chunk_of_frames = []
     for index, (computed_file, sample) in enumerate(input_files):
-        frame = process_frame(job_context["work_dir"],
-                              computed_file,
-                              sample.accession_code,
-                              job_context['dataset'].id,
-                              job_context['dataset'].aggregate_by,
-                              index,
-                              None,
-                              job_context["job"].id)
+        # Create a tuple containing the inputs for process_frame.
+        frame_input = (
+            job_context["work_dir"],
+            computed_file,
+            sample.accession_code,
+            job_context['dataset'].id,
+            job_context['dataset'].aggregate_by,
+            index,
+            None,
+            job_context["job"].id
+        )
 
-        # Count how many frames are in each tech so we can preallocate
-        # the matrices in both directions.
-        if not frame['unsmashable']:
-            all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
+        chunk_of_frames.append(frame_input)
+        # Make sure to handle the last chunk even if it's not a full chunk.
+        if index > 0 \
+           and index % MULTIPROCESSING_CHUNK_SIZE == 0 \
+           or index == len(input_files) - 1:
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [executor.submit(process_frame, frame) for frame in chunk_of_frames]
+                # processed_chunk = executor.map(process_frame, chunk_of_frames)
+                chunk_of_frames = []
 
-            # Each dataframe should only have 1 column, but it's returned as a list so use extend.
-            if frame['technology'] == 'microarray':
-                microarray_columns.extend(frame['dataframe'].columns)
-            elif frame['technology'] == 'rnaseq':
-                rnaseq_columns.extend(frame['dataframe'].columns)
+                for future in as_completed(futures):
+                    frame = future.result()
+                    # Count how many frames are in each tech so we can preallocate
+                    # the matrices in both directions.
+                    if not frame['unsmashable']:
+                        all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
+
+                        # Each dataframe should only have 1 column,
+                        # but it's returned as a list so use extend.
+                        if frame['technology'] == 'microarray':
+                            microarray_columns.extend(frame['dataframe'].columns)
+                        elif frame['technology'] == 'rnaseq':
+                            rnaseq_columns.extend(frame['dataframe'].columns)
+
+                del futures
 
     all_gene_identifiers = list(all_gene_identifiers)
     all_gene_identifiers.sort()
@@ -346,28 +369,42 @@ def process_frames_for_key(key: str,
                                                 columns=rnaseq_columns,
                                                 dtype=np.float64)
 
-    for index, (computed_file, sample) in enumerate(input_files):
-        processed_frame = process_frame(job_context["work_dir"],
-                                        computed_file,
-                                        sample.accession_code,
-                                        job_context['dataset'].id,
-                                        job_context['dataset'].aggregate_by,
-                                        index,
-                                        all_gene_identifiers,
-                                        job_context["job"].id)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        chunk_of_frames = []
+        for index, (computed_file, sample) in enumerate(input_files):
+            # Create a tuple containing the inputs for process_frame.
+            frame_input = (
+                job_context["work_dir"],
+                computed_file,
+                sample.accession_code,
+                job_context['dataset'].id,
+                job_context['dataset'].aggregate_by,
+                index,
+                None,
+                job_context["job"].id
+            )
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
-        else:
-            # The dataframe for each sample will only have one column
-            # whose header will be the accession code.
-            column = processed_frame['dataframe'].columns[0]
-            if processed_frame['technology'] == 'microarray':
-                job_context['microarray_matrix'][column] = processed_frame['dataframe'].values
-            elif processed_frame['technology'] == 'rnaseq':
-                job_context['rnaseq_matrix'][column] = processed_frame['dataframe'].values
+            chunk_of_frames.append(frame_input)
+            # Make sure to handle the last chunk even if it's not a full chunk.
+            if index > 0 \
+               and index % MULTIPROCESSING_CHUNK_SIZE == 0 \
+               or index == len(input_files) - 1:
+                processed_chunk = executor.map(process_frame, chunk_of_frames)
+                chunk_of_frames = []
 
-        del processed_frame
+                for frame in processed_chunk:
+                    if frame['unsmashable']:
+                        job_context['unsmashable_files'].append(frame['unsmashable_file'])
+                    else:
+                        # The dataframe for each sample will only have one column
+                        # whose header will be the accession code.
+                        column = frame['dataframe'].columns[0]
+                        if frame['technology'] == 'microarray':
+                            job_context['microarray_matrix'][column] = frame['dataframe'].values
+                        elif frame['technology'] == 'rnaseq':
+                            job_context['rnaseq_matrix'][column] = frame['dataframe'].values
+
+                del processed_chunk
 
     job_context['num_samples'] = 0
     if job_context['microarray_matrix'] is not None:

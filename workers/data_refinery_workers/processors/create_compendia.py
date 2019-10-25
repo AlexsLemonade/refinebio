@@ -113,9 +113,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
 
 
 def _perform_imputation(job_context: Dict) -> Dict:
-    """
-
-    Take the inputs and perform the primary imputation.
+    """ Take the inputs and perform the primary imputation.
 
     Via https://github.com/AlexsLemonade/refinebio/issues/508#issuecomment-435879283:
      - Combine all microarray samples with a full join to form a
@@ -142,7 +140,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
         -- with specified svd algorithm or skip
      - Untranspose imputed_matrix (genes are now rows, samples are now columns)
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
-
     """
     imputation_start = log_state("start perform imputation", job_context["job"].id)
     job_context['time_start'] = timezone.now()
