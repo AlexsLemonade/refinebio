@@ -28,15 +28,9 @@ def create_quantpendia(job_id: int) -> None:
                                      [utils.start_job,
                                       download_files,
                                       create_result_objects,
+                                      remove_job_dir,
                                       utils.end_job])
     return job_context
-
-
-def get_process_stats():
-    BYTES_IN_GB = 1024 * 1024 * 1024
-    process = psutil.Process(os.getpid())
-    ram_in_GB = process.memory_info().rss / BYTES_IN_GB
-    return { 'total_cpu': psutil.cpu_percent(), 'process_ram': ram_in_GB }
 
 
 def download_files(job_context: Dict) -> Dict:
@@ -85,13 +79,14 @@ def create_result_objects(job_context: Dict) -> Dict:
         return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
 
+    compendia_organism = _get_organisms(job_context['samples']).first()
+
     # Create the resulting archive
     smashing_utils.write_non_data_files(job_context)
-    final_zip_base = SMASHING_DIR + str(job_context["dataset"].pk) + "_compendia"
+    final_zip_base = job_context['job_dir'] + compendia_organism.name + "_rnaseq_compendia"
     shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
 
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
-    compendia_organism = _get_organisms(job_context['samples']).first()
     compendia_version = _get_next_compendia_version(compendia_organism)
 
     archive_computed_file = ComputedFile()
@@ -125,11 +120,23 @@ def create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 
+def remove_job_dir(job_context: Dict):
+    """ remove the directory when the job is successful. At this point
+    the quantpendia was already zipped and uploaded. """
+    shutil.rmtree(job_context["job_dir"], ignore_errors=True)
+
+
+def get_process_stats():
+    BYTES_IN_GB = 1024 * 1024 * 1024
+    process = psutil.Process(os.getpid())
+    ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+    return { 'total_cpu': psutil.cpu_percent(), 'process_ram': ram_in_GB }
+
 def _make_dirs(job_context: Dict):
     dataset_id = str(job_context["dataset"].pk)
-    job_context["work_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
-    os.makedirs(job_context["work_dir"], exist_ok=True)
-    job_context["output_dir"] = job_context["work_dir"] + "output/"
+    job_context["job_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
+    os.makedirs(job_context["job_dir"], exist_ok=True)
+    job_context["output_dir"] = job_context["job_dir"] + "output/"
     os.makedirs(job_context["output_dir"], exist_ok=True)
 
 
