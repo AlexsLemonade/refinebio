@@ -277,16 +277,16 @@ def process_frame(work_dir,
 
 
 def load_first_pass_data_if_cached(work_dir: str):
-    path = os.path.join(work_dir, "first_pass.csv")
+    path = os.path.join(work_dir, 'first_pass.csv')
     try:
         with open(path, newline='') as csvfile:
             reader = csv.reader(csvfile)
             gene_ids = next(reader)
             microarray_columns = next(reader)
             rnaseq_columns = next(reader)
-            return {"gene_ids": gene_ids,
-                    "microarray_columns": microarray_columns,
-                    "rnaseq_columns": rnaseq_columns}
+            return {'gene_ids': gene_ids,
+                    'microarray_columns': microarray_columns,
+                    'rnaseq_columns': rnaseq_columns}
     # If the file doesn't exist then the gene ids aren't cached. Any
     # other exception should be handled and higher in the stack.
     except FileNotFoundError:
@@ -298,7 +298,10 @@ def cache_first_pass(job_context: Dict,
                      microarray_columns: List[str],
                      rnaseq_columns: List[str]):
     try:
-        path = os.path.join(job_context['work_dir'], "gene_identifiers.csv")
+        path = os.path.join(job_context['work_dir'], 'first_pass.csv')
+        logger.info("Caching gene_ids, microarray_columns, and rnaseq_columns to %s",
+                    path,
+                    job_id=job_context['job'].id)
         with open(path, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(gene_ids)
@@ -307,7 +310,7 @@ def cache_first_pass(job_context: Dict,
     # Nothing in the above try should raise an exception, but if it
     # does don't waste the work we did in the first pass.
     except Exception:
-        logger.exception("Error writing gene identifiers to CSV file.",
+        logger.exception('Error writing gene identifiers to CSV file.',
                          job_id=job_context['job'].id)
 
 
@@ -335,6 +338,9 @@ def process_frames_for_key(key: str,
     first_pass_was_cached = False
 
     if cached_data:
+        logger.info(("The data from the first pass was cached, so we're using "
+                     "that and skipping the first pass."),
+                    job_id=job_context['job'].id)
         first_pass_was_cached = True
         all_gene_identifiers = cached_data["gene_ids"]
         microarray_columns = cached_data["microarray_columns"]
