@@ -28,18 +28,15 @@ class CompendiaCommandTestCase(TransactionTestCase):
         options = {'organisms': 'HOMO_SAPIENS', 'quant_sf_only': True}
         call_command('create_compendia', *args, **options)
 
-        start_time = timezone.now()
         processor_job = ProcessorJob.objects\
             .filter(pipeline_applied='CREATE_QUANTPENDIA')\
             .order_by('-created_at')\
             .first()
-        processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-        self.assertTrue(processor_job.success)
 
-        # assert we have a quantpendia for human
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-        quantpendias = ComputedFile.objects.filter(is_compendia=True, quant_sf_only=True, compendia_organism=homo_sapiens).first()
-        self.assertTrue(quantpendias)
+        # check that the processor job was created correctly
+        self.assertIsNotNone(processor_job)
+        self.assertEquals(processor_job.datasets.first().data, {'GSE51088': ['GSM1237818']})
+
 
     def make_test_data(self):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
