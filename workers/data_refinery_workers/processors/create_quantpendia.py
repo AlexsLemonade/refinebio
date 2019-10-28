@@ -115,7 +115,6 @@ def create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, s3_key)
 
     job_context['result'] = result
-    job_context['computed_files'] = [archive_computed_file]
     job_context['success'] = True
 
     return job_context
