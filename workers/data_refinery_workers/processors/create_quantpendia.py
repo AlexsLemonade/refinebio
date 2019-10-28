@@ -3,6 +3,7 @@ import logging
 import shutil
 import time
 from django.utils import timezone
+from django.conf import settings
 from typing import Dict, List, Tuple
 import psutil
 
@@ -123,6 +124,9 @@ def create_result_objects(job_context: Dict) -> Dict:
 def remove_job_dir(job_context: Dict):
     """ remove the directory when the job is successful. At this point
     the quantpendia was already zipped and uploaded. """
+    # don't remove the files when running locally or for tests
+    if not settings.RUNNING_IN_CLOUD:
+        return
     shutil.rmtree(job_context["job_dir"], ignore_errors=True)
     return job_context
 
