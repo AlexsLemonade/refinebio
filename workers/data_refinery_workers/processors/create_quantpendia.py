@@ -3,6 +3,7 @@ import logging
 import shutil
 import time
 from django.utils import timezone
+from django.conf import settings
 from typing import Dict, List, Tuple
 import psutil
 
@@ -114,7 +115,6 @@ def create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, s3_key)
 
     job_context['result'] = result
-    job_context['computed_files'] = [archive_computed_file]
     job_context['success'] = True
 
     return job_context
@@ -123,7 +123,9 @@ def create_result_objects(job_context: Dict) -> Dict:
 def remove_job_dir(job_context: Dict):
     """ remove the directory when the job is successful. At this point
     the quantpendia was already zipped and uploaded. """
-    shutil.rmtree(job_context["job_dir"], ignore_errors=True)
+    # don't remove the files when running locally or for tests
+    if settings.RUNNING_IN_CLOUD:
+        shutil.rmtree(job_context["job_dir"], ignore_errors=True)
     return job_context
 
 def make_dirs(job_context: Dict):

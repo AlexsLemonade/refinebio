@@ -96,3 +96,8 @@ class QuantpendiaTestCase(TransactionTestCase):
         self.assertTrue(final_context['metadata']['quant_sf_only'])
         self.assertEqual(final_context['metadata']['num_samples'], 1)
         self.assertEqual(final_context['metadata']['num_experiments'], 1)
+
+        # test that archive exists
+        quantpendia_file = ComputedFile.objects.filter(is_compendia=True, quant_sf_only=True).latest()
+        self.assertTrue(os.path.exists(quantpendia_file.absolute_file_path))
+
