@@ -85,7 +85,8 @@ class QNRefTestCase(TransactionTestCase):
         self.assertTrue(os.path.exists(final_context['target_file']))
         self.assertEqual(os.path.getsize(final_context['target_file']), 556)
 
-        target = utils.get_most_recent_qn_target_for_organism(homo_sapiens)
+        homo_sapiens.refresh_from_db()
+        target = homo_sapiens.qn_target.computedfile_set.latest()
         self.assertEqual(target.sha1, '636d72d5cbf4b9785b0bd271a1430b615feaa7ea')
 
         # Create and run a smasher job that will use the QN target we just made.

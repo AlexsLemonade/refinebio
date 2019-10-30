@@ -533,22 +533,6 @@ def get_bioc_version():
     return version
 
 
-def get_most_recent_qn_target_for_organism(organism):
-    """ Returns a ComputedFile for QN run for an Organism """
-
-    try:
-        annotation = ComputationalResultAnnotation.objects.filter(
-            data__organism_id=organism.id,
-            data__is_qn=True
-        ).order_by(
-            '-created_at'
-        ).first()
-        file = annotation.result.computedfile_set.first()
-        return file
-    except Exception:
-        return None
-
-
 def get_r_pkgs(pkg_list):
     """Returns a dictionary in which each key is the name of a R package
     and the corresponding value is the package's version.
