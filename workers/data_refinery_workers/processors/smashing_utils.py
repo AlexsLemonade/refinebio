@@ -1,39 +1,35 @@
 # -*- coding: utf-8 -*-
 
 import csv
-import itertools
 import logging
 import math
 import multiprocessing
 import os
-import psutil
-import rpy2.robjects as ro
 import shutil
-import simplejson as json
 import time
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 from django.utils import timezone
-from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
-from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
-import dask.dataframe as dd
+import psutil
+import rpy2.robjects as ro
+import simplejson as json
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
-
 # Take one fewer than 1/2 the total available threads
 # also make the minimum threads 1.
 # Use floor here because multiprocessing raises an exception if this isn't an int.
 MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 MULTIPROCESSING_CHUNK_SIZE = 2000
-INDEX_DASK_START = 200000
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -58,17 +54,17 @@ def log_failure(job_context: Dict, failure_reason: str) -> Dict:
     return job_context
 
 
-def log_state(message, job, start_time=False):
+def log_state(message, job_id, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
         logger.debug(message,
                      total_cpu=psutil.cpu_percent(),
                      process_ram=ram_in_GB,
-                     job_id=job.id)
+                     job_id=job_id)
 
         if start_time:
-            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job.id)
+            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job_id)
         else:
             return time.time()
 
@@ -77,7 +73,7 @@ def prepare_files(job_context: Dict) -> Dict:
     """
     Fetches and prepares the files to smash.
     """
-    start_prepare_files = log_state("start prepare files", job_context["job"])
+    start_prepare_files = log_state("start prepare files", job_context["job"].id)
     found_files = False
     job_context['input_files'] = {}
     # `key` can either be the species name or experiment accession.
@@ -119,11 +115,11 @@ def prepare_files(job_context: Dict) -> Dict:
 
     job_context["output_dir"] = job_context["work_dir"] + "output/"
     os.makedirs(job_context["output_dir"])
-    log_state("end prepare files", job_context["job"], start_prepare_files)
+    log_state("end prepare files", job_context["job"].id, start_prepare_files)
     return job_context
 
 
-def _load_and_sanitize_file(computed_file_path):
+def _load_and_sanitize_file(computed_file_path, index=None):
     """ Read and sanitize a computed file """
 
     data = pd.read_csv(computed_file_path,
@@ -168,21 +164,22 @@ def _load_and_sanitize_file(computed_file_path):
     # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
     data = data.groupby(data.index, sort=False).mean()
 
+    if index is not None:
+        data = data.reindex(index)
+
     return data
 
 
-def process_frame(inputs) -> Dict:
-    (
-        work_dir,
-        computed_file,
-        sample_accession_code,
-        dataset_id,
-        aggregate_by,
-        index,
-        job_id
-    ) = inputs
+def process_frame(work_dir,
+                  computed_file,
+                  sample_accession_code,
+                  dataset_id,
+                  aggregate_by,
+                  index,
+                  gene_ids,
+                  job_id) -> Dict:
 
-    logger.debug('processing frame {}'.format(index), job_id=job_id)
+    log_state('processing frame {}'.format(index), job_id)
 
     frame = {
         "unsmashable": False,
@@ -215,7 +212,7 @@ def process_frame(inputs) -> Dict:
                            dataset_id=dataset_id)
             return unsmashable(computed_file.filename)
 
-        data = _load_and_sanitize_file(computed_file_path)
+        data = _load_and_sanitize_file(computed_file_path, gene_ids)
 
         if len(data.columns) > 2:
             # Most of the time, >1 is actually bad, but we also need to support
@@ -270,151 +267,166 @@ def process_frame(inputs) -> Dict:
                          file=computed_file_path,
                          dataset_id=dataset_id)
         return unsmashable(computed_file.filename)
-    finally:
-        # Delete before archiving the work dir
-        if computed_file_path and os.path.exists(computed_file_path):
-            os.remove(computed_file_path)
+    # TEMPORARY for iterating on compendia more quickly.
+    # finally:
+    #     # Delete before archiving the work dir
+    #     if computed_file_path and os.path.exists(computed_file_path):
+    #         os.remove(computed_file_path)
 
     return smashable(data)
 
 
+def load_first_pass_data_if_cached(work_dir: str):
+    path = os.path.join(work_dir, 'first_pass.csv')
+    try:
+        with open(path, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            gene_ids = next(reader)
+            microarray_columns = next(reader)
+            rnaseq_columns = next(reader)
+            return {'gene_ids': gene_ids,
+                    'microarray_columns': microarray_columns,
+                    'rnaseq_columns': rnaseq_columns}
+    # If the file doesn't exist then the gene ids aren't cached. Any
+    # other exception should be handled and higher in the stack.
+    except FileNotFoundError:
+        return None
+
+
+def cache_first_pass(job_context: Dict,
+                     gene_ids: List[str],
+                     microarray_columns: List[str],
+                     rnaseq_columns: List[str]):
+    try:
+        path = os.path.join(job_context['work_dir'], 'first_pass.csv')
+        logger.info("Caching gene_ids, microarray_columns, and rnaseq_columns to %s",
+                    path,
+                    job_id=job_context['job'].id)
+        with open(path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(gene_ids)
+            writer.writerow(microarray_columns)
+            writer.writerow(rnaseq_columns)
+    # Nothing in the above try should raise an exception, but if it
+    # does don't waste the work we did in the first pass.
+    except Exception:
+        logger.exception('Error writing gene identifiers to CSV file.',
+                         job_id=job_context['job'].id)
+
+
 def process_frames_for_key(key: str,
                            input_files: List[ComputedFile],
-                           job_context: Dict,
-                           merge_strategy: str) -> Dict:
+                           job_context: Dict) -> Dict:
     """Download, read, and chunk processed sample files from s3.
 
     `key` is the species or experiment whose samples are contained in `input_files`.
 
-    Will populate add to job_context the keys 'microarray_frames' and
-    'rnaseq_frames' with pandas dataframes containing
-    MULTIPROCESSING_CHUNK_SIZE samples worth of data. Also adds the
-    key 'unsmashable_files' containing a list of paths that were
-    determined to be unsmashable.
-
-    `merge_strategy` dictates how the chunks will be merged and must be
-    one of the two values `inner` or `outer.
+    Will add to job_context the keys 'microarray_matrix' and
+    'rnaseq_matrix' with pandas dataframes containing all of the
+    samples' data. Also adds the key 'unsmashable_files' containing a
+    list of paths that were determined to be unsmashable.
     """
-    if merge_strategy != 'inner' and merge_strategy != 'outer':
-        raise ValueError("merge_strategy must be either of the values 'inner' or 'outer'.")
 
-    job_context['original_merged'] = pd.DataFrame()
+    start_gene_ids = log_state("Collecting all gene identifiers for key {}".format(key),
+                               job_context["job"].id)
 
-    start_frames = log_state("building frames for species or experiment {}".format(key),
-                             job_context["job"])
+    # Build up a list of gene identifiers because these will be the
+    # rows of our matrices, and we want to preallocate them so we need
+    # to know them all.
+    ## We may have built this list in a previous job, check to see if it's cached:
+    cached_data = load_first_pass_data_if_cached(job_context['work_dir'])
+    first_pass_was_cached = False
 
-    # Build up a list of microarray frames and a list of rnaseq
-    # frames. Each one will have MULTIPROCESSING_CHUNK_SIZE samples
-    # worth of data in them.
-    job_context['microarray_matrix'] = None
-    job_context['rnaseq_matrix'] = None
+    if cached_data:
+        logger.info(("The data from the first pass was cached, so we're using "
+                     "that and skipping the first pass."),
+                    job_id=job_context['job'].id)
+        first_pass_was_cached = True
+        all_gene_identifiers = cached_data["gene_ids"]
+        microarray_columns = cached_data["microarray_columns"]
+        rnaseq_columns = cached_data["rnaseq_columns"]
+    else:
+        all_gene_identifiers = set()
+        microarray_columns = []
+        rnaseq_columns = []
+        for index, (computed_file, sample) in enumerate(input_files):
+            frame = process_frame(job_context["work_dir"],
+                                  computed_file,
+                                  sample.accession_code,
+                                  job_context['dataset'].id,
+                                  job_context['dataset'].aggregate_by,
+                                  index,
+                                  None,
+                                  job_context["job"].id)
 
-    worker_pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT,
-                                       maxtasksperchild=MULTIPROCESSING_CHUNK_SIZE)
+            # Count how many frames are in each tech so we can preallocate
+            # the matrices in both directions.
+            if not frame['unsmashable']:
+                all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
 
-    chunk_of_frames = []
-    for index, (computed_file, sample) in enumerate(input_files):
-
-        # Create a tuple containing the inputs for process_frame.
-        frame_input = (
-            job_context["work_dir"],
-            computed_file,
-            sample.accession_code,
-            job_context['dataset'].id,
-            job_context['dataset'].aggregate_by,
-            index,
-            job_context["job"].id
-        )
-
-        chunk_of_frames.append(frame_input)
-        # Make sure to handle the last chunk even if it's not a full chunk.
-        if index > 0 and index % MULTIPROCESSING_CHUNK_SIZE == 0 or index == len(input_files) - 1:
-
-            start_frame_chunk = log_state("merging chunk of frames",
-                                     job_context["job"])
-            processed_chunk = worker_pool.map(process_frame, chunk_of_frames)
-            chunk_of_frames = []
-
-            microarray_frames = []
-            rnaseq_frames = []
-            for frame in processed_chunk:
+                # Each dataframe should only have 1 column, but it's
+                # returned as a list so use extend.
                 if frame['technology'] == 'microarray':
-                    microarray_frames.append(frame['dataframe'])
+                    microarray_columns.extend(frame['dataframe'].columns)
                 elif frame['technology'] == 'rnaseq':
-                    rnaseq_frames.append(frame['dataframe'])
-                elif frame['unsmashable']:
-                    job_context['unsmashable_files'].append(frame['unsmashable_file'])
+                    rnaseq_columns.extend(frame['dataframe'].columns)
 
-            del processed_chunk
+        all_gene_identifiers = list(all_gene_identifiers)
+        all_gene_identifiers.sort()
 
-            # Merge the two types of frames from the chunk into only
-            # two data frames so the gene identifiers aren't
-            # duplicated for each sample.
-            if len(microarray_frames) > 0:
-                microarray_chunk_frame = pd.concat(microarray_frames,
-                                                   axis=1,
-                                                   keys=None,
-                                                   join=merge_strategy,
-                                                   copy=False,
-                                                   sort=True)
+        log_template = ("Collected {0} gene identifiers for {1} across"
+                        " {2} micrarry samples and {3} RNA-Seq samples.")
+        log_state(log_template.format(len(all_gene_identifiers),
+                                      key,
+                                      len(microarray_columns),
+                                      len(rnaseq_columns)),
+                  job_context["job"].id,
+                  start_gene_ids)
 
-                del microarray_frames
+    if not first_pass_was_cached:
+        cache_first_pass(job_context, all_gene_identifiers, microarray_columns, rnaseq_columns)
 
-                if job_context['microarray_matrix'] is not None:
-                    job_context['microarray_matrix'] = job_context['microarray_matrix'].merge(
-                        microarray_chunk_frame,
-                        how=merge_strategy,
-                        left_index=True,
-                        right_index=True
-                    )
-                else:
-                    job_context['microarray_matrix'] = microarray_chunk_frame
+    start_build_matrix = log_state("Beginning to build the full matrices.",
+                                   job_context["job"].id)
 
-                del microarray_chunk_frame
-                # start using dask to save ram at scale
-                if index > INDEX_DASK_START and type(job_context['microarray_matrix']) is pd.DataFrame:
-                    job_context['microarray_matrix'] = dd.from_pandas(job_context.pop('microarray_matrix'),
-                                                                      npartitions=MULTIPROCESSING_WORKER_COUNT)
+    # Sort the columns so that the matrices are in predictable orders.
+    microarray_columns.sort()
+    rnaseq_columns.sort()
 
-            if len(rnaseq_frames) > 0:
-                rnaseq_chunk_frame = pd.concat(rnaseq_frames,
-                                               axis=1,
-                                               keys=None,
-                                               join=merge_strategy,
-                                               copy=False,
-                                               sort=True)
+    # Preallocate the matrices to be the exact size we will need. This
+    # should prevent any operations from happening while we build it
+    # up, so the only RAM used will be needed.
+    job_context['microarray_matrix'] = pd.DataFrame(data=None,
+                                                    index=all_gene_identifiers,
+                                                    columns=microarray_columns,
+                                                    dtype=np.float64)
+    job_context['rnaseq_matrix'] = pd.DataFrame(data=None,
+                                                index=all_gene_identifiers,
+                                                columns=rnaseq_columns,
+                                                dtype=np.float64)
 
-                del rnaseq_frames
+    for index, (computed_file, sample) in enumerate(input_files):
+        frame = process_frame(job_context["work_dir"],
+                              computed_file,
+                              sample.accession_code,
+                              job_context['dataset'].id,
+                              job_context['dataset'].aggregate_by,
+                              index,
+                              all_gene_identifiers,
+                              job_context["job"].id)
 
-                if job_context['rnaseq_matrix'] is not None:
-                    job_context['rnaseq_matrix'] = job_context['rnaseq_matrix'].merge(
-                        rnaseq_chunk_frame,
-                        how=merge_strategy,
-                        left_index=True,
-                        right_index=True
-                    )
-                else:
-                    job_context['rnaseq_matrix'] = rnaseq_chunk_frame
+        if frame['unsmashable']:
+            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+        else:
+            # The dataframe for each sample will only have one column
+            # whose header will be the accession code.
+            column = frame['dataframe'].columns[0]
+            if frame['technology'] == 'microarray':
+                job_context['microarray_matrix'][column] = frame['dataframe'].values
+            elif frame['technology'] == 'rnaseq':
+                job_context['rnaseq_matrix'][column] = frame['dataframe'].values
 
-                del rnaseq_chunk_frame
-                # start using dask to save ram at scale
-                if index > INDEX_DASK_START and type(job_context['rnaseq_matrix']) is pd.DataFrame:
-                    job_context['rnaseq_matrix'] = dd.from_pandas(job_context.pop('rnaseq_matrix'),
-                                                                      npartitions=MULTIPROCESSING_WORKER_COUNT)
-
-            log_state("end merging chunk of frames",
-                      job_context["job"],
-                      start_frame_chunk)
-
-    # convert from dask to pandas dataframe if it is dask
-    if type(job_context['microarray_matrix']) is dd.DataFrame:
-        job_context['microarray_matrix'] = job_context.pop('microarray_matrix').compute()
-    if type(job_context['rnaseq_matrix']) is dd.DataFrame:
-        job_context['rnaseq_matrix'] = job_context.pop('rnaseq_matrix').compute()
-
-    # clean up the pool when we are done
-    worker_pool.close()
-    worker_pool.join()
+        del frame
 
     job_context['num_samples'] = 0
     if job_context['microarray_matrix'] is not None:
@@ -422,7 +434,9 @@ def process_frames_for_key(key: str,
     if job_context['rnaseq_matrix'] is not None:
         job_context['num_samples'] += len(job_context['rnaseq_matrix'].columns)
 
-    log_state("set frames for key {}".format(key), job_context["job"], start_frames)
+    log_state("Built full matrices for key {}".format(key),
+              job_context["job"].id,
+              start_build_matrix)
 
     return job_context
 
@@ -748,7 +762,7 @@ def get_tsv_columns(job_context, samples_metadata):
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-    tsv_start = log_state("start get tsv columns", job_context["job"])
+    tsv_start = log_state("start get tsv columns", job_context["job"].id)
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -794,7 +808,7 @@ def get_tsv_columns(job_context, samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    log_state("end get tsv columns", job_context["job"], tsv_start)
+    log_state("end get tsv columns", job_context["job"].id, tsv_start)
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -854,7 +868,7 @@ def write_tsv_json(job_context):
                         progress_template = ('Done with {0} out of {1} lines of metadata '
                                              'for species {2}')
                         log_state(progress_template.format(i, len(metadata['samples']), species),
-                                  job_context['job'])
+                                  job_context['job'].id)
 
             # Writes a json file for current species:
             if len(samples_in_species):
@@ -890,6 +904,7 @@ def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
     except:
         # Let's not fail if there's an error syncing one of the quant.sf files
         logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
+
 
 def sync_quant_files(output_path, samples: List[Sample]):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.

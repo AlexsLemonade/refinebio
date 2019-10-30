@@ -1,31 +1,24 @@
-import gc
 import logging
 import os
-import psutil
 import shutil
 import time
+from typing import Dict
 
+from django.utils import timezone
+from fancyimpute import IterativeSVD
 import numpy as np
 import pandas as pd
-from fancyimpute import IterativeSVD
-import simplejson as json
-
-from datetime import datetime
-from django.utils import timezone
-from typing import Dict
+import psutil
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    ComputedFile,
-    Pipeline,
-    Organism
-)
+from data_refinery_common.models import (ComputationalResult,
+                                         ComputationalResultAnnotation,
+                                         ComputedFile,
+                                         Organism,
+                                         Pipeline)
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, smashing_utils
-
+from data_refinery_workers.processors import smashing_utils, utils
 
 pd.set_option('mode.chained_assignment', None)
 
@@ -38,23 +31,23 @@ logger = get_and_configure_logger(__name__)
 logger.setLevel(logging.getLevelName('DEBUG'))
 
 
-def log_state(message, job, start_time=False):
+def log_state(message, job_id, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
         logger.debug(message,
                      total_cpu=psutil.cpu_percent(),
                      process_ram=ram_in_GB,
-                     job_id=job.id)
+                     job_id=job_id)
 
         if start_time:
-            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job.id)
+            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job_id)
         else:
             return time.time()
 
 
 def _prepare_input(job_context: Dict) -> Dict:
-    start_time = log_state("prepare input", job_context["job"])
+    start_time = log_state("prepare input", job_context["job"].id)
 
     job_context = smashing_utils.prepare_files(job_context)
     if job_context['job'].success is False:
@@ -66,12 +59,20 @@ def _prepare_input(job_context: Dict) -> Dict:
     if job_context['job'].success is not False:
         job_context["organism_name"] = job_context['group_by_keys'][0]
 
-    log_state("prepare input done", job_context["job"], start_time)
+        # TEMPORARY for iterating on compendia more quickly. Rather
+        # than downloading the data from S3 each run we're just gonna
+        # use the same directory every job.
+        job_context["old_work_dir"] = job_context["work_dir"]
+        job_context["work_dir"] = SMASHING_DIR + job_context["organism_name"] + "/"
+        if not os.path.exists(job_context["work_dir"]):
+            os.makedirs(job_context["work_dir"])
+
+    log_state("prepare input done", job_context["job"].id, start_time)
     return job_context
 
 
 def _prepare_frames(job_context: Dict) -> Dict:
-    start_prepare_frames = log_state("start _prepare_frames", job_context["job"])
+    start_prepare_frames = log_state("start _prepare_frames", job_context["job"].id)
 
     try:
         job_context['unsmashable_files'] = []
@@ -86,8 +87,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
         for key, input_files in job_context.pop('input_files').items():
             job_context = smashing_utils.process_frames_for_key(key,
                                                                 input_files,
-                                                                job_context,
-                                                                merge_strategy='outer')
+                                                                job_context)
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
 
@@ -100,15 +100,14 @@ def _prepare_frames(job_context: Dict) -> Dict:
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
-        # Delay failing this pipeline until the failure notify has been sent
-        job_context['job'].success = False
+        job_context['success'] = False
         job_context['failure_reason'] = str(e)
         return job_context
 
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
-    log_state("end _prepare_frames", job_context["job"], start_prepare_frames)
+    log_state("end _prepare_frames", job_context["job"].id, start_prepare_frames)
     return job_context
 
 
@@ -144,9 +143,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
 
     """
-    imputation_start = log_state("start perform imputation", job_context["job"])
+    imputation_start = log_state("start perform imputation", job_context["job"].id)
     job_context['time_start'] = timezone.now()
-    rnaseq_row_sums_start = log_state("start rnaseq row sums", job_context["job"])
+    rnaseq_row_sums_start = log_state("start rnaseq row sums", job_context["job"].id)
 
     # We potentially can have a microarray-only compendia but not a RNASeq-only compendia
     log2_rnaseq_matrix = None
@@ -155,14 +154,14 @@ def _perform_imputation(job_context: Dict) -> Dict:
         # (gene) of the rnaseq_matrix (rnaseq_row_sums)
         rnaseq_row_sums = np.sum(job_context['rnaseq_matrix'], axis=1)
 
-        log_state("end rnaseq row sums", job_context["job"], rnaseq_row_sums_start)
-        rnaseq_decile_start = log_state("start rnaseq decile", job_context["job"])
+        log_state("end rnaseq row sums", job_context["job"].id, rnaseq_row_sums_start)
+        rnaseq_decile_start = log_state("start rnaseq decile", job_context["job"].id)
 
         # Calculate the 10th percentile of rnaseq_row_sums
         rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
 
-        log_state("end rnaseq decile", job_context["job"], rnaseq_decile_start)
-        drop_start = log_state("drop all rows", job_context["job"])
+        log_state("end rnaseq decile", job_context["job"].id, rnaseq_decile_start)
+        drop_start = log_state("drop all rows", job_context["job"].id)
         # Drop all rows in rnaseq_matrix with a row sum < 10th
         # percentile of rnaseq_row_sums; this is now
         # filtered_rnaseq_matrix
@@ -174,14 +173,14 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
         del rnaseq_row_sums
 
-        log_state("actually calling drop()", job_context["job"])
+        log_state("actually calling drop()", job_context["job"].id)
 
         filtered_rnaseq_matrix = job_context.pop('rnaseq_matrix').drop(rows_to_filter)
 
         del rows_to_filter
 
-        log_state("end drop all rows", job_context["job"], drop_start)
-        log2_start = log_state("start log2", job_context["job"])
+        log_state("end drop all rows", job_context["job"].id, drop_start)
+        log2_start = log_state("start log2", job_context["job"].id)
 
         # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
         filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
@@ -189,8 +188,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
         del filtered_rnaseq_matrix_plus_one
         del filtered_rnaseq_matrix
 
-        log_state("end log2", job_context["job"], log2_start)
-        cache_start = log_state("start caching zeroes", job_context["job"])
+        log_state("end log2", job_context["job"].id, log2_start)
+        cache_start = log_state("start caching zeroes", job_context["job"].id)
 
         # Cache our RNA-Seq zero values
         cached_zeroes = {}
@@ -201,9 +200,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
         # to keep track of where these zeroes are
         log2_rnaseq_matrix[log2_rnaseq_matrix == 0] = np.nan
 
-        log_state("end caching zeroes", job_context["job"], cache_start)
+        log_state("end caching zeroes", job_context["job"].id, cache_start)
 
-    outer_merge_start = log_state("start outer merge", job_context["job"])
+    outer_merge_start = log_state("start outer merge", job_context["job"].id)
 
     # Perform a full outer join of microarray_matrix and
     # log2_rnaseq_matrix; combined_matrix
@@ -216,12 +215,12 @@ def _perform_imputation(job_context: Dict) -> Dict:
         logger.info("Building compendia with only microarray data.", job_id=job_context["job"].id)
         combined_matrix = job_context.pop('microarray_matrix')
 
-    log_state("ran outer merge, now deleteing log2_rnaseq_matrix", job_context["job"])
+    log_state("ran outer merge, now deleteing log2_rnaseq_matrix", job_context["job"].id)
 
     del log2_rnaseq_matrix
 
-    log_state("end outer merge", job_context["job"], outer_merge_start)
-    drop_na_genes_start = log_state("start drop NA genes", job_context["job"])
+    log_state("end outer merge", job_context["job"].id, outer_merge_start)
+    drop_na_genes_start = log_state("start drop NA genes", job_context["job"].id)
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
@@ -235,8 +234,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
     del combined_matrix
     del thresh
 
-    log_state("end drop NA genes", job_context["job"], drop_na_genes_start)
-    drop_na_samples_start = log_state("start drop NA samples", job_context["job"])
+    log_state("end drop NA genes", job_context["job"].id, drop_na_genes_start)
+    drop_na_samples_start = log_state("start drop NA samples", job_context["job"].id)
 
     # # Visualize Row Filtered
     # output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
@@ -250,8 +249,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
     row_col_filtered_matrix_samples_index = row_col_filtered_matrix_samples.index
     row_col_filtered_matrix_samples_columns = row_col_filtered_matrix_samples.columns
 
-    log_state("end drop NA genes", job_context["job"], drop_na_samples_start)
-    replace_zeroes_start = log_state("start replace zeroes", job_context["job"])
+    log_state("end drop NA genes", job_context["job"].id, drop_na_samples_start)
+    replace_zeroes_start = log_state("start replace zeroes", job_context["job"].id)
 
     del row_filtered_matrix
 
@@ -281,8 +280,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
             logger.warn("Error when replacing zero")
             continue
 
-    log_state("end replace zeroes", job_context["job"], replace_zeroes_start)
-    transposed_zeroes_start = log_state("start replacing transposed zeroes", job_context["job"])
+    log_state("end replace zeroes", job_context["job"].id, replace_zeroes_start)
+    transposed_zeroes_start = log_state("start replacing transposed zeroes", job_context["job"].id)
 
     # Label our new replaced data
     combined_matrix_zero = row_col_filtered_matrix_samples
@@ -296,7 +295,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     transposed_matrix = transposed_matrix_with_zeros.replace([np.inf, -np.inf], np.nan)
     del transposed_matrix_with_zeros
 
-    log_state("end replacing transposed zeroes", job_context["job"], transposed_zeroes_start)
+    log_state("end replacing transposed zeroes", job_context["job"].id, transposed_zeroes_start)
 
     # Store the absolute/percentages of imputed values
     matrix_sum = transposed_matrix.isnull().sum()
@@ -309,7 +308,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # transposed_matrix; imputed_matrix
     svd_algorithm = job_context['dataset'].svd_algorithm
     if svd_algorithm != 'NONE':
-        svd_start = log_state("start SVD", job_context["job"])
+        svd_start = log_state("start SVD", job_context["job"].id)
 
         logger.info("IterativeSVD algorithm: %s" % svd_algorithm)
         svd_algorithm = str.lower(svd_algorithm)
@@ -318,13 +317,13 @@ def _perform_imputation(job_context: Dict) -> Dict:
             svd_algorithm=svd_algorithm
         ).fit_transform(transposed_matrix)
 
-        svd_start = log_state("end SVD", job_context["job"], svd_start)
+        svd_start = log_state("end SVD", job_context["job"].id, svd_start)
     else:
         imputed_matrix = transposed_matrix
         logger.info("Skipping IterativeSVD")
     del transposed_matrix
 
-    untranspose_start = log_state("start untranspose", job_context["job"])
+    untranspose_start = log_state("start untranspose", job_context["job"].id)
 
     # Untranspose imputed_matrix (genes are now rows, samples are now columns)
     untransposed_imputed_matrix = imputed_matrix.T
@@ -344,13 +343,13 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(),
     #                                               output_path)
 
-    log_state("end untranspose", job_context["job"], untranspose_start)
-    quantile_start = log_state("start quantile normalize", job_context["job"])
+    log_state("end untranspose", job_context["job"].id, untranspose_start)
+    quantile_start = log_state("start quantile normalize", job_context["job"].id)
 
     # Perform the Quantile Normalization
     job_context = smashing_utils.quantile_normalize(job_context, ks_check=False)
 
-    log_state("end quantile normalize", job_context["job"], quantile_start)
+    log_state("end quantile normalize", job_context["job"].id, quantile_start)
 
     # Visualize Final Compendia
     # output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
@@ -358,7 +357,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     job_context['time_end'] = timezone.now()
     job_context['formatted_command'] = "create_compendia.py"
-    log_state("end prepare imputation", job_context["job"], imputation_start)
+    log_state("end prepare imputation", job_context["job"].id, imputation_start)
     return job_context
 
 
@@ -366,7 +365,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
     """
-    result_start = log_state("start create result object", job_context["job"])
+    result_start = log_state("start create result object", job_context["job"].id)
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
@@ -474,7 +473,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
                                      archive_computed_file]
     job_context['success'] = True
 
-    log_state("end create result object", job_context["job"], result_start)
+    log_state("end create result object", job_context["job"].id, result_start)
+
+    # TEMPORARY for iterating on compendia more quickly.
+    # Reset this so the end_job does clean up the job's non-input-data stuff.
+    job_context["work_dir"] = job_context["old_work_dir"]
 
     return job_context
 
