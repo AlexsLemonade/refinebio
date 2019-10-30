@@ -24,9 +24,10 @@ class CompendiaCommandTestCase(TransactionTestCase):
     def test_quantpendia_command(self):
         self.make_test_data()
 
-        args = []
-        options = {'organisms': 'HOMO_SAPIENS', 'quant_sf_only': True}
-        call_command('create_compendia', *args, **options)
+        try:
+            call_command('create_compendia', organisms='HOMO_SAPIENS', quant_sf_only=True)
+        except SystemExit as e:  # this is okay!
+            pass
 
         processor_job = ProcessorJob.objects\
             .filter(pipeline_applied='CREATE_QUANTPENDIA')\
