@@ -148,11 +148,27 @@ class CompendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        qn_target = ComputationalResult()
+        qn_target = ComputedFile()
+        qn_target.filename = "danio_target.tsv"
+        qn_target.absolute_file_path = '/home/user/data_store/QN/danio_target.tsv'
+        qn_target.is_qn_target = True
+        qn_target.size_in_bytes = "12345"
+        qn_target.sha1 = "aabbccddeeff"
+        qn_target.result = result
         qn_target.save()
 
-        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1, qn_target=qn_target)
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1, qn_target=result)
         danio_rerio.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.data = {}
+        cra.data['organism_id'] = danio_rerio.id
+        cra.data['is_qn'] = True
+        cra.result = result
+        cra.save()
+
+        result = ComputationalResult()
+        result.save()
 
         micros = []
         for file in os.listdir('/home/user/data_store/raw/TEST/MICROARRAY/'):
@@ -235,26 +251,6 @@ class CompendiaTestCase(TransactionTestCase):
             assoc.save()
 
             rnas.append(file)
-
-
-        result = ComputationalResult()
-        result.save()
-
-        qn_target = ComputedFile()
-        qn_target.filename = "danio_target.tsv"
-        qn_target.absolute_file_path = '/home/user/data_store/QN/danio_target.tsv'
-        qn_target.is_qn_target = True
-        qn_target.size_in_bytes = "12345"
-        qn_target.sha1 = "aabbccddeeff"
-        qn_target.result = result
-        qn_target.save()
-
-        cra = ComputationalResultAnnotation()
-        cra.data = {}
-        cra.data['organism_id'] = danio_rerio.id
-        cra.data['is_qn'] = True
-        cra.result = result
-        cra.save()
 
         dset = Dataset()
         dset.data = {'GSE1234': micros, 'GSE5678': rnas}
