@@ -126,6 +126,7 @@ def _load_and_sanitize_file(computed_file_path, index=None):
                        sep='\t',
                        header=0,
                        index_col=0,
+                       dtype={0: str, 1: np.float32},
                        error_bad_lines=False)
 
     # Strip any funky whitespace
@@ -399,11 +400,11 @@ def process_frames_for_key(key: str,
     job_context['microarray_matrix'] = pd.DataFrame(data=None,
                                                     index=all_gene_identifiers,
                                                     columns=microarray_columns,
-                                                    dtype=np.float64)
+                                                    dtype=np.float32)
     job_context['rnaseq_matrix'] = pd.DataFrame(data=None,
                                                 index=all_gene_identifiers,
                                                 columns=rnaseq_columns,
-                                                dtype=np.float64)
+                                                dtype=np.float32)
 
     for index, (computed_file, sample) in enumerate(input_files):
         frame = process_frame(job_context["work_dir"],
