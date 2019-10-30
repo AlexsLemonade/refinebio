@@ -148,7 +148,10 @@ class CompendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1)
+        qn_target = ComputationalResult()
+        qn_target.save()
+
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1, qn_target=qn_target)
         danio_rerio.save()
 
         micros = []
