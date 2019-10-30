@@ -272,7 +272,10 @@ jobs:
       - run: docker tag ccdlstaging/dr_affymetrix:latest localhost:5000/dr_affymetrix:latest
       - run: docker push localhost:5000/dr_affymetrix
 
-      - run: ./foreman/run_tests.sh --tag=affymetrix
+      - run:
+          command: ./foreman/run_tests.sh --tag=affymetrix
+          # This takes more than 10 minutes, but not much.
+          no_output_timeout: 20m
 
   deploy:
     machine: true

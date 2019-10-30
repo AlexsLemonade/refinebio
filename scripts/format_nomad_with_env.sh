@@ -267,7 +267,7 @@ if [ "$project" = "workers" ]; then
                 done
             done
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
-        elif [ "$output_file" = "smasher.nomad" ] || [ "$output_file" = "create_qn_target.nomad" ] || [ "$output_file" = "create_compendia.nomad" ] || [ "$output_file" = "tximport.nomad" ]; then
+        elif [ "$output_file" = "smasher.nomad" ] || [ "$output_file" = "create_qn_target.nomad" ] || [ "$output_file" = "create_compendia.nomad" ] || [ "$output_file" = "create_quantpendia.nomad" ] || [ "$output_file" = "tximport.nomad" ]; then
             export_log_conf "processor"
             perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                  < "nomad-job-specs/$template" \

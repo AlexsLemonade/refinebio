@@ -13,7 +13,6 @@ import requests
 import psutil
 import logging
 import time
-from multiprocessing import Pool
 
 from botocore.exceptions import ClientError
 from datetime import timedelta
@@ -60,110 +59,29 @@ SCALERS = {
 }
 
 
-def log_state(message, job, start_time=False):
+def log_state(message, job_id, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
         logger.debug(message,
                      total_cpu=psutil.cpu_percent(),
                      process_ram=ram_in_GB,
-                     job_id=job.id)
+                     job_id=job_id)
 
         if start_time:
-            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job.id)
+            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job_id)
         else:
             return time.time()
 
 
-def _prepare_files(job_context: Dict) -> Dict:
-    """
-    Fetches and prepares the files to smash.
-    """
-    start_prepare_files = log_state("start prepare files", job_context["job"])
-    found_files = False
-    job_context['input_files'] = {}
-    # `key` can either be the species name or experiment accession.
-    for key, samples in job_context["samples"].items():
-        smashable_files = []
-        seen_files = set()
-        for sample in samples:
-            smashable_file = sample.get_most_recent_smashable_result_file()
-            if smashable_file is not None and smashable_file not in seen_files:
-                smashable_files = smashable_files + [(smashable_file, sample)]
-                seen_files.add(smashable_file)
-                found_files = True
-
-        job_context['input_files'][key] = smashable_files
-
-    if not found_files:
-        error_message = "Couldn't get any files to smash for Smash job!!"
-        logger.error(error_message,
-                     dataset_id=job_context['dataset'].id,
-                     num_samples=len(job_context["samples"]))
-
-        # Delay failing this pipeline until the failure notify has been sent
-        job_context['dataset'].failure_reason = error_message
-        job_context['dataset'].success = False
-        job_context['dataset'].save()
-        job_context['job'].success = False
-        job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
-        return job_context
-
-    job_context["work_dir"] = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
-    # Ensure we have a fresh smash directory
-    shutil.rmtree(job_context["work_dir"], ignore_errors=True)
-    os.makedirs(job_context["work_dir"])
-
-    job_context["output_dir"] = job_context["work_dir"] + "output/"
-    os.makedirs(job_context["output_dir"])
-    log_state("end prepare files", job_context["job"], start_prepare_files)
-    return job_context
-
-def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
-    """ this function downloads the latest computed file. Receives a tuple with
-    the computed file and the path where it needs to be downloaded
-    This is used to parallelize downloading quantsf files. """
-    (latest_computed_file, output_file_path) = download_tuple
-    try:
-        latest_computed_file.get_synced_file_path(path=output_file_path)
-    except:
-        # Let's not fail if there's an error syncing one of the quant.sf files
-        logger.exception('Failed to sync computed file', computed_file_id=latest_computed_file.pk)
-
-def sync_quant_files(output_path, files_sample_tuple):
-    """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
-        Returns the total number of samples that were included """
-    num_samples = 0
-    samples = [sample for (_, sample) in files_sample_tuple]
-    page_size = 100
-    # split the samples in groups and download each one individually
-    pool = Pool(processes=PROCESS_POOL_SIZE)
-
-    # for each sample we need it's latest quant.sf file we don't want to query the db
-    # for all of them, so we do it in groups of 100, and then download all of the computed_files
-    # in parallel
-    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
-        sample_and_computed_files = []
-        for sample in sample_page:
-            latest_computed_file = sample.get_most_recent_quant_sf_file()
-            if not latest_computed_file:
-                continue
-            output_file_path = output_path + sample.accession_code + "_quant.sf"
-            sample_and_computed_files.append((latest_computed_file, output_file_path))
-
-        # download this set of files, this will take a few seconds that should also help the db recover
-        pool.map(downlad_computed_file, sample_and_computed_files)
-        num_samples += len(sample_and_computed_files)
-
-    pool.close()
-    pool.join()
-
-    return num_samples
-
 def _inner_join(job_context: Dict) -> pd.DataFrame:
     """Performs an inner join across the all_frames key of job_context.
 
-    Returns a new dict containing the metadata, not the job_context.
+    Returns a dataframe, not the job_context.
+
+    TODO: This function should be mostly unnecessary now because we
+    pretty much do this in the smashing utils but I don't want to rip
+    it out right now .
     """
     # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
     # TODO: If the very first frame is the wrong platform, are we boned?
@@ -191,7 +109,6 @@ def _inner_join(job_context: Dict) -> pd.DataFrame:
 
         if breaker:
             logger.warning("Column repeated for smash job!",
-                           input_files=str(input_files),
                            dataset_id=job_context["dataset"].id,
                            job_id=job_context["job"].id,
                            column=column)
@@ -228,6 +145,46 @@ def _inner_join(job_context: Dict) -> pd.DataFrame:
     return merged
 
 
+def process_frames_for_key(key: str,
+                           input_files: List[ComputedFile],
+                           job_context: Dict) -> Dict:
+    """Download, read, and chunk processed sample files from s3.
+
+    `key` is the species or experiment whose samples are contained in `input_files`.
+
+    Will add to job_context the key 'all_frames', a list of pandas
+    dataframes containing all the samples' data. Also adds the key
+    'unsmashable_files' containing a list of paths that were
+    determined to be unsmashable.
+    """
+    job_context['original_merged'] = pd.DataFrame()
+
+    start_all_frames = log_state("Building list of all_frames key {}".format(key),
+                                 job_context["job"].id)
+
+    job_context['all_frames'] = []
+    for index, (computed_file, sample) in enumerate(input_files):
+        frame = smashing_utils.process_frame(job_context["work_dir"],
+                                             computed_file,
+                                             sample.accession_code,
+                                             job_context['dataset'].id,
+                                             job_context['dataset'].aggregate_by,
+                                             index,
+                                             None,
+                                             job_context["job"].id)
+
+        if frame['unsmashable']:
+            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+        else:
+            job_context['all_frames'].append(frame['dataframe'])
+
+    log_state("Finished building list of all_frames key {}".format(key),
+              job_context["job"].id,
+              start_all_frames)
+
+    return job_context
+
+
 def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> Dict:
     """Smash all of the input files together for a given key.
 
@@ -237,25 +194,20 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-    start_smash = log_state("start _smash_key for {}".format(key), job_context["job"])
+    start_smash = log_state("start _smash_key for {}".format(key), job_context["job"].id)
 
     # Check if we need to copy the quant.sf files
     if job_context['dataset'].quant_sf_only:
         outfile_dir = job_context["output_dir"] + key + "/"
         os.makedirs(outfile_dir, exist_ok=True)
-        job_context['num_samples'] += sync_quant_files(outfile_dir, input_files)
+        samples = [sample for (_, sample) in input_files]
+        job_context['num_samples'] += smashing_utils.sync_quant_files(outfile_dir, samples)
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
-    job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
-
-    # Combine the two technologies into a single list of dataframes.
-    ## Extend one list rather than adding the two together so we don't
-    ## the memory both are using.
-    ## Also free up the the memory the microarray-only list was using with pop.
-    job_context['rnaseq_frames'].extend(job_context.pop('microarray_frames'))
-    ## Change the key of the now-extended list
-    job_context['all_frames'] = job_context.pop('rnaseq_frames')
+    job_context = process_frames_for_key(key,
+                                         input_files,
+                                         job_context)
 
     if len(job_context['all_frames']) < 1:
         logger.error("Was told to smash a key with no frames!",
@@ -270,8 +222,8 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     merged = _inner_join(job_context)
 
     job_context['original_merged'] = merged
-    log_state("end build all frames", job_context["job"], start_smash)
-    start_qn = log_state("start qn", job_context["job"], start_smash)
+    log_state("end build all frames", job_context["job"].id, start_smash)
+    start_qn = log_state("start qn", job_context["job"].id, start_smash)
 
     # Quantile Normalization
     if job_context['dataset'].quantile_normalize:
@@ -302,29 +254,28 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
             return job_context
 
     # End QN
-    log_state("end qn", job_context["job"], start_qn)
+    log_state("end qn", job_context["job"].id, start_qn)
     # Transpose before scaling
     # Do this even if we don't want to scale in case transpose
     # modifies the data in any way. (Which it shouldn't but
     # we're paranoid.)
     # TODO: stop the paranoia because Josh has alleviated it.
     transposed = merged.transpose()
-    start_scaler = log_state("starting scaler", job_context["job"])
+    start_scaler = log_state("starting scaler", job_context["job"].id)
     # Scaler
     if job_context['dataset'].scale_by != "NONE":
         scale_funtion = SCALERS[job_context['dataset'].scale_by]
         scaler = scale_funtion(copy=True)
         scaler.fit(transposed)
-        scaled = pd.DataFrame(  scaler.transform(transposed),
-                                index=transposed.index,
-                                columns=transposed.columns
-                            )
+        scaled = pd.DataFrame(scaler.transform(transposed),
+                              index=transposed.index,
+                              columns=transposed.columns)
         # Untranspose
         untransposed = scaled.transpose()
     else:
         # Wheeeeeeeeeee
         untransposed = transposed.transpose()
-    log_state("end scaler", job_context["job"], start_scaler)
+    log_state("end scaler", job_context["job"].id, start_scaler)
 
     # This is just for quality assurance in tests.
     job_context['final_frame'] = untransposed
@@ -345,7 +296,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     job_context['smash_outfile'] = outfile
     untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
-    log_state("end _smash_key for {}".format(key), job_context["job"], start_smash)
+    log_state("end _smash_key for {}".format(key), job_context["job"].id, start_smash)
 
     return job_context
 
@@ -353,7 +304,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
 def _smash_all(job_context: Dict) -> Dict:
     """Perform smashing on all species/experiments in the dataset.
     """
-    start_smash = log_state("start smash", job_context["job"])
+    start_smash = log_state("start smash", job_context["job"].id)
     # We have already failed - return now so we can send our fail email.
     if job_context['job'].success is False:
         return job_context
@@ -368,7 +319,7 @@ def _smash_all(job_context: Dict) -> Dict:
                      job_id=job_context['job'].id)
 
         # Once again, `key` is either a species name or an experiment accession
-        for key, input_files in job_context['input_files'].items():
+        for key, input_files in job_context.pop('input_files').items():
             job_context = _smash_key(job_context, key, input_files)
 
         smashing_utils.write_non_data_files(job_context)
@@ -379,9 +330,9 @@ def _smash_all(job_context: Dict) -> Dict:
         job_context["output_file"] = final_zip_base + ".zip"
     except Exception as e:
         logger.exception("Could not smash dataset.",
-                        dataset_id=job_context['dataset'].id,
-                        processor_job_id=job_context['job_id'],
-                        num_input_files=len(job_context['input_files']))
+                         dataset_id=job_context['dataset'].id,
+                         processor_job_id=job_context['job_id'],
+                         num_input_files=job_context['num_input_files'])
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
@@ -397,7 +348,7 @@ def _smash_all(job_context: Dict) -> Dict:
     logger.debug("Created smash output!",
         archive_location=job_context["output_file"])
 
-    log_state("end smash", job_context["job"], start_smash);
+    log_state("end smash", job_context["job"].id, start_smash);
     return job_context
 
 
