@@ -126,6 +126,7 @@ def _load_and_sanitize_file(computed_file_path, index=None):
                        sep='\t',
                        header=0,
                        index_col=0,
+                       dtype={0: str, 1: np.float32},
                        error_bad_lines=False)
 
     # Strip any funky whitespace
@@ -399,11 +400,11 @@ def process_frames_for_key(key: str,
     job_context['microarray_matrix'] = pd.DataFrame(data=None,
                                                     index=all_gene_identifiers,
                                                     columns=microarray_columns,
-                                                    dtype=np.float64)
+                                                    dtype=np.float32)
     job_context['rnaseq_matrix'] = pd.DataFrame(data=None,
                                                 index=all_gene_identifiers,
                                                 columns=rnaseq_columns,
-                                                dtype=np.float64)
+                                                dtype=np.float32)
 
     for index, (computed_file, sample) in enumerate(input_files):
         frame = process_frame(job_context["work_dir"],
@@ -448,9 +449,8 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
     # Prepare our QN target file
     organism = job_context['organism']
-    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
 
-    if not qn_target:
+    if not organism.qn_target:
         logger.error("Could not find QN target for Organism!",
                      organism=organism,
                      dataset_id=job_context['dataset'].id,
@@ -464,7 +464,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         job_context['failure_reason'] = "Could not find QN target for Organism: " + str(organism)
         return job_context
     else:
-        qn_target_path = qn_target.sync_from_s3()
+        qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
         qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
                                       index_col=None, error_bad_lines=False)
 

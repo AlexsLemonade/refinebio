@@ -22,35 +22,48 @@ from .create_compendia import create_job_for_organism
 
 class CompendiaCommandTestCase(TransactionTestCase):
     def test_quantpendia_command(self):
-        self.make_test_data()
+        organism = self.get_organism_with_qn_target()
+        self.make_test_data(organism)
 
-        args = []
-        options = {'organisms': 'HOMO_SAPIENS', 'quant_sf_only': True}
-        call_command('create_compendia', *args, **options)
+        try:
+            call_command('create_compendia', organisms=organism.name, quant_sf_only=True)
+        except SystemExit as e:  # this is okay!
+            pass
 
-        start_time = timezone.now()
         processor_job = ProcessorJob.objects\
             .filter(pipeline_applied='CREATE_QUANTPENDIA')\
             .order_by('-created_at')\
             .first()
-        processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-        self.assertTrue(processor_job.success)
 
-        # assert we have a quantpendia for human
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-        quantpendias = ComputedFile.objects.filter(is_compendia=True, quant_sf_only=True, compendia_organism=homo_sapiens).first()
-        self.assertTrue(quantpendias)
+        # check that the processor job was created correctly
+        self.assertIsNotNone(processor_job)
+        self.assertEquals(processor_job.datasets.first().data, {'GSE51088': ['GSM1237818']})
 
-    def make_test_data(self):
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+    def get_organism_with_qn_target(self):
+        result = ComputationalResult()
+        result.save()
 
+        qn_target = ComputedFile()
+        qn_target.filename = "danio_target.tsv"
+        qn_target.absolute_file_path = '/home/user/data_store/QN/danio_target.tsv'
+        qn_target.is_qn_target = True
+        qn_target.size_in_bytes = "12345"
+        qn_target.sha1 = "aabbccddeeff"
+        qn_target.result = result
+        qn_target.save()
+
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1, qn_target=result)
+        danio_rerio.save()
+        return danio_rerio
+
+    def make_test_data(self, organism):
         experiment = Experiment()
         experiment.accession_code = "GSE51088"
         experiment.save()
 
         xoa = ExperimentOrganismAssociation()
         xoa.experiment=experiment
-        xoa.organism=homo_sapiens
+        xoa.organism=organism
         xoa.save()
 
         result = ComputationalResult()
@@ -59,7 +72,7 @@ class CompendiaCommandTestCase(TransactionTestCase):
         sample = Sample()
         sample.accession_code = 'GSM1237818'
         sample.title = 'GSM1237818'
-        sample.organism = homo_sapiens
+        sample.organism = organism
         sample.save()
 
         sra = SampleResultAssociation()

@@ -441,6 +441,7 @@ def _aggregate_nomad_jobs(aggregated_jobs):
 
     return nomad_pending_jobs, nomad_running_jobs
 
+
 def queryset_page_iterator(queryset, page_size = 2000):
     """ use the performant paginator to iterate over each page in a queryset """
     paginator = PerformantPaginator(queryset, page_size)
@@ -452,6 +453,7 @@ def queryset_page_iterator(queryset, page_size = 2000):
             break
         else:
             page = paginator.page(page.next_page_number())
+
 
 def queryset_iterator(queryset, page_size = 2000):
     """ use the performant paginator to iterate over a queryset """

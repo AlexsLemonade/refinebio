@@ -2,9 +2,11 @@ import os
 import logging
 import shutil
 import time
-from django.utils import timezone
-from typing import Dict, List, Tuple
+from typing import Dict, List
 import psutil
+
+from django.utils import timezone
+from django.conf import settings
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -21,6 +23,7 @@ SMASHING_DIR = "/home/user/data_store/smashed/"
 
 logger = get_and_configure_logger(__name__)
 logger.setLevel(logging.getLevelName('DEBUG'))
+
 
 def create_quantpendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_QUANTPENDIA.value)
@@ -43,9 +46,9 @@ def download_files(job_context: Dict) -> Dict:
         os.makedirs(outfile_dir, exist_ok=True)
 
         logger.debug("Downloading quant.sf files for quantpendia.",
-                    accession_code=key,
-                    job_id=job_context['job_id'],
-                    **get_process_stats())
+                     accession_code=key,
+                     job_id=job_context['job_id'],
+                     **get_process_stats())
 
         # download quant.sf files directly into the dataset folder
         num_samples += smashing_utils.sync_quant_files(outfile_dir, samples)
@@ -55,9 +58,9 @@ def download_files(job_context: Dict) -> Dict:
     job_context['formatted_command'] = "create_quantpendia.py"
 
     logger.debug("Finished downloading quant.sf files for quantpendia.",
-                job_id=job_context['job_id'],
-                total_downloaded_files=num_samples,
-                **get_process_stats())
+                 job_id=job_context['job_id'],
+                 total_downloaded_files=num_samples,
+                 **get_process_stats())
 
     return job_context
 
@@ -114,7 +117,6 @@ def create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, s3_key)
 
     job_context['result'] = result
-    job_context['computed_files'] = [archive_computed_file]
     job_context['success'] = True
 
     return job_context
@@ -123,8 +125,11 @@ def create_result_objects(job_context: Dict) -> Dict:
 def remove_job_dir(job_context: Dict):
     """ remove the directory when the job is successful. At this point
     the quantpendia was already zipped and uploaded. """
-    shutil.rmtree(job_context["job_dir"], ignore_errors=True)
+    # don't remove the files when running locally or for tests
+    if settings.RUNNING_IN_CLOUD:
+        shutil.rmtree(job_context["job_dir"], ignore_errors=True)
     return job_context
+
 
 def make_dirs(job_context: Dict):
     dataset_id = str(job_context["dataset"].pk)
@@ -134,11 +139,12 @@ def make_dirs(job_context: Dict):
     os.makedirs(job_context["output_dir"], exist_ok=True)
     return job_context
 
+
 def get_process_stats():
     BYTES_IN_GB = 1024 * 1024 * 1024
     process = psutil.Process(os.getpid())
     ram_in_GB = process.memory_info().rss / BYTES_IN_GB
-    return { 'total_cpu': psutil.cpu_percent(), 'process_ram': ram_in_GB }
+    return {'total_cpu': psutil.cpu_percent(), 'process_ram': ram_in_GB}
 
 
 def _get_organisms(aggregated_samples: Dict[str, Sample]) -> List[Organism]:
