@@ -170,5 +170,5 @@ class QNRefTestCase(TransactionTestCase):
         self.assertFalse('Target file' in stdout)
 
         # There's not enough samples available in this scenario so we
-        # should have even made a processor job.
+        # shouldn't have even made a processor job.
         self.assertEqual(ProcessorJob.objects.count(), 0)
