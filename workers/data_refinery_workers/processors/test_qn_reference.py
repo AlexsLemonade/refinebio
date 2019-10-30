@@ -114,7 +114,9 @@ class QNRefTestCase(TransactionTestCase):
 
     @tag('qn')
     def test_qn_management_command(self):
-        """Test that """
+        """Test that the management command fires off and then does not create
+        a job for an organism that does not have enough samples on the same
+        platform."""
 
         homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606)
         homo_sapiens.save()
