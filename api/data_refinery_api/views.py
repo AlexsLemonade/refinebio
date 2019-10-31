@@ -818,29 +818,57 @@ class SurveyJobList(generics.ListAPIView):
     ordering_fields = ('id', 'created_at')
     ordering = ('-id',)
 
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='sample_accession_code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='List the downloader jobs associated with a sample',
+    )
+]))
 class DownloaderJobList(generics.ListAPIView):
     """
     List of all DownloaderJob
     """
     model = DownloaderJob
-    queryset = DownloaderJob.objects.all()
     serializer_class = DownloaderJobSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = DownloaderJobSerializer.Meta.fields
     ordering_fields = ('id', 'created_at')
     ordering = ('-id',)
 
+    def get_queryset(self):
+        queryset = DownloaderJob.objects.all()
+
+        sample_accession_code = self.request.query_params.get('sample_accession_code', None)
+        if sample_accession_code:
+            queryset = queryset.filter(original_files__samples__accession_code=sample_accession_code).distinct()
+
+        return queryset
+
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='sample_accession_code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='List the processor jobs associated with a sample',
+    )
+]))
 class ProcessorJobList(generics.ListAPIView):
     """
     List of all ProcessorJobs.
     """
     model = ProcessorJob
-    queryset = ProcessorJob.objects.all()
     serializer_class = ProcessorJobSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = ProcessorJobSerializer.Meta.fields
     ordering_fields = ('id', 'created_at')
     ordering = ('-id',)
+
+    def get_queryset(self):
+        queryset = ProcessorJob.objects.all()
+
+        sample_accession_code = self.request.query_params.get('sample_accession_code', None)
+        if sample_accession_code:
+            queryset = queryset.filter(original_files__samples__accession_code=sample_accession_code).distinct()
+
+        return queryset
 
 ###
 # Statistics
