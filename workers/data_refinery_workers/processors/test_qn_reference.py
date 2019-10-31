@@ -110,8 +110,8 @@ class QNRefTestCase(TransactionTestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(final_context['success'])
 
-        self.assertEqual(final_context['merged_qn']['1'][0], -0.4379488528812934)
-        self.assertEqual(final_context['original_merged']['1'][0], -0.576210936113982)
+        self.assertEqual(final_context['merged_qn']['1'][0], -0.4379488527774811)
+        self.assertEqual(final_context['original_merged']['1'][0], -0.5762109)
 
     @tag('qn')
     def test_qn_management_command(self):
