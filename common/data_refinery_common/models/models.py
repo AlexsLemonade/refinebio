@@ -599,6 +599,49 @@ class ComputationalResultAnnotation(models.Model):
         self.last_modified = current_time
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
 
+# Compendia Computational Result
+class CompendiaResult(models.Model):
+    """ Computational Result For Compendia """
+    class Meta:
+        db_table = "compendia_results"
+        base_manager_name = "public_objects"
+
+    def __str__(self):
+        return "CompendiaResult " + str(self.pk)
+
+    SVD_ALGORITHM_CHOICES = (
+        ('NONE', 'None'),
+        ('RANDOMIZED', 'randomized'),
+        ('ARPACK', 'arpack'),
+    )
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    # Relations
+    result = models.ForeignKey(ComputationalResult,
+                               blank=False,
+                               null=False,
+                               on_delete=models.CASCADE)
+    primary_organism = models.ForeignKey(Organism,
+                                         blank=True,
+                                         null=True,
+                                         related_name='primary_compendia_results',
+                                         on_delete=models.CASCADE)
+    organisms = models.ManyToManyField(Organism,
+                                       related_name='compendia_results',
+                                       through='CompendiaResultOrganismAssociation')
+
+    # Properties
+    quant_sf_only = models.BooleanField(default=False)
+    compendia_version = models.IntegerField(blank=True, null=True)
+    svd_algorithm = models.CharField(
+        max_length=255,
+        choices=SVD_ALGORITHM_CHOICES,
+        default="NONE",
+        help_text='The SVD algorithm that was used to impute the compendia result.'
+    )
 
 # TODO
 # class Gene(models.Model):
@@ -1483,3 +1526,15 @@ class ExperimentResultAssociation(models.Model):
     class Meta:
         db_table = "experiment_result_associations"
         unique_together = ('result', 'experiment')
+
+
+class CompendiaResultOrganismAssociation(models.Model):
+
+    compendia_result = models.ForeignKey(
+        CompendiaResult, blank=False, null=False, on_delete=models.CASCADE)
+    organism = models.ForeignKey(
+        Organism, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "compendia_result_organism_associations"
+        unique_together = ('compendia_result', 'organism')
