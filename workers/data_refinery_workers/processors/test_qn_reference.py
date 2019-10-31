@@ -87,7 +87,7 @@ class QNRefTestCase(TransactionTestCase):
 
         homo_sapiens.refresh_from_db()
         target = homo_sapiens.qn_target.computedfile_set.latest()
-        self.assertEqual(target.sha1, '636d72d5cbf4b9785b0bd271a1430b615feaa7ea')
+        self.assertEqual(target.sha1, 'de69d348f8b239479e2330d596c4013a7b0b2b6a')
 
         # Create and run a smasher job that will use the QN target we just made.
         pj = ProcessorJob()
