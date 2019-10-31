@@ -4,6 +4,7 @@ import csv
 import logging
 import math
 import os
+import multiprocessing
 import shutil
 import time
 from pathlib import Path
@@ -25,7 +26,7 @@ from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
-
+MULTIPROCESSING_MAX_THREAD_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -909,7 +910,7 @@ def sync_quant_files(output_path, samples: List[Sample]):
 
     page_size = 100
     # split the samples in groups and download each one individually
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=MULTIPROCESSING_MAX_THREAD_COUNT) as executor:
         # for each sample we need it's latest quant.sf file we don't want to query the db
         # for all of them, so we do it in groups of 100, and then download all of the computed_files
         # in parallel
