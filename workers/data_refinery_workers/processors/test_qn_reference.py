@@ -83,7 +83,7 @@ class QNRefTestCase(TransactionTestCase):
         final_context = qn_reference.create_qn_reference(job.pk)
         self.assertTrue(final_context['success'])
         self.assertTrue(os.path.exists(final_context['target_file']))
-        self.assertEqual(os.path.getsize(final_context['target_file']), 556)
+        self.assertEqual(os.path.getsize(final_context['target_file']), 562)
 
         homo_sapiens.refresh_from_db()
         target = homo_sapiens.qn_target.computedfile_set.latest()
