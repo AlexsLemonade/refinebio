@@ -319,7 +319,9 @@ def end_job(job_context: Dict, abort=False):
         if len(pipeline.steps):
             pipeline.save()
 
-    if "work_dir" in job_context and settings.RUNNING_IN_CLOUD:
+    if "work_dir" in job_context \
+       and job_context["job"].pipeline_applied != ProcessorPipeline.CREATE_COMPENDIA.value \
+       and settings.RUNNING_IN_CLOUD:
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     job.success = success
