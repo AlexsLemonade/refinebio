@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
@@ -110,8 +111,8 @@ class QNRefTestCase(TransactionTestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(final_context['success'])
 
-        self.assertEqual(final_context['merged_qn']['1'][0], -0.4379488527774811)
-        self.assertEqual(final_context['original_merged']['1'][0], -0.5762109)
+        np.testing.assert_almost_equal(final_context['merged_qn']['1'][0], -0.4379488527774811)
+        np.testing.assert_almost_equal(final_context['original_merged']['1'][0], -0.5762109)
 
     @tag('qn')
     def test_qn_management_command(self):
