@@ -9,7 +9,8 @@ def populate_compendia_results(apps, schema):
     # get all existing compendia computed files
     compendia_computed_files = ComputedFile.objects.filter(is_compendia=True)
 
-    # create as compendia result from each of the results 
+    # create as compendia result from each of the results
+    compendia_results = []
     for computed_file in compendia_computed_files:
         compendia_result = CompendiaResult(quant_sf_only=computed_file.quant_sf_only,
                                            compendia_version=computed_file.compendia_version,
@@ -19,8 +20,9 @@ def populate_compendia_results(apps, schema):
         compendia_result.result = computed_file.result
         compendia_result.primary_organism = computed_file.compendia_organism
         compendia_result.organisms.add(computed_file.compendia_organism)
+        compendia_results.append(compendia_result)
 
-        compendia_result.save()
+    CompendiaResult.objects.bulk_create(compendia_results)
 
 class Migration(migrations.Migration):
 
