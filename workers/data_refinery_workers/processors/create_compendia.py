@@ -176,6 +176,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
         log_state("actually calling drop()", job_context["job"].id)
 
         filtered_rnaseq_matrix = job_context.pop('rnaseq_matrix').drop(rows_to_filter)
+        filtered_microarray_matrix = job_context.pop('microarray_matrix').drop(rows_to_filter)
 
         del rows_to_filter
 
@@ -202,22 +203,48 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
         log_state("end caching zeroes", job_context["job"].id, cache_start)
 
-    outer_merge_start = log_state("start outer merge", job_context["job"].id)
+        outer_merge_start = log_state("start outer merge", job_context["job"].id)
 
-    # Perform a full outer join of microarray_matrix and
-    # log2_rnaseq_matrix; combined_matrix
-    if log2_rnaseq_matrix is not None:
-        combined_matrix = job_context.pop('microarray_matrix').merge(log2_rnaseq_matrix,
-                                                                     how='outer',
-                                                                     left_index=True,
-                                                                     right_index=True)
+        # Perform a full outer join of microarray_matrix and
+        # log2_rnaseq_matrix; combined_matrix
+        if None:
+            # In memory solution fully disabled for now.
+            # Merges left_matrix and right_matrix. Uses 2X RAM where X
+            # is the sum of RAM from left_matrix and right_matrix.
+            combined_matrix = log2_rnaseq_matrix.merge(filtered_microarray_matrix,
+                                                       how='outer',
+                                                       left_index=True,
+                                                       right_index=True)
+        else:
+            # Merges two arrays without using additional RAM. Uses the
+            # same amount of RAM as the sum of RAM of the two
+            # matrices. It does so by first transposing both matrices,
+            # writing them both to disk (so that they are using no
+            # RAM), then reading the full matrix off of disk and into
+            # memory.
+            sample_names = list(log2_rnaseq_matrix.columns) + list(filtered_microarray_matrix.columns)
+            path = os.path.join(job_context['work_dir'], 'full_matrix.csv')
+            log2_rnaseq_matrix.T.to_csv(path, index=False)
+            del log2_rnaseq_matrix
+            filtered_microarray_matrix.T.to_csv(path, mode='a', header=False, index=False)
+            del filtered_microarray_matrix
+            # Read in the merged matrix, transpose it back so samples
+            # are columns and gene_ids are rows, since that is what
+            # the rest of the pipeline is expecting.
+            combined_matrix = pd.read_csv(path, header=0, index_col=False, dtype=np.float32).T
+            # Then make sure we've kept track of the column names
+            # correctly, and set them back.  The column names are done
+            # like this because pandas can't allow the index to be a
+            # string and the rest of the columns to be floats, so
+            # rather than creating a dtype dict for EVERY SINGLE
+            # COLUMN, we just don't write and read the index.
+            assert(combined_matrix.shape[1] == len(sample_names))
+            combined_matrix.columns = sample_names
+
+        log_state("ran outer merge", job_context["job"].id)
     else:
         logger.info("Building compendia with only microarray data.", job_id=job_context["job"].id)
         combined_matrix = job_context.pop('microarray_matrix')
-
-    log_state("ran outer merge, now deleteing log2_rnaseq_matrix", job_context["job"].id)
-
-    del log2_rnaseq_matrix
 
     log_state("end outer merge", job_context["job"].id, outer_merge_start)
     drop_na_genes_start = log_state("start drop NA genes", job_context["job"].id)
