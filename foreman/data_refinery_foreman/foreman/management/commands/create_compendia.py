@@ -21,8 +21,12 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorith
     experiments = Experiment.objects.filter(organisms=organism).prefetch_related('samples')
 
     for experiment in queryset_iterator(experiments):
-        data[experiment.accession_code] = list(experiment.samples.filter(organism=organism)\
-            .values_list('accession_code', flat=True))
+        data[experiment.accession_code] = list(
+            experiment.samples.filter(
+                organism=organism,
+                has_raw=True
+            ).values_list('accession_code', flat=True)
+        )
 
     job = ProcessorJob()
     if quant_sf_only:
