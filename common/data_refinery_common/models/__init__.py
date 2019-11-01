@@ -13,6 +13,7 @@ from data_refinery_common.models.models import (
     APIToken,
     ComputationalResult,
     ComputationalResultAnnotation,
+    CompendiaResult,
     ComputedFile,
     Dataset,
     DownloaderJobOriginalFileAssociation,
