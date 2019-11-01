@@ -15,6 +15,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
+from data_refinery_common.job_management import create_downloader_job
 
 
 logger = logging.get_and_configure_logger(__name__)
@@ -43,66 +44,13 @@ class ExternalSourceSurveyor:
         """
         files_to_download = []
         for sample in samples:
-            files_for_sample = OriginalFile.objects.filter(sample=sample, is_downloaded=False)
+            files_for_sample = sample.original_files.filter(is_downloaded=False)
             for og_file in files_for_sample:
                 files_to_download.append(og_file)
 
-        download_urls_with_jobs = {}
         for original_file in files_to_download:
+            create_downloader_job([original_file])
 
-            # We don't need to create multiple downloaders for the same file.
-            # However, we do want to associate original_files with the
-            # DownloaderJobs that will download them.
-            if original_file.source_url in download_urls_with_jobs.keys():
-                DownloaderJobOriginalFileAssociation.objects.get_or_create(
-                    downloader_job = download_urls_with_jobs[original_file.source_url],
-                    original_file = original_file
-                )
-                continue
-
-            # There is already a downloader job associated with this file.
-            old_assocs_count = DownloaderJobOriginalFileAssociation.objects.filter(
-                original_file__source_url=original_file.source_url).count()
-            if old_assocs_count > 0:
-                logger.debug("We found an existing DownloaderJob for this file/url.",
-                             original_file_id=original_file.id)
-                continue
-
-            sample_object = original_file.samples.first()
-            downloader_task = job_lookup.determine_downloader_task(sample_object)
-
-            if downloader_task == job_lookup.Downloaders.NONE:
-                logger.info("No valid downloader task found for sample.",
-                            sample=sample_object.id,
-                            original_file=original_file.id)
-            else:
-                downloader_job = DownloaderJob()
-                downloader_job.downloader_task = downloader_task.value
-                downloader_job.accession_code = experiment.accession_code
-                downloader_job.save()
-
-                DownloaderJobOriginalFileAssociation.objects.get_or_create(
-                    downloader_job = downloader_job,
-                    original_file = original_file
-                )
-
-                download_urls_with_jobs[original_file.source_url] = downloader_job
-
-                try:
-                    logger.info("Queuing downloader job for URL: " + original_file.source_url,
-                                 survey_job=self.survey_job.id,
-                                 downloader_job=downloader_job.id)
-                    message_queue.send_job(downloader_task, downloader_job)
-                except Exception as e:
-                    # If the task doesn't get sent we don't want the
-                    # downloader_job to be left floating
-                    logger.exception("Failed to enqueue downloader job for URL: "
-                                     + original_file.source_url,
-                                     survey_job=self.survey_job.id,
-                                     downloader_job=downloader_job.id)
-                    downloader_job.success = False
-                    downloader_job.failure_reason = str(e)
-                    downloader_job.save()
 
     def queue_downloader_job_for_original_files(self,
                                                 original_files: List[OriginalFile],
@@ -116,7 +64,7 @@ class ExternalSourceSurveyor:
         if is_transcriptome:
             downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX
         else:
-            source_urls = [original_file.source_url for original_file in original_files]        
+            source_urls = [original_file.source_url for original_file in original_files]
             # There is already a downloader job associated with this file.
             old_assocs_count = DownloaderJobOriginalFileAssociation.objects.filter(
                 original_file__source_url__in=source_urls).count()
