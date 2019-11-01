@@ -5,6 +5,7 @@ import time
 from typing import Dict
 
 from django.utils import timezone
+from django.db.models import Count
 from fancyimpute import IterativeSVD
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (ComputationalResult,
                                          ComputationalResultAnnotation,
+                                         CompendiaResult,
                                          ComputedFile,
                                          Organism,
                                          Pipeline)
@@ -431,18 +433,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     shutil.copy("/home/user/LICENSE_DATASET.txt", job_context["output_dir"] + "/LICENSE.TXT")
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
-    # Save the related metadata file
-    organism = job_context['samples'][organism_key][0].organism
-
-    try:
-        last_compendia = ComputedFile.objects.filter(
-                                    is_compendia=True,
-                                    compendia_organism=organism).order_by('-compendia_version')[-1]
-        compendia_version = last_compendia.compendia_version + 1
-    except Exception as e:
-        # This is the first compendia for this Organism
-        compendia_version = 1
-
     archive_computed_file = ComputedFile()
     archive_computed_file.absolute_file_path = archive_path
     archive_computed_file.filename = archive_path.split('/')[-1]
@@ -451,12 +441,27 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_smashable = False
     archive_computed_file.is_qn_target = False
     archive_computed_file.result = result
-    archive_computed_file.is_compendia = True
-    archive_computed_file.quant_sf_only = job_context["dataset"].quant_sf_only
-    archive_computed_file.svd_algorithm = job_context["dataset"].svd_algorithm
-    archive_computed_file.compendia_organism = job_context['samples'][organism_key][0].organism
-    archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
+
+    # Compendia Result Helpers
+    primary_organism = job_context['samples'][organism_key][0].organism
+    organisms = [primary_organism]
+    compendia_version = CompendiaResult.objects.annotate(
+                                                   organism_count=Count('organisms')
+                                               ).filter(
+                                                   primary_organism=primary_organism,
+                                                   organisms__in=organisms,
+                                                   organism_count=len(organisms)
+                                               ).count() + 1
+    # Save Compendia Results
+    compendia_result = CompendiaResult()
+    compendia_result.primary_organism = primary_organism
+    compendia_result.organisms.set(organisms)
+    compendia_result.result = result
+    compendia_result.quant_sf_only = job_context["dataset"].quant_sf_only
+    compendia_result.svd_algorithm = job_context['dataset'].svd_algorithm
+    compendia_result.compendia_version = compendia_version
+    compedia_result.save()
 
     logger.info("Compendia created!",
                 archive_path=archive_path,
