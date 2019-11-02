@@ -14,6 +14,7 @@ from data_refinery_common.models.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     CompendiaResult,
+    CompendiaResultOrganismAssociation,
     ComputedFile,
     Dataset,
     DownloaderJobOriginalFileAssociation,

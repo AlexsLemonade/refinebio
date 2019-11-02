@@ -599,6 +599,7 @@ class ComputationalResultAnnotation(models.Model):
         self.last_modified = current_time
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
 
+
 # Compendia Computational Result
 class CompendiaResult(models.Model):
     """ Computational Result For Compendia """
@@ -623,10 +624,11 @@ class CompendiaResult(models.Model):
     result = models.ForeignKey(ComputationalResult,
                                blank=False,
                                null=False,
+                               related_name='compendia_result',
                                on_delete=models.CASCADE)
     primary_organism = models.ForeignKey(Organism,
-                                         blank=True,
-                                         null=True,
+                                         blank=False,
+                                         null=False,
                                          related_name='primary_compendia_results',
                                          on_delete=models.CASCADE)
     organisms = models.ManyToManyField(Organism,
@@ -642,6 +644,10 @@ class CompendiaResult(models.Model):
         default="NONE",
         help_text='The SVD algorithm that was used to impute the compendia result.'
     )
+
+    # Common Properties
+    is_public = models.BooleanField(default=True)
+
 
 # TODO
 # class Gene(models.Model):
