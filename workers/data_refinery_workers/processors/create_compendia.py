@@ -16,6 +16,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (ComputationalResult,
                                          ComputationalResultAnnotation,
                                          CompendiaResult,
+                                         CompendiaResultOrganismAssociation,
                                          ComputedFile,
                                          Organism,
                                          Pipeline)
@@ -453,15 +454,29 @@ def _create_result_objects(job_context: Dict) -> Dict:
                                                    organisms__in=organisms,
                                                    organism_count=len(organisms)
                                                ).count() + 1
-    # Save Compendia Results
+    # Save Compendia Result
     compendia_result = CompendiaResult()
-    compendia_result.primary_organism = primary_organism
-    compendia_result.organisms.set(organisms)
-    compendia_result.result = result
     compendia_result.quant_sf_only = job_context["dataset"].quant_sf_only
     compendia_result.svd_algorithm = job_context['dataset'].svd_algorithm
     compendia_result.compendia_version = compendia_version
-    compedia_result.save()
+    compendia_result.result = result
+    compendia_result.primary_organism = primary_organism
+    compendia_result.save()
+
+    # create relations to all organisms contained in the compendia
+
+    compendia_result_organism_associations = []
+    for compendia_organism in organisms:
+        compendia_result_organism_association = CompendiaResultOrganismAssociation()
+        compendia_result_organism_association.compendia_result = compendia_result
+        compendia_result_organism_association.organism = compendia_organism
+        compendia_result_organism_associations.append(
+                compendia_result_organism_association)
+
+    CompendiaResultOrganismAssociation.objects.bulk_create(
+            compendia_result_organism_associations)
+
+    job_context['compendia_result'] = compendia_result
 
     logger.info("Compendia created!",
                 archive_path=archive_path,
