@@ -510,7 +510,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
                 ar = np.array(combos)
                 np.random.shuffle(np.transpose(ar))
             else:
-                indexes = [*range(ncol(reso))]
+                indexes = [*range(ncolumns[0])]
                 np.random.shuffle(indexes)
                 ar = np.array([*zip(indexes[0:100], indexes[100:200])])
 
