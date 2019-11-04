@@ -499,11 +499,21 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         n = ncol(reso)[0]
         m = 2
         if n >= m:
-            combos = combn(ncol(reso), 2)
 
-            # Convert to NP, Shuffle, Return to R
-            ar = np.array(combos)
-            np.random.shuffle(np.transpose(ar))
+            # This wont work with larger matricies
+            # https://github.com/AlexsLemonade/refinebio/issues/1860
+            ncolumns = ncol(reso)
+
+            if ncolumns[0] <= 200:
+                # Convert to NP, Shuffle, Return to R
+                combos = combn(ncolumns, 2)
+                ar = np.array(combos)
+                np.random.shuffle(np.transpose(ar))
+            else:
+                indexes = [*range(ncolumns[0])]
+                np.random.shuffle(indexes)
+                ar = np.array([*zip(indexes[0:100], indexes[100:200])])
+
             nr, nc = ar.shape
             combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
 
