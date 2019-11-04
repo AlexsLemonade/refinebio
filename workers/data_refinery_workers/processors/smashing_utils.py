@@ -3,12 +3,13 @@
 import csv
 import logging
 import math
-import multiprocessing
 import os
+import multiprocessing
 import shutil
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
+from concurrent.futures import ThreadPoolExecutor
 
 from django.utils import timezone
 from rpy2.robjects import pandas2ri
@@ -25,11 +26,7 @@ from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
-# Take one fewer than 1/2 the total available threads
-# also make the minimum threads 1.
-# Use floor here because multiprocessing raises an exception if this isn't an int.
-MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
-MULTIPROCESSING_CHUNK_SIZE = 2000
+MULTIPROCESSING_MAX_THREAD_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -923,25 +920,21 @@ def sync_quant_files(output_path, samples: List[Sample]):
 
     page_size = 100
     # split the samples in groups and download each one individually
-    pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+    with ThreadPoolExecutor(max_workers=MULTIPROCESSING_MAX_THREAD_COUNT) as executor:
+        # for each sample we need it's latest quant.sf file we don't want to query the db
+        # for all of them, so we do it in groups of 100, and then download all of the computed_files
+        # in parallel
+        for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
+            sample_and_computed_files = []
+            for sample in sample_page:
+                latest_computed_file = sample.get_most_recent_quant_sf_file()
+                if not latest_computed_file:
+                    continue
+                output_file_path = output_path + sample.accession_code + "_quant.sf"
+                sample_and_computed_files.append((latest_computed_file, output_file_path))
 
-    # for each sample we need it's latest quant.sf file we don't want to query the db
-    # for all of them, so we do it in groups of 100, and then download all of the computed_files
-    # in parallel
-    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
-        sample_and_computed_files = []
-        for sample in sample_page:
-            latest_computed_file = sample.get_most_recent_quant_sf_file()
-            if not latest_computed_file:
-                continue
-            output_file_path = output_path + sample.accession_code + "_quant.sf"
-            sample_and_computed_files.append((latest_computed_file, output_file_path))
-
-        # download this set of files, this will take a few seconds that should also help the db recover
-        pool.map(downlad_computed_file, sample_and_computed_files)
-        num_samples += len(sample_and_computed_files)
-
-    pool.close()
-    pool.join()
+            # download this set of files, this will take a few seconds that should also help the db recover
+            executor.map(downlad_computed_file, sample_and_computed_files)
+            num_samples += len(sample_and_computed_files)
 
     return num_samples
