@@ -308,6 +308,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
     annotations = SampleAnnotationSerializer(many=True, source='sampleannotation_set')
     organism = OrganismSerializer(many=False)
     results = DetailedSamplesComputationalResultSerializer(many=True)
+    original_files = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    computed_files = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Sample
@@ -342,6 +344,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'is_processed',
                     'created_at',
                     'last_modified',
+                    'original_files',
+                    'computed_files',
                 )
 
 ##
