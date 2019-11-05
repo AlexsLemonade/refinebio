@@ -308,8 +308,6 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
     annotations = SampleAnnotationSerializer(many=True, source='sampleannotation_set')
     organism = OrganismSerializer(many=False)
     results = DetailedSamplesComputationalResultSerializer(many=True)
-    original_files = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    computed_files = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Sample
@@ -506,8 +504,6 @@ class SurveyJobSerializer(serializers.ModelSerializer):
                 )
 
 class DownloaderJobSerializer(serializers.ModelSerializer):
-    original_files = OriginalFileSerializer(many=True)
-
     class Meta:
         model = DownloaderJob
         fields = (
@@ -529,8 +525,6 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                 )
 
 class ProcessorJobSerializer(serializers.ModelSerializer):
-    original_files = OriginalFileSerializer(many=True)
-
     class Meta:
         model = ProcessorJob
         fields = (
