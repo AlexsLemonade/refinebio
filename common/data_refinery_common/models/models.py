@@ -197,12 +197,8 @@ class Sample(models.Model):
                 is_public=True,
                 is_smashable=True,
             ).latest()
-
-            # Access a property to make the query fire now.
-            latest_computed_file.id
-
             return latest_computed_file
-        except Exception as e:
+        except ComputedFile.DoesNotExist as e:
             # This sample has no smashable files yet.
             return None
 
