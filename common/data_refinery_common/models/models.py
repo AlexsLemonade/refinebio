@@ -211,7 +211,8 @@ class Sample(models.Model):
         Note: We don't associate that file to the computed_files of this sample, that's
         why we have to go through the computational results. """
         return ComputedFile.objects\
-            .filter(result__in=self.results.all(), filename='quant.sf')\
+            .filter(result__in=self.results.all(), filename='quant.sf',
+                    s3_key__isnull=False, s3_bucket__isnull=False)\
             .order_by('-created_at')\
             .first()
 
@@ -559,6 +560,11 @@ class ComputationalResult(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(ComputationalResult, self).save(*args, **kwargs)
+
+    def remove_computed_files_from_s3(self):
+        """ Removes all associated computed files from S3. Use this before deleting a computational result. """
+        for computed_file in self.computedfile_set.all():
+                computed_file.delete_s3_file()
 
 
 class ComputationalResultAnnotation(models.Model):
@@ -1022,6 +1028,9 @@ class ComputedFile(models.Model):
         target_directory = os.path.dirname(self.absolute_file_path)
         os.makedirs(target_directory, exist_ok=True)
 
+        if not self.s3_bucket or not self.s3_key:
+            raise ValueError('Tried to download a computed file with no s3_bucket or s3_key')
+
         try:
             S3.download_file(
                         self.s3_bucket,
@@ -1128,12 +1137,16 @@ class ComputedFile(models.Model):
 
         try:
             S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
-            return True
         except:
             logger.exception("Failed to delete S3 object for Computed File.",
                              computed_file=self.id,
                              s3_object=self.s3_key)
             return False
+
+        self.s3_key = None
+        self.s3_bucket = None
+        self.save()
+        return True
 
     def get_synced_file_path(self, force=False, path=None):
         """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it

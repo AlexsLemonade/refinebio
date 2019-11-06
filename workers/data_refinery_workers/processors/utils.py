@@ -49,6 +49,7 @@ def signal_handler(sig, frame):
     """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
     if CURRENT_JOB:
+        CURRENT_JOB.success = False
         CURRENT_JOB.end_time = timezone.now()
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
         CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT: " + str(sig)
@@ -60,7 +61,7 @@ def prepare_original_files(job_context):
     """ Provision in the Job context for OriginalFile-driven processors
     """
     job = job_context["job"]
-    original_files = OriginalFile.objects.filter(processor_jobs=job)
+    original_files = job.original_files.all()
 
     if original_files.count() == 0:
         logger.error("No files found.", processor_job=job.id)
@@ -278,6 +279,7 @@ def end_job(job_context: Dict, abort=False):
            and not (job_context["job"].pipeline_applied in [ProcessorPipeline.SMASHER.value,
                                                             ProcessorPipeline.QN_REFERENCE.value,
                                                             ProcessorPipeline.CREATE_COMPENDIA.value,
+                                                            ProcessorPipeline.CREATE_QUANTPENDIA.value,
                                                             ProcessorPipeline.JANITOR.value]):
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
@@ -317,7 +319,9 @@ def end_job(job_context: Dict, abort=False):
         if len(pipeline.steps):
             pipeline.save()
 
-    if "work_dir" in job_context and settings.RUNNING_IN_CLOUD:
+    if "work_dir" in job_context \
+       and job_context["job"].pipeline_applied != ProcessorPipeline.CREATE_COMPENDIA.value \
+       and settings.RUNNING_IN_CLOUD:
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     job.success = success
@@ -529,22 +533,6 @@ def get_bioc_version():
         raise Exception('Bioconductor not found')
 
     return version
-
-
-def get_most_recent_qn_target_for_organism(organism):
-    """ Returns a ComputedFile for QN run for an Organism """
-
-    try:
-        annotation = ComputationalResultAnnotation.objects.filter(
-            data__organism_id=organism.id,
-            data__is_qn=True
-        ).order_by(
-            '-created_at'
-        ).first()
-        file = annotation.result.computedfile_set.first()
-        return file
-    except Exception:
-        return None
 
 
 def get_r_pkgs(pkg_list):

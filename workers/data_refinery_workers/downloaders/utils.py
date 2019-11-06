@@ -39,6 +39,7 @@ def signal_handler(sig, frame):
     """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
     if CURRENT_JOB:
+        CURRENT_JOB.success = False
         CURRENT_JOB.end_time = timezone.now()
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
         CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT: " + str(sig)
