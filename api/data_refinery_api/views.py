@@ -62,6 +62,7 @@ from data_refinery_api.serializers import (
     CompendiaWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
+    OriginalFileListSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -100,6 +101,7 @@ from data_refinery_common.utils import (
     get_env_variable,
     get_active_volumes,
     get_nomad_jobs_breakdown,
+    get_nomad_jobs
 )
 from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
@@ -822,7 +824,11 @@ class SurveyJobList(generics.ListAPIView):
     openapi.Parameter(
         name='sample_accession_code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
         description='List the downloader jobs associated with a sample',
-    )
+    ),
+    openapi.Parameter(
+        name='nomad', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='Only return jobs that are in the nomad queue currently',
+    ),
 ]))
 class DownloaderJobList(generics.ListAPIView):
     """
@@ -842,13 +848,22 @@ class DownloaderJobList(generics.ListAPIView):
         if sample_accession_code:
             queryset = queryset.filter(original_files__samples__accession_code=sample_accession_code).distinct()
 
+        nomad = self.request.query_params.get('nomad', None)
+        if nomad:
+            nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs()]
+            queryset = queryset.filter(nomad_job_id__in=nomad_jobs_ids)
+
         return queryset
 
 @method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
     openapi.Parameter(
         name='sample_accession_code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
         description='List the processor jobs associated with a sample',
-    )
+    ),
+    openapi.Parameter(
+        name='nomad', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='Only return jobs that are in the nomad queue currently',
+    ),
 ]))
 class ProcessorJobList(generics.ListAPIView):
     """
@@ -867,6 +882,11 @@ class ProcessorJobList(generics.ListAPIView):
         sample_accession_code = self.request.query_params.get('sample_accession_code', None)
         if sample_accession_code:
             queryset = queryset.filter(original_files__samples__accession_code=sample_accession_code).distinct()
+
+        nomad = self.request.query_params.get('nomad', None)
+        if nomad:
+            nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs()]
+            queryset = queryset.filter(nomad_job_id__in=nomad_jobs_ids)
 
         return queryset
 
@@ -1278,6 +1298,7 @@ class ComputedFilesList(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = (
         'id',
+        'samples',
         'is_qn_target',
         'is_smashable',
         'is_qc',
@@ -1302,6 +1323,22 @@ class ComputedFilesList(generics.ListAPIView):
             return {**serializer_context, 'token': token}
         except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             return serializer_context
+
+
+class OriginalFileList(generics.ListAPIView):
+    """
+    original_files_list
+
+    List Original Files that are associated with Samples. These are the files we proccess.
+
+    """
+    queryset = OriginalFile.objects.all()
+    serializer_class = OriginalFileListSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = OriginalFileListSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at', 'last_modified',)
+    ordering = ('-id',)
+
 
 ##
 # Util
