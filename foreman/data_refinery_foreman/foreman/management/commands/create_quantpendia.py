@@ -65,9 +65,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Create a quantpendia for one or more organisms."""
         all_organisms = Organism.objects.all().filter(qn_target__isnull=False)
-        if options["organisms"] is None:
-            all_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
-        else:
+        if options["organisms"] is not None:
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
             all_organisms = all_organisms.filter(name__in=organisms)
 
