@@ -12,7 +12,7 @@ from data_refinery_common.utils import queryset_iterator
 
 logger = get_and_configure_logger(__name__)
 
-def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorithm='ARPACK'):
+def create_job_for_organism(organism=Organism, svd_algorithm='ARPACK'):
     """Returns a compendia job for the provided organism.
 
     Fetch all of the experiments and compile large but normally formated Dataset.
@@ -25,18 +25,15 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorith
             .values_list('accession_code', flat=True))
 
     job = ProcessorJob()
-    if quant_sf_only:
-        job.pipeline_applied = ProcessorPipeline.CREATE_QUANTPENDIA.value
-    else:
-        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+    job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
     job.save()
 
     dset = Dataset()
     dset.data = data
     dset.scale_by = 'NONE'
-    dset.aggregate_by = 'EXPERIMENT' if quant_sf_only else 'SPECIES'
+    dset.aggregate_by = 'SPECIES'
     dset.quantile_normalize = False
-    dset.quant_sf_only = quant_sf_only
+    dset.quant_sf_only = False
     dset.svd_algorithm = svd_algorithm
     dset.save()
 
@@ -47,7 +44,6 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorith
 
     return job
 
-
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -55,11 +51,6 @@ class Command(BaseCommand):
             "--organisms",
             type=str,
             help=("Comma separated list of organism names."))
-
-        parser.add_argument(
-            "--quant-sf-only",
-            type=lambda x: x == "True",
-            help=("Whether to create a quantpendium or normal compendium. Quantpendium will be aggregated by EXPERIMENT"))
 
         parser.add_argument(
             "--svd-algorithm",
@@ -73,36 +64,28 @@ class Command(BaseCommand):
         for it. If not a new job will be dispatched for each organism
         with enough microarray samples except for human and mouse.
         """
+        svd_algorithm = 'ARPACK' # default algorithm to arpack until we decide that ranomized is preferred
+        svd_algorithm_choices = ['ARPACK', 'RANDOMIZED', 'NONE']
+        if options['svd_algorithm'] and options['svd_algorithm'] not in svd_algorithm_choices:
+            raise Exception('Invalid svd_algorithm option provided. Possible values are ' + str(svd_algorithm_choices))
+        else:
+            svd_algorithm = options["svd_algorithm"]
+
+        # only include organisms with QN targets. We'll merge groups later.
+        all_organisms = Organism.objects.all().filter(qn_target__isnull=False)
         if options["organisms"] is None:
-            all_organisms = Organism.objects.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
+            all_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
         else:
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
-            all_organisms = Organism.objects.filter(name__in=organisms)
-
-        # I think we could just use options["quant_sf_only"] but I
-        # wanna make sure that values that are not True do not trigger
-        # a truthy evaluation.
-        quant_sf_only = options["quant_sf_only"] is True
-
-        # default algorithm to arpack until we decide that ranomized is preferred
-        svd_algorithm = 'NONE' if quant_sf_only else 'ARPACK'
-        if options["svd_algorithm"] in ['ARPACK', 'RANDOMIZED', 'NONE']:
-            svd_algorithm = options["svd_algorithm"]
+            all_organisms = all_organisms.filter(name__in=organisms)
 
         logger.debug('Generating compendia for organisms', organisms=all_organisms)
 
-        job_pipeline = ProcessorPipeline.CREATE_QUANTPENDIA if quant_sf_only else ProcessorPipeline.CREATE_COMPENDIA
-
         for organism in all_organisms:
-            if organism.qn_target:
-                job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
-                logger.info("Sending compendia job for Organism",
-                            job_id=str(job.pk),
-                            organism=str(organism),
-                            quant_sf_only=quant_sf_only)
-                send_job(job_pipeline, job)
-            else:
-                logger.debug("Could not create compendia for organism because it did not have a QN target.",
-                             organism=organism.name)
+            job = create_job_for_organism(organism, svd_algorithm)
+            logger.info("Sending compendia job for Organism",
+                        job_id=str(job.pk),
+                        organism=str(organism))
+            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
 
         sys.exit(0)
