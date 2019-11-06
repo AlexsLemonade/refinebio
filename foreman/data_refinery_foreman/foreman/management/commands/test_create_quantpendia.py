@@ -1,8 +1,6 @@
 from django.test import TransactionTestCase
-from django.utils import timezone
 from django.core.management import call_command
 
-from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (ComputationalResult,
                                          ComputedFile,
                                          Dataset,
@@ -10,23 +8,18 @@ from data_refinery_common.models import (ComputationalResult,
                                          ExperimentSampleAssociation,
                                          Organism,
                                          ProcessorJob,
-                                         ProcessorJobDatasetAssociation,
                                          Sample,
                                          SampleComputedFileAssociation,
                                          SampleResultAssociation,
                                          ExperimentOrganismAssociation)
-from data_refinery_foreman.surveyor.test_end_to_end import wait_for_job
 
-from .create_compendia import create_job_for_organism
-
-
-class CompendiaCommandTestCase(TransactionTestCase):
+class QuantendiaCommandTestCase(TransactionTestCase):
     def test_quantpendia_command(self):
         organism = self.get_organism_with_qn_target()
         self.make_test_data(organism)
 
         try:
-            call_command('create_compendia', organisms=organism.name, quant_sf_only=True)
+            call_command('create_quantpendia', organisms=organism.name)
         except SystemExit as e:  # this is okay!
             pass
 
