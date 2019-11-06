@@ -377,9 +377,26 @@ openapi.Parameter(
 @method_decorator(name='put', decorator=swagger_auto_schema(operation_description="""
 Modify an existing Dataset.
 
-Set `start` to `true` along with a valid activated API token (from `/token/`) to begin smashing and delivery.
+In order to begin smashing, you have to provide an activated api token. The token can be
+requested with [/token](#tag/token), and has to be sent in the header of the request
+with the key: `API-TOKEN`. Example:
 
-You must also supply `email_address` with `start`, though this will never be serialized back to you.
+```py
+import requests
+import json
+
+params = json.dumps({
+    'data': data,
+    'aggregate_by': 'EXPERIMENT',
+    'start': True,
+    'email_address': 'refinebio@gmail.com'
+})
+headers = {
+    'Content-Type': 'application/json',
+    'API-KEY': token_id
+}
+requests.put(host + '/v1/dataset/38879729-93c8-436d-9293-b95d3f274741/', params, headers=headers)
+```
 """))
 class DatasetView(generics.RetrieveUpdateAPIView):
     """ View and modify a single Dataset. """
@@ -540,16 +557,20 @@ class CreateApiTokenView(generics.CreateAPIView):
     """
     token_create
 
-    There're several endpoints like [/dataset](#tag/dataset) and [/results](#tag/results) that return
-    S3 urls where users can download the files we produce, however in order to get those files people
-    need to accept our terms of use by creating a token and activating it.
+    This endpoint can be used to create and activate tokens. These tokens can be used
+    in requests that provide urls to download computed files. They are a way to accept
+    our terms of service.
 
-    ```
-    POST /token
-    PUT /token/{token-id} is_active=True
+    ```py
+    import requests
+    import json
+    ​
+    response = requests.post('https://api.refine.bio/v1/token/')
+    token_id = response.json()['id']
+    response = requests.put('https://api.refine.bio/v1/token/' + token_id + '/', json.dumps({'is_activated': True}), headers={'Content-Type': 'application/json'})
     ```
 
-    The token id needs to be sent on the `API_KEY` header on http requests.
+    The token id needs to be attached to the header of the requests with the key `API-KEY`
 
     References
     - [https://github.com/AlexsLemonade/refinebio/issues/731]()
