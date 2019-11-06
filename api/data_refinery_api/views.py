@@ -62,6 +62,7 @@ from data_refinery_api.serializers import (
     CompendiaWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
+    OriginalFileListSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -1297,6 +1298,7 @@ class ComputedFilesList(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = (
         'id',
+        'samples',
         'is_qn_target',
         'is_smashable',
         'is_qc',
@@ -1321,6 +1323,22 @@ class ComputedFilesList(generics.ListAPIView):
             return {**serializer_context, 'token': token}
         except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             return serializer_context
+
+
+class OriginalFileList(generics.ListAPIView):
+    """
+    original_files_list
+
+    List Original Files that are associated with Samples. These are the files we proccess.
+
+    """
+    queryset = OriginalFile.objects.all()
+    serializer_class = OriginalFileListSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = OriginalFileListSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at', 'last_modified',)
+    ordering = ('-id',)
+
 
 ##
 # Util

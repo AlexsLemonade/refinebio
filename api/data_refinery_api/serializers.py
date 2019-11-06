@@ -254,6 +254,27 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
             }
         }
 
+class OriginalFileListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OriginalFile
+        fields = (
+                    'id',
+                    'filename',
+                    'samples',
+                    'size_in_bytes',
+                    'sha1',
+                    'samples',
+                    'processor_jobs',
+                    'downloader_jobs',
+                    'source_url',
+                    'is_archive',
+                    'source_filename',
+                    'has_raw',
+                    'created_at',
+                    'last_modified'
+                )
+
+
 ##
 # Samples
 ##

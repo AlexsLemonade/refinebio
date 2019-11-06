@@ -37,6 +37,7 @@ from .views import (
     QNTargetsAvailable,
     CompendiaDetail,
     ComputedFilesList,
+    OriginalFileList,
     AboutStats
 )
 
@@ -110,6 +111,7 @@ urlpatterns = [
 
         url(r'^compendia/$', CompendiaDetail.as_view(), name='compendia'),
         url(r'^computed_files/$', ComputedFilesList.as_view(), name='computed_files'),
+        url(r'^original_files/$', OriginalFileList.as_view(), name='original_files'),
         url(r'^computational_results/$', ComputationalResultsList.as_view(), name='results'),
 
         # v1 api docs
