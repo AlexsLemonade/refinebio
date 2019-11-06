@@ -19,8 +19,7 @@ def create_job_for_organism(organism: Organism):
             organisms=organism,
             samples__results__computedfile__filename='quant.sf'
         )\
-        .distinct()\
-        .prefetch_related('samples')
+        .distinct()
 
     for experiment in queryset_iterator(experiments):
         # only include the samples from the target organism that have quant.sf files
