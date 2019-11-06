@@ -44,7 +44,6 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(
         accession_code=experiment_accession,
-        organism_names=['HOMO_SAPIENS'],
         technology='RNA-SEQ'
     )
 

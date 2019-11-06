@@ -461,7 +461,6 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
-                    'organism_names',
                     'sample_metadata',
                     'num_total_samples',
                     'num_processed_samples',
