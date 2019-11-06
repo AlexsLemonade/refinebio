@@ -72,6 +72,14 @@ class Command(BaseCommand):
         logger.debug('Generating quantpendia for organisms', organisms=all_organisms)
 
         for organism in all_organisms:
+            # only generate the quantpendia for organisms that have some samples
+            # with quant.sf files.
+            has_quantsf_files = organism.sample_set\
+                .filter(results__computedfile__filename='quant.sf')\
+                .exists()
+            if not has_quantsf_files:
+                continue
+
             job = create_job_for_organism(organism)
             logger.info("Sending compendia job for Organism", job_id=str(job.pk), organism=str(organism))
             send_job(ProcessorPipeline.CREATE_QUANTPENDIA, job)
