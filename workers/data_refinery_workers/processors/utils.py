@@ -303,7 +303,9 @@ def end_job(job_context: Dict, abort=False):
         if len(pipeline.steps):
             pipeline.save()
 
-    if "work_dir" in job_context and settings.RUNNING_IN_CLOUD:
+    if "work_dir" in job_context \
+       and job_context["job"].pipeline_applied != ProcessorPipeline.CREATE_COMPENDIA.value \
+       and settings.RUNNING_IN_CLOUD:
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     job.success = success
@@ -534,22 +536,6 @@ def get_bioc_version():
         raise Exception('Bioconductor not found')
 
     return version
-
-
-def get_most_recent_qn_target_for_organism(organism):
-    """ Returns a ComputedFile for QN run for an Organism """
-
-    try:
-        annotation = ComputationalResultAnnotation.objects.filter(
-            data__organism_id=organism.id,
-            data__is_qn=True
-        ).order_by(
-            '-created_at'
-        ).first()
-        file = annotation.result.computedfile_set.first()
-        return file
-    except Exception:
-        return None
 
 
 def get_r_pkgs(pkg_list):

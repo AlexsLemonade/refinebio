@@ -3,12 +3,13 @@
 import csv
 import logging
 import math
-import multiprocessing
 import os
+import multiprocessing
 import shutil
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
+from concurrent.futures import ThreadPoolExecutor
 
 from django.utils import timezone
 from rpy2.robjects import pandas2ri
@@ -25,11 +26,7 @@ from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
-# Take one fewer than 1/2 the total available threads
-# also make the minimum threads 1.
-# Use floor here because multiprocessing raises an exception if this isn't an int.
-MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
-MULTIPROCESSING_CHUNK_SIZE = 2000
+MULTIPROCESSING_MAX_THREAD_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -126,6 +123,7 @@ def _load_and_sanitize_file(computed_file_path, index=None):
                        sep='\t',
                        header=0,
                        index_col=0,
+                       dtype={0: str, 1: np.float32},
                        error_bad_lines=False)
 
     # Strip any funky whitespace
@@ -399,11 +397,11 @@ def process_frames_for_key(key: str,
     job_context['microarray_matrix'] = pd.DataFrame(data=None,
                                                     index=all_gene_identifiers,
                                                     columns=microarray_columns,
-                                                    dtype=np.float64)
+                                                    dtype=np.float32)
     job_context['rnaseq_matrix'] = pd.DataFrame(data=None,
                                                 index=all_gene_identifiers,
                                                 columns=rnaseq_columns,
-                                                dtype=np.float64)
+                                                dtype=np.float32)
 
     for index, (computed_file, sample) in enumerate(input_files):
         frame = process_frame(job_context["work_dir"],
@@ -448,9 +446,8 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
     # Prepare our QN target file
     organism = job_context['organism']
-    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
 
-    if not qn_target:
+    if not organism.qn_target:
         logger.error("Could not find QN target for Organism!",
                      organism=organism,
                      dataset_id=job_context['dataset'].id,
@@ -464,7 +461,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         job_context['failure_reason'] = "Could not find QN target for Organism: " + str(organism)
         return job_context
     else:
-        qn_target_path = qn_target.sync_from_s3()
+        qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
         qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
                                       index_col=None, error_bad_lines=False)
 
@@ -499,11 +496,21 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         n = ncol(reso)[0]
         m = 2
         if n >= m:
-            combos = combn(ncol(reso), 2)
 
-            # Convert to NP, Shuffle, Return to R
-            ar = np.array(combos)
-            np.random.shuffle(np.transpose(ar))
+            # This wont work with larger matricies
+            # https://github.com/AlexsLemonade/refinebio/issues/1860
+            ncolumns = ncol(reso)
+
+            if ncolumns[0] <= 200:
+                # Convert to NP, Shuffle, Return to R
+                combos = combn(ncolumns, 2)
+                ar = np.array(combos)
+                np.random.shuffle(np.transpose(ar))
+            else:
+                indexes = [*range(ncolumns[0])]
+                np.random.shuffle(indexes)
+                ar = np.array([*zip(indexes[0:100], indexes[100:200])])
+
             nr, nc = ar.shape
             combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
 
@@ -894,7 +901,7 @@ def write_tsv_json(job_context):
         return [tsv_path]
 
 
-def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
+def download_computed_file(download_tuple: Tuple[ComputedFile, str]):
     """ this function downloads the latest computed file. Receives a tuple with
     the computed file and the path where it needs to be downloaded
     This is used to parallelize downloading quantsf files. """
@@ -913,25 +920,21 @@ def sync_quant_files(output_path, samples: List[Sample]):
 
     page_size = 100
     # split the samples in groups and download each one individually
-    pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+    with ThreadPoolExecutor(max_workers=MULTIPROCESSING_MAX_THREAD_COUNT) as executor:
+        # for each sample we need it's latest quant.sf file we don't want to query the db
+        # for all of them, so we do it in groups of 100, and then download all of the computed_files
+        # in parallel
+        for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
+            sample_and_computed_files = []
+            for sample in sample_page:
+                latest_computed_file = sample.get_most_recent_quant_sf_file()
+                if not latest_computed_file:
+                    continue
+                output_file_path = output_path + sample.accession_code + "_quant.sf"
+                sample_and_computed_files.append((latest_computed_file, output_file_path))
 
-    # for each sample we need it's latest quant.sf file we don't want to query the db
-    # for all of them, so we do it in groups of 100, and then download all of the computed_files
-    # in parallel
-    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
-        sample_and_computed_files = []
-        for sample in sample_page:
-            latest_computed_file = sample.get_most_recent_quant_sf_file()
-            if not latest_computed_file:
-                continue
-            output_file_path = output_path + sample.accession_code + "_quant.sf"
-            sample_and_computed_files.append((latest_computed_file, output_file_path))
-
-        # download this set of files, this will take a few seconds that should also help the db recover
-        pool.map(downlad_computed_file, sample_and_computed_files)
-        num_samples += len(sample_and_computed_files)
-
-    pool.close()
-    pool.join()
+            # download this set of files, this will take a few seconds that should also help the db recover
+            executor.map(download_computed_file, sample_and_computed_files)
+            num_samples += len(sample_and_computed_files)
 
     return num_samples

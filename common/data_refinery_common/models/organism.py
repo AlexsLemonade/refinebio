@@ -1,6 +1,7 @@
 import requests
 from xml.etree import ElementTree
 
+from django.apps import apps
 from django.db import models
 from django.utils import timezone
 
