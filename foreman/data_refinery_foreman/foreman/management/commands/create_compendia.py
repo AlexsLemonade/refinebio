@@ -64,12 +64,11 @@ class Command(BaseCommand):
         for it. If not a new job will be dispatched for each organism
         with enough microarray samples except for human and mouse.
         """
-        svd_algorithm = 'ARPACK' # default algorithm to arpack until we decide that ranomized is preferred
+        svd_algorithm = options["svd_algorithm"] or 'ARPACK'
+
         svd_algorithm_choices = ['ARPACK', 'RANDOMIZED', 'NONE']
         if options['svd_algorithm'] and options['svd_algorithm'] not in svd_algorithm_choices:
             raise Exception('Invalid svd_algorithm option provided. Possible values are ' + str(svd_algorithm_choices))
-        else:
-            svd_algorithm = options["svd_algorithm"]
 
         # only include organisms with QN targets. We'll merge groups later.
         all_organisms = Organism.objects.all().filter(qn_target__isnull=False)
