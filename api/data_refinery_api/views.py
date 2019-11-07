@@ -377,9 +377,9 @@ openapi.Parameter(
 @method_decorator(name='put', decorator=swagger_auto_schema(operation_description="""
 Modify an existing Dataset.
 
-In order to begin smashing, you have to provide an activated api token. The token can be
-requested with [/token](#tag/token), and has to be sent in the header of the request
-with the key: `API-TOKEN`. Example:
+In order to begin smashing, an activated API key must be provided in the `API-KEY` header field of the request.
+To acquire and activate an API key see the documentation for the [/token](#tag/token)
+endpoint.
 
 ```py
 import requests
@@ -393,7 +393,7 @@ params = json.dumps({
 })
 headers = {
     'Content-Type': 'application/json',
-    'API-KEY': token_id
+    'API-KEY': token_id # requested from /token
 }
 requests.put(host + '/v1/dataset/38879729-93c8-436d-9293-b95d3f274741/', params, headers=headers)
 ```
@@ -570,7 +570,7 @@ class CreateApiTokenView(generics.CreateAPIView):
     response = requests.put('https://api.refine.bio/v1/token/' + token_id + '/', json.dumps({'is_activated': True}), headers={'Content-Type': 'application/json'})
     ```
 
-    The token id needs to be attached to the header of the requests with the key `API-KEY`
+    The token id needs to be provided in the HTTP request in the API-KEY header.
 
     References
     - [https://github.com/AlexsLemonade/refinebio/issues/731]()
