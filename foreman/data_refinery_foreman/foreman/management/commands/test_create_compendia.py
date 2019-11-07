@@ -15,8 +15,9 @@ from data_refinery_common.models import (ComputationalResult,
 
 from .test_create_quantpendia import get_organism_with_qn_target, make_test_data
 
-class QuantendiaCommandTestCase(TransactionTestCase):
-    def test_quantpendia_command(self):
+
+class CompendiaCommandTestCase(TransactionTestCase):
+    def test_compendia_command(self):
         organism = get_organism_with_qn_target()
         make_test_data(organism)
 
@@ -33,3 +34,4 @@ class QuantendiaCommandTestCase(TransactionTestCase):
         # check that the processor job was created correctly
         self.assertIsNotNone(processor_job)
         self.assertEquals(processor_job.datasets.first().data, {'GSE51088': ['GSM1237818']})
+
