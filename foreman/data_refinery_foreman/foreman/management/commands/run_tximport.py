@@ -45,7 +45,7 @@ def run_tximport():
     eligible_experiments = Experiment.objects.annotate(
         num_organisms=Count('organisms')
     ).filter(
-        num_organisms=2,
+        num_organisms=1,
         technology='RNA-SEQ',
         num_processed_samples=0
     ).prefetch_related('samples__results')

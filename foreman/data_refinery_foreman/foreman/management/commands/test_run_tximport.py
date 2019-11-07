@@ -27,6 +27,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleResultAssociation,
+    ExperimentOrganismAssociation,
 )
 from data_refinery_foreman.foreman.management.commands import run_tximport
 
@@ -48,6 +49,8 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     )
 
     zebrafish = Organism.get_object_for_name("DANIO_RERIO")
+
+    ExperimentOrganismAssociation.objects.get_or_create(experiment=experiment, organism=zebrafish)
 
     # Create the transcriptome processor and result:
     transcriptome_processor = Processor()
