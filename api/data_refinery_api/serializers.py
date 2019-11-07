@@ -438,6 +438,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = DetailedExperimentSampleSerializer(many=True)
     sample_metadata = serializers.ReadOnlyField(source='sample_metadata_fields')
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Experiment
@@ -461,6 +462,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
+                    'organisms',
                     'sample_metadata',
                     'num_total_samples',
                     'num_processed_samples',
