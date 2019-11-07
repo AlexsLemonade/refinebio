@@ -12,6 +12,7 @@ from data_refinery_common.utils import queryset_iterator
 
 logger = get_and_configure_logger(__name__)
 
+
 def create_job_for_organism(organism: Organism):
     """Returns a quantpendia job for the provided organism."""
     data = {}
