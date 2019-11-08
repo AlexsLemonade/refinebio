@@ -58,8 +58,8 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     ProcessorSerializer,
     SampleSerializer,
-    CompendiaSerializer,
-    CompendiaWithUrlSerializer,
+    CompendiumResultSerializer,
+    CompendiumResultWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
 
@@ -79,6 +79,7 @@ from data_refinery_common.models import (
     APIToken,
     ComputationalResult,
     ComputationalResultAnnotation,
+    CompendiumResult,
     ComputedFile,
     Dataset,
     DownloaderJob,
@@ -1166,26 +1167,38 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
 # Compendia
 ###
 
-class CompendiaDetail(APIView):
+class CompendiumResultList(generics.ListAPIView):
     """
-    A very simple modified ComputedFile endpoint which only shows Compendia results.
+    List all CompendiaResults with filtering.
     """
-
-    @swagger_auto_schema(deprecated=True)
-    def get(self, request, version, format=None):
-
-        computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
-
+    model = CompendiumResult
+    queryset = CompendiumResult.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = CompendiumResultSerializer.Meta.fields
+    ordering_fields = ('id')
+    ordering = ('-id',)
+    try:
         token_id = self.request.META.get('HTTP_API_KEY', None)
+        token = APIToken.objects.get(id=token_id, is_activated=True)
+        serializer_class = CompendiumResultWithUrlSerializer
+    except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        serializer_class = CompendiumResultSerializer
 
-        try:
-            token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer = CompendiaWithUrlSerializer(computed_files, many=True)
-        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer = CompendiaSerializer(computed_files, many=True)
+class CompendiumResult(generics.RetrieveAPIView):
+    """
+    Get a specific Compendium Result
+    """
+    model = CompendiumResult
+    queryset = CompendiumResult.objects.filter(is_public=True)
+    ordering_fields = ('id')
+    ordering = ('-id',)
 
-        return Response(serializer.data)
-
+    try:
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+        token = APIToken.objects.get(id=token_id, is_activated=True)
+        serializer_class = CompendiumResultWithUrlSerializer
+    except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        serializer_class = CompendiumResultSerializer
 
 ###
 # QN Targets
