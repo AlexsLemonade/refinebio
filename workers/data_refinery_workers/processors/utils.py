@@ -370,9 +370,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
             logger.info('Processor Job deleted itself.', reason=e.reason, processor_job=job_id)
             break
         except ProcessorJobError as e:
-            job.failure_reason = e.failure_reason
-            if e.success is not None:
-                job.success = e.success
+            e.update_job(job)
             logger.exception(e.failure_reason, processor_job=job.id, **e.context)
             return end_job(last_result)
         except Exception as e:
@@ -400,12 +398,21 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
 
 class ProcessorJobError(Exception):
     """ General processor job error class. """
-    def __init__(self, failure_reason, *, success=None, **context):
+    def __init__(self, failure_reason, *, success=None, no_retry=None, **context):
         super(ProcessorJobError, self).__init__(failure_reason)
         self.failure_reason = failure_reason
         self.success = success
+        self.no_retry = no_retry
         # additional context to be included when logging
         self.context = context
+
+    def update_job(self, job):
+        job.failure_reason = self.failure_reason
+        if self.success is not None:
+            job.success = self.success
+        if self.no_retry is not None:
+            job.no_retry = self.no_retry
+        job.save()
 
 
 class ProcessorJobDeleteSelf(Exception):
