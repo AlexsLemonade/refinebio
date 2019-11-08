@@ -600,15 +600,15 @@ class ComputationalResultAnnotation(models.Model):
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
 
 
-# Compendia Computational Result
-class CompendiaResult(models.Model):
-    """ Computational Result For Compendia """
+# Compendium Computational Result
+class CompendiumResult(models.Model):
+    """ Computational Result For A Compendium """
     class Meta:
-        db_table = "compendia_results"
+        db_table = "compendium_results"
         base_manager_name = "public_objects"
 
     def __str__(self):
-        return "CompendiaResult " + str(self.pk)
+        return "CompendiumResult " + str(self.pk)
 
     SVD_ALGORITHM_CHOICES = (
         ('NONE', 'None'),
@@ -624,25 +624,30 @@ class CompendiaResult(models.Model):
     result = models.ForeignKey(ComputationalResult,
                                blank=False,
                                null=False,
-                               related_name='compendia_result',
+                               related_name='compendium_result',
                                on_delete=models.CASCADE)
+    computed_file = models.ForeignKey(ComputedFile,
+                                        blank=False,
+                                        null=False,
+                                        related_name='compendium_result'
+                                        on_delete=models.CASCADE)
     primary_organism = models.ForeignKey(Organism,
                                          blank=False,
                                          null=False,
-                                         related_name='primary_compendia_results',
+                                         related_name='primary_compendium_results',
                                          on_delete=models.CASCADE)
     organisms = models.ManyToManyField(Organism,
-                                       related_name='compendia_results',
-                                       through='CompendiaResultOrganismAssociation')
+                                       related_name='compendium_results',
+                                       through='CompendiumResultOrganismAssociation')
 
     # Properties
     quant_sf_only = models.BooleanField(default=False)
-    compendia_version = models.IntegerField(blank=True, null=True)
+    compendium_version = models.IntegerField(blank=True, null=True)
     svd_algorithm = models.CharField(
         max_length=255,
         choices=SVD_ALGORITHM_CHOICES,
         default="NONE",
-        help_text='The SVD algorithm that was used to impute the compendia result.'
+        help_text='The SVD algorithm that was used to impute the compendium result.'
     )
 
     # Common Properties
@@ -1534,13 +1539,13 @@ class ExperimentResultAssociation(models.Model):
         unique_together = ('result', 'experiment')
 
 
-class CompendiaResultOrganismAssociation(models.Model):
+class CompendiumResultOrganismAssociation(models.Model):
 
-    compendia_result = models.ForeignKey(
-        CompendiaResult, blank=False, null=False, on_delete=models.CASCADE)
+    compendium_result = models.ForeignKey(
+        CompendiumResult, blank=False, null=False, on_delete=models.CASCADE)
     organism = models.ForeignKey(
         Organism, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
-        db_table = "compendia_result_organism_associations"
-        unique_together = ('compendia_result', 'organism')
+        db_table = "compendium_result_organism_associations"
+        unique_together = ('compendium_result', 'organism')
