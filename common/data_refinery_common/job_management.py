@@ -208,7 +208,7 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
 
         logger.debug("Queuing processor job.",
                      processor_job=processor_job.id,
-                     downloader_job=downloader_job.id)
+                     downloader_job=downloader_job.id if downloader_job else None)
 
         try:
             send_job(pipeline_to_apply, processor_job)
