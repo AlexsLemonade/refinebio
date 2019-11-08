@@ -372,6 +372,9 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         except ProcessorJobError as e:
             e.update_job(job)
             logger.exception(e.failure_reason, processor_job=job.id, **e.context)
+            if e.success is False:
+                # end_job will use this and set the value
+                last_result['success'] = False
             return end_job(last_result)
         except Exception as e:
             failure_reason = ("Unhandled exception caught while running processor"
