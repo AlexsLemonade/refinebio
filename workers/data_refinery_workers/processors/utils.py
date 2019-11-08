@@ -95,14 +95,10 @@ def prepare_original_files(job_context):
             raise ProcessorJobError('Missing file for processor job but unable to recreate downloader jobs!',
                                     success=False)
 
-        # If we can't process the data because it's not on the disk we
-        # can't mark the job as a success since it obviously didn't
-        # succeed. However if we mark it as a failure the job could be
-        # retried triggering yet another DownloaderJob to be created
-        # to re-download the data. Therefore the best option is to
-        # delete this job.
-        job.delete()
-        raise ProcessorJobDeleteSelf('We can not process the data because it is not on the disk')
+        raise ProcessorJobError('We can not process the data because it is not on the disk',
+                                success=False,
+                                no_retry=True, # this job should not be retried again
+                                undownloaded_files=[file.id for file in undownloaded_files])
 
     job_context["original_files"] = original_files
     first_original_file = original_files.first()
@@ -366,9 +362,6 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     for processor in pipeline:
         try:
             last_result = processor(last_result)
-        except ProcessorJobDeleteSelf as e:
-            logger.info('Processor Job deleted itself.', reason=e.reason, processor_job=job_id)
-            break
         except ProcessorJobError as e:
             e.update_job(job)
             logger.exception(e.failure_reason, processor_job=job.id, **e.context)
@@ -416,13 +409,6 @@ class ProcessorJobError(Exception):
         if self.no_retry is not None:
             job.no_retry = self.no_retry
         job.save()
-
-
-class ProcessorJobDeleteSelf(Exception):
-    """ Triggered when a processor job deletes itself. """
-    def __init__(self, reason):
-        super(ProcessorJobDeleteSelf, self).__init__(reason)
-        self.reason = reason
 
 
 def get_os_distro():
