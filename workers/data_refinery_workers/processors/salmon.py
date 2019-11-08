@@ -40,6 +40,7 @@ from data_refinery_common.rna_seq import (
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
+from data_refinery_workers.processors.utils import ProcessorJobError
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -78,24 +79,18 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["input_file_path"] = original_files[0].absolute_file_path
 
     if not os.path.exists(job_context["input_file_path"]):
-        logger.error("Was told to process a non-existent file - why did this happen?",
-            input_file_path=job_context["input_file_path"],
-            processor_job=job_context["job_id"]
-        )
-        job_context["job"].failure_reason = "Missing input file: " + str(job_context["input_file_path"])
-        job_context["success"] = False
-        return job_context
+        raise ProcessorJobError('Was told to process a non-existent file - why did this happen?',
+                                success=False,
+                                input_file_path=job_context["input_file_path"],
+                                processor_job=job_context["job_id"])
 
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
         if not os.path.exists(job_context["input_file_path_2"]):
-            logger.error("Was told to process a non-existent file2 - why did this happen?",
-                input_file_path=job_context["input_file_path_2"],
-                processor_job=job_context["job_id"]
-            )
-            job_context["job"].failure_reason = "Missing input file2: " + str(job_context["input_file_path_2"])
-            job_context["success"] = False
-            return job_context
+            raise ProcessorJobError('Was told to process a non-existent file2 - why did this happen?',
+                                    success=False,
+                                    input_file_path=job_context["input_file_path_2"],
+                                    processor_job=job_context["job_id"])
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
@@ -108,14 +103,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     if sample.technology != 'RNA-SEQ' or sample.source_database != 'SRA':
         failure_reason = ("The sample for this job either was not RNA-Seq or was not from the "
                           "SRA database.")
-        job_context['failure_reason'] = failure_reason
-        logger.error(failure_reason, sample=sample, processor_job=job_context["job_id"])
-
         # No need to retry and fail more than once for this reason.
-        job_context["success"] = False
-        job_context["job"].failure_reason = failure_reason
-        job_context["job"].no_retry = True
-        return job_context
+        raise ProcessorJobError(failure_reason, success=False, no_retry=True, sample=sample)
 
     # Detect that this is an SRA file from the source URL
     if ('ncbi.nlm.nih.gov' in job_context['original_files'][0].source_url) or (job_context["input_file_path"][-4:].upper() == ".SRA"):
@@ -216,15 +205,14 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
                         job_context['sra_num_reads'] = 1
                         return job_context
         except Exception as e:
-            logger.exception("Problem trying to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
-            job_context["job"].failure_reason = "Unable to determine library strategy (single/paired): " + str(e)
-            job_context["success"] = False
-            return job_context
+            raise ProcessorJobError('Problem trying to determine library strategy (single/paired)!',
+                                    success=False,
+                                    file=job_context["sra_input_file_path"])
 
     if not job_context.get('sra_num_reads', None):
-        logger.error("Completely unable to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
-        job_context["job"].failure_reason = "Unable to determine library strategy (single/paired)"
-        job_context["success"] = False
+        raise ProcessorJobError('Completely unable to determine library strategy (single/paired)!',
+                                success=False,
+                                file=job_context["sra_input_file_path"])
 
     return job_context
 
@@ -279,15 +267,12 @@ def _determine_index_length(job_context: Dict) -> Dict:
                 counter += 1
 
     if number_of_reads == 0:
-        logger.error("Unable to determine number_of_reads for job.",
-            input_file_1=job_context.get("input_file_path"),
-            input_file_2=job_context.get("input_file_path_2"),
-            job_id=job_context['job'].id
-        )
-        job_context['job'].failure_reason = "Unable to determine number_of_reads."
-        job_context['job'].no_retry = True
-        job_context['success'] = False
-        return job_context
+        raise ProcessorJobError('Unable to determine number_of_reads for job.',
+                                success=False,
+                                no_retry=True,
+                                input_file_1=job_context.get("input_file_path"),
+                                input_file_2=job_context.get("input_file_path_2"),
+                                job_id=job_context['job'].id)
 
     index_length_raw = total_base_pairs / number_of_reads
 
@@ -321,15 +306,12 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             index_type=index_type).order_by('-created_at').first()
 
     if not index_object:
-        logger.error("Could not run Salmon processor without index for organism",
-            organism=job_context['organism'],
-            processor_job=job_context["job_id"],
-            index_type=index_type
-        )
-        job_context["job"].no_retry = True
-        job_context["job"].failure_reason = "Missing transcriptome index. (" + index_type + ")"
-        job_context["success"] = False
-        return job_context
+        raise ProcessorJobError('Could not run Salmon processor without index for organism',
+                                success=False,
+                                no_retry=True,
+                                organism=job_context['organism'],
+                                processor_job=job_context["job_id"],
+                                index_type=index_type)
 
     job_context["index_directory"] = index_object.absolute_directory_path
 
@@ -392,15 +374,12 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             logger.error("We have failed the index extraction race! Removing dead trees.")
             shutil.rmtree(index_hard_dir, ignore_errors=True)
     except Exception as e:
-        error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
-        error_message = error_template.format(str(job_context['organism']), str(e))
-        logger.exception(error_message, processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-
         # Make sure we don't leave an empty index directory lying around.
         shutil.rmtree(index_hard_dir, ignore_errors=True)
-        return job_context
+
+        error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
+        error_message = error_template.format(str(job_context['organism']), str(e))
+        raise ProcessorJobError(error_message, success=False)
 
     # The index tarball contains a directory named index, so add that
     # to the path where we should put it.
@@ -464,24 +443,17 @@ def _run_tximport_for_experiment(
     except Exception as e:
         error_template = ("Encountered error in R code while running tximport.R: {}")
         error_message = error_template.format(str(e))
-        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-        return job_context
+        raise ProcessorJobError(error_message, success=False, experiment=experiment.id)
 
     if tximport_result.returncode != 0:
         error_template = ("Found non-zero exit code from R code while running tximport.R: {}")
         error_message = error_template.format(tximport_result.stderr.decode().strip())
-        logger.error(error_message,
-            processor_job=job_context["job_id"],
-            experiment=experiment.id,
-            quant_files=quant_files,
-            cmd_tokens=cmd_tokens,
-            quant_file_paths=quant_file_paths,
-            )
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-        return job_context
+        raise ProcessorJobError(error_message,
+                                success=False,
+                                experiment=experiment.id,
+                                quant_files=quant_files,
+                                cmd_tokens=cmd_tokens,
+                                quant_file_paths=quant_file_paths)
 
     result.time_end = timezone.now()
     result.commands.append(" ".join(cmd_tokens))
@@ -743,14 +715,10 @@ def _run_salmon(job_context: Dict) -> Dict:
                                            timeout=timeout)
     except subprocess.TimeoutExpired:
         failure_reason = "Salmon timed out because it failed to complete within 3 hours."
-        logger.error(failure_reason,
-                     sample_accesion_code=job_context["sample"].accession_code,
-                     processor_job=job_context["job_id"]
-        )
-        job_context["job"].failure_reason = failure_reason
-        job_context["job"].no_retry = True
-        job_context["success"] = False
-        return job_context
+        raise ProcessorJobError(failure_reason,
+                                no_retry=True,
+                                success=False,
+                                sample_accesion_code=job_context["sample"].accession_code)
 
     job_context['time_end'] = timezone.now()
 
@@ -758,15 +726,10 @@ def _run_salmon(job_context: Dict) -> Dict:
         stderr = completed_command.stderr.decode().strip()
         error_start = stderr.upper().find("ERROR:")
         error_start = error_start if error_start != -1 else 0
-        logger.error("Shell call to salmon failed with error message: %s",
-                     stderr[error_start:],
-                     processor_job=job_context["job_id"])
-
         # If salmon has an error exit code then we don't want to retry it.
-        job_context["job"].no_retry = True
-        job_context["job"].failure_reason = ("Shell call to salmon failed because: "
-                                             + stderr[error_start:])
-        job_context["success"] = False
+        raise ProcessorJobError('Shell call to salmon failed with error message: %s' % stderr[error_start:],
+                                no_retry=True,
+                                success=False)
     else:
         result = ComputationalResult()
         result.commands.append(formatted_command)
@@ -786,14 +749,8 @@ def _run_salmon(job_context: Dict) -> Dict:
             with tarfile.open(job_context['output_archive'], "w:gz") as tar:
                 tar.add(job_context["output_directory"], arcname=os.sep)
         except Exception:
-            logger.exception("Exception caught while zipping processed directory %s",
-                             job_context["output_directory"],
-                             processor_job=job_context["job_id"]
-            )
-            failure_template = "Exception caught while zipping processed directory {}"
-            job_context["job"].failure_reason = failure_template.format(job_context['output_archive'])
-            job_context["success"] = False
-            return job_context
+            raise ProcessorJobError('Exception caught while zipping processed directory %s' % job_context["output_directory"],
+                                    success=False)
 
         salmon_quant_archive = ComputedFile()
         salmon_quant_archive.absolute_file_path = job_context["output_archive"]
@@ -833,11 +790,10 @@ def _run_salmon(job_context: Dict) -> Dict:
                     }
                 )
             except Exception as e:
-                logger.exception(e, processor_job=job_context["job_id"], sample=job_context["sample"].id)
-                failure_template = "Exception caught while uploading quantfile to S3: {}"
-                job_context["job"].failure_reason = failure_template.format(quant_file.absolute_file_path)
-                job_context["success"] = False
-                return job_context
+                raise ProcessorJobError('Exception caught while uploading quantfile to S3: %s' % quant_file.absolute_file_path,
+                                        success=False,
+                                        sample=job_context["sample"].id,
+                                        quant_file=quant_file.id)
 
         # Here select_for_update() is used as a mutex that forces multiple
         # jobs to execute this block of code in serial manner. See:
@@ -942,14 +898,8 @@ def _run_salmontools(job_context: Dict) -> Dict:
             with tarfile.open(job_context['salmontools_archive'], "w:gz") as tar:
                 tar.add(job_context["salmontools_directory"], arcname=os.sep)
         except Exception:
-            logger.exception("Exception caught while zipping processed directory %s",
-                             job_context["salmontools_directory"],
-                             processor_job=job_context["job_id"]
-            )
-            failure_template = "Exception caught while zipping salmontools directory {}"
-            job_context["job"].failure_reason = failure_template.format(job_context['salmontools_archive'])
-            job_context["success"] = False
-            return job_context
+            raise ProcessorJobError('Exception caught while zipping processed directory %s' % job_context["salmontools_directory"],
+                                    success=False)
 
         result = ComputationalResult()
         result.commands.append(command_str)
@@ -991,12 +941,8 @@ def _run_salmontools(job_context: Dict) -> Dict:
         job_context["result"] = result
         job_context["success"] = True
     else:   # error in salmontools
-        logger.error("Shell call to salmontools failed with error message: %s",
-                     status_str,
-                     processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = ("Shell call to salmontools failed because: "
-                                             + status_str)
-        job_context["success"] = False
+        raise ProcessorJobError('Shell call to salmontools failed with error message: %s' % status_str,
+                                success=False)
 
     return job_context
 
