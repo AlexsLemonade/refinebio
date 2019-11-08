@@ -776,7 +776,7 @@ class CompendiumResultOrganismSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organism
 
-class CompendiumSerializer(serializers.ModelSerializer):
+class CompendiumResultSerializer(serializers.ModelSerializer):
     primary_organism = CompendiumResultOrganismSerializer(read_only=True)
     organisms = CompendiumResultOrganismSerializer(many=True, read_only=True)
 
@@ -801,7 +801,7 @@ class CompendiumSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class CompendiumWithUrlSerializer(serializers.ModelSerializer):
+class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
     organism_name = serializers.CharField(source='compendium_organism.name', read_only=True)
 
     class Meta:
