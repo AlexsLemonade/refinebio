@@ -179,7 +179,6 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
                     original_file=original_files[0].id)
         for original_file in original_files:
             original_file.delete_local_file()
-            original_file.save()
     else:
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = pipeline_to_apply.value
