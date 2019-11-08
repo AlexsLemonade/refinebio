@@ -372,8 +372,8 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         except ProcessorJobError as e:
             job.failure_reason = e.failure_reason
             if e.success is not None:
-                job.succeess = e.success
-            logger.exception(e.failure_reason, processor_job=job.id)
+                job.success = e.success
+            logger.exception(e.failure_reason, processor_job=job.id, **e.context)
             return end_job(last_result)
         except Exception as e:
             failure_reason = ("Unhandled exception caught while running processor"
@@ -400,11 +400,12 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
 
 class ProcessorJobError(Exception):
     """ General processor job error class. """
-    def __init__(self, failure_reason, *, success=None, original_exception=None):
+    def __init__(self, failure_reason, *, success=None, **context):
         super(ProcessorJobError, self).__init__(failure_reason)
         self.failure_reason = failure_reason
         self.success = success
-        self.original_exception = original_exception
+        # additional context to be included when logging
+        self.context = context
 
 
 class ProcessorJobDeleteSelf(Exception):
