@@ -1190,8 +1190,7 @@ class CompendiumResult(generics.RetrieveAPIView):
     """
     model = CompendiumResult
     queryset = CompendiumResult.objects.filter(is_public=True)
-    ordering_fields = ('id')
-    ordering = ('-id',)
+    lookup_field = 'id'
 
     try:
         token_id = self.request.META.get('HTTP_API_KEY', None)
