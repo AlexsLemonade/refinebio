@@ -36,6 +36,7 @@ from .views import (
     QNTargetsDetail,
     QNTargetsAvailable,
     CompendiumResultList,
+    CompendiumResult,
     ComputedFilesList,
     AboutStats
 )
@@ -108,7 +109,8 @@ urlpatterns = [
         url(r'^qn_targets/$', QNTargetsAvailable.as_view(), name='qn_targets_available'),
         url(r'^qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name='qn_targets'),
 
-        url(r'^compendium_results/$', CompendiaResultList.as_view(), name='compendia_results'),
+        url(r'^compendium_results/$', CompendiumResultList.as_view(), name='compendium_results'),
+        url(r'^compendium_results/(?P<id>[0-9]+)/$', CompendiumResult.as_view(), name='compendium_result'),
         url(r'^computed_files/$', ComputedFilesList.as_view(), name='computed_files'),
         url(r'^computational_results/$', ComputationalResultsList.as_view(), name='results'),
 
