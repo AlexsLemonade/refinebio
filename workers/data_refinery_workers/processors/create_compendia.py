@@ -5,7 +5,7 @@ import time
 from typing import Dict
 
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Q, Count
 from fancyimpute import IterativeSVD
 import numpy as np
 import pandas as pd
@@ -447,12 +447,14 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Compendia Result Helpers
     primary_organism = job_context['samples'][organism_key][0].organism
     organisms = [primary_organism]
+    organisms_filter = Q(organisms__in=organisms)
     compendia_version = CompendiaResult.objects.annotate(
-                                                   organism_count=Count('organisms')
+                                                   organisms_count=Count('organisms'),
+                                                   organisms_match_count=Count('organisms', filter=organisms_filter)
                                                ).filter(
                                                    primary_organism=primary_organism,
-                                                   organisms__in=organisms,
-                                                   organism_count=len(organisms)
+                                                   organisms_count=len(organisms),
+                                                   organisms_match_count=len(organisms)
                                                ).count() + 1
     # Save Compendia Result
     compendia_result = CompendiaResult()
