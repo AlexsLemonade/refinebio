@@ -626,11 +626,6 @@ class CompendiumResult(models.Model):
                                null=False,
                                related_name='compendium_result',
                                on_delete=models.CASCADE)
-    computed_file = models.ForeignKey(ComputedFile,
-                                        blank=False,
-                                        null=False,
-                                        related_name='compendium_result'
-                                        on_delete=models.CASCADE)
     primary_organism = models.ForeignKey(Organism,
                                          blank=False,
                                          null=False,
