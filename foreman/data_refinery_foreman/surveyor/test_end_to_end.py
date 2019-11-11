@@ -186,8 +186,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             )
 
             start_time = timezone.now()
-            with self.assertRaises(ProcessorJob.DoesNotExist):
-                wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+            wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should now be two.
@@ -289,8 +288,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
                 )
 
                 start_time = timezone.now()
-                with self.assertRaises(ProcessorJob.DoesNotExist):
-                    wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+                wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should now be two.
@@ -400,8 +398,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
                 )
 
                 start_time = timezone.now()
-                with self.assertRaises(ProcessorJob.DoesNotExist):
-                    wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+                wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should
@@ -624,8 +621,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             )
 
             start_time = timezone.now()
-            with self.assertRaises(ProcessorJob.DoesNotExist):
-                wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+            wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should
