@@ -480,16 +480,10 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
 
 def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
-    failed_jobs = DownloaderJob.objects.filter(
-        success=False,
-        retried=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF,
-    ).order_by(
-        'created_at'
-    ).prefetch_related(
-        "original_files__samples"
-    )
+    failed_jobs = DownloaderJob.failed_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .order_by('created_at')\
+        .prefetch_related("original_files__samples")
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -522,19 +516,10 @@ def retry_failed_downloader_jobs() -> None:
 
 def retry_hung_downloader_jobs() -> None:
     """Retry downloader jobs that were started but never finished."""
-    potentially_hung_jobs = DownloaderJob.objects.filter(
-        success=None,
-        retried=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF,
-        start_time__isnull=False,
-        end_time=None,
-        nomad_job_id__isnull=False,
-    ).order_by(
-        'created_at'
-    ).prefetch_related(
-        "original_files__samples"
-    )
+    potentially_hung_jobs = DownloaderJob.hung_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .order_by('created_at')\
+        .prefetch_related("original_files__samples")
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -593,18 +578,10 @@ def retry_lost_downloader_jobs() -> None:
     global VOLUME_WORK_DEPTH
     global DOWNLOADER_JOBS_IN_QUEUE
 
-    potentially_lost_jobs = DownloaderJob.objects.filter(
-        success=None,
-        retried=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF,
-        start_time=None,
-        end_time=None,
-    ).order_by(
-        'created_at'
-    ).prefetch_related(
-        "original_files__samples"
-    )
+    potentially_lost_jobs = DownloaderJob.lost_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .order_by('created_at')\
+        .prefetch_related("original_files__samples")
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -815,22 +792,15 @@ def retry_failed_processor_jobs() -> None:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
-    failed_jobs = ProcessorJob.objects.filter(
-        Q(success=False,
-          retried=False,
-          no_retry=False,
-          created_at__gt=JOB_CREATED_AT_CUTOFF) \
-        & (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
-    ).exclude(
-        pipeline_applied="JANITOR"
-    ).order_by(
-        'created_at'
-    ).prefetch_related(
-        "original_files__samples"
-    )
+    failed_jobs = ProcessorJob.failed_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .filter(Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))\
+        .exclude(pipeline_applied='JANITOR')\
+        .order_by('created_at')\
+        .prefetch_related('original_files__samples')
 
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_host = get_env_variable('NOMAD_HOST')
+    nomad_port = get_env_variable('NOMAD_PORT', '4646')
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
@@ -861,22 +831,12 @@ def retry_hung_processor_jobs() -> None:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
-    potentially_hung_jobs = ProcessorJob.objects.filter(
-        Q(success=None,
-          retried=False,
-          no_retry=False,
-          created_at__gt=JOB_CREATED_AT_CUTOFF,
-          start_time__isnull=False,
-          end_time=None,
-          nomad_job_id__isnull=False) \
-        & (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
-    ).exclude(
-        pipeline_applied="JANITOR"
-    ).order_by(
-        'created_at'
-    ).prefetch_related(
-        "original_files__samples"
-    )
+    potentially_hung_jobs = ProcessorJob.hung_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .filter(Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))\
+        .exclude(pipeline_applied="JANITOR")\
+        .order_by('created_at')\
+        .prefetch_related("original_files__samples")
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -938,21 +898,12 @@ def retry_lost_processor_jobs() -> None:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
-    potentially_lost_jobs = ProcessorJob.objects.filter(
-        Q(success=None,
-          retried=False,
-          no_retry=False,
-          created_at__gt=JOB_CREATED_AT_CUTOFF,
-          start_time=None,
-          end_time=None) \
-        & (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
-    ).exclude(
-        pipeline_applied="JANITOR"
-    ).order_by(
-        'created_at'
-    ).prefetch_related(
-        "original_files__samples"
-    )
+    potentially_lost_jobs = ProcessorJob.lost_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .filter(Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))\
+        .exclude(pipeline_applied="JANITOR")\
+        .order_by('created_at')\
+        .prefetch_related("original_files__samples")
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -1026,8 +977,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     num_retries = last_job.num_retries + 1
 
     new_job = SurveyJob(num_retries=num_retries,
-                        source_type=last_job.source_type
-                    )
+                        source_type=last_job.source_type)
 
     if new_job.num_retries == 1:
         new_job.ram_amount = 4096
@@ -1102,12 +1052,9 @@ def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> Non
 
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.objects.filter(
-        success=False,
-        retried=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
-    ).order_by('pk')
+    failed_jobs = SurveyJob.failed_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -1134,15 +1081,9 @@ def retry_failed_survey_jobs() -> None:
 
 def retry_hung_survey_jobs() -> None:
     """Retry survey jobs that were started but never finished."""
-    potentially_hung_jobs = SurveyJob.objects.filter(
-        success=None,
-        retried=False,
-        end_time=None,
-        nomad_job_id__isnull=False,
-        start_time__isnull=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
-    ).order_by('pk')
+    potentially_hung_jobs = SurveyJob.hung_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -1192,14 +1133,9 @@ def retry_hung_survey_jobs() -> None:
 
 def retry_lost_survey_jobs() -> None:
     """Retry survey jobs which never even got started for too long."""
-    potentially_lost_jobs = SurveyJob.objects.filter(
-        success=None,
-        retried=False,
-        start_time=None,
-        end_time=None,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
-    ).order_by('pk')
+    potentially_lost_jobs = SurveyJob.lost_objects\
+        .filter(created_at__gt=JOB_CREATED_AT_CUTOFF)\
+        .order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")

@@ -901,7 +901,7 @@ def write_tsv_json(job_context):
         return [tsv_path]
 
 
-def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
+def download_computed_file(download_tuple: Tuple[ComputedFile, str]):
     """ this function downloads the latest computed file. Receives a tuple with
     the computed file and the path where it needs to be downloaded
     This is used to parallelize downloading quantsf files. """
@@ -934,7 +934,7 @@ def sync_quant_files(output_path, samples: List[Sample]):
                 sample_and_computed_files.append((latest_computed_file, output_file_path))
 
             # download this set of files, this will take a few seconds that should also help the db recover
-            executor.map(downlad_computed_file, sample_and_computed_files)
+            executor.map(download_computed_file, sample_and_computed_files)
             num_samples += len(sample_and_computed_files)
 
     return num_samples

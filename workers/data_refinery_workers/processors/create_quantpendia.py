@@ -85,9 +85,18 @@ def create_result_objects(job_context: Dict) -> Dict:
     compendia_organism = _get_organisms(job_context['samples']).first()
 
     # Create the resulting archive
+    logger.debug("Writing metadata for quantpendia.",
+                 job_id=job_context['job_id'],
+                 organism_name=compendia_organism.name,
+                 **get_process_stats())
     smashing_utils.write_non_data_files(job_context)
     final_zip_base = job_context['job_dir'] + compendia_organism.name + "_rnaseq_compendia"
     shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
+
+    logger.debug("Finished metadata for quantpendia. Generating archive.",
+                 job_id=job_context['job_id'],
+                 organism_name=compendia_organism.name,
+                 **get_process_stats())
 
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
     compendia_version = _get_next_compendia_version(compendia_organism)
@@ -107,9 +116,11 @@ def create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
 
-    logger.info("Quantpendia created!",
+    logger.info("Quantpendia created! Uploading to S3.",
+                job_id=job_context['job_id'],
                 archive_path=archive_path,
-                organism_name=compendia_organism.name)
+                organism_name=compendia_organism.name,
+                **get_process_stats())
 
     # Upload the result to S3
     timestamp = str(int(time.time()))
