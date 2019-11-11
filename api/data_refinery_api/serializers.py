@@ -239,7 +239,6 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
                     'is_smashable',
                     'is_qc',
                     'is_compendia',
-                    'quant_sf_only',
                     'compendia_version',
                     'compendia_organism_name',
                     'sha1',
@@ -256,27 +255,6 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
                 'help_text': 'This will contain an url to download the file. You must send a valid [token](#tag/token) in order to receive this.'
             }
         }
-
-class OriginalFileListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OriginalFile
-        fields = (
-                    'id',
-                    'filename',
-                    'samples',
-                    'size_in_bytes',
-                    'sha1',
-                    'samples',
-                    'processor_jobs',
-                    'downloader_jobs',
-                    'source_url',
-                    'is_archive',
-                    'source_filename',
-                    'has_raw',
-                    'created_at',
-                    'last_modified'
-                )
-
 
 ##
 # Samples
@@ -364,8 +342,6 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'is_processed',
                     'created_at',
                     'last_modified',
-                    'original_files',
-                    'computed_files',
                 )
 
 ##
@@ -438,7 +414,6 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = DetailedExperimentSampleSerializer(many=True)
     sample_metadata = serializers.ReadOnlyField(source='sample_metadata_fields')
-    organisms = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Experiment
@@ -462,7 +437,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
-                    'organisms',
+                    'organism_names',
                     'sample_metadata',
                     'num_total_samples',
                     'num_processed_samples',
@@ -527,6 +502,8 @@ class SurveyJobSerializer(serializers.ModelSerializer):
                 )
 
 class DownloaderJobSerializer(serializers.ModelSerializer):
+    original_files = OriginalFileSerializer(many=True)
+
     class Meta:
         model = DownloaderJob
         fields = (
@@ -537,7 +514,6 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                     'was_recreated',
                     'worker_id',
                     'worker_version',
-                    'nomad_job_id',
                     'failure_reason',
                     'success',
                     'original_files',
@@ -548,6 +524,8 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                 )
 
 class ProcessorJobSerializer(serializers.ModelSerializer):
+    original_files = OriginalFileSerializer(many=True)
+
     class Meta:
         model = ProcessorJob
         fields = (
@@ -560,7 +538,6 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
                     'volume_index',
                     'worker_version',
                     'failure_reason',
-                    'nomad_job_id',
                     'success',
                     'original_files',
                     'datasets',

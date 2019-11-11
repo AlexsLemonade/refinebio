@@ -40,6 +40,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(
         accession_code=experiment_accession,
+        organism_names=['HOMO_SAPIENS'],
         technology='RNA-SEQ'
     )
 

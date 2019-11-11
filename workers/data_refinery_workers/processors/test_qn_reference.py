@@ -32,6 +32,7 @@ class QNRefTestCase(TransactionTestCase):
 
         experiment = Experiment()
         experiment.accession_code = "12345"
+        experiment.organism_names = [homo_sapiens.name]
         experiment.save()
         # We don't have a 0.tsv
         codes = [str(i) for i in range(1, 201)]
@@ -124,6 +125,7 @@ class QNRefTestCase(TransactionTestCase):
 
         experiment = Experiment()
         experiment.accession_code = "12345"
+        experiment.organism_names = [homo_sapiens.name]
         experiment.save()
         codes = ["1", "2", "3", "4", "5", "6"]
         # We don't have a 0.tsv

@@ -1,6 +1,6 @@
 from elasticsearch_dsl import analyzer
 
-from django_elasticsearch_dsl import DocType, Index, fields
+from django_elasticsearch_dsl import DocType, Index, fields 
 from elasticsearch_dsl.analysis import token_filter
 
 from data_refinery_common.utils import get_supported_microarray_platforms, get_supported_rnaseq_platforms
@@ -91,7 +91,7 @@ class ExperimentDocument(DocType):
         fielddata=True,
         fields={'raw': fields.TextField()}
     )
-
+    
     # Basic Fields
     accession_code = fields.TextField()
     alternate_accession_code = fields.TextField()
@@ -121,4 +121,4 @@ class ExperimentDocument(DocType):
 
     def get_queryset(self):
         """ Override default queryset """
-        return super(ExperimentDocument, self).get_queryset().order_by('id')
+        return super(ExperimentDocument, self).get_queryset()

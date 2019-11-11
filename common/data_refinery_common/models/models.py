@@ -197,8 +197,12 @@ class Sample(models.Model):
                 is_public=True,
                 is_smashable=True,
             ).latest()
+
+            # Access a property to make the query fire now.
+            latest_computed_file.id
+
             return latest_computed_file
-        except ComputedFile.DoesNotExist as e:
+        except Exception as e:
             # This sample has no smashable files yet.
             return None
 
@@ -320,6 +324,7 @@ class Experiment(models.Model):
     num_processed_samples = models.IntegerField(default=0)
     num_downloadable_samples = models.IntegerField(default=0)
     sample_metadata_fields = ArrayField(models.TextField(), default=list)
+    organism_names = ArrayField(models.TextField(), default=list)
     platform_names = ArrayField(models.TextField(), default=list)
     platform_accession_codes = ArrayField(models.TextField(), default=list)
 
@@ -403,6 +408,9 @@ class Experiment(models.Model):
     def update_sample_metadata_fields(self):
         self.sample_metadata_fields = self.get_sample_metadata_fields()
 
+    def update_organism_names(self):
+        self.organism_names = self.get_organism_names()
+
     def update_platform_names(self):
         self.platform_names = self.get_platform_names()
         self.platform_accession_codes = self.get_platform_accession_codes()
@@ -411,6 +419,11 @@ class Experiment(models.Model):
         """ Get a list of unique technologies for all of the associated samples
         """
         return list(set([sample.technology for sample in self.samples.all()]))
+
+    def get_organism_names(self):
+        """ Get a list of unique technologies for all of the associated samples
+        """
+        return list(set([organism.name for organism in self.organisms.all()]))
 
     def get_platform_names(self):
         """ Get a list of unique platforms for all of the associated samples
@@ -437,15 +450,6 @@ class Experiment(models.Model):
         return list([sample.accession_code for sample in self.samples.all() if sample.is_processed == True])
 
     @property
-    def organism_names(self):
-        """ Get a list of unique organism names that has at least one downloadable sample """
-        result = self.samples\
-            .filter(is_processed=True, organism__qn_target__isnull=False)\
-            .values_list('organism__name', flat=True)\
-            .distinct()
-        return list(result)
-
-    @property
     def downloadable_samples(self):
         """
         Returns the accession codes of the downloadable samples in this experiment.
@@ -454,8 +458,6 @@ class Experiment(models.Model):
         """
         return list(self.samples.filter(is_processed=True, organism__qn_target__isnull=False)\
                                       .values_list('accession_code', flat=True))
-
-
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """

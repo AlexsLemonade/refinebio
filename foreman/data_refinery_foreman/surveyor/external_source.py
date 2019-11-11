@@ -116,7 +116,7 @@ class ExternalSourceSurveyor:
         if is_transcriptome:
             downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX
         else:
-            source_urls = [original_file.source_url for original_file in original_files]
+            source_urls = [original_file.source_url for original_file in original_files]        
             # There is already a downloader job associated with this file.
             old_assocs_count = DownloaderJobOriginalFileAssociation.objects.filter(
                 original_file__source_url__in=source_urls).count()
@@ -206,6 +206,7 @@ class ExternalSourceSurveyor:
         # Update our cached values
         experiment.update_num_samples()
         experiment.update_sample_metadata_fields()
+        experiment.update_organism_names()
         experiment.update_platform_names()
         experiment.save()
 

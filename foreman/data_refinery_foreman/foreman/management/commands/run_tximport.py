@@ -11,7 +11,6 @@ import sys
 import time
 from typing import Dict, List
 
-from django.db.models import Count
 from django.core.management.base import BaseCommand
 from nomad import Nomad
 
@@ -42,10 +41,9 @@ PAGE_SIZE=2000
 
 def run_tximport():
     """Creates a tximport job for all eligible experiments."""
-    eligible_experiments = Experiment.objects.annotate(
-        num_organisms=Count('organisms')
+    eligible_experiments = Experiment.objects.extra(
+        where=['cardinality(organism_names) = 1']
     ).filter(
-        num_organisms=1,
         technology='RNA-SEQ',
         num_processed_samples=0
     ).prefetch_related('samples__results')

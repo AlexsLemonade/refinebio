@@ -9,54 +9,11 @@ from data_refinery_common.models.models import Sample, Experiment, OriginalFile
 from data_refinery_common.utils import get_env_variable
 
 
-class FailedJobsManager(models.Manager):
-    """
-    Only returns Failed Jobs
-    """
-    def get_queryset(self):
-        return super().get_queryset().filter(success=False, retried=False, no_retry=False)
-
-
-class HungJobsManager(models.Manager):
-    """
-    Only returns jobs that are potentially hung
-    """
-    def get_queryset(self):
-        return super().get_queryset().filter(
-            success=None,
-            retried=False,
-            no_retry=False,
-            start_time__isnull=False,
-            end_time=None,
-            nomad_job_id__isnull=False
-        )
-
-
-class LostJobsManager(models.Manager):
-    """
-    Only returns lost jobs
-    """
-    def get_queryset(self):
-        return super().get_queryset().filter(
-            success=None,
-            retried=False,
-            no_retry=False,
-            start_time=None,
-            end_time=None,
-        )
-
-
 class SurveyJob(models.Model):
     """Records information about a Surveyor Job."""
 
     class Meta:
         db_table = "survey_jobs"
-
-    # Managers
-    objects = models.Manager()
-    failed_objects = FailedJobsManager()
-    hung_objects = HungJobsManager()
-    lost_objects = LostJobsManager()
 
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
@@ -158,12 +115,6 @@ class ProcessorJob(models.Model):
             ),
         ]
 
-    # Managers
-    objects = models.Manager()
-    failed_objects = FailedJobsManager()
-    hung_objects = HungJobsManager()
-    lost_objects = LostJobsManager()
-
     # This field will contain an enumerated value specifying which
     # processor pipeline was applied during the processor job.
     pipeline_applied = models.CharField(max_length=256)
@@ -256,12 +207,6 @@ class DownloaderJob(models.Model):
             ),
             models.Index(fields=['worker_id']),
         ]
-
-    # Managers
-    objects = models.Manager()
-    failed_objects = FailedJobsManager()
-    hung_objects = HungJobsManager()
-    lost_objects = LostJobsManager()
 
     # This field contains a string which corresponds to a valid
     # Downloader Task. Valid values are enumerated in:

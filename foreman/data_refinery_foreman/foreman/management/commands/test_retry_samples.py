@@ -31,7 +31,7 @@ from data_refinery_common.models import (
 from data_refinery_foreman.foreman.management.commands.retry_samples import retry_by_regex
 
 def setup_experiment() -> Dict:
-    """ Create an experiment with two samples where one of them has a processor job that failed
+    """ Create an experiment with two samples where one of them has a processor job that failed 
     because nomad restarted it."""
 
     # Create the experiment
@@ -40,6 +40,7 @@ def setup_experiment() -> Dict:
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(
         accession_code=experiment_accession,
+        organism_names=['HOMO_SAPIENS'],
         technology='RNA-SEQ'
     )
 

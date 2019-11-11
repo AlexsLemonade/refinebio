@@ -32,6 +32,7 @@ def setup_experiments() -> None:
     # Experiment that needs to be re-surveyed
     experiment = Experiment.objects.create(
         accession_code="GSE12417",
+        organism_names=['HOMO_SAPIENS'],
         technology='MICROARRAY',
         source_database='GEO'
     )
@@ -59,6 +60,7 @@ def setup_experiments() -> None:
     # Experiment that does not need to be re-surveyed
     experiment = Experiment.objects.create(
         accession_code="GSE9890",
+        organism_names=['HOMO_SAPIENS'],
         technology='MICROARRAY',
         source_database='GEO'
     )
@@ -84,6 +86,7 @@ def setup_experiments() -> None:
     # Experiment that isn't even the right source_database.
     experiment = Experiment.objects.create(
         accession_code="SRP12345",
+        organism_names=['HOMO_SAPIENS'],
         technology='RNA-SEQ',
         source_database='SRA'
     )
