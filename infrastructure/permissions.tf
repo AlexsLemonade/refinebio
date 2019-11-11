@@ -46,7 +46,7 @@ EOF
 resource "aws_iam_policy_attachment" "fleet_role" {
   name       = "EC2SpotFleetRole"
   roles      = ["${aws_iam_role.data_refinery_spot_fleet.name}"]
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
 }
 
 resource "aws_iam_instance_profile" "data_refinery_instance_profile" {
