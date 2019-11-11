@@ -120,8 +120,9 @@ variable "client_instance_type" {
 }
 
 variable "smasher_instance_type" {
-  # ~4TB Memory, smasher jobs need 28 and we're giving the rest to the compendia job.
-  default = "x1e.32xlarge"
+  # 32BB Memory, smasher jobs need 28. Too small for compendia as they
+  # stand but we'll bump it back up.
+  default = "m5.2xlarge"
 }
 
 variable "spot_price" {
