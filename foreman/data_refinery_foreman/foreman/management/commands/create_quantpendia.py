@@ -61,10 +61,14 @@ def build_dataset(organism: Organism):
                 .values_list('accession_code', flat=True)\
                 .distinct()
 
-            data[experiment.accession_code] = list(processed_samples_with_quantsf) \
+            sample_accession_codes = list(processed_samples_with_quantsf) \
                 + list(unprocessed_samples_with_quantsf)
 
+            if (sample_accession_codes):
+                data[experiment.accession_code] = sample_accession_codes
+
         time.sleep(5)
+
     return data
 
 class Command(BaseCommand):
