@@ -362,9 +362,9 @@ def process_frames_for_key(key: str,
             if not frame['unsmashable']:
                 for gene_id in frame['dataframe'].index:
                     if gene_id in gene_identifier_counts:
-                        gene_identifier_counts[gene_id] = 1
-                    else:
                         gene_identifier_counts[gene_id] += 1
+                    else:
+                        gene_identifier_counts[gene_id] = 1
 
                 # Each dataframe should only have 1 column, but it's
                 # returned as a list so use extend.
@@ -377,8 +377,12 @@ def process_frames_for_key(key: str,
         all_gene_identifiers = []
         for gene_id, sample_count in gene_identifier_counts.items():
             # We only want to use gene identifiers which are present
-            # in >50% of the samples.
-            if sample_count > total_samples / 2:
+            # in >50% of the samples. We're doing this because a large
+            # number of gene identifiers present in only a modest
+            # number of experiments have leaked through. We wouldn't
+            # necessarily want to do this if we'd mapped all the data
+            # to ENSEMBL identifiers successfully.
+            if sample_count > (total_samples * 0.5):
                 all_gene_identifiers.append(gene_id)
 
         all_gene_identifiers.sort()
