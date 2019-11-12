@@ -50,9 +50,11 @@ def build_dataset(organism: Organism):
             experiment_samples = experiment.samples\
                 .filter(is_processed=True, technology='RNA-SEQ')
             # split the query into two so to avoid timeouts.
+            # assume processed rna-seq samples have a quant.sf file
             processed_samples_with_quantsf = experiment_samples\
                 .filter(is_processed=True)\
                 .values_list('accession_code', flat=True)
+            # and only check for quant file for unprocessed samples
             unprocessed_samples_with_quantsf = experiment_samples\
                 .filter(
                     is_processed=False,
