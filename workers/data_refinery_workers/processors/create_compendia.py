@@ -150,6 +150,10 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # We potentially can have a microarray-only compendia but not a RNASeq-only compendia
     log2_rnaseq_matrix = None
     if job_context['rnaseq_matrix'] is not None:
+        # Drop any genes that are entirely NULL in the RNA-Seq matrix
+        job_context['rnaseq_matrix'] = job_context['rnaseq_matrix'].dropna(axis='columns',
+                                                                           how='all')
+
         # Calculate the sum of the lengthScaledTPM values for each row
         # (gene) of the rnaseq_matrix (rnaseq_row_sums)
         rnaseq_row_sums = np.sum(job_context['rnaseq_matrix'], axis=1)
@@ -207,8 +211,11 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Perform a full outer join of microarray_matrix and
     # log2_rnaseq_matrix; combined_matrix
     if log2_rnaseq_matrix is not None:
+        # Use how='right' because we've filtered some gene identifiers
+        # out of the the rnaseq_matrix and we want to keep those
+        # filtered out of the full matrix.
         combined_matrix = job_context.pop('microarray_matrix').merge(log2_rnaseq_matrix,
-                                                                     how='outer',
+                                                                     how='right',
                                                                      left_index=True,
                                                                      right_index=True)
     else:

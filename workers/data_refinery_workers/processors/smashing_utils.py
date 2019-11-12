@@ -344,7 +344,7 @@ def process_frames_for_key(key: str,
         microarray_columns = cached_data["microarray_columns"]
         rnaseq_columns = cached_data["rnaseq_columns"]
     else:
-        all_gene_identifiers = set()
+        gene_identifier_counts = {}
         microarray_columns = []
         rnaseq_columns = []
         for index, (computed_file, sample) in enumerate(input_files):
@@ -360,7 +360,11 @@ def process_frames_for_key(key: str,
             # Count how many frames are in each tech so we can preallocate
             # the matrices in both directions.
             if not frame['unsmashable']:
-                all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
+                for gene_id in frame['dataframe'].index:
+                    if gene_id in gene_identifier_counts:
+                        gene_identifier_counts[gene_id] = 1
+                    else:
+                        gene_identifier_counts[gene_id] += 1
 
                 # Each dataframe should only have 1 column, but it's
                 # returned as a list so use extend.
@@ -369,8 +373,16 @@ def process_frames_for_key(key: str,
                 elif frame['technology'] == 'rnaseq':
                     rnaseq_columns.extend(frame['dataframe'].columns)
 
-        all_gene_identifiers = list(all_gene_identifiers)
+        total_samples = len(microarray_columns) + len(rnaseq_columns)
+        all_gene_identifiers = []
+        for gene_id, sample_count in gene_identifier_counts.items():
+            # We only want to use gene identifiers which are present
+            # in >50% of the samples.
+            if sample_count > total_samples / 2:
+                all_gene_identifiers.append(gene_id)
+
         all_gene_identifiers.sort()
+        del gene_identifier_counts
 
         log_template = ("Collected {0} gene identifiers for {1} across"
                         " {2} micrarry samples and {3} RNA-Seq samples.")
