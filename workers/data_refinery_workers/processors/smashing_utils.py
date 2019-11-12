@@ -499,88 +499,91 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
                                             copy=True
                                         )
 
-        # Verify this QN, related:
-        # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-        set_seed = rlang("set.seed")
-        combn = rlang("combn")
-        ncol = rlang("ncol")
-        ks_test = rlang("ks.test")
-        which = rlang("which")
+        # For now, don't test the QN. This never fails on smasher jobs
+        # and is OOM-killing our compendia jobs. Let's run this
+        # manually after we have a compendia job actually finish.
+        # # Verify this QN, related:
+        # # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
+        # set_seed = rlang("set.seed")
+        # combn = rlang("combn")
+        # ncol = rlang("ncol")
+        # ks_test = rlang("ks.test")
+        # which = rlang("which")
 
-        set_seed(123)
+        # set_seed(123)
 
-        n = ncol(reso)[0]
-        m = 2
-        if n >= m:
+        # n = ncol(reso)[0]
+        # m = 2
+        # if n >= m:
 
-            # This wont work with larger matricies
-            # https://github.com/AlexsLemonade/refinebio/issues/1860
-            ncolumns = ncol(reso)
+        #     # This wont work with larger matricies
+        #     # https://github.com/AlexsLemonade/refinebio/issues/1860
+        #     ncolumns = ncol(reso)
 
-            if ncolumns[0] <= 200:
-                # Convert to NP, Shuffle, Return to R
-                combos = combn(ncolumns, 2)
-                ar = np.array(combos)
-                np.random.shuffle(np.transpose(ar))
-            else:
-                indexes = [*range(ncolumns[0])]
-                np.random.shuffle(indexes)
-                ar = np.array([*zip(indexes[0:100], indexes[100:200])])
+        #     if ncolumns[0] <= 200:
+        #         # Convert to NP, Shuffle, Return to R
+        #         combos = combn(ncolumns, 2)
+        #         ar = np.array(combos)
+        #         np.random.shuffle(np.transpose(ar))
+        #     else:
+        #         indexes = [*range(ncolumns[0])]
+        #         np.random.shuffle(indexes)
+        #         ar = np.array([*zip(indexes[0:100], indexes[100:200])])
 
-            nr, nc = ar.shape
-            combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+        #     nr, nc = ar.shape
+        #     combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
 
-            # adapted from
-            # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
-            # apply KS test to randomly selected pairs of columns (samples)
-            for i in range(1, min(ncol(combos)[0], 100)):
-                value1 = combos.rx(1, i)[0]
-                value2 = combos.rx(2, i)[0]
+        #     # adapted from
+        #     # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
+        #     # apply KS test to randomly selected pairs of columns (samples)
+        #     for i in range(1, min(ncol(combos)[0], 100)):
+        #         value1 = combos.rx(1, i)[0]
+        #         value2 = combos.rx(2, i)[0]
 
-                test_a = reso.rx(True, value1)
-                test_b = reso.rx(True, value2)
+        #         test_a = reso.rx(True, value1)
+        #         test_b = reso.rx(True, value2)
 
-                # RNA-seq has a lot of zeroes in it, which
-                # breaks the ks_test. Therefore we want to
-                # filter them out. To do this we drop the
-                # lowest half of the values. If there's
-                # still zeroes in there, then that's
-                # probably too many zeroes so it's okay to
-                # fail.
-                median_a = np.median(test_a)
-                median_b = np.median(test_b)
+        #         # RNA-seq has a lot of zeroes in it, which
+        #         # breaks the ks_test. Therefore we want to
+        #         # filter them out. To do this we drop the
+        #         # lowest half of the values. If there's
+        #         # still zeroes in there, then that's
+        #         # probably too many zeroes so it's okay to
+        #         # fail.
+        #         median_a = np.median(test_a)
+        #         median_b = np.median(test_b)
 
-                # `which` returns indices which are
-                # 1-indexed. Python accesses lists with
-                # zero-indexes, even if that list is
-                # actually an R vector. Therefore subtract
-                # 1 to account for the difference.
-                test_a = [test_a[i-1] for i in which(test_a > median_a)]
-                test_b = [test_b[i-1] for i in which(test_b > median_b)]
+        #         # `which` returns indices which are
+        #         # 1-indexed. Python accesses lists with
+        #         # zero-indexes, even if that list is
+        #         # actually an R vector. Therefore subtract
+        #         # 1 to account for the difference.
+        #         test_a = [test_a[i-1] for i in which(test_a > median_a)]
+        #         test_b = [test_b[i-1] for i in which(test_b > median_b)]
 
-                # The python list comprehension gives us a
-                # python list, but ks_test wants an R
-                # vector so let's go back.
-                test_a = as_numeric(test_a)
-                test_b = as_numeric(test_b)
+        #         # The python list comprehension gives us a
+        #         # python list, but ks_test wants an R
+        #         # vector so let's go back.
+        #         test_a = as_numeric(test_a)
+        #         test_b = as_numeric(test_b)
 
-                ks_res = ks_test(test_a, test_b)
-                statistic = ks_res.rx('statistic')[0][0]
-                pvalue = ks_res.rx('p.value')[0][0]
+        #         ks_res = ks_test(test_a, test_b)
+        #         statistic = ks_res.rx('statistic')[0][0]
+        #         pvalue = ks_res.rx('p.value')[0][0]
 
-                job_context['ks_statistic'] = statistic
-                job_context['ks_pvalue'] = pvalue
+        #         job_context['ks_statistic'] = statistic
+        #         job_context['ks_pvalue'] = pvalue
 
-                # We're unsure of how strigent to be about
-                # the pvalue just yet, so we're extra lax
-                # rather than failing tons of tests. This may need tuning.
-                if ks_check and (statistic > ks_stat or pvalue < 0.8):
-                    job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
-                                                 str(statistic) + ", PVal: " + str(pvalue))
-        else:
-            logger.warning(("Not enough columns to perform KS test -"
-                            " either bad smash or single saple smash."),
-                           dataset_id=job_context['dataset'].id)
+        #         # We're unsure of how strigent to be about
+        #         # the pvalue just yet, so we're extra lax
+        #         # rather than failing tons of tests. This may need tuning.
+        #         if ks_check and (statistic > ks_stat or pvalue < 0.8):
+        #             job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
+        #                                          str(statistic) + ", PVal: " + str(pvalue))
+        # else:
+        #     logger.warning(("Not enough columns to perform KS test -"
+        #                     " either bad smash or single saple smash."),
+        #                    dataset_id=job_context['dataset'].id)
 
         # And finally convert back to Pandas
         ar = np.array(reso)

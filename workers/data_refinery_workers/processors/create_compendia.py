@@ -373,7 +373,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
-    result.is_public = True
+    # Temporary until we re-enable the QN test step.
+    result.is_public = False
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     try:
