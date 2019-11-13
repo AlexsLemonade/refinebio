@@ -15,7 +15,7 @@ from data_refinery_common.models import (ComputationalResult,
                                          Organism,
                                          Pipeline,
                                          Sample)
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, FileUtils
 from data_refinery_workers.processors import smashing_utils, utils
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
@@ -69,6 +69,26 @@ def create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
     """
+    compendia_organism = _get_organisms(job_context['samples']).first()
+    compendia_version = _get_next_compendia_version(compendia_organism)
+
+    logger.debug("Writing metadata for quantpendia.",
+                job_id=job_context['job_id'],
+                organism_name=compendia_organism.name,
+                **get_process_stats())
+    _add_metadata(job_context)
+
+    logger.debug("Finished adding metadata for quantpendia. Generating archive.",
+            job_id=job_context['job_id'],
+            organism_name=compendia_organism.name,
+            **get_process_stats())
+    archive_path = _make_archive(job_context, compendia_organism)
+
+    logger.debug("Quantpendia zip file generated.",
+            job_id=job_context['job_id'],
+            organism_name=compendia_organism.name,
+            **get_process_stats())
+
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
@@ -82,29 +102,9 @@ def create_result_objects(job_context: Dict) -> Dict:
         return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
 
-    compendia_organism = _get_organisms(job_context['samples']).first()
-
-    # Create the resulting archive
-    logger.debug("Writing metadata for quantpendia.",
-                 job_id=job_context['job_id'],
-                 organism_name=compendia_organism.name,
-                 **get_process_stats())
-    smashing_utils.write_non_data_files(job_context)
-    final_zip_base = job_context['job_dir'] + compendia_organism.name + "_rnaseq_compendia"
-    shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
-
-    logger.debug("Finished metadata for quantpendia. Generating archive.",
-                 job_id=job_context['job_id'],
-                 organism_name=compendia_organism.name,
-                 **get_process_stats())
-
-    archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
-    compendia_version = _get_next_compendia_version(compendia_organism)
-
     archive_computed_file = ComputedFile()
-
     archive_computed_file.absolute_file_path = archive_path
-    archive_computed_file.filename = archive_path.split('/')[-1]
+    archive_computed_file.filename = FileUtils.get_filename(archive_path)
     archive_computed_file.calculate_sha1()
     archive_computed_file.calculate_size()
     archive_computed_file.is_smashable = False
@@ -131,7 +131,6 @@ def create_result_objects(job_context: Dict) -> Dict:
     job_context['success'] = True
 
     return job_context
-
 
 def remove_job_dir(job_context: Dict):
     """ remove the directory when the job is successful. At this point
@@ -177,3 +176,14 @@ def _get_next_compendia_version(organism: Organism) -> int:
 
     # otherwise this is the first compendia that we are generating
     return 1
+
+
+def _add_metadata(job_context: Dict):
+    smashing_utils.write_non_data_files(job_context)
+    shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
+
+
+def _make_archive(job_context: Dict, compendia_organism):
+    final_zip_base = job_context['job_dir'] + compendia_organism.name + "_rnaseq_compendia"
+    archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
+    return archive_path
