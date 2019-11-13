@@ -91,10 +91,10 @@ class Command(BaseCommand):
         logger.debug('Generating quantpendia for organisms', organisms=all_organisms)
 
         for organism in all_organisms:
-            # only generate the quantpendia for organisms that at least one
-            # RNA-SEQ processed sample
+            # only generate the quantpendia for organisms that have some samples
+            # with quant.sf files.
             has_quantsf_files = organism.sample_set\
-                .filter(is_processed=True, technology='RNA-SEQ')\
+                .filter(results__computedfile__filename='quant.sf')\
                 .exists()
             if not has_quantsf_files:
                 continue
