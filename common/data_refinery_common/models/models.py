@@ -784,7 +784,7 @@ class OriginalFile(models.Model):
     def has_blocking_jobs(self, own_processor_id=None) -> bool:
         # If the file has a processor job that should not have been
         # retried, then it still shouldn't be retried.
-        no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True)
+        no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True).exclude(retried=True)
 
         # If the file has a processor job that hasn't even started
         # yet, then it doesn't need another.

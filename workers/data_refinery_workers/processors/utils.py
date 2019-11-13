@@ -98,6 +98,7 @@ def prepare_original_files(job_context):
         raise ProcessorJobError('We can not process the data because it is not on the disk',
                                 success=False,
                                 no_retry=True, # this job should not be retried again
+                                retried=True, # This job was retried with a downloader job
                                 undownloaded_files=[file.id for file in undownloaded_files])
 
     job_context["original_files"] = original_files
@@ -394,11 +395,12 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
 
 class ProcessorJobError(Exception):
     """ General processor job error class. """
-    def __init__(self, failure_reason, *, success=None, no_retry=None, **context):
+    def __init__(self, failure_reason, *, success=None, no_retry=None, retried=None, **context):
         super(ProcessorJobError, self).__init__(failure_reason)
         self.failure_reason = failure_reason
         self.success = success
         self.no_retry = no_retry
+        self.retried = retried
         # additional context to be included when logging
         self.context = context
 
@@ -408,6 +410,8 @@ class ProcessorJobError(Exception):
             job.success = self.success
         if self.no_retry is not None:
             job.no_retry = self.no_retry
+        if self.retried is not None:
+            job.retried = self.retried
         job.save()
 
 
