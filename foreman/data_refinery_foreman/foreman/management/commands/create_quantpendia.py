@@ -48,7 +48,7 @@ def build_dataset(organism: Organism):
         for experiment in experiment_page:
             # only include the samples from the target organism that have quant.sf files
             experiment_samples = experiment.samples\
-                .filter(is_processed=True, technology='RNA-SEQ')
+                .filter(organisms=organism, technology='RNA-SEQ')
             # split the query into two so to avoid timeouts.
             # assume processed rna-seq samples have a quant.sf file
             processed_samples_with_quantsf = experiment_samples\
