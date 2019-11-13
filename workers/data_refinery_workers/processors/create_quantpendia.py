@@ -67,7 +67,7 @@ def download_files(job_context: Dict) -> Dict:
     return job_context
 
 
-@utils.cache_keys(work_dir_key='job_dir')
+@utils.cache_keys('metadata', work_dir_key='job_dir')
 def add_metadata(job_context: Dict) -> Dict:
     logger.debug("Writing metadata for quantpendia.",
             job_id=job_context['job_id'],
