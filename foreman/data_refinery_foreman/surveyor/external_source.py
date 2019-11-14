@@ -206,6 +206,7 @@ class ExternalSourceSurveyor:
         # Update our cached values
         experiment.update_num_samples()
         experiment.update_sample_metadata_fields()
+        experiment.update_organism_names()
         experiment.update_platform_names()
         experiment.save()
 
