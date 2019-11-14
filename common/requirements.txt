@@ -11,13 +11,13 @@ chardet==3.0.4            # via requests
 coverage==4.5.1
 daiquiri==1.5.0
 django-elasticsearch-dsl-drf==0.20.3
-django-elasticsearch-dsl==7.1.0
+django-elasticsearch-dsl==6.4.2
 django-nine==0.2.2        # via django-elasticsearch-dsl-drf
 django==2.2.7
-djangorestframework==3.10.3  # via django-elasticsearch-dsl-drf
+djangorestframework==3.9.4
 docutils==0.14            # via botocore
-elasticsearch-dsl==7.1.0
-elasticsearch==7.1.0      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
+elasticsearch-dsl==6.4.0
+elasticsearch==6.4.0      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
 idna==2.7                 # via requests
 jmespath==0.9.3           # via boto3, botocore
 psycopg2-binary==2.7.5
