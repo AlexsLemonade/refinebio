@@ -823,25 +823,6 @@ class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
                 )
         read_only_fields = fields
 
-class CompendiumResultSerializer(serializers.ModelSerializer):
-
-    primary_organism = CompendiumResultOrganismSerializer(read_only=True)
-    organisms = CompendiumResultOrganismSerializer(many=True)
-    result = ComputationalResultSerializer()
-
-    class Meta:
-        model = CompendiumResult
-        fields = (
-                    'id',
-                    'quant_sf_only',
-                    'compendium_version',
-                    'svd_algorithm',
-                    'primary_organism',
-                    'organisms',
-                    'result',
-                )
-        read_only_fields = fields
-
 
 ##
 # ElasticSearch Document Serializers
