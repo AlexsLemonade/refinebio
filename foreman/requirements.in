@@ -1,4 +1,4 @@
-django>=2.1.8
+django>=2.1.11
 psycopg2-binary
 requests>=2.20.0
 retrying
@@ -7,3 +7,5 @@ coverage
 GEOparse
 python-dateutil
 raven
+django-elasticsearch-dsl-drf>=0.17.1
+elasticsearch-dsl>=6.1.0
