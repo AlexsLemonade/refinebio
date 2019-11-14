@@ -38,6 +38,7 @@ from .views import (
     CompendiumResultList,
     CompendiumResult,
     ComputedFilesList,
+    OriginalFileList,
     AboutStats
 )
 
@@ -111,6 +112,7 @@ urlpatterns = [
 
         # Computed Files
         url(r'^computed_files/$', ComputedFilesList.as_view(), name='computed_files'),
+        url(r'^original_files/$', OriginalFileList.as_view(), name='original_files'),
         url(r'^computational_results/$', ComputationalResultsList.as_view(), name='results'),
 
         # Compendia
