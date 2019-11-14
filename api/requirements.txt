@@ -13,8 +13,8 @@ coreapi==2.3.3
 coreschema==0.0.4         # via coreapi, drf-yasg
 coverage==4.5.1
 django-cors-headers==2.4.0
-django-elasticsearch-dsl-drf==0.17.6
-django-elasticsearch-dsl==0.5.1  # via django-elasticsearch-dsl-drf
+django-elasticsearch-dsl-drf==0.20.3
+django-elasticsearch-dsl==7.1.0  # via django-elasticsearch-dsl-drf
 django-filter==2.0.0
 django-hstore==1.4.2      # via djangorestframework-hstore
 django-nine==0.2.2        # via django-elasticsearch-dsl-drf
@@ -23,11 +23,10 @@ djangorestframework-hstore==1.3
 djangorestframework==3.10.3
 docutils==0.14            # via botocore
 drf-yasg==1.15.0
-elasticsearch-dsl==6.1.0  # via django-elasticsearch-dsl, django-elasticsearch-dsl-drf
-elasticsearch==6.3.1      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
+elasticsearch-dsl==7.1.0  # via django-elasticsearch-dsl, django-elasticsearch-dsl-drf
+elasticsearch==7.1.0      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
 idna==2.7                 # via requests
 inflection==0.3.1         # via drf-yasg
-ipaddress==1.0.22         # via elasticsearch-dsl
 itypes==1.1.0             # via coreapi
 jinja2==2.10              # via coreschema
 jmespath==0.9.3           # via boto3, botocore
