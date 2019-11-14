@@ -775,6 +775,7 @@ class CompendiumResultOrganismSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organism
+        fields = '__all__'
 
 class CompendiumResultSerializer(serializers.ModelSerializer):
     primary_organism = CompendiumResultOrganismSerializer(read_only=True)
