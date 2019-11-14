@@ -20,7 +20,7 @@ django-hstore==1.4.2      # via djangorestframework-hstore
 django-nine==0.2.2        # via django-elasticsearch-dsl-drf
 django==2.1.8
 djangorestframework-hstore==1.3
-djangorestframework==3.8.2
+djangorestframework==3.9.1
 docutils==0.14            # via botocore
 drf-yasg==1.15.0
 elasticsearch-dsl==6.1.0  # via django-elasticsearch-dsl, django-elasticsearch-dsl-drf
@@ -46,4 +46,4 @@ uritemplate==3.0.0        # via coreapi, drf-yasg
 urllib3==1.23             # via botocore, elasticsearch, requests
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==41.2.0        # via apscheduler
+# setuptools==41.6.0        # via apscheduler
