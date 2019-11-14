@@ -94,7 +94,7 @@ class Command(BaseCommand):
             # only generate the quantpendia for organisms that have some samples
             # with quant.sf files.
             has_quantsf_files = organism.sample_set\
-                .filter(results__computedfile__filename='quant.sf')\
+                .filter(technology='RNA-SEQ', results__computedfile__filename='quant.sf')\
                 .exists()
             if not has_quantsf_files:
                 continue
