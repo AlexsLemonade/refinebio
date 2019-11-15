@@ -8,7 +8,7 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0041_auto_20190925_2041'),
+        ('data_refinery_common', '0042_remove_experiment_organism_names'),
     ]
 
     operations = [
