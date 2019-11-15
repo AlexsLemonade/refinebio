@@ -38,6 +38,7 @@ class QuantpendiaTestCase(TransactionTestCase):
         sample.accession_code = 'GSM1237818'
         sample.title = 'GSM1237818'
         sample.organism = homo_sapiens
+        sample.technology = 'RNA-SEQ'
         sample.save()
 
         sra = SampleResultAssociation()
