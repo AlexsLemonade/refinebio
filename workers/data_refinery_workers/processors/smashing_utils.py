@@ -36,6 +36,7 @@ BODY_ERROR_HTML = Path(
     'data_refinery_workers/processors/smasher_email_error.min.html'
 ).read_text().replace('\n', '')
 BYTES_IN_GB = 1024 * 1024 * 1024
+QN_CHUNK_SIZE = 10000
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -455,6 +456,16 @@ def process_frames_for_key(key: str,
     return job_context
 
 
+# Modified from: http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
+def _index_marks(num_columns, chunk_size):
+    return range(chunk_size, math.ceil(num_columns / chunk_size) * chunk_size, chunk_size)
+
+
+def _split_dataframe_columns(dataframe, chunk_size):
+    indices = _index_marks(dataframe.shape[1], chunk_size)
+    return np.split(dataframe, indices, axis=1)
+
+
 def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
     Apply quantile normalization.
@@ -490,14 +501,35 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         # Convert the smashed frames to an R numeric Matrix
         # and the target Dataframe into an R numeric Vector
         target_vector = as_numeric(qn_target_frame[0])
-        merged_matrix = data_matrix(job_context['merged_no_qn'])
+        original_matrix = job_context['merged_no_qn']
 
         # Perform the Actual QN
-        reso = preprocessCore.normalize_quantiles_use_target(
-                                            x=merged_matrix,
-                                            target=target_vector,
-                                            copy=True
-                                        )
+        # Do so in chunks if the matrix is too large.
+        if job_context['merged_no_qn'].shape[1] <= QN_CHUNK_SIZE:
+            merged_matrix = data_matrix(original_matrix)
+            normalized_matrix = preprocessCore.normalize_quantiles_use_target(x=merged_matrix,
+                                                                              target=target_vector,
+                                                                              copy=True)
+            # And finally convert back to Pandas
+            ar = np.array(normalized_matrix)
+            new_merged = pd.DataFrame(ar,
+                                      columns=job_context['merged_no_qn'].columns,
+                                      index=job_context['merged_no_qn'].index)
+        else:
+            matrix_chunks = _split_dataframe_columns(original_matrix, QN_CHUNK_SIZE)
+            for i, chunk in enumerate(matrix_chunks):
+                R_chunk = data_matrix(chunk)
+                normalized_chunk = preprocessCore.normalize_quantiles_use_target(
+                    x=R_chunk,
+                    target=target_vector,
+                    copy=True
+                )
+                ar = np.array(normalized_chunk)
+                start_column = i * QN_CHUNK_SIZE
+                end_column = (i + 1) * QN_CHUNK_SIZE
+                original_matrix.iloc[:, start_column:end_column] = ar
+
+            new_merged = original_matrix
 
         # For now, don't test the QN. This never fails on smasher jobs
         # and is OOM-killing our compendia jobs. Let's run this
@@ -586,10 +618,6 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         #                    dataset_id=job_context['dataset'].id)
 
         # And finally convert back to Pandas
-        ar = np.array(reso)
-        new_merged = pd.DataFrame(ar,
-                                  columns=job_context['merged_no_qn'].columns,
-                                  index=job_context['merged_no_qn'].index)
 
         # Remove un-quantiled normalized matrix from job_context
         # because we no longer need it.
