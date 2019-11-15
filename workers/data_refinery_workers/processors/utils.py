@@ -6,7 +6,6 @@ import string
 import subprocess
 import sys
 import yaml
-import hashlib
 import pickle
 
 from django.conf import settings
@@ -678,10 +677,9 @@ def cache_keys(*keys, work_dir_key='work_dir'):
     keys into the `work_dir`. On the next call it will load those keys (if they
     exist) and add them to the job_context instead of executing the function. """
     def inner(func):
-        key_names = ''.join(list(keys) + [func.__name__])
         # generate a unique name for the cache based on the pipeline name
         # and the cached keys
-        cache_name = hashlib.md5(key_names.encode()).hexdigest()
+        cache_name = '__'.join(list(keys) + [func.__name__])
 
         def pipeline(job_context):
             cache_path = os.path.join(job_context[work_dir_key], cache_name)
