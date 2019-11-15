@@ -362,9 +362,9 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
              "$test_data_repo/$quant_name"
     fi
     if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-        AWS_ACCESS_KEY_ID="$(aws configure get default.aws_access_key_id)"
+        AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"
 	export AWS_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY="$(aws configure get default.aws_secret_access_key)"
+        AWS_SECRET_ACCESS_KEY="$(~/bin/aws configure get default.aws_secret_access_key)"
 	export AWS_SECRET_ACCESS_KEY
     fi
 fi
