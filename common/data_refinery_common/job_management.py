@@ -147,6 +147,7 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
 
     return True
 
+
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
                                              downloader_job: DownloaderJob=None,
                                              volume_index: str=None):
@@ -154,68 +155,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
     Creates one processor job for each original file given.
     """
     for original_file in original_files:
-        sample_object = original_file.samples.first()
-
-        if original_file.is_blacklisted():
-            logger.debug("Original file had a blacklisted extension of %s, skipping",
-                         extension=original_file.get_extension(),
-                         original_file=original_file.id)
-            original_file.delete_local_file()
-
-        # Fix for: https://github.com/AlexsLemonade/refinebio/issues/968
-        # Basically, we incorrectly detected technology/manufacturers
-        # for many Affymetrix samples and this is a good place to fix
-        # some of them.
-        if original_file.is_affy_data():
-            # Only Affymetrix Microarrays produce .CEL files
-            sample_object.technology = 'MICROARRAY'
-            sample_object.manufacturer = 'AFFYMETRIX'
-            sample_object.save()
-
-        pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
-
-        if pipeline_to_apply == ProcessorPipeline.NONE:
-            logger.info("No valid processor pipeline found to apply to sample.",
-                        sample=sample_object.id,
-                        original_file=original_files[0].id)
-            original_file.delete_local_file()
-            original_file.is_downloaded = False
-            original_file.save()
-        else:
-            processor_job = ProcessorJob()
-            processor_job.pipeline_applied = pipeline_to_apply.value
-            processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
-
-            if volume_index:
-                processor_job.volume_index = volume_index
-            elif downloader_job.volume_index:
-                processor_job.volume_index = downloader_job.volume_index
-            else:
-                processor_job.volume_index = get_volume_index()
-
-            processor_job.save()
-
-            assoc = ProcessorJobOriginalFileAssociation()
-            assoc.original_file = original_file
-            assoc.processor_job = processor_job
-            assoc.save()
-
-            if downloader_job:
-                logger.debug("Queuing processor job.",
-                             processor_job=processor_job.id,
-                             original_file=original_file.id,
-                             downloader_job=downloader_job.id)
-            else:
-                logger.debug("Queuing processor job.",
-                             processor_job=processor_job.id,
-                             original_file=original_file.id)
-
-            try:
-                send_job(pipeline_to_apply, processor_job)
-            except:
-                # If we cannot queue the job now the Foreman will do
-                # it later.
-                pass
+        create_processor_job_for_original_files([original_file], downloader_job, volume_index)
 
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile],
@@ -239,8 +179,6 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
                     original_file=original_files[0].id)
         for original_file in original_files:
             original_file.delete_local_file()
-            original_file.is_downloaded = False
-            original_file.save()
     else:
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = pipeline_to_apply.value
@@ -256,13 +194,21 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         processor_job.save()
 
         for original_file in original_files:
+            if original_file.is_blacklisted():
+                logger.debug("Original file had a blacklisted extension of %s, skipping",
+                            extension=original_file.get_extension(),
+                            original_file=original_file.id)
+                original_file.delete_local_file()
+                continue
+
             assoc = ProcessorJobOriginalFileAssociation()
             assoc.original_file = original_file
             assoc.processor_job = processor_job
             assoc.save()
 
         logger.debug("Queuing processor job.",
-                     processor_job=processor_job.id)
+                     processor_job=processor_job.id,
+                     downloader_job=downloader_job.id if downloader_job else None)
 
         try:
             send_job(pipeline_to_apply, processor_job)

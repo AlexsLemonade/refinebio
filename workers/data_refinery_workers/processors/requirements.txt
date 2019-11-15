@@ -47,7 +47,7 @@ packaging==19.0           # via bokeh
 pandas==0.23.4
 param==1.8.2              # via colorcet, datashader, holoviews, pyct, pyviz-comms
 partd==0.3.10             # via dask
-pillow==5.4.1             # via bokeh, datashader, scikit-image
+pillow==6.2.0             # via bokeh, datashader, scikit-image
 psutil==5.6.1             # via distributed
 psycopg2-binary==2.7.5
 pyct[cmd]==0.4.6          # via colorcet, datashader
@@ -80,4 +80,4 @@ xarray==0.12.3
 zict==0.1.4               # via distributed
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==41.0.1        # via kiwisolver
+# setuptools==41.4.0        # via kiwisolver
