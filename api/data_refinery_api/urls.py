@@ -38,7 +38,9 @@ from .views import (
     CompendiaDetail,
     ComputedFilesList,
     OriginalFileList,
-    AboutStats
+    AboutStats,
+    FailedDownloaderJobStats,
+    FailedProcessorJobStats
 )
 
 # This provides _public_ access to the /admin interface!
@@ -101,6 +103,8 @@ urlpatterns = [
 
         # Dashboard Driver
         url(r'^stats/$', Stats.as_view(), name='stats'),
+        url(r'^stats/failed-downloader$', FailedDownloaderJobStats.as_view(), name='stats'),
+        url(r'^stats/failed-processor$', FailedProcessorJobStats.as_view(), name='stats'),
         url(r'^stats-about/$', AboutStats.as_view(), name='stats_about'),
 
         # Transcriptome Indices and QN Targets
