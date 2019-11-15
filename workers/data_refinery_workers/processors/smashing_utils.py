@@ -458,7 +458,7 @@ def process_frames_for_key(key: str,
 
 # Modified from: http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
 def _index_marks(num_columns, chunk_size):
-    return range(1 * chunk_size, math.ceil(num_columns / chunk_size) * chunk_size, chunk_size)
+    return range(chunk_size, math.ceil(num_columns / chunk_size) * chunk_size, chunk_size)
 
 
 def _split_dataframe_columns(dataframe, chunk_size):
