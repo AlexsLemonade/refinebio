@@ -29,17 +29,17 @@ def create_quantpendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_QUANTPENDIA.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                                      [utils.start_job,
-                                      make_dirs,
-                                      download_files,
-                                      add_metadata,
-                                      make_archive,
-                                      create_result_objects,
-                                      remove_job_dir,
+                                      _make_dirs,
+                                      _download_files,
+                                      _add_metadata,
+                                      _make_archive,
+                                      _create_result_objects,
+                                      _remove_job_dir,
                                       utils.end_job])
     return job_context
 
 @utils.cache_keys('time_start', 'num_samples', 'time_end', 'formatted_command', work_dir_key='job_dir')
-def download_files(job_context: Dict) -> Dict:
+def _download_files(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
 
     num_samples = 0
@@ -68,7 +68,7 @@ def download_files(job_context: Dict) -> Dict:
 
 
 @utils.cache_keys('metadata', work_dir_key='job_dir')
-def add_metadata(job_context: Dict) -> Dict:
+def _add_metadata(job_context: Dict) -> Dict:
     logger.debug("Writing metadata for quantpendia.",
             job_id=job_context['job_id'],
             **get_process_stats())
@@ -78,7 +78,7 @@ def add_metadata(job_context: Dict) -> Dict:
 
 
 @utils.cache_keys('archive_path', work_dir_key='job_dir')
-def make_archive(job_context: Dict):
+def _make_archive(job_context: Dict):
     compendia_organism = _get_organisms(job_context['samples']).first()
     final_zip_base = job_context['job_dir'] + compendia_organism.name + "_rnaseq_compendia"
 
@@ -95,7 +95,7 @@ def make_archive(job_context: Dict):
     return {**job_context, 'archive_path': archive_path}
 
 
-def create_result_objects(job_context: Dict) -> Dict:
+def _create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
     """
@@ -147,7 +147,7 @@ def create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 
-def remove_job_dir(job_context: Dict):
+def _remove_job_dir(job_context: Dict):
     """ remove the directory when the job is successful. At this point
     the quantpendia was already zipped and uploaded. """
     # don't remove the files when running locally or for tests
@@ -156,7 +156,7 @@ def remove_job_dir(job_context: Dict):
     return job_context
 
 
-def make_dirs(job_context: Dict):
+def _make_dirs(job_context: Dict):
     dataset_id = str(job_context["dataset"].pk)
     job_context["job_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
     os.makedirs(job_context["job_dir"], exist_ok=True)
