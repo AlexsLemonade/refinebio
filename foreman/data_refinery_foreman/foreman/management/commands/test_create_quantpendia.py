@@ -52,6 +52,7 @@ def get_organism_with_qn_target():
 def make_test_data(organism):
     experiment = Experiment()
     experiment.accession_code = "GSE51088"
+    experiment.technology='RNA-SEQ'
     experiment.save()
 
     xoa = ExperimentOrganismAssociation()
@@ -66,6 +67,7 @@ def make_test_data(organism):
     sample.accession_code = 'GSM1237818'
     sample.title = 'GSM1237818'
     sample.organism = organism
+    sample.technology = 'RNA-SEQ'
     sample.save()
 
     sra = SampleResultAssociation()

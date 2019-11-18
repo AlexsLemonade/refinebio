@@ -29,15 +29,17 @@ def create_quantpendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_QUANTPENDIA.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                                      [utils.start_job,
-                                      make_dirs,
-                                      download_files,
-                                      create_result_objects,
-                                      remove_job_dir,
+                                      _make_dirs,
+                                      _download_files,
+                                      _add_metadata,
+                                      _make_archive,
+                                      _create_result_objects,
+                                      _remove_job_dir,
                                       utils.end_job])
     return job_context
 
-
-def download_files(job_context: Dict) -> Dict:
+@utils.cache_keys('time_start', 'num_samples', 'time_end', 'formatted_command', work_dir_key='job_dir')
+def _download_files(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
 
     num_samples = 0
@@ -65,29 +67,41 @@ def download_files(job_context: Dict) -> Dict:
     return job_context
 
 
-def create_result_objects(job_context: Dict) -> Dict:
-    """
-    Store and host the result as a ComputationalResult object.
-    """
-    compendia_organism = _get_organisms(job_context['samples']).first()
-    compendia_version = _get_next_compendia_version(compendia_organism)
-
+@utils.cache_keys('metadata', work_dir_key='job_dir')
+def _add_metadata(job_context: Dict) -> Dict:
     logger.debug("Writing metadata for quantpendia.",
-                job_id=job_context['job_id'],
-                organism_name=compendia_organism.name,
-                **get_process_stats())
-    _add_metadata(job_context)
+            job_id=job_context['job_id'],
+            **get_process_stats())
+    smashing_utils.write_non_data_files(job_context)
+    shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
+    return job_context
 
-    logger.debug("Finished adding metadata for quantpendia. Generating archive.",
+
+@utils.cache_keys('archive_path', work_dir_key='job_dir')
+def _make_archive(job_context: Dict):
+    compendia_organism = _get_organisms(job_context['samples']).first()
+    final_zip_base = job_context['job_dir'] + compendia_organism.name + "_rnaseq_compendia"
+
+    logger.debug("Generating archive.",
             job_id=job_context['job_id'],
             organism_name=compendia_organism.name,
             **get_process_stats())
-    archive_path = _make_archive(job_context, compendia_organism)
-
+    archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
     logger.debug("Quantpendia zip file generated.",
             job_id=job_context['job_id'],
             organism_name=compendia_organism.name,
             **get_process_stats())
+
+    return {**job_context, 'archive_path': archive_path}
+
+
+def _create_result_objects(job_context: Dict) -> Dict:
+    """
+    Store and host the result as a ComputationalResult object.
+    """
+    archive_path = job_context['archive_path']
+    compendia_organism = _get_organisms(job_context['samples']).first()
+    compendia_version = _get_next_compendia_version(compendia_organism)
 
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
@@ -132,7 +146,8 @@ def create_result_objects(job_context: Dict) -> Dict:
 
     return job_context
 
-def remove_job_dir(job_context: Dict):
+
+def _remove_job_dir(job_context: Dict):
     """ remove the directory when the job is successful. At this point
     the quantpendia was already zipped and uploaded. """
     # don't remove the files when running locally or for tests
@@ -141,7 +156,7 @@ def remove_job_dir(job_context: Dict):
     return job_context
 
 
-def make_dirs(job_context: Dict):
+def _make_dirs(job_context: Dict):
     dataset_id = str(job_context["dataset"].pk)
     job_context["job_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"
     os.makedirs(job_context["job_dir"], exist_ok=True)
@@ -177,13 +192,3 @@ def _get_next_compendia_version(organism: Organism) -> int:
     # otherwise this is the first compendia that we are generating
     return 1
 
-
-def _add_metadata(job_context: Dict):
-    smashing_utils.write_non_data_files(job_context)
-    shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
-
-
-def _make_archive(job_context: Dict, compendia_organism):
-    final_zip_base = job_context['job_dir'] + compendia_organism.name + "_rnaseq_compendia"
-    archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
-    return archive_path
