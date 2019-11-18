@@ -5,9 +5,9 @@ def populate_compendium_results(apps, schema_editor):
     CompendiumResult = apps.get_model('data_refinery_common', 'CompendiumResult')
     CompendiumResultOrganismAssociation = apps.get_model('data_refinery_common',
                                                          'CompendiumResultOrganismAssociation')
-    ComputedFile = apps.get_modoel('data_refinery_common', 'ComputedFile')
+    ComputedFile = apps.get_model('data_refinery_common', 'ComputedFile')
 
-    compendium_computed_files = ComputedFile.object.filter(is_compendia=True)
+    compendium_computed_files = ComputedFile.objects.filter(is_compendia=True)
 
     compendium_results = []
     for computed_file in compendium_computed_files:
@@ -31,7 +31,7 @@ def populate_compendium_results(apps, schema_editor):
         compendium_result_organism_associations.append(
             compendium_result_organism_association)
 
-    CompendiumResultOrganismAssociation.bulk_create(
+    CompendiumResultOrganismAssociation.objects.bulk_create(
             compendium_result_organism_associations)
 
 
@@ -42,5 +42,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(set_computed_file_svd_algorithm_none),
+        migrations.RunPython(populate_compendium_results),
     ]
