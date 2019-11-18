@@ -1381,7 +1381,7 @@ def monitor_jobs():
                 logger.error("Caught exception in %s: ", function.__name__)
                 traceback.print_exc(chain=False)
 
-        if not settings.RUNNING_IN_CLOUD:
+        if settings.RUNNING_IN_CLOUD:
             if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
                 send_janitor_jobs()
                 cleanup_the_queue()
