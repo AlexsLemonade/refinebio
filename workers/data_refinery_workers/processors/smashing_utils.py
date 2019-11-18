@@ -3,12 +3,13 @@
 import csv
 import logging
 import math
-import multiprocessing
 import os
+import multiprocessing
 import shutil
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
+from concurrent.futures import ThreadPoolExecutor
 
 from django.utils import timezone
 from rpy2.robjects import pandas2ri
@@ -25,11 +26,7 @@ from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
-# Take one fewer than 1/2 the total available threads
-# also make the minimum threads 1.
-# Use floor here because multiprocessing raises an exception if this isn't an int.
-MULTIPROCESSING_WORKER_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
-MULTIPROCESSING_CHUNK_SIZE = 2000
+MULTIPROCESSING_MAX_THREAD_COUNT = max(1, math.floor(multiprocessing.cpu_count()/2) - 1)
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path(
@@ -39,6 +36,7 @@ BODY_ERROR_HTML = Path(
     'data_refinery_workers/processors/smasher_email_error.min.html'
 ).read_text().replace('\n', '')
 BYTES_IN_GB = 1024 * 1024 * 1024
+QN_CHUNK_SIZE = 10000
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -126,6 +124,7 @@ def _load_and_sanitize_file(computed_file_path, index=None):
                        sep='\t',
                        header=0,
                        index_col=0,
+                       dtype={0: str, 1: np.float32},
                        error_bad_lines=False)
 
     # Strip any funky whitespace
@@ -346,7 +345,7 @@ def process_frames_for_key(key: str,
         microarray_columns = cached_data["microarray_columns"]
         rnaseq_columns = cached_data["rnaseq_columns"]
     else:
-        all_gene_identifiers = set()
+        gene_identifier_counts = {}
         microarray_columns = []
         rnaseq_columns = []
         for index, (computed_file, sample) in enumerate(input_files):
@@ -362,7 +361,11 @@ def process_frames_for_key(key: str,
             # Count how many frames are in each tech so we can preallocate
             # the matrices in both directions.
             if not frame['unsmashable']:
-                all_gene_identifiers = all_gene_identifiers.union(frame['dataframe'].index)
+                for gene_id in frame['dataframe'].index:
+                    if gene_id in gene_identifier_counts:
+                        gene_identifier_counts[gene_id] += 1
+                    else:
+                        gene_identifier_counts[gene_id] = 1
 
                 # Each dataframe should only have 1 column, but it's
                 # returned as a list so use extend.
@@ -371,8 +374,20 @@ def process_frames_for_key(key: str,
                 elif frame['technology'] == 'rnaseq':
                     rnaseq_columns.extend(frame['dataframe'].columns)
 
-        all_gene_identifiers = list(all_gene_identifiers)
+        total_samples = len(microarray_columns) + len(rnaseq_columns)
+        all_gene_identifiers = []
+        for gene_id, sample_count in gene_identifier_counts.items():
+            # We only want to use gene identifiers which are present
+            # in >50% of the samples. We're doing this because a large
+            # number of gene identifiers present in only a modest
+            # number of experiments have leaked through. We wouldn't
+            # necessarily want to do this if we'd mapped all the data
+            # to ENSEMBL identifiers successfully.
+            if sample_count > (total_samples * 0.5):
+                all_gene_identifiers.append(gene_id)
+
         all_gene_identifiers.sort()
+        del gene_identifier_counts
 
         log_template = ("Collected {0} gene identifiers for {1} across"
                         " {2} micrarry samples and {3} RNA-Seq samples.")
@@ -399,11 +414,11 @@ def process_frames_for_key(key: str,
     job_context['microarray_matrix'] = pd.DataFrame(data=None,
                                                     index=all_gene_identifiers,
                                                     columns=microarray_columns,
-                                                    dtype=np.float64)
+                                                    dtype=np.float32)
     job_context['rnaseq_matrix'] = pd.DataFrame(data=None,
                                                 index=all_gene_identifiers,
                                                 columns=rnaseq_columns,
-                                                dtype=np.float64)
+                                                dtype=np.float32)
 
     for index, (computed_file, sample) in enumerate(input_files):
         frame = process_frame(job_context["work_dir"],
@@ -441,6 +456,16 @@ def process_frames_for_key(key: str,
     return job_context
 
 
+# Modified from: http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
+def _index_marks(num_columns, chunk_size):
+    return range(chunk_size, math.ceil(num_columns / chunk_size) * chunk_size, chunk_size)
+
+
+def _split_dataframe_columns(dataframe, chunk_size):
+    indices = _index_marks(dataframe.shape[1], chunk_size)
+    return np.split(dataframe, indices, axis=1)
+
+
 def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
     Apply quantile normalization.
@@ -448,9 +473,8 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
     # Prepare our QN target file
     organism = job_context['organism']
-    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
 
-    if not qn_target:
+    if not organism.qn_target:
         logger.error("Could not find QN target for Organism!",
                      organism=organism,
                      dataset_id=job_context['dataset'].id,
@@ -464,7 +488,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         job_context['failure_reason'] = "Could not find QN target for Organism: " + str(organism)
         return job_context
     else:
-        qn_target_path = qn_target.sync_from_s3()
+        qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
         qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
                                       index_col=None, error_bad_lines=False)
 
@@ -477,93 +501,123 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         # Convert the smashed frames to an R numeric Matrix
         # and the target Dataframe into an R numeric Vector
         target_vector = as_numeric(qn_target_frame[0])
-        merged_matrix = data_matrix(job_context['merged_no_qn'])
+        original_matrix = job_context['merged_no_qn']
 
         # Perform the Actual QN
-        reso = preprocessCore.normalize_quantiles_use_target(
-                                            x=merged_matrix,
-                                            target=target_vector,
-                                            copy=True
-                                        )
-
-        # Verify this QN, related:
-        # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-        set_seed = rlang("set.seed")
-        combn = rlang("combn")
-        ncol = rlang("ncol")
-        ks_test = rlang("ks.test")
-        which = rlang("which")
-
-        set_seed(123)
-
-        n = ncol(reso)[0]
-        m = 2
-        if n >= m:
-            combos = combn(ncol(reso), 2)
-
-            # Convert to NP, Shuffle, Return to R
-            ar = np.array(combos)
-            np.random.shuffle(np.transpose(ar))
-            nr, nc = ar.shape
-            combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
-
-            # adapted from
-            # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
-            # apply KS test to randomly selected pairs of columns (samples)
-            for i in range(1, min(ncol(combos)[0], 100)):
-                value1 = combos.rx(1, i)[0]
-                value2 = combos.rx(2, i)[0]
-
-                test_a = reso.rx(True, value1)
-                test_b = reso.rx(True, value2)
-
-                # RNA-seq has a lot of zeroes in it, which
-                # breaks the ks_test. Therefore we want to
-                # filter them out. To do this we drop the
-                # lowest half of the values. If there's
-                # still zeroes in there, then that's
-                # probably too many zeroes so it's okay to
-                # fail.
-                median_a = np.median(test_a)
-                median_b = np.median(test_b)
-
-                # `which` returns indices which are
-                # 1-indexed. Python accesses lists with
-                # zero-indexes, even if that list is
-                # actually an R vector. Therefore subtract
-                # 1 to account for the difference.
-                test_a = [test_a[i-1] for i in which(test_a > median_a)]
-                test_b = [test_b[i-1] for i in which(test_b > median_b)]
-
-                # The python list comprehension gives us a
-                # python list, but ks_test wants an R
-                # vector so let's go back.
-                test_a = as_numeric(test_a)
-                test_b = as_numeric(test_b)
-
-                ks_res = ks_test(test_a, test_b)
-                statistic = ks_res.rx('statistic')[0][0]
-                pvalue = ks_res.rx('p.value')[0][0]
-
-                job_context['ks_statistic'] = statistic
-                job_context['ks_pvalue'] = pvalue
-
-                # We're unsure of how strigent to be about
-                # the pvalue just yet, so we're extra lax
-                # rather than failing tons of tests. This may need tuning.
-                if ks_check and (statistic > ks_stat or pvalue < 0.8):
-                    job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
-                                                 str(statistic) + ", PVal: " + str(pvalue))
+        # Do so in chunks if the matrix is too large.
+        if job_context['merged_no_qn'].shape[1] <= QN_CHUNK_SIZE:
+            merged_matrix = data_matrix(original_matrix)
+            normalized_matrix = preprocessCore.normalize_quantiles_use_target(x=merged_matrix,
+                                                                              target=target_vector,
+                                                                              copy=True)
+            # And finally convert back to Pandas
+            ar = np.array(normalized_matrix)
+            new_merged = pd.DataFrame(ar,
+                                      columns=job_context['merged_no_qn'].columns,
+                                      index=job_context['merged_no_qn'].index)
         else:
-            logger.warning(("Not enough columns to perform KS test -"
-                            " either bad smash or single saple smash."),
-                           dataset_id=job_context['dataset'].id)
+            matrix_chunks = _split_dataframe_columns(original_matrix, QN_CHUNK_SIZE)
+            for i, chunk in enumerate(matrix_chunks):
+                R_chunk = data_matrix(chunk)
+                normalized_chunk = preprocessCore.normalize_quantiles_use_target(
+                    x=R_chunk,
+                    target=target_vector,
+                    copy=True
+                )
+                ar = np.array(normalized_chunk)
+                start_column = i * QN_CHUNK_SIZE
+                end_column = (i + 1) * QN_CHUNK_SIZE
+                original_matrix.iloc[:, start_column:end_column] = ar
+
+            new_merged = original_matrix
+
+        # For now, don't test the QN. This never fails on smasher jobs
+        # and is OOM-killing our compendia jobs. Let's run this
+        # manually after we have a compendia job actually finish.
+        # # Verify this QN, related:
+        # # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
+        # set_seed = rlang("set.seed")
+        # combn = rlang("combn")
+        # ncol = rlang("ncol")
+        # ks_test = rlang("ks.test")
+        # which = rlang("which")
+
+        # set_seed(123)
+
+        # n = ncol(reso)[0]
+        # m = 2
+        # if n >= m:
+
+        #     # This wont work with larger matricies
+        #     # https://github.com/AlexsLemonade/refinebio/issues/1860
+        #     ncolumns = ncol(reso)
+
+        #     if ncolumns[0] <= 200:
+        #         # Convert to NP, Shuffle, Return to R
+        #         combos = combn(ncolumns, 2)
+        #         ar = np.array(combos)
+        #         np.random.shuffle(np.transpose(ar))
+        #     else:
+        #         indexes = [*range(ncolumns[0])]
+        #         np.random.shuffle(indexes)
+        #         ar = np.array([*zip(indexes[0:100], indexes[100:200])])
+
+        #     nr, nc = ar.shape
+        #     combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+
+        #     # adapted from
+        #     # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
+        #     # apply KS test to randomly selected pairs of columns (samples)
+        #     for i in range(1, min(ncol(combos)[0], 100)):
+        #         value1 = combos.rx(1, i)[0]
+        #         value2 = combos.rx(2, i)[0]
+
+        #         test_a = reso.rx(True, value1)
+        #         test_b = reso.rx(True, value2)
+
+        #         # RNA-seq has a lot of zeroes in it, which
+        #         # breaks the ks_test. Therefore we want to
+        #         # filter them out. To do this we drop the
+        #         # lowest half of the values. If there's
+        #         # still zeroes in there, then that's
+        #         # probably too many zeroes so it's okay to
+        #         # fail.
+        #         median_a = np.median(test_a)
+        #         median_b = np.median(test_b)
+
+        #         # `which` returns indices which are
+        #         # 1-indexed. Python accesses lists with
+        #         # zero-indexes, even if that list is
+        #         # actually an R vector. Therefore subtract
+        #         # 1 to account for the difference.
+        #         test_a = [test_a[i-1] for i in which(test_a > median_a)]
+        #         test_b = [test_b[i-1] for i in which(test_b > median_b)]
+
+        #         # The python list comprehension gives us a
+        #         # python list, but ks_test wants an R
+        #         # vector so let's go back.
+        #         test_a = as_numeric(test_a)
+        #         test_b = as_numeric(test_b)
+
+        #         ks_res = ks_test(test_a, test_b)
+        #         statistic = ks_res.rx('statistic')[0][0]
+        #         pvalue = ks_res.rx('p.value')[0][0]
+
+        #         job_context['ks_statistic'] = statistic
+        #         job_context['ks_pvalue'] = pvalue
+
+        #         # We're unsure of how strigent to be about
+        #         # the pvalue just yet, so we're extra lax
+        #         # rather than failing tons of tests. This may need tuning.
+        #         if ks_check and (statistic > ks_stat or pvalue < 0.8):
+        #             job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
+        #                                          str(statistic) + ", PVal: " + str(pvalue))
+        # else:
+        #     logger.warning(("Not enough columns to perform KS test -"
+        #                     " either bad smash or single saple smash."),
+        #                    dataset_id=job_context['dataset'].id)
 
         # And finally convert back to Pandas
-        ar = np.array(reso)
-        new_merged = pd.DataFrame(ar,
-                                  columns=job_context['merged_no_qn'].columns,
-                                  index=job_context['merged_no_qn'].index)
 
         # Remove un-quantiled normalized matrix from job_context
         # because we no longer need it.
@@ -894,7 +948,7 @@ def write_tsv_json(job_context):
         return [tsv_path]
 
 
-def downlad_computed_file(download_tuple: Tuple[ComputedFile, str]):
+def download_computed_file(download_tuple: Tuple[ComputedFile, str]):
     """ this function downloads the latest computed file. Receives a tuple with
     the computed file and the path where it needs to be downloaded
     This is used to parallelize downloading quantsf files. """
@@ -913,25 +967,21 @@ def sync_quant_files(output_path, samples: List[Sample]):
 
     page_size = 100
     # split the samples in groups and download each one individually
-    pool = multiprocessing.Pool(processes=MULTIPROCESSING_WORKER_COUNT)
+    with ThreadPoolExecutor(max_workers=MULTIPROCESSING_MAX_THREAD_COUNT) as executor:
+        # for each sample we need it's latest quant.sf file we don't want to query the db
+        # for all of them, so we do it in groups of 100, and then download all of the computed_files
+        # in parallel
+        for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
+            sample_and_computed_files = []
+            for sample in sample_page:
+                latest_computed_file = sample.get_most_recent_quant_sf_file()
+                if not latest_computed_file:
+                    continue
+                output_file_path = output_path + sample.accession_code + "_quant.sf"
+                sample_and_computed_files.append((latest_computed_file, output_file_path))
 
-    # for each sample we need it's latest quant.sf file we don't want to query the db
-    # for all of them, so we do it in groups of 100, and then download all of the computed_files
-    # in parallel
-    for sample_page in (samples[i*page_size:i+page_size] for i in range(0, len(samples), page_size)):
-        sample_and_computed_files = []
-        for sample in sample_page:
-            latest_computed_file = sample.get_most_recent_quant_sf_file()
-            if not latest_computed_file:
-                continue
-            output_file_path = output_path + sample.accession_code + "_quant.sf"
-            sample_and_computed_files.append((latest_computed_file, output_file_path))
-
-        # download this set of files, this will take a few seconds that should also help the db recover
-        pool.map(downlad_computed_file, sample_and_computed_files)
-        num_samples += len(sample_and_computed_files)
-
-    pool.close()
-    pool.join()
+            # download this set of files, this will take a few seconds that should also help the db recover
+            executor.map(download_computed_file, sample_and_computed_files)
+            num_samples += len(sample_and_computed_files)
 
     return num_samples

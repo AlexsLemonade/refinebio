@@ -6,6 +6,7 @@ import string
 import subprocess
 import sys
 import yaml
+import pickle
 
 from django.conf import settings
 from django.utils import timezone
@@ -64,10 +65,7 @@ def prepare_original_files(job_context):
     original_files = job.original_files.all()
 
     if original_files.count() == 0:
-        logger.error("No files found.", processor_job=job.id)
-        job_context["success"] = False
-        job.failure_reason = "No files were found for the job."
-        return job_context
+        raise ProcessorJobError('No files were found for the job.', success=False)
 
     undownloaded_files = set()
     for original_file in original_files:
@@ -95,11 +93,8 @@ def prepare_original_files(job_context):
             force=True
         )
         if not was_job_created:
-            failure_reason = "Missing file for processor job but unable to recreate downloader jobs!"
-            logger.error(failure_reason, processor_job=job.id)
-            job_context["success"] = False
-            job.failure_reason = failure_reason
-            return job_context
+            raise ProcessorJobError('Missing file for processor job but unable to recreate downloader jobs!',
+                                    success=False)
 
         # If we can't process the data because it's not on the disk we
         # can't mark the job as a success since it obviously didn't
@@ -108,9 +103,7 @@ def prepare_original_files(job_context):
         # to re-download the data. Therefore the best option is to
         # delete this job.
         job.delete()
-        job_context["delete_self"] = True
-
-        return job_context
+        raise ProcessorJobDeleteSelf('We can not process the data because it is not on the disk')
 
     job_context["original_files"] = original_files
     first_original_file = original_files.first()
@@ -125,23 +118,15 @@ def prepare_dataset(job_context):
     """ Provision in the Job context for Dataset-driven processors
     """
     job = job_context["job"]
-    relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
+    job_datasets = job.datasets.all()
 
     # This should never be more than one!
-    if relations.count() > 1:
-        failure_reason = "More than one dataset for processor job!"
-        logger.error(failure_reason, processor_job=job.id)
-        job_context["success"] = False
-        job.failure_reason = failure_reason
-        return job_context
-    elif relations.count() == 0:
-        failure_reason = "No datasets found for processor job!"
-        logger.error(failure_reason, processor_job=job.id)
-        job_context["success"] = False
-        job.failure_reason = failure_reason
-        return job_context
+    if job_datasets.count() > 1:
+        raise ProcessorJobError('More than one dataset for processor job!', success=False)
+    elif job_datasets.count() == 0:
+        raise ProcessorJobError('No datasets found for processor job!', success=False)
 
-    dataset = Dataset.objects.get(id=relations[0].dataset_id)
+    dataset = job_datasets.first()
     dataset.is_processing = True
     dataset.save()
 
@@ -319,7 +304,9 @@ def end_job(job_context: Dict, abort=False):
         if len(pipeline.steps):
             pipeline.save()
 
-    if "work_dir" in job_context and settings.RUNNING_IN_CLOUD:
+    if "work_dir" in job_context \
+       and job_context["job"].pipeline_applied != ProcessorPipeline.CREATE_COMPENDIA.value \
+       and settings.RUNNING_IN_CLOUD:
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     job.success = success
@@ -373,14 +360,23 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         return
 
     if len(pipeline) == 0:
-        logger.error("Empty pipeline specified.",
-                     procesor_job=job_id)
+        logger.error("Empty pipeline specified.", procesor_job=job_id)
 
     last_result = start_value
     last_result["job"] = job
     for processor in pipeline:
         try:
             last_result = processor(last_result)
+        except ProcessorJobDeleteSelf as e:
+            logger.info('Processor Job deleted itself.', reason=e.reason, processor_job=job_id)
+            break
+        except ProcessorJobError as e:
+            e.update_job(job)
+            logger.exception(e.failure_reason, processor_job=job.id, **e.context)
+            if e.success is False:
+                # end_job will use this and set the value
+                last_result['success'] = False
+            return end_job(last_result)
         except Exception as e:
             failure_reason = ("Unhandled exception caught while running processor"
                               " function {} in pipeline: ").format(processor.__name__)
@@ -398,15 +394,36 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                          failure_reason=last_result["job"].failure_reason)
             return end_job(last_result)
 
-        # We don't want to run end_job at all if the job has deleted
-        # itself, which happens if the data for the job was missing.
-        if last_result.get("delete_self", False):
-            break
-
         if last_result.get("abort", False):
             return end_job(last_result, abort=True)
 
     return last_result
+
+
+class ProcessorJobError(Exception):
+    """ General processor job error class. """
+    def __init__(self, failure_reason, *, success=None, no_retry=None, **context):
+        super(ProcessorJobError, self).__init__(failure_reason)
+        self.failure_reason = failure_reason
+        self.success = success
+        self.no_retry = no_retry
+        # additional context to be included when logging
+        self.context = context
+
+    def update_job(self, job):
+        job.failure_reason = self.failure_reason
+        if self.success is not None:
+            job.success = self.success
+        if self.no_retry is not None:
+            job.no_retry = self.no_retry
+        job.save()
+
+
+class ProcessorJobDeleteSelf(Exception):
+    """ Triggered when a processor job deletes itself. """
+    def __init__(self, reason):
+        super(ProcessorJobDeleteSelf, self).__init__(reason)
+        self.reason = reason
 
 
 def get_os_distro():
@@ -533,22 +550,6 @@ def get_bioc_version():
     return version
 
 
-def get_most_recent_qn_target_for_organism(organism):
-    """ Returns a ComputedFile for QN run for an Organism """
-
-    try:
-        annotation = ComputationalResultAnnotation.objects.filter(
-            data__organism_id=organism.id,
-            data__is_qn=True
-        ).order_by(
-            '-created_at'
-        ).first()
-        file = annotation.result.computedfile_set.first()
-        return file
-    except Exception:
-        return None
-
-
 def get_r_pkgs(pkg_list):
     """Returns a dictionary in which each key is the name of a R package
     and the corresponding value is the package's version.
@@ -668,3 +669,47 @@ def handle_processor_exception(job_context, processor_key, ex):
     job_context["job"].failure_reason = err_str
     job_context["success"] = False
     return job_context
+
+
+def cache_keys(*keys, work_dir_key='work_dir'):
+    """ Decorator to be applied to a pipeline function.
+    Returns a new function that calls the original one and caches the given
+    keys into the `work_dir`. On the next call it will load those keys (if they
+    exist) and add them to the job_context instead of executing the function. """
+    def inner(func):
+        # generate a unique name for the cache based on the pipeline name
+        # and the cached keys
+        cache_name = '__'.join(list(keys) + [func.__name__])
+
+        def pipeline(job_context):
+            cache_path = os.path.join(job_context[work_dir_key], cache_name)
+            if os.path.exists(cache_path):
+                # cached values exist, load keys from cacke
+                try:
+                    values = pickle.load(open(cache_path, "rb" ))
+                    return {**job_context, **values}
+                except:
+                    # don't fail if we can't load the cache
+                    logger.warning('Failed to load cached data for pipeline function.',
+                                   function_name=func.__name__,
+                                   keys=keys)
+                    pass
+
+            # execute the actual function
+            job_context = func(job_context)
+
+            try:
+                # save cached data for the next run
+                values = {key: job_context[key] for key in keys}
+                pickle.dump(values, open(cache_path, "wb"))
+            except:
+                # don't fail if we can't save the cache
+                logger.warning('Failed to cache data for pipeline function.',
+                                function_name=func.__name__,
+                                keys=keys)
+                pass
+            return job_context
+
+        return pipeline
+
+    return inner

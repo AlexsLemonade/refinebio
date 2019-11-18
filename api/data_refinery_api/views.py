@@ -62,6 +62,7 @@ from data_refinery_api.serializers import (
     CompendiaWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
+    OriginalFileListSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -100,6 +101,7 @@ from data_refinery_common.utils import (
     get_env_variable,
     get_active_volumes,
     get_nomad_jobs_breakdown,
+    get_nomad_jobs
 )
 from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
@@ -375,9 +377,26 @@ openapi.Parameter(
 @method_decorator(name='put', decorator=swagger_auto_schema(operation_description="""
 Modify an existing Dataset.
 
-Set `start` to `true` along with a valid activated API token (from `/token/`) to begin smashing and delivery.
+In order to begin smashing, an activated API key must be provided in the `API-KEY` header field of the request.
+To acquire and activate an API key see the documentation for the [/token](#tag/token)
+endpoint.
 
-You must also supply `email_address` with `start`, though this will never be serialized back to you.
+```py
+import requests
+import json
+
+params = json.dumps({
+    'data': data,
+    'aggregate_by': 'EXPERIMENT',
+    'start': True,
+    'email_address': 'refinebio@gmail.com'
+})
+headers = {
+    'Content-Type': 'application/json',
+    'API-KEY': token_id # requested from /token
+}
+requests.put(host + '/v1/dataset/38879729-93c8-436d-9293-b95d3f274741/', params, headers=headers)
+```
 """))
 class DatasetView(generics.RetrieveUpdateAPIView):
     """ View and modify a single Dataset. """
@@ -538,16 +557,20 @@ class CreateApiTokenView(generics.CreateAPIView):
     """
     token_create
 
-    There're several endpoints like [/dataset](#tag/dataset) and [/results](#tag/results) that return
-    S3 urls where users can download the files we produce, however in order to get those files people
-    need to accept our terms of use by creating a token and activating it.
+    This endpoint can be used to create and activate tokens. These tokens can be used
+    in requests that provide urls to download computed files. They are a way to accept
+    our terms of service.
 
-    ```
-    POST /token
-    PUT /token/{token-id} is_active=True
+    ```py
+    import requests
+    import json
+    ​
+    response = requests.post('https://api.refine.bio/v1/token/')
+    token_id = response.json()['id']
+    response = requests.put('https://api.refine.bio/v1/token/' + token_id + '/', json.dumps({'is_activated': True}), headers={'Content-Type': 'application/json'})
     ```
 
-    The token id needs to be sent on the `API_KEY` header on http requests.
+    The token id needs to be provided in the HTTP request in the API-KEY header.
 
     References
     - [https://github.com/AlexsLemonade/refinebio/issues/731]()
@@ -818,29 +841,75 @@ class SurveyJobList(generics.ListAPIView):
     ordering_fields = ('id', 'created_at')
     ordering = ('-id',)
 
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='sample_accession_code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='List the downloader jobs associated with a sample',
+    ),
+    openapi.Parameter(
+        name='nomad', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='Only return jobs that are in the nomad queue currently',
+    ),
+]))
 class DownloaderJobList(generics.ListAPIView):
     """
     List of all DownloaderJob
     """
     model = DownloaderJob
-    queryset = DownloaderJob.objects.all()
     serializer_class = DownloaderJobSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = DownloaderJobSerializer.Meta.fields
     ordering_fields = ('id', 'created_at')
     ordering = ('-id',)
 
+    def get_queryset(self):
+        queryset = DownloaderJob.objects.all()
+
+        sample_accession_code = self.request.query_params.get('sample_accession_code', None)
+        if sample_accession_code:
+            queryset = queryset.filter(original_files__samples__accession_code=sample_accession_code).distinct()
+
+        nomad = self.request.query_params.get('nomad', None)
+        if nomad:
+            nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs()]
+            queryset = queryset.filter(nomad_job_id__in=nomad_jobs_ids)
+
+        return queryset
+
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='sample_accession_code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='List the processor jobs associated with a sample',
+    ),
+    openapi.Parameter(
+        name='nomad', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description='Only return jobs that are in the nomad queue currently',
+    ),
+]))
 class ProcessorJobList(generics.ListAPIView):
     """
     List of all ProcessorJobs.
     """
     model = ProcessorJob
-    queryset = ProcessorJob.objects.all()
     serializer_class = ProcessorJobSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = ProcessorJobSerializer.Meta.fields
     ordering_fields = ('id', 'created_at')
     ordering = ('-id',)
+
+    def get_queryset(self):
+        queryset = ProcessorJob.objects.all()
+
+        sample_accession_code = self.request.query_params.get('sample_accession_code', None)
+        if sample_accession_code:
+            queryset = queryset.filter(original_files__samples__accession_code=sample_accession_code).distinct()
+
+        nomad = self.request.query_params.get('nomad', None)
+        if nomad:
+            nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs()]
+            queryset = queryset.filter(nomad_job_id__in=nomad_jobs_ids)
+
+        return queryset
 
 ###
 # Statistics
@@ -1250,6 +1319,7 @@ class ComputedFilesList(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = (
         'id',
+        'samples',
         'is_qn_target',
         'is_smashable',
         'is_qc',
@@ -1274,6 +1344,22 @@ class ComputedFilesList(generics.ListAPIView):
             return {**serializer_context, 'token': token}
         except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             return serializer_context
+
+
+class OriginalFileList(generics.ListAPIView):
+    """
+    original_files_list
+
+    List Original Files that are associated with Samples. These are the files we proccess.
+
+    """
+    queryset = OriginalFile.objects.all()
+    serializer_class = OriginalFileListSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = OriginalFileListSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at', 'last_modified',)
+    ordering = ('-id',)
+
 
 ##
 # Util

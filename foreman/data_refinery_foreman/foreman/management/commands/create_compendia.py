@@ -24,11 +24,6 @@ class Command(BaseCommand):
             help=("Comma separated list of organism names."))
 
         parser.add_argument(
-            "--quant-sf-only",
-            type=lambda x: x == "True",
-            help=("Whether to create a quantpendium or normal compendium. Quantpendium will be aggregated by EXPERIMENT"))
-
-        parser.add_argument(
             "--svd-algorithm",
             type=str,
             help=("Specify SVD algorithm applied during imputation ARPACK, RANDOMIZED or NONE to skip."))
