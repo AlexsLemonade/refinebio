@@ -53,8 +53,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     start_time = log_state("prepare input", job_context["job"].id)
 
     job_context["primary_organism"] = max(job_context["samples"],
-                                          key=lambda,
-                                          organism:len(job_context["samples"][organism]))
+                                          key=lambda organism:len(job_context["samples"][organism]))
     job_context["all_organisms"] = job_context["samples"].keys()
     all_samples = itertools.chain(*job_context["samples"].values())
     job_context["samples"] = {job_context["primary_organism"]: all_samples}
