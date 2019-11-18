@@ -393,19 +393,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
         return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
 
-    # Write the compendia dataframe to a file
-    job_context['csv_outfile'] = job_context['output_dir'] + job_context['organism_name'] + '.tsv'
-    job_context['merged_qn'].to_csv(job_context['csv_outfile'], sep='\t', encoding='utf-8')
-    compendia_tsv_computed_file = ComputedFile()
-    compendia_tsv_computed_file.absolute_file_path = job_context['csv_outfile']
-    compendia_tsv_computed_file.filename = job_context['csv_outfile'].split('/')[-1]
-    compendia_tsv_computed_file.calculate_sha1()
-    compendia_tsv_computed_file.calculate_size()
-    compendia_tsv_computed_file.is_smashable = False
-    compendia_tsv_computed_file.is_qn_target = False
-    compendia_tsv_computed_file.result = result
-    compendia_tsv_computed_file.save()
-
     organism_key = list(job_context['samples'].keys())[0]
     annotation = ComputationalResultAnnotation()
     annotation.result = result
@@ -421,17 +408,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
         "total_percent_imputed": job_context['total_percent_imputed']
     }
     annotation.save()
-
-    # Save the related metadata file
-    metadata_computed_file = ComputedFile()
-    metadata_computed_file.absolute_file_path = job_context['metadata_tsv_paths'][0]
-    metadata_computed_file.filename = job_context['metadata_tsv_paths'][0].split('/')[-1]
-    metadata_computed_file.calculate_sha1()
-    metadata_computed_file.calculate_size()
-    metadata_computed_file.is_smashable = False
-    metadata_computed_file.is_qn_target = False
-    metadata_computed_file.result = result
-    metadata_computed_file.save()
 
     # Create the resulting archive
     final_zip_base = SMASHING_DIR + str(job_context["dataset"].pk) + "_compendia"
