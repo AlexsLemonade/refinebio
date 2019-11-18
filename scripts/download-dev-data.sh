@@ -44,11 +44,6 @@ while getopts ":h" opt; do
     esac
 done
 
-if [ -z "$SYSTEM_VERSION" ]; then
-    echo 'Error: must specify the version repo with -v'
-    exit 1
-fi
-
 VOLUME_FOLDER=./volume
 POSTGRES_VOLUME_FOLDER=./volumes_postgres
 
@@ -56,25 +51,25 @@ download_dev_data() {
 
     # Download Archived Data
 
-    curl https://refinebio-dev-data.s3.amazonaws.com/dev-data.zip -O dev-data.tar.gz
+    curl -o dev-data.tar.gz https://refinebio-dev-data.s3.amazonaws.com/dev-data.tar.gz
 
     # remove existing data folder
     if [ -f "$VOLUME_FOLDER" ]; then
-        echo "removing exsting data folder"
+        echo "found existing volumes folder... removing before replacing"
         rm -r "$VOLUME_FOLDER"
     fi
 
     # remove existing db folder
     if [ -f "$POSTGRES_VOLUME_FOLDER" ]; then
-        echo "removing exsting db data"
+        echo "Found existing volumes_postgres... removing before replacing"
         rm -r "$POSTGRES_VOLUME_FOLDER"
     fi
     # Unarchive Volume and Data
-    echo "unarchiving dev data"
+    echo "unarchiving dev-data.tar.gz"
     tar -xzf dev-data.tar.gz
 
     # Clean Up
-    echp "removing zip download"
+    echo "cleaning up downloaded zip file"
     rm ./dev-data.tar.gz
 
 }

@@ -51,7 +51,7 @@ upload_data() {
 
     # Send to s3
     echo "Sending to S3..."
-    s3 cp dev-data.tar.gz s3://refinebio-dev-data/dev-data.tar.gz
+    s3 cp dev-data.tar.gz s3://refinebio-dev-data/dev-data.tar.gz --acl public-read
 
     # Clean up
     echo "Cleaning up..."
