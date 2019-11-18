@@ -180,7 +180,7 @@ class CompendiaTestCase(TransactionTestCase):
             sample.accession_code = file
             sample.title = file
             sample.organism = danio_rerio
-            sample.technology="MICROARRAY"
+            sample.technology = "MICROARRAY"
             sample.save()
 
             sra = SampleResultAssociation()
