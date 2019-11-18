@@ -42,19 +42,16 @@ class Command(BaseCommand):
 
         logger.debug('Generating compendia for organisms', organism_groups=str(grouped_organisms))
 
-        job_pipeline = ProcessorPipeline.CREATE_QUANTPENDIA if quant_sf_only else ProcessorPipeline.CREATE_COMPENDIA
-
         for organism in grouped_organisms:
             job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
             logger.info("Sending compendia job for Organism",
                         job_id=str(job.pk),
                         organism=str(organism),
                         quant_sf_only=quant_sf_only)
-            send_job(job_pipeline, job)
+            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
 
     def _get_target_organisms(self, options):
-        all_organisms = list(get_compendia_organisms().values_list('id', flat=True))
-        all_organisms = Organism.objects.filter(id__in=all_organisms)
+        all_organisms = get_compendia_organisms()
 
         if options["organisms"] is None:
             target_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
@@ -123,17 +120,13 @@ def create_job_for_organism(organisms: List[Organism], quant_sf_only=False, svd_
     Fetch all of the experiments and compile large but normally formated Dataset.
     """
     job = ProcessorJob()
-    if quant_sf_only:
-        job.pipeline_applied = ProcessorPipeline.CREATE_QUANTPENDIA.value
-    else:
-        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+    job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
     job.save()
 
     dataset = Dataset()
     dataset.data = get_dataset(organisms)
     dataset.scale_by = 'NONE'
-    # The quantpendias should be aggregated by species
-    dataset.aggregate_by = 'EXPERIMENT' if quant_sf_only else 'SPECIES'
+    dataset.aggregate_by = 'SPECIES'
     dataset.quantile_normalize = False
     dataset.quant_sf_only = quant_sf_only
     dataset.svd_algorithm = svd_algorithm
@@ -158,11 +151,7 @@ def get_dataset(organisms: List[Organism]):
     experiments = Experiment.objects.filter(filter_query).prefetch_related('samples')
 
     for experiment in queryset_iterator(experiments):
-        filter_query = Q()
-        for organism in organisms:
-            filter_query = filter_query | Q(organism=organism)
-
-        dataset[experiment.accession_code] = list(experiment.samples.filter(filter_query)
+        dataset[experiment.accession_code] = list(experiment.samples.filter(organism__in=organisms)
                                                   .values_list('accession_code', flat=True))
 
     return dataset
