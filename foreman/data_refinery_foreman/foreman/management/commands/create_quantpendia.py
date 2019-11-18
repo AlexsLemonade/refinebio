@@ -81,12 +81,21 @@ class Command(BaseCommand):
             type=str,
             help=("Comma separated list of organism names."))
 
+        parser.add_argument(
+            "--organisms-exclude",
+            type=str,
+            help=("Comma separated list of organism names that we want to exclude from the list"))
+
     def handle(self, *args, **options):
         """Create a quantpendia for one or more organisms."""
         all_organisms = Organism.objects.all().filter(qn_target__isnull=False)
         if options["organisms"] is not None:
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
             all_organisms = all_organisms.filter(name__in=organisms)
+
+        if options["organisms_exclude"]:
+            organisms = options["organisms_exclude"].upper().replace(" ", "_").split(",")
+            all_organisms = all_organisms.exclude(name__in=organisms)
 
         logger.debug('Generating quantpendia for organisms', organisms=all_organisms)
 
