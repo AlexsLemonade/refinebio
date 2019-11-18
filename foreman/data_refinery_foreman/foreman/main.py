@@ -1382,7 +1382,7 @@ def monitor_jobs():
                 traceback.print_exc(chain=False)
 
         if not settings.RUNNING_IN_CLOUD:
-            if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME
+            if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
                 send_janitor_jobs()
                 cleanup_the_queue()
                 last_janitorial_time = timezone.now()
