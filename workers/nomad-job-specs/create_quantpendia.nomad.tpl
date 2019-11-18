@@ -69,7 +69,7 @@ job "CREATE_QUANTPENDIA" {
       resources {
         # CPU is in AWS's CPU units.
         cpu =   4000
-        memory = 65536
+        memory = 64000
       }
 
       logs {
