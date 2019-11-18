@@ -1,16 +1,20 @@
 coverage
-django>=2.1.8
+django>=2.1.11
 psycopg2-binary
 boto3
 requests>=2.20.0
 python-nomad>=1.0.2
-djangorestframework
+djangorestframework>=3.9.1
 djangorestframework-hstore
 django-cors-headers
 django-filter
 coreapi
 # For ElasticSearch support:
 django-elasticsearch-dsl-drf
+# Can't go above 6.4.2 without upgrading elasticsearch
+django-elasticsearch-dsl==6.4.2
+# DRF 3.10 breaks an import.
+djangorestframework==3.9.4
 six
 drf_yasg
 apscheduler

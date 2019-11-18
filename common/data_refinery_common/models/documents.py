@@ -1,6 +1,6 @@
 from elasticsearch_dsl import analyzer
 
-from django_elasticsearch_dsl import DocType, Index, fields
+from django_elasticsearch_dsl import Document, Index, fields
 from elasticsearch_dsl.analysis import token_filter
 
 from data_refinery_common.utils import get_supported_microarray_platforms, get_supported_rnaseq_platforms
@@ -46,7 +46,7 @@ standard_keyword = analyzer(
 )
 
 @experiment_index.doc_type
-class ExperimentDocument(DocType):
+class ExperimentDocument(Document):
     """ Our Experiment ElasticSearch Document, which
     corresponds to our Experiment model. """
 
@@ -110,7 +110,7 @@ class ExperimentDocument(DocType):
         fields.KeywordField()
     )
 
-    class Meta:
+    class Django:
         model = Experiment
         parallel_indexing = True
         queryset_pagination = 3000
