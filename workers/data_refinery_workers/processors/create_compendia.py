@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import time
+import itertools
 from typing import Dict
 
 from django.utils import timezone
