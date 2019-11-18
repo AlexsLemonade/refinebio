@@ -29,24 +29,22 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Create a compendium for one or more organisms."""
+        svd_algorithm = options["svd_algorithm"] or 'ARPACK'
+
+        svd_algorithm_choices = ['ARPACK', 'RANDOMIZED', 'NONE']
+        if options['svd_algorithm'] and options['svd_algorithm'] not in svd_algorithm_choices:
+            raise Exception('Invalid svd_algorithm option provided. Possible values are ' + str(svd_algorithm_choices))
+
         target_organisms = self._get_target_organisms(options)
         grouped_organisms = group_organisms_by_biggest_platform(target_organisms)
-
-        quant_sf_only = options["quant_sf_only"] is True
-
-        # default algorithm to arpack until we decide that ranomized is preferred
-        svd_algorithm = 'NONE' if quant_sf_only else 'ARPACK'
-        if options["svd_algorithm"] in ['ARPACK', 'RANDOMIZED', 'NONE']:
-            svd_algorithm = options["svd_algorithm"]
 
         logger.debug('Generating compendia for organisms', organism_groups=str(grouped_organisms))
 
         for organism in grouped_organisms:
-            job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
+            job = create_job_for_organism(organism, svd_algorithm)
             logger.info("Sending compendia job for Organism",
                         job_id=str(job.pk),
-                        organism=str(organism),
-                        quant_sf_only=quant_sf_only)
+                        organism=str(organism))
             send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
 
     def _get_target_organisms(self, options):
@@ -113,7 +111,7 @@ def get_organism_microarray_platforms(organism):
                    .values_list('platform_accession_code', flat=True)
 
 
-def create_job_for_organism(organisms: List[Organism], quant_sf_only=False, svd_algorithm='ARPACK'):
+def create_job_for_organism(organisms: List[Organism], svd_algorithm='ARPACK'):
     """Returns a compendia job for the provided organism.
 
     Fetch all of the experiments and compile large but normally formated Dataset.
@@ -127,7 +125,7 @@ def create_job_for_organism(organisms: List[Organism], quant_sf_only=False, svd_
     dataset.scale_by = 'NONE'
     dataset.aggregate_by = 'SPECIES'
     dataset.quantile_normalize = False
-    dataset.quant_sf_only = quant_sf_only
+    dataset.quant_sf_only = False
     dataset.svd_algorithm = svd_algorithm
     dataset.save()
 
