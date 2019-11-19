@@ -646,6 +646,12 @@ class CompendiumResult(models.Model):
     # Common Properties
     is_public = models.BooleanField(default=True)
 
+    #helper
+    def get_computed_file():
+        """ Short hand method for getting the computed file for this compendium"""
+        return ComputedFile.objects.filter(result=self.result,
+                                           is_compendia=True).first()
+
 
 # TODO
 # class Gene(models.Model):

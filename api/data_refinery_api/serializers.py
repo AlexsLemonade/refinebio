@@ -803,6 +803,7 @@ class CompendiumResultOrganismSerializer(serializers.ModelSerializer):
 class CompendiumResultSerializer(serializers.ModelSerializer):
     primary_organism = CompendiumResultOrganismSerializer(read_only=True)
     organisms = CompendiumResultOrganismSerializer(many=True, read_only=True)
+    computed_file = ComputedFileSerializer(source='get_computed_file', read_only=True)
 
     class Meta:
         model = CompendiumResult
@@ -813,36 +814,25 @@ class CompendiumResultSerializer(serializers.ModelSerializer):
                     'svd_algorithm',
                     'quant_sf_only',
                     'compendium_version',
-                    #'filename',
-                    #'size_in_bytes',
-                    #'sha1',
-                    #'s3_bucket',
-                    #'s3_key',
-                    #'s3_url',
-                    #'created_at',
-                    #'last_modified',
+                    'computed_file',
                 )
         read_only_fields = fields
 
-
 class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
-    organism_name = serializers.CharField(source='compendium_organism.name', read_only=True)
+    primary_organism = CompendiumResultOrganismSerializer(read_only=True)
+    organisms = CompendiumResultOrganismSerializer(many=True, read_only=True)
+    computed_file = ComputedFileWithUrlSerializer(source='get_computed_file', read_only=True)
 
     class Meta:
         model = CompendiumResult
         fields = (
                     'id',
-                    'filename',
-                    'size_in_bytes',
+                    'primary_organism',
+                    'organisms',
+                    'svd_algorithm',
+                    'quant_sf_only',
                     'compendium_version',
-                    'organism_name',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    's3_url',
-                    'download_url',
-                    'created_at',
-                    'last_modified'
+                    'computed_file',
                 )
         read_only_fields = fields
 
