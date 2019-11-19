@@ -14,7 +14,8 @@ from data_refinery_common.models import (ComputationalResult,
                                          ComputedFile,
                                          Organism,
                                          Pipeline,
-                                         Sample)
+                                         Sample,
+                                         CompendiumResult)
 from data_refinery_common.utils import get_env_variable, FileUtils
 from data_refinery_workers.processors import smashing_utils, utils
 
@@ -129,6 +130,13 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.compendia_organism = compendia_organism
     archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
+
+    compendium_result = CompendiumResult()
+    compendium_result.quant_sf_only = True
+    compendium_result.result = result
+    compendium_result.primary_organism = compendia_organism
+    compendium_result.compendium_version = compendia_version
+    compendium_result.save()
 
     logger.info("Quantpendia created! Uploading to S3.",
                 job_id=job_context['job_id'],
