@@ -276,6 +276,8 @@ class CompendiaTestCase(TransactionTestCase):
         self.assertEqual(final_context['compendia_result'].svd_algorithm, 'ARPACK')
         self.assertEqual(final_context['compendia_result'].primary_organism.name,
                 final_context['organism_name'])
+        self.assertEqual(final_context['compendia_result'].primary_organism.name,
+                'DANIO_RERIO')
         self.assertEqual(final_context['compendia_result'].organisms.count(), 1)
 
 
