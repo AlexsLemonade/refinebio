@@ -6,7 +6,7 @@ from itertools import groupby
 from re import match
 from django.conf import settings
 from django.views.decorators.cache import cache_page
-from django.db.models import Count, Prefetch, DateTimeField
+from django.db.models import Count, Prefetch, DateTimeField, OuterRef, Subquery
 from django.db.models.functions import Trunc
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
@@ -1237,8 +1237,8 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
 ###
 @method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
     openapi.Parameter(
-        name='compendium_version', in_=openapi.IN_QUERY, type=openapi.TYPE_NUMBER,
-        description="Number to filter `compendium_version` or `\"latest\"` to get only the more recent `compendium_version` for each primary_organism.",
+        name='latest_version', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
+        description="`True` will only return the highest `compendium_version` for each primary_organism.",
     ),
     openapi.Parameter(
         name='quant_sf_only', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
@@ -1257,18 +1257,19 @@ class CompendiumResultList(generics.ListAPIView):
     ordering = ('-primary_organism__name',)
 
     def get_queryset(self):
-        version = self.request.query_params.get('compendium_version', False)
-        if version and version is 'latest':
+        public_result_queryset = CompendiumResult.objects.filter(result__is_public=True)
+        latest_version = self.request.query_params.get('latest_version', False)
+        if latest_version:
             version_filter = Q(primary_organism=OuterRef('primary_organism'),
                                quant_sf_only=OuterRef('quant_sf_only'))
             latest_version = CompendiumResult.objects.filter(version_filter)\
                                                      .order_by('-compendium_version')\
                                                      .values('compendium_version')
-            return CompendiumResult.objects.annotate(
+            return public_result_queryset.annotate(
                 latest_version=Subquery(latest_version[:1])
             ).filter(compendium_version=F('latest_version'))
 
-        return CompendiumResult.objects.all()
+        return public_result_queryset
 
 
     def get_serializer_class(self):
