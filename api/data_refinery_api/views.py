@@ -1255,7 +1255,7 @@ class CompendiumResultList(generics.ListAPIView):
         except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             serializer_class = CompendiumResultSerializer
 
-class CompendiumResult(generics.RetrieveAPIView):
+class CompendiumResultDetails(generics.RetrieveAPIView):
     """
     Get a specific Compendium Result
     """

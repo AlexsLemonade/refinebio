@@ -36,7 +36,7 @@ from .views import (
     QNTargetsDetail,
     QNTargetsAvailable,
     CompendiumResultList,
-    CompendiumResult,
+    CompendiumResultDetails,
     ComputedFilesList,
     OriginalFileList,
     AboutStats
@@ -117,7 +117,7 @@ urlpatterns = [
 
         # Compendia
         url(r'^compendia/$', CompendiumResultList.as_view(), name='compendium_results'),
-        url(r'^compendia/(?P<id>[0-9]+)/$', CompendiumResult.as_view(), name='compendium_result'),
+        url(r'^compendia/(?P<id>[0-9]+)/$', CompendiumResultDetails.as_view(), name='compendium_result'),
 
         # v1 api docs
         url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema_swagger_ui'),
