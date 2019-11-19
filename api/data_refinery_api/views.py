@@ -1243,9 +1243,24 @@ class CompendiumResultList(generics.ListAPIView):
     model = CompendiumResult
     queryset = CompendiumResult.objects.all()
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
-    filterset_fields = CompendiumResultSerializer.Meta.fields
-    ordering_fields = ('id')
-    ordering = ('-id',)
+    filterset_fields = ['primary_organism__name', 'compendium_version', 'quant_sf_only']
+    ordering_fields = ('primary_organism__name', 'compendium_version', 'id')
+    ordering = ('-primary_organism__name',)
+    # we need to consider filter compendium type before the grouping
+    def get_queryset(self):
+        version = self.request.query_params.get('compendium_version', False)
+        if version and version is 'latest':
+            version_filter = Q(primary_organism=OuterRef('primary_organism'),
+                               quant_sf_only=OuterRef('quant_sf_only'))
+            latest_version = CompendiumResult.objects.filter(version_filter)\
+                                                     .order_by('-compendium_version')\
+                                                     .values('compendium_version')
+            return CompendiumResult.objects.annotate(
+                latest_version=Subquery(latest_version[:1])
+            ).filter(compendium_version=F('latest_version'))
+
+        return CompendiumResult.objects.all()
+
 
     def get_serializer_class(self):
         try:
