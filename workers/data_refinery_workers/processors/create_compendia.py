@@ -56,7 +56,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context["primary_organism"] = max(job_context["samples"],
                                           key=lambda organism:len(job_context["samples"][organism]))
     job_context["all_organisms"] = job_context["samples"].keys()
-    all_samples = itertools.chain(*job_context["samples"].values())
+    all_samples = list(itertools.chain(*job_context["samples"].values()))
     job_context["samples"] = {job_context["primary_organism"]: all_samples}
 
     job_context = smashing_utils.prepare_files(job_context)
