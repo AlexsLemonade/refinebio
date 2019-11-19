@@ -791,18 +791,9 @@ class APITokenSerializer(serializers.ModelSerializer):
                         }
                     }
 
-class CompendiumResultOrganismSerializer(serializers.ModelSerializer):
-
-    def to_representation(self, value):
-        return value.name
-
-    class Meta:
-        model = Organism
-        fields = '__all__'
-
 class CompendiumResultSerializer(serializers.ModelSerializer):
-    primary_organism = CompendiumResultOrganismSerializer(read_only=True)
-    organisms = CompendiumResultOrganismSerializer(many=True, read_only=True)
+    primary_organism = serializer.StringRelatedField(read_only=True)
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
     computed_file = ComputedFileSerializer(source='get_computed_file', read_only=True)
 
     class Meta:
@@ -819,8 +810,8 @@ class CompendiumResultSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
-    primary_organism = CompendiumResultOrganismSerializer(read_only=True)
-    organisms = CompendiumResultOrganismSerializer(many=True, read_only=True)
+    primary_organism = serializer.StringRelatedField(read_only=True)
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
     computed_file = ComputedFileWithUrlSerializer(source='get_computed_file', read_only=True)
 
     class Meta:
