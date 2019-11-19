@@ -1252,7 +1252,7 @@ class CompendiumResultList(generics.ListAPIView):
     model = CompendiumResult
     queryset = CompendiumResult.objects.all()
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
-    filterset_fields = ['primary_organism__name', 'quant_sf_only']
+    filterset_fields = ['primary_organism__name', 'compendium_version', 'quant_sf_only']
     ordering_fields = ('primary_organism__name', 'compendium_version', 'id')
     ordering = ('-primary_organism__name',)
 
