@@ -474,13 +474,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Upload the result to S3
     timestamp = str(int(time.time()))
-    key = job_context['organism_name'] + "_" + str(compendia_version) + "_" + timestamp + ".zip"
+    key = job_context['organism_name'] + "_" + str(compendium_version) + "_" + timestamp + ".zip"
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
 
     job_context['result'] = result
-    job_context['computed_files'] = [compendia_tsv_computed_file,
-                                     metadata_computed_file,
-                                     archive_computed_file]
+    job_context['computed_files'] = [archive_computed_file]
     job_context['success'] = True
 
     log_state("end create result object", job_context["job"].id, result_start)
