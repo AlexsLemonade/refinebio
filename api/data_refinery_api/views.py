@@ -1246,12 +1246,14 @@ class CompendiumResultList(generics.ListAPIView):
     filterset_fields = CompendiumResultSerializer.Meta.fields
     ordering_fields = ('id')
     ordering = ('-id',)
-    try:
-        token_id = self.request.META.get('HTTP_API_KEY', None)
-        token = APIToken.objects.get(id=token_id, is_activated=True)
-        serializer_class = CompendiumResultWithUrlSerializer
-    except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-        serializer_class = CompendiumResultSerializer
+
+    def get_serializer_class(self):
+        try:
+            token_id = self.request.META.get('HTTP_API_KEY', None)
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer_class = CompendiumResultWithUrlSerializer
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer_class = CompendiumResultSerializer
 
 class CompendiumResult(generics.RetrieveAPIView):
     """
@@ -1261,12 +1263,13 @@ class CompendiumResult(generics.RetrieveAPIView):
     queryset = CompendiumResult.objects.filter(is_public=True)
     lookup_field = 'id'
 
-    try:
-        token_id = self.request.META.get('HTTP_API_KEY', None)
-        token = APIToken.objects.get(id=token_id, is_activated=True)
-        serializer_class = CompendiumResultWithUrlSerializer
-    except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-        serializer_class = CompendiumResultSerializer
+    def get_serializer_class(self):
+        try:
+            token_id = self.request.META.get('HTTP_API_KEY', None)
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer_class = CompendiumResultWithUrlSerializer
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer_class = CompendiumResultSerializer
 
 ###
 # QN Targets
