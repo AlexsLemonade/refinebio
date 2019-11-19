@@ -272,13 +272,13 @@ class CompendiaTestCase(TransactionTestCase):
         for file in final_context['computed_files']:
             self.assertTrue(os.path.exists(file.absolute_file_path))
 
-        # test compendia_result
-        self.assertEqual(final_context['compendia_result'].svd_algorithm, 'ARPACK')
-        self.assertEqual(final_context['compendia_result'].primary_organism.name,
+        # test compendium_result
+        self.assertEqual(final_context['compendium_result'].svd_algorithm, 'ARPACK')
+        self.assertEqual(final_context['compendium_result'].primary_organism.name,
                 final_context['organism_name'])
-        self.assertEqual(final_context['compendia_result'].primary_organism.name,
+        self.assertEqual(final_context['compendium_result'].primary_organism.name,
                 'DANIO_RERIO')
-        self.assertEqual(final_context['compendia_result'].organisms.count(), 1)
+        self.assertEqual(final_context['compendium_result'].organisms.count(), 1)
 
 
         # It's maybe not worth asserting this until we're sure the behavior is correct
