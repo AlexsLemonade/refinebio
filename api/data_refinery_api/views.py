@@ -1246,7 +1246,7 @@ class CompendiumResultList(generics.ListAPIView):
     filterset_fields = ['primary_organism__name', 'compendium_version', 'quant_sf_only']
     ordering_fields = ('primary_organism__name', 'compendium_version', 'id')
     ordering = ('-primary_organism__name',)
-    # we need to consider filter compendium type before the grouping
+
     def get_queryset(self):
         version = self.request.query_params.get('compendium_version', False)
         if version and version is 'latest':
@@ -1266,9 +1266,9 @@ class CompendiumResultList(generics.ListAPIView):
         try:
             token_id = self.request.META.get('HTTP_API_KEY', None)
             token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer_class = CompendiumResultWithUrlSerializer
+            return CompendiumResultWithUrlSerializer
         except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer_class = CompendiumResultSerializer
+            return CompendiumResultSerializer
 
 class CompendiumResultDetails(generics.RetrieveAPIView):
     """
@@ -1282,9 +1282,9 @@ class CompendiumResultDetails(generics.RetrieveAPIView):
         try:
             token_id = self.request.META.get('HTTP_API_KEY', None)
             token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer_class = CompendiumResultWithUrlSerializer
+            return CompendiumResultWithUrlSerializer
         except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer_class = CompendiumResultSerializer
+            return CompendiumResultSerializer
 
 ###
 # QN Targets

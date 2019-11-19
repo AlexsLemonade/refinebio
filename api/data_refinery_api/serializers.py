@@ -792,7 +792,7 @@ class APITokenSerializer(serializers.ModelSerializer):
                     }
 
 class CompendiumResultSerializer(serializers.ModelSerializer):
-    primary_organism = serializer.StringRelatedField(read_only=True)
+    primary_organism = serializers.StringRelatedField(read_only=True)
     organisms = serializers.StringRelatedField(many=True, read_only=True)
     computed_file = ComputedFileSerializer(source='get_computed_file', read_only=True)
 
@@ -810,7 +810,7 @@ class CompendiumResultSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
-    primary_organism = serializer.StringRelatedField(read_only=True)
+    primary_organism = serializers.StringRelatedField(read_only=True)
     organisms = serializers.StringRelatedField(many=True, read_only=True)
     computed_file = ComputedFileWithUrlSerializer(source='get_computed_file', read_only=True)
 
