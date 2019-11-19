@@ -35,7 +35,8 @@ from .views import (
     TranscriptomeIndexDetail,
     QNTargetsDetail,
     QNTargetsAvailable,
-    CompendiaDetail,
+    CompendiumResultList,
+    CompendiumResultDetails,
     ComputedFilesList,
     OriginalFileList,
     AboutStats
@@ -109,10 +110,14 @@ urlpatterns = [
         url(r'^qn_targets/$', QNTargetsAvailable.as_view(), name='qn_targets_available'),
         url(r'^qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name='qn_targets'),
 
-        url(r'^compendia/$', CompendiaDetail.as_view(), name='compendia'),
+        # Computed Files
         url(r'^computed_files/$', ComputedFilesList.as_view(), name='computed_files'),
         url(r'^original_files/$', OriginalFileList.as_view(), name='original_files'),
         url(r'^computational_results/$', ComputationalResultsList.as_view(), name='results'),
+
+        # Compendia
+        url(r'^compendia/$', CompendiumResultList.as_view(), name='compendium_results'),
+        url(r'^compendia/(?P<id>[0-9]+)/$', CompendiumResultDetails.as_view(), name='compendium_result'),
 
         # v1 api docs
         url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema_swagger_ui'),
