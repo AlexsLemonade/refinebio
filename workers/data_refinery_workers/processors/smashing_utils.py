@@ -399,7 +399,7 @@ def process_frames_for_key(key: str,
                   start_gene_ids)
 
     # Temporarily only cache mouse compendia because it may not succeed.
-    if not first_pass_was_cached and job_context['organism_name'] == "MUS_MUSCULUS":
+    if not first_pass_was_cached and key == "MUS_MUSCULUS":
         cache_first_pass(job_context, all_gene_identifiers, microarray_columns, rnaseq_columns)
 
     start_build_matrix = log_state("Beginning to build the full matrices.",
