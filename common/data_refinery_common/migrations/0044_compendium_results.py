@@ -13,7 +13,7 @@ def populate_compendium_results(apps, schema_editor):
     for computed_file in compendium_computed_files:
         compendium_result = CompendiumResult()
         compendium_result.quant_sf_only = computed_file.quant_sf_only
-        compendium_result.svd_alorgithm = computed_file.svd_alorgithm
+        compendium_result.svd_alorgithm = computed_file.svd_algorithm
         compendium_result.primary_organism = computed_file.compendia_organism
         compendium_result.compendium_version = computed_file.compendia_version
         compendium_result.result = computed_file.result
