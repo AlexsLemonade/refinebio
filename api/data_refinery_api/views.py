@@ -6,7 +6,7 @@ from itertools import groupby
 from re import match
 from django.conf import settings
 from django.views.decorators.cache import cache_page
-from django.db.models import Count, Prefetch, DateTimeField
+from django.db.models import Count, Prefetch, DateTimeField, OuterRef, Subquery
 from django.db.models.functions import Trunc
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
@@ -58,8 +58,8 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     ProcessorSerializer,
     SampleSerializer,
-    CompendiaSerializer,
-    CompendiaWithUrlSerializer,
+    CompendiumResultSerializer,
+    CompendiumResultWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
     OriginalFileListSerializer,
@@ -80,6 +80,7 @@ from data_refinery_common.models import (
     APIToken,
     ComputationalResult,
     ComputationalResultAnnotation,
+    CompendiumResult,
     ComputedFile,
     Dataset,
     DownloaderJob,
@@ -1234,27 +1235,66 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
 ###
 # Compendia
 ###
-
-class CompendiaDetail(APIView):
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='latest_version', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
+        description="`True` will only return the highest `compendium_version` for each primary_organism.",
+    ),
+    openapi.Parameter(
+        name='quant_sf_only', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
+        description="`True` for RNA-seq Sample Compendium results or `False` for quantile normalized.",
+    ),
+]))
+class CompendiumResultList(generics.ListAPIView):
     """
-    A very simple modified ComputedFile endpoint which only shows Compendia results.
+    List all CompendiaResults with filtering.
     """
+    model = CompendiumResult
+    queryset = CompendiumResult.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = ['primary_organism__name', 'compendium_version', 'quant_sf_only']
+    ordering_fields = ('primary_organism__name', 'compendium_version', 'id')
+    ordering = ('-primary_organism__name',)
 
-    @swagger_auto_schema(deprecated=True)
-    def get(self, request, version, format=None):
+    def get_queryset(self):
+        public_result_queryset = CompendiumResult.objects.filter(result__is_public=True)
+        latest_version = self.request.query_params.get('latest_version', False)
+        if latest_version:
+            version_filter = Q(primary_organism=OuterRef('primary_organism'),
+                               quant_sf_only=OuterRef('quant_sf_only'))
+            latest_version = CompendiumResult.objects.filter(version_filter)\
+                                                     .order_by('-compendium_version')\
+                                                     .values('compendium_version')
+            return public_result_queryset.annotate(
+                latest_version=Subquery(latest_version[:1])
+            ).filter(compendium_version=F('latest_version'))
 
-        computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
+        return public_result_queryset
 
-        token_id = self.request.META.get('HTTP_API_KEY', None)
 
+    def get_serializer_class(self):
         try:
+            token_id = self.request.META.get('HTTP_API_KEY', None)
             token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer = CompendiaWithUrlSerializer(computed_files, many=True)
+            return CompendiumResultWithUrlSerializer
         except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer = CompendiaSerializer(computed_files, many=True)
+            return CompendiumResultSerializer
 
-        return Response(serializer.data)
+class CompendiumResultDetails(generics.RetrieveAPIView):
+    """
+    Get a specific Compendium Result
+    """
+    model = CompendiumResult
+    queryset = CompendiumResult.objects.filter(is_public=True)
+    lookup_field = 'id'
 
+    def get_serializer_class(self):
+        try:
+            token_id = self.request.META.get('HTTP_API_KEY', None)
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            return CompendiumResultWithUrlSerializer
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return CompendiumResultSerializer
 
 ###
 # QN Targets

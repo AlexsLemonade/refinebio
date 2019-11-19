@@ -598,6 +598,61 @@ class ComputationalResultAnnotation(models.Model):
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
 
 
+# Compendium Computational Result
+class CompendiumResult(models.Model):
+    """ Computational Result For A Compendium """
+    class Meta:
+        db_table = "compendium_results"
+        base_manager_name = "public_objects"
+
+    def __str__(self):
+        return "CompendiumResult " + str(self.pk)
+
+    SVD_ALGORITHM_CHOICES = (
+        ('NONE', 'None'),
+        ('RANDOMIZED', 'randomized'),
+        ('ARPACK', 'arpack'),
+    )
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    # Relations
+    result = models.ForeignKey(ComputationalResult,
+                               blank=False,
+                               null=False,
+                               related_name='compendium_result',
+                               on_delete=models.CASCADE)
+    primary_organism = models.ForeignKey(Organism,
+                                         blank=False,
+                                         null=False,
+                                         related_name='primary_compendium_results',
+                                         on_delete=models.CASCADE)
+    organisms = models.ManyToManyField(Organism,
+                                       related_name='compendium_results',
+                                       through='CompendiumResultOrganismAssociation')
+
+    # Properties
+    quant_sf_only = models.BooleanField(default=False)
+    compendium_version = models.IntegerField(blank=True, null=True)
+    svd_algorithm = models.CharField(
+        max_length=255,
+        choices=SVD_ALGORITHM_CHOICES,
+        default="NONE",
+        help_text='The SVD algorithm that was used to impute the compendium result.'
+    )
+
+    # Common Properties
+    is_public = models.BooleanField(default=True)
+
+    #helper
+    def get_computed_file(self):
+        """ Short hand method for getting the computed file for this compendium"""
+        return ComputedFile.objects.filter(result=self.result,
+                                           is_compendia=True).first()
+
+
 # TODO
 # class Gene(models.Model):
     """ A representation of a Gene """
@@ -1481,3 +1536,15 @@ class ExperimentResultAssociation(models.Model):
     class Meta:
         db_table = "experiment_result_associations"
         unique_together = ('result', 'experiment')
+
+
+class CompendiumResultOrganismAssociation(models.Model):
+
+    compendium_result = models.ForeignKey(
+        CompendiumResult, blank=False, null=False, on_delete=models.CASCADE)
+    organism = models.ForeignKey(
+        Organism, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "compendium_result_organism_associations"
+        unique_together = ('compendium_result', 'organism')
