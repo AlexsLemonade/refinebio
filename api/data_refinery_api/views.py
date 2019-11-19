@@ -1235,7 +1235,16 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
 ###
 # Compendia
 ###
-
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='compendium_version', in_=openapi.IN_QUERY, type=openapi.TYPE_NUMBER,
+        description="Number to filter `compendium_version` or `\"latest\"` to get only the more recent `compendium_version` for each primary_organism.",
+    ),
+    openapi.Parameter(
+        name='quant_sf_only', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
+        description="`True` for RNA-seq Sample Compendium results or `False` for quantile normalized.",
+    ),
+]))
 class CompendiumResultList(generics.ListAPIView):
     """
     List all CompendiaResults with filtering.
