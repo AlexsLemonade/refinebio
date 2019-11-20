@@ -122,9 +122,9 @@ def prepare_dataset(job_context):
 
     # This should never be more than one!
     if job_datasets.count() > 1:
-        raise ProcessorJobError('More than one dataset for processor job!', success=False)
+        raise ProcessorJobError('More than one dataset for processor job!', success=False, no_retry=True)
     elif job_datasets.count() == 0:
-        raise ProcessorJobError('No datasets found for processor job!', success=False)
+        raise ProcessorJobError('No datasets found for processor job!', success=False, no_retry=True)
 
     dataset = job_datasets.first()
     dataset.is_processing = True
