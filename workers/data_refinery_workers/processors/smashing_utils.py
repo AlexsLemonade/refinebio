@@ -536,7 +536,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         # smasher jobs and is OOM-killing our very large compendia
         # jobs. Let's run this manually after we have a compendia job
         # actually finish.
-        if job_context['organism_name'] != "MUS_MUSCULUS":
+        if organism.name != "MUS_MUSCULUS":
             # Verify this QN, related:
             # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
             merged_R_matrix = data_matrix(new_merged)
