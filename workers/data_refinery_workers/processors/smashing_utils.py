@@ -470,164 +470,182 @@ def _split_dataframe_columns(dataframe, chunk_size):
 def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
     Apply quantile normalization.
-
     """
     # Prepare our QN target file
     organism = job_context['organism']
 
     if not organism.qn_target:
-        logger.error("Could not find QN target for Organism!",
-                     organism=organism,
-                     dataset_id=job_context['dataset'].id,
-                     processor_job_id=job_context["job"].id,)
-        job_context['dataset'].success = False
         failure_reason = "Could not find QN target for Organism: " + str(organism)
-        job_context['job'].failure_reason = failure_reason
+        job_context['dataset'].success = False
         job_context['dataset'].failure_reason = failure_reason
         job_context['dataset'].save()
-        job_context['job'].success = False
-        job_context['failure_reason'] = "Could not find QN target for Organism: " + str(organism)
-        return job_context
+        raise utils.ProcessorJobError(failure_reason,
+                                      success=False,
+                                      organism=organism,
+                                      dataset_id=job_context['dataset'].id)
+
+    qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
+    qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
+                                  index_col=None, error_bad_lines=False)
+
+    # Prepare our RPy2 bridge
+    pandas2ri.activate()
+
+    # Perform the Actual QN
+    new_merged = _quantile_normalize_matrix(qn_target_frame[0], job_context['merged_no_qn'])
+
+    # Remove un-quantiled normalized matrix from job_context
+    # because we no longer need it.
+    job_context.pop('merged_no_qn')
+
+    # And add the quantile normalized matrix to job_context.
+    job_context['merged_qn'] = new_merged
+
+    # For now, don't test the QN for mouse/human. This never fails on
+    # smasher jobs and is OOM-killing our very large compendia
+    # jobs. Let's run this manually after we have a compendia job
+    # actually finish.
+    if organism.name in ["MUS_MUSCULUS", "HOMO_SAPIENS"]: return job_context
+
+    ks_res = _test_qn(new_merged)
+    if ks_res:
+        for (statistic, pvalue) in ks_res:
+            job_context['ks_statistic'] = statistic
+            job_context['ks_pvalue'] = pvalue
+
+            # We're unsure of how strigent to be about
+            # the pvalue just yet, so we're extra lax
+            # rather than failing tons of tests. This may need tuning.
+            if ks_check and (statistic > ks_stat or pvalue < 0.8):
+                job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
+                                                str(statistic) + ", PVal: " + str(pvalue))
     else:
-        qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
-        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
-                                      index_col=None, error_bad_lines=False)
+        logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
+                       dataset_id=job_context['dataset'].id)
 
-        # Prepare our RPy2 bridge
-        pandas2ri.activate()
-        preprocessCore = importr('preprocessCore')
-        as_numeric = rlang("as.numeric")
-        data_matrix = rlang('data.matrix')
-
-        # Convert the smashed frames to an R numeric Matrix
-        # and the target Dataframe into an R numeric Vector
-        target_vector = as_numeric(qn_target_frame[0])
-        original_matrix = job_context['merged_no_qn']
-
-        # Perform the Actual QN
-        # Do so in chunks if the matrix is too large.
-        if job_context['merged_no_qn'].shape[1] <= QN_CHUNK_SIZE:
-            merged_matrix = data_matrix(original_matrix)
-            normalized_matrix = preprocessCore.normalize_quantiles_use_target(x=merged_matrix,
-                                                                              target=target_vector,
-                                                                              copy=True)
-            # And finally convert back to Pandas
-            ar = np.array(normalized_matrix)
-            new_merged = pd.DataFrame(ar,
-                                      columns=job_context['merged_no_qn'].columns,
-                                      index=job_context['merged_no_qn'].index)
-        else:
-            matrix_chunks = _split_dataframe_columns(original_matrix, QN_CHUNK_SIZE)
-            for i, chunk in enumerate(matrix_chunks):
-                R_chunk = data_matrix(chunk)
-                normalized_chunk = preprocessCore.normalize_quantiles_use_target(
-                    x=R_chunk,
-                    target=target_vector,
-                    copy=True
-                )
-                ar = np.array(normalized_chunk)
-                start_column = i * QN_CHUNK_SIZE
-                end_column = (i + 1) * QN_CHUNK_SIZE
-                original_matrix.iloc[:, start_column:end_column] = ar
-
-            new_merged = original_matrix
-
-        # For now, don't test the QN for mouse. This never fails on
-        # smasher jobs and is OOM-killing our very large compendia
-        # jobs. Let's run this manually after we have a compendia job
-        # actually finish.
-        if organism.name != "MUS_MUSCULUS":
-            # Verify this QN, related:
-            # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-            merged_R_matrix = data_matrix(new_merged)
-            set_seed = rlang("set.seed")
-            combn = rlang("combn")
-            ncol = rlang("ncol")
-            ks_test = rlang("ks.test")
-            which = rlang("which")
-
-            set_seed(123)
-
-            n = ncol(merged_R_matrix)[0]
-            m = 2
-            if n >= m:
-
-                # This wont work with larger matricies
-                # https://github.com/AlexsLemonade/refinebio/issues/1860
-                ncolumns = ncol(merged_R_matrix)
-
-                if ncolumns[0] <= 200:
-                    # Convert to NP, Shuffle, Return to R
-                    combos = combn(ncolumns, 2)
-                    ar = np.array(combos)
-                    np.random.shuffle(np.transpose(ar))
-                else:
-                    indexes = [*range(ncolumns[0])]
-                    np.random.shuffle(indexes)
-                    ar = np.array([*zip(indexes[0:100], indexes[100:200])])
-
-                nr, nc = ar.shape
-                combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
-
-                # adapted from
-                # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
-                # apply KS test to randomly selected pairs of columns (samples)
-                for i in range(1, min(ncol(combos)[0], 100)):
-                    value1 = combos.rx(1, i)[0]
-                    value2 = combos.rx(2, i)[0]
-
-                    test_a = merged_R_matrix.rx(True, value1)
-                    test_b = merged_R_matrix.rx(True, value2)
-
-                    # RNA-seq has a lot of zeroes in it, which
-                    # breaks the ks_test. Therefore we want to
-                    # filter them out. To do this we drop the
-                    # lowest half of the values. If there's
-                    # still zeroes in there, then that's
-                    # probably too many zeroes so it's okay to
-                    # fail.
-                    median_a = np.median(test_a)
-                    median_b = np.median(test_b)
-
-                    # `which` returns indices which are
-                    # 1-indexed. Python accesses lists with
-                    # zero-indexes, even if that list is
-                    # actually an R vector. Therefore subtract
-                    # 1 to account for the difference.
-                    test_a = [test_a[i-1] for i in which(test_a > median_a)]
-                    test_b = [test_b[i-1] for i in which(test_b > median_b)]
-
-                    # The python list comprehension gives us a
-                    # python list, but ks_test wants an R
-                    # vector so let's go back.
-                    test_a = as_numeric(test_a)
-                    test_b = as_numeric(test_b)
-
-                    ks_res = ks_test(test_a, test_b)
-                    statistic = ks_res.rx('statistic')[0][0]
-                    pvalue = ks_res.rx('p.value')[0][0]
-
-                    job_context['ks_statistic'] = statistic
-                    job_context['ks_pvalue'] = pvalue
-
-                    # We're unsure of how strigent to be about
-                    # the pvalue just yet, so we're extra lax
-                    # rather than failing tons of tests. This may need tuning.
-                    if ks_check and (statistic > ks_stat or pvalue < 0.8):
-                        job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
-                                                     str(statistic) + ", PVal: " + str(pvalue))
-            else:
-                logger.warning(("Not enough columns to perform KS test -"
-                                " either bad smash or single saple smash."),
-                               dataset_id=job_context['dataset'].id)
-
-        # Remove un-quantiled normalized matrix from job_context
-        # because we no longer need it.
-        job_context.pop('merged_no_qn')
-
-        # And add the quantile normalized matrix to job_context.
-        job_context['merged_qn'] = new_merged
     return job_context
+
+
+def _quantile_normalize_matrix(target_vector, original_matrix):
+    preprocessCore = importr('preprocessCore')
+    as_numeric = rlang("as.numeric")
+    data_matrix = rlang('data.matrix')
+
+    # Convert the smashed frames to an R numeric Matrix
+    target_vector = as_numeric(target_vector)
+
+    # Do so in chunks if the matrix is too large.
+    if original_matrix.shape[1] <= QN_CHUNK_SIZE:
+        merged_matrix = data_matrix(original_matrix)
+        normalized_matrix = preprocessCore.normalize_quantiles_use_target(x=merged_matrix,
+                                                                          target=target_vector,
+                                                                          copy=True)
+        # And finally convert back to Pandas
+        ar = np.array(normalized_matrix)
+        new_merged = pd.DataFrame(ar,
+                                    columns=original_matrix.columns,
+                                    index=original_matrix.index)
+    else:
+        matrix_chunks = _split_dataframe_columns(original_matrix, QN_CHUNK_SIZE)
+        for i, chunk in enumerate(matrix_chunks):
+            R_chunk = data_matrix(chunk)
+            normalized_chunk = preprocessCore.normalize_quantiles_use_target(
+                x=R_chunk,
+                target=target_vector,
+                copy=True
+            )
+            ar = np.array(normalized_chunk)
+            start_column = i * QN_CHUNK_SIZE
+            end_column = (i + 1) * QN_CHUNK_SIZE
+            original_matrix.iloc[:, start_column:end_column] = ar
+
+        new_merged = original_matrix
+
+    return new_merged
+
+
+def _test_qn(merged_matrix):
+    """ Selects a list of 100 random pairs of columns and performs the KS Test on them.
+    Returns a list of tuples with the results of the KN test (statistic, pvalue) """
+    # Verify this QN, related:
+    # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
+    data_matrix = rlang('data.matrix')
+    as_numeric = rlang("as.numeric")
+    set_seed = rlang("set.seed")
+    combn = rlang("combn")
+    ncol = rlang("ncol")
+    ks_test = rlang("ks.test")
+    which = rlang("which")
+
+    merged_R_matrix = data_matrix(merged_matrix)
+
+    set_seed(123)
+
+    n = ncol(merged_R_matrix)[0]
+    m = 2
+
+    # Not enough columns to perform KS test - either bad smash or single saple smash.
+    if n<m: return None
+
+    # This wont work with larger matricies
+    # https://github.com/AlexsLemonade/refinebio/issues/1860
+    ncolumns = ncol(merged_R_matrix)
+
+    if ncolumns[0] <= 200:
+        # Convert to NP, Shuffle, Return to R
+        combos = combn(ncolumns, 2)
+        ar = np.array(combos)
+        np.random.shuffle(np.transpose(ar))
+    else:
+        indexes = [*range(ncolumns[0])]
+        np.random.shuffle(indexes)
+        ar = np.array([*zip(indexes[0:100], indexes[100:200])])
+
+    nr, nc = ar.shape
+    combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+
+    result = []
+    # adapted from
+    # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
+    # apply KS test to randomly selected pairs of columns (samples)
+    for i in range(1, min(ncol(combos)[0], 100)):
+        value1 = combos.rx(1, i)[0]
+        value2 = combos.rx(2, i)[0]
+
+        test_a = merged_R_matrix.rx(True, value1)
+        test_b = merged_R_matrix.rx(True, value2)
+
+        # RNA-seq has a lot of zeroes in it, which
+        # breaks the ks_test. Therefore we want to
+        # filter them out. To do this we drop the
+        # lowest half of the values. If there's
+        # still zeroes in there, then that's
+        # probably too many zeroes so it's okay to
+        # fail.
+        median_a = np.median(test_a)
+        median_b = np.median(test_b)
+
+        # `which` returns indices which are
+        # 1-indexed. Python accesses lists with
+        # zero-indexes, even if that list is
+        # actually an R vector. Therefore subtract
+        # 1 to account for the difference.
+        test_a = [test_a[i-1] for i in which(test_a > median_a)]
+        test_b = [test_b[i-1] for i in which(test_b > median_b)]
+
+        # The python list comprehension gives us a
+        # python list, but ks_test wants an R
+        # vector so let's go back.
+        test_a = as_numeric(test_a)
+        test_b = as_numeric(test_b)
+
+        ks_res = ks_test(test_a, test_b)
+        statistic = ks_res.rx('statistic')[0][0]
+        pvalue = ks_res.rx('p.value')[0][0]
+
+        result.append((statistic, pvalue))
+
+    return result
 
 
 def compile_metadata(job_context: Dict) -> Dict:
