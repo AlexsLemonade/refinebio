@@ -7,7 +7,7 @@ def compendium_version_number_fix(apps, schema_editor):
     CompendiumResult = apps.get_model('data_refinery_common', 'CompendiumResult')
 
     # normalized compendia
-    # get each compendium against primary key sorted by created data
+    # get each compendium against primary key sorted by created date
     compendium_results = CompendiumResult.objects.filter(quant_sf_only=False)\
                                                  .annotate(version_number=Window(
                                                      expression=RowNumber(),
@@ -16,7 +16,7 @@ def compendium_version_number_fix(apps, schema_editor):
                                                  ))
 
     for compendium_result in compendium_results:
-        # generate the version
+        # assign the correct version if greater than 1
         if compendium_result.version_number is not 1:
             compendium_result.compendium_version = compendium_result.version_number
             compedium_result.save()
