@@ -649,8 +649,7 @@ class CompendiumResult(models.Model):
     #helper
     def get_computed_file(self):
         """ Short hand method for getting the computed file for this compendium"""
-        return ComputedFile.objects.filter(result=self.result,
-                                           is_compendia=True).first()
+        return ComputedFile.objects.filter(result=self.result).first()
 
 
 # TODO
