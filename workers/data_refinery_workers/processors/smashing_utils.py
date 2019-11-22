@@ -92,18 +92,13 @@ def prepare_files(job_context: Dict) -> Dict:
 
     if not found_files:
         error_message = "Couldn't get any files to smash for Smash job!!"
-        logger.error(error_message,
-                     dataset_id=job_context['dataset'].id,
-                     num_samples=len(job_context["samples"]))
-
-        # Delay failing this pipeline until the failure notify has been sent
         job_context['dataset'].failure_reason = error_message
         job_context['dataset'].success = False
         job_context['dataset'].save()
-        job_context['job'].success = False
-        job_context["job"].failure_reason = ("Couldn't get any files to smash for Smash job"
-                                             " - empty all_sample_files")
-        return job_context
+        raise utils.ProcessorJobError(error_message,
+                                      success=False,
+                                      dataset_id=job_context['dataset'].id,
+                                      num_samples=len(job_context["samples"]))
 
     dataset_id = str(job_context["dataset"].pk)
     job_context["work_dir"] = "/home/user/data_store/smashed/" + dataset_id + "/"

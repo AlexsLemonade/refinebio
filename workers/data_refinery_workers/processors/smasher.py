@@ -451,7 +451,6 @@ def _notify(job_context: Dict) -> Dict:
             AWS_REGION = "us-east-1"
             CHARSET = "UTF-8"
 
-
             if job_context['job'].success is False:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
@@ -541,16 +540,18 @@ def _update_result_objects(job_context: Dict) -> Dict:
 
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
-
     pipeline = Pipeline(name=PipelineEnum.SMASHER.value)
-    return utils.run_pipeline({ "job_id": job_id,
-                                "upload": upload,
-                                "pipeline": pipeline
-                            },
-                       [utils.start_job,
-                        smashing_utils.prepare_files,
-                        _smash_all,
-                        _upload,
-                        _notify,
-                        _update_result_objects,
-                        utils.end_job])
+    job_context = utils.run_pipeline({
+                                        "job_id": job_id,
+                                        "upload": upload,
+                                        "pipeline": pipeline
+                                     },
+                                     [utils.start_job,
+                                        smashing_utils.prepare_files,
+                                        _smash_all,
+                                        _upload,
+                                        _update_result_objects,
+                                        utils.end_job])
+    # ensure that `notify` is always called so that users get emails in case processing fails or succeeds
+    job_context = _notify(job_context)
+    return job_context
