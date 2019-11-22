@@ -58,7 +58,7 @@ for organism in organisms:
         is_processed=True
     )
 
-    report_filename = ROOT_DIR + organism.name + "_NAs.csv"
+    report_filename = os.path.join(ROOT_DIR, organism.name + "_NAs.csv")
     with open(report_filename, "w") as report_file:
         report_file.write("sample_accession_code,num_NA_values\n")
         for sample in platform_samples:
