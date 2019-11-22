@@ -660,10 +660,7 @@ def compile_metadata(job_context: Dict) -> Dict:
 
     experiments = {}
     for experiment in job_context["dataset"].get_experiments():
-        exp_dict = experiment.to_metadata_dict()
-        sample_accessions = experiment.samples.all().values_list('accession_code', flat=True)
-        exp_dict['sample_accession_codes'] = [v for v in sample_accessions]
-        experiments[experiment.accession_code] = exp_dict
+        experiments[experiment.accession_code] = experiment.to_metadata_dict()
 
     metadata['experiments'] = experiments
 
