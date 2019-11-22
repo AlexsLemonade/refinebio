@@ -1254,7 +1254,7 @@ class CompendiumResultList(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filterset_fields = ['primary_organism__name', 'compendium_version', 'quant_sf_only']
     ordering_fields = ('primary_organism__name', 'compendium_version', 'id')
-    ordering = ('-primary_organism__name',)
+    ordering = ('primary_organism__name',)
 
     def get_queryset(self):
         public_result_queryset = CompendiumResult.objects.filter(result__is_public=True)
@@ -1262,9 +1262,9 @@ class CompendiumResultList(generics.ListAPIView):
         if latest_version:
             version_filter = Q(primary_organism=OuterRef('primary_organism'),
                                quant_sf_only=OuterRef('quant_sf_only'))
-            latest_version = CompendiumResult.objects.filter(version_filter)\
-                                                     .order_by('-compendium_version')\
-                                                     .values('compendium_version')
+            latest_version = public_result_queryset.filter(version_filter)\
+                                                   .order_by('-compendium_version')\
+                                                   .values('compendium_version')
             return public_result_queryset.annotate(
                 latest_version=Subquery(latest_version[:1])
             ).filter(compendium_version=F('latest_version'))
