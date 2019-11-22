@@ -491,12 +491,12 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     # Prepare our RPy2 bridge
     pandas2ri.activate()
 
-    # Perform the Actual QN
-    new_merged = _quantile_normalize_matrix(qn_target_frame[0], job_context['merged_no_qn'])
-
     # Remove un-quantiled normalized matrix from job_context
     # because we no longer need it.
-    job_context.pop('merged_no_qn')
+    merged_no_qn = job_context.pop('merged_no_qn')
+
+    # Perform the Actual QN
+    new_merged = _quantile_normalize_matrix(qn_target_frame[0], merged_no_qn)
 
     # And add the quantile normalized matrix to job_context.
     job_context['merged_qn'] = new_merged
