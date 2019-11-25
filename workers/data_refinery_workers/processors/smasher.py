@@ -538,20 +538,19 @@ def _update_result_objects(job_context: Dict) -> Dict:
 
     return job_context
 
+
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
     pipeline = Pipeline(name=PipelineEnum.SMASHER.value)
-    job_context = utils.run_pipeline({
-                                        "job_id": job_id,
-                                        "upload": upload,
-                                        "pipeline": pipeline
-                                     },
+    job_context = utils.run_pipeline({"job_id": job_id,
+                                      "upload": upload,
+                                      "pipeline": pipeline},
                                      [utils.start_job,
-                                        smashing_utils.prepare_files,
-                                        _smash_all,
-                                        _upload,
-                                        _update_result_objects,
-                                        utils.end_job])
+                                      smashing_utils.prepare_files,
+                                      _smash_all,
+                                      _upload,
+                                      _update_result_objects,
+                                      utils.end_job])
     # ensure that `notify` is always called so that users get emails in case processing fails or succeeds
     job_context = _notify(job_context)
     return job_context
