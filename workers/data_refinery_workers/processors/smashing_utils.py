@@ -155,11 +155,8 @@ def process_frame(work_dir,
                   sample_accession_code,
                   dataset_id,
                   aggregate_by,
-                  index,
-                  gene_ids,
-                  job_id) -> Dict:
-
-    log_state('processing frame {}'.format(index), job_id)
+                  gene_ids) -> Dict:
+    """ Downloads the computed file from S3 and tries to see if it's smashable. """
 
     frame = {
         "unsmashable": False,
@@ -217,10 +214,6 @@ def process_frame(work_dir,
 
         # Explicitly title this dataframe
         try:
-            # Unfortuantely, we can't use this as `title` can cause a collision
-            # data.columns = [computed_file.samples.all()[0].title]
-            # So we use this, which also helps us support the case of missing
-            # SampleComputedFileAssociation
             data.columns = [sample_accession_code]
         except ValueError as e:
             # This sample might have multiple channels, or something else.
@@ -328,14 +321,13 @@ def process_frames_for_key(key: str,
         microarray_columns = []
         rnaseq_columns = []
         for index, (computed_file, sample) in enumerate(input_files):
+            log_state('1st processing frame {}'.format(index), job_context["job"].id)
             frame = process_frame(job_context["work_dir"],
                                   computed_file,
                                   sample.accession_code,
                                   job_context['dataset'].id,
                                   job_context['dataset'].aggregate_by,
-                                  index,
-                                  None,
-                                  job_context["job"].id)
+                                  None)
 
             # Count how many frames are in each tech so we can preallocate
             # the matrices in both directions.
@@ -401,14 +393,13 @@ def process_frames_for_key(key: str,
                                                 dtype=np.float32)
 
     for index, (computed_file, sample) in enumerate(input_files):
+        log_state('2nd processing frame {}'.format(index), job_context["job"].id)
         frame = process_frame(job_context["work_dir"],
                               computed_file,
                               sample.accession_code,
                               job_context['dataset'].id,
                               job_context['dataset'].aggregate_by,
-                              index,
-                              all_gene_identifiers,
-                              job_context["job"].id)
+                              all_gene_identifiers)
 
         if frame['unsmashable']:
             job_context['unsmashable_files'].append(frame['unsmashable_file'])

@@ -169,9 +169,7 @@ def process_frames_for_key(key: str,
                                              sample.accession_code,
                                              job_context['dataset'].id,
                                              job_context['dataset'].aggregate_by,
-                                             index,
-                                             None,
-                                             job_context["job"].id)
+                                             None)
 
         if frame['unsmashable']:
             job_context['unsmashable_files'].append(frame['unsmashable_file'])
