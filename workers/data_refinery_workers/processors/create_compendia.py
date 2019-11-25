@@ -60,9 +60,6 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context["samples"] = {job_context["primary_organism"]: all_samples}
 
     job_context = smashing_utils.prepare_files(job_context)
-    if job_context['job'].success is False:
-        smashing_utils.log_failure(job_context, "Unable to run smashing_utils.prepare_files.")
-        return job_context
 
     # Compendia jobs only run for one organism, so we know the only
     # key will be the organism name, unless of course we've already failed.
