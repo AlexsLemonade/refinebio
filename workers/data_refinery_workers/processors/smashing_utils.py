@@ -161,7 +161,6 @@ def process_frame(work_dir,
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
-        "technology": None,
         "dataframe": None
     }
 
@@ -229,9 +228,6 @@ def process_frame(work_dir,
                         exc_info=1,
                         computed_file_path=computed_file_path)
             return unsmashable(computed_file.filename)
-
-        is_rnaseq = computed_file_path.endswith("lengthScaledTPM.tsv")
-        frame['technology'] = 'rnaseq' if is_rnaseq else 'microarray'
 
     except Exception as e:
         logger.exception("Unable to smash file",
@@ -340,9 +336,9 @@ def process_frames_for_key(key: str,
 
                 # Each dataframe should only have 1 column, but it's
                 # returned as a list so use extend.
-                if frame['technology'] == 'microarray':
+                if sample.technology == 'MICROARRAY':
                     microarray_columns.extend(frame['dataframe'].columns)
-                elif frame['technology'] == 'rnaseq':
+                elif sample.technology == 'RNA-SEQ':
                     rnaseq_columns.extend(frame['dataframe'].columns)
 
         total_samples = len(microarray_columns) + len(rnaseq_columns)
@@ -407,9 +403,9 @@ def process_frames_for_key(key: str,
             # The dataframe for each sample will only have one column
             # whose header will be the accession code.
             column = frame['dataframe'].columns[0]
-            if frame['technology'] == 'microarray':
+            if sample.technology == 'MICROARRAY':
                 job_context['microarray_matrix'][column] = frame['dataframe'].values
-            elif frame['technology'] == 'rnaseq':
+            elif sample.technology == 'RNA-SEQ':
                 job_context['rnaseq_matrix'][column] = frame['dataframe'].values
 
         del frame
