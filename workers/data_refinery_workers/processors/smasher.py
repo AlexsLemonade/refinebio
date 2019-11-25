@@ -163,7 +163,7 @@ def process_frames_for_key(key: str,
                                  job_context["job"].id)
 
     job_context['all_frames'] = []
-    for index, (computed_file, sample) in enumerate(input_files):
+    for (computed_file, sample) in input_files:
         frame = smashing_utils.process_frame(job_context["work_dir"],
                                              computed_file,
                                              sample.accession_code,
