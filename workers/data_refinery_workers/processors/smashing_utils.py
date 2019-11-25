@@ -506,7 +506,7 @@ def _test_qn(merged_matrix):
     n = ncol(merged_R_matrix)[0]
     m = 2
 
-    # Not enough columns to perform KS test - either bad smash or single saple smash.
+    # Not enough columns to perform KS test - either bad smash or single sample smash.
     if n<m: return None
 
     # This wont work with larger matricies
@@ -623,7 +623,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
                 job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
                                                 str(statistic) + ", PVal: " + str(pvalue))
     else:
-        logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
+        logger.warning("Not enough columns to perform KS test - either bad smash or single sample smash.",
                        dataset_id=job_context['dataset'].id)
 
     return job_context
