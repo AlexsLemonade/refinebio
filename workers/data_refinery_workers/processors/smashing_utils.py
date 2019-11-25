@@ -448,65 +448,6 @@ def _split_dataframe_columns(dataframe, chunk_size):
     return np.split(dataframe, indices, axis=1)
 
 
-def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
-    """
-    Apply quantile normalization.
-    """
-    # Prepare our QN target file
-    organism = job_context['organism']
-
-    if not organism.qn_target:
-        failure_reason = "Could not find QN target for Organism: " + str(organism)
-        job_context['dataset'].success = False
-        job_context['dataset'].failure_reason = failure_reason
-        job_context['dataset'].save()
-        raise utils.ProcessorJobError(failure_reason,
-                                      success=False,
-                                      organism=organism,
-                                      dataset_id=job_context['dataset'].id)
-
-    qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
-    qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
-                                  index_col=None, error_bad_lines=False)
-
-    # Prepare our RPy2 bridge
-    pandas2ri.activate()
-
-    # Remove un-quantiled normalized matrix from job_context
-    # because we no longer need it.
-    merged_no_qn = job_context.pop('merged_no_qn')
-
-    # Perform the Actual QN
-    new_merged = _quantile_normalize_matrix(qn_target_frame[0], merged_no_qn)
-
-    # And add the quantile normalized matrix to job_context.
-    job_context['merged_qn'] = new_merged
-
-    # For now, don't test the QN for mouse/human. This never fails on
-    # smasher jobs and is OOM-killing our very large compendia
-    # jobs. Let's run this manually after we have a compendia job
-    # actually finish.
-    if organism.name in ["MUS_MUSCULUS", "HOMO_SAPIENS"]: return job_context
-
-    ks_res = _test_qn(new_merged)
-    if ks_res:
-        for (statistic, pvalue) in ks_res:
-            job_context['ks_statistic'] = statistic
-            job_context['ks_pvalue'] = pvalue
-
-            # We're unsure of how strigent to be about
-            # the pvalue just yet, so we're extra lax
-            # rather than failing tons of tests. This may need tuning.
-            if ks_check and (statistic > ks_stat or pvalue < 0.8):
-                job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
-                                                str(statistic) + ", PVal: " + str(pvalue))
-    else:
-        logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
-                       dataset_id=job_context['dataset'].id)
-
-    return job_context
-
-
 def _quantile_normalize_matrix(target_vector, original_matrix):
     preprocessCore = importr('preprocessCore')
     as_numeric = rlang("as.numeric")
@@ -627,6 +568,65 @@ def _test_qn(merged_matrix):
         result.append((statistic, pvalue))
 
     return result
+
+
+def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
+    """
+    Apply quantile normalization.
+    """
+    # Prepare our QN target file
+    organism = job_context['organism']
+
+    if not organism.qn_target:
+        failure_reason = "Could not find QN target for Organism: " + str(organism)
+        job_context['dataset'].success = False
+        job_context['dataset'].failure_reason = failure_reason
+        job_context['dataset'].save()
+        raise utils.ProcessorJobError(failure_reason,
+                                      success=False,
+                                      organism=organism,
+                                      dataset_id=job_context['dataset'].id)
+
+    qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
+    qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
+                                  index_col=None, error_bad_lines=False)
+
+    # Prepare our RPy2 bridge
+    pandas2ri.activate()
+
+    # Remove un-quantiled normalized matrix from job_context
+    # because we no longer need it.
+    merged_no_qn = job_context.pop('merged_no_qn')
+
+    # Perform the Actual QN
+    new_merged = _quantile_normalize_matrix(qn_target_frame[0], merged_no_qn)
+
+    # And add the quantile normalized matrix to job_context.
+    job_context['merged_qn'] = new_merged
+
+    # For now, don't test the QN for mouse/human. This never fails on
+    # smasher jobs and is OOM-killing our very large compendia
+    # jobs. Let's run this manually after we have a compendia job
+    # actually finish.
+    if organism.name in ["MUS_MUSCULUS", "HOMO_SAPIENS"]: return job_context
+
+    ks_res = _test_qn(new_merged)
+    if ks_res:
+        for (statistic, pvalue) in ks_res:
+            job_context['ks_statistic'] = statistic
+            job_context['ks_pvalue'] = pvalue
+
+            # We're unsure of how strigent to be about
+            # the pvalue just yet, so we're extra lax
+            # rather than failing tons of tests. This may need tuning.
+            if ks_check and (statistic > ks_stat or pvalue < 0.8):
+                job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
+                                                str(statistic) + ", PVal: " + str(pvalue))
+    else:
+        logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
+                       dataset_id=job_context['dataset'].id)
+
+    return job_context
 
 
 def compile_metadata(job_context: Dict) -> Dict:
