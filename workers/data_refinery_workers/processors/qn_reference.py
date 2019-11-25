@@ -72,8 +72,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
             logger.warn("No file loaded for input file",
                         exc_info=1,
                         bad_file=file,
-                        num_valid_inputs_so_far=num_valid_inputs
-            )
+                        num_valid_inputs_so_far=num_valid_inputs)
             continue
 
         # If this input doesn't have the same geneset, we don't want it!
@@ -83,8 +82,18 @@ def _build_qn_target(job_context: Dict) -> Dict:
                         target_geneset_len=len(geneset),
                         bad_geneset_len=len(input_frame.index.values),
                         geneset_difference=list(geneset ^ set(input_frame.index.values))[:3],
-                        num_valid_inputs_so_far=num_valid_inputs
-            )
+                        num_valid_inputs_so_far=num_valid_inputs)
+            continue
+
+        # We don't want to build QNs that have Nulls in them, so
+        # filter out any samples that still have null genes at this
+        # point.
+        num_nulls = input_frame.isnull().sum(axis=0)[0]
+        if num_nulls != 0:
+            logger.warn("Input frame contains NA values, skipping!",
+                        bad_file=file,
+                        number_of_NAs=num_nulls,
+                        num_valid_inputs_so_far=num_valid_inputs)
             continue
 
         # Sort the input
