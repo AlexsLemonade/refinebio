@@ -361,7 +361,8 @@ class Experiment(models.Model):
         metadata = {}
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
-        metadata['organisms'] = [organism.name for organism in self.organisms.all()]
+        metadata['organisms'] = list(self.organisms.all().values_list('name', flat=True))
+        metadata['sample_accession_codes'] = list(self.samples.all().values_list('accession_code', flat=True))
         metadata['description'] = self.description
         metadata['protocol_description'] = self.protocol_description
         metadata['technology'] = self.technology
