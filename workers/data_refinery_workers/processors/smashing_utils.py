@@ -206,14 +206,12 @@ def process_frame(work_dir,
         # via https://github.com/AlexsLemonade/refinebio/issues/330:
         #   aggregating by experiment -> return untransformed output from tximport
         #   aggregating by species -> log2(x + 1) tximport output
-        if aggregate_by == 'SPECIES' \
-           and computed_file_path.endswith("lengthScaledTPM.tsv"):
+        if aggregate_by == 'SPECIES' and computed_file.has_been_log2scaled():
             data = data + 1
             data = np.log2(data)
 
-        # Detect if this data hasn't been log2 scaled yet.
         # Ideally done in the NO-OPPER, but sanity check here.
-        if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
+        if (not computed_file.has_been_log2scaled()) and (data.max() > 100).any():
             logger.info("Detected non-log2 microarray data.", computed_file_id=computed_file.id)
             data = np.log2(data)
 
@@ -295,7 +293,7 @@ def cache_first_pass(job_context: Dict,
 
 
 def process_frames_for_key(key: str,
-                           input_files: List[ComputedFile],
+                           input_files: List[Tuple[ComputedFile, Sample]],
                            job_context: Dict) -> Dict:
     """Download, read, and chunk processed sample files from s3.
 
