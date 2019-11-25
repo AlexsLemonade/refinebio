@@ -19,7 +19,7 @@ def compendium_version_number_fix(apps, schema_editor):
         # assign the correct version if greater than 1
         if compendium_result.version_number is not 1:
             compendium_result.compendium_version = compendium_result.version_number
-            compedium_result.save()
+            compendium_result.save()
 
 
 class Migration(migrations.Migration):

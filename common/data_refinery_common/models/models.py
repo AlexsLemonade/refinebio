@@ -1078,7 +1078,7 @@ class ComputedFile(models.Model):
                     # We don't have the file :(
                     return None
 
-        target_directory = os.path.dirname(self.absolute_file_path)
+        target_directory = os.path.dirname(path)
         os.makedirs(target_directory, exist_ok=True)
 
         if not self.s3_bucket or not self.s3_key:
