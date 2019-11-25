@@ -164,17 +164,17 @@ def process_frames_for_key(key: str,
 
     job_context['all_frames'] = []
     for (computed_file, sample) in input_files:
-        frame = smashing_utils.process_frame(job_context["work_dir"],
+        frame_data = smashing_utils.process_frame(job_context["work_dir"],
                                              computed_file,
                                              sample.accession_code,
                                              job_context['dataset'].id,
                                              job_context['dataset'].aggregate_by,
                                              None)
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+        if frame_data is not None:
+            job_context['all_frames'].append(frame_data)
         else:
-            job_context['all_frames'].append(frame['dataframe'])
+            job_context['unsmashable_files'].append(computed_file.filename)
 
     log_state("Finished building list of all_frames key {}".format(key),
               job_context["job"].id,
