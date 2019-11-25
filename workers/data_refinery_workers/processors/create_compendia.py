@@ -81,35 +81,26 @@ def _prepare_input(job_context: Dict) -> Dict:
 def _prepare_frames(job_context: Dict) -> Dict:
     start_prepare_frames = log_state("start _prepare_frames", job_context["job"].id)
 
+    job_context['unsmashable_files'] = []
+    job_context['num_samples'] = 0
+
+    # Smash all of the sample sets
+    logger.debug("About to smash!",
+                 dataset_count=len(job_context['dataset'].data),
+                 job_id=job_context['job'].id)
+
     try:
-        job_context['unsmashable_files'] = []
-        job_context['num_samples'] = 0
-
-        # Smash all of the sample sets
-        logger.debug("About to smash!",
-                     dataset_count=len(job_context['dataset'].data),
-                     job_id=job_context['job'].id)
-
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context.pop('input_files').items():
-            job_context = smashing_utils.process_frames_for_key(key,
-                                                                input_files,
-                                                                job_context)
+            job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
-
     except Exception as e:
-        logger.exception("Could not prepare frames for compendia.",
-                         dataset_id=job_context['dataset'].id,
-                         processor_job_id=job_context['job_id'],
-                         num_input_files=job_context['num_input_files'])
-        job_context['dataset'].success = False
-        job_context['job'].failure_reason = "Failure reason: " + str(e)
-        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
-        job_context['dataset'].save()
-        job_context['success'] = False
-        job_context['failure_reason'] = str(e)
-        return job_context
+        raise utils.ProcessorJobError("Could not prepare frames for compendia.",
+                                      success=False,
+                                      dataset_id=job_context['dataset'].id,
+                                      processor_job_id=job_context['job_id'],
+                                      num_input_files=job_context['num_input_files'])
 
     job_context['dataset'].success = True
     job_context['dataset'].save()
