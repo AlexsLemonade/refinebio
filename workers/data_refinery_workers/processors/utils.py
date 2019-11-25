@@ -418,6 +418,12 @@ class ProcessorJobError(Exception):
             job.no_retry = self.no_retry
         job.save()
 
+        # also update the failure reason if this is a dataset's processor job
+        for dataset in job.datasets.all():
+            dataset.failure_reason = self.failure_reason
+            dataset.success = False
+            dataset.save()
+
 
 class ProcessorJobDeleteSelf(Exception):
     """ Triggered when a processor job deletes itself. """
