@@ -9,9 +9,9 @@ def clean_compendium_files(apps, schema_editor):
 
     # normalized compendia
     compendium_results = CompendiumResult.objects.annotate(file_count=Count('result__computedfile'))\
-                                                     .filter(quant_sf_only=False,
+                                                 .filter(quant_sf_only=False,
                                                              file_count__gt=1)\
-                                                     .values('result_id')
+                                                 .values('result_id')
 
     ComputedFile.objects.filter(result_id__in=compendium_results)\
                         .filter(is_compendia=False)\
