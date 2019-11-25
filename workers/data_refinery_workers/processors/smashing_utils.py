@@ -98,7 +98,7 @@ def prepare_files(job_context: Dict) -> Dict:
     return job_context
 
 
-def _load_and_sanitize_file(computed_file_path, index=None):
+def _load_and_sanitize_file(computed_file_path, index=None) -> pd.DataFrame:
     """ Read and sanitize a computed file """
 
     data = pd.read_csv(computed_file_path,
