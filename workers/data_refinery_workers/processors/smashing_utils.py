@@ -91,11 +91,7 @@ def prepare_files(job_context: Dict) -> Dict:
     job_context['group_by_keys'] = list(job_context['input_files'].keys())
 
     if not found_files:
-        error_message = "Couldn't get any files to smash for Smash job!!"
-        job_context['dataset'].failure_reason = error_message
-        job_context['dataset'].success = False
-        job_context['dataset'].save()
-        raise utils.ProcessorJobError(error_message,
+        raise utils.ProcessorJobError("Couldn't get any files to smash for Smash job!!",
                                       success=False,
                                       dataset_id=job_context['dataset'].id,
                                       num_samples=len(job_context["samples"]))
