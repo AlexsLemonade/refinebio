@@ -168,8 +168,7 @@ def process_frames_for_key(key: str,
                                              computed_file,
                                              sample.accession_code,
                                              job_context['dataset'].id,
-                                             job_context['dataset'].aggregate_by,
-                                             None)
+                                             job_context['dataset'].aggregate_by)
 
         if frame_data is not None:
             job_context['all_frames'].append(frame_data)

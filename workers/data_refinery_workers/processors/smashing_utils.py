@@ -98,7 +98,7 @@ def prepare_files(job_context: Dict) -> Dict:
     return job_context
 
 
-def _load_and_sanitize_file(computed_file_path, index=None) -> pd.DataFrame:
+def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
     """ Read and sanitize a computed file """
 
     data = pd.read_csv(computed_file_path,
@@ -144,9 +144,6 @@ def _load_and_sanitize_file(computed_file_path, index=None) -> pd.DataFrame:
     # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
     data = data.groupby(data.index, sort=False).mean()
 
-    if index is not None:
-        data = data.reindex(index)
-
     return data
 
 
@@ -154,8 +151,7 @@ def process_frame(work_dir,
                   computed_file,
                   sample_accession_code,
                   dataset_id,
-                  aggregate_by,
-                  gene_ids) -> pd.DataFrame:
+                  aggregate_by) -> pd.DataFrame:
     """ Downloads the computed file from S3 and tries to see if it's smashable.
     Returns a data frame if the file can be processed or False otherwise. """
 
@@ -174,7 +170,7 @@ def process_frame(work_dir,
                            dataset_id=dataset_id)
             return None
 
-        data = _load_and_sanitize_file(computed_file_path, gene_ids)
+        data = _load_and_sanitize_file(computed_file_path)
 
         if len(data.columns) > 2:
             # Most of the time, >1 is actually bad, but we also need to support
@@ -308,8 +304,7 @@ def process_frames_for_key(key: str,
                                        computed_file,
                                        sample.accession_code,
                                        job_context['dataset'].id,
-                                       job_context['dataset'].aggregate_by,
-                                       None)
+                                       job_context['dataset'].aggregate_by)
 
             if frame_data is None:
                 # we were not able to process this sample, so we drop
@@ -381,8 +376,8 @@ def process_frames_for_key(key: str,
                                    computed_file,
                                    sample.accession_code,
                                    job_context['dataset'].id,
-                                   job_context['dataset'].aggregate_by,
-                                   all_gene_identifiers)
+                                   job_context['dataset'].aggregate_by)
+        frame_data = frame_data.reindex(all_gene_identifiers)
 
         if frame_data is not None:
             # The dataframe for each sample will only have one column
