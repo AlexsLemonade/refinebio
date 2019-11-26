@@ -311,35 +311,36 @@ def process_frames_for_key(key: str,
                                        job_context['dataset'].aggregate_by,
                                        None)
 
+            if frame_data is None:
+                # we were not able to process this sample, so we drop
+                continue
+
             # Count how many frames are in each tech so we can preallocate
             # the matrices in both directions.
-            if frame_data is not None:
-                for gene_id in frame_data.index:
-                    if gene_id in gene_identifier_counts:
-                        gene_identifier_counts[gene_id] += 1
-                    else:
-                        gene_identifier_counts[gene_id] = 1
+            for gene_id in frame_data.index:
+                if gene_id in gene_identifier_counts:
+                    gene_identifier_counts[gene_id] += 1
+                else:
+                    gene_identifier_counts[gene_id] = 1
 
-                # Each dataframe should only have 1 column, but it's
-                # returned as a list so use extend.
-                if sample.technology == 'MICROARRAY':
-                    microarray_columns.extend(frame_data.columns)
-                elif sample.technology == 'RNA-SEQ':
-                    rnaseq_columns.extend(frame_data.columns)
+            # Each dataframe should only have 1 column, but it's
+            # returned as a list so use extend.
+            if sample.technology == 'MICROARRAY':
+                microarray_columns.extend(frame_data.columns)
+            elif sample.technology == 'RNA-SEQ':
+                rnaseq_columns.extend(frame_data.columns)
 
+        # We only want to use gene identifiers which are present
+        # in >50% of the samples. We're doing this because a large
+        # number of gene identifiers present in only a modest
+        # number of experiments have leaked through. We wouldn't
+        # necessarily want to do this if we'd mapped all the data
+        # to ENSEMBL identifiers successfully.
         total_samples = len(microarray_columns) + len(rnaseq_columns)
-        all_gene_identifiers = []
-        for gene_id, sample_count in gene_identifier_counts.items():
-            # We only want to use gene identifiers which are present
-            # in >50% of the samples. We're doing this because a large
-            # number of gene identifiers present in only a modest
-            # number of experiments have leaked through. We wouldn't
-            # necessarily want to do this if we'd mapped all the data
-            # to ENSEMBL identifiers successfully.
-            if sample_count > (total_samples * 0.5):
-                all_gene_identifiers.append(gene_id)
-
+        all_gene_identifiers = [gene_id for gene_id in gene_identifier_counts
+                                        if gene_identifier_counts[gene_id] > (total_samples * 0.5)]
         all_gene_identifiers.sort()
+
         del gene_identifier_counts
 
         log_template = ("Collected {0} gene identifiers for {1} across"
