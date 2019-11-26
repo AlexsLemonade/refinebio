@@ -163,20 +163,20 @@ def process_frames_for_key(key: str,
                                  job_context["job"].id)
 
     job_context['all_frames'] = []
-    for index, (computed_file, sample) in enumerate(input_files):
-        frame = smashing_utils.process_frame(job_context["work_dir"],
+    for (computed_file, sample) in input_files:
+        frame_data = smashing_utils.process_frame(job_context["work_dir"],
                                              computed_file,
                                              sample.accession_code,
-                                             job_context['dataset'].id,
-                                             job_context['dataset'].aggregate_by,
-                                             index,
-                                             None,
-                                             job_context["job"].id)
+                                             job_context['dataset'].aggregate_by)
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+        if frame_data is not None:
+            job_context['all_frames'].append(frame_data)
         else:
-            job_context['all_frames'].append(frame['dataframe'])
+            logger.warning('Unable to smash file',
+                               computed_file=computed_file.id,
+                               dataset_id=job_context['dataset'].id,
+                               job_id=job_context["job"].id)
+            job_context['unsmashable_files'].append(computed_file.filename)
 
     log_state("Finished building list of all_frames key {}".format(key),
               job_context["job"].id,
@@ -205,9 +205,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
-    job_context = process_frames_for_key(key,
-                                         input_files,
-                                         job_context)
+    job_context = process_frames_for_key(key, input_files, job_context)
 
     if len(job_context['all_frames']) < 1:
         logger.error("Was told to smash a key with no frames!",
