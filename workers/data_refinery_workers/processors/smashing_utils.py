@@ -374,18 +374,17 @@ def process_frames_for_key(key: str,
                                    job_context['dataset'].aggregate_by)
         frame_data = frame_data.reindex(all_gene_identifiers)
 
-        if frame_data is not None:
-            # The dataframe for each sample will only have one column
-            # whose header will be the accession code.
-            column = frame_data.columns[0]
-            if sample.technology == 'MICROARRAY':
-                job_context['microarray_matrix'][column] = frame_data.values
-            elif sample.technology == 'RNA-SEQ':
-                job_context['rnaseq_matrix'][column] = frame_data.values
-        else:
+        if frame_data is None:
             job_context['unsmashable_files'].append(computed_file.filename)
+            continue
 
-        del frame_data
+        # The dataframe for each sample will only have one column
+        # whose header will be the accession code.
+        column = frame_data.columns[0]
+        if sample.technology == 'MICROARRAY':
+            job_context['microarray_matrix'][column] = frame_data.values
+        elif sample.technology == 'RNA-SEQ':
+            job_context['rnaseq_matrix'][column] = frame_data.values
 
     job_context['num_samples'] = 0
     if job_context['microarray_matrix'] is not None:
