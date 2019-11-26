@@ -147,11 +147,7 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
     return data
 
 
-def process_frame(work_dir,
-                  computed_file,
-                  sample_accession_code,
-                  dataset_id,
-                  aggregate_by) -> pd.DataFrame:
+def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) -> pd.DataFrame:
     """ Downloads the computed file from S3 and tries to see if it's smashable.
     Returns a data frame if the file can be processed or False otherwise. """
 
@@ -166,8 +162,7 @@ def process_frame(work_dir,
         if not computed_file_path or not os.path.exists(computed_file_path):
             logger.warning("Smasher received non-existent file path.",
                            computed_file_path=computed_file_path,
-                           computed_file_id=computed_file.id,
-                           dataset_id=dataset_id)
+                           computed_file_id=computed_file.id)
             return None
 
         data = _load_and_sanitize_file(computed_file_path)
@@ -212,9 +207,7 @@ def process_frame(work_dir,
             return None
 
     except Exception as e:
-        logger.exception("Unable to smash file",
-                         file=computed_file_path,
-                         dataset_id=dataset_id)
+        logger.exception("Unable to smash file", file=computed_file_path)
         return None
     # TEMPORARY for iterating on compendia more quickly.
     # finally:
@@ -303,11 +296,14 @@ def process_frames_for_key(key: str,
             frame_data = process_frame(job_context["work_dir"],
                                        computed_file,
                                        sample.accession_code,
-                                       job_context['dataset'].id,
                                        job_context['dataset'].aggregate_by)
 
             if frame_data is None:
-                # we were not able to process this sample, so we drop
+                # we were unable to process this sample, so we drop
+                logger.warning('Unable to smash file',
+                               computed_file=computed_file.id,
+                               dataset_id=job_context['dataset'].id,
+                               job_id=job_context["job"].id)
                 continue
 
             # Count how many frames are in each tech so we can preallocate
@@ -375,7 +371,6 @@ def process_frames_for_key(key: str,
         frame_data = process_frame(job_context["work_dir"],
                                    computed_file,
                                    sample.accession_code,
-                                   job_context['dataset'].id,
                                    job_context['dataset'].aggregate_by)
         frame_data = frame_data.reindex(all_gene_identifiers)
 
