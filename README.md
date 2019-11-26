@@ -563,30 +563,38 @@ If you want to quantile normalize combined outputs, you'll first need to create 
 nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
 
+To create QN targets for all organisms, do so with the dispatcher:
+
+```bash
+nomad job dispatch QN_DISPATCHER
+```
+
+This will at some point move to the foreman and then it will take a list of organisms to create QN targets for.
+
 ### Creating Compendia
 
 Creating species-wide compendia for a given species can be done in a production environment by running the following on the Foreman instance:
 
 ```bash
-./run_management_command.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --organisms=DANIO_RERIO --svd-algorithm=ARPACK
 ```
 
 or for a list of organisms:
 
 ```bash
-./run_management_command.sh create_compendia --organisms=DANIO_RERIO,HOMO_SAPIENS --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --organisms=DANIO_RERIO,HOMO_SAPIENS --svd-algorithm=ARPACK
 ```
 
 or for all organisms with sufficient data:
 
 ```bash
-./run_management_command.sh create_compendia --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --svd-algorithm=ARPACK
 ```
 
-Alternatively a compendium can be created which only includes quant.sf files by specifying the nomad meta field `QUANT_SF_ONLY=True` like so:
+Alternatively a compendium can be created which only includes quant.sf files by using the create_quantpentida command:
 
 ```
-./run_management_command.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=True --svd-algorithm=None
+./run_management_command.sh create_quantpendia --organisms=DANIO_RERIO
 ```
 
 Compendia jobs run on the smasher instance.
