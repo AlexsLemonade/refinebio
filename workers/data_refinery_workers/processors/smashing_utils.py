@@ -98,7 +98,7 @@ def prepare_files(job_context: Dict) -> Dict:
     return job_context
 
 
-def _load_and_sanitize_file(computed_file_path, index=None) -> pd.DataFrame:
+def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
     """ Read and sanitize a computed file """
 
     data = pd.read_csv(computed_file_path,
@@ -144,38 +144,12 @@ def _load_and_sanitize_file(computed_file_path, index=None) -> pd.DataFrame:
     # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
     data = data.groupby(data.index, sort=False).mean()
 
-    if index is not None:
-        data = data.reindex(index)
-
     return data
 
 
-def process_frame(work_dir,
-                  computed_file,
-                  sample_accession_code,
-                  dataset_id,
-                  aggregate_by,
-                  index,
-                  gene_ids,
-                  job_id) -> Dict:
-
-    log_state('processing frame {}'.format(index), job_id)
-
-    frame = {
-        "unsmashable": False,
-        "unsmashable_file": None,
-        "technology": None,
-        "dataframe": None
-    }
-
-    def unsmashable(path):
-        frame['unsmashable'] = True
-        frame['unsmashable_file'] = path
-        return frame
-
-    def smashable(data):
-        frame['dataframe'] = data
-        return frame
+def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) -> pd.DataFrame:
+    """ Downloads the computed file from S3 and tries to see if it's smashable.
+    Returns a data frame if the file can be processed or False otherwise. """
 
     try:
         # Download the file to a job-specific location so it
@@ -188,11 +162,10 @@ def process_frame(work_dir,
         if not computed_file_path or not os.path.exists(computed_file_path):
             logger.warning("Smasher received non-existent file path.",
                            computed_file_path=computed_file_path,
-                           computed_file_id=computed_file.id,
-                           dataset_id=dataset_id)
-            return unsmashable(computed_file.filename)
+                           computed_file_id=computed_file.id)
+            return None
 
-        data = _load_and_sanitize_file(computed_file_path, gene_ids)
+        data = _load_and_sanitize_file(computed_file_path)
 
         if len(data.columns) > 2:
             # Most of the time, >1 is actually bad, but we also need to support
@@ -201,28 +174,22 @@ def process_frame(work_dir,
             logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
                         computed_file_path=computed_file_path,
                         computed_file_id=computed_file.id)
-            return unsmashable(computed_file_path)
+            return None
 
         # via https://github.com/AlexsLemonade/refinebio/issues/330:
         #   aggregating by experiment -> return untransformed output from tximport
         #   aggregating by species -> log2(x + 1) tximport output
-        if aggregate_by == 'SPECIES' \
-           and computed_file_path.endswith("lengthScaledTPM.tsv"):
+        if aggregate_by == 'SPECIES' and computed_file.has_been_log2scaled():
             data = data + 1
             data = np.log2(data)
 
-        # Detect if this data hasn't been log2 scaled yet.
         # Ideally done in the NO-OPPER, but sanity check here.
-        if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
+        if (not computed_file.has_been_log2scaled()) and (data.max() > 100).any():
             logger.info("Detected non-log2 microarray data.", computed_file_id=computed_file.id)
             data = np.log2(data)
 
         # Explicitly title this dataframe
         try:
-            # Unfortuantely, we can't use this as `title` can cause a collision
-            # data.columns = [computed_file.samples.all()[0].title]
-            # So we use this, which also helps us support the case of missing
-            # SampleComputedFileAssociation
             data.columns = [sample_accession_code]
         except ValueError as e:
             # This sample might have multiple channels, or something else.
@@ -230,30 +197,25 @@ def process_frame(work_dir,
             logger.warn("Smasher found multi-channel column (probably) - skipping!",
                         exc_info=1,
                         computed_file_path=computed_file_path,)
-            return unsmashable(computed_file.filename)
+            return None
         except Exception as e:
             # Okay, somebody probably forgot to create a SampleComputedFileAssociation
             # Don't mess with it.
             logger.warn("Smasher found very bad column title - skipping!",
                         exc_info=1,
                         computed_file_path=computed_file_path)
-            return unsmashable(computed_file.filename)
-
-        is_rnaseq = computed_file_path.endswith("lengthScaledTPM.tsv")
-        frame['technology'] = 'rnaseq' if is_rnaseq else 'microarray'
+            return None
 
     except Exception as e:
-        logger.exception("Unable to smash file",
-                         file=computed_file_path,
-                         dataset_id=dataset_id)
-        return unsmashable(computed_file.filename)
+        logger.exception("Unable to smash file", file=computed_file_path)
+        return None
     # TEMPORARY for iterating on compendia more quickly.
     # finally:
     #     # Delete before archiving the work dir
     #     if computed_file_path and os.path.exists(computed_file_path):
     #         os.remove(computed_file_path)
 
-    return smashable(data)
+    return data
 
 
 def load_first_pass_data_if_cached(work_dir: str):
@@ -295,7 +257,7 @@ def cache_first_pass(job_context: Dict,
 
 
 def process_frames_for_key(key: str,
-                           input_files: List[ComputedFile],
+                           input_files: List[Tuple[ComputedFile, Sample]],
                            job_context: Dict) -> Dict:
     """Download, read, and chunk processed sample files from s3.
 
@@ -330,44 +292,46 @@ def process_frames_for_key(key: str,
         microarray_columns = []
         rnaseq_columns = []
         for index, (computed_file, sample) in enumerate(input_files):
-            frame = process_frame(job_context["work_dir"],
-                                  computed_file,
-                                  sample.accession_code,
-                                  job_context['dataset'].id,
-                                  job_context['dataset'].aggregate_by,
-                                  index,
-                                  None,
-                                  job_context["job"].id)
+            log_state('1st processing frame {}'.format(index), job_context["job"].id)
+            frame_data = process_frame(job_context["work_dir"],
+                                       computed_file,
+                                       sample.accession_code,
+                                       job_context['dataset'].aggregate_by)
+
+            if frame_data is None:
+                # we were unable to process this sample, so we drop
+                logger.warning('Unable to smash file',
+                               computed_file=computed_file.id,
+                               dataset_id=job_context['dataset'].id,
+                               job_id=job_context["job"].id)
+                continue
 
             # Count how many frames are in each tech so we can preallocate
             # the matrices in both directions.
-            if not frame['unsmashable']:
-                for gene_id in frame['dataframe'].index:
-                    if gene_id in gene_identifier_counts:
-                        gene_identifier_counts[gene_id] += 1
-                    else:
-                        gene_identifier_counts[gene_id] = 1
+            for gene_id in frame_data.index:
+                if gene_id in gene_identifier_counts:
+                    gene_identifier_counts[gene_id] += 1
+                else:
+                    gene_identifier_counts[gene_id] = 1
 
-                # Each dataframe should only have 1 column, but it's
-                # returned as a list so use extend.
-                if frame['technology'] == 'microarray':
-                    microarray_columns.extend(frame['dataframe'].columns)
-                elif frame['technology'] == 'rnaseq':
-                    rnaseq_columns.extend(frame['dataframe'].columns)
+            # Each dataframe should only have 1 column, but it's
+            # returned as a list so use extend.
+            if sample.technology == 'MICROARRAY':
+                microarray_columns.extend(frame_data.columns)
+            elif sample.technology == 'RNA-SEQ':
+                rnaseq_columns.extend(frame_data.columns)
 
+        # We only want to use gene identifiers which are present
+        # in >50% of the samples. We're doing this because a large
+        # number of gene identifiers present in only a modest
+        # number of experiments have leaked through. We wouldn't
+        # necessarily want to do this if we'd mapped all the data
+        # to ENSEMBL identifiers successfully.
         total_samples = len(microarray_columns) + len(rnaseq_columns)
-        all_gene_identifiers = []
-        for gene_id, sample_count in gene_identifier_counts.items():
-            # We only want to use gene identifiers which are present
-            # in >50% of the samples. We're doing this because a large
-            # number of gene identifiers present in only a modest
-            # number of experiments have leaked through. We wouldn't
-            # necessarily want to do this if we'd mapped all the data
-            # to ENSEMBL identifiers successfully.
-            if sample_count > (total_samples * 0.5):
-                all_gene_identifiers.append(gene_id)
-
+        all_gene_identifiers = [gene_id for gene_id in gene_identifier_counts
+                                        if gene_identifier_counts[gene_id] > (total_samples * 0.5)]
         all_gene_identifiers.sort()
+
         del gene_identifier_counts
 
         log_template = ("Collected {0} gene identifiers for {1} across"
@@ -403,27 +367,24 @@ def process_frames_for_key(key: str,
                                                 dtype=np.float32)
 
     for index, (computed_file, sample) in enumerate(input_files):
-        frame = process_frame(job_context["work_dir"],
-                              computed_file,
-                              sample.accession_code,
-                              job_context['dataset'].id,
-                              job_context['dataset'].aggregate_by,
-                              index,
-                              all_gene_identifiers,
-                              job_context["job"].id)
+        log_state('2nd processing frame {}'.format(index), job_context["job"].id)
+        frame_data = process_frame(job_context["work_dir"],
+                                   computed_file,
+                                   sample.accession_code,
+                                   job_context['dataset'].aggregate_by)
+        frame_data = frame_data.reindex(all_gene_identifiers)
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
-        else:
-            # The dataframe for each sample will only have one column
-            # whose header will be the accession code.
-            column = frame['dataframe'].columns[0]
-            if frame['technology'] == 'microarray':
-                job_context['microarray_matrix'][column] = frame['dataframe'].values
-            elif frame['technology'] == 'rnaseq':
-                job_context['rnaseq_matrix'][column] = frame['dataframe'].values
+        if frame_data is None:
+            job_context['unsmashable_files'].append(computed_file.filename)
+            continue
 
-        del frame
+        # The dataframe for each sample will only have one column
+        # whose header will be the accession code.
+        column = frame_data.columns[0]
+        if sample.technology == 'MICROARRAY':
+            job_context['microarray_matrix'][column] = frame_data.values
+        elif sample.technology == 'RNA-SEQ':
+            job_context['rnaseq_matrix'][column] = frame_data.values
 
     job_context['num_samples'] = 0
     if job_context['microarray_matrix'] is not None:

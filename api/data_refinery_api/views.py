@@ -872,8 +872,8 @@ class DownloaderJobList(generics.ListAPIView):
 
         nomad = self.request.query_params.get('nomad', None)
         if nomad:
-            nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs()]
-            queryset = queryset.filter(nomad_job_id__in=nomad_jobs_ids)
+            running_nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs() if job['Status'] == 'running']
+            queryset = queryset.filter(nomad_job_id__in=running_nomad_jobs_ids)
 
         return queryset
 
@@ -907,8 +907,8 @@ class ProcessorJobList(generics.ListAPIView):
 
         nomad = self.request.query_params.get('nomad', None)
         if nomad:
-            nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs()]
-            queryset = queryset.filter(nomad_job_id__in=nomad_jobs_ids)
+            running_nomad_jobs_ids = [job['ID'] for job in get_nomad_jobs() if job['Status'] == 'running']
+            queryset = queryset.filter(nomad_job_id__in=running_nomad_jobs_ids)
 
         return queryset
 

@@ -68,6 +68,7 @@ def make_test_data(organism):
     sample.title = 'GSM1237818'
     sample.organism = organism
     sample.technology = 'RNA-SEQ'
+    sample.is_processed = True
     sample.save()
 
     sra = SampleResultAssociation()
