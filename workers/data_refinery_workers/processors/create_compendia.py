@@ -382,6 +382,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
         return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
 
+    # Write the compendia dataframe to a file
+    job_context['csv_outfile'] = job_context['output_dir'] + job_context['organism_name'] + '.tsv'
+    job_context['merged_qn'].to_csv(job_context['csv_outfile'], sep='\t', encoding='utf-8')
+
     organism_key = list(job_context['samples'].keys())[0]
     annotation = ComputationalResultAnnotation()
     annotation.result = result
