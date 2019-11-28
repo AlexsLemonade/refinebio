@@ -358,7 +358,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
     job_context['time_end'] = timezone.now()
-    job_context['formatted_command'] = "create_compendia.py"
+    job_context['formatted_command'] = ["create_compendia.py"]
     log_state("end prepare imputation", job_context["job"].id, imputation_start)
     return job_context
 
