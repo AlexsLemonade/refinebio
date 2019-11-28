@@ -427,7 +427,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Compendia Result Helpers
     primary_organism = Organism.get_object_for_name(job_context['primary_organism'])
     organisms = [Organism.get_object_for_name(organism) for organism in job_context["all_organisms"]]
-    organisms_filter = Q(organisms__in=organisms)
     compendium_version = CompendiumResult.objects.filter(
                                                    primary_organism=primary_organism,
                                                    quant_sf_only=False
