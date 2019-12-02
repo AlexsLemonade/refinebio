@@ -372,11 +372,12 @@ def process_frames_for_key(key: str,
                                    computed_file,
                                    sample.accession_code,
                                    job_context['dataset'].aggregate_by)
-        frame_data = frame_data.reindex(all_gene_identifiers)
 
         if frame_data is None:
             job_context['unsmashable_files'].append(computed_file.filename)
             continue
+        else:
+            frame_data = frame_data.reindex(all_gene_identifiers)
 
         # The dataframe for each sample will only have one column
         # whose header will be the accession code.
