@@ -312,7 +312,7 @@ def process_frames_for_key(key: str,
                                job_id=job_context["job"].id)
                 job_context['filtered_samples'][sample.accession_code] = {
                     'reason': 'We were unable to smash the file associated with this sample during the first pass.',
-                    'source_url': computed_file.source_url
+                    'filename': computed_file.filename
                 }
                 continue
 
@@ -387,7 +387,7 @@ def process_frames_for_key(key: str,
             job_context['unsmashable_files'].append(computed_file.filename)
             job_context['filtered_samples'][sample.accession_code] = {
                 'reason': 'We were unable to smash the file associated with this sample during the first pass.',
-                'source_url': computed_file.source_url
+                'filename': computed_file.filename
             }
             continue
 
@@ -631,7 +631,7 @@ def compile_metadata(job_context: Dict) -> Dict:
 
     samples = {}
     for sample in job_context["dataset"].get_samples():
-        if job_context['filtered_samples'] and sample.accession_code in job_context['filtered_samples']:
+        if sample.accession_code in filtered_samples:
             # skip the samples that were filtered
             continue
         samples[sample.accession_code] = sample.to_metadata_dict()
@@ -675,7 +675,7 @@ def write_non_data_files(job_context: Dict) -> Dict:
         with open(aggregated_metadata_path, 'w', encoding='utf-8') as metadata_file:
             json.dump(job_context['metadata'], metadata_file, indent=4, sort_keys=True)
 
-        if 'filtered_samples' in job_context and job_context['filtered_samples']:
+        if job_context['filtered_samples']:
             # generate filtered samples file only if some samples were skipped
             filtered_samples_path = os.path.join(job_context["output_dir"],
                                                  'filtered_samples_metadata.json')
