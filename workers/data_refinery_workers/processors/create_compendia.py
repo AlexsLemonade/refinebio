@@ -59,6 +59,10 @@ def _prepare_input(job_context: Dict) -> Dict:
     all_samples = list(itertools.chain(*job_context["samples"].values()))
     job_context["samples"] = {job_context["primary_organism"]: all_samples}
 
+    # We'll store here all sample accession codes that didn't make it into the compendia
+    # with the reason why not.
+    job_context['filtered_samples'] = {}
+
     job_context = smashing_utils.prepare_files(job_context)
 
     # Compendia jobs only run for one organism, so we know the only
@@ -231,8 +235,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Remove genes (rows) with <=70% present values in combined_matrix
     thresh = combined_matrix.shape[1] * .7  # (Rows, Columns)
     # Everything below `thresh` is dropped
-    row_filtered_matrix = combined_matrix.dropna(axis='index',
-                                                 thresh=thresh)
+    row_filtered_matrix = combined_matrix.dropna(axis='index', thresh=thresh)
+
     del combined_matrix
     del thresh
 
@@ -253,6 +257,12 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     log_state("end drop NA genes", job_context["job"].id, drop_na_samples_start)
     replace_zeroes_start = log_state("start replace zeroes", job_context["job"].id)
+
+    for sample_accession_code in row_filtered_matrix.columns:
+        if sample_accession_code not in row_col_filtered_matrix_samples_columns:
+            job_context['filtered_samples'][sample_accession_code] = {
+                'reason': 'Sample was dropped because it less than 50% present values.',
+            }
 
     del row_filtered_matrix
 

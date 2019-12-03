@@ -64,6 +64,7 @@ def prepare_files(job_context: Dict) -> Dict:
     start_prepare_files = log_state("start prepare files", job_context["job"].id)
     found_files = False
     job_context['input_files'] = {}
+
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
         smashable_files = []
@@ -74,6 +75,11 @@ def prepare_files(job_context: Dict) -> Dict:
                 smashable_files = smashable_files + [(smashable_file, sample)]
                 seen_files.add(smashable_file)
                 found_files = True
+            else:
+                if job_context['filtered_samples']:
+                    job_context['filtered_samples'][sample.accession_code] = {
+                        'reason': 'We could not find a valid smashable file for this sample.'
+                    }
 
         job_context['input_files'][key] = smashable_files
 
@@ -304,6 +310,11 @@ def process_frames_for_key(key: str,
                                computed_file=computed_file.id,
                                dataset_id=job_context['dataset'].id,
                                job_id=job_context["job"].id)
+                if job_context['filtered_samples']:
+                    job_context['filtered_samples'][sample.accession_code] = {
+                        'reason': 'We were unable to smash the file associated with this sample during the first pass.',
+                        'source_url': computed_file.source_url
+                    }
                 continue
 
             # Count how many frames are in each tech so we can preallocate
@@ -375,9 +386,14 @@ def process_frames_for_key(key: str,
 
         if frame_data is None:
             job_context['unsmashable_files'].append(computed_file.filename)
+            if job_context['filtered_samples']:
+                job_context['filtered_samples'][sample.accession_code] = {
+                    'reason': 'We were unable to smash the file associated with this sample during the first pass.',
+                    'source_url': computed_file.source_url
+                }
             continue
-        else:
-            frame_data = frame_data.reindex(all_gene_identifiers)
+
+        frame_data = frame_data.reindex(all_gene_identifiers)
 
         # The dataframe for each sample will only have one column
         # whose header will be the accession code.
