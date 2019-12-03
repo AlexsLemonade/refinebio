@@ -386,7 +386,7 @@ def process_frames_for_key(key: str,
         if frame_data is None:
             job_context['unsmashable_files'].append(computed_file.filename)
             job_context['filtered_samples'][sample.accession_code] = {
-                'reason': 'We were unable to smash the file associated with this sample during the first pass.',
+                'reason': 'We were unable to smash the file associated with this sample during the second pass.',
                 'filename': computed_file.filename
             }
             continue

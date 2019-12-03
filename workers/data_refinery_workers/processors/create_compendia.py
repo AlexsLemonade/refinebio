@@ -261,7 +261,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     for sample_accession_code in row_filtered_matrix.columns:
         if sample_accession_code not in row_col_filtered_matrix_samples_columns:
             job_context['filtered_samples'][sample_accession_code] = {
-                'reason': 'Sample was dropped because it less than 50% present values.',
+                'reason': 'Sample was dropped because it had less than 50% present values.',
             }
 
     del row_filtered_matrix
