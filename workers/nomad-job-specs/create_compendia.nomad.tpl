@@ -70,7 +70,7 @@ job "CREATE_COMPENDIA" {
         # CPU is in AWS's CPU units.
         cpu =   4000
         # Memory is in MB of RAM. Instance has 976GiB of RAM.
-        memory = 400000
+        memory = 40000
       }
 
       logs {
