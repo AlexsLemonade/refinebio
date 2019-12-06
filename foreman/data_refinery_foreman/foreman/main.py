@@ -686,6 +686,8 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
                 new_ram_amount = 4096
             elif new_ram_amount == 4096:
                 new_ram_amount = 8192
+            elif new_ram_amount == 8192:
+                new_ram_amount = 32768
 
     volume_index = last_job.volume_index
     # Make sure volume_index is set to something, unless it's a
