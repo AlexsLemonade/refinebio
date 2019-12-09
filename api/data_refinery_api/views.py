@@ -925,6 +925,16 @@ def get_start_date(range_param):
         'year': current_date - timedelta(days=365)
     }.get(range_param)
 
+def paginate_queryset_response(queryset, request):
+    paginator = LimitOffsetPagination()
+    page_items = paginator.paginate_queryset(queryset, request)
+    return Response(data={
+                        'results': [x.to_dict() for x in page_items],
+                        'limit': paginator.limit,
+                        'offset': paginator.offset,
+                        'count': paginator.count
+                    },
+                    status=status.HTTP_200_OK)
 
 class FailedDownloaderJobStats(APIView):
     @swagger_auto_schema(manual_parameters=[openapi.Parameter(
@@ -946,8 +956,7 @@ class FailedDownloaderJobStats(APIView):
             )\
             .order_by('-job_count')
 
-        # return the top 10 failure reasons
-        return Response(list(jobs[:10]))
+        return paginate_queryset_response(jobs, request)
 
 
 class FailedProcessorJobStats(APIView):
@@ -970,8 +979,7 @@ class FailedProcessorJobStats(APIView):
             )\
             .order_by('-job_count')
 
-        # return the top 10 failure reasons
-        return Response(list(jobs[:10]))
+        return paginate_queryset_response(jobs, request)
 
 
 class AboutStats(APIView):
