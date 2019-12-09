@@ -686,6 +686,8 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
                 new_ram_amount = 4096
             elif new_ram_amount == 4096:
                 new_ram_amount = 8192
+            elif new_ram_amount == 8192:
+                new_ram_amount = 32768
 
     volume_index = last_job.volume_index
     # Make sure volume_index is set to something, unless it's a
@@ -1381,14 +1383,15 @@ def monitor_jobs():
                 logger.error("Caught exception in %s: ", function.__name__)
                 traceback.print_exc(chain=False)
 
-        if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
-            send_janitor_jobs()
-            cleanup_the_queue()
-            last_janitorial_time = timezone.now()
+        if settings.RUNNING_IN_CLOUD:
+            if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
+                send_janitor_jobs()
+                cleanup_the_queue()
+                last_janitorial_time = timezone.now()
 
-        if timezone.now() - last_dbclean_time > DBCLEAN_TIME:
-            clean_database()
-            last_dbclean_time = timezone.now()
+            if timezone.now() - last_dbclean_time > DBCLEAN_TIME:
+                clean_database()
+                last_dbclean_time = timezone.now()
 
         loop_time = timezone.now() - start_time
         if loop_time < MIN_LOOP_TIME:

@@ -1,11 +1,6 @@
-import os
-import random
-import string
 import subprocess
 import time
-import warnings
 
-import numpy as np
 import pandas as pd
 
 from django.utils import timezone
@@ -18,14 +13,10 @@ from data_refinery_common.models import (
     ComputationalResultAnnotation,
     ComputedFile,
     Pipeline,
-    Processor,
-    SampleComputedFileAssociation,
-    SampleResultAssociation,
     Experiment,
-    Organism,
 )
-from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, smasher, smashing_utils
+from data_refinery_common.utils import queryset_iterator
+from data_refinery_workers.processors import utils, smashing_utils
 
 
 logger = get_and_configure_logger(__name__)
@@ -44,13 +35,15 @@ def _prepare_input(job_context: Dict) -> Dict:
 
     return job_context
 
-def _build_qn_target(job_context: Dict) -> Dict:
-    """ Iteratively creates a QN target file, method described here: https://github.com/AlexsLemonade/refinebio/pull/1013"""
 
+def _build_qn_target(job_context: Dict) -> Dict:
+    """ Iteratively creates a QN target file, method described here:
+    https://github.com/AlexsLemonade/refinebio/pull/1013
+    """
     job_context['time_start'] = timezone.now()
 
     # Get the gene list from the first input
-    (computed_file, _) =  job_context['input_files']['ALL'][0]
+    (computed_file, _) = job_context['input_files']['ALL'][0]
     computed_file_path = computed_file.get_synced_file_path()
     geneset_target_frame = smashing_utils._load_and_sanitize_file(computed_file_path)
 
@@ -72,8 +65,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
             logger.warn("No file loaded for input file",
                         exc_info=1,
                         bad_file=file,
-                        num_valid_inputs_so_far=num_valid_inputs
-            )
+                        num_valid_inputs_so_far=num_valid_inputs)
             continue
 
         # If this input doesn't have the same geneset, we don't want it!
@@ -83,8 +75,18 @@ def _build_qn_target(job_context: Dict) -> Dict:
                         target_geneset_len=len(geneset),
                         bad_geneset_len=len(input_frame.index.values),
                         geneset_difference=list(geneset ^ set(input_frame.index.values))[:3],
-                        num_valid_inputs_so_far=num_valid_inputs
-            )
+                        num_valid_inputs_so_far=num_valid_inputs)
+            continue
+
+        # We don't want to build QNs that have Nulls in them, so
+        # filter out any samples that still have null genes at this
+        # point.
+        num_nulls = input_frame.isnull().sum(axis=0)[0]
+        if num_nulls != 0:
+            logger.warn("Input frame contains NA values, skipping!",
+                        bad_file=file,
+                        number_of_NAs=num_nulls,
+                        num_valid_inputs_so_far=num_valid_inputs)
             continue
 
         # Sort the input
@@ -105,7 +107,11 @@ def _build_qn_target(job_context: Dict) -> Dict:
     job_context['geneset'] = list(geneset)
 
     # Write the file
-    sum_frame.to_csv(job_context['target_file'], index=False, header=False, sep='\t', encoding='utf-8')
+    sum_frame.to_csv(job_context['target_file'],
+                     index=False,
+                     header=False,
+                     sep='\t',
+                     encoding='utf-8')
     job_context['formatted_command'] = "qn_reference.py"
 
     return job_context
@@ -215,6 +221,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     job_context['success'] = True
     return job_context
 
+
 def _update_caches(job_context: Dict) -> Dict:
     """ Experiments have a cached value with the number of samples that have QN targets
         generated, this value should be updated after generating new QN targets. """
@@ -229,19 +236,20 @@ def _update_caches(job_context: Dict) -> Dict:
         .filter(organism=organism)\
         .distinct()
 
-    for experiment in unique_experiments.iterator():
+    for experiment in queryset_iterator(unique_experiments):
         experiment.update_num_samples()
 
     return job_context
 
+
 def create_qn_reference(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.QN_REFERENCE.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
-                       [utils.start_job,
-                        _prepare_input,
-                        _build_qn_target,
-                        # _verify_result,
-                        _create_result_objects,
-                        _update_caches,
-                        utils.end_job])
+                                     [utils.start_job,
+                                      _prepare_input,
+                                      _build_qn_target,
+                                      # _verify_result,
+                                      _create_result_objects,
+                                      _update_caches,
+                                      utils.end_job])
     return job_context

@@ -231,11 +231,10 @@ def determine_downloader_task(sample_object: Sample) -> Downloaders:
         # Sometimes Array Express lies about what a sample's platform
         # is. Therefore, if there's a .CEL file we'll download it and
         # determine the platform from that.
-        relations = OriginalFileSampleAssociation.objects.filter(sample=sample_object)
-        original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
-        for original_file in original_files:
-            if original_file.source_filename[-4:].upper() == ".CEL":
-                return Downloaders[sample_object.source_database]
+        has_cel_original_files = sample_object.original_files\
+            .filter(source_filename__iendswith='.CEL').exists()
+        if has_cel_original_files:
+            return Downloaders[sample_object.source_database]
 
     return Downloaders.NONE
 
@@ -316,8 +315,8 @@ def determine_ram_amount(sample: Sample, job) -> int:
         if 'u133' in platform:
             return 2048
         if 'gene' in platform:
-            return 3072
-        if 'hta20' in platform:
+            return 4096
+        if 'hta20' in platform or 'huex10st' in platform:
             return 32768
         # Not sure what the ram usage of this platform is! Investigate!
         logger.debug("Unsure of RAM usage for platform! Using default.",

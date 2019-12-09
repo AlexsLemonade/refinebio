@@ -163,20 +163,20 @@ def process_frames_for_key(key: str,
                                  job_context["job"].id)
 
     job_context['all_frames'] = []
-    for index, (computed_file, sample) in enumerate(input_files):
-        frame = smashing_utils.process_frame(job_context["work_dir"],
+    for (computed_file, sample) in input_files:
+        frame_data = smashing_utils.process_frame(job_context["work_dir"],
                                              computed_file,
                                              sample.accession_code,
-                                             job_context['dataset'].id,
-                                             job_context['dataset'].aggregate_by,
-                                             index,
-                                             None,
-                                             job_context["job"].id)
+                                             job_context['dataset'].aggregate_by)
 
-        if frame['unsmashable']:
-            job_context['unsmashable_files'].append(frame['unsmashable_file'])
+        if frame_data is not None:
+            job_context['all_frames'].append(frame_data)
         else:
-            job_context['all_frames'].append(frame['dataframe'])
+            logger.warning('Unable to smash file',
+                               computed_file=computed_file.id,
+                               dataset_id=job_context['dataset'].id,
+                               job_id=job_context["job"].id)
+            job_context['unsmashable_files'].append(computed_file.filename)
 
     log_state("Finished building list of all_frames key {}".format(key),
               job_context["job"].id,
@@ -205,9 +205,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
-    job_context = process_frames_for_key(key,
-                                         input_files,
-                                         job_context)
+    job_context = process_frames_for_key(key, input_files, job_context)
 
     if len(job_context['all_frames']) < 1:
         logger.error("Was told to smash a key with no frames!",
@@ -451,7 +449,6 @@ def _notify(job_context: Dict) -> Dict:
             AWS_REGION = "us-east-1"
             CHARSET = "UTF-8"
 
-
             if job_context['job'].success is False:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
@@ -539,18 +536,19 @@ def _update_result_objects(job_context: Dict) -> Dict:
 
     return job_context
 
+
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
-
     pipeline = Pipeline(name=PipelineEnum.SMASHER.value)
-    return utils.run_pipeline({ "job_id": job_id,
-                                "upload": upload,
-                                "pipeline": pipeline
-                            },
-                       [utils.start_job,
-                        smashing_utils.prepare_files,
-                        _smash_all,
-                        _upload,
-                        _notify,
-                        _update_result_objects,
-                        utils.end_job])
+    job_context = utils.run_pipeline({"job_id": job_id,
+                                      "upload": upload,
+                                      "pipeline": pipeline},
+                                     [utils.start_job,
+                                      smashing_utils.prepare_files,
+                                      _smash_all,
+                                      _upload,
+                                      _update_result_objects,
+                                      utils.end_job])
+    # ensure that `notify` is always called so that users get emails in case processing fails or succeeds
+    job_context = _notify(job_context)
+    return job_context

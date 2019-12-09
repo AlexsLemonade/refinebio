@@ -26,6 +26,7 @@ from data_refinery_common.utils import (
     get_readable_affymetrix_names,
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,
+    FileUtils
 )
 from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
@@ -360,13 +361,13 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         sample_object.save()
 
                     # filename and source_filename are the same for these
-                    filename = supplementary_file_url.split('/')[-1]
+                    filename = FileUtils.get_filename(supplementary_file_url)
                     original_file = OriginalFile.objects.get_or_create(
                             source_url = supplementary_file_url,
                             filename = filename,
                             source_filename = filename,
                             has_raw = sample_object.has_raw,
-                            is_archive = True
+                            is_archive = FileUtils.is_archive(filename)
                         )[0]
 
                     logger.debug("Created OriginalFile: " + str(original_file))

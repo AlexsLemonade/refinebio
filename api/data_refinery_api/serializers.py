@@ -18,6 +18,7 @@ from data_refinery_common.models import (
     Processor,
     ComputationalResult,
     ComputationalResultAnnotation,
+    CompendiumResult,
     ComputedFile,
     Dataset,
     APIToken
@@ -116,9 +117,6 @@ class ComputedFileSerializer(serializers.ModelSerializer):
             'size_in_bytes',
             'is_smashable',
             'is_qc',
-            'is_compendia',
-            'quant_sf_only',
-            'svd_algorithm',
             'sha1',
             's3_bucket',
             's3_key',
@@ -137,9 +135,6 @@ class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
             'size_in_bytes',
             'is_smashable',
             'is_qc',
-            'is_compendia',
-            'quant_sf_only',
-            'svd_algorithm',
             'sha1',
             's3_bucket',
             's3_key',
@@ -790,49 +785,41 @@ class APITokenSerializer(serializers.ModelSerializer):
                         }
                     }
 
-
-class CompendiaSerializer(serializers.ModelSerializer):
-    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
+class CompendiumResultSerializer(serializers.ModelSerializer):
+    primary_organism = serializers.StringRelatedField(read_only=True)
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    computed_file = ComputedFileSerializer(source='get_computed_file', read_only=True)
 
     class Meta:
-        model = ComputedFile
+        model = CompendiumResult
         fields = (
                     'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_compendia',
+                    'primary_organism',
+                    'organisms',
+                    'svd_algorithm',
                     'quant_sf_only',
-                    'compendia_version',
-                    'organism_name',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    's3_url',
-                    'created_at',
-                    'last_modified'
+                    'compendium_version',
+                    'computed_file',
                 )
+        read_only_fields = fields
 
-
-class CompendiaWithUrlSerializer(serializers.ModelSerializer):
-    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
+class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
+    primary_organism = serializers.StringRelatedField(read_only=True)
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    computed_file = ComputedFileWithUrlSerializer(source='get_computed_file', read_only=True)
 
     class Meta:
-        model = ComputedFile
+        model = CompendiumResult
         fields = (
                     'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_compendia',
-                    'compendia_version',
-                    'organism_name',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    's3_url',
-                    'download_url',
-                    'created_at',
-                    'last_modified'
+                    'primary_organism',
+                    'organisms',
+                    'svd_algorithm',
+                    'quant_sf_only',
+                    'compendium_version',
+                    'computed_file',
                 )
+        read_only_fields = fields
 
 
 ##

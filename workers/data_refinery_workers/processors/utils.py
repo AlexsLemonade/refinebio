@@ -6,6 +6,7 @@ import string
 import subprocess
 import sys
 import yaml
+import pickle
 
 from django.conf import settings
 from django.utils import timezone
@@ -118,9 +119,9 @@ def prepare_dataset(job_context):
 
     # This should never be more than one!
     if job_datasets.count() > 1:
-        raise ProcessorJobError('More than one dataset for processor job!', success=False)
+        raise ProcessorJobError('More than one dataset for processor job!', success=False, no_retry=True)
     elif job_datasets.count() == 0:
-        raise ProcessorJobError('No datasets found for processor job!', success=False)
+        raise ProcessorJobError('No datasets found for processor job!', success=False, no_retry=True)
 
     dataset = job_datasets.first()
     dataset.is_processing = True
@@ -241,9 +242,9 @@ def end_job(job_context: Dict, abort=False):
             nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(24))
             result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
 
-            if result:
+            if result and settings.RUNNING_IN_CLOUD:
                 computed_file.delete_local_file()
-            else:
+            elif not result:
                 success = False
                 job_context['success'] = False
                 job.failure_reason = "Failed to upload computed file."
@@ -417,6 +418,12 @@ class ProcessorJobError(Exception):
         if self.abort is not None:
             job.abort = self.abort
         job.save()
+
+        # also update the failure reason if this is a dataset's processor job
+        for dataset in job.datasets.all():
+            dataset.failure_reason = self.failure_reason
+            dataset.success = False
+            dataset.save()
 
 
 def get_os_distro():
@@ -662,3 +669,47 @@ def handle_processor_exception(job_context, processor_key, ex):
     job_context["job"].failure_reason = err_str
     job_context["success"] = False
     return job_context
+
+
+def cache_keys(*keys, work_dir_key='work_dir'):
+    """ Decorator to be applied to a pipeline function.
+    Returns a new function that calls the original one and caches the given
+    keys into the `work_dir`. On the next call it will load those keys (if they
+    exist) and add them to the job_context instead of executing the function. """
+    def inner(func):
+        # generate a unique name for the cache based on the pipeline name
+        # and the cached keys
+        cache_name = '__'.join(list(keys) + [func.__name__])
+
+        def pipeline(job_context):
+            cache_path = os.path.join(job_context[work_dir_key], cache_name)
+            if os.path.exists(cache_path):
+                # cached values exist, load keys from cacke
+                try:
+                    values = pickle.load(open(cache_path, "rb" ))
+                    return {**job_context, **values}
+                except:
+                    # don't fail if we can't load the cache
+                    logger.warning('Failed to load cached data for pipeline function.',
+                                   function_name=func.__name__,
+                                   keys=keys)
+                    pass
+
+            # execute the actual function
+            job_context = func(job_context)
+
+            try:
+                # save cached data for the next run
+                values = {key: job_context[key] for key in keys}
+                pickle.dump(values, open(cache_path, "wb"))
+            except:
+                # don't fail if we can't save the cache
+                logger.warning('Failed to cache data for pipeline function.',
+                                function_name=func.__name__,
+                                keys=keys)
+                pass
+            return job_context
+
+        return pipeline
+
+    return inner

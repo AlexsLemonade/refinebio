@@ -2,9 +2,11 @@ import logging
 import os
 import shutil
 import time
+import itertools
 from typing import Dict
 
 from django.utils import timezone
+from django.db.models import Q, Count
 from fancyimpute import IterativeSVD
 import numpy as np
 import pandas as pd
@@ -14,6 +16,8 @@ from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (ComputationalResult,
                                          ComputationalResultAnnotation,
+                                         CompendiumResult,
+                                         CompendiumResultOrganismAssociation,
                                          ComputedFile,
                                          Organism,
                                          Pipeline)
@@ -49,10 +53,13 @@ def log_state(message, job_id, start_time=False):
 def _prepare_input(job_context: Dict) -> Dict:
     start_time = log_state("prepare input", job_context["job"].id)
 
+    job_context["primary_organism"] = max(job_context["samples"],
+                                          key=lambda organism:len(job_context["samples"][organism]))
+    job_context["all_organisms"] = job_context["samples"].keys()
+    all_samples = list(itertools.chain(*job_context["samples"].values()))
+    job_context["samples"] = {job_context["primary_organism"]: all_samples}
+
     job_context = smashing_utils.prepare_files(job_context)
-    if job_context['job'].success is False:
-        smashing_utils.log_failure(job_context, "Unable to run smashing_utils.prepare_files.")
-        return job_context
 
     # Compendia jobs only run for one organism, so we know the only
     # key will be the organism name, unless of course we've already failed.
@@ -74,35 +81,26 @@ def _prepare_input(job_context: Dict) -> Dict:
 def _prepare_frames(job_context: Dict) -> Dict:
     start_prepare_frames = log_state("start _prepare_frames", job_context["job"].id)
 
+    job_context['unsmashable_files'] = []
+    job_context['num_samples'] = 0
+
+    # Smash all of the sample sets
+    logger.debug("About to smash!",
+                 dataset_count=len(job_context['dataset'].data),
+                 job_id=job_context['job'].id)
+
     try:
-        job_context['unsmashable_files'] = []
-        job_context['num_samples'] = 0
-
-        # Smash all of the sample sets
-        logger.debug("About to smash!",
-                     dataset_count=len(job_context['dataset'].data),
-                     job_id=job_context['job'].id)
-
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context.pop('input_files').items():
-            job_context = smashing_utils.process_frames_for_key(key,
-                                                                input_files,
-                                                                job_context)
+            job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
-
     except Exception as e:
-        logger.exception("Could not prepare frames for compendia.",
-                         dataset_id=job_context['dataset'].id,
-                         processor_job_id=job_context['job_id'],
-                         num_input_files=job_context['num_input_files'])
-        job_context['dataset'].success = False
-        job_context['job'].failure_reason = "Failure reason: " + str(e)
-        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
-        job_context['dataset'].save()
-        job_context['success'] = False
-        job_context['failure_reason'] = str(e)
-        return job_context
+        raise utils.ProcessorJobError("Could not prepare frames for compendia.",
+                                      success=False,
+                                      dataset_id=job_context['dataset'].id,
+                                      processor_job_id=job_context['job_id'],
+                                      num_input_files=job_context['num_input_files'])
 
     job_context['dataset'].success = True
     job_context['dataset'].save()
@@ -150,6 +148,10 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # We potentially can have a microarray-only compendia but not a RNASeq-only compendia
     log2_rnaseq_matrix = None
     if job_context['rnaseq_matrix'] is not None:
+        # Drop any genes that are entirely NULL in the RNA-Seq matrix
+        job_context['rnaseq_matrix'] = job_context['rnaseq_matrix'].dropna(axis='columns',
+                                                                           how='all')
+
         # Calculate the sum of the lengthScaledTPM values for each row
         # (gene) of the rnaseq_matrix (rnaseq_row_sums)
         rnaseq_row_sums = np.sum(job_context['rnaseq_matrix'], axis=1)
@@ -356,7 +358,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
     job_context['time_end'] = timezone.now()
-    job_context['formatted_command'] = "create_compendia.py"
+    job_context['formatted_command'] = ["create_compendia.py"]
     log_state("end prepare imputation", job_context["job"].id, imputation_start)
     return job_context
 
@@ -369,7 +371,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
-    result.is_public = True
+    # Temporary until we re-enable the QN test step.
+    result.is_public = False
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     try:
@@ -382,15 +385,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Write the compendia dataframe to a file
     job_context['csv_outfile'] = job_context['output_dir'] + job_context['organism_name'] + '.tsv'
     job_context['merged_qn'].to_csv(job_context['csv_outfile'], sep='\t', encoding='utf-8')
-    compendia_tsv_computed_file = ComputedFile()
-    compendia_tsv_computed_file.absolute_file_path = job_context['csv_outfile']
-    compendia_tsv_computed_file.filename = job_context['csv_outfile'].split('/')[-1]
-    compendia_tsv_computed_file.calculate_sha1()
-    compendia_tsv_computed_file.calculate_size()
-    compendia_tsv_computed_file.is_smashable = False
-    compendia_tsv_computed_file.is_qn_target = False
-    compendia_tsv_computed_file.result = result
-    compendia_tsv_computed_file.save()
 
     organism_key = list(job_context['samples'].keys())[0]
     annotation = ComputationalResultAnnotation()
@@ -408,17 +402,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     }
     annotation.save()
 
-    # Save the related metadata file
-    metadata_computed_file = ComputedFile()
-    metadata_computed_file.absolute_file_path = job_context['metadata_tsv_paths'][0]
-    metadata_computed_file.filename = job_context['metadata_tsv_paths'][0].split('/')[-1]
-    metadata_computed_file.calculate_sha1()
-    metadata_computed_file.calculate_size()
-    metadata_computed_file.is_smashable = False
-    metadata_computed_file.is_qn_target = False
-    metadata_computed_file.result = result
-    metadata_computed_file.save()
-
     # Create the resulting archive
     final_zip_base = SMASHING_DIR + str(job_context["dataset"].pk) + "_compendia"
     # Copy LICENSE.txt and correct README.md files.
@@ -431,18 +414,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     shutil.copy("/home/user/LICENSE_DATASET.txt", job_context["output_dir"] + "/LICENSE.TXT")
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
-    # Save the related metadata file
-    organism = job_context['samples'][organism_key][0].organism
-
-    try:
-        last_compendia = ComputedFile.objects.filter(
-                                    is_compendia=True,
-                                    compendia_organism=organism).order_by('-compendia_version')[-1]
-        compendia_version = last_compendia.compendia_version + 1
-    except Exception as e:
-        # This is the first compendia for this Organism
-        compendia_version = 1
-
     archive_computed_file = ComputedFile()
     archive_computed_file.absolute_file_path = archive_path
     archive_computed_file.filename = archive_path.split('/')[-1]
@@ -451,26 +422,50 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_smashable = False
     archive_computed_file.is_qn_target = False
     archive_computed_file.result = result
-    archive_computed_file.is_compendia = True
-    archive_computed_file.quant_sf_only = job_context["dataset"].quant_sf_only
-    archive_computed_file.svd_algorithm = job_context["dataset"].svd_algorithm
-    archive_computed_file.compendia_organism = job_context['samples'][organism_key][0].organism
-    archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
 
-    logger.info("Compendia created!",
+    # Compendia Result Helpers
+    primary_organism = Organism.get_object_for_name(job_context['primary_organism'])
+    organisms = [Organism.get_object_for_name(organism) for organism in job_context["all_organisms"]]
+    compendium_version = CompendiumResult.objects.filter(
+                                                   primary_organism=primary_organism,
+                                                   quant_sf_only=False
+                                               ).count() + 1
+    # Save Compendia Result
+    compendium_result = CompendiumResult()
+    compendium_result.quant_sf_only = job_context["dataset"].quant_sf_only
+    compendium_result.svd_algorithm = job_context['dataset'].svd_algorithm
+    compendium_result.compendium_version = compendium_version
+    compendium_result.result = result
+    compendium_result.primary_organism = primary_organism
+    compendium_result.save()
+
+    # create relations to all organisms contained in the compendia
+
+    compendium_result_organism_associations = []
+    for compendium_organism in organisms:
+        compendium_result_organism_association = CompendiumResultOrganismAssociation()
+        compendium_result_organism_association.compendium_result = compendium_result
+        compendium_result_organism_association.organism = compendium_organism
+        compendium_result_organism_associations.append(
+                compendium_result_organism_association)
+
+    CompendiumResultOrganismAssociation.objects.bulk_create(
+            compendium_result_organism_associations)
+
+    job_context['compendium_result'] = compendium_result
+
+    logger.info("Compendium created!",
                 archive_path=archive_path,
                 organism_name=job_context['organism_name'])
 
     # Upload the result to S3
     timestamp = str(int(time.time()))
-    key = job_context['organism_name'] + "_" + str(compendia_version) + "_" + timestamp + ".zip"
+    key = job_context['organism_name'] + "_" + str(compendium_version) + "_" + timestamp + ".zip"
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
 
     job_context['result'] = result
-    job_context['computed_files'] = [compendia_tsv_computed_file,
-                                     metadata_computed_file,
-                                     archive_computed_file]
+    job_context['computed_files'] = [archive_computed_file]
     job_context['success'] = True
 
     log_state("end create result object", job_context["job"].id, result_start)

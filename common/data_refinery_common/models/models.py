@@ -361,7 +361,8 @@ class Experiment(models.Model):
         metadata = {}
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
-        metadata['organisms'] = [organism.name for organism in self.organisms.all()]
+        metadata['organisms'] = list(self.organisms.all().values_list('name', flat=True))
+        metadata['sample_accession_codes'] = list(self.samples.all().values_list('accession_code', flat=True))
         metadata['description'] = self.description
         metadata['protocol_description'] = self.protocol_description
         metadata['technology'] = self.technology
@@ -596,6 +597,60 @@ class ComputationalResultAnnotation(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
+
+
+# Compendium Computational Result
+class CompendiumResult(models.Model):
+    """ Computational Result For A Compendium """
+    class Meta:
+        db_table = "compendium_results"
+        base_manager_name = "public_objects"
+
+    def __str__(self):
+        return "CompendiumResult " + str(self.pk)
+
+    SVD_ALGORITHM_CHOICES = (
+        ('NONE', 'None'),
+        ('RANDOMIZED', 'randomized'),
+        ('ARPACK', 'arpack'),
+    )
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    # Relations
+    result = models.ForeignKey(ComputationalResult,
+                               blank=False,
+                               null=False,
+                               related_name='compendium_result',
+                               on_delete=models.CASCADE)
+    primary_organism = models.ForeignKey(Organism,
+                                         blank=False,
+                                         null=False,
+                                         related_name='primary_compendium_results',
+                                         on_delete=models.CASCADE)
+    organisms = models.ManyToManyField(Organism,
+                                       related_name='compendium_results',
+                                       through='CompendiumResultOrganismAssociation')
+
+    # Properties
+    quant_sf_only = models.BooleanField(default=False)
+    compendium_version = models.IntegerField(blank=True, null=True)
+    svd_algorithm = models.CharField(
+        max_length=255,
+        choices=SVD_ALGORITHM_CHOICES,
+        default="NONE",
+        help_text='The SVD algorithm that was used to impute the compendium result.'
+    )
+
+    # Common Properties
+    is_public = models.BooleanField(default=True)
+
+    #helper
+    def get_computed_file(self):
+        """ Short hand method for getting the computed file for this compendium"""
+        return ComputedFile.objects.filter(result=self.result).first()
 
 
 # TODO
@@ -1024,7 +1079,7 @@ class ComputedFile(models.Model):
                     # We don't have the file :(
                     return None
 
-        target_directory = os.path.dirname(self.absolute_file_path)
+        target_directory = os.path.dirname(path)
         os.makedirs(target_directory, exist_ok=True)
 
         if not self.s3_bucket or not self.s3_key:
@@ -1191,6 +1246,11 @@ class ComputedFile(models.Model):
             )
         else:
             return None
+
+    def has_been_log2scaled(self):
+        """ Return true if this is a smashable file that has been log2 scaled """
+        return self.is_smashable and self.filename.endswith("lengthScaledTPM.tsv")
+
 
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
@@ -1482,3 +1542,15 @@ class ExperimentResultAssociation(models.Model):
     class Meta:
         db_table = "experiment_result_associations"
         unique_together = ('result', 'experiment')
+
+
+class CompendiumResultOrganismAssociation(models.Model):
+
+    compendium_result = models.ForeignKey(
+        CompendiumResult, blank=False, null=False, on_delete=models.CASCADE)
+    organism = models.ForeignKey(
+        Organism, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "compendium_result_organism_associations"
+        unique_together = ('compendium_result', 'organism')
