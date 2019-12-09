@@ -20,7 +20,8 @@ from data_refinery_common.models import (ComputationalResult,
                                          CompendiumResultOrganismAssociation,
                                          ComputedFile,
                                          Organism,
-                                         Pipeline)
+                                         Pipeline,
+                                         Sample)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import smashing_utils, utils
 
@@ -260,8 +261,12 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     for sample_accession_code in row_filtered_matrix.columns:
         if sample_accession_code not in row_col_filtered_matrix_samples_columns:
+            sample = Sample.objects.get(accession_code=sample_accession_code)
+            sample_metadata = sample.to_metadata_dict()
             job_context['filtered_samples'][sample_accession_code] = {
+                **sample_metadata,
                 'reason': 'Sample was dropped because it had less than 50% present values.',
+                'experiment_accession_code': smashing_utils.get_experiment_accession(sample.accession_code, job_context['dataset'].data)
             }
 
     del row_filtered_matrix

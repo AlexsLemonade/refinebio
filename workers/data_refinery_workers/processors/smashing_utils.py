@@ -77,8 +77,11 @@ def prepare_files(job_context: Dict) -> Dict:
                 seen_files.add(smashable_file)
                 found_files = True
             else:
+                sample_metadata = sample.to_metadata_dict()
                 job_context['filtered_samples'][sample.accession_code] = {
-                    'reason': 'This sample did not have a processed file associated with it in our database.'
+                    **sample_metadata,
+                    'reason': 'This sample did not have a processed file associated with it in our database.',
+                    'experiment_accession_code': get_experiment_accession(sample.accession_code, job_context['dataset'].data)
                 }
 
         job_context['input_files'][key] = smashable_files
@@ -310,9 +313,13 @@ def process_frames_for_key(key: str,
                                computed_file=computed_file.id,
                                dataset_id=job_context['dataset'].id,
                                job_id=job_context["job"].id)
+
+                sample_metadata = sample.to_metadata_dict()
                 job_context['filtered_samples'][sample.accession_code] = {
+                    **sample_metadata,
                     'reason': 'The file associated with this sample did not pass the QC checks we apply before aggregating.',
-                    'filename': computed_file.filename
+                    'filename': computed_file.filename,
+                    'experiment_accession_code': get_experiment_accession(sample.accession_code, job_context['dataset'].data)
                 }
                 continue
 
@@ -385,9 +392,12 @@ def process_frames_for_key(key: str,
 
         if frame_data is None:
             job_context['unsmashable_files'].append(computed_file.filename)
+            sample_metadata = sample.to_metadata_dict()
             job_context['filtered_samples'][sample.accession_code] = {
+                **sample_metadata,
                 'reason': 'The file associated with this sample did not contain a vector that fit the expected dimensions of the matrix.',
-                'filename': computed_file.filename
+                'filename': computed_file.filename,
+                'experiment_accession_code': get_experiment_accession(sample.accession_code, job_context['dataset'].data)
             }
             continue
 

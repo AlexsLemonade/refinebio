@@ -165,6 +165,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         # check that sample with no computed file was skipped
         self.assertTrue('GSM1487222' in final_context['filtered_samples'])
+        self.assertEqual(final_context['filtered_samples']['GSM1487222']['experiment_accession_code'], 'GSE1487313')
 
 
     @tag('compendia')
