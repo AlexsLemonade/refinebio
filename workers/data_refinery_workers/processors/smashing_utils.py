@@ -78,7 +78,7 @@ def prepare_files(job_context: Dict) -> Dict:
                 found_files = True
             else:
                 job_context['filtered_samples'][sample.accession_code] = {
-                    'reason': 'We could not find a valid smashable file for this sample.'
+                    'reason': 'This sample did not have a processed file associated with it in our database.'
                 }
 
         job_context['input_files'][key] = smashable_files
@@ -311,7 +311,7 @@ def process_frames_for_key(key: str,
                                dataset_id=job_context['dataset'].id,
                                job_id=job_context["job"].id)
                 job_context['filtered_samples'][sample.accession_code] = {
-                    'reason': 'We were unable to smash the file associated with this sample during the first pass.',
+                    'reason': 'The file associated with this sample did not pass the QC checks we apply before aggregating.',
                     'filename': computed_file.filename
                 }
                 continue
@@ -386,7 +386,7 @@ def process_frames_for_key(key: str,
         if frame_data is None:
             job_context['unsmashable_files'].append(computed_file.filename)
             job_context['filtered_samples'][sample.accession_code] = {
-                'reason': 'We were unable to smash the file associated with this sample during the second pass.',
+                'reason': 'The file associated with this sample did not contain a vector that fit the expected dimensions of the matrix.',
                 'filename': computed_file.filename
             }
             continue
