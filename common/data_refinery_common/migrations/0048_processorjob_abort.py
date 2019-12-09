@@ -26,7 +26,7 @@ def set_default_abort_value(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0042_remove_experiment_organism_names'),
+        ('data_refinery_common', '0047_clean_compendia_files'),
     ]
 
     # we need to add a new field `abort` with default value `False`
