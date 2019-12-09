@@ -807,14 +807,13 @@ def get_tsv_row_data(sample_metadata, dataset_data):
     return row_data
 
 
-def get_tsv_columns(job_context, samples_metadata):
+def get_tsv_columns(samples_metadata):
     """Returns an array of strings that will be written as a TSV file's
     header. The columns are based on fields found in samples_metadata.
 
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-    tsv_start = log_state("start get tsv columns", job_context["job"].id)
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -860,7 +859,6 @@ def get_tsv_columns(job_context, samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    log_state("end get tsv columns", job_context["job"].id, tsv_start)
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -874,7 +872,7 @@ def write_tsv_json(job_context):
     metadata = job_context['metadata']
 
     # Uniform TSV header per dataset
-    columns = get_tsv_columns(job_context, metadata['samples'])
+    columns = get_tsv_columns(metadata['samples'])
 
     # Per-Experiment Metadata
     if job_context["dataset"].aggregate_by == "EXPERIMENT":
