@@ -691,6 +691,16 @@ def write_non_data_files(job_context: Dict) -> Dict:
                                                  'filtered_samples_metadata.json')
             with open(filtered_samples_path, 'w',encoding='utf-8') as metadata_file:
                 json.dump(job_context['filtered_samples'], metadata_file, indent=4, sort_keys=True)
+
+            columns = get_tsv_columns(job_context['filtered_samples'])
+            filtered_samples_tsv_path = os.path.join(job_context["output_dir"],
+                                                     'filtered_samples_metadata.tsv')
+            with open(filtered_samples_tsv_path, 'w', encoding='utf-8') as tsv_file:
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
+                dw.writeheader()
+                for sample_metadata in job_context['filtered_samples'].values():
+                    dw.writerow(get_tsv_row_data(sample_metadata, job_context["dataset"].data))
+
     except Exception as e:
         logger.exception("Failed to write metadata TSV!", job_id=job_context['job'].id)
 
