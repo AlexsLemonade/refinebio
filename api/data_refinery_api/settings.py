@@ -178,6 +178,11 @@ CACHES = {
 }
 
 
+# Server Side Databse Cursors
+# https://code.djangoproject.com/ticket/28062
+
+ENABLE_SERVER_SIDE_CURSORS = False
+
 ##
 # Django Rest Framework
 ##

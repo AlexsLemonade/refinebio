@@ -358,7 +358,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
     job_context['time_end'] = timezone.now()
-    job_context['formatted_command'] = "create_compendia.py"
+    job_context['formatted_command'] = ["create_compendia.py"]
     log_state("end prepare imputation", job_context["job"].id, imputation_start)
     return job_context
 
@@ -381,6 +381,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
     except Exception as e:
         return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
+
+    # Write the compendia dataframe to a file
+    job_context['csv_outfile'] = job_context['output_dir'] + job_context['organism_name'] + '.tsv'
+    job_context['merged_qn'].to_csv(job_context['csv_outfile'], sep='\t', encoding='utf-8')
 
     organism_key = list(job_context['samples'].keys())[0]
     annotation = ComputationalResultAnnotation()
@@ -423,7 +427,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Compendia Result Helpers
     primary_organism = Organism.get_object_for_name(job_context['primary_organism'])
     organisms = [Organism.get_object_for_name(organism) for organism in job_context["all_organisms"]]
-    organisms_filter = Q(organisms__in=organisms)
     compendium_version = CompendiumResult.objects.filter(
                                                    primary_organism=primary_organism,
                                                    quant_sf_only=False

@@ -315,8 +315,8 @@ def determine_ram_amount(sample: Sample, job) -> int:
         if 'u133' in platform:
             return 2048
         if 'gene' in platform:
-            return 3072
-        if 'hta20' in platform:
+            return 4096
+        if 'hta20' in platform or 'huex10st' in platform:
             return 32768
         # Not sure what the ram usage of this platform is! Investigate!
         logger.debug("Unsure of RAM usage for platform! Using default.",

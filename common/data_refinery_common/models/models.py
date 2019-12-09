@@ -1246,6 +1246,11 @@ class ComputedFile(models.Model):
         else:
             return None
 
+    def has_been_log2scaled(self):
+        """ Return true if this is a smashable file that has been log2 scaled """
+        return self.is_smashable and self.filename.endswith("lengthScaledTPM.tsv")
+
+
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
