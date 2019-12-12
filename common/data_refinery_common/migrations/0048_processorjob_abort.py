@@ -34,12 +34,12 @@ class Migration(migrations.Migration):
     # and then set the default value
     # the next migration alters the field to have a default value
     operations = [
-        # 2. add fields with None as default value
+        # 1. add fields with None as default value
         migrations.AddField(
             model_name='processorjob',
             name='abort',
             field=models.BooleanField(null=True),
         ),
-        # 3. set default value in batches
+        # 2. set default value in batches
         migrations.RunPython(set_default_abort_value),
     ]
