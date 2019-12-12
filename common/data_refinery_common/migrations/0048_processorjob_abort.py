@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='processorjob',
             name='abort',
-            field=models.BooleanField(),
+            field=models.BooleanField(null=True),
         ),
         # 3. set default value in batches
         migrations.RunPython(set_default_abort_value),
