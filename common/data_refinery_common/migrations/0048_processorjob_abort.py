@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='processorjob',
             name='abort',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(default=False, null=False),
         ),
         # 5. re-add indexes
         migrations.AddIndex(
