@@ -103,7 +103,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
                 downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time)
                 self.assertTrue(downloader_job.success)
 
-            processor_jobs = ProcessorJob.objects.all()
+            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted processor jobs
             self.assertGreater(processor_jobs.count(), 0)
 
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
@@ -186,8 +186,8 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             )
 
             start_time = timezone.now()
-            with self.assertRaises(ProcessorJob.DoesNotExist):
-                wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+            doomed_processor_job = wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+            self.assertTrue(doomed_processor_job.abort)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should now be two.
@@ -212,7 +212,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             # Once the Downloader job succeeds, it should create one
             # and only one processor job, after which the total goes back up
             # to NUM_SAMPLES_IN_EXPERIMENT:
-            processor_jobs = ProcessorJob.objects.all()
+            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted processor jobs
             self.assertEqual(processor_jobs.count(), NUM_SAMPLES_IN_EXPERIMENT)
 
             # And finally we can make sure that all of the
@@ -278,7 +278,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             try:
                 doomed_processor_job = original_file.processor_jobs.all()[0]
             except:
-                # The doomed job may delete itself before we can get
+                # The doomed job may be aborted before we can get
                 # it. This is fine, we just can't look at it.
                 doomed_processor_job = None
 
@@ -289,8 +289,8 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
                 )
 
                 start_time = timezone.now()
-                with self.assertRaises(ProcessorJob.DoesNotExist):
-                    wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+                doomed_processor_job = wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+                self.assertTrue(doomed_processor_job.abort)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should now be two.
@@ -316,7 +316,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             # processor jobs were successful, including the one that
             # got recreated.
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            processor_jobs = ProcessorJob.objects.all()
+            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted processor jobs
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
                 self.assertTrue(processor_job.success)
@@ -389,7 +389,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             try:
                 doomed_processor_job = original_file.processor_jobs.all()[0]
             except:
-                # The doomed job may delete itself before we can get
+                # The doomed job may be aborted before we can get
                 # it. This is fine, we just can't look at it.
                 doomed_processor_job = None
 
@@ -400,8 +400,8 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
                 )
 
                 start_time = timezone.now()
-                with self.assertRaises(ProcessorJob.DoesNotExist):
-                    wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+                doomed_processor_job = wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+                self.assertTrue(doomed_processor_job.abort)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should
@@ -426,10 +426,10 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             # And finally we can make sure that all of the processor
             # jobs were successful, including the one that got
-            # recreated. The processor job that recreated that job deleted
-            # itself rather than failing, so there's only successes!
+            # recreated. The processor job that recreated that job has
+            # abort=True
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            processor_jobs = ProcessorJob.objects.all()
+            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted jobs
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
                 self.assertTrue(processor_job.success)
@@ -530,17 +530,14 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             successful_processor_jobs = []
             for processor_job in processor_jobs:
                 # One of the calls to wait_for_job will fail if the
-                # job deletes itself before it we selected all the
+                # job aborts before it we selected all the
                 # processor jobs.
-                try:
-                    processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-                    if processor_job.success:
-                        successful_processor_jobs.append(processor_job)
-                except:
-                    pass
+                processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                if processor_job.success:
+                    successful_processor_jobs.append(processor_job)
 
-            # While one of the original ProcessorJobs will definitely
-            # delete itself, it is hard to be sure of what will happen
+            # While one of the original ProcessorJobs will  be aborted
+            # it is hard to be sure of what will happen
             # to the other because of the racing that happens between
             # processor jobs getting started and us deleting the files
             # they need.
@@ -611,7 +608,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
                             break
 
             # There's a chance that the processor job with a missing
-            # file deletes itself before the last downloader job
+            # file is aborted before the last downloader job
             # completes, therefore just check that there's at least 3
             # processor jobs.
             processor_jobs = ProcessorJob.objects.all()
@@ -624,8 +621,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             )
 
             start_time = timezone.now()
-            with self.assertRaises(ProcessorJob.DoesNotExist):
-                wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+            wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should
@@ -666,7 +662,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             successful_processor_jobs = []
             for processor_job in processor_jobs:
                 # One of the two calls to wait_for_job will fail
-                # because the job is going to delete itself when it
+                # because the job is going to abort when it
                 # finds that the file it wants to process is missing.
                 try:
                     processor_job = wait_for_job(processor_job, ProcessorJob, start_time)

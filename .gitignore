@@ -79,6 +79,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.pytest_cache/
 
 # Translations
 *.mo
@@ -140,4 +141,3 @@ dr_env/
 
 # vim swp files
 *.*.swp
-.vscode

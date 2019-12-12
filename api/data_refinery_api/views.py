@@ -7,7 +7,7 @@ from re import match
 from django.conf import settings
 from django.views.decorators.cache import cache_page
 from django.db.models import Count, Prefetch, DateTimeField, OuterRef, Subquery
-from django.db.models.functions import Trunc
+from django.db.models.functions import Trunc, Left
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
@@ -916,6 +916,72 @@ class ProcessorJobList(generics.ListAPIView):
 # Statistics
 ###
 
+def get_start_date(range_param):
+    current_date = datetime.now(tz=timezone.utc)
+    return {
+        'day': current_date - timedelta(days=1),
+        'week': current_date - timedelta(weeks=1),
+        'month': current_date - timedelta(days=30),
+        'year': current_date - timedelta(days=365)
+    }.get(range_param)
+
+def paginate_queryset_response(queryset, request):
+    paginator = LimitOffsetPagination()
+    page_items = paginator.paginate_queryset(queryset, request)
+    return Response(data={
+                        'results': [x.to_dict() for x in page_items],
+                        'limit': paginator.limit,
+                        'offset': paginator.offset,
+                        'count': paginator.count
+                    },
+                    status=status.HTTP_200_OK)
+
+class FailedDownloaderJobStats(APIView):
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter(
+        name='range', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Specify a range from which to calculate the possible options",
+        enum=('day', 'week', 'month', 'year',)
+    )])
+    @method_decorator(cache_page(10 * 60))
+    def get(self, request, version, format=None):
+        range_param = request.query_params.dict().pop('range', 'day')
+        start_date = get_start_date(range_param)
+        jobs = DownloaderJob.objects\
+            .filter(created_at__gt=start_date)\
+            .annotate(reason=Left('failure_reason', 80))\
+            .values('reason')\
+            .annotate(
+                job_count=Count('reason'),
+                sample_count=Count('original_files__samples', distinct=True, filter=Q(original_files__samples__is_processed=False))
+            )\
+            .order_by('-job_count')
+
+        return paginate_queryset_response(jobs, request)
+
+
+class FailedProcessorJobStats(APIView):
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter(
+        name='range', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Specify a range from which to calculate the possible options",
+        enum=('day', 'week', 'month', 'year',)
+    )])
+    @method_decorator(cache_page(10 * 60))
+    def get(self, request, version, format=None):
+        range_param = request.query_params.dict().pop('range', 'day')
+        start_date = get_start_date(range_param)
+        jobs = ProcessorJob.objects\
+            .filter(created_at__gt=start_date)\
+            .annotate(reason=Left('failure_reason', 80))\
+            .values('reason')\
+            .annotate(
+                job_count=Count('reason'),
+                sample_count=Count('original_files__samples', distinct=True, filter=Q(original_files__samples__is_processed=False))
+            )\
+            .order_by('-job_count')
+
+        return paginate_queryset_response(jobs, request)
+
+
 class AboutStats(APIView):
     """ Returns general stats for the site, used in the about page """
     @method_decorator(cache_page(10 * 60))
@@ -975,6 +1041,7 @@ class AboutStats(APIView):
             results__computedfile__filename='quant.sf'
         ).distinct().count()
         return processed_samples + unprocessed_samples_with_quant
+
 
 class Stats(APIView):
     """ Statistics about the health of the system. """
@@ -1104,13 +1171,7 @@ class Stats(APIView):
         start_filter = Q()
 
         if range_param:
-            current_date = datetime.now(tz=timezone.utc)
-            start_date = {
-                'day': current_date - timedelta(days=1),
-                'week': current_date - timedelta(weeks=1),
-                'month': current_date - timedelta(days=30),
-                'year': current_date - timedelta(days=365)
-            }.get(range_param)
+            start_date = get_start_date(range_param)
             start_filter = start_filter | Q(start_time__gte=start_date) | Q(start_time__isnull=True)
 
         result = jobs.filter(start_filter).aggregate(
@@ -1170,13 +1231,7 @@ class Stats(APIView):
             'month': 'day',
             'year': 'month'
         }
-        current_date = datetime.now(tz=timezone.utc)
-        range_to_start_date = {
-            'day': current_date - timedelta(days=1),
-            'week': current_date - timedelta(weeks=1),
-            'month': current_date - timedelta(days=30),
-            'year': current_date - timedelta(days=365)
-        }
+        range_to_start_date = get_start_date(range_param)
 
         # truncate the `last_modified` field by hour, day or month depending on the `range` param
         # and annotate each object with that. This will allow us to count the number of objects
