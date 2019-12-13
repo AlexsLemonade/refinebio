@@ -13,22 +13,21 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
         if not client.is_enabled():
             return response
 
+        # format error message
+        message = (
+            "{status_code} code returned for URL: {url}"
+            "with message: {message}"
+        ).format(status_code=response.status_code,
+                 url=request.build_absolute_uri(),
+                 message=str(response.content))
+
+        # create data representation
         data = client.get_data_from_request(request)
         data.update({
             "level": logging.WARN,
             "logger": "BadRequestMiddleware",
         })
-        message_template = "{status_code} code returned for URL: {url} {content}"
 
-        content = ""
-        try:
-            content = "with message: {}".format(str(response.content))
-        except Exception:
-            pass
-
-        message = message_template.format(status_code=response.status_code,
-                                          url=request.build_absolute_uri(),
-                                          content=content)
         client.captureMessage(message=message, data=data)
 
         return response
