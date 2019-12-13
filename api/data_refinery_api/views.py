@@ -1451,7 +1451,7 @@ def handle404error(request, exception):
     url = 'https://api.refine.bio/'
 
     # check to see if the 404ed request contained a version
-    if not match(r'\v[1-9]/.*/gc', request.path):
+    if not match(r'^/v[1-9]/.*', request.path):
         message = 'refine.bio API resources are only available through versioned requests.'
 
     return JsonResponse({
