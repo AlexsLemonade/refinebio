@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 import sys
-from django.core.exceptions import ImproperlyConfigured
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -98,7 +97,7 @@ TEMPLATES = [
 ]
 
 # Uncomment this line to use Django Debug Toolbar inside Docker
-#INTERNAL_IPS = type(str('c'), (), {'__contains__': lambda *a: True})()
+# INTERNAL_IPS = type(str('c'), (), {'__contains__': lambda *a: True})()
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
