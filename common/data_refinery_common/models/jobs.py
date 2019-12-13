@@ -171,7 +171,6 @@ class ProcessorJob(models.Model):
     original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
     datasets = models.ManyToManyField('DataSet', through='ProcessorJobDataSetAssociation')
     no_retry = models.BooleanField(default=False)
-    abort = models.BooleanField(default=False)
 
     # Resources
     ram_amount = models.IntegerField(default=2048)
