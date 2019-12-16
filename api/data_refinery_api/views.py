@@ -1220,15 +1220,17 @@ class Stats(APIView):
             'month': 'day',
             'year': 'month'
         }
-        range_to_start_date = get_start_date(range_param)
 
-        # truncate the `last_modified` field by hour, day or month depending on the `range` param
-        # and annotate each object with that. This will allow us to count the number of objects
-        # on each interval with a single query
+        # truncate the parameterized field so it can be annotated by range
+        # ie. each day is composed of 24 hours...
+        start_trunc = Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())
+
+        # get the correct start time for the range
+        start_range = get_start_date(range_param)
+
+        # annotate and filter in a single query
         # ref https://stackoverflow.com/a/38359913/763705
-        return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
-                      .values('start') \
-                      .filter(start__gte=range_to_start_date.get(range_param))
+        return objects.annotate(start=start_trunc).values('start').filter(start__gte=start_range)
 
 
 ###
