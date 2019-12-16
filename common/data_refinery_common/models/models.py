@@ -701,9 +701,6 @@ class OrganismIndex(models.Model):
     # Salmon jobs can access it.
     absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
 
-    # S3 Information
-    s3_url = models.CharField(max_length=255, default="")
-
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -725,6 +722,7 @@ These are the database representations of files
 which live on local disk, on ephemeral storage,
 or on AWS cloud services.
 """
+
 
 class OriginalFile(models.Model):
     """ A representation of a file from an external source """
