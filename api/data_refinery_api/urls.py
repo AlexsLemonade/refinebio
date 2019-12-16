@@ -41,14 +41,19 @@ from .views import (
     OriginalFileList,
     AboutStats,
     FailedDownloaderJobStats,
-    FailedProcessorJobStats
+    FailedProcessorJobStats,
+    handle404error,
+    handle500error,
 )
+
 
 # This provides _public_ access to the /admin interface!
 # Enabling this by setting DEBUG to true this will allow unauthenticated access to the admin interface.
 # Very useful for debugging (since we have no User accounts), but very dangerous for prod!
 class AccessUser:
     has_module_perms = has_perm = __getattr__ = lambda s, *a, **kw: True
+
+
 if settings.DEBUG:
     admin.site.has_permission = lambda r: setattr(r, 'user', AccessUser()) or True
 
@@ -138,3 +143,7 @@ urlpatterns = [
 
 # This adds support explicitly typed endpoints such that appending '.json' returns that application type.
 urlpatterns = format_suffix_patterns(urlpatterns)
+
+# handle errors
+handler404 = handle404error
+handler500 = handle500error

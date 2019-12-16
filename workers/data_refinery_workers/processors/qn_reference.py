@@ -145,38 +145,6 @@ def _quantile_normalize(job_context: Dict) -> Dict:
 
     return job_context
 
-def _verify_result(job_context: Dict) -> Dict:
-    """ Statistically verify this is a sane result
-    More info: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-    """
-
-    import rpy2
-    from rpy2.robjects import pandas2ri
-    from rpy2.robjects import r as rlang
-    from rpy2.robjects.packages import importr
-
-    qn_target_frame = pd.read_csv(job_context['target_file'], sep='\t', header=None, index_col=None, error_bad_lines=False)
-
-    pandas2ri.activate()
-    preprocessCore = importr('preprocessCore')
-    as_matrix = rlang("as.matrix")
-    as_vector = rlang("as.vector")
-    data_matrix = rlang('data.matrix')
-    all_equal = rlang('all.equal')
-
-    rb_target_vector = as_vector(as_matrix(qn_target_frame[0]))
-    exprs_mat = data_matrix(smashed_frame)
-    qn_target =  preprocessCore.normalize_quantiles_determine_target(exprs_mat)
-    is_equal = all_equal(qn_target, rb_target_vector)
-
-    if bool(is_equal):
-        job_context['result_verified'] = True
-        return job_context
-    else:
-        job_context['result_verified'] = False
-        job_context['success'] = False
-        job_context['job'].failure_reason = "Failed QN check!"
-        return job_context
 
 def _create_result_objects(job_context: Dict) -> Dict:
 
@@ -248,7 +216,6 @@ def create_qn_reference(job_id: int) -> None:
                                      [utils.start_job,
                                       _prepare_input,
                                       _build_qn_target,
-                                      # _verify_result,
                                       _create_result_objects,
                                       _update_caches,
                                       utils.end_job])

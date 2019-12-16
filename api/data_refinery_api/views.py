@@ -10,40 +10,31 @@ from django.db.models import Count, Prefetch, DateTimeField, OuterRef, Subquery
 from django.db.models.functions import Trunc, Left
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.http import (
+    Http404,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_elasticsearch_dsl_drf.constants import (
-    LOOKUP_FILTER_TERMS,
     LOOKUP_FILTER_RANGE,
-    LOOKUP_FILTER_PREFIX,
-    LOOKUP_FILTER_WILDCARD,
     LOOKUP_QUERY_IN,
     LOOKUP_QUERY_GT,
-    LOOKUP_QUERY_GTE,
-    LOOKUP_QUERY_LT,
-    LOOKUP_QUERY_LTE,
-    LOOKUP_QUERY_EXCLUDE,
 )
 from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
 from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,
-    IdsFilterBackend,
     OrderingFilterBackend,
     DefaultOrderingFilterBackend,
     CompoundSearchFilterBackend,
     FacetedSearchFilterBackend
 )
 from django_filters.rest_framework import DjangoFilterBackend
-import django_filters
-from elasticsearch_dsl import TermsFacet, DateHistogramFacet
-from rest_framework import status, filters, generics, mixins
+from elasticsearch_dsl import TermsFacet
+from rest_framework import status, filters, generics
 from rest_framework.exceptions import APIException, NotFound
-from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
-from rest_framework.reverse import reverse
-from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from data_refinery_api.serializers import (
@@ -57,7 +48,6 @@ from data_refinery_api.serializers import (
     OrganismSerializer,
     PlatformSerializer,
     ProcessorSerializer,
-    SampleSerializer,
     CompendiumResultSerializer,
     CompendiumResultWithUrlSerializer,
     QNTargetSerializer,
@@ -85,7 +75,6 @@ from data_refinery_common.models import (
     Dataset,
     DownloaderJob,
     Experiment,
-    ExperimentSampleAssociation,
     Organism,
     OrganismIndex,
     OriginalFile,
@@ -99,7 +88,6 @@ from data_refinery_common.models.documents import (
     ExperimentDocument
 )
 from data_refinery_common.utils import (
-    get_env_variable,
     get_active_volumes,
     get_nomad_jobs_breakdown,
     get_nomad_jobs
@@ -111,6 +99,13 @@ from django.utils.decorators import method_decorator
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+##
+# ElasticSearch
+##
+from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
+from six import iteritems
+
+
 logger = get_and_configure_logger(__name__)
 
 ##
@@ -118,12 +113,6 @@ logger = get_and_configure_logger(__name__)
 ##
 
 JOB_CREATED_AT_CUTOFF = datetime(2019, 6, 5, tzinfo=timezone.utc)
-
-##
-# ElasticSearch
-##
-from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
-from six import iteritems
 
 class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
     def aggregate(self, request, queryset, view):
@@ -1454,6 +1443,29 @@ class OriginalFileList(generics.ListAPIView):
     filterset_fields = OriginalFileListSerializer.Meta.fields
     ordering_fields = ('id', 'created_at', 'last_modified',)
     ordering = ('-id',)
+
+
+# error handlers
+def handle404error(request, exception):
+    message = 'The requested resource was not found on this server.'
+    url = 'https://api.refine.bio/'
+
+    # check to see if the 404ed request contained a version
+    if not match(r'^/v[1-9]/.*', request.path):
+        message = 'refine.bio API resources are only available through versioned requests.'
+
+    return JsonResponse({
+        'message': message,
+        'docs': url,
+        'status_code': 404,
+    }, status=404)
+
+
+def handle500error(request):
+    return JsonResponse({
+        'message': 'A server error occured. This has been reported.',
+        'status_code': 500,
+    }, status=500)
 
 
 ##
