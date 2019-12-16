@@ -1226,9 +1226,15 @@ class Stats(APIView):
         # and annotate each object with that. This will allow us to count the number of objects
         # on each interval with a single query
         # ref https://stackoverflow.com/a/38359913/763705
-        return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
-                      .values('start') \
-                      .filter(start__gte=range_to_start_date.get(range_param))
+        return objects.annotate(
+                          start=Trunc(field,
+                                      range_to_trunc.get(range_param),
+                                      output_field=DateTimeField())
+                      ).values(
+                          'start'
+                      ).filter(
+                          start__gte=range_to_start_date
+                      )
 
 
 ###
