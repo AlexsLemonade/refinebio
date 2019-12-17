@@ -115,10 +115,6 @@ variable "nomad_server_instance_type" {
   default = "m5.xlarge"
 }
 
-variable "client_instance_type" {
-  default = "m5.4xlarge"
-}
-
 variable "smasher_instance_type" {
   # 32GiB Memory, smasher and compendia jobs need 28.
   default = "m5.2xlarge"
@@ -134,14 +130,6 @@ variable "spot_fleet_capacity" {
 
 variable "max_clients" {
   default = "1"
-}
-
-variable "scale_up_threshold" {
-  default = "1"
-}
-
-variable "scale_down_threshold" {
-  default = "0"
 }
 
 variable "raven_dsn" {
@@ -180,6 +168,10 @@ variable "elasticsearch_port" {
 variable "engagementbot_webhook" {
   # Only necessary for TF, but will be overwritten.
   default = "DEFAULT"
+}
+
+variable "full_stack" {
+  default = "False"
 }
 
 # Output our production environment variables.

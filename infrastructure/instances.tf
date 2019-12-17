@@ -247,6 +247,8 @@ data "template_file" "nomad_client_script_smasher_smusher" {
 }
 
 resource "aws_instance" "smasher_instance" {
+  # This is an expense we don't need in the staging stack.
+  count = "${var.stage == "prod" || var.full_stack == "True" ? 1 : 0}"
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.smasher_instance_type}"
   availability_zone = "${var.region}b"
