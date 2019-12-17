@@ -700,11 +700,14 @@ class OrganismIndex(models.Model):
     # We keep the director unextracted on the shared filesystem so all
     # Salmon jobs can access it.
     absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
-
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def get_computed_file(self):
+        """ Short hand method for getting the computed file for this organism index"""
+        return ComputedFile.objects.filter(result=self.result).first()
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """

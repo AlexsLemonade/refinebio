@@ -65,10 +65,16 @@ class ProcessorSerializer(serializers.ModelSerializer):
 ##
 
 class OrganismIndexSerializer(serializers.ModelSerializer):
+
+    organism = serializers.StringRelatedField(read_only=True)
+    s3_url = serializers.SerializerMethodField()
+
     class Meta:
         model = OrganismIndex
+
         fields = (
                     'index_type',
+                    'organism',
                     's3_url',
                     'source_version',
                     'assembly_name',
@@ -76,6 +82,11 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
                     'result',
                     'last_modified',
                 )
+        read_only_fields = fields
+
+    def get_s3_url(self, obj):
+        return obj.get_computed_file().s3_url
+
 
 ##
 # Results
@@ -190,6 +201,7 @@ class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified'
                 )
+
 
 class QNTargetSerializer(serializers.ModelSerializer):
     result = ComputationalResultNoFilesSerializer(many=False)
