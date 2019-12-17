@@ -1271,9 +1271,9 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
         transcription_length = "TRANSCRIPTOME_" + length.upper()
         try:
             organism = Organism.objects.get(name=organism_name.upper())
-            organism_index = OrganismIndex.objects.exclude(s3_url__exact="")\
-                                .distinct("organism", "index_type")\
-                                .get(organism=organism, index_type=transcription_length)
+            organism_index = OrganismIndex.objects.distinct(
+                "organism", "index_type"
+            ).get(organism=organism, index_type=transcription_length)
             return organism_index
         except OrganismIndex.DoesNotExist:
             raise Http404('Organism does not exists')

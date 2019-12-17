@@ -222,10 +222,12 @@ class QNTargetSerializer(serializers.ModelSerializer):
                     'result'
                 )
 
+
 class ComputedFileListSerializer(serializers.ModelSerializer):
     result = ComputationalResultNoFilesSerializer(many=False)
     samples = DetailedExperimentSampleSerializer(many=True)
-    compendia_organism_name = serializers.CharField(source='compendia_organism__name', read_only=True)
+    compendia_organism_name = serializers.CharField(source='compendia_organism__name',
+                                                    read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(ComputedFileListSerializer, self).__init__(*args, **kwargs)
