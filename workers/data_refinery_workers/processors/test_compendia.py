@@ -77,6 +77,37 @@ class CompendiaTestCase(TransactionTestCase):
         assoc.computed_file = computed_file
         assoc.save()
 
+        # Missing sample that will be filtered
+        sample = Sample()
+        sample.accession_code = 'GSM1487222'
+        sample.title = 'this sample will be filtered'
+        sample.organism = gallus_gallus
+        sample.technology="MICROARRAY"
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1487222_empty.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/doesnt_exists.PCL"
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
         # RNASEQ TECH
         experiment2 = Experiment()
         experiment2.accession_code = "SRS332914"
@@ -116,7 +147,7 @@ class CompendiaTestCase(TransactionTestCase):
         assoc2.save()
 
         dset = Dataset()
-        dset.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
+        dset.data = {'GSE1487313': ['GSM1487313', 'GSM1487222'], 'SRX332914': ['SRS332914']}
         dset.scale_by = 'NONE'
         dset.aggregate_by = 'SPECIES'
         dset.svd_algorithm = 'ARPACK'
@@ -128,10 +159,13 @@ class CompendiaTestCase(TransactionTestCase):
         pjda.dataset = dset
         pjda.save()
 
-#        with self.assertRaises(ValueError):
         final_context = create_compendia.create_compendia(job.id)
 
         self.assertFalse(job.success)
+
+        # check that sample with no computed file was skipped
+        self.assertTrue('GSM1487222' in final_context['filtered_samples'])
+        self.assertEqual(final_context['filtered_samples']['GSM1487222']['experiment_accession_code'], 'GSE1487313')
 
 
     @tag('compendia')
@@ -252,6 +286,26 @@ class CompendiaTestCase(TransactionTestCase):
 
             rnas.append(file)
 
+        # Missing sample that will be filtered
+        sample = Sample()
+        sample.accession_code = 'GSM1487222'
+        sample.title = 'this sample will be filtered'
+        sample.organism = danio_rerio
+        sample.technology="RNASEQ"
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        rnas.append(sample.accession_code)
+
         dset = Dataset()
         dset.data = {'GSE1234': micros, 'GSE5678': rnas}
         dset.scale_by = 'NONE'
@@ -280,6 +334,9 @@ class CompendiaTestCase(TransactionTestCase):
                 'DANIO_RERIO')
         self.assertEqual(final_context['compendium_result'].organisms.count(), 1)
 
+        # check that sample with no computed file was skipped
+        self.assertTrue('GSM1487222' in final_context['filtered_samples'])
+        self.assertEqual(final_context['filtered_samples']['GSM1487222']['experiment_accession_code'], 'GSE5678')
 
         # It's maybe not worth asserting this until we're sure the behavior is correct
         # self.assertEqual(final_context['merged_qn'].shape, (9045, 830))

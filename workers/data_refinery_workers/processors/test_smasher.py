@@ -1289,7 +1289,7 @@ class AggregationTestCase(TransactionTestCase):
             'job': pj
         }
 
-        columns = smashing_utils.get_tsv_columns(job_context, self.metadata['samples'])
+        columns = smashing_utils.get_tsv_columns(self.metadata['samples'])
         self.assertEqual(len(columns), 22)
         self.assertEqual(columns[0], 'refinebio_accession_code')
         self.assertTrue('refinebio_accession_code' in columns)

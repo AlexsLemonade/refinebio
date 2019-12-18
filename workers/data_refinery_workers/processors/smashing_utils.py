@@ -63,7 +63,9 @@ def prepare_files(job_context: Dict) -> Dict:
     """
     start_prepare_files = log_state("start prepare files", job_context["job"].id)
     found_files = False
+    job_context['filtered_samples'] = {}
     job_context['input_files'] = {}
+
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
         smashable_files = []
@@ -74,6 +76,13 @@ def prepare_files(job_context: Dict) -> Dict:
                 smashable_files = smashable_files + [(smashable_file, sample)]
                 seen_files.add(smashable_file)
                 found_files = True
+            else:
+                sample_metadata = sample.to_metadata_dict()
+                job_context['filtered_samples'][sample.accession_code] = {
+                    **sample_metadata,
+                    'reason': 'This sample did not have a processed file associated with it in our database.',
+                    'experiment_accession_code': get_experiment_accession(sample.accession_code, job_context['dataset'].data)
+                }
 
         job_context['input_files'][key] = smashable_files
 
@@ -304,6 +313,14 @@ def process_frames_for_key(key: str,
                                computed_file=computed_file.id,
                                dataset_id=job_context['dataset'].id,
                                job_id=job_context["job"].id)
+
+                sample_metadata = sample.to_metadata_dict()
+                job_context['filtered_samples'][sample.accession_code] = {
+                    **sample_metadata,
+                    'reason': 'The file associated with this sample did not pass the QC checks we apply before aggregating.',
+                    'filename': computed_file.filename,
+                    'experiment_accession_code': get_experiment_accession(sample.accession_code, job_context['dataset'].data)
+                }
                 continue
 
             # Count how many frames are in each tech so we can preallocate
@@ -375,9 +392,16 @@ def process_frames_for_key(key: str,
 
         if frame_data is None:
             job_context['unsmashable_files'].append(computed_file.filename)
+            sample_metadata = sample.to_metadata_dict()
+            job_context['filtered_samples'][sample.accession_code] = {
+                **sample_metadata,
+                'reason': 'The file associated with this sample did not contain a vector that fit the expected dimensions of the matrix.',
+                'filename': computed_file.filename,
+                'experiment_accession_code': get_experiment_accession(sample.accession_code, job_context['dataset'].data)
+            }
             continue
-        else:
-            frame_data = frame_data.reindex(all_gene_identifiers)
+
+        frame_data = frame_data.reindex(all_gene_identifiers)
 
         # The dataframe for each sample will only have one column
         # whose header will be the accession code.
@@ -613,15 +637,25 @@ def compile_metadata(job_context: Dict) -> Dict:
         metadata['ks_warning'] = job_context.get("ks_warning", None)
         metadata['quantile_normalized'] = job_context['dataset'].quantile_normalize
 
+    filtered_samples = job_context['filtered_samples']
+
     samples = {}
     for sample in job_context["dataset"].get_samples():
+        if sample.accession_code in filtered_samples:
+            # skip the samples that were filtered
+            continue
         samples[sample.accession_code] = sample.to_metadata_dict()
 
     metadata['samples'] = samples
 
     experiments = {}
     for experiment in job_context["dataset"].get_experiments():
-        experiments[experiment.accession_code] = experiment.to_metadata_dict()
+        experiment_metadata = experiment.to_metadata_dict()
+        # exclude filtered samples from experiment metadata
+        all_samples = experiment_metadata['sample_accession_codes']
+        all_samples = [code for code in all_samples if code not in filtered_samples]
+        experiment_metadata['sample_accession_codes'] = all_samples
+        experiments[experiment.accession_code] = experiment_metadata
 
     metadata['experiments'] = experiments
 
@@ -643,18 +677,32 @@ def write_non_data_files(job_context: Dict) -> Dict:
 
     # Write samples metadata to TSV
     try:
-        tsv_paths = write_tsv_json(job_context)
-        job_context['metadata_tsv_paths'] = tsv_paths
+        write_tsv_json(job_context)
         # Metadata to JSON
         job_context['metadata']['created_at'] = timezone.now().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(job_context["output_dir"] + 'aggregated_metadata.json',
-                  'w',
-                  encoding='utf-8') as metadata_file:
+        aggregated_metadata_path = os.path.join(job_context["output_dir"],
+                                                'aggregated_metadata.json')
+        with open(aggregated_metadata_path, 'w', encoding='utf-8') as metadata_file:
             json.dump(job_context['metadata'], metadata_file, indent=4, sort_keys=True)
+
+        if job_context['filtered_samples']:
+            # generate filtered samples file only if some samples were skipped
+            filtered_samples_path = os.path.join(job_context["output_dir"],
+                                                 'filtered_samples_metadata.json')
+            with open(filtered_samples_path, 'w',encoding='utf-8') as metadata_file:
+                json.dump(job_context['filtered_samples'], metadata_file, indent=4, sort_keys=True)
+
+            columns = get_tsv_columns(job_context['filtered_samples'])
+            filtered_samples_tsv_path = os.path.join(job_context["output_dir"],
+                                                     'filtered_samples_metadata.tsv')
+            with open(filtered_samples_tsv_path, 'w', encoding='utf-8') as tsv_file:
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', extrasaction='ignore')
+                dw.writeheader()
+                for sample_metadata in job_context['filtered_samples'].values():
+                    dw.writerow(get_tsv_row_data(sample_metadata, job_context["dataset"].data))
+
     except Exception as e:
-        logger.exception("Failed to write metadata TSV!",
-                         job_id=job_context['job'].id)
-        job_context['metadata_tsv_paths'] = None
+        logger.exception("Failed to write metadata TSV!", job_id=job_context['job'].id)
 
     return job_context
 
@@ -769,14 +817,13 @@ def get_tsv_row_data(sample_metadata, dataset_data):
     return row_data
 
 
-def get_tsv_columns(job_context, samples_metadata):
+def get_tsv_columns(samples_metadata):
     """Returns an array of strings that will be written as a TSV file's
     header. The columns are based on fields found in samples_metadata.
 
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-    tsv_start = log_state("start get tsv columns", job_context["job"].id)
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -822,7 +869,6 @@ def get_tsv_columns(job_context, samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    log_state("end get tsv columns", job_context["job"].id, tsv_start)
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -836,7 +882,7 @@ def write_tsv_json(job_context):
     metadata = job_context['metadata']
 
     # Uniform TSV header per dataset
-    columns = get_tsv_columns(job_context, metadata['samples'])
+    columns = get_tsv_columns(metadata['samples'])
 
     # Per-Experiment Metadata
     if job_context["dataset"].aggregate_by == "EXPERIMENT":
