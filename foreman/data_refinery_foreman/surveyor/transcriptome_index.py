@@ -1,11 +1,10 @@
-import re
+import csv
 import urllib
 
 from abc import ABC
-from django.utils import timezone
 from typing import List, Dict
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OriginalFile,
@@ -45,6 +44,16 @@ MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=applicat
 DIVISION_RELEASE_URL = "https://rest.ensembl.org/info/eg_version?content-type=application/json"
 
 
+def get_organism_strain_mapping(config_file="config/organism_strain_mapping.csv") -> List[Dict]:
+    mapping = []
+    with open(config_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            mapping.append(row)
+
+    return mapping
+
+
 class EnsemblUrlBuilder(ABC):
     """Generates URLs for different divisions of Ensembl.
 
@@ -60,7 +69,8 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
+        assembly_response = utils.requests_retry_session().get(DIVISION_RELEASE_URL)
+        self.assembly_version = assembly_response.json()["version"]
 
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
@@ -86,7 +96,7 @@ class EnsemblUrlBuilder(ABC):
             file_handle = urllib.request.urlopen(url)
             file_handle.close()
             urllib.request.urlcleanup()
-        except:
+        except Exception:
             url = url.replace("primary_assembly", "toplevel")
 
         return url
@@ -197,7 +207,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
-        
+
         platform_accession_code = species.pop("division")
         self._clean_metadata(species)
 
@@ -272,7 +282,8 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             # distinguish between a singlular species and multiple species.
             specieses = r.json()["species"]
         else:
-            r = utils.requests_retry_session().get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
+            formatted_division_url = DIVISION_URL_TEMPLATE.format(division=ensembl_division)
+            r = utils.requests_retry_session().get(formatted_division_url)
             specieses = r.json()
 
         try:
