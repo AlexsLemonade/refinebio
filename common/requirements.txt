@@ -13,7 +13,7 @@ daiquiri==1.5.0
 django-elasticsearch-dsl-drf==0.20.3
 django-elasticsearch-dsl==6.4.2
 django-nine==0.2.2        # via django-elasticsearch-dsl-drf
-django==2.2.9
+django==2.2.7
 djangorestframework==3.9.4
 docutils==0.14            # via botocore
 elasticsearch-dsl==6.4.0
