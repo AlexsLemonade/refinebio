@@ -1,5 +1,5 @@
 coverage
-django==2.2.9
+django>=2.1.11
 psycopg2-binary
 boto3
 requests>=2.20.0
