@@ -1,4 +1,6 @@
 import csv
+import re
+import shutil
 import urllib
 
 from abc import ABC
@@ -16,14 +18,21 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
+CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
+
+
 MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 DIVISION_URL_TEMPLATE = ("https://rest.ensembl.org/info/genomes/division/{division}"
                          "?content-type=application/json")
 
-TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
-                              "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
-GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
-                    "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
+SPECIES_DETAIL_URL_TEMPLATE = ("ftp://ftp.ensemblgenomes.org/pub/"
+                               "{short_division}/current/species_{division}.txt")
+TRANSCRIPTOME_URL_TEMPLATE = (
+    "ftp://ftp.{url_root}/fasta/{collection}{species_sub_dir}{strain}/dna/"
+    "{filename_species}{strain}.{assembly}.dna.{schema_type}.fa.gz"
+)
+GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{collection}{species_sub_dir}{strain}/"
+                    "{filename_species}{strain}.{assembly}.{assembly_version}.gtf.gz")
 
 
 # For whatever reason the division in the download URL is shortened in
@@ -44,14 +53,48 @@ MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=applicat
 DIVISION_RELEASE_URL = "https://rest.ensembl.org/info/eg_version?content-type=application/json"
 
 
-def get_organism_strain_mapping(config_file="config/organism_strain_mapping.csv") -> List[Dict]:
-    mapping = []
+def get_strain_mapping_for_organism(
+        species_name: str,
+        config_file="config/organism_strain_mapping.csv") -> List[Dict]:
+    """Returns the row of the strain/organism mapping for the species_name
+    """
+    upper_name = species_name.upper()
     with open(config_file) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            mapping.append(row)
+            if row["organism"] == upper_name:
+                return row
 
-    return mapping
+    return None
+
+
+def get_species_detail_by_assembly(assembly: str, division: str) -> str:
+    """Returns additional detail about a species given an assembly and a division.
+
+    These details are necessary because the FTP directory for
+    EnsemblBacteria and EnsemblFungi have an additional level in their
+    paths that can only be determined by parsing this file. I found
+    this out via the Ensembl dev mailing list.
+    """
+    bacteria_species_detail_url = SPECIES_DETAIL_URL_TEMPLATE.format(
+        short_division=DIVISION_LOOKUP[division],
+        division=division
+    )
+
+    urllib.request.urlcleanup()
+    collection_path = assembly + "_collection.tsv"
+    with open(collection_path, "wb") as collection_file:
+        with urllib.request.urlopen(bacteria_species_detail_url) as request:
+            shutil.copyfileobj(request, collection_file, CHUNK_SIZE)
+
+    # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
+    urllib.request.urlcleanup()
+
+    with open(collection_path) as csvfile:
+        reader = csv.DictReader(csvfile, delimiter='\t')
+        for row in reader:
+            if row['assembly'] == assembly:
+                return row
 
 
 class EnsemblUrlBuilder(ABC):
@@ -67,8 +110,19 @@ class EnsemblUrlBuilder(ABC):
     def __init__(self, species: Dict):
         """Species is a Dict containing parsed JSON from the Division API."""
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
+        self.division = species["division"]
         self.short_division = DIVISION_LOOKUP[species["division"]]
-        self.assembly = species["assembly_name"].replace(" ", "_")
+
+        mapping = get_strain_mapping_for_organism(species["name"])
+        if mapping:
+            self.assembly = mapping["assembly"]
+            self.strain = mapping["strain"]
+            self.strain_postfix = "_" + self.strain.lower()
+        else:
+            self.assembly = species["assembly_name"].replace(" ", "_")
+            self.strain = None
+            self.strain_postfix = ""
+
         assembly_response = utils.requests_retry_session().get(DIVISION_RELEASE_URL)
         self.assembly_version = assembly_response.json()["version"]
 
@@ -80,11 +134,16 @@ class EnsemblUrlBuilder(ABC):
         self.scientific_name = species["name"].upper()
         self.taxonomy_id = species["taxonomy_id"]
 
+        # This field is only needed for EnsemblBacteria and EnsemblFungi.
+        self.collection = ""
+
     def build_transcriptome_url(self) -> str:
         url_root = self.url_root.format(assembly_version=self.assembly_version,
                                         short_division=self.short_division)
         url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
                                                 species_sub_dir=self.species_sub_dir,
+                                                collection=self.collection,
+                                                strain=self.strain_postfix,
                                                 filename_species=self.filename_species,
                                                 assembly=self.assembly,
                                                 schema_type="primary_assembly")
@@ -106,6 +165,8 @@ class EnsemblUrlBuilder(ABC):
                                         short_division=self.short_division)
         return GTF_URL_TEMPLATE.format(url_root=url_root,
                                        species_sub_dir=self.species_sub_dir,
+                                       collection=self.collection,
+                                       strain=self.strain_postfix,
                                        filename_species=self.filename_species,
                                        assembly=self.assembly,
                                        assembly_version=self.assembly_version)
@@ -160,6 +221,27 @@ class EnsemblFungiUrlBuilder(EnsemblProtistsUrlBuilder):
             self.assembly = "CADRE"
 
 
+class EnsemblBacteriaUrlBuilder(EnsemblUrlBuilder):
+    """The EnsemblBacteria URLs are extra tricky because they have an extra layer in them.
+
+    This requires parsing a special file to find out what collection
+    the species belongs to.
+    """
+    def __init__(self, species: Dict):
+        super().__init__(species)
+        species_detail = get_species_detail_by_assembly(self.assembly, self.division)
+
+        if species_detail:
+            collection_pattern = r"bacteria_.+_collection"
+            match = re.match(collection_pattern, species_detail['core_db'])
+            if match:
+                # Need to append a / to the collection because it's not
+                # present in all the routes so we don't want to put it in the
+                # template and end up with a // in the path if collection is
+                # blank.
+                self.collection = match.group(0) + "/"
+
+
 def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
     """Returns instance of EnsemblUrlBuilder or one of its subclasses.
 
@@ -171,6 +253,8 @@ def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
         return EnsemblFungiUrlBuilder(species)
     elif species["division"] == "EnsemblVertebrates":
         return MainEnsemblUrlBuilder(species)
+    elif species["division"] == "EnsemblBacteria":
+        return EnsemblBacteriaUrlBuilder(species)
     else:
         return EnsemblUrlBuilder(species)
 
