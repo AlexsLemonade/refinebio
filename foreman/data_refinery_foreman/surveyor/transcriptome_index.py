@@ -27,12 +27,10 @@ DIVISION_URL_TEMPLATE = ("https://rest.ensembl.org/info/genomes/division/{divisi
 
 SPECIES_DETAIL_URL_TEMPLATE = ("ftp://ftp.ensemblgenomes.org/pub/"
                                "{short_division}/current/species_{division}.txt")
-TRANSCRIPTOME_URL_TEMPLATE = (
-    "ftp://ftp.{url_root}/fasta/{collection}{species_sub_dir}{strain}/dna/"
-    "{filename_species}{strain}.{assembly}.dna.{schema_type}.fa.gz"
-)
-GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{collection}{species_sub_dir}{strain}/"
-                    "{filename_species}{strain}.{assembly}.{assembly_version}.gtf.gz")
+TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{collection}{species_sub_dir}/dna/"
+                              "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
+GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{collection}{species_sub_dir}/"
+                    "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
 
 
 # For whatever reason the division in the download URL is shortened in
@@ -117,11 +115,9 @@ class EnsemblUrlBuilder(ABC):
         if mapping:
             self.assembly = mapping["assembly"]
             self.strain = mapping["strain"]
-            self.strain_postfix = "_" + self.strain.lower()
         else:
             self.assembly = species["assembly_name"].replace(" ", "_")
             self.strain = None
-            self.strain_postfix = ""
 
         assembly_response = utils.requests_retry_session().get(DIVISION_RELEASE_URL)
         self.assembly_version = assembly_response.json()["version"]
@@ -143,7 +139,6 @@ class EnsemblUrlBuilder(ABC):
         url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
                                                 species_sub_dir=self.species_sub_dir,
                                                 collection=self.collection,
-                                                strain=self.strain_postfix,
                                                 filename_species=self.filename_species,
                                                 assembly=self.assembly,
                                                 schema_type="primary_assembly")
@@ -166,7 +161,6 @@ class EnsemblUrlBuilder(ABC):
         return GTF_URL_TEMPLATE.format(url_root=url_root,
                                        species_sub_dir=self.species_sub_dir,
                                        collection=self.collection,
-                                       strain=self.strain_postfix,
                                        filename_species=self.filename_species,
                                        assembly=self.assembly,
                                        assembly_version=self.assembly_version)
@@ -208,19 +202,6 @@ class EnsemblProtistsUrlBuilder(EnsemblUrlBuilder):
         self.filename_species = species["species"].capitalize()
 
 
-class EnsemblFungiUrlBuilder(EnsemblProtistsUrlBuilder):
-    """The EnsemblFungi URLs work the similarly to Protists division.
-
-    EnsemblFungi is special because there is an assembly_name TIGR
-    which needs to be corrected to CADRE for some reason.
-    """
-
-    def __init__(self, species: Dict):
-        super().__init__(species)
-        if self.assembly == "TIGR":
-            self.assembly = "CADRE"
-
-
 class EnsemblBacteriaUrlBuilder(EnsemblUrlBuilder):
     """The EnsemblBacteria URLs are extra tricky because they have an extra layer in them.
 
@@ -232,7 +213,36 @@ class EnsemblBacteriaUrlBuilder(EnsemblUrlBuilder):
         species_detail = get_species_detail_by_assembly(self.assembly, self.division)
 
         if species_detail:
+            self.species_sub_dir = species_detail['species']
+            self.filename_species = species_detail["species"].capitalize()
             collection_pattern = r"bacteria_.+_collection"
+            match = re.match(collection_pattern, species_detail['core_db'])
+            if match:
+                # Need to append a / to the collection because it's not
+                # present in all the routes so we don't want to put it in the
+                # template and end up with a // in the path if collection is
+                # blank.
+                self.collection = match.group(0) + "/"
+
+
+class EnsemblFungiUrlBuilder(EnsemblUrlBuilder):
+    """The EnsemblFungi URLs work similarly to EnsemblBacteria.
+
+    EnsemblFungi is special because there is an assembly_name TIGR
+    which needs to be corrected to CADRE for some reason.
+    """
+
+    def __init__(self, species: Dict):
+        super().__init__(species)
+        if self.assembly == "TIGR":
+            self.assembly = "CADRE"
+
+        species_detail = get_species_detail_by_assembly(self.assembly, self.division)
+
+        if species_detail:
+            self.species_sub_dir = species_detail['species']
+            self.filename_species = species_detail["species"].capitalize()
+            collection_pattern = r"fungi_.+_collection"
             match = re.match(collection_pattern, species_detail['core_db'])
             if match:
                 # Need to append a / to the collection because it's not
@@ -383,8 +393,18 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 # This key varies based on whether the division is the
                 # main one or not... why couldn't they just make them
                 # consistent?
-                if ('species' in species and species['species'] == organism_name) \
-                   or ('name' in species and species['name'] == organism_name):
+                if ('species' in species and organism_name in species['species']) \
+                   or ('name' in species and organism_name in species['name']):
+                    # Fungi have a strain identifier in their
+                    # names. This is different than everything else,
+                    # so we're going to handle this special case by
+                    # just overwriting this. This is okay because we
+                    # just have to discover one species for the
+                    # organism, and then our strain mapping will make
+                    # sure we use the correct strain and assembly.
+                    if organism_name != species['name']:
+                        species['name'] = organism_name
+
                     all_new_species.append(self._generate_files(species))
                     break
         else:
