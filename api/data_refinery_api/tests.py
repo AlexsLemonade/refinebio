@@ -288,12 +288,12 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_fetching_organism_index(self):
-        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'version': API_VERSION}), {'id': 1})
+        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'id': 1, 'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
 
-        # Expect 404 if the experiment accession code isn't valid
-        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'experiment_accession_code': 'wrong-accession-code'})
+        # Expect 404 if the transcriptome index id is not valid
+        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'id': -1, 'version': API_VERSION}))
         self.assertEqual(response.status_code, 404)
 
     def test_compendia(self):
@@ -1098,5 +1098,5 @@ class ProcessorTestCases(APITestCase):
                          self.salmon_quant_proc.environment['os_pkg']['python3'])
 
         organism_index = response.json()['results'][0]['organism_index']
-        self.assertEqual(organism_index["result"], transcriptome_result.id)
+        self.assertEqual(organism_index["result_id"], transcriptome_result.id)
         self.assertEqual(organism_index["index_type"], "TRANSCRIPTOME_LONG")
