@@ -288,7 +288,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_fetching_organism_index(self):
-        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'organism_name': 'DANIO_RERIO', 'version': API_VERSION}), {'length': 'SHORT'})
+        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'version': API_VERSION}), {'id': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
 
