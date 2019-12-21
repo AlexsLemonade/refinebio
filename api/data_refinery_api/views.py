@@ -1236,24 +1236,54 @@ class Stats(APIView):
 ###
 # Transcriptome Indices
 ###
-
-class TranscriptomeIndexList(generics.ListAPIView):
-    """ List all Transcriptome Indices. These are a special type of process result, necessary for processing other SRA samples. """
-    serializer_class = OrganismIndexSerializer
-
-    def get_queryset(self):
-        return OrganismIndex.objects.distinct("organism", "index_type")
-
 @method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
     openapi.Parameter(
-        name='organism_name', in_=openapi.IN_PATH, type=openapi.TYPE_STRING,
+        name='organism_name', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
         description="Organism name. Eg. `MUS_MUSCULUS`",
     ),
     openapi.Parameter(
         name='length', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
-        description="",
-        enum=('short', 'long',),
-        default='short'
+        description="Short hand for `index_type` Eg. `short` or `long`",
+    ),
+    openapi.Parameter(
+        name='salmon_version', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Eg. `salmon 0.13.1`",
+    ),
+    openapi.Parameter(
+        name='index_type', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Eg. `TRANSCRIPTOME_LONG`",
+    ),
+]))
+class TranscriptomeIndexList(generics.ListAPIView):
+    """
+    List all Transcriptome Indices. These are a special type of process result,
+    necessary for processing other SRA samples.
+    """
+    serializer_class = OrganismIndexSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = ['index_type', 'salmon_version', 'index_type']
+    ordering_fields = ('created_at', 'salmon_version')
+    ordering = ('-created_at',)
+
+    def get_queryset(self):
+        queryset = OrganismIndex.objects.all()
+
+        organism_name = self.request.GET.get('organism_name', None)
+        if organism_name is not None:
+            queryset = queryset.filter(organism__name=organism_name.upper())
+
+        length = self.request.GET.get('length', None)
+        if length is not None:
+            index_type = "TRANSCRIPTOME_{}".format(length.upper())
+            queryset = queryset.filter(index_type=index_type)
+
+        return queryset
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='id', in_=openapi.IN_PATH, type=openapi.TYPE_NUMBER,
+        description="Transcriptome Index Id eg `1`",
     ),
 ]))
 class TranscriptomeIndexDetail(generics.RetrieveAPIView):
@@ -1262,21 +1292,8 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
     the transcriptome index we have stored.
     """
     serializer_class = OrganismIndexSerializer
-
-    def get_object(self):
-        organism_name = self.kwargs['organism_name'].upper()
-        length = self.request.query_params.get('length', 'short')
-
-        # Get the correct organism index object, serialize it, and return it
-        transcription_length = "TRANSCRIPTOME_" + length.upper()
-        try:
-            organism = Organism.objects.get(name=organism_name.upper())
-            organism_index = OrganismIndex.objects.distinct(
-                "organism", "index_type"
-            ).get(organism=organism, index_type=transcription_length)
-            return organism_index
-        except OrganismIndex.DoesNotExist:
-            raise Http404('Organism does not exists')
+    lookup_field = 'id'
+    queryset = OrganismIndex.objects.all()
 
 ###
 # Compendia
