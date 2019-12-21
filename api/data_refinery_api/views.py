@@ -1261,12 +1261,12 @@ class TranscriptomeIndexList(generics.ListAPIView):
     """
     serializer_class = OrganismIndexSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
-    filterset_fields = ['index_type', 'salmon_version', 'index_type']
+    filterset_fields = ['salmon_version', 'index_type']
     ordering_fields = ('created_at', 'salmon_version')
     ordering = ('-created_at',)
 
     def get_queryset(self):
-        queryset = OrganismIndex.objects.all()
+        queryset = OrganismIndex.public_objects.all()
 
         organism_name = self.request.GET.get('organism_name', None)
         if organism_name is not None:
@@ -1293,7 +1293,7 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
     """
     serializer_class = OrganismIndexSerializer
     lookup_field = 'id'
-    queryset = OrganismIndex.objects.all()
+    queryset = OrganismIndex.public_objects.all()
 
 ###
 # Compendia
