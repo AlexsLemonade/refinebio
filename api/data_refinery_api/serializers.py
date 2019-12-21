@@ -85,7 +85,10 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_s3_url(self, obj):
-        return obj.get_computed_file().s3_url
+        computed_file = obj.get_computed_file()
+        if computed_file is not None:
+            return computed_file.s3_url
+        return None
 
 
 ##
