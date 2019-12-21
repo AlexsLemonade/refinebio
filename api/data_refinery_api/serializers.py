@@ -80,6 +80,7 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
                     'source_version',
                     'assembly_name',
                     'salmon_version',
+                    'result_id',
                     'last_modified',
                 )
         read_only_fields = fields
