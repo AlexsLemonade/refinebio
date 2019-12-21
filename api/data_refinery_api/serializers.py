@@ -73,13 +73,13 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
         model = OrganismIndex
 
         fields = (
+                    'id',
                     'index_type',
                     'organism',
                     's3_url',
                     'source_version',
                     'assembly_name',
                     'salmon_version',
-                    'result',
                     'last_modified',
                 )
         read_only_fields = fields
