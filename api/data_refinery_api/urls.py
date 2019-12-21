@@ -113,9 +113,13 @@ urlpatterns = [
         url(r'^stats/failures/processor$', FailedProcessorJobStats.as_view(), name='stats_failed_processor'),
         url(r'^stats-about/$', AboutStats.as_view(), name='stats_about'),
 
-        # Transcriptome Indices and QN Targets
-        url(r'^transcriptome_indices/$', TranscriptomeIndexList.as_view(), name='transcriptome_indices'),
-        url(r'^transcriptome_indices/(?P<organism_name>.+)$', TranscriptomeIndexDetail.as_view(), name='transcriptome_indices_read'),
+        # Transcriptome Indices
+        path('transcriptome_indices/', include([
+            path('', TranscriptomeIndexList.as_view(), name='trascriptome_indices_list'),
+            path('<int:id>', TranscriptomeIndexDetail.as_view(), name='transcriptome_indices_detail'),
+        ])),
+
+        # QN Targets
         url(r'^qn_targets/$', QNTargetsAvailable.as_view(), name='qn_targets_available'),
         url(r'^qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name='qn_targets'),
 
