@@ -288,12 +288,13 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_fetching_organism_index(self):
-        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'id': 1, 'version': API_VERSION}))
+        organism_index_id = OrganismIndex.objects.all().first().id
+        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'id': organism_index_id, 'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
 
         # Expect 404 if the transcriptome index id is not valid
-        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'id': -1, 'version': API_VERSION}))
+        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'id': 0, 'version': API_VERSION}))
         self.assertEqual(response.status_code, 404)
 
     def test_compendia(self):
