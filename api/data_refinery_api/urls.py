@@ -1,12 +1,7 @@
-from rest_framework.routers import DefaultRouter
-from django.conf.urls import url, include
+from django.conf.urls import url
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.reverse import reverse
-from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -144,9 +139,6 @@ urlpatterns = [
     url(r'^swagger/$', RedirectView.as_view(url="/v1/swagger")),
     url(r'^$', RedirectView.as_view(url="/v1")),
 ]
-
-# This adds support explicitly typed endpoints such that appending '.json' returns that application type.
-urlpatterns = format_suffix_patterns(urlpatterns)
 
 # handle errors
 handler404 = handle404error
