@@ -110,7 +110,7 @@ urlpatterns = [
 
         # Transcriptome Indices
         path('transcriptome_indices/', include([
-            path('', TranscriptomeIndexList.as_view(), name='trascriptome_indices'),
+            path('', TranscriptomeIndexList.as_view(), name='transcriptome_indices'),
             path('<int:id>', TranscriptomeIndexDetail.as_view(), name='transcriptome_indices_read'),
         ])),
 
