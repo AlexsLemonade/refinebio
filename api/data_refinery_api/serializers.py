@@ -66,26 +66,26 @@ class ProcessorSerializer(serializers.ModelSerializer):
 
 class OrganismIndexSerializer(serializers.ModelSerializer):
 
-    organism = serializers.StringRelatedField(read_only=True)
-    s3_url = serializers.SerializerMethodField()
+    organism_name = serializers.StringRelatedField(read_only=True)
+    download_url = serializers.SerializerMethodField()
 
     class Meta:
         model = OrganismIndex
 
         fields = (
                     'id',
-                    'index_type',
-                    'organism',
-                    's3_url',
-                    'source_version',
                     'assembly_name',
+                    'organism_name',
+                    'source_version',
+                    'index_type',
                     'salmon_version',
+                    'download_url',
                     'result_id',
                     'last_modified',
                 )
         read_only_fields = fields
 
-    def get_s3_url(self, obj):
+    def get_download_url(self, obj):
         computed_file = obj.get_computed_file()
         if computed_file is not None:
             return computed_file.s3_url
