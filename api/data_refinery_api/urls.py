@@ -1,12 +1,7 @@
-from rest_framework.routers import DefaultRouter
-from django.conf.urls import url, include
+from django.conf.urls import url
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.reverse import reverse
-from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -113,9 +108,13 @@ urlpatterns = [
         url(r'^stats/failures/processor$', FailedProcessorJobStats.as_view(), name='stats_failed_processor'),
         url(r'^stats-about/$', AboutStats.as_view(), name='stats_about'),
 
-        # Transcriptome Indices and QN Targets
-        url(r'^transcriptome_indices/$', TranscriptomeIndexList.as_view(), name='transcriptome_indices'),
-        url(r'^transcriptome_indices/(?P<organism_name>.+)$', TranscriptomeIndexDetail.as_view(), name='transcriptome_indices_read'),
+        # Transcriptome Indices
+        path('transcriptome_indices/', include([
+            path('', TranscriptomeIndexList.as_view(), name='transcriptome_indices'),
+            path('<int:id>', TranscriptomeIndexDetail.as_view(), name='transcriptome_indices_read'),
+        ])),
+
+        # QN Targets
         url(r'^qn_targets/$', QNTargetsAvailable.as_view(), name='qn_targets_available'),
         url(r'^qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name='qn_targets'),
 
@@ -140,9 +139,6 @@ urlpatterns = [
     url(r'^swagger/$', RedirectView.as_view(url="/v1/swagger")),
     url(r'^$', RedirectView.as_view(url="/v1")),
 ]
-
-# This adds support explicitly typed endpoints such that appending '.json' returns that application type.
-urlpatterns = format_suffix_patterns(urlpatterns)
 
 # handle errors
 handler404 = handle404error

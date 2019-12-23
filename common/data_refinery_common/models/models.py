@@ -700,14 +700,14 @@ class OrganismIndex(models.Model):
     # We keep the director unextracted on the shared filesystem so all
     # Salmon jobs can access it.
     absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
-
-    # S3 Information
-    s3_url = models.CharField(max_length=255, default="")
-
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def get_computed_file(self):
+        """ Short hand method for getting the computed file for this organism index"""
+        return self.result.computedfile_set.first()
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
@@ -725,6 +725,7 @@ These are the database representations of files
 which live on local disk, on ephemeral storage,
 or on AWS cloud services.
 """
+
 
 class OriginalFile(models.Model):
     """ A representation of a file from an external source """
