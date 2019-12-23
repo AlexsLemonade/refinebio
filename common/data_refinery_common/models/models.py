@@ -707,7 +707,7 @@ class OrganismIndex(models.Model):
 
     def get_computed_file(self):
         """ Short hand method for getting the computed file for this organism index"""
-        return ComputedFile.objects.filter(result=self.result).first()
+        return self.result.computedfile_set.first()
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
