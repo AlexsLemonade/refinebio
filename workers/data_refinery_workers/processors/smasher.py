@@ -424,17 +424,15 @@ def _notify(job_context: Dict) -> Dict:
                 _notify_send_email(job_context)
             # Display an error if something goes wrong.
             except ClientError as e:
-                logger.warn("ClientError while notifying.", exc_info=1, client_error_message=e.response['Error']['Message'])
-                job_context['job'].success = False
-                job_context['job'].failure_reason = e.response['Error']['Message']
-                job_context['success'] = False
-                return job_context
+                raise utils.ProcessorJobError('ClientError while notifying',
+                                              success=False,
+                                              exc_info=1,
+                                              client_error_message=e.response['Error']['Message'])
             except Exception as e:
-                logger.warn("General failure when trying to send email.", exc_info=1, result_url=job_context["result_url"])
-                job_context['job'].success = False
-                job_context['job'].failure_reason = str(e)
-                job_context['success'] = False
-                return job_context
+                raise utils.ProcessorJobError('General failure when trying to send email.',
+                                              success=False,
+                                              exc_info=1,
+                                              result_url=job_context['result_url'])
 
             job_context["dataset"].email_sent = True
             job_context["dataset"].save()
