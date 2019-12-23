@@ -35,6 +35,7 @@ from data_refinery_common.models import (
     OriginalFile,
     Pipeline,
     SampleResultAssociation,
+    Dataset
 )
 from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
 from data_refinery_workers.processors import utils, smashing_utils
@@ -409,103 +410,18 @@ def _notify(job_context: Dict) -> Dict:
     # SES
     ##
     if job_context.get("upload", True) and settings.RUNNING_IN_CLOUD:
-        # Link to the dataset page, where the user can re-try the download job
-        dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
-
         # Send a notification to slack when a dataset fails to be processed
         if job_context['job'].success is False:
             try:
-                requests.post(
-                    settings.ENGAGEMENTBOT_WEBHOOK,
-                    json={
-                        'channel': 'ccdl-general', # Move to robots when we get sick of these
-                        'username': 'EngagementBot',
-                        'icon_emoji': ':halal:',
-                        'fallback': 'Dataset failed processing.',
-                        'title': 'Dataset failed processing',
-                        'title_link': dataset_url,
-                        'attachments':[
-                            {
-                                'color': 'warning',
-                                'text': job_context['job'].failure_reason,
-                                'author_name': job_context['dataset'].email_address,
-                                'fields': [
-                                    {
-                                        'title': 'Dataset id',
-                                        'value': str(job_context['dataset'].id)
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    headers={'Content-Type': 'application/json'},
-                    timeout=10
-                )
+                _notify_slack_failed_dataset(job_context['dataset'])
             except Exception as e:
-                logger.warn(e) # It doens't really matter if this didn't work
-                pass
+                logger.warn(e) # It doesn't really matter if this didn't work
 
         # Don't send an email if we don't have address.
         if job_context["dataset"].email_address:
-            SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
-            RECIPIENT = job_context["dataset"].email_address
-            AWS_REGION = "us-east-1"
-            CHARSET = "UTF-8"
-
-            if job_context['job'].success is False:
-                SUBJECT = "There was a problem processing your refine.bio dataset :("
-                BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-
-                ERROR_EMAIL_TITLE = quote('I can\'t download my dataset')
-                ERROR_EMAIL_BODY = quote("""
-                [What browser are you using?]
-                [Add details of the issue you are facing]
-
-                ---
-                """ + str(job_context['dataset'].id))
-
-                FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url)\
-                                                .replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)\
-                                                .replace('REPLACE_NEW_ISSUE', 'https://github.com/AlexsLemonade/refinebio/issues/new?title={0}&body={1}&labels=bug'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))\
-                                                .replace('REPLACE_MAILTO', 'mailto:ccdl@alexslemonade.org?subject={0}&body={1}'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))
-                job_context['success'] = False
-            else:
-                SUBJECT = "Your refine.bio Dataset is Ready!"
-                BODY_TEXT = "Hot off the presses:\n\n" + dataset_url + "\n\nLove!,\nThe refine.bio Team"
-                FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', dataset_url)\
-                                          .replace('REPLACE_DATASET_URL', dataset_url)
-
             # Try to send the email.
             try:
-
-                # Create a new SES resource and specify a region.
-                client = boto3.client('ses', region_name=AWS_REGION)
-
-                #Provide the contents of the email.
-                response = client.send_email(
-                    Destination={
-                        'ToAddresses': [
-                            RECIPIENT,
-                        ],
-                    },
-                    Message={
-                        'Body': {
-                            'Html': {
-                                'Charset': CHARSET,
-                                'Data': FORMATTED_HTML,
-                            },
-                            'Text': {
-                                'Charset': CHARSET,
-                                'Data': BODY_TEXT,
-                            },
-                        },
-                        'Subject': {
-                            'Charset': CHARSET,
-                            'Data': SUBJECT,
-                        }
-                    },
-                    Source=SENDER,
-                )
+                _notify_send_email(job_context)
             # Display an error if something goes wrong.
             except ClientError as e:
                 logger.warn("ClientError while notifying.", exc_info=1, client_error_message=e.response['Error']['Message'])
@@ -524,6 +440,99 @@ def _notify(job_context: Dict) -> Dict:
             job_context["dataset"].save()
 
     return job_context
+
+def _notify_slack_failed_dataset(dataset: Dataset):
+    """ Send a slack notification when a dataset fails to smash """
+
+    # Link to the dataset page, where the user can re-try the download job
+    dataset_url = 'https://www.refine.bio/dataset/' + str(dataset.id)
+
+    requests.post(
+        settings.ENGAGEMENTBOT_WEBHOOK,
+        json={
+            'channel': 'ccdl-general', # Move to robots when we get sick of these
+            'username': 'EngagementBot',
+            'icon_emoji': ':halal:',
+            'fallback': 'Dataset failed processing.',
+            'title': 'Dataset failed processing',
+            'title_link': dataset_url,
+            'attachments':[
+                {
+                    'color': 'warning',
+                    'text': dataset.failure_reason,
+                    'author_name': dataset.email_address,
+                    'fields': [
+                        {
+                            'title': 'Dataset id',
+                            'value': str(dataset.id)
+                        }
+                    ]
+                }
+            ]
+        },
+        headers={'Content-Type': 'application/json'},
+        timeout=10
+    )
+
+def _notify_send_email(job_context):
+    dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
+
+    SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
+    RECIPIENT = job_context["dataset"].email_address
+    AWS_REGION = "us-east-1"
+    CHARSET = "UTF-8"
+
+    if job_context['job'].success is False:
+        SUBJECT = "There was a problem processing your refine.bio dataset :("
+        BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
+
+        ERROR_EMAIL_TITLE = quote('I can\'t download my dataset')
+        ERROR_EMAIL_BODY = quote("""
+        [What browser are you using?]
+        [Add details of the issue you are facing]
+
+        ---
+        """ + str(job_context['dataset'].id))
+
+        FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url)\
+                                        .replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)\
+                                        .replace('REPLACE_NEW_ISSUE', 'https://github.com/AlexsLemonade/refinebio/issues/new?title={0}&body={1}&labels=bug'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))\
+                                        .replace('REPLACE_MAILTO', 'mailto:ccdl@alexslemonade.org?subject={0}&body={1}'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))
+        job_context['success'] = False
+    else:
+        SUBJECT = "Your refine.bio Dataset is Ready!"
+        BODY_TEXT = "Hot off the presses:\n\n" + dataset_url + "\n\nLove!,\nThe refine.bio Team"
+        FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', dataset_url)\
+                                    .replace('REPLACE_DATASET_URL', dataset_url)
+
+    # Create a new SES resource and specify a region.
+    client = boto3.client('ses', region_name=AWS_REGION)
+
+    #Provide the contents of the email.
+    response = client.send_email(
+        Destination={
+            'ToAddresses': [
+                RECIPIENT,
+            ],
+        },
+        Message={
+            'Body': {
+                'Html': {
+                    'Charset': CHARSET,
+                    'Data': FORMATTED_HTML,
+                },
+                'Text': {
+                    'Charset': CHARSET,
+                    'Data': BODY_TEXT,
+                },
+            },
+            'Subject': {
+                'Charset': CHARSET,
+                'Data': SUBJECT,
+            }
+        },
+        Source=SENDER,
+    )
 
 def _update_result_objects(job_context: Dict) -> Dict:
     """Closes out the dataset object."""
