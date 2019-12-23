@@ -406,41 +406,41 @@ def _upload(job_context: Dict) -> Dict:
 def _notify(job_context: Dict) -> Dict:
     """ Use AWS SES to notify a user of a smash result.. """
 
-    ##
-    # SES
-    ##
-    if job_context.get("upload", True) and settings.RUNNING_IN_CLOUD:
-        # Send a notification to slack when a dataset fails to be processed
-        if job_context['job'].success is False:
-            try:
-                _notify_slack_failed_dataset(job_context['dataset'])
-            except Exception as e:
-                logger.warn(e) # It doesn't really matter if this didn't work
+    if not job_context.get("upload", True) or not settings.RUNNING_IN_CLOUD:
+        return job_context
 
-        # Don't send an email if we don't have address.
-        if job_context["dataset"].email_address:
-            # Try to send the email.
-            try:
-                _notify_send_email(job_context)
-            # Display an error if something goes wrong.
-            except ClientError as e:
-                raise utils.ProcessorJobError('ClientError while notifying',
-                                              success=False,
-                                              exc_info=1,
-                                              client_error_message=e.response['Error']['Message'])
-            except Exception as e:
-                raise utils.ProcessorJobError('General failure when trying to send email.',
-                                              success=False,
-                                              exc_info=1,
-                                              result_url=job_context['result_url'])
+    # Send a notification to slack when a dataset fails to be processed
+    if job_context['job'].success is False:
+        try:
+            _notify_slack_failed_dataset(job_context)
+        except Exception as e:
+            logger.warn(e) # It doesn't really matter if this didn't work
+
+    # Don't send an email if we don't have address.
+    if job_context["dataset"].email_address:
+        # Try to send the email.
+        try:
+            _notify_send_email(job_context)
+        # Display an error if something goes wrong.
+        except ClientError as e:
+            raise utils.ProcessorJobError('ClientError while notifying',
+                                          success=False,
+                                          exc_info=1,
+                                          client_error_message=e.response['Error']['Message'])
+        except Exception as e:
+            raise utils.ProcessorJobError('General failure when trying to send email.',
+                                          success=False,
+                                          exc_info=1,
+                                          result_url=job_context['result_url'])
 
     return job_context
 
-def _notify_slack_failed_dataset(dataset: Dataset):
+
+def _notify_slack_failed_dataset(job_context: Dict):
     """ Send a slack notification when a dataset fails to smash """
 
     # Link to the dataset page, where the user can re-try the download job
-    dataset_url = 'https://www.refine.bio/dataset/' + str(dataset.id)
+    dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
 
     requests.post(
         settings.ENGAGEMENTBOT_WEBHOOK,
@@ -454,12 +454,12 @@ def _notify_slack_failed_dataset(dataset: Dataset):
             'attachments':[
                 {
                     'color': 'warning',
-                    'text': dataset.failure_reason,
-                    'author_name': dataset.email_address,
+                    'text': job_context['job'].failure_reason,
+                    'author_name': job_context['dataset'].email_address,
                     'fields': [
                         {
                             'title': 'Dataset id',
-                            'value': str(dataset.id)
+                            'value': str(job_context['dataset'].id)
                         }
                     ]
                 }
@@ -469,7 +469,9 @@ def _notify_slack_failed_dataset(dataset: Dataset):
         timeout=10
     )
 
+
 def _notify_send_email(job_context):
+    """ Send email notification to the user if the dataset succeded or failed. """
     dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
 
     SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
@@ -528,6 +530,7 @@ def _notify_send_email(job_context):
         },
         Source=SENDER,
     )
+
 
 def _update_result_objects(job_context: Dict) -> Dict:
     """Closes out the dataset object."""
