@@ -416,16 +416,19 @@ def _notify(job_context: Dict) -> Dict:
         if job_context['job'].success is False:
             try:
                 requests.post(
-                    "https://hooks.slack.com/services/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",
+                    settings.ENGAGEMENTBOT_WEBHOOK,
                     json={
+                        'channel': 'ccdl-general', # Move to robots when we get sick of these
+                        'username': 'EngagementBot',
+                        'icon_emoji': ':halal:',
                         'fallback': 'Dataset failed processing.',
                         'title': 'Dataset failed processing',
                         'title_link': dataset_url,
-                        "attachments":[
+                        'attachments':[
                             {
-                                "color": "warning",
-                                "text": job_context['job'].failure_reason,
-                                'author_name': job_context["dataset"].email_address,
+                                'color': 'warning',
+                                'text': job_context['job'].failure_reason,
+                                'author_name': job_context['dataset'].email_address,
                                 'fields': [
                                     {
                                         'title': 'Dataset id',
