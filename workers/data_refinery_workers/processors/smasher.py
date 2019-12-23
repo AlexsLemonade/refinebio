@@ -434,9 +434,6 @@ def _notify(job_context: Dict) -> Dict:
                                               exc_info=1,
                                               result_url=job_context['result_url'])
 
-            job_context["dataset"].email_sent = True
-            job_context["dataset"].save()
-
     return job_context
 
 def _notify_slack_failed_dataset(dataset: Dataset):
