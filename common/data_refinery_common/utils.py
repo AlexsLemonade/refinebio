@@ -22,6 +22,7 @@ INSTANCE_ID = None
 SUPPORTED_MICROARRAY_PLATFORMS = None
 SUPPORTED_RNASEQ_PLATFORMS = None
 READABLE_PLATFORM_NAMES = None
+ANNOTATION_PACKAGE_OVERRIDES = None
 
 
 def get_env_variable(var_name: str, default: str = None) -> str:
