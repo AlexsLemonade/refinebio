@@ -157,7 +157,7 @@ def get_active_volumes_detailed() -> Dict:
 
 
 def get_supported_microarray_platforms(
-        platforms_csv: str = "config/supported_microarray_platforms.csv"
+    platforms_csv: str = "config/supported_microarray_platforms.csv"
 ) -> list:
     """
     Loads our supported microarray platforms file and returns a list of dictionaries
@@ -206,8 +206,9 @@ def get_supported_microarray_platforms(
     return SUPPORTED_MICROARRAY_PLATFORMS
 
 
-def get_supported_rnaseq_platforms(platforms_list: str = "config/supported_rnaseq_platforms.txt"
-                                   ) -> list:
+def get_supported_rnaseq_platforms(
+    platforms_list: str = "config/supported_rnaseq_platforms.txt"
+) -> list:
     """
     Returns a list of RNASeq platforms which are currently supported.
     """
