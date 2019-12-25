@@ -168,7 +168,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
                 "annotationPackageName": job_context["annotation_override"]
             }
 
-            # rpy2 doesn't like None as a value for arguments so lets filter them out
+            # rpy2 doesn't like None as a value for arguments so let's filter them out
             optional_args = {k: v for k, v in scan_upc_named_args.items() if v is not None}
 
             scan_upc(input_file, job_context["output_file_path"], **optional_args)
