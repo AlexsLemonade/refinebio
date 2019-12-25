@@ -12,14 +12,16 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
-    OriginalFile,
     Pipeline,
-    Processor,
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
 
-from data_refinery_common.utils import get_env_variable, get_readable_affymetrix_names
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_readable_affymetrix_names,
+    get_affymetrix_annotation_package_name_overrides
+)
 from data_refinery_workers.processors import utils
 
 
@@ -35,7 +37,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context so everything is prepared for processing.
     """
     # All files for the job are in the same directory.
-    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
+    work_dir_template = "{0}/processor_job_{1}/"
+    job_context["work_dir"] = work_dir_template.format(LOCAL_ROOT_DIR, str(job_context["job_id"]))
 
     original_file = job_context["original_files"][0]
     job_context["input_file_path"] = original_file.absolute_file_path
@@ -50,7 +53,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         return job_context
 
     file_extension_start = original_file.filename.upper().find(".CEL")
-    new_filename= original_file.filename[:file_extension_start] + ".PCL"
+    new_filename = original_file.filename[:file_extension_start] + ".PCL"
     job_context["output_file_path"] = job_context["work_dir"] + new_filename
 
     return job_context
@@ -110,6 +113,13 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     chip_pkg_map = _create_ensg_pkg_map()
     job_context["brainarray_package"] = chip_pkg_map.get(package_name_without_version, None)
     job_context["platform_accession_code"] = package_name_without_version
+
+    # ref: https://github.com/AlexsLemonade/refinebio/issues/1986
+    job_context["annotation_override"] = get_affymetrix_annotation_package_name_overrides().get(
+        package_name_without_version,
+        None
+    )
+
     return job_context
 
 
@@ -153,12 +163,16 @@ def _run_scan_upc(job_context: Dict) -> Dict:
                     sample.platform_name = platform_name
                     sample.save()
 
-                scan_upc(input_file,
-                         job_context["output_file_path"],
-                         probeSummaryPackage=job_context["brainarray_package"])
-            else:
-                scan_upc(input_file,
-                         job_context["output_file_path"])
+            scan_upc_named_args = {
+                "probeSummaryPackage": job_context["brainarray_package"],
+                "annotationPackageName": job_context["annotation_override"]
+            }
+
+            # rpy2 doesn't like None as a value for arguments so lets filter them out
+            optional_args = {k: v for k, v in scan_upc_named_args.items() if v is not None}
+
+            scan_upc(input_file, job_context["output_file_path"], **optional_args)
+
             job_context['time_end'] = timezone.now()
 
     except RRuntimeError as e:
@@ -167,10 +181,11 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         error_message = error_template.format(input_file, str(e))
         logger.error(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
-        job_context["success"] = False
         job_context["job"].no_retry = True
+        job_context["success"] = False
 
     return job_context
+
 
 def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
@@ -214,10 +229,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
             computed_file=computed_file)
 
     logger.debug("Created %s", result,
-                processor_job=job_context["job_id"])
+                 processor_job=job_context["job_id"])
     job_context["success"] = True
 
     return job_context
+
 
 def affy_to_pcl(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.ARRAY_EXPRESS.value)
