@@ -796,9 +796,19 @@ class SmasherTestCase(TransactionTestCase):
         experiment.save()
 
         result = ComputationalResult()
+        result.commands.append("create_qn_target.py")
+        result.is_ccdl = True
+        result.is_public = True
+        processor_key = "QN_REFERENCE"
+        result.processor = None
         result.save()
 
         danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        danio_rerio.qn_target = result
+        danio_rerio.save()
+
+        result = ComputationalResult()
+        result.save()
 
         sample = Sample()
         sample.accession_code = 'SRR1731761'
