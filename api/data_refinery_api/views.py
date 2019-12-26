@@ -1220,38 +1220,70 @@ class Stats(APIView):
             'month': 'day',
             'year': 'month'
         }
-        range_to_start_date = get_start_date(range_param)
 
-        # truncate the `last_modified` field by hour, day or month depending on the `range` param
-        # and annotate each object with that. This will allow us to count the number of objects
-        # on each interval with a single query
+        # truncate the parameterized field so it can be annotated by range
+        # ie. each day is composed of 24 hours...
+        start_trunc = Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())
+
+        # get the correct start time for the range
+        start_range = get_start_date(range_param)
+
+        # annotate and filter in a single query
         # ref https://stackoverflow.com/a/38359913/763705
-        return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
-                      .values('start') \
-                      .filter(start__gte=range_to_start_date.get(range_param))
+        return objects.annotate(start=start_trunc).values('start').filter(start__gte=start_range)
 
 
 ###
 # Transcriptome Indices
 ###
-
-class TranscriptomeIndexList(generics.ListAPIView):
-    """ List all Transcriptome Indices. These are a special type of process result, necessary for processing other SRA samples. """
-    serializer_class = OrganismIndexSerializer
-
-    def get_queryset(self):
-        return OrganismIndex.objects.distinct("organism", "index_type")
-
 @method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
     openapi.Parameter(
-        name='organism_name', in_=openapi.IN_PATH, type=openapi.TYPE_STRING,
+        name='organism_name', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
         description="Organism name. Eg. `MUS_MUSCULUS`",
     ),
     openapi.Parameter(
         name='length', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
-        description="",
-        enum=('short', 'long',),
-        default='short'
+        description="Short hand for `index_type` Eg. `short` or `long`",
+    ),
+    openapi.Parameter(
+        name='salmon_version', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Eg. `salmon 0.13.1`",
+    ),
+    openapi.Parameter(
+        name='index_type', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Eg. `TRANSCRIPTOME_LONG`",
+    ),
+]))
+class TranscriptomeIndexList(generics.ListAPIView):
+    """
+    List all Transcriptome Indices. These are a special type of process result,
+    necessary for processing other SRA samples.
+    """
+    serializer_class = OrganismIndexSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = ['salmon_version', 'index_type']
+    ordering_fields = ('created_at', 'salmon_version')
+    ordering = ('-created_at',)
+
+    def get_queryset(self):
+        queryset = OrganismIndex.public_objects.all()
+
+        organism_name = self.request.GET.get('organism_name', None)
+        if organism_name is not None:
+            queryset = queryset.filter(organism__name=organism_name.upper())
+
+        length = self.request.GET.get('length', None)
+        if length is not None:
+            index_type = "TRANSCRIPTOME_{}".format(length.upper())
+            queryset = queryset.filter(index_type=index_type)
+
+        return queryset
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='id', in_=openapi.IN_PATH, type=openapi.TYPE_NUMBER,
+        description="Transcriptome Index Id eg `1`",
     ),
 ]))
 class TranscriptomeIndexDetail(generics.RetrieveAPIView):
@@ -1260,21 +1292,8 @@ class TranscriptomeIndexDetail(generics.RetrieveAPIView):
     the transcriptome index we have stored.
     """
     serializer_class = OrganismIndexSerializer
-
-    def get_object(self):
-        organism_name = self.kwargs['organism_name'].upper()
-        length = self.request.query_params.get('length', 'short')
-
-        # Get the correct organism index object, serialize it, and return it
-        transcription_length = "TRANSCRIPTOME_" + length.upper()
-        try:
-            organism = Organism.objects.get(name=organism_name.upper())
-            organism_index = OrganismIndex.objects.exclude(s3_url__exact="")\
-                                .distinct("organism", "index_type")\
-                                .get(organism=organism, index_type=transcription_length)
-            return organism_index
-        except OrganismIndex.DoesNotExist:
-            raise Http404('Organism does not exists')
+    lookup_field = 'id'
+    queryset = OrganismIndex.public_objects.all()
 
 ###
 # Compendia

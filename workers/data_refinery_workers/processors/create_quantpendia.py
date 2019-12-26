@@ -41,6 +41,7 @@ def create_quantpendia(job_id: int) -> None:
 
 @utils.cache_keys('time_start', 'num_samples', 'time_end', 'formatted_command', work_dir_key='job_dir')
 def _download_files(job_context: Dict) -> Dict:
+    job_context['filtered_samples'] = {}
     job_context['time_start'] = timezone.now()
 
     num_samples = 0

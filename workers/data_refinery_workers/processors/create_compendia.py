@@ -20,7 +20,8 @@ from data_refinery_common.models import (ComputationalResult,
                                          CompendiumResultOrganismAssociation,
                                          ComputedFile,
                                          Organism,
-                                         Pipeline)
+                                         Pipeline,
+                                         Sample)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import smashing_utils, utils
 
@@ -58,6 +59,10 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context["all_organisms"] = job_context["samples"].keys()
     all_samples = list(itertools.chain(*job_context["samples"].values()))
     job_context["samples"] = {job_context["primary_organism"]: all_samples}
+
+    # We'll store here all sample accession codes that didn't make it into the compendia
+    # with the reason why not.
+    job_context['filtered_samples'] = {}
 
     job_context = smashing_utils.prepare_files(job_context)
 
@@ -231,8 +236,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Remove genes (rows) with <=70% present values in combined_matrix
     thresh = combined_matrix.shape[1] * .7  # (Rows, Columns)
     # Everything below `thresh` is dropped
-    row_filtered_matrix = combined_matrix.dropna(axis='index',
-                                                 thresh=thresh)
+    row_filtered_matrix = combined_matrix.dropna(axis='index', thresh=thresh)
+
     del combined_matrix
     del thresh
 
@@ -253,6 +258,16 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     log_state("end drop NA genes", job_context["job"].id, drop_na_samples_start)
     replace_zeroes_start = log_state("start replace zeroes", job_context["job"].id)
+
+    for sample_accession_code in row_filtered_matrix.columns:
+        if sample_accession_code not in row_col_filtered_matrix_samples_columns:
+            sample = Sample.objects.get(accession_code=sample_accession_code)
+            sample_metadata = sample.to_metadata_dict()
+            job_context['filtered_samples'][sample_accession_code] = {
+                **sample_metadata,
+                'reason': 'Sample was dropped because it had less than 50% present values.',
+                'experiment_accession_code': smashing_utils.get_experiment_accession(sample.accession_code, job_context['dataset'].data)
+            }
 
     del row_filtered_matrix
 

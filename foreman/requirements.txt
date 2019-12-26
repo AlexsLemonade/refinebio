@@ -11,7 +11,7 @@ coverage==4.5.1
 django-elasticsearch-dsl-drf==0.20.3
 django-elasticsearch-dsl==7.1.0  # via django-elasticsearch-dsl-drf
 django-nine==0.2.2        # via django-elasticsearch-dsl-drf
-django==2.2.7
+django==2.2.9
 djangorestframework==3.10.3  # via django-elasticsearch-dsl-drf
 elasticsearch-dsl==7.1.0
 elasticsearch==7.1.0      # via django-elasticsearch-dsl-drf, elasticsearch-dsl

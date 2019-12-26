@@ -65,17 +65,32 @@ class ProcessorSerializer(serializers.ModelSerializer):
 ##
 
 class OrganismIndexSerializer(serializers.ModelSerializer):
+
+    organism_name = serializers.StringRelatedField(read_only=True)
+    download_url = serializers.SerializerMethodField()
+
     class Meta:
         model = OrganismIndex
+
         fields = (
-                    'index_type',
-                    's3_url',
-                    'source_version',
+                    'id',
                     'assembly_name',
+                    'organism_name',
+                    'source_version',
+                    'index_type',
                     'salmon_version',
-                    'result',
+                    'download_url',
+                    'result_id',
                     'last_modified',
                 )
+        read_only_fields = fields
+
+    def get_download_url(self, obj):
+        computed_file = obj.get_computed_file()
+        if computed_file is not None:
+            return computed_file.s3_url
+        return None
+
 
 ##
 # Results
@@ -191,6 +206,7 @@ class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+
 class QNTargetSerializer(serializers.ModelSerializer):
     result = ComputationalResultNoFilesSerializer(many=False)
 
@@ -210,10 +226,12 @@ class QNTargetSerializer(serializers.ModelSerializer):
                     'result'
                 )
 
+
 class ComputedFileListSerializer(serializers.ModelSerializer):
     result = ComputationalResultNoFilesSerializer(many=False)
     samples = DetailedExperimentSampleSerializer(many=True)
-    compendia_organism_name = serializers.CharField(source='compendia_organism__name', read_only=True)
+    compendia_organism_name = serializers.CharField(source='compendia_organism__name',
+                                                    read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(ComputedFileListSerializer, self).__init__(*args, **kwargs)
