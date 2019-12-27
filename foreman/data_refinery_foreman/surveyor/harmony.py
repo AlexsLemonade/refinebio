@@ -407,7 +407,7 @@ def harmonize(metadata: List) -> Dict:
                     'characteristics [organism part]',
 
                     # SRA
-                    'cell_type'
+                    'cell_type',
                     'organismpart',
 
                     # GEO
