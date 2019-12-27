@@ -512,6 +512,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                             city = "COULD_NOT_DETERMINE"
 
                         user_agent = self.request.META.get('HTTP_USER_AGENT', None)
+                        total_samples = len(set([accession_code for experiment in new_data.values() for accession_code in experiment]))
                         response = requests.post(
                             settings.ENGAGEMENTBOT_WEBHOOK,
                             json={
@@ -531,11 +532,15 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                                             {
                                                 'title': 'Dataset id',
                                                 'value': str(old_object.id),
+                                            },
+                                            {
+                                                'title': 'Total downloads',
+                                                'value': Dataset.objects.filter(email_address=supplied_email_address).count(),
                                                 'short': True
                                             },
                                             {
-                                                'title': 'Total',
-                                                'value': Dataset.objects.filter(email_address=supplied_email_address).count(),
+                                                'title': 'Samples',
+                                                'value': total_samples,
                                                 'short': True
                                             }
                                         ]
