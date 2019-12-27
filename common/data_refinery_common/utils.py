@@ -12,6 +12,7 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
+from multiprocessing import current_process
 
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 
@@ -21,8 +22,10 @@ INSTANCE_ID = None
 SUPPORTED_MICROARRAY_PLATFORMS = None
 SUPPORTED_RNASEQ_PLATFORMS = None
 READABLE_PLATFORM_NAMES = None
+ANNOTATION_PACKAGE_OVERRIDES = None
 
-def get_env_variable(var_name: str, default: str=None) -> str:
+
+def get_env_variable(var_name: str, default: str = None) -> str:
     """ Get an environment variable or return a default value """
     try:
         return os.environ[var_name]
@@ -33,7 +36,7 @@ def get_env_variable(var_name: str, default: str=None) -> str:
         raise ImproperlyConfigured(error_msg)
 
 
-def get_env_variable_gracefully(var_name: str, default: str=None) -> str:
+def get_env_variable_gracefully(var_name: str, default: str = None) -> str:
     """
     Get an environment variable, or return a default value, but always fail gracefully and return
     something rather than raising an ImproperlyConfigured error.
@@ -86,6 +89,7 @@ def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
 
     return default
 
+
 def get_nomad_jobs() -> list:
     """Calls nomad service and return all jobs"""
     try:
@@ -96,6 +100,7 @@ def get_nomad_jobs() -> list:
     except nomad.api.exceptions.BaseNomadException:
         # Nomad is not available right now
         return []
+
 
 def get_active_volumes() -> Set[str]:
     """Returns a Set of indices for volumes that are currently mounted.
@@ -151,8 +156,9 @@ def get_active_volumes_detailed() -> Dict:
     return volumes
 
 
-def get_supported_microarray_platforms(platforms_csv: str="config/supported_microarray_platforms.csv"
-                                       ) -> list:
+def get_supported_microarray_platforms(
+    platforms_csv: str = "config/supported_microarray_platforms.csv"
+) -> list:
     """
     Loads our supported microarray platforms file and returns a list of dictionaries
     containing the internal accession, the external accession, and a boolean indicating
@@ -170,7 +176,7 @@ def get_supported_microarray_platforms(platforms_csv: str="config/supported_micr
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
-            if reader.line_num is 1:
+            if reader.line_num == 1:
                 continue
 
             external_accession = line[1]
@@ -200,8 +206,9 @@ def get_supported_microarray_platforms(platforms_csv: str="config/supported_micr
     return SUPPORTED_MICROARRAY_PLATFORMS
 
 
-def get_supported_rnaseq_platforms(platforms_list: str="config/supported_rnaseq_platforms.txt"
-                                   ) -> list:
+def get_supported_rnaseq_platforms(
+    platforms_list: str = "config/supported_rnaseq_platforms.txt"
+) -> list:
     """
     Returns a list of RNASeq platforms which are currently supported.
     """
@@ -217,7 +224,9 @@ def get_supported_rnaseq_platforms(platforms_list: str="config/supported_rnaseq_
     return SUPPORTED_RNASEQ_PLATFORMS
 
 
-def get_readable_affymetrix_names(mapping_csv: str="config/readable_affymetrix_names.csv") -> Dict:
+def get_readable_affymetrix_names(
+    mapping_csv: str = "config/readable_affymetrix_names.csv"
+) -> Dict:
     """
     Loads the mapping from human readble names to internal accessions for Affymetrix platforms.
     CSV must be in the format:
@@ -235,12 +244,39 @@ def get_readable_affymetrix_names(mapping_csv: str="config/readable_affymetrix_n
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
-            if reader.line_num is 1:
+            if reader.line_num == 1:
                 continue
 
             READABLE_PLATFORM_NAMES[line[1]] = line[0]
 
     return READABLE_PLATFORM_NAMES
+
+
+def get_affymetrix_annotation_package_name_overrides(
+    overrides_csv: str = "config/affymetrix_annotation_package_name_overrides.csv"
+) -> Dict:
+    """
+    Loads the mapping from annotation package name to internal accession for Affymetrix platforms.
+    CSV must be in the format:
+    Annotation Package Name | Inernal Accession
+    """
+    global ANNOTATION_PACKAGE_OVERRIDES
+
+    if ANNOTATION_PACKAGE_OVERRIDES is not None:
+        return ANNOTATION_PACKAGE_OVERRIDES
+
+    ANNOTATION_PACKAGE_OVERRIDES = {}
+    with open(overrides_csv, encoding='utf-8') as overrides_file:
+        reader = csv.reader(overrides_file, )
+        for line in reader:
+            # Skip the header row
+            # Lines are 1 indexed, #BecauseCSV
+            if reader.line_num == 1:
+                continue
+
+            ANNOTATION_PACKAGE_OVERRIDES[line[1]] = line[0]
+
+    return ANNOTATION_PACKAGE_OVERRIDES
 
 
 def get_internal_microarray_accession(accession_code):
@@ -254,6 +290,7 @@ def get_internal_microarray_accession(accession_code):
 
     return None
 
+
 def get_normalized_platform(external_accession):
     """
     Handles a weirdo cases, where external_accessions in the format
@@ -265,6 +302,7 @@ def get_normalized_platform(external_accession):
         external_accession = external_accession.replace(match, 'st')
 
     return external_accession
+
 
 def parse_s3_url(url):
     """
@@ -279,14 +317,17 @@ def parse_s3_url(url):
         path = result.path.strip('/')
     return bucket, path
 
+
 def get_s3_url(s3_bucket: str, s3_key: str) -> str:
     """
     Calculates the s3 URL for a file from the bucket name and the file key.
     """
     return "%s.s3.amazonaws.com/%s" % (s3_bucket, s3_key)
 
+
 def calculate_file_size(absolute_file_path):
     return os.path.getsize(absolute_file_path)
+
 
 def calculate_sha1(absolute_file_path):
     hash_object = hashlib.sha1()
@@ -296,14 +337,16 @@ def calculate_sha1(absolute_file_path):
 
     return hash_object.hexdigest()
 
+
 def get_sra_download_url(run_accession, protocol="fasp"):
     """Try getting the sra-download URL from CGI endpoint"""
-    #Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
+    # Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" \
+    #   https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
     cgi_url = "https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi"
     data = "acc=" + run_accession + "&accept-proto=" + protocol + "&version=2.0"
     try:
         resp = requests.post(cgi_url, data=data)
-    except Exception as e:
+    except Exception:
         # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
         logger = logging.getLogger(__name__)
@@ -321,14 +364,15 @@ def get_sra_download_url(run_accession, protocol="fasp"):
             # Sometimes, the responses from names.cgi makes no sense at all on a per-accession-code basis. This helps us handle that.
             # $ curl --data "acc=SRR5818019&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
             # 2.0\nremote|SRR5818019|434259775|2017-07-11T21:32:08Z|a4bfc16dbab1d4f729c4552e3c9519d1|||400|Only 'https' protocol is allowed for this object
-            protocol_header = protocol + '://'
             sra_url = resp.text.split('\n')[1].split('|')[6]
             return sra_url
-        except Exception as e:
-            # Our configured logger needs util, so we use the standard logging library for just this.
+        except Exception:
+            # Our configured logger needs util
+            # so we use the standard logging library for just this.
             import logging
             logger = logging.getLogger(__name__)
-            logger.exception("Error parsing CGI response: " + str(cgi_url) + " " + str(data) + " " + str(resp.text))
+            exception_template = "Error parsing CGI response: {0} {1} {2}"
+            logger.exception(exception_template.format(str(cgi_url), str(data), str(resp.text)))
             return None
 
 
@@ -358,7 +402,7 @@ def load_blacklist(blacklist_csv: str = "config/RNASeqRunBlackList.csv"):
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
-            if reader.line_num is 1:
+            if reader.line_num == 1:
                 continue
 
             blacklisted_samples.append(line[0].strip())
@@ -376,7 +420,8 @@ def get_nomad_jobs_breakdown():
     def get_job_volume(job):
         return get_job_details(job)[1]
 
-    # groupby must be executed on a sorted iterable https://docs.python.org/2/library/itertools.html#itertools.groupby
+    # groupby must be executed on a sorted iterable
+    # ref: https://docs.python.org/2/library/itertools.html#itertools.groupby
     sorted_jobs_by_type = sorted(filter(get_job_type, parameterized_jobs), key=get_job_type)
     aggregated_jobs_by_type = groupby(sorted_jobs_by_type, get_job_type)
     nomad_pending_jobs_by_type, nomad_running_jobs_by_type = \
@@ -442,7 +487,7 @@ def _aggregate_nomad_jobs(aggregated_jobs):
     return nomad_pending_jobs, nomad_running_jobs
 
 
-def queryset_page_iterator(queryset, page_size = 2000):
+def queryset_page_iterator(queryset, page_size=2000):
     """ use the performant paginator to iterate over each page in a queryset """
     paginator = PerformantPaginator(queryset, page_size)
     page = paginator.page()
@@ -455,11 +500,12 @@ def queryset_page_iterator(queryset, page_size = 2000):
             page = paginator.page(page.next_page_number())
 
 
-def queryset_iterator(queryset, page_size = 2000):
+def queryset_iterator(queryset, page_size=2000):
     """ use the performant paginator to iterate over a queryset """
     for page in queryset_page_iterator(queryset, page_size):
         for item in page:
             yield item
+
 
 class FileUtils:
     @staticmethod
@@ -480,4 +526,3 @@ class FileUtils:
             return None
 
         return os.path.splitext(file_path)[1].lower()
-
