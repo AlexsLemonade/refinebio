@@ -446,20 +446,25 @@ def _notify_slack_failed_dataset(job_context: Dict):
         settings.ENGAGEMENTBOT_WEBHOOK,
         json={
             'channel': 'ccdl-general', # Move to robots when we get sick of these
-            'username': 'EngagementBot',
-            'icon_emoji': ':halal:',
-            'fallback': 'Dataset failed processing.',
-            'title': 'Dataset failed processing',
-            'title_link': dataset_url,
+            "username": "EngagementBot",
+            "icon_emoji": ":halal:",
             'attachments':[
                 {
-                    'color': 'warning',
+                    'fallback': 'Dataset failed processing.',
+                    'title': 'Dataset failed processing',
+                    'title_link': dataset_url,
+                    'color': '#db3b28',
                     'text': job_context['job'].failure_reason,
-                    'author_name': job_context['dataset'].email_address,
                     'fields': [
                         {
                             'title': 'Dataset id',
-                            'value': str(job_context['dataset'].id)
+                            'value': str(job_context['dataset'].id),
+                            'short': True
+                        },
+                        {
+                            'title': 'Email',
+                            'value': job_context['dataset'].email_address,
+                            'short': True
                         }
                     ]
                 }
