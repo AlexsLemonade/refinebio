@@ -511,21 +511,37 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                         except Exception:
                             city = "COULD_NOT_DETERMINE"
 
-                        new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
-                        webhook_url = settings.ENGAGEMENTBOT_WEBHOOK
-                        slack_json = {
-                            "channel": "ccdl-general", # Move to robots when we get sick of these
-                            "username": "EngagementBot",
-                            "icon_emoji": ":halal:",
-                            "attachments":[
-                                {   "color": "good",
-                                    "text": new_user_text
-                                }
-                            ]
-                        }
+                        user_agent = self.request.META.get('HTTP_USER_AGENT', None)
                         response = requests.post(
-                            webhook_url,
-                            json=slack_json,
+                            settings.ENGAGEMENTBOT_WEBHOOK,
+                            json={
+                                'channel': 'ccdl-general', # Move to robots when we get sick of these
+                                'username': 'EngagementBot',
+                                'icon_emoji': ':halal:',
+                                'attachments': [
+                                    {
+                                        'color': 'good',
+                                        'title': 'New dataset download',
+                                        'fallback': 'New dataset download',
+                                        'title_link': 'http://www.refine.bio/dataset/' + str(old_object.id),
+                                        'text': 'New user ' + supplied_email_address + ' from ' + city + ' downloaded a dataset!',
+                                        'footer': 'Refine.bio | ' + remote_ip + ' | ' + user_agent,
+                                        'footer_icon': 'https://s3.amazonaws.com/refinebio-email/logo-2x.png',
+                                        'fields': [
+                                            {
+                                                'title': 'Dataset id',
+                                                'value': str(old_object.id),
+                                                'short': True
+                                            },
+                                            {
+                                                'title': 'Total',
+                                                'value': Dataset.objects.filter(email_address=supplied_email_address).count(),
+                                                'short': True
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
                             headers={'Content-Type': 'application/json'},
                             timeout=10
                         )

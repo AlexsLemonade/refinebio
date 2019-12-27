@@ -466,7 +466,9 @@ def _notify_slack_failed_dataset(job_context: Dict):
                             'value': job_context['dataset'].email_address,
                             'short': True
                         }
-                    ]
+                    ],
+                    'footer': 'Refine.bio',
+                    'footer_icon': 'https://s3.amazonaws.com/refinebio-email/logo-2x.png',
                 }
             ]
         },
