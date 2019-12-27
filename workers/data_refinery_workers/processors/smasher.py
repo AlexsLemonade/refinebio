@@ -433,6 +433,11 @@ def _notify(job_context: Dict) -> Dict:
                                           exc_info=1,
                                           result_url=job_context['result_url'])
 
+    # We don't want to retry this dataset after we send a notification to users
+    # https://github.com/alexslemonade/refinebio/issues/1944
+    job_context['job'].no_retry = True
+    job_context['job'].save()
+
     return job_context
 
 
