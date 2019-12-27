@@ -524,9 +524,13 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                                         'color': 'good',
                                         'title': 'New dataset download',
                                         'fallback': 'New dataset download',
-                                        'title_link': 'http://www.refine.bio/dataset/' + str(old_object.id),
-                                        'text': 'New user ' + supplied_email_address + ' from ' + city + ' downloaded a dataset!',
-                                        'footer': 'Refine.bio | ' + remote_ip + ' | ' + user_agent,
+                                        'title_link': 'http://www.refine.bio/dataset/{0}'.format(
+                                            old_object.id
+                                        ),
+                                        'text': 'New user {0} from {1} downloaded a dataset!'.format(
+                                            supplied_email_address, city
+                                        ),
+                                        'footer': 'Refine.bio | {0} | {1}'.format(remote_ip, user_agent),
                                         'footer_icon': 'https://s3.amazonaws.com/refinebio-email/logo-2x.png',
                                         'fields': [
                                             {
