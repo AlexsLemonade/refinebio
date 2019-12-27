@@ -423,6 +423,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'technologies'
                 )
 
+    @staticmethod
     def setup_eager_loading(queryset):
         """ Perform necessary eager loading of data. """
         queryset = queryset.prefetch_related('samples').prefetch_related('organisms')
