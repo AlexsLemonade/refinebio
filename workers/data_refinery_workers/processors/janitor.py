@@ -22,7 +22,7 @@ from data_refinery_common.models import (
     Sample,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    ProcessorJob
+    ProcessorJob,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
@@ -38,19 +38,19 @@ def _find_and_remove_expired_jobs(job_context):
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=15)
 
-    job_context['deleted_items'] = []
+    job_context["deleted_items"] = []
 
     for item in os.listdir(LOCAL_ROOT_DIR):
 
         # Processor job working directories
-        if 'processor_job_' in item:
+        if "processor_job_" in item:
 
             # TX Index jobs are the only ones who are allowed to hang around
             # after their jobs are finished. They're marked with an _index in their path.
-            if '_index' in item:
+            if "_index" in item:
                 continue
 
-            job_id = item.split('processor_job_')[1]
+            job_id = item.split("processor_job_")[1]
 
             # Okay, does this job exist?
             try:
@@ -86,16 +86,20 @@ def _find_and_remove_expired_jobs(job_context):
 
             # Delete it!
             try:
-                to_delete = LOCAL_ROOT_DIR + '/' + item
-                logger.debug("Janitor deleting " + to_delete, contents=str(os.listdir(to_delete)), job_id=job_id)
+                to_delete = LOCAL_ROOT_DIR + "/" + item
+                logger.debug(
+                    "Janitor deleting " + to_delete,
+                    contents=str(os.listdir(to_delete)),
+                    job_id=job_id,
+                )
                 shutil.rmtree(to_delete)
-                job_context['deleted_items'].append(to_delete)
+                job_context["deleted_items"].append(to_delete)
             except Exception as e:
                 # This job is likely vanished. No need for this directory.
                 pass
 
         # There may be successful processors
-        if 'SRP' in item or 'ERP' in item or 'DRR' in item:
+        if "SRP" in item or "ERP" in item or "DRR" in item:
             sub_path = os.path.join(LOCAL_ROOT_DIR, item)
             for sub_item in os.listdir(sub_path):
                 try:
@@ -112,20 +116,24 @@ def _find_and_remove_expired_jobs(job_context):
 
                 try:
                     sub_item_path = os.path.join(sub_path, sub_item)
-                    logger.debug("Janitor deleting " + sub_item_path, contents=str(os.listdir(sub_item_path)))
+                    logger.debug(
+                        "Janitor deleting " + sub_item_path,
+                        contents=str(os.listdir(sub_item_path)),
+                    )
                     shutil.rmtree(sub_item_path)
-                    job_context['deleted_items'].append(sub_item_path)
+                    job_context["deleted_items"].append(sub_item_path)
                 except Exception as e:
                     # This job is likely vanished. No need for this directory.
                     pass
 
-    job_context['success'] = True
+    job_context["success"] = True
     return job_context
+
 
 def run_janitor(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.JANITOR.value)
-    job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
-                       [utils.start_job,
-                        _find_and_remove_expired_jobs,
-                        utils.end_job])
+    job_context = utils.run_pipeline(
+        {"job_id": job_id, "pipeline": pipeline},
+        [utils.start_job, _find_and_remove_expired_jobs, utils.end_job],
+    )
     return job_context

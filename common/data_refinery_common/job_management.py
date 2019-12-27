@@ -15,17 +15,22 @@ from data_refinery_common.utils import (
     get_instance_id,
     get_volume_index,
 )
-from data_refinery_common.job_lookup import determine_processor_pipeline, determine_ram_amount, ProcessorEnum, ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import (
+    determine_processor_pipeline,
+    determine_ram_amount,
+    ProcessorEnum,
+    ProcessorPipeline,
+    Downloaders,
+)
 from data_refinery_common.message_queue import send_job
 
 
 logger = get_and_configure_logger(__name__)
 
 
-def create_downloader_job(undownloaded_files: List[OriginalFile],
-                          *,
-                          processor_job_id=None,
-                          force=False) -> bool:
+def create_downloader_job(
+    undownloaded_files: List[OriginalFile], *, processor_job_id=None, force=False
+) -> bool:
     """Creates a downloader job to download `undownloaded_files`."""
     if not undownloaded_files:
         return False
@@ -34,7 +39,7 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
     archive_file = None
     for undownloaded_file in undownloaded_files:
         try:
-            original_downloader_job = undownloaded_file.downloader_jobs.latest('id')
+            original_downloader_job = undownloaded_file.downloader_jobs.latest("id")
 
             # Found the job so we don't need to keep going.
             break
@@ -54,16 +59,24 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
             # until we've checked all the files before calling it a
             # failure.
             try:
-                archive_file = OriginalFile.objects.filter(filename=archive_filename).first()
+                archive_file = OriginalFile.objects.filter(
+                    filename=archive_filename
+                ).first()
                 if not archive_file:
                     # We might need to match these up based on
                     # source_filenames rather than filenames so just
                     # try them both.
-                    archive_file = OriginalFile.objects.filter(source_filename=archive_filename).first()
+                    archive_file = OriginalFile.objects.filter(
+                        source_filename=archive_filename
+                    ).first()
 
-                original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
-                    original_file=archive_file
-                ).latest('id').downloader_job
+                original_downloader_job = (
+                    DownloaderJobOriginalFileAssociation.objects.filter(
+                        original_file=archive_file
+                    )
+                    .latest("id")
+                    .downloader_job
+                )
                 # Found the job so we don't need to keep going.
                 break
             except:
@@ -75,9 +88,13 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
             downloader_task = job_lookup.determine_downloader_task(sample_object)
 
             if downloader_task == job_lookup.Downloaders.NONE:
-                logger.warn(("No valid downloader task found for sample, which is weird"
-                             " because it was able to have a processor job created for it..."),
-                            sample=sample_object.id)
+                logger.warn(
+                    (
+                        "No valid downloader task found for sample, which is weird"
+                        " because it was able to have a processor job created for it..."
+                    ),
+                    sample=sample_object.id,
+                )
                 return False
             else:
                 # determine_downloader_task returns an enum object,
@@ -90,14 +107,14 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
         else:
             logger.error(
                 "Could not find the original DownloaderJob or Sample for these files.",
-                undownloaded_file=undownloaded_files
+                undownloaded_file=undownloaded_files,
             )
             return False
     elif original_downloader_job.was_recreated and not force:
         logger.warn(
             "Downloader job has already been recreated once, not doing it again.",
             original_downloader_job=original_downloader_job,
-            undownloaded_files=undownloaded_files
+            undownloaded_files=undownloaded_files,
         )
         return False
     else:
@@ -132,8 +149,7 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
                 archive_file.save()
 
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
-                downloader_job=new_job,
-                original_file=archive_file
+                downloader_job=new_job, original_file=archive_file
             )
     else:
         # We can't just associate the undownloaded files, because
@@ -141,26 +157,31 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
         # downloaded that also needs to be associated with the job.
         for original_file in original_files:
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
-                downloader_job=new_job,
-                original_file=original_file
+                downloader_job=new_job, original_file=original_file
             )
 
     return True
 
 
-def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
-                                             downloader_job: DownloaderJob=None,
-                                             volume_index: str=None):
+def create_processor_jobs_for_original_files(
+    original_files: List[OriginalFile],
+    downloader_job: DownloaderJob = None,
+    volume_index: str = None,
+):
     """
     Creates one processor job for each original file given.
     """
     for original_file in original_files:
-        create_processor_job_for_original_files([original_file], downloader_job, volume_index)
+        create_processor_job_for_original_files(
+            [original_file], downloader_job, volume_index
+        )
 
 
-def create_processor_job_for_original_files(original_files: List[OriginalFile],
-                                            downloader_job: DownloaderJob=None,
-                                            volume_index: str=None):
+def create_processor_job_for_original_files(
+    original_files: List[OriginalFile],
+    downloader_job: DownloaderJob = None,
+    volume_index: str = None,
+):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
     """
@@ -174,9 +195,11 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
     pipeline_to_apply = determine_processor_pipeline(sample_object, original_files[0])
 
     if pipeline_to_apply == ProcessorPipeline.NONE:
-        logger.info("No valid processor pipeline found to apply to sample.",
-                    sample=sample_object.id,
-                    original_file=original_files[0].id)
+        logger.info(
+            "No valid processor pipeline found to apply to sample.",
+            sample=sample_object.id,
+            original_file=original_files[0].id,
+        )
         for original_file in original_files:
             original_file.delete_local_file()
     else:
@@ -195,9 +218,11 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
 
         for original_file in original_files:
             if original_file.is_blacklisted():
-                logger.debug("Original file had a blacklisted extension of %s, skipping",
-                            extension=original_file.get_extension(),
-                            original_file=original_file.id)
+                logger.debug(
+                    "Original file had a blacklisted extension of %s, skipping",
+                    extension=original_file.get_extension(),
+                    original_file=original_file.id,
+                )
                 original_file.delete_local_file()
                 continue
 
@@ -206,9 +231,11 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
             assoc.processor_job = processor_job
             assoc.save()
 
-        logger.debug("Queuing processor job.",
-                     processor_job=processor_job.id,
-                     downloader_job=downloader_job.id if downloader_job else None)
+        logger.debug(
+            "Queuing processor job.",
+            processor_job=processor_job.id,
+            downloader_job=downloader_job.id if downloader_job else None,
+        )
 
         try:
             send_job(pipeline_to_apply, processor_job)

@@ -15,11 +15,14 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.foreman.management.commands.create_missing_downloader_jobs import Command
+from data_refinery_foreman.foreman.management.commands.create_missing_downloader_jobs import (
+    Command,
+)
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
+
 class SurveyTestCase(TransactionTestCase):
-    @tag('missing_jobs')
+    @tag("missing_jobs")
     def test_create_missing_jobs(self):
         """Tests that files which should have downloader jobs get them created."""
 
@@ -39,8 +42,7 @@ class SurveyTestCase(TransactionTestCase):
         sample_with_downloader.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=sample_with_downloader,
-            original_file=original_file_with_downloader
+            sample=sample_with_downloader, original_file=original_file_with_downloader
         )
 
         downloader_job = DownloaderJob()
@@ -50,8 +52,7 @@ class SurveyTestCase(TransactionTestCase):
         downloader_job.save()
 
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=downloader_job,
-            original_file=original_file_with_downloader
+            downloader_job=downloader_job, original_file=original_file_with_downloader
         )
 
         # 2. create a sample with an original file and no downloader job
@@ -66,12 +67,13 @@ class SurveyTestCase(TransactionTestCase):
         sample_no_downloader.accession_code = "sample_no_downloader"
         sample_no_downloader.technology = "MICROARRAY"
         sample_no_downloader.source_database = "GEO"
-        sample_no_downloader.platform_accession_code = "bovine" # must be a supported platform
+        sample_no_downloader.platform_accession_code = (
+            "bovine"  # must be a supported platform
+        )
         sample_no_downloader.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=sample_no_downloader,
-            original_file=original_file
+            sample=sample_no_downloader, original_file=original_file
         )
 
         # 3. Setup is done, actually run the command.
@@ -83,7 +85,7 @@ class SurveyTestCase(TransactionTestCase):
             1,
             DownloaderJobOriginalFileAssociation.objects.filter(
                 original_file=original_file
-            ).count()
+            ).count(),
         )
 
         ## Test that a downloader job that wasn't missing wasn't created.
@@ -93,5 +95,5 @@ class SurveyTestCase(TransactionTestCase):
             1,
             DownloaderJobOriginalFileAssociation.objects.filter(
                 original_file=original_file_with_downloader
-            ).count()
+            ).count(),
         )

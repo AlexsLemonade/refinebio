@@ -7,9 +7,18 @@ from django.conf import settings
 from enum import Enum
 from nomad.api.exceptions import URLNotFoundNomadException
 
-from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully, get_volume_index
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_env_variable_gracefully,
+    get_volume_index,
+)
 from data_refinery_common.models import ProcessorJob, SurveyJob, DownloaderJob
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes, SMASHER_JOB_TYPES
+from data_refinery_common.job_lookup import (
+    ProcessorPipeline,
+    Downloaders,
+    SurveyJobTypes,
+    SMASHER_JOB_TYPES,
+)
 from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
@@ -36,8 +45,10 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
     is_processor = True
-    if job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG \
-       or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
+    if (
+        job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG
+        or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT
+    ):
         nomad_job = NOMAD_TRANSCRIPTOME_JOB
     elif job_type is ProcessorPipeline.SALMON or job_type is ProcessorPipeline.TXIMPORT:
         # Tximport uses the same job specification as Salmon.
@@ -69,17 +80,23 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         is_processor = False
     elif job_type is Downloaders.NONE:
         logger.warn("Not queuing %s job.", job_type, job_id=job_id)
-        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id))
+        raise ValueError(
+            NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id)
+        )
     elif job_type is ProcessorPipeline.NONE:
         logger.warn("Not queuing %s job.", job_type, job_id=job_id)
-        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id))
+        raise ValueError(
+            NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id)
+        )
     else:
         raise ValueError("Invalid job_type: {}".format(job_type.value))
 
-    logger.debug("Queuing %s nomad job to run job %s with id %d.",
-                nomad_job,
-                job_type.value,
-                job.id)
+    logger.debug(
+        "Queuing %s nomad job to run job %s with id %d.",
+        nomad_job,
+        job_type.value,
+        job.id,
+    )
 
     # We only want to dispatch processor jobs directly.
     # Everything else will be handled by the Foreman, which will increment the retry counter.
@@ -104,20 +121,29 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
             nomad_job = nomad_job + "_" + volume_index + "_" + str(job.ram_amount)
 
         try:
-            nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
-                                                                            "JOB_ID": str(job.id)})
+            nomad_response = nomad_client.job.dispatch_job(
+                nomad_job, meta={"JOB_NAME": job_type.value, "JOB_ID": str(job.id)}
+            )
             job.nomad_job_id = nomad_response["DispatchedJobID"]
             job.save()
             return True
         except URLNotFoundNomadException:
-            logger.info("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
-                job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
+            logger.info(
+                "Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
+                job_type,
+                nomad_job,
+                nomad_host,
+                nomad_port,
+                job=str(job.id),
+            )
             raise
         except Exception as e:
-            logger.info('Unable to Dispatch Nomad Job.',
-                        job_name=job_type.value,
-                        job_id=str(job.id),
-                        reason=str(e))
+            logger.info(
+                "Unable to Dispatch Nomad Job.",
+                job_name=job_type.value,
+                job_id=str(job.id),
+                reason=str(e),
+            )
             raise
     else:
         job.num_retries = job.num_retries - 1

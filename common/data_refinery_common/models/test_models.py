@@ -1,8 +1,7 @@
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
-from data_refinery_common.models import (
-    Experiment, Sample, ExperimentSampleAssociation
-)
+from data_refinery_common.models import Experiment, Sample, ExperimentSampleAssociation
+
 
 class ExperimentModelTestCase(TestCase):
     def tearDown(self):
@@ -26,7 +25,9 @@ class ExperimentModelTestCase(TestCase):
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
 
-        self.assertEqual(set(experiment.get_sample_metadata_fields()), set(['specimen_part', 'sex']))
+        self.assertEqual(
+            set(experiment.get_sample_metadata_fields()), set(["specimen_part", "sex"])
+        )
 
     # Test for when no metadata fields are present
     def test_get_sample_metadata_fields_none(self):
@@ -61,4 +62,4 @@ class ExperimentModelTestCase(TestCase):
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
 
-        self.assertEqual(set(experiment.get_sample_metadata_fields()), set(['age']))
+        self.assertEqual(set(experiment.get_sample_metadata_fields()), set(["age"]))

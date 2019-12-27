@@ -13,22 +13,30 @@ class FailedJobsManager(models.Manager):
     """
     Only returns Failed Jobs
     """
+
     def get_queryset(self):
-        return super().get_queryset().filter(success=False, retried=False, no_retry=False)
+        return (
+            super().get_queryset().filter(success=False, retried=False, no_retry=False)
+        )
 
 
 class HungJobsManager(models.Manager):
     """
     Only returns jobs that are potentially hung
     """
+
     def get_queryset(self):
-        return super().get_queryset().filter(
-            success=None,
-            retried=False,
-            no_retry=False,
-            start_time__isnull=False,
-            end_time=None,
-            nomad_job_id__isnull=False
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                success=None,
+                retried=False,
+                no_retry=False,
+                start_time__isnull=False,
+                end_time=None,
+                nomad_job_id__isnull=False,
+            )
         )
 
 
@@ -36,13 +44,18 @@ class LostJobsManager(models.Manager):
     """
     Only returns lost jobs
     """
+
     def get_queryset(self):
-        return super().get_queryset().filter(
-            success=None,
-            retried=False,
-            no_retry=False,
-            start_time=None,
-            end_time=None,
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                success=None,
+                retried=False,
+                no_retry=False,
+                start_time=None,
+                end_time=None,
+            )
         )
 
 
@@ -148,8 +161,8 @@ class ProcessorJob(models.Model):
 
         indexes = [
             models.Index(
-                fields=['created_at'],
-                name='processor_jobs_created_at',
+                fields=["created_at"],
+                name="processor_jobs_created_at",
                 # A partial index might be better here, given our queries we don't
                 # need to index the whole table. We need to update to Django 2.2
                 # for this to be supported.
@@ -168,8 +181,12 @@ class ProcessorJob(models.Model):
     # processor pipeline was applied during the processor job.
     pipeline_applied = models.CharField(max_length=256)
 
-    original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
-    datasets = models.ManyToManyField('DataSet', through='ProcessorJobDataSetAssociation')
+    original_files = models.ManyToManyField(
+        "OriginalFile", through="ProcessorJobOriginalFileAssociation"
+    )
+    datasets = models.ManyToManyField(
+        "DataSet", through="ProcessorJobDataSetAssociation"
+    )
     no_retry = models.BooleanField(default=False)
     abort = models.BooleanField(default=False)
 
@@ -205,7 +222,7 @@ class ProcessorJob(models.Model):
     failure_reason = models.TextField(null=True)
 
     # If the job is retried, this is the id of the new job
-    retried_job = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
+    retried_job = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)
 
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
@@ -243,6 +260,7 @@ class ProcessorJob(models.Model):
     def __str__(self):
         return "ProcessorJob " + str(self.pk) + ": " + str(self.pipeline_applied)
 
+
 class DownloaderJob(models.Model):
     """Records information about running a Downloader."""
 
@@ -251,11 +269,11 @@ class DownloaderJob(models.Model):
 
         indexes = [
             models.Index(
-                fields=['created_at'],
-                name='downloader_jobs_created_at',
+                fields=["created_at"],
+                name="downloader_jobs_created_at",
                 # condition=Q(success=None, retried=False, no_retry=False)
             ),
-            models.Index(fields=['worker_id']),
+            models.Index(fields=["worker_id"]),
         ]
 
     # Managers
@@ -271,7 +289,9 @@ class DownloaderJob(models.Model):
     accession_code = models.CharField(max_length=256, blank=True, null=True)
     no_retry = models.BooleanField(default=False)
 
-    original_files = models.ManyToManyField('OriginalFile', through='DownloaderJobOriginalFileAssociation')
+    original_files = models.ManyToManyField(
+        "OriginalFile", through="DownloaderJobOriginalFileAssociation"
+    )
 
     # Tracking
     start_time = models.DateTimeField(null=True)
@@ -305,7 +325,7 @@ class DownloaderJob(models.Model):
     failure_reason = models.TextField(null=True)
 
     # If the job is retried, this is the id of the new job
-    retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
+    retried_job = models.ForeignKey("self", on_delete=models.PROTECT, null=True)
 
     # If the job was recreated because the data it downloaded got
     # lost, deleted, or corrupted then this field will be true.

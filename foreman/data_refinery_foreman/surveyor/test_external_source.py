@@ -12,8 +12,9 @@ from data_refinery_common.models import (
     SurveyJob,
 )
 
+
 class SraSurveyorTestCase(TestCase):
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_queue_downloader_jobs_for_original_files(self, mock_send_task):
         """Make sure that queue_downloader_jobs queues all expected Downloader
         jobs for a given experiment.
@@ -110,10 +111,12 @@ class SraSurveyorTestCase(TestCase):
         survey_job.save()
         surveyor = SraSurveyor(survey_job)
 
-        surveyor.queue_downloader_job_for_original_files(sample_1_original_files,
-                                                         experiment_object.accession_code)
-        surveyor.queue_downloader_job_for_original_files(sample_2_original_files,
-                                                         experiment_object.accession_code)
+        surveyor.queue_downloader_job_for_original_files(
+            sample_1_original_files, experiment_object.accession_code
+        )
+        surveyor.queue_downloader_job_for_original_files(
+            sample_2_original_files, experiment_object.accession_code
+        )
 
         self.assertEqual(DownloaderJob.objects.all().count(), 2)
 
@@ -164,21 +167,20 @@ class SraSurveyorTestCase(TestCase):
         dlj.save()
 
         DownloaderJobOriginalFileAssociation(
-            downloader_job=dlj,
-            original_file=original_file_1
+            downloader_job=dlj, original_file=original_file_1
         ).save()
 
         DownloaderJobOriginalFileAssociation(
-            downloader_job=dlj,
-            original_file=original_file_2
+            downloader_job=dlj, original_file=original_file_2
         ).save()
 
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         surveyor = SraSurveyor(survey_job)
 
-        surveyor.queue_downloader_job_for_original_files([original_file_1, original_file_2],
-                                                         experiment_object.accession_code)
+        surveyor.queue_downloader_job_for_original_files(
+            [original_file_1, original_file_2], experiment_object.accession_code
+        )
 
         # We made one DownloaderJob in this test, so
         # queue_downloader_job_for_original_files didn't have anything

@@ -25,7 +25,7 @@ class PipelineEnum(Enum):
     NO_OP = "No Op"
     SALMON = "Salmon"
     SMASHER = "Smasher"
-    TXIMPORT = 'Tximport'
+    TXIMPORT = "Tximport"
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"
@@ -41,77 +41,73 @@ class ProcessorEnum(Enum):
     AGILENT_TWOCOLOR = {
         "name": "Agilent SCAN TwoColor",
         "docker_img": "not_available_yet",
-        "yml_file": "agilent_twocolor.yml"
+        "yml_file": "agilent_twocolor.yml",
     }
 
     # One processor in "Array Express" pipeline
     AFFYMETRIX_SCAN = {
         "name": "Affymetrix SCAN",
         "docker_img": "dr_affymetrix",
-        "yml_file": "affymetrix.yml"
+        "yml_file": "affymetrix.yml",
     }
 
     # One processor in "Illumina" pipeline
     ILLUMINA_SCAN = {
         "name": "Illumina SCAN",
         "docker_img": "dr_illumina",
-        "yml_file": "illumina.yml"
+        "yml_file": "illumina.yml",
     }
 
     # One processor in "No Op" pipeline
     SUBMITTER_PROCESSED = {
         "name": "Submitter-processed",
         "docker_img": "dr_no_op",
-        "yml_file": "no_op.yml"
+        "yml_file": "no_op.yml",
     }
 
     # Three processors in "Salmon" pipeline
     SALMON_QUANT = {
         "name": "Salmon Quant",
         "docker_img": "dr_salmon",
-        "yml_file": "salmon_quant.yml"
+        "yml_file": "salmon_quant.yml",
     }
     SALMONTOOLS = {
         "name": "Salmontools",
         "docker_img": "dr_salmon",
-        "yml_file": "salmontools.yml"
+        "yml_file": "salmontools.yml",
     }
     TXIMPORT = {
         "name": "Tximport",
         "docker_img": "dr_salmon",
-        "yml_file": "tximport.yml"
+        "yml_file": "tximport.yml",
     }
 
     # One processor in "Smasher" pipeline
-    SMASHER = {
-        "name": "Smasher",
-        "docker_img": "dr_smasher",
-        "yml_file": "smasher.yml"
-    }
+    SMASHER = {"name": "Smasher", "docker_img": "dr_smasher", "yml_file": "smasher.yml"}
 
     # One processor in "Transcriptome Index" pipeline
     TX_INDEX = {
         "name": "Transcriptome Index",
         "docker_img": "dr_transcriptome",
-        "yml_file": "transcriptome_index.yml"
+        "yml_file": "transcriptome_index.yml",
     }
 
     QN_REFERENCE = {
         "name": "Quantile Normalization Reference",
         "docker_img": "dr_smasher",
-        "yml_file": "qn.yml"
+        "yml_file": "qn.yml",
     }
 
     CREATE_COMPENDIA = {
         "name": "Compendia Creation",
         "docker_img": "dr_compendia",
-        "yml_file": "compendia.yml"
+        "yml_file": "compendia.yml",
     }
 
     CREATE_QUANTPENDIA = {
         "name": "Quantpendia Creation",
         "docker_img": "dr_compendia",
-        "yml_file": "compendia.yml"
+        "yml_file": "compendia.yml",
     }
 
     @classmethod
@@ -122,6 +118,7 @@ class ProcessorEnum(Enum):
 
 class ProcessorPipeline(Enum):
     """An enumeration of supported processors"""
+
     AFFY_TO_PCL = "AFFY_TO_PCL"
     AGILENT_ONECOLOR_TO_PCL = "AGILENT_ONECOLOR_TO_PCL"  # Currently unsupported
     AGILENT_TWOCOLOR_TO_PCL = "AGILENT_TWOCOLOR_TO_PCL"
@@ -148,13 +145,16 @@ SMASHER_JOB_TYPES = [
 
 
 def does_processor_job_have_samples(job: ProcessorJob):
-    return not (job.pipeline_applied == ProcessorPipeline.SMASHER.value
-                or job.pipeline_applied == ProcessorPipeline.JANITOR.value
-                or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value)
+    return not (
+        job.pipeline_applied == ProcessorPipeline.SMASHER.value
+        or job.pipeline_applied == ProcessorPipeline.JANITOR.value
+        or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value
+    )
 
 
 class Downloaders(Enum):
     """An enumeration of downloaders for downloader_task."""
+
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
     SRA = "SRA"
     TRANSCRIPTOME_INDEX = "TRANSCRIPTOME_INDEX"
@@ -164,6 +164,7 @@ class Downloaders(Enum):
 
 class SurveyJobTypes(Enum):
     """An enumeration of downloaders for downloader_task."""
+
     SURVEYOR = "SURVEYOR"
 
 
@@ -172,14 +173,16 @@ def is_file_rnaseq(filename: str) -> bool:
     if not filename:
         return False
 
-    matches_accession_pattern = re.search('[SED]RR\d{5,}', filename)
+    matches_accession_pattern = re.search("[SED]RR\d{5,}", filename)
 
-    return filename[-5:].upper() == "FASTQ" \
-        or filename[-8:].upper() == "FASTQ.GZ" \
-        or filename[-2:].upper() == "FQ" \
-        or filename[-3:].upper() == "SRA" \
-        or filename[-5:].upper() == "FQ.GZ" \
+    return (
+        filename[-5:].upper() == "FASTQ"
+        or filename[-8:].upper() == "FASTQ.GZ"
+        or filename[-2:].upper() == "FQ"
+        or filename[-3:].upper() == "SRA"
+        or filename[-5:].upper() == "FQ.GZ"
         or matches_accession_pattern
+    )
 
 
 def _is_platform_supported(platform: str) -> bool:
@@ -193,8 +196,10 @@ def _is_platform_supported(platform: str) -> bool:
 
     # Check if this is a supported Microarray platform.
     for supported_platform in utils.get_supported_microarray_platforms():
-        if (supported_platform["platform_accession"].upper() == upper_platform
-                or supported_platform["external_accession"].upper() == upper_platform):
+        if (
+            supported_platform["platform_accession"].upper() == upper_platform
+            or supported_platform["external_accession"].upper() == upper_platform
+        ):
             return True
 
     # Check if this is a supported RNASeq platform.
@@ -208,7 +213,9 @@ def _is_platform_supported(platform: str) -> bool:
     # because RNASeq platforms are organism agnostic.
     for supported_platform in utils.get_supported_rnaseq_platforms():
         # Spacing can be inconsistent, easiest to just remove it entirely.
-        if supported_platform.upper().replace(" ", "") in upper_platform.replace(" ", ""):
+        if supported_platform.upper().replace(" ", "") in upper_platform.replace(
+            " ", ""
+        ):
             return True
 
     return False
@@ -231,15 +238,18 @@ def determine_downloader_task(sample_object: Sample) -> Downloaders:
         # Sometimes Array Express lies about what a sample's platform
         # is. Therefore, if there's a .CEL file we'll download it and
         # determine the platform from that.
-        has_cel_original_files = sample_object.original_files\
-            .filter(source_filename__iendswith='.CEL').exists()
+        has_cel_original_files = sample_object.original_files.filter(
+            source_filename__iendswith=".CEL"
+        ).exists()
         if has_cel_original_files:
             return Downloaders[sample_object.source_database]
 
     return Downloaders.NONE
 
 
-def determine_processor_pipeline(sample_object: Sample, original_file=None) -> ProcessorPipeline:
+def determine_processor_pipeline(
+    sample_object: Sample, original_file=None
+) -> ProcessorPipeline:
     """Determines the appropriate processor pipeline for the sample.
 
     This is mostly a giant set of nested if statements, so describing
@@ -258,7 +268,9 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
             return ProcessorPipeline.SALMON
 
     # We NO_OP processed data. It's what we do.
-    if not sample_object.has_raw or (original_file and '.processed' in original_file.source_url):
+    if not sample_object.has_raw or (
+        original_file and ".processed" in original_file.source_url
+    ):
         return ProcessorPipeline.NO_OP
 
     if not _is_platform_supported(sample_object.platform_accession_code):
@@ -278,19 +290,21 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
             # whitelist of supported platforms for it. However this code works so
             # let's keep it around until we're ready for Agilent.
             annotations = sample_object.sampleannotation_set.all()[0]
-            channel1_protocol = annotations.data.get('label_protocol_ch1', "").upper()
-            channel2_protocol = annotations.data.get('label_protocol_ch2', "").upper()
-            if ('AGILENT' in channel1_protocol) and ('AGILENT' in channel2_protocol):
+            channel1_protocol = annotations.data.get("label_protocol_ch1", "").upper()
+            channel2_protocol = annotations.data.get("label_protocol_ch2", "").upper()
+            if ("AGILENT" in channel1_protocol) and ("AGILENT" in channel2_protocol):
                 return ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL
             else:
                 return ProcessorPipeline.AGILENT_ONECOLOR_TO_PCL
         elif sample_object.manufacturer == "UNKNOWN":
-            logger.error("Found a Sample on a supported platform with an unknown manufacturer.",
-                         sample=sample_object.id,
-                         platform_accession=sample_object.platform_accession_code,
-                         accession=sample_object.accession_code,
-                         manufacturer=sample_object.manufacturer,
-                         platform_name=sample_object.platform_name)
+            logger.error(
+                "Found a Sample on a supported platform with an unknown manufacturer.",
+                sample=sample_object.id,
+                platform_accession=sample_object.platform_accession_code,
+                accession=sample_object.accession_code,
+                manufacturer=sample_object.manufacturer,
+                platform_name=sample_object.platform_name,
+            )
             return ProcessorPipeline.NONE
 
     elif sample_object.has_raw:
@@ -312,16 +326,18 @@ def determine_ram_amount(sample: Sample, job) -> int:
     elif job.pipeline_applied == ProcessorPipeline.AFFY_TO_PCL.value:
         platform = sample.platform_accession_code
         # Values via https://github.com/AlexsLemonade/refinebio/issues/54#issuecomment-373836510
-        if 'u133' in platform:
+        if "u133" in platform:
             return 2048
-        if 'gene' in platform:
+        if "gene" in platform:
             return 4096
-        if 'hta20' in platform or 'huex10st' in platform:
+        if "hta20" in platform or "huex10st" in platform:
             return 32768
         # Not sure what the ram usage of this platform is! Investigate!
-        logger.debug("Unsure of RAM usage for platform! Using default.",
-                     platform=platform,
-                     job=job)
+        logger.debug(
+            "Unsure of RAM usage for platform! Using default.",
+            platform=platform,
+            job=job,
+        )
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value:
         return 2048
@@ -332,7 +348,9 @@ def determine_ram_amount(sample: Sample, job) -> int:
     elif job.pipeline_applied == ProcessorPipeline.NONE.value:
         return 1024
     else:
-        logger.error("Found a job without an expected pipeline!",
-                     job=job,
-                     pipeline=job.pipeline_applied)
+        logger.error(
+            "Found a job without an expected pipeline!",
+            job=job,
+            pipeline=job.pipeline_applied,
+        )
         return 1024

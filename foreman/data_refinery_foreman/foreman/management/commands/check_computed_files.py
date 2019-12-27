@@ -12,11 +12,12 @@ from data_refinery_common.utils import queryset_page_iterator
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
-S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
+S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
 
 logger = get_and_configure_logger(__name__)
 
 PAGE_SIZE = 2000
+
 
 def check_item(computed_file):
     # check that file is present in S3, no need to download the entire object
@@ -26,9 +27,14 @@ def check_item(computed_file):
         S3.head_object(Bucket=computed_file.s3_bucket, Key=computed_file.s3_key)
     except ClientError:
         # Not found
-        logger.info('Computed file not found on S3 - will remove S3 fields.', computed_file=computed_file.id, file_name=computed_file.filename)
+        logger.info(
+            "Computed file not found on S3 - will remove S3 fields.",
+            computed_file=computed_file.id,
+            file_name=computed_file.filename,
+        )
         return computed_file.pk
     return None
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -37,7 +43,9 @@ class Command(BaseCommand):
         will clear their `s3_key`/`s3_bucket` fields.
         ref https://github.com/AlexsLemonade/refinebio/issues/1696
         """
-        computed_files_queryset = ComputedFile.objects.filter(s3_key__isnull=False, s3_bucket__isnull=False)
+        computed_files_queryset = ComputedFile.objects.filter(
+            s3_key__isnull=False, s3_bucket__isnull=False
+        )
         results = queryset_page_iterator(computed_files_queryset, PAGE_SIZE)
 
         connections.close_all()
@@ -50,8 +58,15 @@ class Command(BaseCommand):
                 page_number += 1
                 if missing_file_ids:
                     # Update all computed files in one query
-                    logger.info('Checked page %i of computed files, found %i were missing in S3 clearing s3_key and s3_bucket now.' % (page_number, len(missing_file_ids)))
-                    ComputedFile.objects.filter(id__in=missing_file_ids).update(s3_key=None, s3_bucket=None)
+                    logger.info(
+                        "Checked page %i of computed files, found %i were missing in S3 clearing s3_key and s3_bucket now."
+                        % (page_number, len(missing_file_ids))
+                    )
+                    ComputedFile.objects.filter(id__in=missing_file_ids).update(
+                        s3_key=None, s3_bucket=None
+                    )
                 else:
-                    logger.info('Checked page %i of computed files, all of them were in S3.' % page_number)
-
+                    logger.info(
+                        "Checked page %i of computed files, all of them were in S3."
+                        % page_number
+                    )

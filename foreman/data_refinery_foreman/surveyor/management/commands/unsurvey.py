@@ -15,6 +15,7 @@ from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
 
+
 def delete_job_and_retries(job) -> None:
     """Deletes a job and any jobs that retried it."""
     try:
@@ -43,10 +44,11 @@ def purge_experiment(accession: str) -> None:
     experiment = Experiment.objects.filter(accession_code=accession)[0]
     ExperimentAnnotation.objects.filter(experiment=experiment).delete()
 
-
     ## Samples
-    experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-    samples = Sample.objects.filter(id__in=experiment_sample_assocs.values('sample_id'))
+    experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
+        experiment=experiment
+    )
+    samples = Sample.objects.filter(id__in=experiment_sample_assocs.values("sample_id"))
 
     uniquely_assoced_sample_ids = []
     for sample in samples:
@@ -59,11 +61,17 @@ def purge_experiment(accession: str) -> None:
         else:
             # The association isn't unique, but we still should delete
             # the association with the experiment since it will be deleted.
-            ExperimentSampleAssociation.objects.filter(sample=sample, experiment=experiment)[0].delete()
+            ExperimentSampleAssociation.objects.filter(
+                sample=sample, experiment=experiment
+            )[0].delete()
 
     ## ComputationalResults/ComputedFiles
-    comp_result_sample_assocs = SampleResultAssociation.objects.filter(sample_id__in=uniquely_assoced_sample_ids)
-    comp_results = ComputationalResult.objects.filter(id__in=comp_result_sample_assocs.values('result_id'))
+    comp_result_sample_assocs = SampleResultAssociation.objects.filter(
+        sample_id__in=uniquely_assoced_sample_ids
+    )
+    comp_results = ComputationalResult.objects.filter(
+        id__in=comp_result_sample_assocs.values("result_id")
+    )
 
     uniquely_assoced_comp_result_ids = []
     for comp_result in comp_results:
@@ -71,9 +79,7 @@ def purge_experiment(accession: str) -> None:
         # delete, but is it associated with any we cannot?
         extra_assocs = SampleResultAssociation.objects.filter(
             result=comp_result
-        ).exclude(
-            sample_id__in=uniquely_assoced_sample_ids
-        )
+        ).exclude(sample_id__in=uniquely_assoced_sample_ids)
         if extra_assocs.count() == 0:
             # It's not assoced with anything else, delete it, its
             # associations, and its ComputedFile.
@@ -88,7 +94,9 @@ def purge_experiment(accession: str) -> None:
                 computed_file.delete_s3_file()
 
             # Delete the database records for the ComputedFile
-            SampleComputedFileAssociation.objects.filter(computed_file__in=computed_files).delete()
+            SampleComputedFileAssociation.objects.filter(
+                computed_file__in=computed_files
+            ).delete()
             computed_files.delete()
 
     # Whether or not we can delete all of these results, we know the
@@ -96,8 +104,12 @@ def purge_experiment(accession: str) -> None:
     comp_result_sample_assocs.delete()
 
     # OriginalFiles
-    og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=uniquely_assoced_sample_ids)
-    original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
+    og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(
+        sample_id__in=uniquely_assoced_sample_ids
+    )
+    original_files = OriginalFile.objects.filter(
+        id__in=og_file_sample_assocs.values("original_file_id")
+    )
 
     uniquely_assoced_og_file_ids = []
     for original_file in original_files:
@@ -105,9 +117,7 @@ def purge_experiment(accession: str) -> None:
         # delete, but is it associated with any we cannot?
         extra_assocs = OriginalFileSampleAssociation.objects.filter(
             original_file=original_file
-        ).exclude(
-            sample_id__in=uniquely_assoced_sample_ids
-        )
+        ).exclude(sample_id__in=uniquely_assoced_sample_ids)
         if extra_assocs.count() == 0:
             # Build a list of original_files so we can delete them all at once.
             uniquely_assoced_og_file_ids.append(original_file.id)
@@ -124,10 +134,12 @@ def purge_experiment(accession: str) -> None:
     og_file_sample_assocs.delete()
 
     ## DownloaderJobs
-    og_file_dj_assocs = DownloaderJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
+    og_file_dj_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
+        original_file_id__in=uniquely_assoced_og_file_ids
+    )
     # Important to order by id, so the jobs that didn't retry anything are deleted first.
     downloader_jobs = DownloaderJob.objects.filter(
-        id__in=og_file_dj_assocs.values('downloader_job_id')
+        id__in=og_file_dj_assocs.values("downloader_job_id")
     ).order_by("id")
 
     for downloader_job in downloader_jobs:
@@ -135,9 +147,7 @@ def purge_experiment(accession: str) -> None:
         # delete, but is it associated with any we cannot?
         extra_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
             downloader_job=downloader_job
-        ).exclude(
-            original_file_id__in=uniquely_assoced_og_file_ids
-        )
+        ).exclude(original_file_id__in=uniquely_assoced_og_file_ids)
         if extra_assocs.count() == 0:
             delete_job_and_retries(downloader_job)
 
@@ -145,12 +155,13 @@ def purge_experiment(accession: str) -> None:
     # know the associations need to go.
     og_file_dj_assocs.delete()
 
-
     ## ProcessorJobs
-    og_file_pj_assocs = ProcessorJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
+    og_file_pj_assocs = ProcessorJobOriginalFileAssociation.objects.filter(
+        original_file_id__in=uniquely_assoced_og_file_ids
+    )
     # Important to order by id, so the jobs that didn't retry anything are deleted first.
     processor_jobs = ProcessorJob.objects.filter(
-        id__in=og_file_pj_assocs.values('processor_job_id')
+        id__in=og_file_pj_assocs.values("processor_job_id")
     ).order_by("id")
 
     for processor_job in processor_jobs:
@@ -158,9 +169,7 @@ def purge_experiment(accession: str) -> None:
         # delete, but is it associated with any we cannot?
         extra_assocs = ProcessorJobOriginalFileAssociation.objects.filter(
             processor_job=processor_job
-        ).exclude(
-            original_file_id__in=uniquely_assoced_og_file_ids
-        )
+        ).exclude(original_file_id__in=uniquely_assoced_og_file_ids)
         if extra_assocs.count() == 0:
             delete_job_and_retries(processor_job)
 
@@ -183,41 +192,48 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--accession",
-            help=("An experiment accession code to survey, download, and process."))
+            help=("An experiment accession code to survey, download, and process."),
+        )
         parser.add_argument(
             "--file",
             type=str,
-            help=("An optional file listing accession codes. s3:// URLs are also accepted.")
+            help=(
+                "An optional file listing accession codes. s3:// URLs are also accepted."
+            ),
         )
-        parser.add_argument('--force',
-                            help='Do not ask for confirmation.',
-                            action='store_true')
+        parser.add_argument(
+            "--force", help="Do not ask for confirmation.", action="store_true"
+        )
 
     def handle(self, *args, **options):
-        if options["accession"] is None and options['file'] is None:
+        if options["accession"] is None and options["file"] is None:
             logger.error("You must specify an experiment accession or file.")
             sys.exit(1)
 
         if not options["force"]:
-            print('-------------------------------------------------------------------------------')
-            print('This will delete all objects in the database related to these accessions.'
-                  ' Are you sure you want to do this?')
+            print(
+                "-------------------------------------------------------------------------------"
+            )
+            print(
+                "This will delete all objects in the database related to these accessions."
+                " Are you sure you want to do this?"
+            )
             answer = input('You must type "yes", all other input will be ignored: ')
 
             if answer != "yes":
-                print('Not unsurveying because confirmation was denied.')
+                print("Not unsurveying because confirmation was denied.")
                 sys.exit(1)
 
         accessions = []
         if options["file"]:
-            if 's3://' in options["file"]:
+            if "s3://" in options["file"]:
                 bucket, key = parse_s3_url(options["file"])
-                s3 = boto3.resource('s3')
+                s3 = boto3.resource("s3")
                 try:
                     filepath = "/tmp/input_" + str(uuid.uuid4()) + ".txt"
                     s3.Bucket(bucket).download_file(key, filepath)
                 except botocore.exceptions.ClientError as e:
-                    if e.response['Error']['Code'] == "404":
+                    if e.response["Error"]["Code"] == "404":
                         logger.error("The remote file does not exist.")
                         raise
                     else:
@@ -229,11 +245,14 @@ class Command(BaseCommand):
                 for accession in file:
                     accessions.append(accession.strip())
         else:
-            accessions.append(options['accession'])
+            accessions.append(options["accession"])
 
         for accession in accessions:
             logger.info("Purging Experiment with accession: %s", accession)
             try:
                 purge_experiment(accession)
             except Exception as e:
-                logger.exception("Exception caught while purging experiment with accession: %s", accession)
+                logger.exception(
+                    "Exception caught while purging experiment with accession: %s",
+                    accession,
+                )

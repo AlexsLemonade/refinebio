@@ -44,7 +44,7 @@ def build_completion_list(organism: Organism) -> List[Dict]:
     samples, and the number of unprocessed samples under the keys:
     experiment, processed, and unprocessed respectively.
     """
-    experiments = organism.experiments.filter(technology='RNA-SEQ')
+    experiments = organism.experiments.filter(technology="RNA-SEQ")
 
     completion_list = []
     for experiment in experiments:
@@ -75,11 +75,13 @@ def build_completion_list(organism: Organism) -> List[Dict]:
         # because that means the sample probably does not have unmated
         # reads. Unmated reads currently break our salmon pipeline.
         if len(processed_samples) > 0:
-            completion_list.append({
-                "experiment": experiment,
-                "unprocessed": unprocessed_samples,
-                "processed": processed_samples
-            })
+            completion_list.append(
+                {
+                    "experiment": experiment,
+                    "unprocessed": unprocessed_samples,
+                    "processed": processed_samples,
+                }
+            )
 
     return completion_list
 
@@ -111,7 +113,7 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
             "Experiment %s has %d / %d samples processed.",
             experiment_stats_dict["experiment"],
             len(unprocessed_samples),
-            (len(unprocessed_samples) + len(experiment_stats_dict["processed"]))
+            (len(unprocessed_samples) + len(experiment_stats_dict["processed"])),
         )
 
         for sample in unprocessed_samples:
@@ -121,16 +123,10 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
                 # We want to requeue the most recently created
                 # processor job, so sort by id since they are
                 # autoincrementing.
-                processor_jobs.sort(
-                    reverse=True,
-                    key=lambda x: x.id
-                )
+                processor_jobs.sort(reverse=True, key=lambda x: x.id)
                 prioritized_job_list.append(processor_jobs[0])
             elif downloader_jobs:
-                downloader_jobs.sort(
-                    reverse=True,
-                    key=lambda x: x.id
-                )
+                downloader_jobs.sort(reverse=True, key=lambda x: x.id)
                 prioritized_job_list.append(downloader_jobs[0])
 
     return prioritized_job_list
@@ -154,14 +150,13 @@ def requeue_job(job, volume_index):
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
             ram_amount=job.ram_amount,
-            volume_index=volume_index
+            volume_index=volume_index,
         )
         new_job.save()
 
         for original_file in job.original_files.all():
             ProcessorJobOriginalFileAssociation.objects.get_or_create(
-                processor_job=new_job,
-                original_file=original_file
+                processor_job=new_job, original_file=original_file
             )
 
         job_type = ProcessorPipeline[job.pipeline_applied]
@@ -169,19 +164,20 @@ def requeue_job(job, volume_index):
         new_job = DownloaderJob(
             num_retries=num_retries,
             downloader_task=job.downloader_task,
-            accession_code=job.accession_code
+            accession_code=job.accession_code,
         )
         new_job.save()
 
         for original_file in job.original_files.all():
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
-                downloader_job=new_job,
-                original_file=original_file
+                downloader_job=new_job, original_file=original_file
             )
 
         job_type = Downloaders[job.downloader_task]
     else:
-        raise ValueError("Told to requeue a job that's not a ProcessorJob nor DownloaderJob!")
+        raise ValueError(
+            "Told to requeue a job that's not a ProcessorJob nor DownloaderJob!"
+        )
 
     try:
         # Only dispatch a job to Nomad immediately if it's a processor
@@ -195,24 +191,28 @@ def requeue_job(job, volume_index):
             job.save()
         else:
             logger.error(
-                ("Failed to requeue %s which had ID %d with a new %s "
-                 "with ID %d because send_job returned false."),
+                (
+                    "Failed to requeue %s which had ID %d with a new %s "
+                    "with ID %d because send_job returned false."
+                ),
                 type(job).__name__,
                 job.id,
                 type(job).__name__,
-                new_job.id
+                new_job.id,
             )
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
             return False
     except:
         logger.exception(
-            ("Failed to requeue %s which had ID %d with a new %s "
-             "with ID %d because send_job raised an exception."),
+            (
+                "Failed to requeue %s which had ID %d with a new %s "
+                "with ID %d because send_job raised an exception."
+            ),
             type(job).__name__,
             job.id,
             type(job).__name__,
-            new_job.id
+            new_job.id,
         )
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
@@ -226,9 +226,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--organism-name",
             type=str,
-            help=("The name of the organism you would like to shepherd to completion. "
-                  "Must be in all caps and any spaces should be replaced with an underscore. "
-                  "I should make this less strict.")
+            help=(
+                "The name of the organism you would like to shepherd to completion. "
+                "Must be in all caps and any spaces should be replaced with an underscore. "
+                "I should make this less strict."
+            ),
         )
 
     def handle(self, *args, **options):
@@ -250,14 +252,14 @@ class Command(BaseCommand):
 
         logger.info(
             "Found %d samples that need to be processed. Beginning to queue jobs!",
-            len(prioritized_job_list)
+            len(prioritized_job_list),
         )
 
         nomad_host = get_env_variable("NOMAD_HOST")
         nomad_port = get_env_variable("NOMAD_PORT", "4646")
         nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
-        while(len(prioritized_job_list) > 0):
+        while len(prioritized_job_list) > 0:
             len_all_jobs = len(nomad_client.jobs.get_jobs())
 
             num_short_from_max = MAX_JOBS_FOR_THIS_MODE - len_all_jobs
@@ -279,4 +281,6 @@ class Command(BaseCommand):
                 logger.info("Sleeping for 5 minutes while jobs get done.")
                 time.sleep(300)
 
-        logger.info("Successfully requeued all jobs for unprocessed %s samples.", organism_name)
+        logger.info(
+            "Successfully requeued all jobs for unprocessed %s samples.", organism_name
+        )

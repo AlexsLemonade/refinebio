@@ -28,64 +28,70 @@ from data_refinery_common.models import (
     Sample,
     SampleResultAssociation,
 )
-from data_refinery_foreman.foreman.management.commands.retry_samples import retry_by_regex
+from data_refinery_foreman.foreman.management.commands.retry_samples import (
+    retry_by_regex,
+)
+
 
 def setup_experiment() -> Dict:
     """ Create an experiment with two samples where one of them has a processor job that failed
     because nomad restarted it."""
 
     # Create the experiment
-    experiment_accession = 'SRP095529'
-    data_dir = '/home/user/data_store/'
+    experiment_accession = "SRP095529"
+    data_dir = "/home/user/data_store/"
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(
-        accession_code=experiment_accession,
-        technology='RNA-SEQ'
+        accession_code=experiment_accession, technology="RNA-SEQ"
     )
 
     zebrafish = Organism.get_object_for_name("DANIO_RERIO")
 
-    accession_code = 'S001'
+    accession_code = "S001"
     sample = Sample.objects.create(
         accession_code=accession_code,
         organism=zebrafish,
-        source_database='SRA',
-        technology='RNA-SEQ',
-        platform_accession_code='IlluminaHiSeq1000'
+        source_database="SRA",
+        technology="RNA-SEQ",
+        platform_accession_code="IlluminaHiSeq1000",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
     original_file = OriginalFile()
-    original_file.filename=accession_code+'.SRA'
-    original_file.source_filename=accession_code+'.SRA'
+    original_file.filename = accession_code + ".SRA"
+    original_file.source_filename = accession_code + ".SRA"
     original_file.save()
 
-    OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
+    OriginalFileSampleAssociation.objects.get_or_create(
+        original_file=original_file, sample=sample
+    )
 
-    accession_code = 'S002'
+    accession_code = "S002"
     sample = Sample.objects.create(
         accession_code=accession_code,
         organism=zebrafish,
-        source_database='SRA',
-        technology='RNA-SEQ',
-        platform_accession_code='IlluminaHiSeq1000'
+        source_database="SRA",
+        technology="RNA-SEQ",
+        platform_accession_code="IlluminaHiSeq1000",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
     original_file = OriginalFile()
-    original_file.filename=accession_code+'.SRA'
-    original_file.source_filename=accession_code+'.SRA'
+    original_file.filename = accession_code + ".SRA"
+    original_file.source_filename = accession_code + ".SRA"
     original_file.save()
 
-    OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
+    OriginalFileSampleAssociation.objects.get_or_create(
+        original_file=original_file, sample=sample
+    )
 
     # add a failed processor job for the second sample
     processor_job = ProcessorJob()
     processor_job.start_time = timezone.now()
     processor_job.end_time = timezone.now()
-    processor_job.no_retry=True
-    processor_job.success=False
-    processor_job.failure_reason = 'ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!'
+    processor_job.no_retry = True
+    processor_job.success = False
+    processor_job.failure_reason = "ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!"
     processor_job.save()
 
     processor_assoc = ProcessorJobOriginalFileAssociation()
@@ -95,12 +101,14 @@ def setup_experiment() -> Dict:
 
     return experiment
 
+
 class RetrySamples(TestCase):
     """
     """
+
     def test(self):
         setup_experiment()
-        retry_by_regex('ProcessorJob has already completed .*')
+        retry_by_regex("ProcessorJob has already completed .*")
 
         dl_jobs = DownloaderJob.objects.all()
         self.assertEqual(dl_jobs.count(), 1)

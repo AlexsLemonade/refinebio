@@ -28,19 +28,23 @@ from data_refinery_common.models import (
     Sample,
     SampleResultAssociation,
 )
-from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples import update_salmon_all_experiments
+from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples import (
+    update_salmon_all_experiments,
+)
 
-def setup_experiment(new_version_accessions: List[str], old_version_accessions: List[str]) -> Dict:
+
+def setup_experiment(
+    new_version_accessions: List[str], old_version_accessions: List[str]
+) -> Dict:
     """ Create an experiment where some samples were processed with the newest version of salmon and
     other with an older one.
     """
     # Create the experiment
-    experiment_accession = 'SRP095529'
-    data_dir = '/home/user/data_store/'
+    experiment_accession = "SRP095529"
+    data_dir = "/home/user/data_store/"
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(
-        accession_code=experiment_accession,
-        technology='RNA-SEQ'
+        accession_code=experiment_accession, technology="RNA-SEQ"
     )
 
     zebrafish = Organism.get_object_for_name("DANIO_RERIO")
@@ -59,16 +63,20 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version='salmon 0.9.1'
+    organism_index.absolute_directory_path = (
+        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
+    )
+    organism_index.salmon_version = "salmon 0.9.1"
     organism_index.save()
 
     comp_file = ComputedFile()
     # This path will not be used because we already have the files extracted.
-    comp_file.absolute_file_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    comp_file.absolute_file_path = (
+        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    )
     comp_file.result = computational_result_short
-    comp_file.size_in_bytes=1337
-    comp_file.sha1="ABC"
+    comp_file.size_in_bytes = 1337
+    comp_file.sha1 = "ABC"
     comp_file.s3_key = "key"
     comp_file.s3_bucket = "bucket"
     comp_file.save()
@@ -84,24 +92,28 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
         sample = Sample.objects.create(
             accession_code=accession_code,
             organism=zebrafish,
-            source_database='SRA',
-            technology='RNA-SEQ',
-            platform_accession_code='IlluminaHiSeq1000'
+            source_database="SRA",
+            technology="RNA-SEQ",
+            platform_accession_code="IlluminaHiSeq1000",
         )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
         original_file = OriginalFile()
-        original_file.filename=accession_code+'.SRA'
-        original_file.source_filename=accession_code+'.SRA'
+        original_file.filename = accession_code + ".SRA"
+        original_file.source_filename = accession_code + ".SRA"
         original_file.save()
 
-        OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
+        OriginalFileSampleAssociation.objects.get_or_create(
+            original_file=original_file, sample=sample
+        )
 
         # Create and associate quant result and files.
         quant_result = ComputationalResult()
         quant_result.is_ccdl = True
         quant_result.processor = quant_processor
-        quant_result.organism_index = organism_index # associate with OLD organism index
+        quant_result.organism_index = (
+            organism_index  # associate with OLD organism index
+        )
         quant_result.save()
 
         kv = ComputationalResultAnnotation()
@@ -126,7 +138,9 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
 
         quant_file = ComputedFile()
         quant_file.filename = "quant.sf"
-        quant_file.absolute_file_path = experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+        quant_file.absolute_file_path = (
+            experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+        )
         quant_file.is_public = False
         quant_file.is_smashable = False
         quant_file.is_qc = False
@@ -137,8 +151,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
         quant_file.save()
 
         SampleResultAssociation.objects.get_or_create(
-            sample=sample,
-            result=quant_result
+            sample=sample, result=quant_result
         )
 
     # Create another OrganismIndex with a newer version of
@@ -155,16 +168,20 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version='salmon 0.13.1' # DIFFERENT SALMON VERSION
+    organism_index.absolute_directory_path = (
+        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
+    )
+    organism_index.salmon_version = "salmon 0.13.1"  # DIFFERENT SALMON VERSION
     organism_index.save()
 
     comp_file = ComputedFile()
     # This path will not be used because we already have the files extracted.
-    comp_file.absolute_file_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    comp_file.absolute_file_path = (
+        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    )
     comp_file.result = computational_result_short
-    comp_file.size_in_bytes=1337
-    comp_file.sha1="ABC"
+    comp_file.size_in_bytes = 1337
+    comp_file.sha1 = "ABC"
     comp_file.s3_key = "key"
     comp_file.s3_bucket = "bucket"
     comp_file.save()
@@ -173,24 +190,26 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
         sample = Sample.objects.create(
             accession_code=accession_code,
             organism=zebrafish,
-            source_database='SRA',
-            technology='RNA-SEQ',
-            platform_accession_code='IlluminaHiSeq1000'
+            source_database="SRA",
+            technology="RNA-SEQ",
+            platform_accession_code="IlluminaHiSeq1000",
         )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
         original_file = OriginalFile()
-        original_file.filename=accession_code+'.SRA'
-        original_file.source_filename=accession_code+'.SRA'
+        original_file.filename = accession_code + ".SRA"
+        original_file.source_filename = accession_code + ".SRA"
         original_file.save()
 
-        OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
+        OriginalFileSampleAssociation.objects.get_or_create(
+            original_file=original_file, sample=sample
+        )
 
         # Create and associate quant result and files.
         quant_result = ComputationalResult()
         quant_result.is_ccdl = True
         quant_result.processor = quant_processor
-        quant_result.organism_index = organism_index # NEWER VERSION
+        quant_result.organism_index = organism_index  # NEWER VERSION
         quant_result.save()
 
         kv = ComputationalResultAnnotation()
@@ -215,7 +234,9 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
 
         quant_file = ComputedFile()
         quant_file.filename = "quant.sf"
-        quant_file.absolute_file_path = experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+        quant_file.absolute_file_path = (
+            experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+        )
         quant_file.is_public = False
         quant_file.is_smashable = False
         quant_file.is_qc = False
@@ -226,19 +247,20 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
         quant_file.save()
 
         SampleResultAssociation.objects.get_or_create(
-            sample=sample,
-            result=quant_result
+            sample=sample, result=quant_result
         )
 
     return experiment
+
 
 class RerunSalmonTestCase(TestCase):
     """
     Tests that new processor jobs are created for samples that belong to experiments that were
     processed with multiple versions of Salmon
     """
+
     def test_no_processor_job_needed(self):
-        setup_experiment(['AA001', 'AA002'], [])
+        setup_experiment(["AA001", "AA002"], [])
         update_salmon_all_experiments()
 
         # Verify that no jobs were created, because all samples had been processed with the latest version
@@ -246,14 +268,14 @@ class RerunSalmonTestCase(TestCase):
         self.assertEqual(dl_jobs.count(), 0)
 
     def test(self):
-        setup_experiment(['SS001'], ['SS002'])
+        setup_experiment(["SS001"], ["SS002"])
         update_salmon_all_experiments()
 
         dl_jobs = DownloaderJob.objects.all()
         self.assertEqual(dl_jobs.count(), 1)
 
     def test_no_job_created_when_failed_job_exists(self):
-        experiment = setup_experiment([], ['GSM001'])
+        experiment = setup_experiment([], ["GSM001"])
 
         # create a failed job for that experiment
         processor_job = ProcessorJob()

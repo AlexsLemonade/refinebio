@@ -11,13 +11,14 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     Sample,
     OriginalFile,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
 )
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
+
 class SurveyTestCase(TransactionTestCase):
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_microarray(self, mock_send_task):
         """Test that the unsurveyor works correctly.
 
@@ -38,9 +39,11 @@ class SurveyTestCase(TransactionTestCase):
         survey_job = SurveyJob(source_type="GEO")
         survey_job.save()
 
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value=superseries_accession)
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job,
+            key="experiment_accession_code",
+            value=superseries_accession,
+        )
         key_value_pair.save()
 
         geo_surveyor = GeoSurveyor(survey_job)
@@ -50,45 +53,75 @@ class SurveyTestCase(TransactionTestCase):
         survey_job = SurveyJob(source_type="GEO")
         survey_job.save()
 
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value=sub_experiment_accession)
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job,
+            key="experiment_accession_code",
+            value=sub_experiment_accession,
+        )
         key_value_pair.save()
 
         geo_surveyor = GeoSurveyor(survey_job)
         geo_surveyor.survey()
 
         # Establish baselines before purge
-        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[0]
-        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values('sample_id'))
+        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[
+            0
+        ]
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
+            experiment=experiment
+        )
+        samples = Sample.objects.filter(
+            id__in=experiment_sample_assocs.values("sample_id")
+        )
         self.assertEqual(samples.count(), 4)
 
-        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=samples.values('id'))
-        original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
+        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(
+            sample_id__in=samples.values("id")
+        )
+        original_files = OriginalFile.objects.filter(
+            id__in=og_file_sample_assocs.values("original_file_id")
+        )
         self.assertEqual(original_files.count(), 4)
 
         experiment = Experiment.objects.filter(accession_code=superseries_accession)[0]
-        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values('sample_id'))
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
+            experiment=experiment
+        )
+        samples = Sample.objects.filter(
+            id__in=experiment_sample_assocs.values("sample_id")
+        )
         self.assertEqual(samples.count(), 20)
 
-        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=samples.values('id'))
-        original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
+        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(
+            sample_id__in=samples.values("id")
+        )
+        original_files = OriginalFile.objects.filter(
+            id__in=og_file_sample_assocs.values("original_file_id")
+        )
         self.assertEqual(original_files.count(), 20)
 
         # Purge the superseries
         purge_experiment(superseries_accession)
 
         # Make sure the subexperiment samples weren't affected.
-        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[0]
-        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values('sample_id'))
+        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[
+            0
+        ]
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
+            experiment=experiment
+        )
+        samples = Sample.objects.filter(
+            id__in=experiment_sample_assocs.values("sample_id")
+        )
         self.assertEqual(samples.count(), 4)
 
         # Make sure sub-experiment original files weren't affected.
-        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=samples.values('id'))
-        original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
+        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(
+            sample_id__in=samples.values("id")
+        )
+        original_files = OriginalFile.objects.filter(
+            id__in=og_file_sample_assocs.values("original_file_id")
+        )
         self.assertEqual(original_files.count(), 4)
 
         # And that samples and files that remain are from the subseries.

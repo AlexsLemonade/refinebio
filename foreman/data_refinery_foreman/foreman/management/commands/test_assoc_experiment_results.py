@@ -12,8 +12,9 @@ from data_refinery_common.models import (
     Sample,
     SampleResultAssociation,
 )
-from data_refinery_foreman.foreman.management.commands.assoc_experiment_results \
-    import make_experiment_result_associations
+from data_refinery_foreman.foreman.management.commands.assoc_experiment_results import (
+    make_experiment_result_associations,
+)
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
 
@@ -62,8 +63,8 @@ class SurveyTestCase(TransactionTestCase):
         processed_experiment.save()
 
         processed_sample_one = Sample()
-        processed_sample_one.accession_code = 'SRX12345'
-        processed_sample_one.title = 'SRX12345'
+        processed_sample_one.accession_code = "SRX12345"
+        processed_sample_one.title = "SRX12345"
         processed_sample_one.organism = homo_sapiens
         processed_sample_one.save()
 
@@ -78,8 +79,8 @@ class SurveyTestCase(TransactionTestCase):
         esa.save()
 
         processed_sample_two = Sample()
-        processed_sample_two.accession_code = 'SRX12346'
-        processed_sample_two.title = 'SRX12346'
+        processed_sample_two.accession_code = "SRX12346"
+        processed_sample_two.title = "SRX12346"
         processed_sample_two.organism = homo_sapiens
         processed_sample_two.save()
 
@@ -99,8 +100,8 @@ class SurveyTestCase(TransactionTestCase):
         unprocessed_experiment.save()
 
         unprocessed_sample = Sample()
-        unprocessed_sample.accession_code = 'SRX6789'
-        unprocessed_sample.title = 'SRX6789'
+        unprocessed_sample.accession_code = "SRX6789"
+        unprocessed_sample.title = "SRX6789"
         unprocessed_sample.organism = homo_sapiens
         unprocessed_sample.save()
 

@@ -29,7 +29,7 @@ from data_refinery_common.models import *
 
 
 logger = get_and_configure_logger(__name__)
-CHUNK_SIZE = 1024 * 256 # chunk_size is in bytes
+CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 
 def _download_file(download_url: str, file_path: str) -> None:
@@ -37,9 +37,7 @@ def _download_file(download_url: str, file_path: str) -> None:
     """
 
     try:
-        logger.debug("Downloading file from %s to %s.",
-                     download_url,
-                     file_path)
+        logger.debug("Downloading file from %s to %s.", download_url, file_path)
 
         # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
         urllib.request.urlcleanup()
@@ -50,8 +48,11 @@ def _download_file(download_url: str, file_path: str) -> None:
 
         urllib.request.urlcleanup()
     except Exception:
-        logger.exception("Exception caught while downloading file %s from %s",
-                         file_path, download_url)
+        logger.exception(
+            "Exception caught while downloading file %s from %s",
+            file_path,
+            download_url,
+        )
         return False
     finally:
         target_file.close()
@@ -63,10 +64,12 @@ def _determine_brainarray_package(input_file: str) -> Dict:
     """Uses the R package affy.io to read the .CEL file and determine its platform.
     """
     try:
-        header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
+        header = ro.r["::"]("affyio", "read.celfile.header")(input_file)
     except RRuntimeError as e:
-        error_template = ("Unable to read Affy header in input file {0}"
-                          " while running AFFY_TO_PCL due to error: {1}")
+        error_template = (
+            "Unable to read Affy header in input file {0}"
+            " while running AFFY_TO_PCL due to error: {1}"
+        )
         error_message = error_template.format(input_file, str(e))
         logger.exception(error_message)
         return None
@@ -97,37 +100,49 @@ class Command(BaseCommand):
         LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
         work_dir = LOCAL_ROOT_DIR + "/affy_correction/"
         os.makedirs(work_dir, exist_ok=True)
-        for sample in Sample.objects.filter(technology='RNA-SEQ', source_database='GEO'):
+        for sample in Sample.objects.filter(
+            technology="RNA-SEQ", source_database="GEO"
+        ):
             for original_file in sample.original_files.all():
-                if original_file.is_affy_data() :
+                if original_file.is_affy_data():
                     input_file_path = work_dir + original_file.source_filename
-                    download_success = _download_file(original_file.source_url,
-                                                      input_file_path)
+                    download_success = _download_file(
+                        original_file.source_url, input_file_path
+                    )
 
                     if download_success:
                         try:
-                            brainarray_package = _determine_brainarray_package(input_file_path)
+                            brainarray_package = _determine_brainarray_package(
+                                input_file_path
+                            )
 
                             if brainarray_package:
-                                logger.info("Determined the package for sample %d is: " + brainarray_package,
-                                            sample.id)
+                                logger.info(
+                                    "Determined the package for sample %d is: "
+                                    + brainarray_package,
+                                    sample.id,
+                                )
                                 # If we've detected the platform using affy, then this
                                 # is the best source of truth we'll be able to get, so
                                 # update the sample to match it.
-                                platform_name = get_readable_affymetrix_names()[brainarray_package]
+                                platform_name = get_readable_affymetrix_names()[
+                                    brainarray_package
+                                ]
 
                                 sample.platform_accession_code = brainarray_package
                                 sample.platform_name = platform_name
                         except:
-                            logger.exception("Failed to detect platform from downloaded file %s.",
-                                             input_file_path)
+                            logger.exception(
+                                "Failed to detect platform from downloaded file %s.",
+                                input_file_path,
+                            )
 
                     # Regardless of whether we could detect the
                     # platform successfully or not, we definitely know
                     # it's an Affymetrix Microarray because that's the
                     # only one that makes .CEL files.
-                    sample.technology = 'MICROARRAY'
-                    sample.manufacturer = 'AFFYMETRIX'
+                    sample.technology = "MICROARRAY"
+                    sample.manufacturer = "AFFYMETRIX"
                     sample.save()
 
                     # If there's other original files associated with

@@ -26,25 +26,30 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
 
-def _download_file(download_url: str,
-                   downloader_job: DownloaderJob,
-                   target_file_path: str,
-                   force_ftp: bool=False) -> bool:
+
+def _download_file(
+    download_url: str,
+    downloader_job: DownloaderJob,
+    target_file_path: str,
+    force_ftp: bool = False,
+) -> bool:
     """ Download file dispatcher. Dispatches to the FTP or Aspera downloader """
 
     # SRA files have Apsera downloads.
-    if 'ftp.sra.ebi.ac.uk' in download_url and not force_ftp:
+    if "ftp.sra.ebi.ac.uk" in download_url and not force_ftp:
         # From: ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz
         # To: era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz
-        download_url = download_url.replace('ftp://', 'era-fasp@')
-        download_url = download_url.replace('ftp', 'fasp')
-        download_url = download_url.replace('.uk/', '.uk:/')
-        return _download_file_aspera(download_url, downloader_job, target_file_path, source="ENA")
+        download_url = download_url.replace("ftp://", "era-fasp@")
+        download_url = download_url.replace("ftp", "fasp")
+        download_url = download_url.replace(".uk/", ".uk:/")
+        return _download_file_aspera(
+            download_url, downloader_job, target_file_path, source="ENA"
+        )
     elif "ncbi.nlm.nih.gov" in download_url and not force_ftp:
         # Try to convert old-style endpoints into new-style endpoints if possible
         try:
-            if 'anonftp' in download_url or 'dbtest' in download_url:
-                accession = download_url.split('/')[-1].split('.sra')[0]
+            if "anonftp" in download_url or "dbtest" in download_url:
+                accession = download_url.split("/")[-1].split(".sra")[0]
                 new_url = get_https_sra_download(accession)
                 if new_url:
                     download_url = new_url
@@ -55,13 +60,17 @@ def _download_file(download_url: str,
         return _download_file_ftp(download_url, downloader_job, target_file_path)
 
 
-def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_file_path: str) -> bool:
+def _download_file_ftp(
+    download_url: str, downloader_job: DownloaderJob, target_file_path: str
+) -> bool:
     """ Download a file to a location using FTP via urllib. """
     try:
-        logger.debug("Downloading file from %s to %s via FTP.",
-                     download_url,
-                     target_file_path,
-                     downloader_job=downloader_job.id)
+        logger.debug(
+            "Downloading file from %s to %s via FTP.",
+            download_url,
+            target_file_path,
+            downloader_job=downloader_job.id,
+        )
 
         # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
         urllib.request.urlcleanup()
@@ -72,34 +81,42 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 
         urllib.request.urlcleanup()
     except Exception:
-        logger.exception("Exception caught while downloading file from the URL via FTP: %s",
-                         download_url,
-                         downloader_job=downloader_job.id)
-        downloader_job.failure_reason = ("Exception caught while downloading "
-                                         "file from the URL via FTP: {}").format(download_url)
+        logger.exception(
+            "Exception caught while downloading file from the URL via FTP: %s",
+            download_url,
+            downloader_job=downloader_job.id,
+        )
+        downloader_job.failure_reason = (
+            "Exception caught while downloading " "file from the URL via FTP: {}"
+        ).format(download_url)
         return False
 
     return True
 
 
-def _download_file_http(download_url: str,
-                        downloader_job: DownloaderJob,
-                        target_file_path: str
-                          ) -> bool:
+def _download_file_http(
+    download_url: str, downloader_job: DownloaderJob, target_file_path: str
+) -> bool:
     try:
         target_file = open(target_file_path, "wb")
-        logger.debug("Downloading file from %s to %s using HTTP.",
-                     download_url,
-                     target_file_path,
-                     downloader_job=downloader_job.id)
+        logger.debug(
+            "Downloading file from %s to %s using HTTP.",
+            download_url,
+            target_file_path,
+            downloader_job=downloader_job.id,
+        )
 
         with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception as e:
-        logger.exception("Exception caught while downloading file.",
-                         downloader_job=downloader_job.id)
-        downloader_job.failure_reason = "Exception caught while downloading file\\n " \
-                                        + str(e).replace('\n', '\\n')
+        logger.exception(
+            "Exception caught while downloading file.", downloader_job=downloader_job.id
+        )
+        downloader_job.failure_reason = "Exception caught while downloading file\\n " + str(
+            e
+        ).replace(
+            "\n", "\\n"
+        )
         return False
     finally:
         target_file.close()
@@ -107,40 +124,49 @@ def _download_file_http(download_url: str,
     return True
 
 
-def _download_file_aspera(download_url: str,
-                          downloader_job: DownloaderJob,
-                          target_file_path: str,
-                          attempt: int=0,
-                          source="NCBI"
-                          ) -> bool:
+def _download_file_aspera(
+    download_url: str,
+    downloader_job: DownloaderJob,
+    target_file_path: str,
+    attempt: int = 0,
+    source="NCBI",
+) -> bool:
     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
 
     try:
-        logger.debug("Downloading file from %s to %s via Aspera.",
-                     download_url,
-                     target_file_path,
-                     downloader_job=downloader_job.id)
+        logger.debug(
+            "Downloading file from %s to %s via Aspera.",
+            download_url,
+            target_file_path,
+            downloader_job=downloader_job.id,
+        )
 
         if source is "ENA":
             # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
             # We are also NOT using encryption (-T) to avoid slowdown,
             # and we are not using any kind of rate limiting.
             command_str = ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
-            formatted_command = command_str.format(src=download_url,
-                                                   dest=target_file_path)
-            completed_command = subprocess.run(formatted_command.split(),
-                                               stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE)
+            formatted_command = command_str.format(
+                src=download_url, dest=target_file_path
+            )
+            completed_command = subprocess.run(
+                formatted_command.split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
         else:
             # NCBI requires encryption and recommends -k1 resume, as well as the 450m limit and -Q (play fair).
             # ex: https://github.com/AlexsLemonade/refinebio/pull/1189#issuecomment-478018580
             command_str = ".aspera/cli/bin/ascp -p -Q -T -k1 -l 450m -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
-            formatted_command = command_str.format(src=download_url,
-                                                   dest=target_file_path)
+            formatted_command = command_str.format(
+                src=download_url, dest=target_file_path
+            )
             logger.info("Starting NCBI ascp", time=str(timezone.now()))
-            completed_command = subprocess.run(formatted_command.split(),
-                                               stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE)
+            completed_command = subprocess.run(
+                formatted_command.split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
             logger.info("Ending NCBI ascp", time=str(timezone.now()))
 
         # Something went wrong! Else, just fall through to returning True.
@@ -148,55 +174,64 @@ def _download_file_aspera(download_url: str,
 
             stdout = completed_command.stdout.decode().strip()
             stderr = completed_command.stderr.decode().strip()
-            logger.debug("Shell call of `%s` to ascp failed with error message: %s",
-                         formatted_command,
-                         stderr,
-                         downloader_job=downloader_job.id)
+            logger.debug(
+                "Shell call of `%s` to ascp failed with error message: %s",
+                formatted_command,
+                stderr,
+                downloader_job=downloader_job.id,
+            )
 
             # Sometimes, Aspera fails mysteriously.
             # Wait a few minutes and try again.
             if attempt > 5:
-                logger.info("Final shell call of `%s` to ascp failed with error message: %s",
-                         formatted_command,
-                         stderr + "\nSTDOUT: " + stdout,
-                         downloader_job=downloader_job.id)
-                downloader_job.failure_reason = "stderr:\n " + stderr + "\nstdout:\n " + stdout
+                logger.info(
+                    "Final shell call of `%s` to ascp failed with error message: %s",
+                    formatted_command,
+                    stderr + "\nSTDOUT: " + stdout,
+                    downloader_job=downloader_job.id,
+                )
+                downloader_job.failure_reason = (
+                    "stderr:\n " + stderr + "\nstdout:\n " + stdout
+                )
                 return False
             else:
                 time.sleep(5)
-                return _download_file_aspera(download_url,
-                                             downloader_job,
-                                             target_file_path,
-                                             attempt + 1,
-                                             source
-                                             )
+                return _download_file_aspera(
+                    download_url, downloader_job, target_file_path, attempt + 1, source
+                )
     except Exception:
-        logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
-                         download_url,
-                         downloader_job=downloader_job.id)
-        downloader_job.failure_reason = ("Exception caught while downloading "
-                                         "file from the URL via Aspera: {}").format(download_url)
+        logger.exception(
+            "Exception caught while downloading file from the URL via Aspera: %s",
+            download_url,
+            downloader_job=downloader_job.id,
+        )
+        downloader_job.failure_reason = (
+            "Exception caught while downloading " "file from the URL via Aspera: {}"
+        ).format(download_url)
         return False
 
     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
-    if (not os.path.exists(target_file_path)) or (os.path.getsize(target_file_path) < 1):
+    if (not os.path.exists(target_file_path)) or (
+        os.path.getsize(target_file_path) < 1
+    ):
         if os.path.exists(target_file_path):
             os.remove(target_file_path)
 
         if attempt > 5:
-            downloader_job.failure_reason = "Got zero byte file from aspera after 5 attempts."
+            downloader_job.failure_reason = (
+                "Got zero byte file from aspera after 5 attempts."
+            )
             return False
 
-        logger.error("Got zero byte ascp download for target, retrying.",
-                     target_url=download_url,
-                     downloader_job=downloader_job.id)
+        logger.error(
+            "Got zero byte ascp download for target, retrying.",
+            target_url=download_url,
+            downloader_job=downloader_job.id,
+        )
         time.sleep(10)
-        return _download_file_aspera(download_url,
-                                     downloader_job,
-                                     target_file_path,
-                                     attempt + 1,
-                                     source
-                                     )
+        return _download_file_aspera(
+            download_url, downloader_job, target_file_path, attempt + 1, source
+        )
     return True
 
 
@@ -244,9 +279,9 @@ def _has_unmated_reads(accession_code: str) -> bool:
     return False
 
 
-def _replace_dotsra_with_fastq_files(sample: Sample,
-                                     downloader_job: DownloaderJob,
-                                     original_file: OriginalFile) -> List[OriginalFile]:
+def _replace_dotsra_with_fastq_files(
+    sample: Sample, downloader_job: DownloaderJob, original_file: OriginalFile
+) -> List[OriginalFile]:
     """Replaces a .SRA file with two .fastq files.
 
     This function should only be called on a sample which has unmated
@@ -260,21 +295,19 @@ def _replace_dotsra_with_fastq_files(sample: Sample,
     # its associations just to recreate another with the same
     # associations seems rather pointless.
     original_file.source_url = read_one_url
-    original_file.source_filename = read_one_url.split('/')[-1]
+    original_file.source_filename = read_one_url.split("/")[-1]
     original_file.save()
 
     read_two_original_file = OriginalFile.objects.get_or_create(
-        source_url = read_two_url,
-        source_filename = read_two_url.split('/')[-1],
-        has_raw = True
+        source_url=read_two_url,
+        source_filename=read_two_url.split("/")[-1],
+        has_raw=True,
     )[0]
     OriginalFileSampleAssociation.objects.get_or_create(
-        original_file = read_two_original_file,
-        sample = sample
+        original_file=read_two_original_file, sample=sample
     )
     DownloaderJobOriginalFileAssociation.objects.get_or_create(
-        original_file = read_two_original_file,
-        downloader_job = downloader_job
+        original_file=read_two_original_file, downloader_job=downloader_job
     )
     return [original_file, read_two_original_file]
 
@@ -285,7 +318,9 @@ def download_sra(job_id: int) -> None:
     Fairly straightforward, just downloads the file from SRA.
     """
     job = utils.start_job(job_id)
-    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
+        downloader_job=job
+    )
     original_files = job.original_files.all()
 
     original_file = original_files[0]
@@ -303,17 +338,19 @@ def download_sra(job_id: int) -> None:
     success = None
     for original_file in original_files:
         if original_file.is_downloaded:
-            logger.info("File already downloaded!",
-                         original_file_id=original_file.id,
-                         downloader_job=job_id)
+            logger.info(
+                "File already downloaded!",
+                original_file_id=original_file.id,
+                downloader_job=job_id,
+            )
             success = True
             continue
 
-        exp_path = LOCAL_ROOT_DIR + '/' + job.accession_code
-        samp_path = exp_path + '/' + sample.accession_code
+        exp_path = LOCAL_ROOT_DIR + "/" + job.accession_code
+        samp_path = exp_path + "/" + sample.accession_code
         os.makedirs(exp_path, exist_ok=True)
         os.makedirs(samp_path, exist_ok=True)
-        dl_file_path = samp_path + '/' + original_file.source_filename
+        dl_file_path = samp_path + "/" + original_file.source_filename
         success = _download_file(original_file.source_url, job, dl_file_path)
 
         if success:

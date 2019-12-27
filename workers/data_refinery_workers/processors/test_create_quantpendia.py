@@ -3,19 +3,20 @@ import os
 from django.test import TransactionTestCase, tag
 
 from data_refinery_common.job_lookup import ProcessorPipeline
-from data_refinery_common.models import (ComputationalResult,
-                                         ComputedFile,
-                                         Dataset,
-                                         Experiment,
-                                         ExperimentSampleAssociation,
-                                         Organism,
-                                         ProcessorJob,
-                                         ProcessorJobDatasetAssociation,
-                                         Sample,
-                                         SampleComputedFileAssociation,
-                                         SampleResultAssociation)
-from data_refinery_workers.processors.create_quantpendia import \
-    create_quantpendia
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputedFile,
+    Dataset,
+    Experiment,
+    ExperimentSampleAssociation,
+    Organism,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    Sample,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
+)
+from data_refinery_workers.processors.create_quantpendia import create_quantpendia
 
 
 class QuantpendiaTestCase(TransactionTestCase):
@@ -35,10 +36,10 @@ class QuantpendiaTestCase(TransactionTestCase):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1237818'
-        sample.title = 'GSM1237818'
+        sample.accession_code = "GSM1237818"
+        sample.title = "GSM1237818"
         sample.organism = homo_sapiens
-        sample.technology = 'RNA-SEQ'
+        sample.technology = "RNA-SEQ"
         sample.save()
 
         sra = SampleResultAssociation()
@@ -55,11 +56,13 @@ class QuantpendiaTestCase(TransactionTestCase):
         computed_file.s3_key = "smasher-test-quant.sf"
         computed_file.s3_bucket = "data-refinery-test-assets"
         computed_file.filename = "quant.sf"
-        computed_file.absolute_file_path = "/home/user/data_store/QUANT/smasher-test-quant.sf"
+        computed_file.absolute_file_path = (
+            "/home/user/data_store/QUANT/smasher-test-quant.sf"
+        )
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.size_in_bytes = 123123
-        computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967" # this matches with the downloaded file
+        computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
         computed_file.save()
 
         computed_file = ComputedFile()
@@ -75,11 +78,11 @@ class QuantpendiaTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE51088': ['GSM1237818']}
-        ds.aggregate_by = 'EXPERIMENT'
-        ds.scale_by = 'STANDARD'
+        ds.data = {"GSE51088": ["GSM1237818"]}
+        ds.aggregate_by = "EXPERIMENT"
+        ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
-        ds.quant_sf_only = True # Make the dataset include quant.sf files only
+        ds.quant_sf_only = True  # Make the dataset include quant.sf files only
         ds.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -89,16 +92,23 @@ class QuantpendiaTestCase(TransactionTestCase):
 
         final_context = create_quantpendia(job.id)
 
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/GSE51088/GSM1237818_quant.sf'))
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/README.md'))
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/LICENSE.TXT'))
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/aggregated_metadata.json'))
+        self.assertTrue(
+            os.path.exists(
+                final_context["output_dir"] + "/GSE51088/GSM1237818_quant.sf"
+            )
+        )
+        self.assertTrue(os.path.exists(final_context["output_dir"] + "/README.md"))
+        self.assertTrue(os.path.exists(final_context["output_dir"] + "/LICENSE.TXT"))
+        self.assertTrue(
+            os.path.exists(final_context["output_dir"] + "/aggregated_metadata.json")
+        )
 
-        self.assertTrue(final_context['metadata']['quant_sf_only'])
-        self.assertEqual(final_context['metadata']['num_samples'], 1)
-        self.assertEqual(final_context['metadata']['num_experiments'], 1)
+        self.assertTrue(final_context["metadata"]["quant_sf_only"])
+        self.assertEqual(final_context["metadata"]["num_samples"], 1)
+        self.assertEqual(final_context["metadata"]["num_experiments"], 1)
 
         # test that archive exists
-        quantpendia_file = ComputedFile.objects.filter(is_compendia=True, quant_sf_only=True).latest()
+        quantpendia_file = ComputedFile.objects.filter(
+            is_compendia=True, quant_sf_only=True
+        ).latest()
         self.assertTrue(os.path.exists(quantpendia_file.absolute_file_path))
-

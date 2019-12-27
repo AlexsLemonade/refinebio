@@ -9,7 +9,10 @@ from data_refinery_common.performant_pagination.pagination import PerformantPagi
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.sra import SraSurveyor
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
-from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor, EXPERIMENTS_URL
+from data_refinery_foreman.surveyor.array_express import (
+    ArrayExpressSurveyor,
+    EXPERIMENTS_URL,
+)
 
 logger = get_and_configure_logger(__name__)
 
@@ -21,8 +24,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--source-database",
             type=str,
-            help=("The name of a source database, such as ARRAY_EXPRESS, GEO, or SRA."
-                  "All experiments from this source database will have their metadata refreshed."))
+            help=(
+                "The name of a source database, such as ARRAY_EXPRESS, GEO, or SRA."
+                "All experiments from this source database will have their metadata refreshed."
+            ),
+        )
 
     def handle(self, *args, **options):
         """Refreshes the metadata for all experiments, or experiments from a specific database
@@ -35,10 +41,12 @@ class Command(BaseCommand):
             source_database = options["source_database"]
             experiments = Experiment.objects.filter(source_database=source_database)
         else:
-            logger.error("Invalid source database \"{}\""
-                         .format(options["source_database"])
-                         + "\nPossible source databases: {}"
-                         .format(", ".join(possible_source_databases)))
+            logger.error(
+                'Invalid source database "{}"'.format(options["source_database"])
+                + "\nPossible source databases: {}".format(
+                    ", ".join(possible_source_databases)
+                )
+            )
             sys.exit(1)
 
         paginator = PerformantPaginator(experiments, PAGE_SIZE)
@@ -46,37 +54,45 @@ class Command(BaseCommand):
 
         while True:
             for experiment in experiments:
-                logger.debug("Refreshing metadata for an experiment.",
-                             experiment=experiment.accession_code)
+                logger.debug(
+                    "Refreshing metadata for an experiment.",
+                    experiment=experiment.accession_code,
+                )
                 if experiment.source_database == "SRA":
                     metadata = SraSurveyor.gather_all_metadata(
-                         experiment.samples.first().accession_code)
-                    SraSurveyor._apply_metadata_to_experiment(
-                         experiment, metadata)
+                        experiment.samples.first().accession_code
+                    )
+                    SraSurveyor._apply_metadata_to_experiment(experiment, metadata)
 
                 elif experiment.source_database == "GEO":
-                    gse = GEOparse.get_GEO(experiment.accession_code,
-                                           destdir="/tmp/management",
-                                           how="brief",
-                                           silent=True)
+                    gse = GEOparse.get_GEO(
+                        experiment.accession_code,
+                        destdir="/tmp/management",
+                        how="brief",
+                        silent=True,
+                    )
 
-                    GeoSurveyor._apply_metadata_to_experiment(
-                        experiment,
-                        gse)
+                    GeoSurveyor._apply_metadata_to_experiment(experiment, gse)
 
                 elif experiment.source_database == "ARRAY_EXPRESS":
                     request_url = EXPERIMENTS_URL + experiment.accession_code
-                    experiment_request = utils.requests_retry_session().get(request_url,
-                                                                            timeout=60)
+                    experiment_request = utils.requests_retry_session().get(
+                        request_url, timeout=60
+                    )
                     try:
-                        parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+                        parsed_json = experiment_request.json()["experiments"][
+                            "experiment"
+                        ][0]
                     except KeyError:
-                        logger.error("Remote experiment has no Experiment data!",
-                                     experiment_accession_code=experiment.accession_code,
-                                     survey_job=self.survey_job.id)
+                        logger.error(
+                            "Remote experiment has no Experiment data!",
+                            experiment_accession_code=experiment.accession_code,
+                            survey_job=self.survey_job.id,
+                        )
                         continue
-                    ArrayExpressSurveyor._apply_metadata_to_experiment(experiment,
-                                                                       parsed_json)
+                    ArrayExpressSurveyor._apply_metadata_to_experiment(
+                        experiment, parsed_json
+                    )
 
                 experiment.save()
 

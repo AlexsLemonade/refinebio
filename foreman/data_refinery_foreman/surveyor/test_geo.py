@@ -18,15 +18,16 @@ from data_refinery_foreman.surveyor.utils import get_title_and_authors_for_pubme
 
 
 class SurveyTestCase(TransactionTestCase):
-
     def prep_test(self, experiment_accession):
         survey_job = SurveyJob(source_type="GEO")
         survey_job.save()
         self.survey_job = survey_job
 
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value=experiment_accession)
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job,
+            key="experiment_accession_code",
+            value=experiment_accession,
+        )
         key_value_pair.save()
 
     def tearDown(self):
@@ -34,7 +35,7 @@ class SurveyTestCase(TransactionTestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_microarray(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
 
@@ -48,7 +49,10 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(34, Sample.objects.all().count())
 
         sample_object = Sample.objects.first()
-        self.assertEqual(sample_object.platform_name, "[HG-U133A] Affymetrix Human Genome U133A Array")
+        self.assertEqual(
+            sample_object.platform_name,
+            "[HG-U133A] Affymetrix Human Genome U133A Array",
+        )
         self.assertEqual(sample_object.platform_accession_code, "hgu133a")
         self.assertEqual(sample_object.technology, "MICROARRAY")
 
@@ -56,10 +60,12 @@ class SurveyTestCase(TransactionTestCase):
         GSM299800 = Sample.objects.get(accession_code="GSM299800")
         protocol_info = GSM299800.protocol_info
         self.assertEqual(
-            protocol_info['Extraction protocol'],
-            ['Chromatin IP performed as described in Odom et al., Science 303, 1378 (Feb 27, 2004)']
+            protocol_info["Extraction protocol"],
+            [
+                "Chromatin IP performed as described in Odom et al., Science 303, 1378 (Feb 27, 2004)"
+            ],
         )
-        self.assertEqual(protocol_info['Data processing'], ['Z-score normalization'])
+        self.assertEqual(protocol_info["Data processing"], ["Z-score normalization"])
 
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(45, downloader_jobs.count())
@@ -68,7 +74,7 @@ class SurveyTestCase(TransactionTestCase):
         original_files = OriginalFile.objects.all()
         self.assertEqual(45, original_files.count())
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_not_agilent(self, mock_send_task):
         """ Test to make sure we're setting MFG correctly
         """
@@ -80,7 +86,7 @@ class SurveyTestCase(TransactionTestCase):
         sample_object = Sample.objects.first()
         self.assertEqual(sample_object.manufacturer, "ILLUMINA")
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_agilent(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
 
@@ -94,8 +100,10 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(124, Sample.objects.all().count())
 
         sample_object = Sample.objects.first()
-        self.assertEqual(sample_object.platform_name,
-                         "Agilent-014850 Whole Human Genome Microarray 4x44K G4112F (Probe Name version)")
+        self.assertEqual(
+            sample_object.platform_name,
+            "Agilent-014850 Whole Human Genome Microarray 4x44K G4112F (Probe Name version)",
+        )
         self.assertEqual(sample_object.platform_accession_code, "GPL6480")
         # We currently do not support Agilent platforms, so we can't
         # match its accession to one we know about.
@@ -107,7 +115,7 @@ class SurveyTestCase(TransactionTestCase):
         # downloader jobs.
         self.assertEqual(0, downloader_jobs.count())
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_rnaseq(self, mock_send_task):
         """Run the GEO surveyor and make sure we discover the experiment/samples.
 
@@ -124,13 +132,15 @@ class SurveyTestCase(TransactionTestCase):
 
         sample_object = Sample.objects.first()
         self.assertEqual(sample_object.platform_name, "Illumina Genome Analyzer II")
-        self.assertEqual(sample_object.platform_accession_code, "Illumina Genome Analyzer II")
+        self.assertEqual(
+            sample_object.platform_accession_code, "Illumina Genome Analyzer II"
+        )
         self.assertEqual(sample_object.technology, "RNA-SEQ")
 
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(0, downloader_jobs.count())
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_superseries(self, mock_send_task):
         """Run the GEO surveyor and make sure we get some files to DL!
 
@@ -146,13 +156,13 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(28, Sample.objects.all().count())
 
         # 10 of which are microarray and therefore need downloader jobs
-        microarray_samples = Sample.objects.filter(technology='MICROARRAY')
+        microarray_samples = Sample.objects.filter(technology="MICROARRAY")
         self.assertEqual(10, microarray_samples.count())
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(10, downloader_jobs.count())
 
         # And 18 of which are RNA-Seq so they won't have downloader jobs.
-        rna_seq_samples = Sample.objects.filter(technology='RNA-SEQ')
+        rna_seq_samples = Sample.objects.filter(technology="RNA-SEQ")
         self.assertEqual(18, rna_seq_samples.count())
 
         # Make sure there aren't extra OriginalFiles
@@ -162,5 +172,34 @@ class SurveyTestCase(TransactionTestCase):
     def test_get_pubmed_id_title(self):
         """ We scrape PMIDs now. """
         resp = get_title_and_authors_for_pubmed_id("22367537")
-        self.assertEqual(resp[0], 'Sequencing of neuroblastoma identifies chromothripsis and defects in neuritogenesis genes.')
-        self.assertEqual(resp[1], ['Molenaar JJ', 'Koster J', 'Zwijnenburg DA', 'van Sluis P', 'Valentijn LJ', 'van der Ploeg I', 'Hamdi M', 'van Nes J', 'Westerman BA', 'van Arkel J', 'Ebus ME', 'Haneveld F', 'Lakeman A', 'Schild L', 'Molenaar P', 'Stroeken P', 'van Noesel MM', 'Ora I', 'Santo EE', 'Caron HN', 'Westerhout EM', 'Versteeg R'])
+        self.assertEqual(
+            resp[0],
+            "Sequencing of neuroblastoma identifies chromothripsis and defects in neuritogenesis genes.",
+        )
+        self.assertEqual(
+            resp[1],
+            [
+                "Molenaar JJ",
+                "Koster J",
+                "Zwijnenburg DA",
+                "van Sluis P",
+                "Valentijn LJ",
+                "van der Ploeg I",
+                "Hamdi M",
+                "van Nes J",
+                "Westerman BA",
+                "van Arkel J",
+                "Ebus ME",
+                "Haneveld F",
+                "Lakeman A",
+                "Schild L",
+                "Molenaar P",
+                "Stroeken P",
+                "van Noesel MM",
+                "Ora I",
+                "Santo EE",
+                "Caron HN",
+                "Westerhout EM",
+                "Versteeg R",
+            ],
+        )
