@@ -1,74 +1,84 @@
-from datetime import timedelta, datetime
-import requests
-import nomad
-from typing import Dict
+from datetime import datetime, timedelta
 from itertools import groupby
 from re import match
+from typing import Dict
+
 from django.conf import settings
-from django.views.decorators.cache import cache_page
-from django.db.models import Count, Prefetch, DateTimeField, OuterRef, Subquery
-from django.db.models.functions import Trunc, Left
+from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
-from django.http import (
-    Http404,
-    JsonResponse,
-)
+from django.db.models.functions import Left, Trunc
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
+import requests
+from six import iteritems
+
+import nomad
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE,
-    LOOKUP_QUERY_IN,
     LOOKUP_QUERY_GT,
+    LOOKUP_QUERY_IN,
 )
-from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
 from django_elasticsearch_dsl_drf.filter_backends import (
+    CompoundSearchFilterBackend,
+    DefaultOrderingFilterBackend,
+    FacetedSearchFilterBackend,
     FilteringFilterBackend,
     OrderingFilterBackend,
-    DefaultOrderingFilterBackend,
-    CompoundSearchFilterBackend,
-    FacetedSearchFilterBackend,
 )
+
+##
+# ElasticSearch
+##
+from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from elasticsearch_dsl import TermsFacet
-from rest_framework import status, filters, generics
+from rest_framework import filters, generics, status
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from data_refinery_api.serializers import (
+from .serializers import ExperimentDocumentSerializer
+
+from data_refinery_api.serializers import (  # Job; Dataset
+    APITokenSerializer,
+    CompendiumResultSerializer,
+    CompendiumResultWithUrlSerializer,
     ComputationalResultSerializer,
     ComputationalResultWithUrlSerializer,
+    ComputedFileListSerializer,
+    CreateDatasetSerializer,
+    DatasetSerializer,
     DetailedExperimentSerializer,
     DetailedSampleSerializer,
+    DownloaderJobSerializer,
     ExperimentSerializer,
     InstitutionSerializer,
     OrganismIndexSerializer,
     OrganismSerializer,
-    PlatformSerializer,
-    ProcessorSerializer,
-    CompendiumResultSerializer,
-    CompendiumResultWithUrlSerializer,
-    QNTargetSerializer,
-    ComputedFileListSerializer,
     OriginalFileListSerializer,
-    # Job
-    DownloaderJobSerializer,
+    PlatformSerializer,
     ProcessorJobSerializer,
+    ProcessorSerializer,
+    QNTargetSerializer,
     SurveyJobSerializer,
-    # Dataset
-    APITokenSerializer,
-    CreateDatasetSerializer,
-    DatasetSerializer,
 )
 from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     APIToken,
+    CompendiumResult,
     ComputationalResult,
     ComputationalResultAnnotation,
-    CompendiumResult,
     ComputedFile,
     Dataset,
     DownloaderJob,
@@ -83,20 +93,7 @@ from data_refinery_common.models import (
     SurveyJob,
 )
 from data_refinery_common.models.documents import ExperimentDocument
-from data_refinery_common.utils import get_active_volumes, get_nomad_jobs_breakdown, get_nomad_jobs
-from data_refinery_common.logging import get_and_configure_logger
-from .serializers import ExperimentDocumentSerializer
-
-from django.utils.decorators import method_decorator
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
-
-##
-# ElasticSearch
-##
-from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
-from six import iteritems
-
+from data_refinery_common.utils import get_active_volumes, get_nomad_jobs, get_nomad_jobs_breakdown
 
 logger = get_and_configure_logger(__name__)
 

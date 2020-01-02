@@ -1,16 +1,13 @@
 import re
 import urllib
-
 from abc import ABC
-from django.utils import timezone
-from typing import List, Dict
+from typing import Dict, List
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from django.utils import timezone
+
+from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    OriginalFile,
-    SurveyJobKeyValue,
-)
+from data_refinery_common.models import OriginalFile, SurveyJobKeyValue
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 

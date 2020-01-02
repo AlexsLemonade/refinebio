@@ -1,9 +1,9 @@
 import datetime
 
 from django.core.management.base import BaseCommand
-from django_elasticsearch_dsl.registries import registry
 from django.utils import timezone
 
+from django_elasticsearch_dsl.registries import registry
 
 # We'll update for the past 30 minutes every 20 minutes.
 UPDATE_WINDOW = datetime.timedelta(minutes=30)

@@ -1,11 +1,8 @@
-from django.test import TransactionTestCase
 from unittest.mock import patch
 
-from data_refinery_common.models import (
-    Experiment,
-    ExperimentSampleAssociation,
-    Sample,
-)
+from django.test import TransactionTestCase
+
+from data_refinery_common.models import Experiment, ExperimentSampleAssociation, Sample
 from data_refinery_foreman.foreman.management.commands.update_experiment_metadata import Command
 from data_refinery_foreman.surveyor.test_sra import mocked_requests_get
 

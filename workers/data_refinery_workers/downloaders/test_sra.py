@@ -1,19 +1,21 @@
 import os
-from urllib.error import URLError
 from typing import List
-from unittest.mock import patch, call
+from unittest.mock import call, patch
+from urllib.error import URLError
+
 from django.test import TestCase, tag
+
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
-    SurveyJob,
     DownloaderJob,
-    OriginalFile,
     DownloaderJobOriginalFileAssociation,
+    OriginalFile,
+    OriginalFileSampleAssociation,
     ProcessorJob,
     Sample,
-    OriginalFileSampleAssociation,
+    SurveyJob,
 )
 from data_refinery_workers.downloaders import sra, utils
-from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 class DownloadSraTestCase(TestCase):

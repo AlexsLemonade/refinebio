@@ -1,8 +1,9 @@
-import requests
 import sys
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count
+
+import requests
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
@@ -14,7 +15,6 @@ from data_refinery_common.models import (
     Experiment,
     ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
-    ExperimentSampleAssociation,
     Organism,
     OrganismIndex,
     ProcessorJob,
@@ -23,7 +23,6 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
 )
 from data_refinery_workers.processors import qn_reference, utils
-
 
 logger = get_and_configure_logger(__name__)
 

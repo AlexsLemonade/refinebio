@@ -1,28 +1,26 @@
 import datetime
-import nomad
 import random
 import socket
 import sys
 import time
 import traceback
+from functools import wraps
+from typing import List, Set
 
 from django.conf import settings
-
-# from django.core.paginator import Paginator
-from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from django.db import transaction
 from django.db.models.expressions import Q
 from django.utils import timezone
-from functools import wraps
+
+import nomad
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
-from typing import List, Set
 
 from data_refinery_common.job_lookup import (
+    SMASHER_JOB_TYPES,
     Downloaders,
     ProcessorPipeline,
     SurveyJobTypes,
-    SMASHER_JOB_TYPES,
     does_processor_job_have_samples,
     is_file_rnaseq,
 )
@@ -38,13 +36,15 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
+
+# from django.core.paginator import Paginator
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.utils import (
     get_active_volumes,
-    get_nomad_jobs_breakdown,
     get_env_variable,
     get_env_variable_gracefully,
+    get_nomad_jobs_breakdown,
 )
-
 
 logger = get_and_configure_logger(__name__)
 

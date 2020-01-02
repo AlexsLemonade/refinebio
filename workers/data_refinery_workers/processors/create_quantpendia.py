@@ -1,24 +1,25 @@
-import os
 import logging
+import os
 import shutil
 import time
 from typing import Dict, List
-import psutil
 
-from django.utils import timezone
 from django.conf import settings
+from django.utils import timezone
+
+import psutil
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
+    CompendiumResult,
     ComputationalResult,
     ComputedFile,
     Organism,
     Pipeline,
     Sample,
-    CompendiumResult,
 )
-from data_refinery_common.utils import get_env_variable, FileUtils
+from data_refinery_common.utils import FileUtils, get_env_variable
 from data_refinery_workers.processors import smashing_utils, utils
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")

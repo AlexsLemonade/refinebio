@@ -7,26 +7,26 @@ downloader jobs are failing to create processor jobs.
 from typing import List
 
 from django.core.management.base import BaseCommand
+
 from data_refinery_common.job_lookup import (
     ProcessorPipeline,
     determine_processor_pipeline,
     determine_ram_amount,
     is_file_rnaseq,
 )
+from data_refinery_common.job_management import (
+    create_processor_job_for_original_files,
+    create_processor_jobs_for_original_files,
+)
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
-    ProcessorJob,
-    OriginalFile,
     DownloaderJobOriginalFileAssociation,
+    OriginalFile,
+    ProcessorJob,
     ProcessorJobOriginalFileAssociation,
 )
-from data_refinery_common.job_management import (
-    create_processor_jobs_for_original_files,
-    create_processor_job_for_original_files,
-)
-
 
 logger = get_and_configure_logger(__name__)
 

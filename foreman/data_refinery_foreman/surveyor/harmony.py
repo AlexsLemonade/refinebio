@@ -1,10 +1,10 @@
 import csv
 import random
-import requests
 import string
-
 from io import StringIO
 from typing import Dict, List
+
+import requests
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Sample

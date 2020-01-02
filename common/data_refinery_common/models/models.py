@@ -2,32 +2,31 @@ import hashlib
 import io
 import os
 import shutil
-import pytz
 import uuid
-import boto3
-
-from botocore.client import Config
-
 from datetime import datetime
 from functools import partial
 from typing import Dict, Set
 
-from django.db.models import Count, Prefetch, DateTimeField
-from django.db.models.expressions import F, Q
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
-from django.db import transaction
-from django.db import models
+from django.db import models, transaction
+from django.db.models import Count, DateTimeField, Prefetch
+from django.db.models.expressions import F, Q
 from django.utils import timezone
+
+import pytz
+
+import boto3
+from botocore.client import Config
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
 from data_refinery_common.utils import (
-    get_env_variable,
-    get_s3_url,
+    FileUtils,
     calculate_file_size,
     calculate_sha1,
-    FileUtils,
+    get_env_variable,
+    get_s3_url,
 )
 
 # We have to set the signature_version to v4 since us-east-1 buckets require

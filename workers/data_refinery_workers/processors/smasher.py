@@ -1,46 +1,46 @@
 # -*- coding: utf-8 -*-
 
-import boto3
 import csv
-import os
-import rpy2
-import rpy2.robjects as ro
-import shutil
-import simplejson as json
-import string
-import warnings
-import requests
-import psutil
 import logging
+import os
+import shutil
+import string
 import time
-
-from botocore.exceptions import ClientError
+import warnings
 from datetime import timedelta
+from pathlib import Path
+from typing import Dict, List, Tuple
+from urllib.parse import quote
+
 from django.conf import settings
 from django.utils import timezone
-from pathlib import Path
-from rpy2.robjects import pandas2ri
-from rpy2.robjects import r as rlang
-from rpy2.robjects.packages import importr
-from sklearn import preprocessing
-from typing import Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
+import requests
+
+import boto3
+import psutil
+import rpy2
+import rpy2.robjects as ro
+import simplejson as json
+from botocore.exceptions import ClientError
+from rpy2.robjects import pandas2ri, r as rlang
+from rpy2.robjects.packages import importr
+from sklearn import preprocessing
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
+    Dataset,
     OriginalFile,
     Pipeline,
     SampleResultAssociation,
-    Dataset,
 )
-from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
-from data_refinery_workers.processors import utils, smashing_utils
-from urllib.parse import quote
-
+from data_refinery_common.utils import calculate_file_size, calculate_sha1, get_env_variable
+from data_refinery_workers.processors import smashing_utils, utils
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")

@@ -1,15 +1,16 @@
 import hashlib
-import numpy
 import os
 import random
-import scipy.stats
 import shutil
 import subprocess
-
 from contextlib import closing
-from django.test import TestCase, tag
 from typing import Dict, List
 from unittest.mock import MagicMock
+
+from django.test import TestCase, tag
+
+import numpy
+import scipy.stats
 
 from data_refinery_common.job_lookup import ProcessorEnum
 from data_refinery_common.models import (

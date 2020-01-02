@@ -1,12 +1,14 @@
-import os
 import json
+import os
 import urllib
-from unittest.mock import Mock, patch, call
 from unittest import skip
-from django.test import TestCase
+from unittest.mock import Mock, call, patch
 from urllib.request import URLError
+
+from django.test import TestCase
+
 from data_refinery_common.job_lookup import Downloaders
-from data_refinery_common.models import DownloaderJob, SurveyJob, SurveyJobKeyValue, Organism
+from data_refinery_common.models import DownloaderJob, Organism, SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 
 

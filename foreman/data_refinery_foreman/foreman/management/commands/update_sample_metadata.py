@@ -1,15 +1,17 @@
-from django.core.management.base import BaseCommand
-import GEOparse
 import sys
 import time
 
-from data_refinery_common.models import Sample
+from django.core.management.base import BaseCommand
+
+import GEOparse
+
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import Sample
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 from data_refinery_foreman.surveyor import harmony
-from data_refinery_foreman.surveyor.sra import SraSurveyor
-from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.geo import GeoSurveyor
+from data_refinery_foreman.surveyor.sra import SraSurveyor
 
 logger = get_and_configure_logger(__name__)
 

@@ -1,11 +1,12 @@
-from django.utils import timezone
-from typing import Dict
 import os
 import string
 import warnings
+from typing import Dict
 
-from rpy2.rinterface import RRuntimeError
+from django.utils import timezone
+
 import rpy2.robjects as ro
+from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -16,14 +17,12 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
-
 from data_refinery_common.utils import (
+    get_affymetrix_annotation_package_name_overrides,
     get_env_variable,
     get_readable_affymetrix_names,
-    get_affymetrix_annotation_package_name_overrides,
 )
 from data_refinery_workers.processors import utils
-
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")

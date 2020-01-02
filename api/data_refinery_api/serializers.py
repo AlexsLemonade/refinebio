@@ -1,27 +1,30 @@
-import boto3
+from collections import defaultdict
 
 from django.db.models import Count, Q
-from rest_framework import serializers
-from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 
-from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
+import boto3
+from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
+from rest_framework import serializers
+
 from data_refinery_common.models import (
+    APIToken,
+    CompendiumResult,
+    ComputationalResult,
+    ComputationalResultAnnotation,
+    ComputedFile,
+    Dataset,
+    DownloaderJob,
     Experiment,
     ExperimentAnnotation,
-    Sample,
-    SampleAnnotation,
     Organism,
     OrganismIndex,
     OriginalFile,
     Processor,
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    CompendiumResult,
-    ComputedFile,
-    Dataset,
-    APIToken,
+    ProcessorJob,
+    Sample,
+    SampleAnnotation,
+    SurveyJob,
 )
-from collections import defaultdict
 from data_refinery_common.models.documents import ExperimentDocument
 
 s3 = boto3.client("s3")

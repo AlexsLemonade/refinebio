@@ -1,13 +1,14 @@
 import datetime
-import psutil
 import signal
 import sys
+from typing import Dict, List
 
-from django.db import transaction
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
+
+import psutil
 from retrying import retry
-from typing import List, Dict
 
 from data_refinery_common.job_lookup import (
     ProcessorPipeline,
@@ -27,10 +28,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import (
-    get_env_variable,
-    get_instance_id,
-)
+from data_refinery_common.utils import get_env_variable, get_instance_id
 
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.

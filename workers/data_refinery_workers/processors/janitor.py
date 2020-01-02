@@ -5,11 +5,12 @@ import string
 import subprocess
 import time
 import warnings
+from typing import Dict
 
 from django.utils import timezone
+
 from nomad import Nomad
 from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
-from typing import Dict
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -19,10 +20,10 @@ from data_refinery_common.models import (
     ComputedFile,
     Pipeline,
     Processor,
+    ProcessorJob,
     Sample,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    ProcessorJob,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils

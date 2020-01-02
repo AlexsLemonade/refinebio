@@ -1,20 +1,21 @@
 import os
-import numpy as np
 
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
 from django.utils.six import StringIO
 
+import numpy as np
+
 from data_refinery_common.models import (
-    ProcessorJob,
-    Sample,
-    SampleComputedFileAssociation,
-    Dataset,
-    ComputedFile,
     ComputationalResult,
+    ComputedFile,
+    Dataset,
     Experiment,
     ExperimentSampleAssociation,
+    ProcessorJob,
     ProcessorJobDatasetAssociation,
+    Sample,
+    SampleComputedFileAssociation,
 )
 from data_refinery_common.models.organism import Organism
 from data_refinery_workers.processors import qn_reference, smasher, utils

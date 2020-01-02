@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from data_refinery_common.models import Experiment, ComputationalResultAnnotation
+
+from data_refinery_common.models import ComputationalResultAnnotation, Experiment
 
 
 class Command(BaseCommand):

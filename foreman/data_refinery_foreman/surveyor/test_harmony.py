@@ -1,28 +1,30 @@
 import datetime
-import GEOparse
 import json
 import logging
+from unittest.mock import Mock, call, patch
 
-from unittest.mock import Mock, patch, call
 from django.test import TestCase, tag
+
+import GEOparse
+
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
-    SurveyJob,
-    SurveyJobKeyValue,
     Organism,
     Sample,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
-from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor, SAMPLES_URL
-from data_refinery_foreman.surveyor.sra import SraSurveyor, UnsupportedDataTypeError
-from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor import utils
+from data_refinery_foreman.surveyor.array_express import SAMPLES_URL, ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor.harmony import (
+    extract_title,
     harmonize,
     parse_sdrf,
     preprocess_geo,
-    extract_title,
 )
+from data_refinery_foreman.surveyor.sra import SraSurveyor, UnsupportedDataTypeError
 
 GEOparse.logger.set_verbosity("WARN")
 

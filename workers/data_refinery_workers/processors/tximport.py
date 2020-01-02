@@ -1,4 +1,3 @@
-import boto3
 import glob
 import io
 import json
@@ -8,14 +7,17 @@ import re
 import shutil
 import subprocess
 import tarfile
+from typing import Dict, List
 
-from botocore.client import Config
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from typing import Dict, List
+
 import numpy as np
 import pandas as pd
+
+import boto3
+from botocore.client import Config
 
 from data_refinery_common.job_lookup import Downloaders, PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -33,7 +35,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, salmon
+from data_refinery_workers.processors import salmon, utils
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.

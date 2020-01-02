@@ -1,20 +1,22 @@
 import datetime
 import os
 from typing import List
-from unittest.mock import patch, call
+from unittest.mock import call, patch
+
 from django.test import TestCase, tag
-from data_refinery_common.models import (
-    SurveyJob,
-    DownloaderJob,
-    ProcessorJob,
-    OriginalFile,
-    DownloaderJobOriginalFileAssociation,
-    Sample,
-    OriginalFileSampleAssociation,
-)
-from data_refinery_workers.downloaders import array_express, utils
+
 from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.models import (
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    ProcessorJob,
+    Sample,
+    SurveyJob,
+)
 from data_refinery_common.utils import get_instance_id
+from data_refinery_workers.downloaders import array_express, utils
 
 
 class DownloadArrayExpressTestCase(TestCase):

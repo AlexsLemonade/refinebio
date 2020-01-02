@@ -1,11 +1,14 @@
-import boto3
-import daiquiri
 import logging
 import sys
 
-from data_refinery_common.utils import get_env_variable_gracefully
-from data_refinery_common.utils import get_instance_id, get_volume_index
+import boto3
+import daiquiri
 
+from data_refinery_common.utils import (
+    get_env_variable_gracefully,
+    get_instance_id,
+    get_volume_index,
+)
 
 # Most of the formatting in this string is for the logging system. All
 # that the call to format() does is replace the "{0}" in the string
