@@ -203,6 +203,7 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.url_root = "ensembl.org/pub/release-{assembly_version}"
         self.short_division = None
         self.species_sub_dir = species["name"]
+        self.collection = ""
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
         self.assembly_version = (
@@ -396,20 +397,6 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             survey_job=self.survey_job.id,
         )
 
-        # The main division has a different base URL for its REST API.
-        if ensembl_division == "Ensembl":
-            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
-
-            # Yes I'm aware that specieses isn't a word. However I need to
-            # distinguish between a singlular species and multiple species.
-            specieses = r.json()["species"]
-        else:
-            formatted_division_url = DIVISION_URL_TEMPLATE.format(
-                division=ensembl_division
-            )
-            r = utils.requests_retry_session().get(formatted_division_url)
-            specieses = r.json()
-
         try:
             organism_name = SurveyJobKeyValue.objects.get(
                 survey_job_id=self.survey_job.id, key__exact="organism_name"
@@ -437,6 +424,20 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                         organism_name=organism_name,
                     )
                     return []
+
+        # The main division has a different base URL for its REST API.
+        if ensembl_division == "Ensembl":
+            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
+
+            # Yes I'm aware that specieses isn't a word. However I need to
+            # distinguish between a singlular species and multiple species.
+            specieses = r.json()["species"]
+        else:
+            formatted_division_url = DIVISION_URL_TEMPLATE.format(
+                division=ensembl_division
+            )
+            r = utils.requests_retry_session().get(formatted_division_url)
+            specieses = r.json()
 
         all_new_species = []
         if organism_name:

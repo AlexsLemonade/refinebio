@@ -3,23 +3,23 @@ from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import DownloaderJob, SurveyJob, SurveyJobKeyValue
-from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
+from data_refinery_foreman.surveyor.transcriptome_index import (
+    TranscriptomeIndexSurveyor,
+)
 
 
 class SurveyTestCase(TestCase):
-    def setUp(self):
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    def test_survey(self, mock_send_job):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
-        self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(
             survey_job=survey_job, key="ensembl_division", value="EnsemblPlants"
         )
         key_value_pair.save()
 
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
-    def test_survey(self, mock_send_job):
-        surveyor = TranscriptomeIndexSurveyor(self.survey_job)
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
         surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
 
         downloader_jobs = DownloaderJob.objects.order_by("id").all()
@@ -37,7 +37,6 @@ class SurveyTestCase(TestCase):
         """
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
-        self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(
             survey_job=survey_job, key="ensembl_division", value="Ensembl"
@@ -49,7 +48,7 @@ class SurveyTestCase(TestCase):
         )
         key_value_pair.save()
 
-        surveyor = TranscriptomeIndexSurveyor(self.survey_job)
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
         files = surveyor.discover_species()[0]
 
         for file in files:
@@ -62,7 +61,6 @@ class SurveyTestCase(TestCase):
         """
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
-        self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(
             survey_job=survey_job, key="ensembl_division", value="EnsemblMetazoa"
@@ -74,8 +72,98 @@ class SurveyTestCase(TestCase):
         )
         key_value_pair.save()
 
-        surveyor = TranscriptomeIndexSurveyor(self.survey_job)
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
         files = surveyor.discover_species()[0]
 
         for file in files:
             urllib.request.urlopen(file.source_url)
+
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    def test_survey_fungi(self, mock_send_job):
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="ensembl_division", value="EnsemblFungi"
+        )
+        key_value_pair.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="organism_name", value="CANDIDA_ALBICANS"
+        )
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
+        surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
+
+        downloader_jobs = DownloaderJob.objects.order_by("id").all()
+        self.assertEqual(downloader_jobs.count(), 1)
+        send_job_calls = []
+        for downloader_job in downloader_jobs:
+            send_job_calls.append(call(Downloaders.TRANSCRIPTOME_INDEX, downloader_job))
+
+        mock_send_job.assert_has_calls(send_job_calls)
+
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    def test_survey_bacteria(self, mock_send_job):
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="ensembl_division", value="EnsemblBacteria"
+        )
+        key_value_pair.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="organism_name", value="PSEUDOMONAS_AERUGINOSA"
+        )
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
+        surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
+
+        downloader_jobs = DownloaderJob.objects.order_by("id").all()
+        self.assertEqual(downloader_jobs.count(), 1)
+        send_job_calls = []
+        for downloader_job in downloader_jobs:
+            send_job_calls.append(call(Downloaders.TRANSCRIPTOME_INDEX, downloader_job))
+
+        mock_send_job.assert_has_calls(send_job_calls)
+
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    def test_survey_bacteria_none(self, mock_send_job):
+        """When surveying fungi an organism_name must be supplied."""
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="ensembl_division", value="EnsemblBacteria"
+        )
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
+        surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
+
+        downloader_jobs = DownloaderJob.objects.order_by("id").all()
+        self.assertEqual(downloader_jobs.count(), 0)
+
+        mock_send_job.assert_not_called()
+
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    def test_survey_fungi_none(self, mock_send_job):
+        """When surveying fungi an organism_name must be supplied."""
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="ensembl_division", value="EnsemblFungi"
+        )
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
+        surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
+
+        downloader_jobs = DownloaderJob.objects.order_by("id").all()
+        self.assertEqual(downloader_jobs.count(), 0)
+
+        mock_send_job.assert_not_called()
