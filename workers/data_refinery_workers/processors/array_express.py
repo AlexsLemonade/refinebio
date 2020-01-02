@@ -20,7 +20,7 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import (
     get_env_variable,
     get_readable_affymetrix_names,
-    get_affymetrix_annotation_package_name_overrides
+    get_affymetrix_annotation_package_name_overrides,
 )
 from data_refinery_workers.processors import utils
 
@@ -119,8 +119,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
 
     # ref: https://github.com/AlexsLemonade/refinebio/issues/1986
     job_context["annotation_override"] = get_affymetrix_annotation_package_name_overrides().get(
-        package_name_without_version,
-        None
+        package_name_without_version, None
     )
 
     return job_context
@@ -168,7 +167,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
             scan_upc_named_args = {
                 "probeSummaryPackage": job_context["brainarray_package"],
-                "annotationPackageName": job_context["annotation_override"]
+                "annotationPackageName": job_context["annotation_override"],
             }
 
             # rpy2 doesn't like None as a value for arguments so let's filter them out
@@ -176,7 +175,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
             scan_upc(input_file, job_context["output_file_path"], **optional_args)
 
-            job_context['time_end'] = timezone.now()
+            job_context["time_end"] = timezone.now()
 
     except RRuntimeError as e:
         error_template = (
@@ -233,8 +232,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
             sample=sample, computed_file=computed_file
         )
 
-    logger.debug("Created %s", result,
-                 processor_job=job_context["job_id"])
+    logger.debug("Created %s", result, processor_job=job_context["job_id"])
     job_context["success"] = True
 
     return job_context

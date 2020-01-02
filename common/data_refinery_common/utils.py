@@ -168,7 +168,7 @@ def get_active_volumes_detailed() -> Dict:
 
 
 def get_supported_microarray_platforms(
-    platforms_csv: str = "config/supported_microarray_platforms.csv"
+    platforms_csv: str = "config/supported_microarray_platforms.csv",
 ) -> list:
     """
     Loads our supported microarray platforms file and returns a list of dictionaries
@@ -230,7 +230,7 @@ def get_supported_microarray_platforms(
 
 
 def get_supported_rnaseq_platforms(
-    platforms_list: str = "config/supported_rnaseq_platforms.txt"
+    platforms_list: str = "config/supported_rnaseq_platforms.txt",
 ) -> list:
     """
     Returns a list of RNASeq platforms which are currently supported.
@@ -248,7 +248,7 @@ def get_supported_rnaseq_platforms(
 
 
 def get_readable_affymetrix_names(
-    mapping_csv: str = "config/readable_affymetrix_names.csv"
+    mapping_csv: str = "config/readable_affymetrix_names.csv",
 ) -> Dict:
     """
     Loads the mapping from human readble names to internal accessions for Affymetrix platforms.
@@ -276,7 +276,7 @@ def get_readable_affymetrix_names(
 
 
 def get_affymetrix_annotation_package_name_overrides(
-    overrides_csv: str = "config/affymetrix_annotation_package_name_overrides.csv"
+    overrides_csv: str = "config/affymetrix_annotation_package_name_overrides.csv",
 ) -> Dict:
     """
     Loads the mapping from annotation package name to internal accession for Affymetrix platforms.
@@ -289,8 +289,8 @@ def get_affymetrix_annotation_package_name_overrides(
         return ANNOTATION_PACKAGE_OVERRIDES
 
     ANNOTATION_PACKAGE_OVERRIDES = {}
-    with open(overrides_csv, encoding='utf-8') as overrides_file:
-        reader = csv.reader(overrides_file, )
+    with open(overrides_csv, encoding="utf-8") as overrides_file:
+        reader = csv.reader(overrides_file,)
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
@@ -388,7 +388,7 @@ def get_sra_download_url(run_accession, protocol="fasp"):
             # Sometimes, the responses from names.cgi makes no sense at all on a per-accession-code basis. This helps us handle that.
             # $ curl --data "acc=SRR5818019&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
             # 2.0\nremote|SRR5818019|434259775|2017-07-11T21:32:08Z|a4bfc16dbab1d4f729c4552e3c9519d1|||400|Only 'https' protocol is allowed for this object
-            sra_url = resp.text.split('\n')[1].split('|')[6]
+            sra_url = resp.text.split("\n")[1].split("|")[6]
             return sra_url
         except Exception:
             # Our configured logger needs util

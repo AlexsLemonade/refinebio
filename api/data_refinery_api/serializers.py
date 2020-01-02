@@ -589,8 +589,8 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
 
 def validate_dataset(data):
     """ Basic dataset validation. Currently only checks formatting, not values. """
-    if data['data'] is not None:
-        if type(data['data']) != dict:
+    if data["data"] is not None:
+        if type(data["data"]) != dict:
             raise serializers.ValidationError("`data` must be a dict of lists.")
 
         for key, value in data["data"].items():
@@ -812,7 +812,6 @@ class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
 ##
 # ElasticSearch Document Serializers
 ##
-
 
 
 class ExperimentDocumentSerializer(DocumentSerializer):

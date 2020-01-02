@@ -63,7 +63,9 @@ def prepare_huex_v1_job():
     og_file = OriginalFile()
     og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1364nnn/GSM1364667/suppl/GSM1364667_U_110208_7-02-10_S2.CEL.gz"
     og_file.filename = "GSM1364667_U_110208_7-02-10_S2.CEL"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/CEL/GSM1364667_U_110208_7-02-10_S2.CEL"
+    og_file.absolute_file_path = (
+        "/home/user/data_store/raw/TEST/CEL/GSM1364667_U_110208_7-02-10_S2.CEL"
+    )
     og_file.is_downloaded = True
     og_file.save()
 
@@ -119,6 +121,8 @@ class AffyToPCLTestCase(TestCase):
         self.assertTrue(updated_job.success)
         self.assertEqual(len(ComputationalResult.objects.all()), 1)
         self.assertEqual(len(ComputedFile.objects.all()), 1)
-        self.assertEqual(ComputedFile.objects.all()[0].filename, 'GSM1364667_U_110208_7-02-10_S2.PCL')
+        self.assertEqual(
+            ComputedFile.objects.all()[0].filename, "GSM1364667_U_110208_7-02-10_S2.PCL"
+        )
 
         os.remove(ComputedFile.objects.all()[0].absolute_file_path)

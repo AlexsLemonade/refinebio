@@ -543,48 +543,57 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                         except Exception:
                             city = "COULD_NOT_DETERMINE"
 
-                        user_agent = self.request.META.get('HTTP_USER_AGENT', None)
-                        total_samples = len(set([accession_code for experiment in new_data.values() for accession_code in experiment]))
+                        user_agent = self.request.META.get("HTTP_USER_AGENT", None)
+                        total_samples = len(
+                            set(
+                                [
+                                    accession_code
+                                    for experiment in new_data.values()
+                                    for accession_code in experiment
+                                ]
+                            )
+                        )
                         response = requests.post(
                             settings.ENGAGEMENTBOT_WEBHOOK,
                             json={
-                                'channel': 'ccdl-general', # Move to robots when we get sick of these
-                                'username': 'EngagementBot',
-                                'icon_emoji': ':halal:',
-                                'attachments': [
+                                "channel": "ccdl-general",  # Move to robots when we get sick of these
+                                "username": "EngagementBot",
+                                "icon_emoji": ":halal:",
+                                "attachments": [
                                     {
-                                        'color': 'good',
-                                        'title': 'New dataset download',
-                                        'fallback': 'New dataset download',
-                                        'title_link': 'http://www.refine.bio/dataset/{0}'.format(
+                                        "color": "good",
+                                        "title": "New dataset download",
+                                        "fallback": "New dataset download",
+                                        "title_link": "http://www.refine.bio/dataset/{0}".format(
                                             old_object.id
                                         ),
-                                        'text': 'New user {0} from {1} downloaded a dataset!'.format(
+                                        "text": "New user {0} from {1} downloaded a dataset!".format(
                                             supplied_email_address, city
                                         ),
-                                        'footer': 'Refine.bio | {0} | {1}'.format(remote_ip, user_agent),
-                                        'footer_icon': 'https://s3.amazonaws.com/refinebio-email/logo-2x.png',
-                                        'fields': [
+                                        "footer": "Refine.bio | {0} | {1}".format(
+                                            remote_ip, user_agent
+                                        ),
+                                        "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
+                                        "fields": [
+                                            {"title": "Dataset id", "value": str(old_object.id),},
                                             {
-                                                'title': 'Dataset id',
-                                                'value': str(old_object.id),
+                                                "title": "Total downloads",
+                                                "value": Dataset.objects.filter(
+                                                    email_address=supplied_email_address
+                                                ).count(),
+                                                "short": True,
                                             },
                                             {
-                                                'title': 'Total downloads',
-                                                'value': Dataset.objects.filter(email_address=supplied_email_address).count(),
-                                                'short': True
+                                                "title": "Samples",
+                                                "value": total_samples,
+                                                "short": True,
                                             },
-                                            {
-                                                'title': 'Samples',
-                                                'value': total_samples,
-                                                'short': True
-                                            }
-                                        ]
+                                        ],
                                     }
-                                ]
+                                ],
                             },
-                            headers={'Content-Type': 'application/json'},
-                            timeout=10
+                            headers={"Content-Type": "application/json"},
+                            timeout=10,
                         )
                     except Exception as e:
                         # It doens't really matter if this didn't work

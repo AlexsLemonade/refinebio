@@ -465,8 +465,8 @@ def _notify(job_context: Dict) -> Dict:
 
     # We don't want to retry this dataset after we send a notification to users
     # https://github.com/alexslemonade/refinebio/issues/1944
-    job_context['job'].no_retry = True
-    job_context['job'].save()
+    job_context["job"].no_retry = True
+    job_context["job"].save()
 
     return job_context
 
@@ -480,30 +480,30 @@ def _notify_slack_failed_dataset(job_context: Dict):
     requests.post(
         settings.ENGAGEMENTBOT_WEBHOOK,
         json={
-            'channel': 'ccdl-general', # Move to robots when we get sick of these
+            "channel": "ccdl-general",  # Move to robots when we get sick of these
             "username": "EngagementBot",
             "icon_emoji": ":halal:",
-            'attachments':[
+            "attachments": [
                 {
-                    'fallback': 'Dataset failed processing.',
-                    'title': 'Dataset failed processing',
-                    'title_link': dataset_url,
-                    'color': '#db3b28',
-                    'text': job_context['job'].failure_reason,
-                    'fields': [
+                    "fallback": "Dataset failed processing.",
+                    "title": "Dataset failed processing",
+                    "title_link": dataset_url,
+                    "color": "#db3b28",
+                    "text": job_context["job"].failure_reason,
+                    "fields": [
                         {
-                            'title': 'Dataset id',
-                            'value': str(job_context['dataset'].id),
-                            'short': True
+                            "title": "Dataset id",
+                            "value": str(job_context["dataset"].id),
+                            "short": True,
                         },
                         {
-                            'title': 'Email',
-                            'value': job_context['dataset'].email_address,
-                            'short': True
-                        }
+                            "title": "Email",
+                            "value": job_context["dataset"].email_address,
+                            "short": True,
+                        },
                     ],
-                    'footer': 'Refine.bio',
-                    'footer_icon': 'https://s3.amazonaws.com/refinebio-email/logo-2x.png',
+                    "footer": "Refine.bio",
+                    "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
                 }
             ],
         },

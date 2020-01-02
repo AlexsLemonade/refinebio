@@ -150,8 +150,10 @@ RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
 # Elastic Search
 ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': get_env_variable('ELASTICSEARCH_HOST') + ":" + get_env_variable('ELASTICSEARCH_PORT')
+    "default": {
+        "hosts": get_env_variable("ELASTICSEARCH_HOST")
+        + ":"
+        + get_env_variable("ELASTICSEARCH_PORT")
     }
 }
 
@@ -166,4 +168,4 @@ else:
     ELASTICSEARCH_DSL_AUTOSYNC = False
 
 # EngagementBot
-ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully('ENGAGEMENTBOT_WEBHOOK')
+ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
