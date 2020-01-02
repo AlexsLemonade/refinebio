@@ -19,9 +19,7 @@ class SurveyTestCase(TestCase):
     def setUp(self):
         # Insert human organism into the database so the model doesn't call the
         # taxonomy API to populate it.
-        organism = Organism(
-            name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-        )
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
 
     def tearDown(self):

@@ -6,20 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0027_organism_qn_target'),
+        ("data_refinery_common", "0027_organism_qn_target"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='downloaderjob',
-            index=models.Index(fields=['created_at'], name='downloader_jobs_created_at'),
+            model_name="downloaderjob",
+            index=models.Index(fields=["created_at"], name="downloader_jobs_created_at"),
         ),
         migrations.AddIndex(
-            model_name='downloaderjob',
-            index=models.Index(fields=['worker_id'], name='downloader__worker__d0aba6_idx'),
+            model_name="downloaderjob",
+            index=models.Index(fields=["worker_id"], name="downloader__worker__d0aba6_idx"),
         ),
         migrations.AddIndex(
-            model_name='processorjob',
-            index=models.Index(fields=['created_at'], name='processor_jobs_created_at'),
+            model_name="processorjob",
+            index=models.Index(fields=["created_at"], name="processor_jobs_created_at"),
         ),
     ]

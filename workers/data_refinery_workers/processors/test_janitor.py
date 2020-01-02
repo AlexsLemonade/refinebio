@@ -69,13 +69,9 @@ def prepare_job():
     # Create a job out of the range with index in it to make sure we
     # don't delete index directories since that's where transcriptome
     # indices get downloaded to.
-    os.makedirs(
-        LOCAL_ROOT_DIR + "/processor_job_" + str(JOBS + 1) + "_index", exist_ok=True
-    )
+    os.makedirs(LOCAL_ROOT_DIR + "/processor_job_" + str(JOBS + 1) + "_index", exist_ok=True)
 
-    os.makedirs(
-        LOCAL_ROOT_DIR + "/SRP" + str(JOBS + 1) + "/SRR" + str(JOBS + 1), exist_ok=True
-    )
+    os.makedirs(LOCAL_ROOT_DIR + "/SRP" + str(JOBS + 1) + "/SRR" + str(JOBS + 1), exist_ok=True)
     sample = Sample()
     sample.accession_code = "SRR" + str(JOBS + 1)
     sample.save()
@@ -126,23 +122,15 @@ class JanitorTestCase(TestCase):
         for i in range(0, JOBS):
             # The job with id 1 should appear running.
             if i == 1:
-                self.assertTrue(
-                    os.path.exists(LOCAL_ROOT_DIR + "/processor_job_" + str(i))
-                )
+                self.assertTrue(os.path.exists(LOCAL_ROOT_DIR + "/processor_job_" + str(i)))
             else:
-                self.assertFalse(
-                    os.path.exists(LOCAL_ROOT_DIR + "/processor_job_" + str(i))
-                )
+                self.assertFalse(os.path.exists(LOCAL_ROOT_DIR + "/processor_job_" + str(i)))
 
-            self.assertFalse(
-                os.path.exists(LOCAL_ROOT_DIR + "/SRP" + str(i) + "/SRR" + str(i))
-            )
+            self.assertFalse(os.path.exists(LOCAL_ROOT_DIR + "/SRP" + str(i) + "/SRR" + str(i)))
 
         self.assertTrue(os.path.exists(LOCAL_ROOT_DIR + "/processor_job_11_index"))
         self.assertTrue(
-            os.path.exists(
-                LOCAL_ROOT_DIR + "/SRP" + str(JOBS + 1) + "/SRR" + str(JOBS + 1)
-            )
+            os.path.exists(LOCAL_ROOT_DIR + "/SRP" + str(JOBS + 1) + "/SRR" + str(JOBS + 1))
         )
 
         # Deleted all the working directories except for the one that's still running.

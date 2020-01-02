@@ -89,10 +89,7 @@ class Command(BaseCommand):
                         all_original_files = sample.original_files.all()
                         files_for_sample = []
                         for og_file in all_original_files:
-                            if (
-                                not og_file.is_archive
-                                and og_file.processor_jobs.all().count() == 0
-                            ):
+                            if not og_file.is_archive and og_file.processor_jobs.all().count() == 0:
                                 files_for_sample.append(og_file)
 
                         if files_for_sample:

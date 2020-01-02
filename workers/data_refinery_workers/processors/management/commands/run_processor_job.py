@@ -49,9 +49,7 @@ class Command(BaseCommand):
 
             build_transcriptome_index(options["job_id"], length="long")
         elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
-            from data_refinery_workers.processors.agilent_twocolor import (
-                agilent_twocolor_to_pcl,
-            )
+            from data_refinery_workers.processors.agilent_twocolor import agilent_twocolor_to_pcl
 
             agilent_twocolor_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
@@ -71,15 +69,11 @@ class Command(BaseCommand):
 
             smash(options["job_id"])
         elif job_type is ProcessorPipeline.CREATE_COMPENDIA:
-            from data_refinery_workers.processors.create_compendia import (
-                create_compendia,
-            )
+            from data_refinery_workers.processors.create_compendia import create_compendia
 
             create_compendia(options["job_id"])
         elif job_type is ProcessorPipeline.CREATE_QUANTPENDIA:
-            from data_refinery_workers.processors.create_quantpendia import (
-                create_quantpendia,
-            )
+            from data_refinery_workers.processors.create_quantpendia import create_quantpendia
 
             create_quantpendia(options["job_id"])
         elif job_type is ProcessorPipeline.NO_OP:

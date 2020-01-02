@@ -40,9 +40,7 @@ class Command(BaseCommand):
         else:
             logger.error(
                 'Invalid source database "{}"'.format(options["source_database"])
-                + "\nPossible source databases: {}".format(
-                    ", ".join(possible_source_databases)
-                )
+                + "\nPossible source databases: {}".format(", ".join(possible_source_databases))
             )
             sys.exit(1)
 
@@ -51,9 +49,7 @@ class Command(BaseCommand):
 
         while True:
             for sample in samples:
-                logger.debug(
-                    "Refreshing metadata for a sample.", sample=sample.accession_code
-                )
+                logger.debug("Refreshing metadata for a sample.", sample=sample.accession_code)
                 if sample.source_database == "SRA":
                     metadata = SraSurveyor.gather_all_metadata(sample.accession_code)
                     SraSurveyor._apply_harmonized_metadata_to_sample(sample, metadata)
@@ -70,7 +66,9 @@ class Command(BaseCommand):
                         sample, harmonized_samples[sample.title]
                     )
                 elif sample.source_database == "ARRAY_EXPRESS":
-                    SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
+                    SDRF_URL_TEMPLATE = (
+                        "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
+                    )
                     sdrf_url = SDRF_URL_TEMPLATE.format(
                         code=sample.experiments.first().accession_code
                     )

@@ -15,9 +15,7 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.foreman.management.commands.create_missing_downloader_jobs import (
-    Command,
-)
+from data_refinery_foreman.foreman.management.commands.create_missing_downloader_jobs import Command
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
 
@@ -67,9 +65,7 @@ class SurveyTestCase(TransactionTestCase):
         sample_no_downloader.accession_code = "sample_no_downloader"
         sample_no_downloader.technology = "MICROARRAY"
         sample_no_downloader.source_database = "GEO"
-        sample_no_downloader.platform_accession_code = (
-            "bovine"  # must be a supported platform
-        )
+        sample_no_downloader.platform_accession_code = "bovine"  # must be a supported platform
         sample_no_downloader.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(

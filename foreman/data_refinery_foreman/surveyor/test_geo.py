@@ -24,9 +24,7 @@ class SurveyTestCase(TransactionTestCase):
         self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job,
-            key="experiment_accession_code",
-            value=experiment_accession,
+            survey_job=survey_job, key="experiment_accession_code", value=experiment_accession,
         )
         key_value_pair.save()
 
@@ -50,8 +48,7 @@ class SurveyTestCase(TransactionTestCase):
 
         sample_object = Sample.objects.first()
         self.assertEqual(
-            sample_object.platform_name,
-            "[HG-U133A] Affymetrix Human Genome U133A Array",
+            sample_object.platform_name, "[HG-U133A] Affymetrix Human Genome U133A Array",
         )
         self.assertEqual(sample_object.platform_accession_code, "hgu133a")
         self.assertEqual(sample_object.technology, "MICROARRAY")
@@ -132,9 +129,7 @@ class SurveyTestCase(TransactionTestCase):
 
         sample_object = Sample.objects.first()
         self.assertEqual(sample_object.platform_name, "Illumina Genome Analyzer II")
-        self.assertEqual(
-            sample_object.platform_accession_code, "Illumina Genome Analyzer II"
-        )
+        self.assertEqual(sample_object.platform_accession_code, "Illumina Genome Analyzer II")
         self.assertEqual(sample_object.technology, "RNA-SEQ")
 
         downloader_jobs = DownloaderJob.objects.all()

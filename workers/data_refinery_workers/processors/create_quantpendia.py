@@ -85,9 +85,7 @@ def _download_files(job_context: Dict) -> Dict:
 @utils.cache_keys("metadata", work_dir_key="job_dir")
 def _add_metadata(job_context: Dict) -> Dict:
     logger.debug(
-        "Writing metadata for quantpendia.",
-        job_id=job_context["job_id"],
-        **get_process_stats()
+        "Writing metadata for quantpendia.", job_id=job_context["job_id"], **get_process_stats()
     )
     smashing_utils.write_non_data_files(job_context)
     shutil.copy("/home/user/README_QUANT.md", job_context["output_dir"] + "/README.md")
@@ -97,9 +95,7 @@ def _add_metadata(job_context: Dict) -> Dict:
 @utils.cache_keys("archive_path", work_dir_key="job_dir")
 def _make_archive(job_context: Dict):
     compendia_organism = _get_organisms(job_context["samples"]).first()
-    final_zip_base = (
-        job_context["job_dir"] + compendia_organism.name + "_rnaseq_compendia"
-    )
+    final_zip_base = job_context["job_dir"] + compendia_organism.name + "_rnaseq_compendia"
 
     logger.debug(
         "Generating archive.",
@@ -170,14 +166,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Upload the result to S3
     timestamp = str(int(time.time()))
-    s3_key = (
-        compendia_organism.name
-        + "_"
-        + str(compendia_version)
-        + "_"
-        + timestamp
-        + ".zip"
-    )
+    s3_key = compendia_organism.name + "_" + str(compendia_version) + "_" + timestamp + ".zip"
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, s3_key)
 
     job_context["result"] = result

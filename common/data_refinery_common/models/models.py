@@ -96,30 +96,18 @@ class Sample(models.Model):
     title = models.CharField(max_length=255, unique=False, blank=True)
 
     # Relations
-    organism = models.ForeignKey(
-        Organism, blank=True, null=True, on_delete=models.SET_NULL
-    )
-    results = models.ManyToManyField(
-        "ComputationalResult", through="SampleResultAssociation"
-    )
-    original_files = models.ManyToManyField(
-        "OriginalFile", through="OriginalFileSampleAssociation"
-    )
-    computed_files = models.ManyToManyField(
-        "ComputedFile", through="SampleComputedFileAssociation"
-    )
-    experiments = models.ManyToManyField(
-        "Experiment", through="ExperimentSampleAssociation"
-    )
+    organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
+    results = models.ManyToManyField("ComputationalResult", through="SampleResultAssociation")
+    original_files = models.ManyToManyField("OriginalFile", through="OriginalFileSampleAssociation")
+    computed_files = models.ManyToManyField("ComputedFile", through="SampleComputedFileAssociation")
+    experiments = models.ManyToManyField("Experiment", through="ExperimentSampleAssociation")
 
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
     source_archive_url = models.CharField(max_length=255)
     source_filename = models.CharField(max_length=255, blank=False)
     source_absolute_file_path = models.CharField(max_length=255)
-    has_raw = models.BooleanField(
-        default=True
-    )  # Did this sample have a raw data source?
+    has_raw = models.BooleanField(default=True)  # Did this sample have a raw data source?
 
     # Technological Properties
     platform_accession_code = models.CharField(max_length=256, blank=True)
@@ -130,9 +118,7 @@ class Sample(models.Model):
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
-    age = models.DecimalField(
-        max_length=255, blank=True, max_digits=8, decimal_places=3, null=True
-    )
+    age = models.DecimalField(max_length=255, blank=True, max_digits=8, decimal_places=3, null=True)
     specimen_part = models.CharField(max_length=255, blank=True)
     genotype = models.CharField(max_length=255, blank=True)
     disease = models.CharField(max_length=255, blank=True)
@@ -185,8 +171,7 @@ class Sample(models.Model):
         metadata["refinebio_time"] = self.time
         metadata["refinebio_platform"] = self.pretty_platform
         metadata["refinebio_annotations"] = [
-            data
-            for data in self.sampleannotation_set.all().values_list("data", flat=True)
+            data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
 
         return metadata
@@ -195,9 +180,7 @@ class Sample(models.Model):
     # that in type hints because it hasn't been declared yet.
     def get_processor_jobs(self) -> Set:
         processor_jobs = set()
-        for original_file in self.original_files.prefetch_related(
-            "processor_jobs"
-        ).all():
+        for original_file in self.original_files.prefetch_related("processor_jobs").all():
             for processor_job in original_file.processor_jobs.all():
                 processor_jobs.add(processor_job)
 
@@ -207,9 +190,7 @@ class Sample(models.Model):
     # that in type hints because it hasn't been declared yet.
     def get_downloader_jobs(self) -> Set:
         downloader_jobs = set()
-        for original_file in self.original_files.prefetch_related(
-            "downloader_jobs"
-        ).all():
+        for original_file in self.original_files.prefetch_related("downloader_jobs").all():
             for downloader_job in original_file.downloader_jobs.all():
                 downloader_jobs.add(downloader_job)
 
@@ -275,9 +256,7 @@ class SampleAnnotation(models.Model):
     public_objects = PublicObjectsManager()
 
     # Relations
-    sample = models.ForeignKey(
-        Sample, blank=False, null=False, on_delete=models.CASCADE
-    )
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
     data = JSONField(default=dict)
@@ -303,9 +282,7 @@ class ProcessedPublicObjectsManager(models.Manager):
     """
 
     def get_queryset(self):
-        return (
-            super().get_queryset().filter(is_public=True, num_processed_samples__gt=0)
-        )
+        return super().get_queryset().filter(is_public=True, num_processed_samples__gt=0)
 
 
 class Experiment(models.Model):
@@ -325,9 +302,7 @@ class Experiment(models.Model):
 
     # Relations
     samples = models.ManyToManyField("Sample", through="ExperimentSampleAssociation")
-    organisms = models.ManyToManyField(
-        "Organism", through="ExperimentOrganismAssociation"
-    )
+    organisms = models.ManyToManyField("Organism", through="ExperimentOrganismAssociation")
 
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
@@ -402,9 +377,7 @@ class Experiment(models.Model):
         metadata = {}
         metadata["title"] = self.title
         metadata["accession_code"] = self.accession_code
-        metadata["organisms"] = list(
-            self.organisms.all().values_list("name", flat=True)
-        )
+        metadata["organisms"] = list(self.organisms.all().values_list("name", flat=True))
         metadata["sample_accession_codes"] = list(
             self.samples.all().values_list("accession_code", flat=True)
         )
@@ -480,9 +453,7 @@ class Experiment(models.Model):
     def get_platform_accession_codes(self):
         """ Get a list of unique platforms for all of the associated samples
         """
-        return list(
-            set([sample.platform_accession_code for sample in self.samples.all()])
-        )
+        return list(set([sample.platform_accession_code for sample in self.samples.all()]))
 
     @property
     def platforms(self):
@@ -497,11 +468,7 @@ class Experiment(models.Model):
     @property
     def processed_samples(self):
         return list(
-            [
-                sample.accession_code
-                for sample in self.samples.all()
-                if sample.is_processed == True
-            ]
+            [sample.accession_code for sample in self.samples.all() if sample.is_processed == True]
         )
 
     @property
@@ -522,9 +489,9 @@ class Experiment(models.Model):
         on the filters.
         """
         return list(
-            self.samples.filter(
-                is_processed=True, organism__qn_target__isnull=False
-            ).values_list("accession_code", flat=True)
+            self.samples.filter(is_processed=True, organism__qn_target__isnull=False).values_list(
+                "accession_code", flat=True
+            )
         )
 
 
@@ -540,9 +507,7 @@ class ExperimentAnnotation(models.Model):
     public_objects = PublicObjectsManager()
 
     # Relations
-    experiment = models.ForeignKey(
-        Experiment, blank=False, null=False, on_delete=models.CASCADE
-    )
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
     data = JSONField(default=dict)
@@ -611,9 +576,7 @@ class ComputationalResult(models.Model):
     public_objects = PublicObjectsManager()
 
     commands = ArrayField(models.TextField(), default=list)
-    processor = models.ForeignKey(
-        Processor, blank=True, null=True, on_delete=models.CASCADE
-    )
+    processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
 
     samples = models.ManyToManyField("Sample", through="SampleResultAssociation")
 
@@ -718,9 +681,7 @@ class CompendiumResult(models.Model):
         on_delete=models.CASCADE,
     )
     organisms = models.ManyToManyField(
-        Organism,
-        related_name="compendium_results",
-        through="CompendiumResultOrganismAssociation",
+        Organism, related_name="compendium_results", through="CompendiumResultOrganismAssociation",
     )
 
     # Properties
@@ -774,9 +735,7 @@ class OrganismIndex(models.Model):
     public_objects = PublicObjectsManager()
 
     # Relations
-    organism = models.ForeignKey(
-        Organism, blank=False, null=False, on_delete=models.CASCADE
-    )
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
     )
@@ -799,9 +758,7 @@ class OrganismIndex(models.Model):
 
     # We keep the director unextracted on the shared filesystem so all
     # Salmon jobs can access it.
-    absolute_directory_path = models.CharField(
-        max_length=255, blank=True, null=True, default=""
-    )
+    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -860,12 +817,10 @@ class OriginalFile(models.Model):
     # Relations
     samples = models.ManyToManyField("Sample", through="OriginalFileSampleAssociation")
     processor_jobs = models.ManyToManyField(
-        "data_refinery_common.ProcessorJob",
-        through="ProcessorJobOriginalFileAssociation",
+        "data_refinery_common.ProcessorJob", through="ProcessorJobOriginalFileAssociation",
     )
     downloader_jobs = models.ManyToManyField(
-        "data_refinery_common.DownloaderJob",
-        through="DownloaderJobOriginalFileAssociation",
+        "data_refinery_common.DownloaderJob", through="DownloaderJobOriginalFileAssociation",
     )
 
     # Historical Properties
@@ -874,9 +829,7 @@ class OriginalFile(models.Model):
     source_filename = models.CharField(max_length=255, blank=False)
 
     # Scientific Properties
-    has_raw = models.BooleanField(
-        default=True
-    )  # Did this sample have a raw data source?
+    has_raw = models.BooleanField(default=True)  # Did this sample have a raw data source?
 
     # Crunch Properties
     is_downloaded = models.BooleanField(default=False)
@@ -942,8 +895,7 @@ class OriginalFile(models.Model):
             pass
         except Exception as e:
             logger.exception(
-                "Unexpected delete file exception.",
-                absolute_file_path=self.absolute_file_path,
+                "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path,
             )
         self.is_downloaded = False
         self.save()
@@ -952,9 +904,7 @@ class OriginalFile(models.Model):
         # If the file has a processor job that should not have been
         # retried, then it still shouldn't be retried.
         # Exclude the ones that were aborted.
-        no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True).exclude(
-            abort=True
-        )
+        no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True).exclude(abort=True)
 
         # If the file has a processor job that hasn't even started
         # yet, then it doesn't need another.
@@ -963,9 +913,7 @@ class OriginalFile(models.Model):
         )
 
         if own_processor_id:
-            incomplete_processor_jobs = incomplete_processor_jobs.exclude(
-                id=own_processor_id
-            )
+            incomplete_processor_jobs = incomplete_processor_jobs.exclude(id=own_processor_id)
 
         # Check if there's any jobs which should block another
         # processing attempt.
@@ -1005,8 +953,7 @@ class OriginalFile(models.Model):
                 computed_file.s3_bucket
                 and computed_file.s3_key
                 and computed_file.result.organism_index is not None
-                and computed_file.result.organism_index.salmon_version
-                == CURRENT_SALMON_VERSION
+                and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION
             ):
                 # If the file wasn't computed with the latest
                 # version of salmon, then it should be rerun
@@ -1197,9 +1144,7 @@ class ComputedFile(models.Model):
         os.makedirs(target_directory, exist_ok=True)
 
         if not self.s3_bucket or not self.s3_key:
-            raise ValueError(
-                "Tried to download a computed file with no s3_bucket or s3_key"
-            )
+            raise ValueError("Tried to download a computed file with no s3_bucket or s3_key")
 
         try:
             S3.download_file(self.s3_bucket, self.s3_key, path)
@@ -1208,9 +1153,7 @@ class ComputedFile(models.Model):
             synced_sha1 = calculate_sha1(path)
 
             if self.sha1 != synced_sha1:
-                raise AssertionError(
-                    "SHA1 of downloaded ComputedFile doesn't match database SHA1!"
-                )
+                raise AssertionError("SHA1 of downloaded ComputedFile doesn't match database SHA1!")
 
             return path
         except Exception as e:
@@ -1228,9 +1171,7 @@ class ComputedFile(models.Model):
         old_key = self.s3_key
         copy_source = {"Bucket": old_bucket, "Key": old_key}
         try:
-            response = S3.copy_object(
-                Bucket=new_bucket, CopySource=copy_source, Key=new_key
-            )
+            response = S3.copy_object(Bucket=new_bucket, CopySource=copy_source, Key=new_key)
         except:
             logger.exception(
                 "Could not copy computed file within S3",
@@ -1297,8 +1238,7 @@ class ComputedFile(models.Model):
             pass
         except Exception as e:
             logger.exception(
-                "Unexpected delete file exception.",
-                absolute_file_path=self.absolute_file_path,
+                "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path,
             )
 
     def delete_s3_file(self, force=False):
@@ -1430,9 +1370,7 @@ class Dataset(models.Model):
     )
 
     # State properties
-    is_processing = models.BooleanField(
-        default=False
-    )  # Data is still editable when False
+    is_processing = models.BooleanField(default=False)  # Data is still editable when False
     is_processed = models.BooleanField(default=False)  # Result has been made
     is_available = models.BooleanField(default=False)  # Result is ready for delivery
 
@@ -1592,12 +1530,8 @@ These represent the relationships between items in the other tables.
 
 class ExperimentSampleAssociation(models.Model):
 
-    experiment = models.ForeignKey(
-        Experiment, blank=False, null=False, on_delete=models.CASCADE
-    )
-    sample = models.ForeignKey(
-        Sample, blank=False, null=False, on_delete=models.CASCADE
-    )
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "experiment_sample_associations"
@@ -1606,12 +1540,8 @@ class ExperimentSampleAssociation(models.Model):
 
 class ExperimentOrganismAssociation(models.Model):
 
-    experiment = models.ForeignKey(
-        Experiment, blank=False, null=False, on_delete=models.CASCADE
-    )
-    organism = models.ForeignKey(
-        Organism, blank=False, null=False, on_delete=models.CASCADE
-    )
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "experiment_organism_associations"
@@ -1621,10 +1551,7 @@ class ExperimentOrganismAssociation(models.Model):
 class DownloaderJobOriginalFileAssociation(models.Model):
 
     downloader_job = models.ForeignKey(
-        "data_refinery_common.DownloaderJob",
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
+        "data_refinery_common.DownloaderJob", blank=False, null=False, on_delete=models.CASCADE,
     )
     original_file = models.ForeignKey(
         OriginalFile, blank=False, null=False, on_delete=models.CASCADE
@@ -1638,10 +1565,7 @@ class DownloaderJobOriginalFileAssociation(models.Model):
 class ProcessorJobOriginalFileAssociation(models.Model):
 
     processor_job = models.ForeignKey(
-        "data_refinery_common.ProcessorJob",
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE,
     )
     original_file = models.ForeignKey(
         OriginalFile, blank=False, null=False, on_delete=models.CASCADE
@@ -1655,14 +1579,9 @@ class ProcessorJobOriginalFileAssociation(models.Model):
 class ProcessorJobDatasetAssociation(models.Model):
 
     processor_job = models.ForeignKey(
-        "data_refinery_common.ProcessorJob",
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE,
     )
-    dataset = models.ForeignKey(
-        Dataset, blank=False, null=False, on_delete=models.CASCADE
-    )
+    dataset = models.ForeignKey(Dataset, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "processorjob_dataset_associations"
@@ -1673,9 +1592,7 @@ class OriginalFileSampleAssociation(models.Model):
     original_file = models.ForeignKey(
         OriginalFile, blank=False, null=False, on_delete=models.CASCADE
     )
-    sample = models.ForeignKey(
-        Sample, blank=False, null=False, on_delete=models.CASCADE
-    )
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "original_file_sample_associations"
@@ -1684,9 +1601,7 @@ class OriginalFileSampleAssociation(models.Model):
 
 class SampleResultAssociation(models.Model):
 
-    sample = models.ForeignKey(
-        Sample, blank=False, null=False, on_delete=models.CASCADE
-    )
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
     )
@@ -1698,9 +1613,7 @@ class SampleResultAssociation(models.Model):
 
 class SampleComputedFileAssociation(models.Model):
 
-    sample = models.ForeignKey(
-        Sample, blank=False, null=False, on_delete=models.CASCADE
-    )
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
     computed_file = models.ForeignKey(
         ComputedFile, blank=False, null=False, on_delete=models.CASCADE
     )
@@ -1712,9 +1625,7 @@ class SampleComputedFileAssociation(models.Model):
 
 class ExperimentResultAssociation(models.Model):
 
-    experiment = models.ForeignKey(
-        Experiment, blank=False, null=False, on_delete=models.CASCADE
-    )
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
     )
@@ -1729,9 +1640,7 @@ class CompendiumResultOrganismAssociation(models.Model):
     compendium_result = models.ForeignKey(
         CompendiumResult, blank=False, null=False, on_delete=models.CASCADE
     )
-    organism = models.ForeignKey(
-        Organism, blank=False, null=False, on_delete=models.CASCADE
-    )
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "compendium_result_organism_associations"

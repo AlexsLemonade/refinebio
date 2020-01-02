@@ -23,9 +23,7 @@ logger = get_and_configure_logger(__name__)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--dataset-ids", type=str, help=("Comma-separated Dataset IDs.")
-        )
+        parser.add_argument("--dataset-ids", type=str, help=("Comma-separated Dataset IDs."))
 
     def handle(self, *args, **options):
         """ Given a dataset ID, fetch the resulting smashed object. 
@@ -40,9 +38,7 @@ class Command(BaseCommand):
         datasets = Dataset.objects.filter(id__in=dataset_ids)
         for dataset in datasets:
             try:
-                organism_name = dataset.email_address.split("@")[0].split("compendia_")[
-                    1
-                ]
+                organism_name = dataset.email_address.split("@")[0].split("compendia_")[1]
             except:
                 organism_name = str(dataset.pk)
 

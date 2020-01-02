@@ -61,18 +61,14 @@ class AffyToPCLTestCase(TestCase):
         """ """
         job = prepare_ba_job()
         # Make sure that a previous test didn't leave a directory around.
-        shutil.rmtree(
-            "/home/user/data_store/processor_job_" + str(job.id), ignore_errors=True
-        )
+        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id), ignore_errors=True)
         array_express.affy_to_pcl(job.pk)
 
         updated_job = ProcessorJob.objects.get(pk=job.pk)
         self.assertTrue(updated_job.success)
         self.assertEqual(len(ComputationalResult.objects.all()), 1)
         self.assertEqual(len(ComputedFile.objects.all()), 1)
-        self.assertEqual(
-            ComputedFile.objects.all()[0].filename, "GSM1426071_CD_colon_active_1.PCL"
-        )
+        self.assertEqual(ComputedFile.objects.all()[0].filename, "GSM1426071_CD_colon_active_1.PCL")
 
         os.remove(ComputedFile.objects.all()[0].absolute_file_path)
 
@@ -81,9 +77,7 @@ class AffyToPCLTestCase(TestCase):
         """ """
         job = prepare_non_ba_job()
         # Make sure that a previous test didn't leave a directory around.
-        shutil.rmtree(
-            "/home/user/data_store/processor_job_" + str(job.id), ignore_errors=True
-        )
+        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id), ignore_errors=True)
         array_express.affy_to_pcl(job.pk)
 
         updated_job = ProcessorJob.objects.get(pk=job.pk)

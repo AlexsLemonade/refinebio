@@ -42,9 +42,7 @@ def _download_file(
         download_url = download_url.replace("ftp://", "era-fasp@")
         download_url = download_url.replace("ftp", "fasp")
         download_url = download_url.replace(".uk/", ".uk:/")
-        return _download_file_aspera(
-            download_url, downloader_job, target_file_path, source="ENA"
-        )
+        return _download_file_aspera(download_url, downloader_job, target_file_path, source="ENA")
     elif "ncbi.nlm.nih.gov" in download_url and not force_ftp:
         # Try to convert old-style endpoints into new-style endpoints if possible
         try:
@@ -114,9 +112,7 @@ def _download_file_http(
         )
         downloader_job.failure_reason = "Exception caught while downloading file\\n " + str(
             e
-        ).replace(
-            "\n", "\\n"
-        )
+        ).replace("\n", "\\n")
         return False
     finally:
         target_file.close()
@@ -146,26 +142,18 @@ def _download_file_aspera(
             # We are also NOT using encryption (-T) to avoid slowdown,
             # and we are not using any kind of rate limiting.
             command_str = ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
-            formatted_command = command_str.format(
-                src=download_url, dest=target_file_path
-            )
+            formatted_command = command_str.format(src=download_url, dest=target_file_path)
             completed_command = subprocess.run(
-                formatted_command.split(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                formatted_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             )
         else:
             # NCBI requires encryption and recommends -k1 resume, as well as the 450m limit and -Q (play fair).
             # ex: https://github.com/AlexsLemonade/refinebio/pull/1189#issuecomment-478018580
             command_str = ".aspera/cli/bin/ascp -p -Q -T -k1 -l 450m -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
-            formatted_command = command_str.format(
-                src=download_url, dest=target_file_path
-            )
+            formatted_command = command_str.format(src=download_url, dest=target_file_path)
             logger.info("Starting NCBI ascp", time=str(timezone.now()))
             completed_command = subprocess.run(
-                formatted_command.split(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                formatted_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             )
             logger.info("Ending NCBI ascp", time=str(timezone.now()))
 
@@ -190,9 +178,7 @@ def _download_file_aspera(
                     stderr + "\nSTDOUT: " + stdout,
                     downloader_job=downloader_job.id,
                 )
-                downloader_job.failure_reason = (
-                    "stderr:\n " + stderr + "\nstdout:\n " + stdout
-                )
+                downloader_job.failure_reason = "stderr:\n " + stderr + "\nstdout:\n " + stdout
                 return False
             else:
                 time.sleep(5)
@@ -211,16 +197,12 @@ def _download_file_aspera(
         return False
 
     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
-    if (not os.path.exists(target_file_path)) or (
-        os.path.getsize(target_file_path) < 1
-    ):
+    if (not os.path.exists(target_file_path)) or (os.path.getsize(target_file_path) < 1):
         if os.path.exists(target_file_path):
             os.remove(target_file_path)
 
         if attempt > 5:
-            downloader_job.failure_reason = (
-                "Got zero byte file from aspera after 5 attempts."
-            )
+            downloader_job.failure_reason = "Got zero byte file from aspera after 5 attempts."
             return False
 
         logger.error(
@@ -299,9 +281,7 @@ def _replace_dotsra_with_fastq_files(
     original_file.save()
 
     read_two_original_file = OriginalFile.objects.get_or_create(
-        source_url=read_two_url,
-        source_filename=read_two_url.split("/")[-1],
-        has_raw=True,
+        source_url=read_two_url, source_filename=read_two_url.split("/")[-1], has_raw=True,
     )[0]
     OriginalFileSampleAssociation.objects.get_or_create(
         original_file=read_two_original_file, sample=sample
@@ -318,9 +298,7 @@ def download_sra(job_id: int) -> None:
     Fairly straightforward, just downloads the file from SRA.
     """
     job = utils.start_job(job_id)
-    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
-        downloader_job=job
-    )
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
     original_files = job.original_files.all()
 
     original_file = original_files[0]

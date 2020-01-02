@@ -38,32 +38,23 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     which I can find. """
     try:
         logger.debug(
-            "Downloading file from %s to %s.",
-            download_url,
-            file_path,
-            downloader_job=job.id,
+            "Downloading file from %s to %s.", download_url, file_path, downloader_job=job.id,
         )
         target_file = open(file_path, "wb")
         with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
-        logger.exception(
-            "Exception caught while downloading file.", downloader_job=job.id
-        )
+        logger.exception("Exception caught while downloading file.", downloader_job=job.id)
         job.failure_reason = "Exception caught while downloading file"
         raise
     finally:
         target_file.close()
 
 
-def _extract_files(
-    file_path: str, accession_code: str, job: DownloaderJob
-) -> List[str]:
+def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> List[str]:
     """Extract zip and return a list of the raw files.
     """
-    logger.debug(
-        "Extracting %s!", file_path, file_path=file_path, downloader_job=job.id
-    )
+    logger.debug("Extracting %s!", file_path, file_path=file_path, downloader_job=job.id)
     abs_with_code_raw = LOCAL_ROOT_DIR + "/" + accession_code + "/raw/"
 
     try:
@@ -76,10 +67,7 @@ def _extract_files(
             # what's in the directory it's being extracted to.
             files_in_zip = zip_ref.namelist()
 
-        return [
-            {"absolute_path": abs_with_code_raw + f, "filename": f}
-            for f in files_in_zip
-        ]
+        return [{"absolute_path": abs_with_code_raw + f, "filename": f} for f in files_in_zip]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), str(file_path)
@@ -98,9 +86,7 @@ def download_array_express(job_id: int) -> None:
     job = utils.start_job(job_id)
     success = True
 
-    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
-        downloader_job=job
-    )
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
     # AE will have multiple files per DownloaderJob, but they are all
     # pieces of the same zip file so they're all referencing the same
     # URL.
@@ -130,8 +116,7 @@ def download_array_express(job_id: int) -> None:
     for extracted_file in extracted_files:
         try:
             original_file = OriginalFile.objects.get(
-                source_filename=extracted_file["filename"],
-                source_url=original_file.source_url,
+                source_filename=extracted_file["filename"], source_url=original_file.source_url,
             )
             # Sometimes a file needs to be redownloaded and processed,
             # but if a file is part of an archive and then we requeue
@@ -224,9 +209,7 @@ def download_array_express(job_id: int) -> None:
 
     if success:
         logger.debug(
-            "File downloaded and extracted successfully.",
-            url=url,
-            downloader_job=job_id,
+            "File downloaded and extracted successfully.", url=url, downloader_job=job_id,
         )
 
         create_processor_jobs_for_original_files(unprocessed_original_files, job)

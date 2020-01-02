@@ -8,12 +8,8 @@ from data_refinery_common.models import *
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        print(
-            "-------------------------------------------------------------------------------"
-        )
-        print(
-            "This will delete all objects in the database. Are you sure you want to do this?"
-        )
+        print("-------------------------------------------------------------------------------")
+        print("This will delete all objects in the database. Are you sure you want to do this?")
         answer = input('You must type "yes", all other input will be ignored: ')
 
         if answer == "yes":

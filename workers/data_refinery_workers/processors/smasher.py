@@ -49,9 +49,7 @@ from urllib.parse import quote
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = (
-    Path("data_refinery_workers/processors/smasher_email.min.html")
-    .read_text()
-    .replace("\n", "")
+    Path("data_refinery_workers/processors/smasher_email.min.html").read_text().replace("\n", "")
 )
 BODY_ERROR_HTML = (
     Path("data_refinery_workers/processors/smasher_email_error.min.html")
@@ -77,10 +75,7 @@ def log_state(message, job_id, start_time=False):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
         logger.debug(
-            message,
-            total_cpu=psutil.cpu_percent(),
-            process_ram=ram_in_GB,
-            job_id=job_id,
+            message, total_cpu=psutil.cpu_percent(), process_ram=ram_in_GB, job_id=job_id,
         )
 
         if start_time:
@@ -163,9 +158,7 @@ def _inner_join(job_context: Dict) -> pd.DataFrame:
     return merged
 
 
-def process_frames_for_key(
-    key: str, input_files: List[ComputedFile], job_context: Dict
-) -> Dict:
+def process_frames_for_key(key: str, input_files: List[ComputedFile], job_context: Dict) -> Dict:
     """Download, read, and chunk processed sample files from s3.
 
     `key` is the species or experiment whose samples are contained in `input_files`.
@@ -219,18 +212,14 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-    start_smash = log_state(
-        "start _smash_key for {}".format(key), job_context["job"].id
-    )
+    start_smash = log_state("start _smash_key for {}".format(key), job_context["job"].id)
 
     # Check if we need to copy the quant.sf files
     if job_context["dataset"].quant_sf_only:
         outfile_dir = job_context["output_dir"] + key + "/"
         os.makedirs(outfile_dir, exist_ok=True)
         samples = [sample for (_, sample) in input_files]
-        job_context["num_samples"] += smashing_utils.sync_quant_files(
-            outfile_dir, samples
-        )
+        job_context["num_samples"] += smashing_utils.sync_quant_files(outfile_dir, samples)
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 
@@ -238,9 +227,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
 
     if len(job_context["all_frames"]) < 1:
         logger.error(
-            "Was told to smash a key with no frames!",
-            job_id=job_context["job"].id,
-            key=key,
+            "Was told to smash a key with no frames!", job_id=job_context["job"].id, key=key,
         )
         # TODO: is this the proper way to handle this? I can see us
         # not wanting to fail an entire dataset because one experiment
@@ -258,17 +245,13 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     if job_context["dataset"].quantile_normalize:
         try:
             job_context["merged_no_qn"] = merged
-            job_context["organism"] = (
-                job_context["dataset"].get_samples().first().organism
-            )
+            job_context["organism"] = job_context["dataset"].get_samples().first().organism
             job_context = smashing_utils.quantile_normalize(job_context)
             merged = job_context.get("merged_qn", None)
 
             # We probably don't have an QN target or there is another error,
             # so let's fail gracefully.
-            assert (
-                merged is not None
-            ), "Problem occured during quantile normalization: No merged_qn"
+            assert merged is not None, "Problem occured during quantile normalization: No merged_qn"
         except Exception as e:
             logger.exception(
                 "Problem occured during quantile normalization",
@@ -302,9 +285,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         scaler = scale_funtion(copy=True)
         scaler.fit(transposed)
         scaled = pd.DataFrame(
-            scaler.transform(transposed),
-            index=transposed.index,
-            columns=transposed.columns,
+            scaler.transform(transposed), index=transposed.index, columns=transposed.columns,
         )
         # Untranspose
         untransposed = scaled.transpose()
@@ -363,9 +344,7 @@ def _smash_all(job_context: Dict) -> Dict:
         smashing_utils.write_non_data_files(job_context)
 
         # Finally, compress all files into a zip
-        final_zip_base = "/home/user/data_store/smashed/" + str(
-            job_context["dataset"].pk
-        )
+        final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
         shutil.make_archive(final_zip_base, "zip", job_context["output_dir"])
         job_context["output_file"] = final_zip_base + ".zip"
     except Exception as e:
@@ -429,9 +408,7 @@ def _upload(job_context: Dict) -> Dict:
 
             job_context["dataset"].s3_bucket = RESULTS_BUCKET
             job_context["dataset"].s3_key = job_context["output_file"].split("/")[-1]
-            job_context["dataset"].size_in_bytes = calculate_file_size(
-                job_context["output_file"]
-            )
+            job_context["dataset"].size_in_bytes = calculate_file_size(job_context["output_file"])
             job_context["dataset"].sha1 = calculate_sha1(job_context["output_file"])
 
             job_context["dataset"].save()
@@ -443,9 +420,7 @@ def _upload(job_context: Dict) -> Dict:
                 pass
 
     except Exception as e:
-        logger.exception(
-            "Failed to upload smash result file.", file=job_context["output_file"]
-        )
+        logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context["job"].success = False
         job_context["job"].failure_reason = "Failure reason: " + str(e)
         # Delay failing this pipeline until the failure notify has been sent
@@ -511,9 +486,7 @@ def _notify_slack_failed_dataset(job_context: Dict):
                     "color": "warning",
                     "text": job_context["job"].failure_reason,
                     "author_name": job_context["dataset"].email_address,
-                    "fields": [
-                        {"title": "Dataset id", "value": str(job_context["dataset"].id)}
-                    ],
+                    "fields": [{"title": "Dataset id", "value": str(job_context["dataset"].id)}],
                 }
             ],
         },
@@ -571,9 +544,7 @@ def _notify_send_email(job_context):
         job_context["success"] = False
     else:
         SUBJECT = "Your refine.bio Dataset is Ready!"
-        BODY_TEXT = (
-            "Hot off the presses:\n\n" + dataset_url + "\n\nLove!,\nThe refine.bio Team"
-        )
+        BODY_TEXT = "Hot off the presses:\n\n" + dataset_url + "\n\nLove!,\nThe refine.bio Team"
         FORMATTED_HTML = BODY_HTML.replace("REPLACE_DOWNLOAD_URL", dataset_url).replace(
             "REPLACE_DATASET_URL", dataset_url
         )

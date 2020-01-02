@@ -34,9 +34,7 @@ class QuantendiaCommandTestCase(TransactionTestCase):
 
         # check that the processor job was created correctly
         self.assertIsNotNone(processor_job)
-        self.assertEquals(
-            processor_job.datasets.first().data, {"GSE51088": ["GSM1237818"]}
-        )
+        self.assertEquals(processor_job.datasets.first().data, {"GSE51088": ["GSM1237818"]})
 
 
 def get_organism_with_qn_target():
@@ -93,13 +91,13 @@ def make_test_data(organism):
     computed_file.s3_key = "smasher-test-quant.sf"
     computed_file.s3_bucket = "data-refinery-test-assets"
     computed_file.filename = "quant.sf"
-    computed_file.absolute_file_path = (
-        "/home/user/data_store/QUANT/smasher-test-quant.sf"
-    )
+    computed_file.absolute_file_path = "/home/user/data_store/QUANT/smasher-test-quant.sf"
     computed_file.result = result
     computed_file.is_smashable = True
     computed_file.size_in_bytes = 123123
-    computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
+    computed_file.sha1 = (
+        "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
+    )
     computed_file.save()
 
     computed_file = ComputedFile()

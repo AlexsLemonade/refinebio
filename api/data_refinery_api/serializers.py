@@ -427,9 +427,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
         # Multiple count annotations
         queryset = queryset.annotate(
             total_samples_count=Count("samples", unique=True),
-            processed_samples_count=Count(
-                "samples", filter=Q(samples__is_processed=True)
-            ),
+            processed_samples_count=Count("samples", filter=Q(samples__is_processed=True)),
         )
 
         return queryset
@@ -447,9 +445,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 
 
 class DetailedExperimentSerializer(serializers.ModelSerializer):
-    annotations = ExperimentAnnotationSerializer(
-        many=True, source="experimentannotation_set"
-    )
+    annotations = ExperimentAnnotationSerializer(many=True, source="experimentannotation_set")
     samples = DetailedExperimentSampleSerializer(many=True)
     sample_metadata = serializers.ReadOnlyField(source="sample_metadata_fields")
     organisms = serializers.StringRelatedField(many=True, read_only=True)
@@ -606,13 +602,9 @@ def validate_dataset(data):
 
             try:
                 if len(value) != len(set(value)):
-                    raise serializers.ValidationError(
-                        "Duplicate values detected in " + str(value)
-                    )
+                    raise serializers.ValidationError("Duplicate values detected in " + str(value))
             except Exception as e:
-                raise serializers.ValidationError(
-                    "Received bad dataset data: " + str(e)
-                )
+                raise serializers.ValidationError("Received bad dataset data: " + str(e))
 
     else:
         raise serializers.ValidationError("`data` must be a dict of lists.")
@@ -802,9 +794,7 @@ class CompendiumResultSerializer(serializers.ModelSerializer):
 class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
     primary_organism = serializers.StringRelatedField(read_only=True)
     organisms = serializers.StringRelatedField(many=True, read_only=True)
-    computed_file = ComputedFileWithUrlSerializer(
-        source="get_computed_file", read_only=True
-    )
+    computed_file = ComputedFileWithUrlSerializer(source="get_computed_file", read_only=True)
 
     class Meta:
         model = CompendiumResult

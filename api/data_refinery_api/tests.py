@@ -168,9 +168,7 @@ class APITestCases(APITestCase):
         sra.result = result
         sra.save()
 
-        zebrafish = Organism(
-            name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True
-        )
+        zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
         zebrafish.save()
 
         processor = Processor()
@@ -206,17 +204,11 @@ class APITestCases(APITestCase):
         SampleAnnotation.objects.all().delete()
 
     def test_all_endpoints(self):
-        response = self.client.get(
-            reverse("experiments", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response["X-Source-Revision"], get_env_variable("SYSTEM_VERSION")
-        )
+        self.assertEqual(response["X-Source-Revision"], get_env_variable("SYSTEM_VERSION"))
 
-        response = self.client.get(
-            reverse("experiments", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
@@ -237,34 +229,22 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("organisms", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("platforms", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("platforms", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("institutions", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("institutions", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("survey_jobs", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("survey_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("downloader_jobs", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("downloader_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("processor_jobs", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("processor_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("stats", kwargs={"version": API_VERSION}))
@@ -276,9 +256,7 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("schema_redoc", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("schema_redoc", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
@@ -289,9 +267,7 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            reverse("create_dataset", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("create_dataset", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_sample_pagination(self):
@@ -306,15 +282,13 @@ class APITestCases(APITestCase):
         self.assertEqual(len(response.json()["results"]), 1)
 
         response = self.client.get(
-            reverse("samples", kwargs={"version": API_VERSION}),
-            {"limit": 1, "ordering": "-title"},
+            reverse("samples", kwargs={"version": API_VERSION}), {"limit": 1, "ordering": "-title"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["title"], "789")
 
         response = self.client.get(
-            reverse("samples", kwargs={"version": API_VERSION}),
-            {"limit": 1, "ordering": "title"},
+            reverse("samples", kwargs={"version": API_VERSION}), {"limit": 1, "ordering": "title"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["title"], "123")
@@ -348,9 +322,7 @@ class APITestCases(APITestCase):
 
         # Expect 404 if the transcriptome index id is not valid
         response = self.client.get(
-            reverse(
-                "transcriptome_indices_read", kwargs={"id": 0, "version": API_VERSION}
-            )
+            reverse("transcriptome_indices_read", kwargs={"id": 0, "version": API_VERSION})
         )
         self.assertEqual(response.status_code, 404)
 
@@ -407,15 +379,12 @@ class APITestCases(APITestCase):
         drc1.save()
 
         response = self.client.get(
-            reverse("computed_files", kwargs={"version": API_VERSION}),
-            {"is_compendia": True},
+            reverse("computed_files", kwargs={"version": API_VERSION}), {"is_compendia": True},
         )
         response_json = response.json()["results"]
         self.assertEqual(3, len(response_json))
         # Prove that the download_url field is missing and not None.
-        self.assertEqual(
-            "NotPresent", response_json[0].get("download_url", "NotPresent")
-        )
+        self.assertEqual("NotPresent", response_json[0].get("download_url", "NotPresent"))
 
         # We don't actually want AWS to generate a temporary URL for
         # us, and it won't unless we're running in the cloud, but if
@@ -425,8 +394,7 @@ class APITestCases(APITestCase):
 
         # Create a token first
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}),
-            content_type="application/json",
+            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json",
         )
         token = response.json()
         token["is_activated"] = True
@@ -451,8 +419,7 @@ class APITestCases(APITestCase):
 
         # Get a token first
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}),
-            content_type="application/json",
+            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json",
         )
         token = response.json()
         token["is_activated"] = True
@@ -549,12 +516,7 @@ class APITestCases(APITestCase):
 
         # With bad token first
         jdata = json.dumps(
-            {
-                "data": {"A": ["D"]},
-                "start": True,
-                "no_send_job": True,
-                "token_id": "HEYO",
-            }
+            {"data": {"A": ["D"]}, "start": True, "no_send_job": True, "token_id": "HEYO",}
         )
         response = self.client.put(
             reverse("dataset", kwargs={"id": good_id, "version": API_VERSION}),
@@ -771,48 +733,24 @@ class APITestCases(APITestCase):
         self.assertTrue(DatasetView._should_display_on_engagement_bot("test@gmail.com"))
 
         self.assertFalse(DatasetView._should_display_on_engagement_bot(None))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("cansav09@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("arielsvn@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("jaclyn.n.taroni@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("kurt.wheeler@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("greenescientist@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("test@alexslemonade.org"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("miserlou@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("michael.zietz@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("d.prasad@gmail.com"))
         self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("cansav09@gmail.com")
+            DatasetView._should_display_on_engagement_bot("daniel.himmelstein@gmail.com")
         )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("arielsvn@gmail.com")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("jaclyn.n.taroni@gmail.com")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("kurt.wheeler@gmail.com")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("greenescientist@gmail.com")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("test@alexslemonade.org")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("miserlou@gmail.com")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("michael.zietz@gmail.com")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("d.prasad@gmail.com")
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot(
-                "daniel.himmelstein@gmail.com"
-            )
-        )
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("dv.prasad991@gmail.com")
-        )
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("dv.prasad991@gmail.com"))
 
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_ok(self, mock_client):
         # We don't even import raven if it's a good response.
-        response = self.client.get(
-            reverse("experiments", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_client.is_enabled.assert_not_called()
 
@@ -858,9 +796,7 @@ class APITestCases(APITestCase):
         mock_get_method.side_effect = Mock(return_value=HttpResponseForbidden())
         # A 403 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = Mock(return_value=True)
-        response = self.client.get(
-            reverse("experiments", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, 403)
         mock_client.captureMessage.assert_called()
 
@@ -873,9 +809,7 @@ class APITestCases(APITestCase):
         mock_get_method.side_effect = Mock(return_value=HttpResponseServerError())
         # A 500 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = Mock(return_value=True)
-        response = self.client.get(
-            reverse("experiments", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
@@ -922,9 +856,7 @@ class APITestCases(APITestCase):
         danio_rerio.qn_target = result
         danio_rerio.save()
 
-        response = self.client.get(
-            reverse("qn_targets_available", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("qn_targets_available", kwargs={"version": API_VERSION}))
         # there's another qn endpoint that is created in the setup method of this test case
         self.assertEqual(len(response.json()), 3)
 
@@ -1037,9 +969,7 @@ class StatsTestCases(APITestCase):
         self.assertEqual(response.json()["nomad_running_jobs"], 0)
         self.assertEqual(response.json()["nomad_pending_jobs"], 0)
 
-    @patch(
-        "data_refinery_common.utils.get_nomad_jobs", return_value=MOCK_NOMAD_RESPONSE
-    )
+    @patch("data_refinery_common.utils.get_nomad_jobs", return_value=MOCK_NOMAD_RESPONSE)
     def test_nomad_stats(self, mock_get_nomad_jobs):
         response = self.client.get(reverse("stats", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, 200)
@@ -1057,9 +987,7 @@ from django.core.cache import cache
 class ESTestCases(APITestCase):
     @classmethod
     def setUpClass(cls):
-        super(
-            ESTestCases, cls
-        ).setUpClass()  # ref https://stackoverflow.com/a/29655301/763705
+        super(ESTestCases, cls).setUpClass()  # ref https://stackoverflow.com/a/29655301/763705
 
         """Set up class."""
         experiment = Experiment()
@@ -1169,9 +1097,7 @@ class ESTestCases(APITestCase):
         response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
 
         """ Test basic ES functionality """
-        es_search_result = ExperimentDocument.search().filter(
-            "term", description="soda"
-        )
+        es_search_result = ExperimentDocument.search().filter("term", description="soda")
         es_search_result_qs = es_search_result.to_queryset()
         self.assertEqual(len(es_search_result_qs), 1)
 
@@ -1239,9 +1165,7 @@ class ProcessorTestCases(APITestCase):
         )
 
     def test_endpoint(self):
-        response = self.client.get(
-            reverse("processors", kwargs={"version": API_VERSION})
-        )
+        response = self.client.get(reverse("processors", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         processors = response.json()["results"]
@@ -1251,8 +1175,7 @@ class ProcessorTestCases(APITestCase):
 
         self.assertEqual(processors[1]["name"], "Salmontools")
         self.assertEqual(
-            processors[1]["environment"]["cmd_line"]["salmontools --version"],
-            "Salmon Tools 0.1.0",
+            processors[1]["environment"]["cmd_line"]["salmontools --version"], "Salmon Tools 0.1.0",
         )
 
     def test_processor_and_organism_in_sample(self):
@@ -1260,9 +1183,7 @@ class ProcessorTestCases(APITestCase):
         organism = Organism.get_object_for_name("HOMO_SAPIENS")
         transcriptome_result = ComputationalResult.objects.create()
         organism_index = OrganismIndex.objects.create(
-            organism=organism,
-            result=transcriptome_result,
-            index_type="TRANSCRIPTOME_LONG",
+            organism=organism, result=transcriptome_result, index_type="TRANSCRIPTOME_LONG",
         )
         result = ComputationalResult.objects.create(
             processor=self.salmon_quant_proc, organism_index=organism_index
@@ -1272,10 +1193,7 @@ class ProcessorTestCases(APITestCase):
         response = self.client.get(
             reverse(
                 "samples_detail",
-                kwargs={
-                    "accession_code": sample.accession_code,
-                    "version": API_VERSION,
-                },
+                kwargs={"accession_code": sample.accession_code, "version": API_VERSION,},
             )
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)

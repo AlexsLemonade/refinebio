@@ -208,9 +208,7 @@ def start_job(job_context: Dict):
     global CURRENT_JOB
     CURRENT_JOB = job
 
-    logger.debug(
-        "Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied
-    )
+    logger.debug("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
     # Janitor jobs don't operate on file objects.
     # Tximport jobs don't need to download the original file, they
@@ -265,9 +263,7 @@ def end_job(job_context: Dict, abort=False):
             nonce = "".join(
                 random.choice(string.ascii_lowercase + string.digits) for _ in range(24)
             )
-            result = computed_file.sync_to_s3(
-                s3_bucket, nonce + "_" + computed_file.filename
-            )
+            result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
 
             if result and settings.RUNNING_IN_CLOUD:
                 computed_file.delete_local_file()
@@ -338,8 +334,7 @@ def end_job(job_context: Dict, abort=False):
 
     if (
         "work_dir" in job_context
-        and job_context["job"].pipeline_applied
-        != ProcessorPipeline.CREATE_COMPENDIA.value
+        and job_context["job"].pipeline_applied != ProcessorPipeline.CREATE_COMPENDIA.value
         and settings.RUNNING_IN_CLOUD
     ):
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
@@ -418,12 +413,9 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
             return end_job(last_result, abort=bool(e.abort))
         except Exception as e:
             failure_reason = (
-                "Unhandled exception caught while running processor"
-                " function {} in pipeline: "
+                "Unhandled exception caught while running processor" " function {} in pipeline: "
             ).format(processor.__name__)
-            logger.exception(
-                failure_reason, no_retry=job.no_retry, processor_job=job_id
-            )
+            logger.exception(failure_reason, no_retry=job.no_retry, processor_job=job_id)
             last_result["success"] = False
             last_result["job"].failure_reason = failure_reason + str(e)
             return end_job(last_result)
@@ -447,14 +439,7 @@ class ProcessorJobError(Exception):
     """ General processor job error class. """
 
     def __init__(
-        self,
-        failure_reason,
-        *,
-        success=None,
-        no_retry=None,
-        retried=None,
-        abort=None,
-        **context
+        self, failure_reason, *, success=None, no_retry=None, retried=None, abort=None, **context
     ):
         super(ProcessorJobError, self).__init__(failure_reason)
         self.failure_reason = failure_reason
@@ -506,14 +491,11 @@ def get_os_pkgs(pkg_list):
     pkg_info = dict()
     for pkg in pkg_list:
         process_done = subprocess.run(
-            ["dpkg-query", "--show", pkg],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            ["dpkg-query", "--show", pkg], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if process_done.returncode:
             raise Exception(
-                "OS-level package %s not found: %s"
-                % (pkg, process_done.stderr.decode().strip())
+                "OS-level package %s not found: %s" % (pkg, process_done.stderr.decode().strip())
             )
 
         version = process_done.stdout.decode().strip().split("\t")[-1]
@@ -529,13 +511,10 @@ def get_cmd_lines(cmd_list):
 
     cmd_info = dict()
     for cmd in cmd_list:
-        process_done = subprocess.run(
-            cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        process_done = subprocess.run(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if process_done.returncode:
             raise Exception(
-                "Failed to run command line '%s': %s"
-                % (cmd, process_done.stderr.decode().strip())
+                "Failed to run command line '%s': %s" % (cmd, process_done.stderr.decode().strip())
             )
 
         output_bytes = process_done.stdout
@@ -564,13 +543,9 @@ def get_pip_pkgs(pkg_list):
     resource.
     """
 
-    process_done = subprocess.run(
-        ["pip", "freeze"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    process_done = subprocess.run(["pip", "freeze"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if process_done.returncode:
-        raise Exception(
-            "'pip freeze' failed: %s" % process_done.stderr.decode().strip()
-        )
+        raise Exception("'pip freeze' failed: %s" % process_done.stderr.decode().strip())
 
     frozen_pkgs = dict()
     for item in process_done.stdout.decode().split():
@@ -672,9 +647,7 @@ def get_checksums(filenames_list):
             ["md5sum", abs_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         if process_done.returncode:
-            raise Exception(
-                "md5sum command error:", process_done.stderr.decode().strip()
-            )
+            raise Exception("md5sum command error:", process_done.stderr.decode().strip())
         checksum_str = process_done.stdout.decode().strip().split()[0]
         checksums[filename] = checksum_str
 
@@ -724,10 +697,7 @@ def find_processor(enum_key):
     yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value["yml_file"])
     environment = get_runtime_env(yml_path)
     obj, status = Processor.objects.get_or_create(
-        name=name,
-        version=SYSTEM_VERSION,
-        docker_image=docker_image,
-        environment=environment,
+        name=name, version=SYSTEM_VERSION, docker_image=docker_image, environment=environment,
     )
     return obj
 

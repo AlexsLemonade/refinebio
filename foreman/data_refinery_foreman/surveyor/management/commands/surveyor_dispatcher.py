@@ -94,10 +94,7 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
         )
 
         parser.add_argument(
-            "--offset",
-            type=int,
-            help=("Skip a number of lines at the beginning"),
-            default=0,
+            "--offset", type=int, help=("Skip a number of lines at the beginning"), default=0,
         )
 
     def handle(self, *args, **options):

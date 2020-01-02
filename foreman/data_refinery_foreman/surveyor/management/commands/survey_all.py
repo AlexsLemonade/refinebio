@@ -40,29 +40,18 @@ class Command(BaseCommand):
         parser.add_argument(
             "--file",
             type=str,
-            help=(
-                """An optional file listing accession codes. s3:// URLs are also accepted."""
-            ),
+            help=("""An optional file listing accession codes. s3:// URLs are also accepted."""),
         )
+        parser.add_argument("--accession", type=str, help=("An accession code to survey."))
         parser.add_argument(
-            "--accession", type=str, help=("An accession code to survey.")
-        )
-        parser.add_argument(
-            "--offset",
-            type=int,
-            help=("Skip a number of lines at the beginning"),
-            default=0,
+            "--offset", type=int, help=("Skip a number of lines at the beginning"), default=0,
         )
         parser.add_argument(
             "--job-id", type=int, help=("An ID of a SurveyJob to execute"), default=None
         )
 
     def handle(self, *args, **options):
-        if (
-            options["file"] is None
-            and options["accession"] is None
-            and options["job_id"] is None
-        ):
+        if options["file"] is None and options["accession"] is None and options["job_id"] is None:
             logger.error("You must specify an accession or file or job ID.")
             return "1"
 

@@ -6,9 +6,7 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     Sample,
 )
-from data_refinery_foreman.foreman.management.commands.update_experiment_metadata import (
-    Command,
-)
+from data_refinery_foreman.foreman.management.commands.update_experiment_metadata import Command
 from data_refinery_foreman.surveyor.test_sra import mocked_requests_get
 
 
@@ -40,9 +38,7 @@ class SurveyTestCase(TransactionTestCase):
         sample.title = "Not important"
         sample.save()
 
-        ExperimentSampleAssociation.objects.get_or_create(
-            experiment=experiment, sample=sample
-        )
+        ExperimentSampleAssociation.objects.get_or_create(experiment=experiment, sample=sample)
 
         # 3. Setup is done, actually run the command.
         command = Command()
@@ -50,9 +46,7 @@ class SurveyTestCase(TransactionTestCase):
 
         # Test that the title was fixed
         self.assertNotEqual(
-            Experiment.objects.get_or_create(accession_code=experiment.accession_code)[
-                0
-            ].title,
+            Experiment.objects.get_or_create(accession_code=experiment.accession_code)[0].title,
             BAD_TITLE,
         )
 
@@ -79,9 +73,7 @@ class SurveyTestCase(TransactionTestCase):
 
         # Test that the title was fixed
         self.assertNotEqual(
-            Experiment.objects.get_or_create(accession_code=experiment.accession_code)[
-                0
-            ].title,
+            Experiment.objects.get_or_create(accession_code=experiment.accession_code)[0].title,
             BAD_TITLE,
         )
 
@@ -108,9 +100,7 @@ class SurveyTestCase(TransactionTestCase):
 
         # Test that the title was fixed
         self.assertNotEqual(
-            Experiment.objects.get_or_create(accession_code=experiment.accession_code)[
-                0
-            ].title,
+            Experiment.objects.get_or_create(accession_code=experiment.accession_code)[0].title,
             BAD_TITLE,
         )
 

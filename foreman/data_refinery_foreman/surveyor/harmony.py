@@ -307,8 +307,7 @@ def harmonize(metadata: List) -> Dict:
                     title
                     + "_"
                     + "".join(
-                        random.choice(string.ascii_uppercase + string.digits)
-                        for _ in range(12)
+                        random.choice(string.ascii_uppercase + string.digits) for _ in range(12)
                     )
                 )
             used_titles.append(title)
@@ -680,9 +679,7 @@ def parse_sdrf(sdrf_url: str) -> List:
         return []
 
     if sdrf_response.status_code != 200:
-        logger.error(
-            "Unable to fetch URL: " + sdrf_url, response_code=sdrf_response.status_code
-        )
+        logger.error("Unable to fetch URL: " + sdrf_url, response_code=sdrf_response.status_code)
         return []
 
     sdrf_text = sdrf_response.text

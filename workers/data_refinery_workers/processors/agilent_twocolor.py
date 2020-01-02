@@ -42,9 +42,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     os.makedirs("/".join(pre_part) + "/processed/", exist_ok=True)
     job_context["output_file_path"] = "/".join(pre_part) + "/processed/" + end_part
-    job_context["output_file_path"] = job_context["output_file_path"].replace(
-        ".txt", ".PCL"
-    )
+    job_context["output_file_path"] = job_context["output_file_path"].replace(".txt", ".PCL")
 
     return job_context
 

@@ -11,9 +11,7 @@ from django.utils import timezone
 from nomad import Nomad
 
 from data_refinery_common.utils import get_env_variable
-from data_refinery_common.performant_pagination.pagination import (
-    PerformantPaginator as Paginator,
-)
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
 )
@@ -66,16 +64,12 @@ class Command(BaseCommand):
 
                     num_surveyor_jobs = 0
                     for job in all_surveyor_jobs:
-                        if job["ParameterizedJob"] and job["JobSummary"].get(
-                            "Children", None
-                        ):
+                        if job["ParameterizedJob"] and job["JobSummary"].get("Children", None):
                             num_surveyor_jobs = (
-                                num_surveyor_jobs
-                                + job["JobSummary"]["Children"]["Pending"]
+                                num_surveyor_jobs + job["JobSummary"]["Children"]["Pending"]
                             )
                             num_surveyor_jobs = (
-                                num_surveyor_jobs
-                                + job["JobSummary"]["Children"]["Running"]
+                                num_surveyor_jobs + job["JobSummary"]["Children"]["Running"]
                             )
                 except:
                     logger.exception("Exception caught counting surveyor jobs!")

@@ -14,9 +14,7 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
             return response
 
         # format error message
-        message = (
-            "{status_code} code returned for URL: {url}" "with message: {message}"
-        ).format(
+        message = ("{status_code} code returned for URL: {url}" "with message: {message}").format(
             status_code=response.status_code,
             url=request.build_absolute_uri(),
             message=str(response.content),

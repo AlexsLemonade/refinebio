@@ -12,9 +12,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
     Organism,
 )
-from data_refinery_foreman.surveyor.transcriptome_index import (
-    TranscriptomeIndexSurveyor,
-)
+from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 
 
 class SurveyTestCase(TestCase):

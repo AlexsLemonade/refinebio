@@ -69,12 +69,8 @@ def start_job(job_id: int) -> DownloaderJob:
 
     # This job should not have been started.
     if job.start_time is not None:
-        logger.error(
-            "This downloader job has already been started!!!", downloader_job=job.id
-        )
-        raise Exception(
-            "downloaders.start_job called on a job that has already been started!"
-        )
+        logger.error("This downloader job has already been started!!!", downloader_job=job.id)
+        raise Exception("downloaders.start_job called on a job that has already been started!")
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
@@ -93,13 +89,10 @@ def start_job(job_id: int) -> DownloaderJob:
 
     if not needs_downloading:
         logger.error(
-            ("No files associated with this job need to be downloaded! Aborting!"),
-            job_id=job.id,
+            ("No files associated with this job need to be downloaded! Aborting!"), job_id=job.id,
         )
         job.start_time = timezone.now()
-        job.failure_reason = (
-            "Was told to redownload file(s) that are already downloaded!"
-        )
+        job.failure_reason = "Was told to redownload file(s) that are already downloaded!"
         job.success = False
         job.no_retry = True
         job.end_time = timezone.now()
@@ -121,9 +114,7 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     else:
         # Should be set by now, but make sure.
         success = False
-        file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
-            downloader_job=job
-        )
+        file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
         for file_assoc in file_assocs:
             file_assoc.original_file.delete_local_file()
             file_assoc.original_file.is_downloaded = False

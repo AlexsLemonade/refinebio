@@ -49,9 +49,7 @@ def _download_file(download_url: str, file_path: str) -> None:
         urllib.request.urlcleanup()
     except Exception:
         logger.exception(
-            "Exception caught while downloading file %s from %s",
-            file_path,
-            download_url,
+            "Exception caught while downloading file %s from %s", file_path, download_url,
         )
         return False
     finally:
@@ -100,21 +98,15 @@ class Command(BaseCommand):
         LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
         work_dir = LOCAL_ROOT_DIR + "/affy_correction/"
         os.makedirs(work_dir, exist_ok=True)
-        for sample in Sample.objects.filter(
-            technology="RNA-SEQ", source_database="GEO"
-        ):
+        for sample in Sample.objects.filter(technology="RNA-SEQ", source_database="GEO"):
             for original_file in sample.original_files.all():
                 if original_file.is_affy_data():
                     input_file_path = work_dir + original_file.source_filename
-                    download_success = _download_file(
-                        original_file.source_url, input_file_path
-                    )
+                    download_success = _download_file(original_file.source_url, input_file_path)
 
                     if download_success:
                         try:
-                            brainarray_package = _determine_brainarray_package(
-                                input_file_path
-                            )
+                            brainarray_package = _determine_brainarray_package(input_file_path)
 
                             if brainarray_package:
                                 logger.info(
@@ -125,9 +117,7 @@ class Command(BaseCommand):
                                 # If we've detected the platform using affy, then this
                                 # is the best source of truth we'll be able to get, so
                                 # update the sample to match it.
-                                platform_name = get_readable_affymetrix_names()[
-                                    brainarray_package
-                                ]
+                                platform_name = get_readable_affymetrix_names()[brainarray_package]
 
                                 sample.platform_accession_code = brainarray_package
                                 sample.platform_name = platform_name

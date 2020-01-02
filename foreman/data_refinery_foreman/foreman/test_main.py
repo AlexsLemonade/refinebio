@@ -163,12 +163,9 @@ class ForemanTestCase(TestCase):
         # depth plus any new queued jobs, so this should only queue up enough jobs to fill the
         # DESIRED_WORK_DEPTH for every node
         # ((DESIRED_WORK_DEPTH - 67) + (DESIRED_WORK_DEPTH - 99) jobs in total)
+        self.assertEqual(len(mock_send_job.mock_calls), 2 * main.DESIRED_WORK_DEPTH - 307 - 409)
         self.assertEqual(
-            len(mock_send_job.mock_calls), 2 * main.DESIRED_WORK_DEPTH - 307 - 409
-        )
-        self.assertEqual(
-            main.VOLUME_WORK_DEPTH,
-            {"0": main.DESIRED_WORK_DEPTH, "1": main.DESIRED_WORK_DEPTH},
+            main.VOLUME_WORK_DEPTH, {"0": main.DESIRED_WORK_DEPTH, "1": main.DESIRED_WORK_DEPTH},
         )
 
         jobs = DownloaderJob.objects.order_by("id")
@@ -301,9 +298,7 @@ class ForemanTestCase(TestCase):
         mock_send_job.return_value = True
 
         job = self.create_downloader_job()
-        job.created_at = timezone.now() - (
-            main.MIN_LOOP_TIME + datetime.timedelta(minutes=1)
-        )
+        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
         main.retry_lost_downloader_jobs()
@@ -349,9 +344,7 @@ class ForemanTestCase(TestCase):
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
 
-    def create_processor_job(
-        self, pipeline="AFFY_TO_PCL", ram_amount=2048, start_time=None
-    ):
+    def create_processor_job(self, pipeline="AFFY_TO_PCL", ram_amount=2048, start_time=None):
         job = ProcessorJob(
             pipeline_applied=pipeline,
             nomad_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
@@ -409,9 +402,7 @@ class ForemanTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_requeuing_processor_job_no_volume(
-        self, mock_send_job, mock_get_active_volumes
-    ):
+    def test_requeuing_processor_job_no_volume(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -439,9 +430,7 @@ class ForemanTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_requeuing_compendia_job_no_volume(
-        self, mock_send_job, mock_get_active_volumes
-    ):
+    def test_requeuing_compendia_job_no_volume(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -470,9 +459,7 @@ class ForemanTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_requeuing_processor_job_w_more_ram(
-        self, mock_send_job, mock_get_active_volumes
-    ):
+    def test_requeuing_processor_job_w_more_ram(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -526,9 +513,7 @@ class ForemanTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_failed_processor_jobs(
-        self, mock_send_job, mock_get_active_volumes
-    ):
+    def test_retrying_failed_processor_jobs(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -550,9 +535,7 @@ class ForemanTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_not_retrying_wrong_volume_index(
-        self, mock_send_job, mock_get_active_volumes
-    ):
+    def test_not_retrying_wrong_volume_index(self, mock_send_job, mock_get_active_volumes):
         """If a volume isn't mounted then we shouldn't queue jobs for it."""
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"2", "3"}
@@ -575,9 +558,7 @@ class ForemanTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
     @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_hung_processor_jobs(
-        self, mock_nomad, mock_send_job, mock_get_active_volumes
-    ):
+    def test_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -644,9 +625,7 @@ class ForemanTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
     @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_lost_processor_jobs(
-        self, mock_nomad, mock_send_job, mock_get_active_volumes
-    ):
+    def test_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -679,9 +658,7 @@ class ForemanTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
     @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_lost_smasher_jobs(
-        self, mock_nomad, mock_send_job, mock_get_active_volumes
-    ):
+    def test_retrying_lost_smasher_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         """Make sure that the smasher jobs will get retried even though they
         don't have a volume_index.
         """
@@ -777,16 +754,12 @@ class ForemanTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
     @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_lost_processor_jobs_time(
-        self, mock_send_job, mock_get_active_volumes
-    ):
+    def test_retrying_lost_processor_jobs_time(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job()
-        job.created_at = timezone.now() - (
-            main.MIN_LOOP_TIME + datetime.timedelta(minutes=1)
-        )
+        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
         main.retry_lost_processor_jobs()
@@ -808,9 +781,7 @@ class ForemanTestCase(TestCase):
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job(pipeline="JANITOR")
-        job.created_at = timezone.now() - (
-            main.MIN_LOOP_TIME + datetime.timedelta(minutes=1)
-        )
+        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
         main.retry_lost_processor_jobs()
@@ -1070,9 +1041,7 @@ class ForemanTestCase(TestCase):
         mock_send_job.return_value = True
 
         job = self.create_survey_job()
-        job.created_at = timezone.now() - (
-            main.MIN_LOOP_TIME + datetime.timedelta(minutes=1)
-        )
+        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
         main.retry_lost_survey_jobs()
@@ -1101,9 +1070,7 @@ class ForemanTestCase(TestCase):
         main.send_janitor_jobs()
 
         self.assertEqual(ProcessorJob.objects.all().count(), 7)
-        self.assertEqual(
-            ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 4
-        )
+        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 4)
 
         # Make sure that the janitors are dispatched to the correct volumes.
         ixs = ["1", "2", "3", None]
@@ -1151,9 +1118,7 @@ class CleanDatabaseTestCase(TransactionTestCase):
         self.assertEqual(sample.computed_files.count(), 2)
         self.assertEqual(sample.get_most_recent_smashable_result_file().id, bad_file.id)
         main.clean_database()
-        self.assertEqual(
-            sample.get_most_recent_smashable_result_file().id, good_file.id
-        )
+        self.assertEqual(sample.get_most_recent_smashable_result_file().id, good_file.id)
 
 
 # class JobPrioritizationTestCase(TestCase):

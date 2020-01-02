@@ -332,13 +332,9 @@ class HarmonyTestCase(TestCase):
         samples_endpoint = SAMPLES_URL.format(experiment_accession_code)
         r = utils.requests_retry_session().get(samples_endpoint, timeout=60)
         json_samples = r.json()["experiment"]["sample"]
-        json_titles = [
-            extract_title(utils.flatten(json_sample)) for json_sample in json_samples
-        ]
+        json_titles = [extract_title(utils.flatten(json_sample)) for json_sample in json_samples]
 
-        SDRF_URL_TEMPLATE = (
-            "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
-        )
+        SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
         sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
         sdrf_samples = harmonize(parse_sdrf(sdrf_url))
 

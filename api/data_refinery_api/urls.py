@@ -83,11 +83,7 @@ urlpatterns = [
         include(
             [
                 # Primary search and filter interface
-                url(
-                    r"^search/$",
-                    ExperimentDocumentView.as_view({"get": "list"}),
-                    name="search",
-                ),
+                url(r"^search/$", ExperimentDocumentView.as_view({"get": "list"}), name="search",),
                 url(r"^experiments/$", ExperimentList.as_view(), name="experiments"),
                 url(
                     r"^experiments/(?P<accession_code>.+)/$",
@@ -106,29 +102,13 @@ urlpatterns = [
                 url(r"^processors/$", ProcessorList.as_view(), name="processors"),
                 # Deliverables
                 url(r"^dataset/$", CreateDatasetView.as_view(), name="create_dataset"),
-                url(
-                    r"^dataset/(?P<id>[0-9a-f-]+)/$",
-                    DatasetView.as_view(),
-                    name="dataset",
-                ),
+                url(r"^dataset/(?P<id>[0-9a-f-]+)/$", DatasetView.as_view(), name="dataset",),
                 url(r"^token/$", CreateApiTokenView.as_view(), name="token"),
-                url(
-                    r"^token/(?P<id>[0-9a-f-]+)/$",
-                    APITokenView.as_view(),
-                    name="token_id",
-                ),
+                url(r"^token/(?P<id>[0-9a-f-]+)/$", APITokenView.as_view(), name="token_id",),
                 # Jobs
                 url(r"^jobs/survey/$", SurveyJobList.as_view(), name="survey_jobs"),
-                url(
-                    r"^jobs/downloader/$",
-                    DownloaderJobList.as_view(),
-                    name="downloader_jobs",
-                ),
-                url(
-                    r"^jobs/processor/$",
-                    ProcessorJobList.as_view(),
-                    name="processor_jobs",
-                ),
+                url(r"^jobs/downloader/$", DownloaderJobList.as_view(), name="downloader_jobs",),
+                url(r"^jobs/processor/$", ProcessorJobList.as_view(), name="processor_jobs",),
                 # Dashboard Driver
                 url(r"^stats/$", Stats.as_view(), name="stats"),
                 url(
@@ -148,9 +128,7 @@ urlpatterns = [
                     include(
                         [
                             path(
-                                "",
-                                TranscriptomeIndexList.as_view(),
-                                name="transcriptome_indices",
+                                "", TranscriptomeIndexList.as_view(), name="transcriptome_indices",
                             ),
                             path(
                                 "<int:id>",
@@ -161,38 +139,20 @@ urlpatterns = [
                     ),
                 ),
                 # QN Targets
-                url(
-                    r"^qn_targets/$",
-                    QNTargetsAvailable.as_view(),
-                    name="qn_targets_available",
-                ),
+                url(r"^qn_targets/$", QNTargetsAvailable.as_view(), name="qn_targets_available",),
                 url(
                     r"^qn_targets/(?P<organism_name>.+)$",
                     QNTargetsDetail.as_view(),
                     name="qn_targets",
                 ),
                 # Computed Files
+                url(r"^computed_files/$", ComputedFilesList.as_view(), name="computed_files",),
+                url(r"^original_files/$", OriginalFileList.as_view(), name="original_files",),
                 url(
-                    r"^computed_files/$",
-                    ComputedFilesList.as_view(),
-                    name="computed_files",
-                ),
-                url(
-                    r"^original_files/$",
-                    OriginalFileList.as_view(),
-                    name="original_files",
-                ),
-                url(
-                    r"^computational_results/$",
-                    ComputationalResultsList.as_view(),
-                    name="results",
+                    r"^computational_results/$", ComputationalResultsList.as_view(), name="results",
                 ),
                 # Compendia
-                url(
-                    r"^compendia/$",
-                    CompendiumResultList.as_view(),
-                    name="compendium_results",
-                ),
+                url(r"^compendia/$", CompendiumResultList.as_view(), name="compendium_results",),
                 url(
                     r"^compendia/(?P<id>[0-9]+)/$",
                     CompendiumResultDetails.as_view(),
@@ -204,11 +164,7 @@ urlpatterns = [
                     schema_view.with_ui("swagger", cache_timeout=0),
                     name="schema_swagger_ui",
                 ),
-                url(
-                    r"^$",
-                    schema_view.with_ui("redoc", cache_timeout=0),
-                    name="schema_redoc",
-                ),
+                url(r"^$", schema_view.with_ui("redoc", cache_timeout=0), name="schema_redoc",),
             ]
         ),
     ),

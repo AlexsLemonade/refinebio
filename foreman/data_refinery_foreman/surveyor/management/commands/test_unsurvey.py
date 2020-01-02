@@ -40,9 +40,7 @@ class SurveyTestCase(TransactionTestCase):
         survey_job.save()
 
         key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job,
-            key="experiment_accession_code",
-            value=superseries_accession,
+            survey_job=survey_job, key="experiment_accession_code", value=superseries_accession,
         )
         key_value_pair.save()
 
@@ -54,9 +52,7 @@ class SurveyTestCase(TransactionTestCase):
         survey_job.save()
 
         key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job,
-            key="experiment_accession_code",
-            value=sub_experiment_accession,
+            survey_job=survey_job, key="experiment_accession_code", value=sub_experiment_accession,
         )
         key_value_pair.save()
 
@@ -64,15 +60,9 @@ class SurveyTestCase(TransactionTestCase):
         geo_surveyor.survey()
 
         # Establish baselines before purge
-        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[
-            0
-        ]
-        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
-            experiment=experiment
-        )
-        samples = Sample.objects.filter(
-            id__in=experiment_sample_assocs.values("sample_id")
-        )
+        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[0]
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values("sample_id"))
         self.assertEqual(samples.count(), 4)
 
         og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(
@@ -84,12 +74,8 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(original_files.count(), 4)
 
         experiment = Experiment.objects.filter(accession_code=superseries_accession)[0]
-        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
-            experiment=experiment
-        )
-        samples = Sample.objects.filter(
-            id__in=experiment_sample_assocs.values("sample_id")
-        )
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values("sample_id"))
         self.assertEqual(samples.count(), 20)
 
         og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(
@@ -104,15 +90,9 @@ class SurveyTestCase(TransactionTestCase):
         purge_experiment(superseries_accession)
 
         # Make sure the subexperiment samples weren't affected.
-        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[
-            0
-        ]
-        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
-            experiment=experiment
-        )
-        samples = Sample.objects.filter(
-            id__in=experiment_sample_assocs.values("sample_id")
-        )
+        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[0]
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values("sample_id"))
         self.assertEqual(samples.count(), 4)
 
         # Make sure sub-experiment original files weren't affected.

@@ -39,9 +39,7 @@ def prepare_organism_indices():
     c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
     # This is a lie, but this image doesn't have the dependencies for TRANSCRIPTOME_INDEX
-    computational_result_short = ComputationalResult(
-        processor=utils.find_processor("SALMON_QUANT")
-    )
+    computational_result_short = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
     computational_result_short.save()
 
     organism_index = OrganismIndex()
@@ -56,16 +54,16 @@ def prepare_organism_indices():
 
     comp_file = ComputedFile()
     # This path will not be used because we already have the files extracted.
-    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT/celgans_short.tar.gz"
+    comp_file.absolute_file_path = (
+        "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT/celgans_short.tar.gz"
+    )
     comp_file.result = computational_result_short
     comp_file.size_in_bytes = 1337
     comp_file.sha1 = "ABC"
     comp_file.save()
 
     # This is a lie, but this image doesn't have the dependencies for TX_IMPORT
-    computational_result_long = ComputationalResult(
-        processor=utils.find_processor("SALMON_QUANT")
-    )
+    computational_result_long = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
     computational_result_long.save()
 
 
@@ -88,18 +86,14 @@ def prepare_job():
     og_file = OriginalFile()
     og_file.source_filename = "ERR1562482_1.fastq.gz"
     og_file.filename = "ERR1562482_1.fastq.gz"
-    og_file.absolute_file_path = (
-        "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
-    )
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
     og_file.is_downloaded = True
     og_file.save()
 
     og_file2 = OriginalFile()
     og_file2.source_filename = "ERR1562482_2.fastq.gz"
     og_file2.filename = "ERR1562482_2.fastq.gz"
-    og_file2.absolute_file_path = (
-        "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
-    )
+    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
     og_file2.is_downloaded = True
     og_file2.save()
 
@@ -178,9 +172,7 @@ def strong_quant_correlation(ref_filename, output_filename):
     ref_TPM = ref_col34[:, 0]
     ref_NumReads = ref_col34[:, 1]
 
-    out_col34 = numpy.loadtxt(
-        output_filename, delimiter="\t", skiprows=1, usecols=(3, 4)
-    )
+    out_col34 = numpy.loadtxt(output_filename, delimiter="\t", skiprows=1, usecols=(3, 4))
     out_TPM = out_col34[:, 0]
     out_NumReads = out_col34[:, 1]
 
@@ -248,10 +240,7 @@ class SalmonTestCase(TestCase):
         self.assertFalse(job.success)
         self.assertEqual(
             job.failure_reason,
-            (
-                "The sample for this job either was not RNA-Seq or was not from the "
-                "SRA database."
-            ),
+            ("The sample for this job either was not RNA-Seq or was not from the " "SRA database."),
         )
         self.assertTrue(job.no_retry)
 
@@ -300,16 +289,12 @@ class SalmonTestCase(TestCase):
         job_context = salmon._run_salmon(job_context)
         job_context = salmon.get_tximport_inputs(job_context)
         job_context = salmon.tximport(job_context)
-        output_quant_filename = os.path.join(
-            job_context["output_directory"], "quant.sf"
-        )
+        output_quant_filename = os.path.join(job_context["output_directory"], "quant.sf")
         self.assertTrue(os.path.exists(output_quant_filename))
 
         # Confirm strong correlation between the new "quant.sf" and reference file
         ref_quant_filename = os.path.join(sample_dir, "ref_files/quant.sf")
-        self.assertTrue(
-            strong_quant_correlation(ref_quant_filename, output_quant_filename)
-        )
+        self.assertTrue(strong_quant_correlation(ref_quant_filename, output_quant_filename))
 
     @tag("salmon")
     def test_salmon_quant_one_sample_double_reads(self):
@@ -332,16 +317,12 @@ class SalmonTestCase(TestCase):
             source_database="SRA",
             technology="RNA-SEQ",
         )
-        ExperimentSampleAssociation.objects.create(
-            experiment=experiment, sample=test_sample
-        )
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=test_sample)
         # fake_sample record (created to prevent tximport step in this experiment)
         fake_sample = Sample.objects.create(
             accession_code="fake_sample", source_database="SRA", technology="RNA-SEQ"
         )
-        ExperimentSampleAssociation.objects.create(
-            experiment=experiment, sample=fake_sample
-        )
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
 
         experiment_dir = "/home/user/data_store/salmon_tests/test_experiment"
 
@@ -407,22 +388,16 @@ class SalmonTestCase(TestCase):
             source_database="SRA",
             technology="RNA-SEQ",
         )
-        ExperimentSampleAssociation.objects.create(
-            experiment=experiment, sample=sample1
-        )
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
 
         experiment_dir = "/home/user/data_store/salmon_tests/PRJNA242809"
 
         og_file_1 = OriginalFile()
-        og_file_1.absolute_file_path = os.path.join(
-            experiment_dir, "raw/SRR1206053.fastq.gz"
-        )
+        og_file_1.absolute_file_path = os.path.join(experiment_dir, "raw/SRR1206053.fastq.gz")
         og_file_1.filename = "SRR1206053.fastq.gz"
         og_file_1.save()
 
-        OriginalFileSampleAssociation.objects.create(
-            original_file=og_file_1, sample=sample1
-        ).save()
+        OriginalFileSampleAssociation.objects.create(original_file=og_file_1, sample=sample1).save()
 
         ## Sample 2
         sample2_accession = "SRR1206054"
@@ -432,20 +407,14 @@ class SalmonTestCase(TestCase):
             source_database="SRA",
             technology="RNA-SEQ",
         )
-        ExperimentSampleAssociation.objects.create(
-            experiment=experiment, sample=sample2
-        )
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
 
         og_file_2 = OriginalFile()
-        og_file_2.absolute_file_path = os.path.join(
-            experiment_dir, "raw/SRR1206054.fastq.gz"
-        )
+        og_file_2.absolute_file_path = os.path.join(experiment_dir, "raw/SRR1206054.fastq.gz")
         og_file_2.filename = "SRR1206054.fastq.gz"
         og_file_2.save()
 
-        OriginalFileSampleAssociation.objects.create(
-            original_file=og_file_2, sample=sample2
-        ).save()
+        OriginalFileSampleAssociation.objects.create(original_file=og_file_2, sample=sample2).save()
 
         # Test `salmon quant` on sample1 (SRR1206053)
         sample1_dir = os.path.join(experiment_dir, sample1_accession)
@@ -467,9 +436,7 @@ class SalmonTestCase(TestCase):
         self.assertEqual(len(experiments_ready), 0)
         # This job should not have produced any tximport output
         # because the other sample isn't ready yet.
-        self.assertFalse(
-            os.path.exists(os.path.join(job1_context["work_dir"], "txi_out.RDS"))
-        )
+        self.assertFalse(os.path.exists(os.path.join(job1_context["work_dir"], "txi_out.RDS")))
 
         # Now run `salmon quant` on sample2 (SRR1206054) too
         sample2_dir = os.path.join(experiment_dir, sample2_accession)
@@ -539,34 +506,22 @@ class SalmonTestCase(TestCase):
 
         ## Sample 1
         sample1_accession = "SRR1206053"
-        sample1 = Sample.objects.create(
-            accession_code=sample1_accession, organism=c_elegans
-        )
+        sample1 = Sample.objects.create(accession_code=sample1_accession, organism=c_elegans)
         sample1.source_database = "GEO"
         sample1.technology = "RNA-SEQ"
-        ExperimentSampleAssociation.objects.create(
-            experiment=experiment, sample=sample1
-        )
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
 
         ## Sample 2
         sample2_accession = "SRR1206054"
-        sample2 = Sample.objects.create(
-            accession_code=sample2_accession, organism=c_elegans
-        )
+        sample2 = Sample.objects.create(accession_code=sample2_accession, organism=c_elegans)
         sample2.source_database = "GEO"
         sample2.technology = "RNA-SEQ"
-        ExperimentSampleAssociation.objects.create(
-            experiment=experiment, sample=sample2
-        )
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
 
-        computational_result1 = ComputationalResult(
-            processor=utils.find_processor("SALMON_QUANT")
-        )
+        computational_result1 = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
         computational_result1.save()
 
-        sample_result_assoc = SampleResultAssociation(
-            sample=sample1, result=computational_result1
-        )
+        sample_result_assoc = SampleResultAssociation(sample=sample1, result=computational_result1)
         sample_result_assoc.save()
 
         comp_file = ComputedFile()
@@ -578,14 +533,10 @@ class SalmonTestCase(TestCase):
         comp_file.s3_bucket = "bucket"
         comp_file.save()
 
-        computational_result2 = ComputationalResult(
-            processor=utils.find_processor("SALMON_QUANT")
-        )
+        computational_result2 = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
         computational_result2.save()
 
-        sample_result_assoc = SampleResultAssociation(
-            sample=sample2, result=computational_result2
-        )
+        sample_result_assoc = SampleResultAssociation(sample=sample2, result=computational_result2)
         sample_result_assoc.save()
 
         comp_file = ComputedFile()
@@ -597,9 +548,7 @@ class SalmonTestCase(TestCase):
         comp_file.s3_bucket = "bucket"
         comp_file.save()
 
-        quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})[
-            "tximport_inputs"
-        ]
+        quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})["tximport_inputs"]
 
         self.assertEqual({}, quantified_experiments)
 
@@ -648,15 +597,11 @@ class SalmonToolsTestCase(TestCase):
 
         # Check two output files
         output_file1 = job_context["salmontools_directory"] + "unmapped_by_salmon_1.fa"
-        expected_output_file1 = (
-            self.test_dir + "expected_double_output/unmapped_by_salmon_1.fa"
-        )
+        expected_output_file1 = self.test_dir + "expected_double_output/unmapped_by_salmon_1.fa"
         self.assertTrue(identical_checksum(output_file1, expected_output_file1))
 
         output_file2 = job_context["salmontools_directory"] + "unmapped_by_salmon_2.fa"
-        expected_output_file2 = (
-            self.test_dir + "expected_double_output/unmapped_by_salmon_2.fa"
-        )
+        expected_output_file2 = self.test_dir + "expected_double_output/unmapped_by_salmon_2.fa"
         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
     @tag("salmon")
@@ -690,9 +635,7 @@ class SalmonToolsTestCase(TestCase):
 
         # Check output file
         output_file = job_context["salmontools_directory"] + "unmapped_by_salmon.fa"
-        expected_output_file = (
-            self.test_dir + "expected_single_output/unmapped_by_salmon.fa"
-        )
+        expected_output_file = self.test_dir + "expected_single_output/unmapped_by_salmon.fa"
         self.assertTrue(identical_checksum(output_file, expected_output_file))
 
 
@@ -755,9 +698,7 @@ class RuntimeProcessorTest(TestCase):
         self.assertEqual(
             tximport_processor.docker_image, ProcessorEnum[proc_key].value["docker_img"]
         )
-        self.assertEqual(
-            tximport_processor.environment["os_distribution"], utils.get_os_distro()
-        )
+        self.assertEqual(tximport_processor.environment["os_distribution"], utils.get_os_distro())
 
         os_pkg_name = "r-base"
         self.assertEqual(
@@ -774,9 +715,7 @@ class RuntimeProcessorTest(TestCase):
         r_pkg_names = ["Bioconductor", "tximport"]
         r_pkg_info = utils.get_r_pkgs(r_pkg_names)
         for r_pkg in r_pkg_names:
-            self.assertEqual(
-                tximport_processor.environment["R"][r_pkg], r_pkg_info[r_pkg]
-            )
+            self.assertEqual(tximport_processor.environment["R"][r_pkg], r_pkg_info[r_pkg])
 
         # Confirm that there is only one processor in one runtime environment
         for i in range(3):
@@ -828,9 +767,7 @@ class RuntimeProcessorTest(TestCase):
 
         # Failed job because "foobar" is an invalid processor key
         self.assertEqual(job_context["success"], False)
-        self.assertEqual(
-            job_context["job"].failure_reason, "Failed to set processor: 'foobar'"
-        )
+        self.assertEqual(job_context["job"].failure_reason, "Failed to set processor: 'foobar'")
 
     @tag("salmon")
     def test_salmontools_with_bad_processor(self):
@@ -859,9 +796,7 @@ class RuntimeProcessorTest(TestCase):
 
         salmon._run_salmontools(job_context)
         self.assertEqual(job_context["success"], False)
-        self.assertTrue(
-            job_context["job"].failure_reason.startswith("Failed to set processor:")
-        )
+        self.assertTrue(job_context["job"].failure_reason.startswith("Failed to set processor:"))
 
         # Change yml filename back
         ProcessorEnum["SALMONTOOLS"].value["yml_file"] = original_yml_file
@@ -888,18 +823,14 @@ def create_tximport_job_context(
     zebrafish = Organism.get_object_for_name("DANIO_RERIO")
 
     # This is a lie, but this image doesn't have the dependencies for TRANSCRIPTOME_INDEX
-    computational_result_short = ComputationalResult(
-        processor=utils.find_processor("SALMON_QUANT")
-    )
+    computational_result_short = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
     computational_result_short.save()
 
     organism_index = OrganismIndex()
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = (
-        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    )
+    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
     organism_index.salmon_version = salmon_version
     organism_index.save()
 
@@ -922,9 +853,7 @@ def create_tximport_job_context(
             source_database="SRA",
             technology="RNA-SEQ",
         )
-        ExperimentSampleAssociation.objects.create(
-            experiment=experiment, sample=last_sample
-        )
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=last_sample)
 
     # Create tximport result and files
     quant_processor = utils.find_processor("SALMON_QUANT")
@@ -987,9 +916,7 @@ def create_tximport_job_context(
         quant_file.s3_key = "key"
         quant_file.save()
 
-        SampleResultAssociation.objects.get_or_create(
-            sample=sample, result=quant_result
-        )
+        SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
 
     # Processor jobs need at least one original file associated with
     # them so they know what they're processing.
@@ -1113,9 +1040,7 @@ class EarlyTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        job_context = run_tximport_at_progress_point(
-            complete_accessions, incomplete_accessions
-        )
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
 
         self.assertTrue("tximported" in job_context)
 
@@ -1128,12 +1053,8 @@ class EarlyTximportTestCase(TestCase):
                 filename=accession_code + "_output_gene_lengthScaledTPM.tsv"
             )
             sample = tpm_file.samples.first()
-            SampleComputedFileAssociation.objects.get(
-                sample=sample, computed_file=tpm_file
-            )
-            SampleComputedFileAssociation.objects.get(
-                sample=sample, computed_file=rds_file
-            )
+            SampleComputedFileAssociation.objects.get(sample=sample, computed_file=tpm_file)
+            SampleComputedFileAssociation.objects.get(sample=sample, computed_file=rds_file)
             self.assertTrue(sample.is_processed)
 
         # Make sure that these samples actually were ignored.
@@ -1233,9 +1154,7 @@ class EarlyTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        job_context = run_tximport_at_progress_point(
-            complete_accessions, incomplete_accessions
-        )
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample' and it
@@ -1291,9 +1210,7 @@ class EarlyTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        job_context = run_tximport_at_progress_point(
-            complete_accessions, incomplete_accessions
-        )
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample' and it
@@ -1347,13 +1264,9 @@ class EarlyTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        job_context = create_tximport_job_context(
-            complete_accessions, incomplete_accessions
-        )
+        job_context = create_tximport_job_context(complete_accessions, incomplete_accessions)
 
-        result = (
-            Sample.objects.filter(accession_code="SRR5125621").first().results.first()
-        )
+        result = Sample.objects.filter(accession_code="SRR5125621").first().results.first()
         computed_file = ComputedFile.objects.get(result=result, filename="quant.sf")
         computed_file.s3_bucket = None
         computed_file.s3_key = None

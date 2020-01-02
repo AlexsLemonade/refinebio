@@ -58,9 +58,7 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
 
         # Don't log statuses more often than every 5 seconds.
         if timezone.now() - last_log_time > timedelta(seconds=5):
-            logger.info(
-                "Still polling the %s with ID %s.", job_class.__name__, job.nomad_job_id
-            )
+            logger.info("Still polling the %s with ID %s.", job_class.__name__, job.nomad_job_id)
             last_log_time = timezone.now()
 
         job = job_class.objects.filter(id=job.id).get()
@@ -88,9 +86,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(
-                name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-            )
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
             accession_code = "E-GEOD-3303"
@@ -112,9 +108,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
             )  # exclude aborted processor jobs
             self.assertGreater(processor_jobs.count(), 0)
 
-            logger.info(
-                "Downloader Jobs finished, waiting for processor Jobs to complete."
-            )
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             start_time = timezone.now()
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
@@ -136,13 +130,9 @@ class NoOpEndToEndTestCase(TransactionTestCase):
             self.assertEqual(SampleComputedFileAssociation.objects.all().count(), 0)
             self.assertEqual(ComputedFile.objects.all().count(), 0)
             self.assertEqual(DownloaderJob.objects.all().count(), 0)
-            self.assertEqual(
-                DownloaderJobOriginalFileAssociation.objects.all().count(), 0
-            )
+            self.assertEqual(DownloaderJobOriginalFileAssociation.objects.all().count(), 0)
             self.assertEqual(ProcessorJob.objects.all().count(), 0)
-            self.assertEqual(
-                ProcessorJobOriginalFileAssociation.objects.all().count(), 0
-            )
+            self.assertEqual(ProcessorJobOriginalFileAssociation.objects.all().count(), 0)
 
 
 class ArrayexpressRedownloadingTestCase(TransactionTestCase):
@@ -158,9 +148,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(
-                name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-            )
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
             NUM_SAMPLES_IN_EXPERIMENT = 12
@@ -180,9 +168,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             # possible, so pass a short loop time and let the waiting
             # loop spin really fast so we lose as little time as
             # possible.
-            downloader_job = wait_for_job(
-                downloader_jobs[0], DownloaderJob, start_time, 0.1
-            )
+            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, 0.1)
             self.assertTrue(downloader_job.success)
 
             # Now we're going to delete one of the extracted files but not the other.
@@ -202,9 +188,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             )
 
             start_time = timezone.now()
-            doomed_processor_job = wait_for_job(
-                doomed_processor_job, ProcessorJob, start_time
-            )
+            doomed_processor_job = wait_for_job(doomed_processor_job, ProcessorJob, start_time)
             self.assertTrue(doomed_processor_job.abort)
 
             # The processor job that had a missing file will have
@@ -220,9 +204,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s", recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -237,9 +219,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             # And finally we can make sure that all of the
             # processor jobs were successful, including the one that
             # got recreated.
-            logger.info(
-                "Downloader Jobs finished, waiting for processor Jobs to complete."
-            )
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
                 self.assertTrue(processor_job.success)
@@ -262,9 +242,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(
-                name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-            )
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
             accession_code = "GSE102571"
@@ -314,9 +292,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
                 )
 
                 start_time = timezone.now()
-                doomed_processor_job = wait_for_job(
-                    doomed_processor_job, ProcessorJob, start_time
-                )
+                doomed_processor_job = wait_for_job(doomed_processor_job, ProcessorJob, start_time)
                 self.assertTrue(doomed_processor_job.abort)
 
             # The processor job that had a missing file will have
@@ -332,18 +308,14 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s", recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
             # And finally we can make sure that all of the
             # processor jobs were successful, including the one that
             # got recreated.
-            logger.info(
-                "Downloader Jobs finished, waiting for processor Jobs to complete."
-            )
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             processor_jobs = ProcessorJob.objects.all().exclude(
                 abort=True
             )  # exclude aborted processor jobs
@@ -380,9 +352,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(
-                name="MUS_MUSCULUS", taxonomy_id=10090, is_scientific_name=True
-            )
+            organism = Organism(name="MUS_MUSCULUS", taxonomy_id=10090, is_scientific_name=True)
             organism.save()
 
             accession_code = "GSE100388"
@@ -433,9 +403,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
                 )
 
                 start_time = timezone.now()
-                doomed_processor_job = wait_for_job(
-                    doomed_processor_job, ProcessorJob, start_time
-                )
+                doomed_processor_job = wait_for_job(doomed_processor_job, ProcessorJob, start_time)
                 self.assertTrue(doomed_processor_job.abort)
 
             # The processor job that had a missing file will have
@@ -452,9 +420,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s", recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -462,12 +428,8 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # jobs were successful, including the one that got
             # recreated. The processor job that recreated that job has
             # abort=True
-            logger.info(
-                "Downloader Jobs finished, waiting for processor Jobs to complete."
-            )
-            processor_jobs = ProcessorJob.objects.all().exclude(
-                abort=True
-            )  # exclude aborted jobs
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
+            processor_jobs = ProcessorJob.objects.all().exclude(abort=True)  # exclude aborted jobs
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
                 self.assertTrue(processor_job.success)
@@ -484,24 +446,17 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
         with self.env:
             for length in ["LONG", "SHORT"]:
                 work_dir_glob = (
-                    LOCAL_ROOT_DIR
-                    + "/Caenorhabditis_elegans/"
-                    + length
-                    + "/processor_job_*"
+                    LOCAL_ROOT_DIR + "/Caenorhabditis_elegans/" + length + "/processor_job_*"
                 )
                 for work_dir in glob.glob(work_dir_glob):
                     shutil.rmtree(work_dir)
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(
-                name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-            )
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
-            survey_job = surveyor.survey_transcriptome_index(
-                "Caenorhabditis elegans", "Ensembl"
-            )
+            survey_job = surveyor.survey_transcriptome_index("Caenorhabditis elegans", "Ensembl")
 
             self.assertTrue(survey_job.success)
 
@@ -560,9 +515,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s", recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -574,9 +527,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # And finally we can make sure that both of the
             # processor jobs were successful, including the one that
             # got recreated.
-            logger.info(
-                "Downloader Jobs finished, waiting for processor Jobs to complete."
-            )
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             successful_processor_jobs = []
             for processor_job in processor_jobs:
                 # One of the calls to wait_for_job will fail if the
@@ -621,9 +572,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
 
             # prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(
-                name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-            )
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
             survey_job = surveyor.survey_experiment("SRP040623", "SRA")
@@ -646,14 +595,10 @@ class SraRedownloadingTestCase(TransactionTestCase):
                 # possible, so pass a short loop time and let the waiting
                 # loop spin really fast so we lose as little time as
                 # possible.
-                downloader_job = wait_for_job(
-                    downloader_job, DownloaderJob, start_time, 0.1
-                )
+                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, 0.1)
                 self.assertTrue(downloader_job.success)
                 if not file_deleted:
-                    for original_file in OriginalFile.objects.filter(
-                        is_downloaded=True
-                    ):
+                    for original_file in OriginalFile.objects.filter(is_downloaded=True):
                         if not original_file.is_archive:
                             original_file.delete_local_file()
                             file_deleted = True
@@ -693,9 +638,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s", recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -712,9 +655,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             # fail, but that failure happens past the point that we're
             # testing.
             # So we're gonna check for the correct failure_reason.
-            logger.info(
-                "Downloader Jobs finished, waiting for processor Jobs to complete."
-            )
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             good_failure_reason = "Missing transcriptome index."
             successful_processor_jobs = []
             for processor_job in processor_jobs:
@@ -722,12 +663,9 @@ class SraRedownloadingTestCase(TransactionTestCase):
                 # because the job is going to abort when it
                 # finds that the file it wants to process is missing.
                 try:
-                    processor_job = wait_for_job(
-                        processor_job, ProcessorJob, start_time
-                    )
-                    if (
-                        not processor_job.success
-                        and processor_job.failure_reason.startswith(good_failure_reason)
+                    processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                    if not processor_job.success and processor_job.failure_reason.startswith(
+                        good_failure_reason
                     ):
                         successful_processor_jobs.append(processor_job)
                 except:
@@ -750,9 +688,7 @@ class EnaFallbackTestCase(TransactionTestCase):
 
             # prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(
-                name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-            )
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
             # Survey just a single run to make things faster!

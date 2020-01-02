@@ -422,9 +422,7 @@ def get_nomad_jobs_breakdown():
         return get_job_details(job)[1]
 
     # groupby must be executed on a sorted iterable https://docs.python.org/2/library/itertools.html#itertools.groupby
-    sorted_jobs_by_type = sorted(
-        filter(get_job_type, parameterized_jobs), key=get_job_type
-    )
+    sorted_jobs_by_type = sorted(filter(get_job_type, parameterized_jobs), key=get_job_type)
     aggregated_jobs_by_type = groupby(sorted_jobs_by_type, get_job_type)
     nomad_pending_jobs_by_type, nomad_running_jobs_by_type = _aggregate_nomad_jobs(
         aggregated_jobs_by_type
@@ -433,16 +431,10 @@ def get_nomad_jobs_breakdown():
     # To get the total jobs for running and pending, the easiest
     # AND the most efficient way is to sum up the stats we've
     # already partially summed up.
-    nomad_running_jobs = sum(
-        num_jobs for job_type, num_jobs in nomad_running_jobs_by_type.items()
-    )
-    nomad_pending_jobs = sum(
-        num_jobs for job_type, num_jobs in nomad_pending_jobs_by_type.items()
-    )
+    nomad_running_jobs = sum(num_jobs for job_type, num_jobs in nomad_running_jobs_by_type.items())
+    nomad_pending_jobs = sum(num_jobs for job_type, num_jobs in nomad_pending_jobs_by_type.items())
 
-    sorted_jobs_by_volume = sorted(
-        filter(get_job_volume, parameterized_jobs), key=get_job_volume
-    )
+    sorted_jobs_by_volume = sorted(filter(get_job_volume, parameterized_jobs), key=get_job_volume)
     aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, get_job_volume)
     nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = _aggregate_nomad_jobs(
         aggregated_jobs_by_volume

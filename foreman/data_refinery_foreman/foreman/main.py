@@ -9,9 +9,7 @@ import traceback
 from django.conf import settings
 
 # from django.core.paginator import Paginator
-from data_refinery_common.performant_pagination.pagination import (
-    PerformantPaginator as Paginator,
-)
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from django.db import transaction
 from django.db.models.expressions import Q
 from django.utils import timezone
@@ -211,10 +209,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
             sample = job.get_samples().pop()
 
             # Skip jobs that aren't for Salmon. Handle both ProcessorJobs and DownloaderJobs.
-            if (
-                type(job) is ProcessorJob
-                and job.pipeline_applied != ProcessorPipeline.SALMON.value
-            ):
+            if type(job) is ProcessorJob and job.pipeline_applied != ProcessorPipeline.SALMON.value:
                 continue
             elif type(job) is DownloaderJob:
                 is_salmon_sample = False
@@ -240,25 +235,17 @@ def prioritize_salmon_jobs(jobs: List) -> List:
                 original_files = related_sample.original_files
                 if original_files.count() == 0:
                     logger.error(
-                        "Salmon sample found without any original files!!!",
-                        sample=related_sample,
+                        "Salmon sample found without any original files!!!", sample=related_sample,
                     )
-                elif (
-                    original_files.first().processor_jobs.filter(success=True).count()
-                    >= 1
-                ):
+                elif original_files.first().processor_jobs.filter(success=True).count() >= 1:
                     processed_samples += 1
 
             experiment_completion_percent = processed_samples / len(related_samples)
-            prioritized_jobs.append(
-                {"job": job, "priority": experiment_completion_percent}
-            )
+            prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
         except:
             logger.debug("Exception caught while prioritizing salmon jobs!", job=job)
 
-    sorted_job_mappings = sorted(
-        prioritized_jobs, reverse=True, key=lambda k: k["priority"]
-    )
+    sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
     sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
 
     # Remove all the jobs we're moving to the front of the list
@@ -318,9 +305,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
                         is_prioritized_job = True
                         break
         except:
-            logger.exception(
-                "Exception caught while prioritizing jobs by accession!", job=job
-            )
+            logger.exception("Exception caught while prioritizing jobs by accession!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
     for job in prioritized_jobs:
@@ -373,9 +358,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
     if not original_file.needs_processing():
         last_job.no_retry = True
         last_job.success = False
-        last_job.failure_reason = (
-            "Foreman told to redownload job with prior successful processing."
-        )
+        last_job.failure_reason = "Foreman told to redownload job with prior successful processing."
         last_job.save()
         logger.info(
             "Foreman told to redownload job with prior successful processing.",
@@ -418,9 +401,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
         new_job.id,
     )
     try:
-        if send_job(
-            Downloaders[last_job.downloader_task], job=new_job, is_dispatch=True
-        ):
+        if send_job(Downloaders[last_job.downloader_task], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -677,15 +658,11 @@ def retry_lost_downloader_jobs() -> None:
                     # need to recreate it, we just gotta queue it up!
                     job.volume_index = get_emptiest_volume()
                     job.save()
-                    send_job(
-                        Downloaders[job.downloader_task], job=job, is_dispatch=True
-                    )
+                    send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
                     jobs_queued_from_this_page += 1
                     VOLUME_WORK_DEPTH[job.volume_index] += 1
             except socket.timeout:
-                logger.info(
-                    "Timeout connecting to Nomad - is Nomad down?", job_id=job.id
-                )
+                logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
             except URLNotFoundNomadException:
                 logger.debug(
                     (
@@ -740,10 +717,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     # increase the RAM amount.
     if last_job.start_time:
         # These initial values are set in common/job_lookup.py:determine_ram_amount
-        if (
-            last_job.pipeline_applied == "SALMON"
-            or last_job.pipeline_applied == "TXIMPORT"
-        ):
+        if last_job.pipeline_applied == "SALMON" or last_job.pipeline_applied == "TXIMPORT":
             if new_ram_amount == 8192:
                 new_ram_amount = 12288
             elif new_ram_amount == 12288:
@@ -771,9 +745,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     ] not in SMASHER_JOB_TYPES:
         active_volumes = get_active_volumes()
         if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD:
-            logger.debug(
-                "No active volumes to requeue processor job.", job_id=last_job.id
-            )
+            logger.debug("No active volumes to requeue processor job.", job_id=last_job.id)
             return
         else:
             volume_index = random.choice(list(active_volumes))
@@ -792,9 +764,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         )
 
     for dataset in last_job.datasets.all():
-        ProcessorJobDatasetAssociation.objects.get_or_create(
-            processor_job=new_job, dataset=dataset
-        )
+        ProcessorJobDatasetAssociation.objects.get_or_create(processor_job=new_job, dataset=dataset)
 
     try:
         logger.debug(
@@ -802,9 +772,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             last_job.id,
             new_job.id,
         )
-        if send_job(
-            ProcessorPipeline[last_job.pipeline_applied], job=new_job, is_dispatch=True
-        ):
+        if send_job(ProcessorPipeline[last_job.pipeline_applied], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -828,9 +796,7 @@ def get_capacity_for_processor_jobs(nomad_client) -> bool:
     """
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
-    MAX_TOTAL_JOBS = int(
-        get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS)
-    )
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
     return MAX_TOTAL_JOBS - len_all_jobs
 
@@ -845,9 +811,7 @@ def handle_processor_jobs(
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     if queue_capacity is None:
-        queue_capacity = int(
-            get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS)
-        )
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
 
     # We want zebrafish data first, then hgu133plus2, then data
     # related to pediatric cancer, then to finish salmon experiments
@@ -903,8 +867,7 @@ def retry_failed_processor_jobs() -> None:
     page_count = 0
     while queue_capacity > 0:
         logger.info(
-            "Handling page %d of failed (explicitly-marked-as-failure) processor jobs!",
-            page_count,
+            "Handling page %d of failed (explicitly-marked-as-failure) processor jobs!", page_count,
         )
         handle_processor_jobs(page.object_list, queue_capacity)
 
@@ -963,15 +926,11 @@ def retry_hung_processor_jobs() -> None:
                 # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 28, in _endpoint_builder
                 #   u = "/".join(args)
                 # TypeError: sequence item 1: expected str instance, NoneType found
-                logger.info(
-                    "Couldn't query Nomad about Processor Job.", processor_job=job.id
-                )
+                logger.info("Couldn't query Nomad about Processor Job.", processor_job=job.id)
             except nomad.api.exceptions.BaseNomadException:
                 raise
             except Exception:
-                logger.exception(
-                    "Couldn't query Nomad about Processor Job.", processor_job=job.id
-                )
+                logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
         if hung_jobs:
             logger.info(
@@ -1053,9 +1012,7 @@ def retry_lost_processor_jobs() -> None:
             except nomad.api.exceptions.BaseNomadException:
                 raise
             except Exception:
-                logger.exception(
-                    "Couldn't query Nomad about Processor Job.", processor_job=job.id
-                )
+                logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
         if lost_jobs:
             logger.info(
@@ -1138,9 +1095,7 @@ def get_capacity_for_survey_jobs(nomad_client) -> bool:
     """
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
-    MAX_TOTAL_JOBS = int(
-        get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS)
-    )
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
     return MAX_TOTAL_JOBS - len_all_jobs
 
@@ -1153,9 +1108,7 @@ def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> Non
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     if queue_capacity is None:
-        queue_capacity = int(
-            get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS)
-        )
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
         if jobs_dispatched >= queue_capacity:
@@ -1173,9 +1126,9 @@ def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> Non
 
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.failed_objects.filter(
-        created_at__gt=JOB_CREATED_AT_CUTOFF
-    ).order_by("pk")
+    failed_jobs = SurveyJob.failed_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).order_by(
+        "pk"
+    )
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -1187,8 +1140,7 @@ def retry_failed_survey_jobs() -> None:
     page_count = 0
     while queue_capacity > 0:
         logger.info(
-            "Handling page %d of failed (explicitly-marked-as-failure) survey jobs!",
-            page_count,
+            "Handling page %d of failed (explicitly-marked-as-failure) survey jobs!", page_count,
         )
         handle_survey_jobs(page.object_list, queue_capacity)
 
@@ -1235,9 +1187,7 @@ def retry_hung_survey_jobs() -> None:
             except nomad.api.exceptions.BaseNomadException:
                 raise
             except Exception:
-                logger.exception(
-                    "Couldn't query Nomad about SurveyJob Job.", survey_job=job.id
-                )
+                logger.exception("Couldn't query Nomad about SurveyJob Job.", survey_job=job.id)
 
         if hung_jobs:
             logger.info(
@@ -1305,9 +1255,7 @@ def retry_lost_survey_jobs() -> None:
             except nomad.api.exceptions.BaseNomadException:
                 raise
             except Exception:
-                logger.exception(
-                    "Couldn't query Nomad about Processor Job.", survey_job=job.id
-                )
+                logger.exception("Couldn't query Nomad about Processor Job.", survey_job=job.id)
 
         if lost_jobs:
             logger.info(
@@ -1343,15 +1291,10 @@ def send_janitor_jobs():
 
     for volume_index in active_volumes:
         new_job = ProcessorJob(
-            num_retries=0,
-            pipeline_applied="JANITOR",
-            ram_amount=2048,
-            volume_index=volume_index,
+            num_retries=0, pipeline_applied="JANITOR", ram_amount=2048, volume_index=volume_index,
         )
         new_job.save()
-        logger.info(
-            "Sending Janitor with index: ", job_id=new_job.id, index=volume_index
-        )
+        logger.info("Sending Janitor with index: ", job_id=new_job.id, index=volume_index)
         try:
             send_job(ProcessorPipeline["JANITOR"], job=new_job, is_dispatch=True)
         except Exception as e:
@@ -1381,9 +1324,7 @@ def cleanup_the_queue():
     DOWNLOADER = "DOWNLOADER"
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
     indexed_job_types = [
-        pipeline.value
-        for pipeline in ProcessorPipeline
-        if pipeline not in SMASHER_JOB_TYPES
+        pipeline.value for pipeline in ProcessorPipeline if pipeline not in SMASHER_JOB_TYPES
     ]
     # Special case for downloader jobs because they only have one
     # nomad job type for all downloader tasks.
@@ -1467,9 +1408,7 @@ def clean_database():
     """
 
     # Hide smashable files
-    computed_files = ComputedFile.objects.filter(
-        s3_bucket=None, s3_key=None, is_smashable=True
-    )
+    computed_files = ComputedFile.objects.filter(s3_bucket=None, s3_key=None, is_smashable=True)
     logger.info("Cleaning unsynced files!", num_to_clean=computed_files.count())
 
     # We don't do this in bulk because we want the properties set by save() as well

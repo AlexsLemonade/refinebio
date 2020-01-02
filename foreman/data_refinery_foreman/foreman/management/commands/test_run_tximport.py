@@ -52,9 +52,7 @@ def run_tximport_at_progress_point(
 
     zebrafish = Organism.get_object_for_name("DANIO_RERIO")
 
-    ExperimentOrganismAssociation.objects.get_or_create(
-        experiment=experiment, organism=zebrafish
-    )
+    ExperimentOrganismAssociation.objects.get_or_create(experiment=experiment, organism=zebrafish)
 
     # Create the transcriptome processor and result:
     transcriptome_processor = Processor()
@@ -70,9 +68,7 @@ def run_tximport_at_progress_point(
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = (
-        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    )
+    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
     organism_index.salmon_version = "salmon 0.13.1"
     organism_index.save()
 
@@ -182,9 +178,7 @@ def run_tximport_at_progress_point(
         quant_file.s3_key = "key"
         quant_file.save()
 
-        SampleResultAssociation.objects.get_or_create(
-            sample=sample, result=quant_result
-        )
+        SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
 
     # Setup is done, actually run the command.
     run_tximport.run_tximport()
@@ -203,9 +197,7 @@ class RunTximportTestCase(TestCase):
     percent.
     """
 
-    @patch(
-        "data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes"
-    )
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
     @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
     def test_early_tximport(self, mock_send_job, mock_get_active_volumes):
         """Tests that tximport jobs are created when the experiment is past the thresholds.
@@ -269,9 +261,7 @@ class RunTximportTestCase(TestCase):
         first_call_job_type = mock_calls[0][1][0]
         self.assertEqual(first_call_job_type, ProcessorPipeline.TXIMPORT)
 
-    @patch(
-        "data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes"
-    )
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
     @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
     def test_tximport_percent_cutoff(self, mock_send_job, mock_get_active_volumes):
         """Tests logic for determining if tximport should be run early.
@@ -335,9 +325,7 @@ class RunTximportTestCase(TestCase):
         mock_calls = mock_send_job.mock_calls
         self.assertEqual(len(mock_calls), 0)
 
-    @patch(
-        "data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes"
-    )
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
     @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
     def test_tximport_numerical_cutoff(self, mock_send_job, mock_get_active_volumes):
         """Tests logic for determining if tximport should be run early.
@@ -387,9 +375,7 @@ class RunTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        job_context = run_tximport_at_progress_point(
-            complete_accessions, incomplete_accessions
-        )
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample' and it

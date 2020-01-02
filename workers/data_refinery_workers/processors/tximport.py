@@ -59,9 +59,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     # (A single sample could belong to multiple experiments, meaning
     # that it could be run more than once, potentially even at the
     # same time.)
-    job_context["work_dir"] = (
-        os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "/"
-    )
+    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     # Technically unsafe, but if either of these objects don't exist we need to fail anyway.

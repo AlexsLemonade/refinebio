@@ -35,9 +35,7 @@ from data_refinery_common.rna_seq import (
     should_run_tximport,
 )
 from data_refinery_common.utils import get_env_variable, get_active_volumes
-from data_refinery_common.performant_pagination.pagination import (
-    PerformantPaginator as Paginator,
-)
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 
 
 logger = get_and_configure_logger(__name__)
@@ -83,9 +81,7 @@ def run_tximport():
                 # in that it doesn't actuallhy use original files so
                 # this is just used to point to the experiment.
                 samples = experiment.samples.all()
-                assoc.original_file = experiment.samples.all()[0].original_files.all()[
-                    0
-                ]
+                assoc.original_file = experiment.samples.all()[0].original_files.all()[0]
                 assoc.processor_job = processor_job
                 assoc.save()
 
@@ -99,8 +95,7 @@ def run_tximport():
                     pass
 
         logger.info(
-            "Created %d tximport jobs for experiments past the thresholds.",
-            creation_count,
+            "Created %d tximport jobs for experiments past the thresholds.", creation_count,
         )
 
         if not page.has_next():

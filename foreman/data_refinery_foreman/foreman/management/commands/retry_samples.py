@@ -10,9 +10,7 @@ from dateutil.parser import parse as parse_date
 from data_refinery_common.models import ProcessorJob, Sample, ComputedFile
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.job_management import create_downloader_job
-from data_refinery_common.performant_pagination.pagination import (
-    PerformantPaginator as Paginator,
-)
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 
 
 logger = get_and_configure_logger(__name__)
@@ -61,9 +59,9 @@ def retry_by_source_database(source_database):
 
 def retry_by_accession_codes(accession_codes_param):
     accession_codes = accession_codes_param.split(",")
-    eligible_samples = Sample.objects.filter(
-        accession_code__in=accession_codes
-    ).prefetch_related("original_files")
+    eligible_samples = Sample.objects.filter(accession_code__in=accession_codes).prefetch_related(
+        "original_files"
+    )
     total_samples_queued = requeue_samples(eligible_samples)
     logger.info(
         "Re-queued %d samples with accession codes %s.",
@@ -89,9 +87,7 @@ def retry_by_regex(pattern, last_modified=None):
     eligible_samples = (
         Sample.objects.filter(is_processed=False)
         .annotate(
-            failure_reason=Subquery(
-                latest_processor_job_for_sample.values("failure_reason")[:1]
-            )
+            failure_reason=Subquery(latest_processor_job_for_sample.values("failure_reason")[:1])
         )
         .filter(failure_reason__regex=pattern)
         .prefetch_related("original_files")
@@ -100,9 +96,7 @@ def retry_by_regex(pattern, last_modified=None):
     total_samples_queued = requeue_samples(eligible_samples)
 
     logger.info(
-        "Re-queued %d samples that had failed with the pattern %s.",
-        total_samples_queued,
-        pattern,
+        "Re-queued %d samples that had failed with the pattern %s.", total_samples_queued, pattern,
     )
 
 

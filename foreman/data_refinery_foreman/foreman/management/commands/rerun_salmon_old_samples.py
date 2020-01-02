@@ -51,8 +51,7 @@ def update_salmon_versions(experiment: Experiment):
                 # might want to retry (failed | hung | lost)
                 has_open_processor_job = (
                     ProcessorJob.objects.filter(
-                        original_files=original_files[0],
-                        pipeline_applied=ProcessorPipeline.SALMON,
+                        original_files=original_files[0], pipeline_applied=ProcessorPipeline.SALMON,
                     )
                     .filter(
                         Q(success=False, retried=False, no_retry=False)
@@ -96,9 +95,7 @@ def update_salmon_all_experiments():
                 "samples__results__organism_index__salmon_version",
                 distinct=True,
                 filter=Q(
-                    samples__results__processor__name=ProcessorEnum.SALMON_QUANT.value[
-                        "name"
-                    ]
+                    samples__results__processor__name=ProcessorEnum.SALMON_QUANT.value["name"]
                 ),
             )
         )
@@ -114,18 +111,14 @@ class Command(BaseCommand):
         parser.add_argument(
             "--accession-code",
             type=str,
-            help=(
-                "Optional parameter to allow running the command on a single experiment"
-            ),
+            help=("Optional parameter to allow running the command on a single experiment"),
         )
 
     def handle(self, *args, **options):
         if options["accession_code"] is None:
             update_salmon_all_experiments()
         else:
-            experiment = Experiment.objects.filter(
-                accession_code=options["accession_code"]
-            ).first()
+            experiment = Experiment.objects.filter(accession_code=options["accession_code"]).first()
             if not experiment:
                 logger.error("The provided experiment accession code was not valid.")
                 sys.exit(1)

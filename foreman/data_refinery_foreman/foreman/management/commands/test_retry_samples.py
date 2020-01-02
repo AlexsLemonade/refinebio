@@ -28,9 +28,7 @@ from data_refinery_common.models import (
     Sample,
     SampleResultAssociation,
 )
-from data_refinery_foreman.foreman.management.commands.retry_samples import (
-    retry_by_regex,
-)
+from data_refinery_foreman.foreman.management.commands.retry_samples import retry_by_regex
 
 
 def setup_experiment() -> Dict:
@@ -62,9 +60,7 @@ def setup_experiment() -> Dict:
     original_file.source_filename = accession_code + ".SRA"
     original_file.save()
 
-    OriginalFileSampleAssociation.objects.get_or_create(
-        original_file=original_file, sample=sample
-    )
+    OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
 
     accession_code = "S002"
     sample = Sample.objects.create(
@@ -81,9 +77,7 @@ def setup_experiment() -> Dict:
     original_file.source_filename = accession_code + ".SRA"
     original_file.save()
 
-    OriginalFileSampleAssociation.objects.get_or_create(
-        original_file=original_file, sample=sample
-    )
+    OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
 
     # add a failed processor job for the second sample
     processor_job = ProcessorJob()
@@ -91,7 +85,9 @@ def setup_experiment() -> Dict:
     processor_job.end_time = timezone.now()
     processor_job.no_retry = True
     processor_job.success = False
-    processor_job.failure_reason = "ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!"
+    processor_job.failure_reason = (
+        "ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!"
+    )
     processor_job.save()
 
     processor_assoc = ProcessorJobOriginalFileAssociation()

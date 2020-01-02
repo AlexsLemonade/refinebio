@@ -84,9 +84,7 @@ def prepare_agilent_twocolor_job():
     pj.save()
 
     og_file = OriginalFile()
-    og_file.source_filename = (
-        "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE22900&format=file"
-    )
+    og_file.source_filename = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE22900&format=file"
     og_file.filename = "GSM466597_95899_agilent.txt"
     og_file.absolute_file_path = (
         "/home/user/data_store/raw/TEST/AGILENT_TWOCOLOR/GSM466597_95899_agilent.txt"
@@ -168,12 +166,9 @@ class IlluminaToPCLTestCase(TestCase):
         final_context = illumina.illumina_to_pcl(pj.pk)
         self.assertEqual(final_context["platform"], "illuminaHumanv3")
 
-        for key in (
-            final_context["samples"][0].sampleannotation_set.all()[0].data.keys()
-        ):
+        for key in final_context["samples"][0].sampleannotation_set.all()[0].data.keys():
             self.assertTrue(
-                key
-                in ["detected_platform", "detection_percentage", "mapped_percentage"]
+                key in ["detected_platform", "detection_percentage", "mapped_percentage"]
             )
 
         # Cleanup after the job since it won't since we aren't running in cloud.
@@ -189,7 +184,5 @@ class AgilentTwoColorTestCase(TestCase):
         job = prepare_agilent_twocolor_job()
         agilent_twocolor.agilent_twocolor_to_pcl(job.pk)
         self.assertTrue(
-            os.path.isfile(
-                "/home/user/data_store/raw/TEST/processed/GSM466597_95899_agilent.PCL"
-            )
+            os.path.isfile("/home/user/data_store/raw/TEST/processed/GSM466597_95899_agilent.PCL")
         )

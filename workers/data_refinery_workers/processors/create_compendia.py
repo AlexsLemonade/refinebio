@@ -43,10 +43,7 @@ def log_state(message, job_id, start_time=False):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
         logger.debug(
-            message,
-            total_cpu=psutil.cpu_percent(),
-            process_ram=ram_in_GB,
-            job_id=job_id,
+            message, total_cpu=psutil.cpu_percent(), process_ram=ram_in_GB, job_id=job_id,
         )
 
         if start_time:
@@ -59,8 +56,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     start_time = log_state("prepare input", job_context["job"].id)
 
     job_context["primary_organism"] = max(
-        job_context["samples"],
-        key=lambda organism: len(job_context["samples"][organism]),
+        job_context["samples"], key=lambda organism: len(job_context["samples"][organism]),
     )
     job_context["all_organisms"] = job_context["samples"].keys()
     all_samples = list(itertools.chain(*job_context["samples"].values()))
@@ -105,9 +101,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
     try:
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context.pop("input_files").items():
-            job_context = smashing_utils.process_frames_for_key(
-                key, input_files, job_context
-            )
+            job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
     except Exception as e:
@@ -234,14 +228,11 @@ def _perform_imputation(job_context: Dict) -> Dict:
         )
     else:
         logger.info(
-            "Building compendia with only microarray data.",
-            job_id=job_context["job"].id,
+            "Building compendia with only microarray data.", job_id=job_context["job"].id,
         )
         combined_matrix = job_context.pop("microarray_matrix")
 
-    log_state(
-        "ran outer merge, now deleteing log2_rnaseq_matrix", job_context["job"].id
-    )
+    log_state("ran outer merge, now deleteing log2_rnaseq_matrix", job_context["job"].id)
 
     del log2_rnaseq_matrix
 
@@ -270,9 +261,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Remove samples (columns) with <50% present values in combined_matrix
     # XXX: Find better test data for this!
     col_thresh = row_filtered_matrix.shape[0] * 0.5
-    row_col_filtered_matrix_samples = row_filtered_matrix.dropna(
-        axis="columns", thresh=col_thresh
-    )
+    row_col_filtered_matrix_samples = row_filtered_matrix.dropna(axis="columns", thresh=col_thresh)
     row_col_filtered_matrix_samples_index = row_col_filtered_matrix_samples.index
     row_col_filtered_matrix_samples_columns = row_col_filtered_matrix_samples.columns
 
@@ -320,9 +309,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             continue
 
     log_state("end replace zeroes", job_context["job"].id, replace_zeroes_start)
-    transposed_zeroes_start = log_state(
-        "start replacing transposed zeroes", job_context["job"].id
-    )
+    transposed_zeroes_start = log_state("start replacing transposed zeroes", job_context["job"].id)
 
     # Label our new replaced data
     combined_matrix_zero = row_col_filtered_matrix_samples
@@ -337,21 +324,16 @@ def _perform_imputation(job_context: Dict) -> Dict:
     del transposed_matrix_with_zeros
 
     log_state(
-        "end replacing transposed zeroes",
-        job_context["job"].id,
-        transposed_zeroes_start,
+        "end replacing transposed zeroes", job_context["job"].id, transposed_zeroes_start,
     )
 
     # Store the absolute/percentages of imputed values
     matrix_sum = transposed_matrix.isnull().sum()
-    percent = (matrix_sum / transposed_matrix.isnull().count()).sort_values(
-        ascending=False
-    )
+    percent = (matrix_sum / transposed_matrix.isnull().count()).sort_values(ascending=False)
     total_percent_imputed = sum(percent) / len(transposed_matrix.count())
     job_context["total_percent_imputed"] = total_percent_imputed
     logger.info(
-        "Total percentage of data to impute!",
-        total_percent_imputed=total_percent_imputed,
+        "Total percentage of data to impute!", total_percent_imputed=total_percent_imputed,
     )
 
     # Perform imputation of missing values with IterativeSVD (rank=10) on the
@@ -362,9 +344,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
         logger.info("IterativeSVD algorithm: %s" % svd_algorithm)
         svd_algorithm = str.lower(svd_algorithm)
-        imputed_matrix = IterativeSVD(
-            rank=10, svd_algorithm=svd_algorithm
-        ).fit_transform(transposed_matrix)
+        imputed_matrix = IterativeSVD(rank=10, svd_algorithm=svd_algorithm).fit_transform(
+            transposed_matrix
+        )
 
         svd_start = log_state("end SVD", job_context["job"].id, svd_start)
     else:
@@ -379,9 +361,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     del imputed_matrix
 
     # Convert back to Pandas
-    untransposed_imputed_matrix_df = pd.DataFrame.from_records(
-        untransposed_imputed_matrix
-    )
+    untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
     untransposed_imputed_matrix_df.index = row_col_filtered_matrix_samples_index
     untransposed_imputed_matrix_df.columns = row_col_filtered_matrix_samples_columns
     del untransposed_imputed_matrix
@@ -432,12 +412,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.save()
 
     # Write the compendia dataframe to a file
-    job_context["csv_outfile"] = (
-        job_context["output_dir"] + job_context["organism_name"] + ".tsv"
-    )
-    job_context["merged_qn"].to_csv(
-        job_context["csv_outfile"], sep="\t", encoding="utf-8"
-    )
+    job_context["csv_outfile"] = job_context["output_dir"] + job_context["organism_name"] + ".tsv"
+    job_context["merged_qn"].to_csv(job_context["csv_outfile"], sep="\t", encoding="utf-8")
 
     organism_key = list(job_context["samples"].keys())[0]
     annotation = ComputationalResultAnnotation()
@@ -448,9 +424,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         "organism_name": job_context["organism_name"],
         "is_qn": False,
         "is_compendia": True,
-        "samples": [
-            sample.accession_code for sample in job_context["samples"][organism_key]
-        ],
+        "samples": [sample.accession_code for sample in job_context["samples"][organism_key]],
         "num_samples": len(job_context["samples"][organism_key]),
         "experiment_accessions": [e.accession_code for e in job_context["experiments"]],
         "total_percent_imputed": job_context["total_percent_imputed"],
@@ -466,9 +440,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         readme_file = "/home/user/README_NORMALIZED.md"
 
     shutil.copy(readme_file, job_context["output_dir"] + "/README.md")
-    shutil.copy(
-        "/home/user/LICENSE_DATASET.txt", job_context["output_dir"] + "/LICENSE.TXT"
-    )
+    shutil.copy("/home/user/LICENSE_DATASET.txt", job_context["output_dir"] + "/LICENSE.TXT")
     archive_path = shutil.make_archive(final_zip_base, "zip", job_context["output_dir"])
 
     archive_computed_file = ComputedFile()
@@ -484,8 +456,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Compendia Result Helpers
     primary_organism = Organism.get_object_for_name(job_context["primary_organism"])
     organisms = [
-        Organism.get_object_for_name(organism)
-        for organism in job_context["all_organisms"]
+        Organism.get_object_for_name(organism) for organism in job_context["all_organisms"]
     ]
     compendium_version = (
         CompendiumResult.objects.filter(
@@ -509,13 +480,9 @@ def _create_result_objects(job_context: Dict) -> Dict:
         compendium_result_organism_association = CompendiumResultOrganismAssociation()
         compendium_result_organism_association.compendium_result = compendium_result
         compendium_result_organism_association.organism = compendium_organism
-        compendium_result_organism_associations.append(
-            compendium_result_organism_association
-        )
+        compendium_result_organism_associations.append(compendium_result_organism_association)
 
-    CompendiumResultOrganismAssociation.objects.bulk_create(
-        compendium_result_organism_associations
-    )
+    CompendiumResultOrganismAssociation.objects.bulk_create(compendium_result_organism_associations)
 
     job_context["compendium_result"] = compendium_result
 
@@ -527,14 +494,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Upload the result to S3
     timestamp = str(int(time.time()))
-    key = (
-        job_context["organism_name"]
-        + "_"
-        + str(compendium_version)
-        + "_"
-        + timestamp
-        + ".zip"
-    )
+    key = job_context["organism_name"] + "_" + str(compendium_version) + "_" + timestamp + ".zip"
     archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
 
     job_context["result"] = result

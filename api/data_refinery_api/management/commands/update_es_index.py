@@ -24,10 +24,6 @@ class Command(BaseCommand):
 
         for doc in registry.get_documents(models):
             start_time = timezone.now() - UPDATE_WINDOW
-            qs = (
-                doc().get_queryset().filter(last_modified__gt=start_time).order_by("id")
-            )
-            self.stdout.write(
-                "Indexing {} '{}' objects".format(qs.count(), qs.model.__name__)
-            )
+            qs = doc().get_queryset().filter(last_modified__gt=start_time).order_by("id")
+            self.stdout.write("Indexing {} '{}' objects".format(qs.count(), qs.model.__name__))
             doc().update(qs)

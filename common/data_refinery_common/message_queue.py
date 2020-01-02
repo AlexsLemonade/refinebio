@@ -80,22 +80,15 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         is_processor = False
     elif job_type is Downloaders.NONE:
         logger.warn("Not queuing %s job.", job_type, job_id=job_id)
-        raise ValueError(
-            NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id)
-        )
+        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id))
     elif job_type is ProcessorPipeline.NONE:
         logger.warn("Not queuing %s job.", job_type, job_id=job_id)
-        raise ValueError(
-            NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id)
-        )
+        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id))
     else:
         raise ValueError("Invalid job_type: {}".format(job_type.value))
 
     logger.debug(
-        "Queuing %s nomad job to run job %s with id %d.",
-        nomad_job,
-        job_type.value,
-        job.id,
+        "Queuing %s nomad job to run job %s with id %d.", nomad_job, job_type.value, job.id,
     )
 
     # We only want to dispatch processor jobs directly.

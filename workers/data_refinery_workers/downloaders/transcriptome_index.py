@@ -23,9 +23,7 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 
-def _download_file(
-    download_url: str, file_path: str, job: DownloaderJob
-) -> DownloaderJob:
+def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> DownloaderJob:
     """Download the file via FTP.
 
     I spoke to Erin from Ensembl about ways to improve this. They're looking into it,
@@ -36,10 +34,7 @@ def _download_file(
     """
     try:
         logger.debug(
-            "Downloading file from %s to %s.",
-            download_url,
-            file_path,
-            downloader_job=job.id,
+            "Downloading file from %s to %s.", download_url, file_path, downloader_job=job.id,
         )
         urllib.request.urlcleanup()
         target_file = open(file_path, "wb")
@@ -73,9 +68,7 @@ def download_transcriptome(job_id: int) -> None:
     """
     job = utils.start_job(job_id)
 
-    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
-        downloader_job=job
-    )
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
     files_to_process = []
 
     for assoc in file_assocs:
@@ -88,13 +81,7 @@ def download_transcriptome(job_id: int) -> None:
             filename_species = "".join(original_file.source_filename.split(".")[:-1])
 
         os.makedirs(LOCAL_ROOT_DIR + "/" + filename_species, exist_ok=True)
-        dl_file_path = (
-            LOCAL_ROOT_DIR
-            + "/"
-            + filename_species
-            + "/"
-            + original_file.source_filename
-        )
+        dl_file_path = LOCAL_ROOT_DIR + "/" + filename_species + "/" + original_file.source_filename
         job = _download_file(original_file.source_url, dl_file_path, job)
 
         if not job.success:
@@ -147,6 +134,4 @@ def create_long_and_short_processor_jobs(files_to_process):
         assoc.processor_job = processor_job_short
         assoc.save()
 
-    send_job(
-        ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short
-    )
+    send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short)

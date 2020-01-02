@@ -15,9 +15,7 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.foreman.management.commands.create_missing_processor_jobs import (
-    Command,
-)
+from data_refinery_foreman.foreman.management.commands.create_missing_processor_jobs import Command
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
 
@@ -66,8 +64,7 @@ class SurveyTestCase(TransactionTestCase):
         ma_sample_doesnt_need_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=ma_sample_doesnt_need_processor,
-            original_file=ma_og_doesnt_need_processor,
+            sample=ma_sample_doesnt_need_processor, original_file=ma_og_doesnt_need_processor,
         )
 
         ma_dl_job_doesnt_need_processor = DownloaderJob()
@@ -145,12 +142,10 @@ class SurveyTestCase(TransactionTestCase):
         ma_dl_job_needs_processor.save()
 
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=ma_dl_job_needs_processor,
-            original_file=ma_og_needs_processor_1,
+            downloader_job=ma_dl_job_needs_processor, original_file=ma_og_needs_processor_1,
         )
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=ma_dl_job_needs_processor,
-            original_file=ma_og_needs_processor_2,
+            downloader_job=ma_dl_job_needs_processor, original_file=ma_og_needs_processor_2,
         )
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
             downloader_job=ma_dl_job_needs_processor, original_file=ma_og_archive
@@ -171,8 +166,7 @@ class SurveyTestCase(TransactionTestCase):
         rna_sample_doesnt_need_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=rna_sample_doesnt_need_processor,
-            original_file=rna_og_doesnt_need_processor,
+            sample=rna_sample_doesnt_need_processor, original_file=rna_og_doesnt_need_processor,
         )
 
         rna_dl_job_doesnt_need_processor = DownloaderJob()
@@ -221,8 +215,7 @@ class SurveyTestCase(TransactionTestCase):
         rna_dl_job_needs_processor.save()
 
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=rna_dl_job_needs_processor,
-            original_file=rna_og_needs_processor,
+            downloader_job=rna_dl_job_needs_processor, original_file=rna_og_needs_processor,
         )
 
         # Setup is done, actually run the command.
@@ -245,9 +238,7 @@ class SurveyTestCase(TransactionTestCase):
         )
         self.assertEqual(
             0,
-            ProcessorJobOriginalFileAssociation.objects.filter(
-                original_file=ma_og_archive
-            ).count(),
+            ProcessorJobOriginalFileAssociation.objects.filter(original_file=ma_og_archive).count(),
         )
 
         ## Test that a processor job that wasn't missing wasn't created.

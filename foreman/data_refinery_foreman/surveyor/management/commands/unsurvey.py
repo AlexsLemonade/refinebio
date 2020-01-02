@@ -45,9 +45,7 @@ def purge_experiment(accession: str) -> None:
     ExperimentAnnotation.objects.filter(experiment=experiment).delete()
 
     ## Samples
-    experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(
-        experiment=experiment
-    )
+    experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
     samples = Sample.objects.filter(id__in=experiment_sample_assocs.values("sample_id"))
 
     uniquely_assoced_sample_ids = []
@@ -61,9 +59,9 @@ def purge_experiment(accession: str) -> None:
         else:
             # The association isn't unique, but we still should delete
             # the association with the experiment since it will be deleted.
-            ExperimentSampleAssociation.objects.filter(
-                sample=sample, experiment=experiment
-            )[0].delete()
+            ExperimentSampleAssociation.objects.filter(sample=sample, experiment=experiment)[
+                0
+            ].delete()
 
     ## ComputationalResults/ComputedFiles
     comp_result_sample_assocs = SampleResultAssociation.objects.filter(
@@ -77,9 +75,9 @@ def purge_experiment(accession: str) -> None:
     for comp_result in comp_results:
         # We know this result is associated with samples we can
         # delete, but is it associated with any we cannot?
-        extra_assocs = SampleResultAssociation.objects.filter(
-            result=comp_result
-        ).exclude(sample_id__in=uniquely_assoced_sample_ids)
+        extra_assocs = SampleResultAssociation.objects.filter(result=comp_result).exclude(
+            sample_id__in=uniquely_assoced_sample_ids
+        )
         if extra_assocs.count() == 0:
             # It's not assoced with anything else, delete it, its
             # associations, and its ComputedFile.
@@ -94,9 +92,7 @@ def purge_experiment(accession: str) -> None:
                 computed_file.delete_s3_file()
 
             # Delete the database records for the ComputedFile
-            SampleComputedFileAssociation.objects.filter(
-                computed_file__in=computed_files
-            ).delete()
+            SampleComputedFileAssociation.objects.filter(computed_file__in=computed_files).delete()
             computed_files.delete()
 
     # Whether or not we can delete all of these results, we know the
@@ -191,19 +187,14 @@ def purge_experiment(accession: str) -> None:
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "--accession",
-            help=("An experiment accession code to survey, download, and process."),
+            "--accession", help=("An experiment accession code to survey, download, and process."),
         )
         parser.add_argument(
             "--file",
             type=str,
-            help=(
-                "An optional file listing accession codes. s3:// URLs are also accepted."
-            ),
+            help=("An optional file listing accession codes. s3:// URLs are also accepted."),
         )
-        parser.add_argument(
-            "--force", help="Do not ask for confirmation.", action="store_true"
-        )
+        parser.add_argument("--force", help="Do not ask for confirmation.", action="store_true")
 
     def handle(self, *args, **options):
         if options["accession"] is None and options["file"] is None:
@@ -211,9 +202,7 @@ class Command(BaseCommand):
             sys.exit(1)
 
         if not options["force"]:
-            print(
-                "-------------------------------------------------------------------------------"
-            )
+            print("-------------------------------------------------------------------------------")
             print(
                 "This will delete all objects in the database related to these accessions."
                 " Are you sure you want to do this?"
@@ -253,6 +242,5 @@ class Command(BaseCommand):
                 purge_experiment(accession)
             except Exception as e:
                 logger.exception(
-                    "Exception caught while purging experiment with accession: %s",
-                    accession,
+                    "Exception caught while purging experiment with accession: %s", accession,
                 )

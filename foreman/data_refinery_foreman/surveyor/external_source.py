@@ -43,9 +43,7 @@ class ExternalSourceSurveyor:
         """
         files_to_download = []
         for sample in samples:
-            files_for_sample = OriginalFile.objects.filter(
-                sample=sample, is_downloaded=False
-            )
+            files_for_sample = OriginalFile.objects.filter(sample=sample, is_downloaded=False)
             for og_file in files_for_sample:
                 files_to_download.append(og_file)
 
@@ -105,8 +103,7 @@ class ExternalSourceSurveyor:
                     # If the task doesn't get sent we don't want the
                     # downloader_job to be left floating
                     logger.exception(
-                        "Failed to enqueue downloader job for URL: "
-                        + original_file.source_url,
+                        "Failed to enqueue downloader job for URL: " + original_file.source_url,
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id,
                     )
@@ -134,8 +131,7 @@ class ExternalSourceSurveyor:
             ).count()
             if old_assocs_count > 0:
                 logger.debug(
-                    "We found an existing DownloaderJob for these urls.",
-                    source_urls=source_urls,
+                    "We found an existing DownloaderJob for these urls.", source_urls=source_urls,
                 )
                 return False
 
@@ -195,10 +191,7 @@ class ExternalSourceSurveyor:
             experiment, samples = self.discover_experiment_and_samples()
         except Exception:
             logger.exception(
-                (
-                    "Exception caught while discovering samples. "
-                    "Terminating survey job."
-                ),
+                ("Exception caught while discovering samples. " "Terminating survey job."),
                 survey_job=self.survey_job.id,
             )
             self.survey_job.failure_reason = (
@@ -218,8 +211,7 @@ class ExternalSourceSurveyor:
                 for sample in samples:
                     sample_files = sample.original_files.all()
                     self.queue_downloader_job_for_original_files(
-                        sample_files,
-                        experiment_accession_code=experiment.accession_code,
+                        sample_files, experiment_accession_code=experiment.accession_code,
                     )
             else:
                 self.queue_downloader_jobs(experiment, samples)
@@ -239,7 +231,5 @@ class ExternalSourceSurveyor:
         experiment.update_platform_names()
         experiment.save()
 
-        logger.debug(
-            "Survey job completed successfully.", survey_job=self.survey_job.id
-        )
+        logger.debug("Survey job completed successfully.", survey_job=self.survey_job.id)
         return True

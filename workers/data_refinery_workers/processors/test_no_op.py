@@ -33,9 +33,7 @@ class NOOPTestCase(TestCase):
 
         # ID_REF, VALUE
         og_file = OriginalFile()
-        og_file.source_filename = (
-            "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/"
-        )
+        og_file.source_filename = "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/"
         og_file.filename = "GSM1234847_sample_table.txt"
         og_file.absolute_file_path = (
             "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table.txt"
@@ -64,11 +62,11 @@ class NOOPTestCase(TestCase):
         # No header - ex
         # AFFX-BioB-3_at  0.74218756
         og_file = OriginalFile()
-        og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10188/miniml/GSE10188_family.xml.tgz"
-        og_file.filename = "GSM269747-tbl-1.txt"
-        og_file.absolute_file_path = (
-            "/home/user/data_store/raw/TEST/NO_OP/GSM269747-tbl-1.txt"
+        og_file.source_filename = (
+            "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10188/miniml/GSE10188_family.xml.tgz"
         )
+        og_file.filename = "GSM269747-tbl-1.txt"
+        og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM269747-tbl-1.txt"
         og_file.is_downloaded = True
         og_file.save()
 
@@ -108,9 +106,7 @@ class NOOPTestCase(TestCase):
         # ILMN_1343291    14.943602   0
         # ILMN_1343295    13.528082   0
         og_file = OriginalFile()
-        og_file.source_filename = (
-            "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22433/"
-        )
+        og_file.source_filename = "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22433/"
         og_file.filename = "GSM557500_sample_table.txt"
         og_file.absolute_file_path = (
             "/home/user/data_store/raw/TEST/NO_OP/GSM557500_sample_table.txt"
@@ -158,11 +154,11 @@ class NOOPTestCase(TestCase):
         # ILMN_2209417    10.0000 0.2029
         # ILMN_1765401    152.0873    0.0000
         og_file = OriginalFile()
-        og_file.source_filename = "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1.txt"
-        og_file.filename = "GSM1089291-tbl-1.txt"
-        og_file.absolute_file_path = (
-            "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1.txt"
+        og_file.source_filename = (
+            "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1.txt"
         )
+        og_file.filename = "GSM1089291-tbl-1.txt"
+        og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1.txt"
         og_file.is_downloaded = True
         og_file.save()
 
@@ -209,7 +205,9 @@ class NOOPTestCase(TestCase):
         # ILMN_2209417    10.0000 0.2029  11.1234 0.543
         # LMN_1765401    152.0873    0.0000  99.999  0.19
         og_file = OriginalFile()
-        og_file.source_filename = "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1-modified.txt"
+        og_file.source_filename = (
+            "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1-modified.txt"
+        )
         og_file.filename = "GSM1089291-tbl-1-modified.txt"
         og_file.absolute_file_path = (
             "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1-modified.txt"

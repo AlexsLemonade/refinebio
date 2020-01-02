@@ -62,9 +62,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         """
 
         # Determine platform information
-        external_accession = get_normalized_platform(
-            gse.metadata.get("platform_id", [UNKNOWN])[0]
-        )
+        external_accession = get_normalized_platform(gse.metadata.get("platform_id", [UNKNOWN])[0])
 
         if external_accession == UNKNOWN:
             sample_object.platform_accession_code = UNKNOWN
@@ -193,8 +191,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
 
         min_url_template = (
-            "ftp://ftp.ncbi.nlm.nih.gov/geo/"
-            "series/{range_subdir}/{record}/miniml/{record_file}"
+            "ftp://ftp.ncbi.nlm.nih.gov/geo/" "series/{range_subdir}/{record}/miniml/{record_file}"
         )
         min_url = min_url_template.format(
             range_subdir=range_subdir, record=geo, record_file="%s_family.xml.tgz" % geo
@@ -206,9 +203,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
     def get_sample_protocol_info(sample_metadata, sample_accession_code):
         protocol_info = dict()
         if "extract_protocol_ch1" in sample_metadata:
-            protocol_info["Extraction protocol"] = sample_metadata[
-                "extract_protocol_ch1"
-            ]
+            protocol_info["Extraction protocol"] = sample_metadata["extract_protocol_ch1"]
         if "label_protocol_ch1" in sample_metadata:
             protocol_info["Label protocol"] = sample_metadata["label_protocol_ch1"]
         if "hyb_protocol" in sample_metadata:
@@ -219,8 +214,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             protocol_info["Data processing"] = sample_metadata["data_processing"]
 
         protocol_info["Reference"] = (
-            "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc="
-            + sample_accession_code
+            "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + sample_accession_code
         )
         return protocol_info
 
@@ -234,8 +228,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
     def _apply_metadata_to_experiment(experiment: Experiment, gse):
         """ Gets the metadata out of gse and applies it to the experiment"""
         experiment.source_url = (
-            "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc="
-            + experiment.accession_code
+            "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + experiment.accession_code
         )
         experiment.source_database = "GEO"
         experiment.title = gse.metadata.get("title", [""])[0]
@@ -253,9 +246,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         # Scrape publication title and authorship from Pubmed
         if experiment.pubmed_id:
-            pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(
-                experiment.pubmed_id
-            )
+            pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment.pubmed_id)
             experiment.publication_title = pubmed_metadata[0]
             experiment.publication_authors = pubmed_metadata[1]
 
@@ -269,19 +260,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
         """
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(
-            experiment_accession_code,
-            destdir=self.get_temp_path(),
-            how="brief",
-            silent=True,
+            experiment_accession_code, destdir=self.get_temp_path(), how="brief", silent=True,
         )
         preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
         harmonized_samples = harmony.harmonize(preprocessed_samples)
 
         # Create the experiment object
         try:
-            experiment_object = Experiment.objects.get(
-                accession_code=experiment_accession_code
-            )
+            experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.debug(
                 "Experiment %s already exists, skipping object creation.",
                 experiment_accession_code,
@@ -326,9 +312,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     experiment=experiment_object, organism=sample_object.organism
                 )
             except Sample.DoesNotExist:
-                organism = Organism.get_object_for_name(
-                    sample.metadata["organism_ch1"][0].upper()
-                )
+                organism = Organism.get_object_for_name(sample.metadata["organism_ch1"][0].upper())
 
                 sample_object = Sample()
                 sample_object.source_database = "GEO"
@@ -470,9 +454,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
             # Delete this Original file if it isn't being used.
             if (
-                OriginalFileSampleAssociation.objects.filter(
-                    original_file=original_file
-                ).count()
+                OriginalFileSampleAssociation.objects.filter(original_file=original_file).count()
                 == 0
             ):
                 original_file.delete()
@@ -496,9 +478,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         # Delete this Original file if it isn't being used.
         if (
-            OriginalFileSampleAssociation.objects.filter(
-                original_file=miniml_original_file
-            ).count()
+            OriginalFileSampleAssociation.objects.filter(original_file=miniml_original_file).count()
             == 0
         ):
             miniml_original_file.delete()
@@ -526,8 +506,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
             survey_job=self.survey_job.id,
         )
 
-        experiment, samples = self.create_experiment_and_samples_from_api(
-            experiment_accession_code
-        )
+        experiment, samples = self.create_experiment_and_samples_from_api(experiment_accession_code)
 
         return experiment, samples

@@ -49,18 +49,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             return parsed_json["releasedate"]
 
     @classmethod
-    def _apply_metadata_to_experiment(
-        cls, experiment_object: Experiment, parsed_json: Dict
-    ):
+    def _apply_metadata_to_experiment(cls, experiment_object: Experiment, parsed_json: Dict):
         # We aren't sure these fields will be populated, or how many there will be.
         # Try to join them all together, or set a sensible default.
         experiment_descripton = ""
         if "description" in parsed_json and len(parsed_json["description"]) > 0:
             for description_item in parsed_json["description"]:
                 if "text" in description_item:
-                    experiment_descripton = (
-                        experiment_descripton + description_item["text"] + "\n"
-                    )
+                    experiment_descripton = experiment_descripton + description_item["text"] + "\n"
 
         if experiment_descripton == "":
             experiment_descripton = "Description not available.\n"
@@ -72,16 +68,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         experiment_object.technology = "MICROARRAY"
         experiment_object.description = experiment_descripton
 
-        experiment_object.source_first_published = parse_datetime(
-            parsed_json["releasedate"]
-        )
+        experiment_object.source_first_published = parse_datetime(parsed_json["releasedate"])
         experiment_object.source_last_modified = parse_datetime(
             cls._get_last_update_date(parsed_json)
         )
 
-    def create_experiment_from_api(
-        self, experiment_accession_code: str
-    ) -> (Experiment, Dict):
+    def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
         """Given an experiment accession code, create an Experiment object.
 
         Also returns a dictionary of additional information about the
@@ -125,8 +117,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # downloader inspect the downloaded file to determine the
         # array then.
         elif (
-            len(parsed_json["arraydesign"]) != 1
-            or "accession" not in parsed_json["arraydesign"][0]
+            len(parsed_json["arraydesign"]) != 1 or "accession" not in parsed_json["arraydesign"][0]
         ):
             experiment["platform_accession_code"] = UNKNOWN
             experiment["platform_accession_name"] = UNKNOWN
@@ -143,9 +134,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     # platforms manufactured by Illumina
                     if "ILLUMINA" in experiment["platform_accession_code"].upper():
                         experiment["manufacturer"] = "ILLUMINA"
-                        experiment["platform_accession_name"] = platform[
-                            "platform_accession"
-                        ]
+                        experiment["platform_accession_name"] = platform["platform_accession"]
                     else:
                         # It's not Illumina, the only other supported Microarray platform is
                         # Affy. As our list of supported platforms grows this logic will
@@ -167,9 +156,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         # Create the experiment object
         try:
-            experiment_object = Experiment.objects.get(
-                accession_code=experiment_accession_code
-            )
+            experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.debug(
                 "Experiment already exists, skipping object creation.",
                 experiment_accession_code=experiment_accession_code,
@@ -179,9 +166,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = request_url
-            ArrayExpressSurveyor._apply_metadata_to_experiment(
-                experiment_object, parsed_json
-            )
+            ArrayExpressSurveyor._apply_metadata_to_experiment(experiment_object, parsed_json)
             experiment_object.save()
 
             json_xa = ExperimentAnnotation()
@@ -191,9 +176,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             json_xa.save()
 
             # Fetch and parse the IDF/SDRF file for any other fields
-            IDF_URL_TEMPLATE = (
-                "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
-            )
+            IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
 
@@ -221,25 +204,17 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 if isinstance(idf_dict["Person Affiliation"], list):
 
                     unique_people = list(set(idf_dict["Person Affiliation"]))
-                    experiment_object.submitter_institution = ", ".join(unique_people)[
-                        :255
-                    ]
+                    experiment_object.submitter_institution = ", ".join(unique_people)[:255]
                 else:
-                    experiment_object.submitter_institution = idf_dict[
-                        "Person Affiliation"
-                    ]
+                    experiment_object.submitter_institution = idf_dict["Person Affiliation"]
 
             # Get protocol_description from "<experiment_url>/protocols"
             # instead of from idf_dict, because the former provides more
             # details.
             protocol_url = request_url + "/protocols"
-            protocol_request = utils.requests_retry_session().get(
-                protocol_url, timeout=60
-            )
+            protocol_request = utils.requests_retry_session().get(protocol_url, timeout=60)
             try:
-                experiment_object.protocol_description = protocol_request.json()[
-                    "protocols"
-                ]
+                experiment_object.protocol_description = protocol_request.json()["protocols"]
             except KeyError:
                 logger.warning(
                     "Remote experiment has no protocol data!",
@@ -252,17 +227,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # Ex: E-GEOD-29536
                 # Assume most recent is "best:, store the rest in experiment annotation.
                 if isinstance(idf_dict["Publication Title"], list):
-                    experiment_object.publication_title = "; ".join(
-                        idf_dict["Publication Title"]
-                    )
+                    experiment_object.publication_title = "; ".join(idf_dict["Publication Title"])
                 else:
                     experiment_object.publication_title = idf_dict["Publication Title"]
                 experiment_object.has_publication = True
             if "Publication DOI" in idf_dict:
                 if isinstance(idf_dict["Publication DOI"], list):
-                    experiment_object.publication_doi = ", ".join(
-                        idf_dict["Publication DOI"]
-                    )
+                    experiment_object.publication_doi = ", ".join(idf_dict["Publication DOI"])
                 else:
                     experiment_object.publication_doi = idf_dict["Publication DOI"]
                 experiment_object.has_publication = True
@@ -363,17 +334,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             return protocol_text.strip()
         elif type(protocol_text) == list:
             # These can be {"br": None}, so skip non string lines
-            return " ".join(
-                [line.strip() for line in protocol_text if type(line) == str]
-            )
+            return " ".join([line.strip() for line in protocol_text if type(line) == str])
         else:
             # Not sure what would get us here, but it's not worth raising an error over
             return str(protocol_text)
 
     @staticmethod
-    def update_sample_protocol_info(
-        existing_protocols, experiment_protocol, protocol_url
-    ):
+    def update_sample_protocol_info(existing_protocols, experiment_protocol, protocol_url):
         """Compares experiment_protocol with a sample's
         existing_protocols and updates the latter if the former includes
         any new entry.
@@ -394,9 +361,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # protocols; if the entry is new, add it to exising_protocols.
         for new_protocol in experiment_protocol["protocol"]:
             new_protocol_text = new_protocol.get("text", "")
-            new_protocol_text = ArrayExpressSurveyor.extract_protocol_text(
-                new_protocol_text
-            )
+            new_protocol_text = ArrayExpressSurveyor.extract_protocol_text(new_protocol_text)
 
             # Ignore experiment-level protocols whose accession or text
             # field is unavailable or empty.
@@ -417,9 +382,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     {
                         "Accession": new_protocol["accession"],
                         "Text": new_protocol_text,
-                        "Type": new_protocol.get(
-                            "type", ""
-                        ),  # in case 'type' field is unavailable
+                        "Type": new_protocol.get("type", ""),  # in case 'type' field is unavailable
                         "Reference": protocol_url,
                     }
                 )
@@ -433,9 +396,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         for key, value in harmonized_metadata.items():
             setattr(sample, key, value)
 
-    def create_samples_from_api(
-        self, experiment: Experiment, platform_dict: Dict
-    ) -> List[Sample]:
+    def create_samples_from_api(self, experiment: Experiment, platform_dict: Dict) -> List[Sample]:
         """Generates a Sample item for each sample in an AE experiment.
 
         There are many possible data situations for a sample:
@@ -465,9 +426,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # The SDRF is the complete metadata record on a sample/property basis.
         # We run this through our harmonizer and then attach the properties
         # to our created samples.
-        SDRF_URL_TEMPLATE = (
-            "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
-        )
+        SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
         sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment.accession_code)
         sdrf_samples = harmony.parse_sdrf(sdrf_url)
         harmonized_samples = harmony.harmonize(sdrf_samples)
@@ -571,10 +530,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             sample_source_name = sample_data["source"].get("name", "")
             sample_assay_name = sample_data["assay"].get("name", "")
             sample_accession_code = self.determine_sample_accession(
-                experiment.accession_code,
-                sample_source_name,
-                sample_assay_name,
-                filename,
+                experiment.accession_code, sample_source_name, sample_assay_name, filename,
             )
 
             # Figure out the Organism for this sample
@@ -631,9 +587,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.source_archive_url = samples_endpoint
                 sample_object.organism = organism
                 sample_object.platform_name = platform_dict["platform_accession_name"]
-                sample_object.platform_accession_code = platform_dict[
-                    "platform_accession_code"
-                ]
+                sample_object.platform_accession_code = platform_dict["platform_accession_code"]
                 sample_object.manufacturer = platform_dict["manufacturer"]
                 sample_object.technology = "MICROARRAY"
 
@@ -707,9 +661,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         )
 
         try:
-            experiment, platform_dict = self.create_experiment_from_api(
-                experiment_accession_code
-            )
+            experiment, platform_dict = self.create_experiment_from_api(experiment_accession_code)
         except UnsupportedPlatformException as e:
             logger.info(
                 "Experiment was not on a supported platform, skipping.",

@@ -32,9 +32,7 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CHUNK_SIZE = 1024 * 256
 
 
-def _download_file(
-    download_url: str, file_path: str, job: DownloaderJob, force_ftp=False
-) -> None:
+def _download_file(download_url: str, file_path: str, job: DownloaderJob, force_ftp=False) -> None:
     """ Download a file from GEO via Aspera unless `force_ftp` is True
     """
 
@@ -48,10 +46,7 @@ def _download_file(
     else:
         try:
             logger.debug(
-                "Downloading file from %s to %s.",
-                download_url,
-                file_path,
-                downloader_job=job.id,
+                "Downloading file from %s to %s.", download_url, file_path, downloader_job=job.id,
             )
 
             # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
@@ -63,9 +58,7 @@ def _download_file(
 
             urllib.request.urlcleanup()
         except Exception:
-            logger.exception(
-                "Exception caught while downloading file.", downloader_job=job.id
-            )
+            logger.exception("Exception caught while downloading file.", downloader_job=job.id)
             job.failure_reason = "Exception caught while downloading file"
             raise
         finally:
@@ -147,9 +140,7 @@ def _download_file_aspera(
     if os.path.getsize(target_file_path) < 1:
         os.remove(target_file_path)
         if attempt > 5:
-            downloader_job.failure_reason = (
-                "Got zero byte file from aspera after 5 attempts."
-            )
+            downloader_job.failure_reason = "Got zero byte file from aspera after 5 attempts."
             return False
 
         logger.error(
@@ -158,9 +149,7 @@ def _download_file_aspera(
             downloader_job=downloader_job.id,
         )
         time.sleep(10)
-        return _download_file_aspera(
-            download_url, downloader_job, target_file_path, attempt + 1
-        )
+        return _download_file_aspera(download_url, downloader_job, target_file_path, attempt + 1)
     return True
 
 
@@ -203,9 +192,7 @@ class ArchivedFile:
 
     def get_sample(self):
         """ Tries to find the sample associated with this file, and returns None if unable. """
-        return Sample.objects.filter(
-            accession_code=self.sample_accession_code()
-        ).first()
+        return Sample.objects.filter(accession_code=self.sample_accession_code()).first()
 
     def is_processable(self):
         """ There're some known file patterns that are found in GEO that we know we can ignore. """
@@ -331,9 +318,7 @@ def download_geo(job_id: int) -> None:
     os.makedirs(LOCAL_ROOT_DIR + "/" + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + "/" + accession_code + "/" + url.split("/")[-1]
 
-    logger.debug(
-        "Starting to download: " + url, job_id=job_id, accession_code=accession_code
-    )
+    logger.debug("Starting to download: " + url, job_id=job_id, accession_code=accession_code)
     _download_file(url, dl_file_path, job)
     original_file.absolute_file_path = dl_file_path
     original_file.is_downloaded = True
@@ -363,8 +348,7 @@ def download_geo(job_id: int) -> None:
             continue
 
         if not sample and (
-            not og_file.is_processable()
-            or og_file.experiment_accession_code() != accession_code
+            not og_file.is_processable() or og_file.experiment_accession_code() != accession_code
         ):
             # skip the files that we know are not processable and can't be associated with a sample
             # also skip the files were we couldn't find a sample and they don't mention the current experiment

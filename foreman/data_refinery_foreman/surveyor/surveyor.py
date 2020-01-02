@@ -8,9 +8,7 @@ from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor.sra import SraSurveyor
-from data_refinery_foreman.surveyor.transcriptome_index import (
-    TranscriptomeIndexSurveyor,
-)
+from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 
 
 logger = get_and_configure_logger(__name__)
@@ -46,9 +44,7 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
     if survey_job.source_type == "GEO":
         return GeoSurveyor(survey_job)
     else:
-        raise SourceNotSupportedError(
-            "Source " + survey_job.source_type + " is not supported."
-        )
+        raise SourceNotSupportedError("Source " + survey_job.source_type + " is not supported.")
 
 
 def _start_job(survey_job: SurveyJob) -> SurveyJob:
@@ -88,9 +84,7 @@ def run_job(survey_job: SurveyJob) -> SurveyJob:
     try:
         surveyor = _get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
-        logger.error(
-            "Unable to run Survey Job because: %s", e, survey_job=survey_job.id
-        )
+        logger.error("Unable to run Survey Job because: %s", e, survey_job=survey_job.id)
 
         _end_job(survey_job, False)
         return survey_job
@@ -98,9 +92,7 @@ def run_job(survey_job: SurveyJob) -> SurveyJob:
     try:
         job_success = surveyor.survey(source_type=survey_job.source_type)
     except Exception as e:
-        logger.exception(
-            "Exception caught while running Survey Job.", survey_job=survey_job.id
-        )
+        logger.exception("Exception caught while running Survey Job.", survey_job=survey_job.id)
         survey_job.failure_reason = str(e)
         job_success = False
 
@@ -120,9 +112,7 @@ def survey_experiment(experiment_accession: str, source_type: str):
     survey_job = SurveyJob(source_type=source_type)
     survey_job.save()
     key_value_pair = SurveyJobKeyValue(
-        survey_job=survey_job,
-        key="experiment_accession_code",
-        value=experiment_accession,
+        survey_job=survey_job, key="experiment_accession_code", value=experiment_accession,
     )
     key_value_pair.save()
     run_job(survey_job)

@@ -15,9 +15,7 @@ class FailedJobsManager(models.Manager):
     """
 
     def get_queryset(self):
-        return (
-            super().get_queryset().filter(success=False, retried=False, no_retry=False)
-        )
+        return super().get_queryset().filter(success=False, retried=False, no_retry=False)
 
 
 class HungJobsManager(models.Manager):
@@ -49,13 +47,7 @@ class LostJobsManager(models.Manager):
         return (
             super()
             .get_queryset()
-            .filter(
-                success=None,
-                retried=False,
-                no_retry=False,
-                start_time=None,
-                end_time=None,
-            )
+            .filter(success=None, retried=False, no_retry=False, start_time=None, end_time=None,)
         )
 
 
@@ -184,9 +176,7 @@ class ProcessorJob(models.Model):
     original_files = models.ManyToManyField(
         "OriginalFile", through="ProcessorJobOriginalFileAssociation"
     )
-    datasets = models.ManyToManyField(
-        "DataSet", through="ProcessorJobDataSetAssociation"
-    )
+    datasets = models.ManyToManyField("DataSet", through="ProcessorJobDataSetAssociation")
     no_retry = models.BooleanField(default=False)
     abort = models.BooleanField(default=False)
 

@@ -40,12 +40,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--min", type=int, default=100, help=("Minimum number of processed samples")
         )
-        parser.add_argument(
-            "--platform", type=str, default=None, help=("Name of platform")
-        )
-        parser.add_argument(
-            "--job_id", type=int, default=None, help=("ID of job to run.")
-        )
+        parser.add_argument("--platform", type=str, default=None, help=("Name of platform"))
+        parser.add_argument("--job_id", type=int, default=None, help=("ID of job to run."))
 
     def handle(self, *args, **options):
         """
@@ -101,9 +97,7 @@ class Command(BaseCommand):
                 sample_codes = [res["accession_code"] for res in sample_codes_results]
 
                 dataset = Dataset()
-                dataset.data = {
-                    organism.name + "_(" + biggest_platform + ")": sample_codes
-                }
+                dataset.data = {organism.name + "_(" + biggest_platform + ")": sample_codes}
                 dataset.aggregate_by = "ALL"
                 dataset.scale_by = "NONE"
                 dataset.quantile_normalize = False
@@ -124,8 +118,7 @@ class Command(BaseCommand):
                     print(":D")
                     self.stdout.write("Target file: " + final_context["target_file"])
                     self.stdout.write(
-                        "Target S3: "
-                        + str(final_context["computed_files"][0].get_s3_url())
+                        "Target S3: " + str(final_context["computed_files"][0].get_s3_url())
                     )
                 else:
                     print(":(")
@@ -137,9 +130,7 @@ def organism_can_have_qn_target(organism: Organism, sample_threshold=100):
     """ Check that the organism has more than `sample_threshold` samples on
     some microarray platform """
     microarray_platforms = (
-        organism.sample_set.filter(
-            has_raw=True, technology="MICROARRAY", is_processed=True
-        )
+        organism.sample_set.filter(has_raw=True, technology="MICROARRAY", is_processed=True)
         .values("platform_accession_code")
         .annotate(count=Count("id"))
         .filter(count__gt=sample_threshold)

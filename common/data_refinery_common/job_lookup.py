@@ -213,9 +213,7 @@ def _is_platform_supported(platform: str) -> bool:
     # because RNASeq platforms are organism agnostic.
     for supported_platform in utils.get_supported_rnaseq_platforms():
         # Spacing can be inconsistent, easiest to just remove it entirely.
-        if supported_platform.upper().replace(" ", "") in upper_platform.replace(
-            " ", ""
-        ):
+        if supported_platform.upper().replace(" ", "") in upper_platform.replace(" ", ""):
             return True
 
     return False
@@ -247,9 +245,7 @@ def determine_downloader_task(sample_object: Sample) -> Downloaders:
     return Downloaders.NONE
 
 
-def determine_processor_pipeline(
-    sample_object: Sample, original_file=None
-) -> ProcessorPipeline:
+def determine_processor_pipeline(sample_object: Sample, original_file=None) -> ProcessorPipeline:
     """Determines the appropriate processor pipeline for the sample.
 
     This is mostly a giant set of nested if statements, so describing
@@ -268,9 +264,7 @@ def determine_processor_pipeline(
             return ProcessorPipeline.SALMON
 
     # We NO_OP processed data. It's what we do.
-    if not sample_object.has_raw or (
-        original_file and ".processed" in original_file.source_url
-    ):
+    if not sample_object.has_raw or (original_file and ".processed" in original_file.source_url):
         return ProcessorPipeline.NO_OP
 
     if not _is_platform_supported(sample_object.platform_accession_code):
@@ -334,9 +328,7 @@ def determine_ram_amount(sample: Sample, job) -> int:
             return 32768
         # Not sure what the ram usage of this platform is! Investigate!
         logger.debug(
-            "Unsure of RAM usage for platform! Using default.",
-            platform=platform,
-            job=job,
+            "Unsure of RAM usage for platform! Using default.", platform=platform, job=job,
         )
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value:
@@ -349,8 +341,6 @@ def determine_ram_amount(sample: Sample, job) -> int:
         return 1024
     else:
         logger.error(
-            "Found a job without an expected pipeline!",
-            job=job,
-            pipeline=job.pipeline_applied,
+            "Found a job without an expected pipeline!", job=job, pipeline=job.pipeline_applied,
         )
         return 1024

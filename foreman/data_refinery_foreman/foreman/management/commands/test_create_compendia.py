@@ -36,6 +36,4 @@ class CompendiaCommandTestCase(TransactionTestCase):
 
         # check that the processor job was created correctly
         self.assertIsNotNone(processor_job)
-        self.assertEquals(
-            processor_job.datasets.first().data, {"GSE51088": ["GSM1237818"]}
-        )
+        self.assertEquals(processor_job.datasets.first().data, {"GSE51088": ["GSM1237818"]})

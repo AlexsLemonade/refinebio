@@ -40,9 +40,7 @@ def make_experiment_result_associations():
                 num_result_associations = 0
                 for experiment_sample in experiment_samples:
                     try:
-                        SampleResultAssociation.objects.get(
-                            sample=experiment_sample, result=result
-                        )
+                        SampleResultAssociation.objects.get(sample=experiment_sample, result=result)
 
                         # If we've made it here, then the association exists so count it!
                         num_result_associations += 1

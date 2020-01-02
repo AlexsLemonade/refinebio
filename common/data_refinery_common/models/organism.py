@@ -49,8 +49,7 @@ def get_scientific_name(taxonomy_id: int) -> str:
 
     if len(taxon_list) == 0:
         logger.error(
-            "No names returned by ncbi.nlm.nih.gov for organism "
-            + "with taxonomy ID %d.",
+            "No names returned by ncbi.nlm.nih.gov for organism " + "with taxonomy ID %d.",
             taxonomy_id,
         )
         raise InvalidNCBITaxonomyId
@@ -75,15 +74,13 @@ def get_taxonomy_id(organism_name: str) -> int:
 
     if len(id_list) == 0:
         logger.error(
-            "Unable to retrieve NCBI taxonomy ID number for organism "
-            + "with name: %s",
+            "Unable to retrieve NCBI taxonomy ID number for organism " + "with name: %s",
             organism_name,
         )
         return 0
     elif len(id_list) > 1:
         logger.warn(
-            "Organism with name %s returned multiple NCBI taxonomy ID " + "numbers.",
-            organism_name,
+            "Organism with name %s returned multiple NCBI taxonomy ID " + "numbers.", organism_name,
         )
 
     return int(id_list[0].text)
@@ -109,8 +106,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
         raise UnscientificNameError
     elif len(id_list) > 1:
         logger.warn(
-            "Organism with name %s returned multiple NCBI taxonomy ID " + "numbers.",
-            organism_name,
+            "Organism with name %s returned multiple NCBI taxonomy ID " + "numbers.", organism_name,
         )
 
     return int(id_list[0].text)
@@ -133,9 +129,7 @@ class Organism(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
-    experiments = models.ManyToManyField(
-        "Experiment", through="ExperimentOrganismAssociation"
-    )
+    experiments = models.ManyToManyField("Experiment", through="ExperimentOrganismAssociation")
     qn_target = models.ForeignKey(
         "ComputationalResult", blank=True, null=True, on_delete=models.SET_NULL
     )
@@ -157,14 +151,12 @@ class Organism(models.Model):
     @classmethod
     def get_name_for_id(cls, taxonomy_id: int) -> str:
         try:
-            organism = cls.objects.filter(taxonomy_id=taxonomy_id).order_by(
-                "-is_scientific_name"
-            )[0]
+            organism = cls.objects.filter(taxonomy_id=taxonomy_id).order_by("-is_scientific_name")[
+                0
+            ]
         except IndexError:
             name = get_scientific_name(taxonomy_id).upper().replace(" ", "_")
-            organism = Organism(
-                name=name, taxonomy_id=taxonomy_id, is_scientific_name=True
-            )
+            organism = Organism(name=name, taxonomy_id=taxonomy_id, is_scientific_name=True)
             organism.save()
 
         return organism.name
@@ -183,9 +175,7 @@ class Organism(models.Model):
                 taxonomy_id = get_taxonomy_id(name)
 
             organism = Organism(
-                name=name,
-                taxonomy_id=taxonomy_id,
-                is_scientific_name=is_scientific_name,
+                name=name, taxonomy_id=taxonomy_id, is_scientific_name=is_scientific_name,
             )
             organism.save()
 
@@ -206,9 +196,7 @@ class Organism(models.Model):
                 taxonomy_id = get_taxonomy_id(name)
 
             organism = Organism(
-                name=name,
-                taxonomy_id=taxonomy_id,
-                is_scientific_name=is_scientific_name,
+                name=name, taxonomy_id=taxonomy_id, is_scientific_name=is_scientific_name,
             )
             organism.save()
 

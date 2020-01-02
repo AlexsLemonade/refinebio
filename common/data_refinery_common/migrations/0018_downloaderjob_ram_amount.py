@@ -6,13 +6,11 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0017_auto_20190312_2011'),
+        ("data_refinery_common", "0017_auto_20190312_2011"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='downloaderjob',
-            name='ram_amount',
-            field=models.IntegerField(default=1024),
+            model_name="downloaderjob", name="ram_amount", field=models.IntegerField(default=1024),
         ),
     ]

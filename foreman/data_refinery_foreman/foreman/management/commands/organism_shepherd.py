@@ -175,9 +175,7 @@ def requeue_job(job, volume_index):
 
         job_type = Downloaders[job.downloader_task]
     else:
-        raise ValueError(
-            "Told to requeue a job that's not a ProcessorJob nor DownloaderJob!"
-        )
+        raise ValueError("Told to requeue a job that's not a ProcessorJob nor DownloaderJob!")
 
     try:
         # Only dispatch a job to Nomad immediately if it's a processor
@@ -281,6 +279,4 @@ class Command(BaseCommand):
                 logger.info("Sleeping for 5 minutes while jobs get done.")
                 time.sleep(300)
 
-        logger.info(
-            "Successfully requeued all jobs for unprocessed %s samples.", organism_name
-        )
+        logger.info("Successfully requeued all jobs for unprocessed %s samples.", organism_name)

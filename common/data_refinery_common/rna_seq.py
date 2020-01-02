@@ -55,9 +55,7 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
         # https://github.com/AlexsLemonade/refinebio/issues/1496
         return False
 
-    eligible_samples = experiment.samples.filter(
-        source_database="SRA", technology="RNA-SEQ"
-    )
+    eligible_samples = experiment.samples.filter(source_database="SRA", technology="RNA-SEQ")
 
     num_eligible_samples = eligible_samples.count()
     if num_eligible_samples == 0:
@@ -89,9 +87,9 @@ def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions
     current_salmon_version = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
 
     if filter_old_versions:
-        eligible_results = ComputationalResult.objects.prefetch_related(
-            "organism_index"
-        ).filter(organism_index__salmon_version=current_salmon_version)
+        eligible_results = ComputationalResult.objects.prefetch_related("organism_index").filter(
+            organism_index__salmon_version=current_salmon_version
+        )
     else:
         eligible_results = ComputationalResult.objects.all()
 
@@ -103,17 +101,14 @@ def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions
     # Calculate the computational results sorted that are associated with a given sample (
     # referenced from the top query)
     newest_computational_results = eligible_results.filter(
-        samples=OuterRef("id"),
-        processor__name=ProcessorEnum.SALMON_QUANT.value["name"],
+        samples=OuterRef("id"), processor__name=ProcessorEnum.SALMON_QUANT.value["name"],
     ).order_by("-created_at")
 
     # Annotate each sample in the experiment with the id of the most recent computational result
     computational_results_ids = (
         experiment.samples.all()
         .annotate(
-            latest_computational_result_id=Subquery(
-                newest_computational_results.values("id")[:1]
-            )
+            latest_computational_result_id=Subquery(newest_computational_results.values("id")[:1])
         )
         .filter(latest_computational_result_id__isnull=False)
         .values_list("latest_computational_result_id", flat=True)

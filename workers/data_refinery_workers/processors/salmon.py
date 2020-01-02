@@ -70,9 +70,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     # (A single sample could belong to multiple experiments, meaning
     # that it could be run more than once, potentially even at the
     # same time.)
-    job_context["work_dir"] = (
-        os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "/"
-    )
+    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     original_files = job_context["original_files"]
@@ -114,8 +112,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     # information.
     if sample.technology != "RNA-SEQ" or sample.source_database != "SRA":
         failure_reason = (
-            "The sample for this job either was not RNA-Seq or was not from the "
-            "SRA database."
+            "The sample for this job either was not RNA-Seq or was not from the " "SRA database."
         )
         job_context["failure_reason"] = failure_reason
         logger.error(failure_reason, sample=sample, processor_job=job_context["job_id"])
@@ -130,17 +127,13 @@ def _prepare_files(job_context: Dict) -> Dict:
     if ("ncbi.nlm.nih.gov" in job_context["original_files"][0].source_url) or (
         job_context["input_file_path"][-4:].upper() == ".SRA"
     ):
-        new_input_file_path = os.path.join(
-            job_context["work_dir"], original_files[0].filename
-        )
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
         job_context["input_file_path"] = new_input_file_path
         job_context["sra_input_file_path"] = new_input_file_path
 
     if job_context.get("input_file_path_2", False):
-        new_input_file_path = os.path.join(
-            job_context["work_dir"], original_files[1].filename
-        )
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
         shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
         job_context["input_file_path_2"] = new_input_file_path
 
@@ -150,21 +143,15 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["organism"] = job_context["sample"].organism
     job_context["success"] = True
 
-    job_context["output_directory"] = (
-        job_context["work_dir"] + sample.accession_code + "_output/"
-    )
+    job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     job_context["salmontools_directory"] = job_context["work_dir"] + "salmontools/"
     os.makedirs(job_context["salmontools_directory"], exist_ok=True)
-    job_context["salmontools_archive"] = (
-        job_context["work_dir"] + "salmontools-result.tar.gz"
-    )
+    job_context["salmontools_archive"] = job_context["work_dir"] + "salmontools-result.tar.gz"
 
     timestamp = str(timezone.now().timestamp()).split(".")[0]
-    job_context["output_archive"] = (
-        job_context["work_dir"] + "result-" + timestamp + ".tar.gz"
-    )
+    job_context["output_archive"] = job_context["work_dir"] + "result-" + timestamp + ".tar.gz"
 
     job_context["computed_files"] = []
     job_context["smashable_files"] = []
@@ -197,9 +184,7 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
         stats = untangle.parse(respo)
     except ValueError:
         logger.error(
-            "Unable to parse sra-stat output!",
-            respo=str(respo),
-            command=formatted_command,
+            "Unable to parse sra-stat output!", respo=str(respo), command=formatted_command,
         )
 
     # Different SRA files can create different output formats, somehow.
@@ -207,9 +192,7 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     # If it's so messed up we don't know, default to short.
     try:
         bases_count = int(stats.Run.Bases["count"])
-        reads_count = int(stats.Run.Statistics["nspots"]) * int(
-            stats.Run.Statistics["nreads"]
-        )
+        reads_count = int(stats.Run.Statistics["nspots"]) * int(stats.Run.Statistics["nreads"])
         job_context["sra_num_reads"] = int(stats.Run.Statistics["nreads"])
         job_context["index_length_raw"] = int(bases_count / reads_count)
     except Exception:
@@ -221,9 +204,7 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
             job_context["index_length_raw"] = int(base_count_bio_mates / reads_count)
         except Exception:
             try:
-                job_context["index_length_raw"] = int(
-                    stats.Run.Statistics.Read[0]["average"]
-                )
+                job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]["average"])
             except Exception:
                 # sra-stat will sometimes put warnings in the XML stream, so we end up with nothing valid to parse.
                 # https://github.com/ncbi/sra-tools/issues/192
@@ -254,9 +235,9 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
                 "Problem trying to determine library strategy (single/paired)!",
                 file=job_context["sra_input_file_path"],
             )
-            job_context["job"].failure_reason = (
-                "Unable to determine library strategy (single/paired): " + str(e)
-            )
+            job_context[
+                "job"
+            ].failure_reason = "Unable to determine library strategy (single/paired): " + str(e)
             job_context["success"] = False
             return job_context
 
@@ -265,9 +246,7 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
             "Completely unable to determine library strategy (single/paired)!",
             file=job_context["sra_input_file_path"],
         )
-        job_context[
-            "job"
-        ].failure_reason = "Unable to determine library strategy (single/paired)"
+        job_context["job"].failure_reason = "Unable to determine library strategy (single/paired)"
         job_context["success"] = False
 
     return job_context
@@ -298,9 +277,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
     # It is installed by default in Debian so it should be included
     # in every docker image already.
     with subprocess.Popen(
-        [cat, job_context["input_file_path"]],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
+        [cat, job_context["input_file_path"]], stdout=subprocess.PIPE, universal_newlines=True,
     ) as process:
         for line in process.stdout:
             # In the FASTQ file format, there are 4 lines for each
@@ -369,9 +346,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
 
     index_type = "TRANSCRIPTOME_" + job_context["index_length"].upper()
     index_object = (
-        OrganismIndex.objects.filter(
-            organism=job_context["organism"], index_type=index_type
-        )
+        OrganismIndex.objects.filter(organism=job_context["organism"], index_type=index_type)
         .order_by("-created_at")
         .first()
     )
@@ -384,9 +359,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             index_type=index_type,
         )
         job_context["job"].no_retry = True
-        job_context["job"].failure_reason = (
-            "Missing transcriptome index. (" + index_type + ")"
-        )
+        job_context["job"].failure_reason = "Missing transcriptome index. (" + index_type + ")"
         job_context["success"] = False
         return job_context
 
@@ -402,12 +375,8 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
         # Something very bad happened and now there are corrupt indexes installed. Nuke 'em.
-        if os.path.exists(version_info_path) and (
-            os.path.getsize(version_info_path) == 0
-        ):
-            logger.error(
-                "We have to nuke a zero-valued index directory: " + version_info_path
-            )
+        if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
+            logger.error("We have to nuke a zero-valued index directory: " + version_info_path)
             shutil.rmtree(job_context["index_directory"], ignore_errors=True)
             os.makedirs(job_context["index_directory"], exist_ok=True)
 
@@ -425,9 +394,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
 
             # Create a temporary location to download the index to, which
             # can be symlinked to once extraction is complete.
-            index_hard_dir = (
-                os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "_index/"
-            )
+            index_hard_dir = os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "_index/"
             os.makedirs(index_hard_dir)
             with tarfile.open(index_tarball, "r:gz") as index_archive:
                 index_archive.extractall(index_hard_dir)
@@ -453,19 +420,14 @@ def _find_or_download_index(job_context: Dict) -> Dict:
 
             for subfile in index_files:
                 os.symlink(
-                    index_hard_dir + subfile,
-                    job_context["index_directory"] + "/" + subfile,
+                    index_hard_dir + subfile, job_context["index_directory"] + "/" + subfile,
                 )
         elif index_hard_dir:
             # We have failed the race.
-            logger.error(
-                "We have failed the index extraction race! Removing dead trees."
-            )
+            logger.error("We have failed the index extraction race! Removing dead trees.")
             shutil.rmtree(index_hard_dir, ignore_errors=True)
     except Exception as e:
-        error_template = (
-            "Failed to download or extract transcriptome index for organism {0}: {1}"
-        )
+        error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
         error_message = error_template.format(str(job_context["organism"]), str(e))
         logger.exception(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
@@ -505,9 +467,7 @@ def _run_tximport_for_experiment(
             # downloads to: /processor_job_2/SRR123_output/quant.sf
             # So the result file has frame "SRR123_output", which we can associate with sample SRR123
             sample_output = (
-                job_context["work_dir"]
-                + str(quant_file.absolute_file_path.split("/")[-2])
-                + "/"
+                job_context["work_dir"] + str(quant_file.absolute_file_path.split("/")[-2]) + "/"
             )
             os.makedirs(sample_output, exist_ok=True)
             quant_work_path = sample_output + quant_file.filename
@@ -543,23 +503,17 @@ def _run_tximport_for_experiment(
     )
 
     try:
-        tximport_result = subprocess.run(
-            cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        tximport_result = subprocess.run(cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except Exception as e:
         error_template = "Encountered error in R code while running tximport.R: {}"
         error_message = error_template.format(str(e))
-        logger.error(
-            error_message, processor_job=job_context["job_id"], experiment=experiment.id
-        )
+        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
 
     if tximport_result.returncode != 0:
-        error_template = (
-            "Found non-zero exit code from R code while running tximport.R: {}"
-        )
+        error_template = "Found non-zero exit code from R code while running tximport.R: {}"
         error_message = error_template.format(tximport_result.stderr.decode().strip())
         logger.error(
             error_message,
@@ -618,9 +572,7 @@ def _run_tximport_for_experiment(
         frame.to_csv(frame_path, sep="\t", encoding="utf-8")
 
         # The frame column header is based off of the path, which includes _output.
-        sample = Sample.objects.get(
-            accession_code=frame.columns.values[0].replace("_output", "")
-        )
+        sample = Sample.objects.get(accession_code=frame.columns.values[0].replace("_output", ""))
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path
@@ -638,9 +590,7 @@ def _run_tximport_for_experiment(
         SampleResultAssociation.objects.get_or_create(sample=sample, result=result)
 
         # Create association with the RDS file.
-        SampleComputedFileAssociation.objects.get_or_create(
-            sample=sample, computed_file=rds_file
-        )
+        SampleComputedFileAssociation.objects.get_or_create(sample=sample, computed_file=rds_file)
 
         # Create association with TPM file.
         SampleComputedFileAssociation.objects.get_or_create(
@@ -674,17 +624,13 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
     quantified_experiments = {}
     for experiment in experiments:
         # We only want to consider samples that we actually can run salmon on.
-        eligible_samples = experiment.samples.filter(
-            source_database="SRA", technology="RNA-SEQ"
-        )
+        eligible_samples = experiment.samples.filter(source_database="SRA", technology="RNA-SEQ")
         num_eligible_samples = eligible_samples.count()
         if num_eligible_samples == 0:
             continue
 
         salmon_quant_results = get_quant_results_for_experiment(experiment)
-        is_tximport_job = (
-            "is_tximport_only" in job_context and job_context["is_tximport_only"]
-        )
+        is_tximport_job = "is_tximport_only" in job_context and job_context["is_tximport_only"]
 
         if is_tximport_job and salmon_quant_results.count() > 0:
             # If the job is only running tximport, then index_length
@@ -713,9 +659,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
                 return job_context
 
         if should_run_tximport(experiment, salmon_quant_results, is_tximport_job):
-            quantified_experiments[experiment] = get_quant_files_for_results(
-                salmon_quant_results
-            )
+            quantified_experiments[experiment] = get_quant_files_for_results(salmon_quant_results)
 
     job_context["tximport_inputs"] = quantified_experiments
 
@@ -799,9 +743,7 @@ def _run_salmon(job_context: Dict) -> Dict:
 
             dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
             formatted_dump_command = dump_str.format(
-                input_sra_file=job_context["sra_input_file_path"],
-                fifo_alpha=alpha,
-                fifo_beta=beta,
+                input_sra_file=job_context["sra_input_file_path"], fifo_alpha=alpha, fifo_beta=beta,
             )
             dump_po = subprocess.Popen(
                 formatted_dump_command,
@@ -872,9 +814,7 @@ def _run_salmon(job_context: Dict) -> Dict:
             timeout=timeout,
         )
     except subprocess.TimeoutExpired:
-        failure_reason = (
-            "Salmon timed out because it failed to complete within 3 hours."
-        )
+        failure_reason = "Salmon timed out because it failed to complete within 3 hours."
         logger.error(
             failure_reason,
             sample_accesion_code=job_context["sample"].accession_code,
@@ -972,13 +912,9 @@ def _run_salmon(job_context: Dict) -> Dict:
                 )
             except Exception as e:
                 logger.exception(
-                    e,
-                    processor_job=job_context["job_id"],
-                    sample=job_context["sample"].id,
+                    e, processor_job=job_context["job_id"], sample=job_context["sample"].id,
                 )
-                failure_template = (
-                    "Exception caught while uploading quantfile to S3: {}"
-                )
+                failure_template = "Exception caught while uploading quantfile to S3: {}"
                 job_context["job"].failure_reason = failure_template.format(
                     quant_file.absolute_file_path
                 )
@@ -1036,9 +972,7 @@ def _run_salmon(job_context: Dict) -> Dict:
 
         try:
             with open(
-                os.path.join(
-                    job_context["output_directory"], "aux_info", "meta_info.json"
-                )
+                os.path.join(job_context["output_directory"], "aux_info", "meta_info.json")
             ) as mi_file:
                 meta_info = json.load(mi_file)
                 kv = ComputationalResultAnnotation()
@@ -1049,8 +983,7 @@ def _run_salmon(job_context: Dict) -> Dict:
         except Exception:
             # See: https://github.com/AlexsLemonade/refinebio/issues/1167
             logger.exception(
-                "Error parsing Salmon meta_info JSON output!",
-                processor_job=job_context["job_id"],
+                "Error parsing Salmon meta_info JSON output!", processor_job=job_context["job_id"],
             )
 
         job_context["success"] = True
@@ -1066,14 +999,11 @@ def _run_salmontools(job_context: Dict) -> Dict:
 
     command_str = "salmontools extract-unmapped -u {unmapped_file} -o {output} "
     output_prefix = job_context["salmontools_directory"] + "unmapped_by_salmon"
-    command_str = command_str.format(
-        unmapped_file=unmapped_filename, output=output_prefix
-    )
+    command_str = command_str.format(unmapped_file=unmapped_filename, output=output_prefix)
     if "input_file_path_2" in job_context:
         command_str += "-1 {input_1} -2 {input_2}"
         command_str = command_str.format(
-            input_1=job_context["input_file_path"],
-            input_2=job_context["input_file_path_2"],
+            input_1=job_context["input_file_path"], input_2=job_context["input_file_path_2"],
         )
     else:
         command_str += "-r {input_1}"

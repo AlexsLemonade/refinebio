@@ -28,16 +28,10 @@ class Command(BaseCommand):
             help=("Minimum number of processed microarray samples for each organism"),
         )
         parser.add_argument(
-            "--qn-target",
-            default=False,
-            action="store_true",
-            help=("Remove invalid QN targets"),
+            "--qn-target", default=False, action="store_true", help=("Remove invalid QN targets"),
         )
         parser.add_argument(
-            "--compendias",
-            default=False,
-            action="store_true",
-            help=("Remove invalid Compendias"),
+            "--compendias", default=False, action="store_true", help=("Remove invalid Compendias"),
         )
 
     def handle(self, *args, **options):
@@ -55,15 +49,11 @@ class Command(BaseCommand):
                 "Nothing removed. Use options --compendia or --qn-target to select which computational results to check."
             )
 
-        logger.info(
-            "Removing computational results with ids %s", str(computational_result_ids)
-        )
+        logger.info("Removing computational results with ids %s", str(computational_result_ids))
 
         if not options["dry_run"]:
             # delete all invalid compendias from S3
-            compendias = ComputationalResult.objects.filter(
-                id__in=computational_result_ids
-            )
+            compendias = ComputationalResult.objects.filter(id__in=computational_result_ids)
             for computational_result in compendias:
                 computational_result.remove_computed_files_from_s3()
             # delete all compendias

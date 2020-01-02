@@ -77,9 +77,7 @@ def main():
         if "performant_pagination.py" in files:
             files.remove("performant_pagination.py")
 
-        cov_files.extend(
-            [os.path.join(path, file) for file in files if file.endswith(".py")]
-        )
+        cov_files.extend([os.path.join(path, file) for file in files if file.endswith(".py")])
 
     cov.report(cov_files)
     if "--html" in sys.argv:

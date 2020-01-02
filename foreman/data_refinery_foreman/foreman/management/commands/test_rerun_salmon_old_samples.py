@@ -33,9 +33,7 @@ from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples 
 )
 
 
-def setup_experiment(
-    new_version_accessions: List[str], old_version_accessions: List[str]
-) -> Dict:
+def setup_experiment(new_version_accessions: List[str], old_version_accessions: List[str]) -> Dict:
     """ Create an experiment where some samples were processed with the newest version of salmon and
     other with an older one.
     """
@@ -63,9 +61,7 @@ def setup_experiment(
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = (
-        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    )
+    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
     organism_index.salmon_version = "salmon 0.9.1"
     organism_index.save()
 
@@ -111,9 +107,7 @@ def setup_experiment(
         quant_result = ComputationalResult()
         quant_result.is_ccdl = True
         quant_result.processor = quant_processor
-        quant_result.organism_index = (
-            organism_index  # associate with OLD organism index
-        )
+        quant_result.organism_index = organism_index  # associate with OLD organism index
         quant_result.save()
 
         kv = ComputationalResultAnnotation()
@@ -150,9 +144,7 @@ def setup_experiment(
         quant_file.s3_key = "key"
         quant_file.save()
 
-        SampleResultAssociation.objects.get_or_create(
-            sample=sample, result=quant_result
-        )
+        SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
 
     # Create another OrganismIndex with a newer version of
     transcriptome_processor = Processor()
@@ -168,9 +160,7 @@ def setup_experiment(
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = (
-        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    )
+    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
     organism_index.salmon_version = "salmon 0.13.1"  # DIFFERENT SALMON VERSION
     organism_index.save()
 
@@ -246,9 +236,7 @@ def setup_experiment(
         quant_file.s3_key = "key"
         quant_file.save()
 
-        SampleResultAssociation.objects.get_or_create(
-            sample=sample, result=quant_result
-        )
+        SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
 
     return experiment
 

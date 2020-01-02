@@ -101,8 +101,6 @@ class Command(BaseCommand):
             pjda.save()
 
             logger.info(
-                "Sending QN_REFERENCE for Organism",
-                job_id=str(job.pk),
-                organism=str(organism),
+                "Sending QN_REFERENCE for Organism", job_id=str(job.pk), organism=str(organism),
             )
             send_job(ProcessorPipeline.QN_REFERENCE, job)

@@ -48,8 +48,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             os.makedirs(job_context["work_dir"], exist_ok=True)
         except Exception as e:
             logger.exception(
-                "Could not create work directory for processor job.",
-                job_context=job_context,
+                "Could not create work directory for processor job.", job_context=job_context,
             )
             job_context["job"].failure_reason = str(e)
             job_context["success"] = False
@@ -136,25 +135,19 @@ def _prepare_files(job_context: Dict) -> Dict:
                         return job_context
 
                     # Okay, there's no header so can just prepend to the file.
-                    with open(
-                        job_context["input_file_path"], "r", encoding="utf-8"
-                    ) as f:
+                    with open(job_context["input_file_path"], "r", encoding="utf-8") as f:
                         all_content = f.read()
 
                     job_context["input_file_path"] = (
                         job_context["work_dir"] + original_file.filename + ".fixed"
                     )
-                    with open(
-                        job_context["input_file_path"], "w+", encoding="utf-8"
-                    ) as f:
+                    with open(job_context["input_file_path"], "w+", encoding="utf-8") as f:
                         f.seek(0, 0)
                         if len(row) == 2:
                             f.write("Reporter Identifier\tVALUE" + "\n" + all_content)
                         elif len(row) == 3:
                             f.write(
-                                "Reporter Identifier\tVALUE\tDetection Pval"
-                                + "\n"
-                                + all_content
+                                "Reporter Identifier\tVALUE\tDetection Pval" + "\n" + all_content
                             )
 
                     job_context["column_name"] = "Reporter Identifier"
@@ -169,8 +162,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         )
         if not job_context["internal_accession"]:
             logger.error(
-                "Failed to find internal accession for code",
-                code=job_context["platform"],
+                "Failed to find internal accession for code", code=job_context["platform"],
             )
             job_context["job"].failure_reason = (
                 "Failed to find internal accession for code" + job_context["platform"]
@@ -178,9 +170,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             job_context["success"] = False
             job_context["job"].no_retry = True
     except Exception as e:
-        logger.exception(
-            "Failed to prepare for NO_OP job.", job_id=job_context["job"].id
-        )
+        logger.exception("Failed to prepare for NO_OP job.", job_id=job_context["job"].id)
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
         job_context["job"].no_retry = True
@@ -202,16 +192,16 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
     if "internal_accession" not in job_context or not job_context["internal_accession"]:
-        error_msg = "Told to convert AFFY genes without an internal_accession - how did this happen?"
+        error_msg = (
+            "Told to convert AFFY genes without an internal_accession - how did this happen?"
+        )
         logger.error(error_msg, job_context=job_context)
         job_context["job"].failure_reason = str(error_msg)
         job_context["success"] = False
         job_context["job"].no_retry = True
         return job_context
 
-    gene_index_path = (
-        "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
-    )
+    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
     if not os.path.exists(gene_index_path):
         logger.error(
             "Missing gene index file for platform!",
@@ -231,8 +221,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
             [
                 "/usr/bin/Rscript",
                 "--vanilla",  # Shut up Rscript
-                "/home/user/data_refinery_workers/processors/"
-                + job_context["script_name"],
+                "/home/user/data_refinery_workers/processors/" + job_context["script_name"],
                 "--geneIndexPath",
                 gene_index_path,
                 "--inputFile",
@@ -244,9 +233,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
         )
     except subprocess.CalledProcessError as e:
         error_template = "Status code {0} from {1}: {2}"
-        error_message = error_template.format(
-            e.returncode, job_context["script_name"], e.stderr
-        )
+        error_message = error_template.format(e.returncode, job_context["script_name"], e.stderr)
         logger.error(error_message, job_context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
@@ -273,9 +260,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     if not is_good_quality:
         job_context["success"] = False
         job_context["job"].failure_reason = (
-            "NO_OP output failed quality control check. ("
-            + job_context["output_file_path"]
-            + ")"
+            "NO_OP output failed quality control check. (" + job_context["output_file_path"] + ")"
         )
         job_context["job"].no_retry = True
         return job_context
@@ -331,9 +316,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
 
         except Exception as e:
             logger.exception(
-                "Could not detect database for file!",
-                platform=platform,
-                job_context=job_context,
+                "Could not detect database for file!", platform=platform, job_context=job_context,
             )
             continue
 
@@ -354,8 +337,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
             [
                 "/usr/bin/Rscript",
                 "--vanilla",
-                "/home/user/data_refinery_workers/processors/"
-                + job_context["script_name"],
+                "/home/user/data_refinery_workers/processors/" + job_context["script_name"],
                 "--platform",
                 high_db,
                 "--inputFile",
@@ -367,9 +349,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
         )
     except subprocess.CalledProcessError as e:
         error_template = "Status code {0} from {1}: {2}"
-        error_message = error_template.format(
-            e.returncode, job_context["script_name"], e.stderr
-        )
+        error_message = error_template.format(e.returncode, job_context["script_name"], e.stderr)
         logger.error(error_message, job_context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
@@ -463,11 +443,5 @@ def no_op_processor(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.NO_OP.value)
     return utils.run_pipeline(
         {"job_id": job_id, "pipeline": pipeline},
-        [
-            utils.start_job,
-            _prepare_files,
-            _convert_genes,
-            _create_result,
-            utils.end_job,
-        ],
+        [utils.start_job, _prepare_files, _convert_genes, _create_result, utils.end_job,],
     )

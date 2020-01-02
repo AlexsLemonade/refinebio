@@ -50,9 +50,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     sanitized_filename = original_file.absolute_file_path.split("/")[-1] + ".sanitized"
     job_context["input_file_path"] = job_context["work_dir"] + sanitized_filename
 
-    new_filename = original_file.absolute_file_path.split("/")[-1].replace(
-        ".txt", ".PCL"
-    )
+    new_filename = original_file.absolute_file_path.split("/")[-1].replace(".txt", ".PCL")
     job_context["output_file_path"] = job_context["work_dir"] + new_filename
 
     # Sanitize this file so R doesn't choke.
@@ -211,8 +209,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
         logger.exception(
-            "Failed to extract columns in " + job_context["input_file_path"],
-            exception=str(e),
+            "Failed to extract columns in " + job_context["input_file_path"], exception=str(e),
         )
         job_context["job"].no_retry = True
         return job_context
@@ -293,8 +290,7 @@ def _detect_platform(job_context: Dict) -> Dict:
     else:
 
         logger.info(
-            "Match percentage too low, NO_OP'ing and aborting.",
-            job=job_context["job_id"],
+            "Match percentage too low, NO_OP'ing and aborting.", job=job_context["job_id"],
         )
 
         processor_job = ProcessorJob()
@@ -394,8 +390,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     frames = np.split(data, len(data.columns), axis=1)
     for frame in frames:
         filename = (
-            frame.columns.values[0].replace("&", "").replace("*", "").replace(";", "")
-            + ".tsv"
+            frame.columns.values[0].replace("&", "").replace("*", "").replace(";", "") + ".tsv"
         )
         frame_path = job_context["work_dir"] + filename
         frame.to_csv(frame_path, sep="\t", encoding="utf-8")

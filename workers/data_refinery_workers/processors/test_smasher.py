@@ -70,9 +70,7 @@ def prepare_job():
 
     computed_file = ComputedFile()
     computed_file.filename = "SRP149598_gene_lengthScaledTPM.tsv"
-    computed_file.absolute_file_path = (
-        "/home/user/data_store/PCL/" + computed_file.filename
-    )
+    computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
     computed_file.is_smashable = True
@@ -106,9 +104,7 @@ def prepare_job():
 
     computed_file = ComputedFile()
     computed_file.filename = "GSM1487313_liver.PCL"
-    computed_file.absolute_file_path = (
-        "/home/user/data_store/PCL/" + computed_file.filename
-    )
+    computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
     computed_file.is_smashable = True
@@ -116,9 +112,7 @@ def prepare_job():
 
     computed_file = ComputedFile()
     computed_file.filename = "GSM1237812_S97-PURE.DAT"
-    computed_file.absolute_file_path = (
-        "/home/user/data_store/PCL/" + computed_file.filename
-    )
+    computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
     computed_file.is_smashable = False
@@ -180,9 +174,7 @@ def prepare_dual_tech_job():
 
     computed_file = ComputedFile()
     computed_file.filename = "GSM1487313_liver.PCL"
-    computed_file.absolute_file_path = (
-        "/home/user/data_store/PCL/" + computed_file.filename
-    )
+    computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
     computed_file.is_smashable = True
@@ -220,9 +212,7 @@ def prepare_dual_tech_job():
 
     computed_file2 = ComputedFile()
     computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
-    computed_file2.absolute_file_path = (
-        "/home/user/data_store/PCL/" + computed_file2.filename
-    )
+    computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
     computed_file2.result = result2
     computed_file2.size_in_bytes = 234
     computed_file2.is_smashable = True
@@ -242,9 +232,7 @@ class SmasherTestCase(TransactionTestCase):
         job = prepare_job()
 
         anno_samp = Sample.objects.get(accession_code="GSM1237810")
-        self.assertTrue(
-            "hi" in anno_samp.to_metadata_dict()["refinebio_annotations"][0].keys()
-        )
+        self.assertTrue("hi" in anno_samp.to_metadata_dict()["refinebio_annotations"][0].keys())
 
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
         dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
@@ -264,9 +252,7 @@ class SmasherTestCase(TransactionTestCase):
         # Don't know why yet.
         # for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
         for ag_type in ["ALL", "EXPERIMENT"]:
-            dataset = Dataset.objects.filter(
-                id__in=relations.values("dataset_id")
-            ).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.aggregate_by = ag_type
             dataset.save()
 
@@ -276,9 +262,7 @@ class SmasherTestCase(TransactionTestCase):
             self.assertNotEqual(os.path.getsize(final_context["output_file"]), 0)
             self.assertEqual(final_context["dataset"].is_processed, True)
 
-            dataset = Dataset.objects.filter(
-                id__in=relations.values("dataset_id")
-            ).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.is_processed = False
             dataset.save()
 
@@ -289,9 +273,7 @@ class SmasherTestCase(TransactionTestCase):
             job.save()
 
         for scale_type in ["NONE", "MINMAX", "STANDARD", "ROBUST"]:
-            dataset = Dataset.objects.filter(
-                id__in=relations.values("dataset_id")
-            ).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.aggregate_by = "EXPERIMENT"
             dataset.scale_by = scale_type
             dataset.save()
@@ -302,9 +284,7 @@ class SmasherTestCase(TransactionTestCase):
             self.assertNotEqual(os.path.getsize(final_context["output_file"]), 0)
             self.assertEqual(final_context["dataset"].is_processed, True)
 
-            dataset = Dataset.objects.filter(
-                id__in=relations.values("dataset_id")
-            ).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.is_processed = False
             dataset.save()
 
@@ -316,9 +296,7 @@ class SmasherTestCase(TransactionTestCase):
 
         # Stats
         for scale_type in ["MINMAX", "STANDARD"]:
-            dataset = Dataset.objects.filter(
-                id__in=relations.values("dataset_id")
-            ).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.aggregate_by = "EXPERIMENT"
             dataset.scale_by = scale_type
             dataset.save()
@@ -353,9 +331,7 @@ class SmasherTestCase(TransactionTestCase):
             job.save()
 
         for scale_type in ["MINMAX", "STANDARD"]:
-            dataset = Dataset.objects.filter(
-                id__in=relations.values("dataset_id")
-            ).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.aggregate_by = "SPECIES"
             dataset.scale_by = scale_type
             dataset.save()
@@ -389,9 +365,7 @@ class SmasherTestCase(TransactionTestCase):
             job.save()
 
         for scale_type in ["MINMAX", "STANDARD"]:
-            dataset = Dataset.objects.filter(
-                id__in=relations.values("dataset_id")
-            ).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.aggregate_by = "ALL"
             dataset.scale_by = scale_type
             dataset.save()
@@ -494,9 +468,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "NOT_REAL.PCL"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -569,9 +541,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1237810_T09-1084.PCL"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -609,9 +579,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1238108-tbl-1.txt"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -642,9 +610,7 @@ class SmasherTestCase(TransactionTestCase):
         print(ds.failure_reason)
         print(final_context["dataset"].failure_reason)
 
-        self.assertEqual(
-            final_context["unsmashable_files"], ["GSM1237810_T09-1084.PCL"]
-        )
+        self.assertEqual(final_context["unsmashable_files"], ["GSM1237810_T09-1084.PCL"])
 
     @tag("smasher")
     def test_qn_targets_only(self):
@@ -682,13 +648,13 @@ class SmasherTestCase(TransactionTestCase):
         computed_file.s3_key = "smasher-test-quant.sf"
         computed_file.s3_bucket = "data-refinery-test-assets"
         computed_file.filename = "quant.sf"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/QUANT/smasher-test-quant.sf"
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/QUANT/smasher-test-quant.sf"
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.size_in_bytes = 123123
-        computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
+        computed_file.sha1 = (
+            "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
+        )
         computed_file.save()
 
         computed_file = ComputedFile()
@@ -720,9 +686,7 @@ class SmasherTestCase(TransactionTestCase):
 
         # Check that the sample was really generated
         self.assertTrue(
-            os.path.exists(
-                final_context["output_dir"] + "/HOMO_SAPIENS/GSM1237818_quant.sf"
-            )
+            os.path.exists(final_context["output_dir"] + "/HOMO_SAPIENS/GSM1237818_quant.sf")
         )
         self.assertTrue(final_context["metadata"]["quant_sf_only"])
         self.assertEqual(final_context["metadata"]["num_samples"], 1)
@@ -764,9 +728,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1237810_T09-1084.PCL"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -861,9 +823,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "SRR1731761_output_gene_lengthScaledTPM.tsv"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -895,9 +855,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "SRR1731762_output_gene_lengthScaledTPM.tsv"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -929,9 +887,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "danio_target.tsv"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = cr
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = False
@@ -1010,9 +966,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084806-tbl-1.txt"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -1041,9 +995,7 @@ class SmasherTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084807-tbl-1.txt"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -1148,9 +1100,7 @@ class SmasherTestCase(TransactionTestCase):
         computed_file.s3_key = "all_the_things.jpg"
         computed_file.s3_bucket = "data-refinery-test-assets"
         computed_file.filename = "all_the_things.jpg"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 9001
         computed_file.is_smashable = False
@@ -1241,10 +1191,7 @@ class AggregationTestCase(TransactionTestCase):
             "experiments": {
                 "E-GEOD-44719": {
                     "accession_code": "E-GEOD-44719",
-                    "sample_accession_codes": [
-                        "IFNa DC_LB016_IFNa",
-                        "undefined_sample",
-                    ],
+                    "sample_accession_codes": ["IFNa DC_LB016_IFNa", "undefined_sample",],
                 }
             },
             "samples": {
@@ -1290,10 +1237,7 @@ class AggregationTestCase(TransactionTestCase):
                                         "name": "Sample_source_name",
                                         "value": "pineal glands at CT18, after light exposure",
                                     },
-                                    {
-                                        "name": "Sample_title",
-                                        "value": "Pineal_Light_CT18",
-                                    },
+                                    {"name": "Sample_title", "value": "Pineal_Light_CT18",},
                                 ],
                             },
                             # For single-key object whose key is "name",
@@ -1360,10 +1304,7 @@ class AggregationTestCase(TransactionTestCase):
             "metadata": self.metadata,
             "dataset": Dataset.objects.create(
                 aggregate_by="ALL",
-                data={
-                    "GSE56409": ["GSM1361050"],
-                    "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],
-                },
+                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],},
             ),
         }
         smashing_utils.write_tsv_json(job_context)
@@ -1374,9 +1315,7 @@ class AggregationTestCase(TransactionTestCase):
             reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
                 if row["refinebio_accession_code"] == "E-GEOD-44719-GSM1089311":
-                    self.assertEqual(
-                        row["cell population"], "IFNa DC"
-                    )  # ArrayExpress specific
+                    self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
                     self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
                     self.assertFalse("source" in row)  # ArrayExpress specific
                     self.assertEqual(row["detection_percentage"], "98.44078")
@@ -1404,10 +1343,7 @@ class AggregationTestCase(TransactionTestCase):
             "metadata": self.metadata,
             "dataset": Dataset.objects.create(
                 aggregate_by="EXPERIMENT",
-                data={
-                    "GSE56409": ["GSM1361050"],
-                    "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],
-                },
+                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],},
             ),
         }
         smashing_utils.write_tsv_json(job_context)
@@ -1418,13 +1354,9 @@ class AggregationTestCase(TransactionTestCase):
         with open(tsv_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                self.assertEqual(
-                    row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311"
-                )
+                self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(
-                    row["cell population"], "IFNa DC"
-                )  # ArrayExpress specific
+                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
                 self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
                 self.assertEqual(row["detection_percentage"], "98.44078")
 
@@ -1446,11 +1378,7 @@ class AggregationTestCase(TransactionTestCase):
                     "refinebio_accession_code": "eyy",
                     "refinebio_annotations": [
                         # annotation #1
-                        {
-                            "😎😎": "😎😎",
-                            "detection_percentage": 98.44078,
-                            "mapped_percentage": 100.0,
-                        }
+                        {"😎😎": "😎😎", "detection_percentage": 98.44078, "mapped_percentage": 100.0,}
                     ],  # end of annotations
                 },  # end of sample #1
             },  # end of "samples"
@@ -1523,10 +1451,7 @@ class AggregationTestCase(TransactionTestCase):
             "metadata": self.metadata,
             "dataset": Dataset.objects.create(
                 aggregate_by="SPECIES",
-                data={
-                    "GSE56409": ["GSM1361050"],
-                    "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],
-                },
+                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],},
             ),
             "group_by_keys": ["homo_sapiens", "fake_species"],
             "input_files": {
@@ -1559,9 +1484,7 @@ class AggregationTestCase(TransactionTestCase):
             species_metadada = json.load(json_fp)
         self.assertEqual(species_metadada["species"], "homo_sapiens")
         self.assertEqual(len(species_metadada["samples"]), 1)
-        self.assertEqual(
-            species_metadada["samples"][0]["refinebio_accession_code"], "GSM1361050"
-        )
+        self.assertEqual(species_metadada["samples"][0]["refinebio_accession_code"], "GSM1361050")
         # os.remove(json_filename)
 
         # Test tsv file of "fake_species"
@@ -1570,13 +1493,9 @@ class AggregationTestCase(TransactionTestCase):
         with open(tsv_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                self.assertEqual(
-                    row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311"
-                )
+                self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(
-                    row["cell population"], "IFNa DC"
-                )  # ArrayExpress specific
+                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
                 self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
                 self.assertEqual(row["detection_percentage"], "98.44078")
 
@@ -1592,8 +1511,7 @@ class AggregationTestCase(TransactionTestCase):
         self.assertEqual(species_metadada["species"], "fake_species")
         self.assertEqual(len(species_metadada["samples"]), 1)
         self.assertEqual(
-            species_metadada["samples"][0]["refinebio_accession_code"],
-            "E-GEOD-44719-GSM1089311",
+            species_metadada["samples"][0]["refinebio_accession_code"], "E-GEOD-44719-GSM1089311",
         )
         os.remove(json_filename)
 

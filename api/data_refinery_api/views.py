@@ -98,9 +98,7 @@ from drf_yasg.utils import swagger_auto_schema
 ##
 # ElasticSearch
 ##
-from django_elasticsearch_dsl_drf.pagination import (
-    LimitOffsetPagination as ESLimitOffsetPagination,
-)
+from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
 from six import iteritems
 
 
@@ -343,9 +341,7 @@ class ExperimentDocumentView(DocumentViewSet):
             filter_group = {}
             for bucket in facet["buckets"]:
                 if field == "has_publication":
-                    filter_group[bucket["key_as_string"]] = bucket["total_samples"][
-                        "value"
-                    ]
+                    filter_group[bucket["key_as_string"]] = bucket["total_samples"]["value"]
                 else:
                     filter_group[bucket["key"]] = bucket["total_samples"]["value"]
             result[field] = filter_group
@@ -470,9 +466,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 new_data["data"][key] = sample_codes
 
         if old_object.is_processed:
-            raise APIException(
-                "You may not update Datasets which have already been processed"
-            )
+            raise APIException("You may not update Datasets which have already been processed")
 
         if new_data.get("start"):
 
@@ -538,9 +532,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 if (
                     settings.RUNNING_IN_CLOUD
                     and settings.ENGAGEMENTBOT_WEBHOOK is not None
-                    and DatasetView._should_display_on_engagement_bot(
-                        supplied_email_address
-                    )
+                    and DatasetView._should_display_on_engagement_bot(supplied_email_address)
                 ):
                     try:
                         try:
@@ -784,13 +776,10 @@ class SampleList(generics.ListAPIView):
             ids = [int(x) for x in ids.split(",")]
             filter_dict["pk__in"] = ids
 
-        experiment_accession_code = self.request.query_params.get(
-            "experiment_accession_code", None
-        )
+        experiment_accession_code = self.request.query_params.get("experiment_accession_code", None)
         if experiment_accession_code:
             experiment = get_object_or_404(
-                Experiment.objects.values("id"),
-                accession_code=experiment_accession_code,
+                Experiment.objects.values("id"), accession_code=experiment_accession_code,
             )
             filter_dict["experiments__in"] = [experiment["id"]]
 
@@ -907,9 +896,7 @@ class InstitutionList(generics.ListAPIView):
     paginator = None
 
     def get_queryset(self):
-        return (
-            Experiment.public_objects.all().values("submitter_institution").distinct()
-        )
+        return Experiment.public_objects.all().values("submitter_institution").distinct()
 
 
 ##
@@ -971,9 +958,7 @@ class DownloaderJobList(generics.ListAPIView):
     def get_queryset(self):
         queryset = DownloaderJob.objects.all()
 
-        sample_accession_code = self.request.query_params.get(
-            "sample_accession_code", None
-        )
+        sample_accession_code = self.request.query_params.get("sample_accession_code", None)
         if sample_accession_code:
             queryset = queryset.filter(
                 original_files__samples__accession_code=sample_accession_code
@@ -1026,9 +1011,7 @@ class ProcessorJobList(generics.ListAPIView):
     def get_queryset(self):
         queryset = ProcessorJob.objects.all()
 
-        sample_accession_code = self.request.query_params.get(
-            "sample_accession_code", None
-        )
+        sample_accession_code = self.request.query_params.get("sample_accession_code", None)
         if sample_accession_code:
             queryset = queryset.filter(
                 original_files__samples__accession_code=sample_accession_code
@@ -1160,9 +1143,9 @@ class AboutStats(APIView):
 
         result = {
             "samples_available": self._get_samples_available(),
-            "total_size_in_bytes": OriginalFile.objects.aggregate(
-                total_size=Sum("size_in_bytes")
-            )["total_size"],
+            "total_size_in_bytes": OriginalFile.objects.aggregate(total_size=Sum("size_in_bytes"))[
+                "total_size"
+            ],
             "supported_organisms": self._get_supported_organisms(),
             "experiments_processed": self._get_experiments_processed(),
         }
@@ -1172,17 +1155,13 @@ class AboutStats(APIView):
         """ total experiments with at least one sample processed """
         experiments_with_sample_processed = (
             Experiment.objects.annotate(
-                processed_samples_count=Count(
-                    "samples", filter=Q(samples__is_processed=True)
-                ),
+                processed_samples_count=Count("samples", filter=Q(samples__is_processed=True)),
             )
             .filter(Q(processed_samples_count__gt=1))
             .count()
         )
         experiments_with_sample_quant = (
-            ComputedFile.objects.filter(
-                filename="quant.sf", result__samples__is_processed=False
-            )
+            ComputedFile.objects.filter(filename="quant.sf", result__samples__is_processed=False)
             .values_list("result__samples__experiments", flat=True)
             .distinct()
             .count()
@@ -1191,9 +1170,7 @@ class AboutStats(APIView):
 
     def _get_supported_organisms(self):
         """ count organisms with qn targets or that have at least one sample with quant files """
-        organisms_with_qn_targets = Organism.objects.filter(
-            qn_target__isnull=False
-        ).count()
+        organisms_with_qn_targets = Organism.objects.filter(qn_target__isnull=False).count()
         organisms_without_qn_targets = (
             Organism.objects.filter(
                 qn_target__isnull=True,
@@ -1260,9 +1237,7 @@ class Stats(APIView):
         data["processed_samples"]["last_hour"] = cls._samples_processed_last_hour()
 
         data["processed_samples"]["technology"] = {}
-        techs = Sample.processed_objects.values("technology").annotate(
-            count=Count("technology")
-        )
+        techs = Sample.processed_objects.values("technology").annotate(count=Count("technology"))
         for tech in techs:
             if not tech["technology"] or not tech["technology"].strip():
                 continue
@@ -1275,13 +1250,9 @@ class Stats(APIView):
         for organism in organisms:
             if not organism["organism__name"]:
                 continue
-            data["processed_samples"]["organism"][
-                organism["organism__name"]
-            ] = organism["count"]
+            data["processed_samples"]["organism"][organism["organism__name"]] = organism["count"]
 
-        data["processed_experiments"] = cls._get_object_stats(
-            Experiment.processed_public_objects
-        )
+        data["processed_experiments"] = cls._get_object_stats(Experiment.processed_public_objects)
         data["active_volumes"] = list(get_active_volumes())
         data["dataset"] = cls._get_dataset_stats(range_param)
 
@@ -1338,18 +1309,14 @@ class Stats(APIView):
     def _samples_processed_last_hour(cls):
         current_date = datetime.now(tz=timezone.utc)
         start = current_date - timedelta(hours=1)
-        return Sample.processed_objects.filter(
-            last_modified__range=(start, current_date)
-        ).count()
+        return Sample.processed_objects.filter(last_modified__range=(start, current_date)).count()
 
     @classmethod
     def _get_input_data_size(cls):
-        total_size = OriginalFile.objects.filter(
-            sample__is_processed=True  # <-- SLOW
-        ).aggregate(Sum("size_in_bytes"))
-        return (
-            total_size["size_in_bytes__sum"] if total_size["size_in_bytes__sum"] else 0
+        total_size = OriginalFile.objects.filter(sample__is_processed=True).aggregate(  # <-- SLOW
+            Sum("size_in_bytes")
         )
+        return total_size["size_in_bytes__sum"] if total_size["size_in_bytes__sum"] else 0
 
     @classmethod
     def _get_output_data_size(cls):
@@ -1358,9 +1325,7 @@ class Stats(APIView):
             .filter(s3_bucket__isnull=False, s3_key__isnull=True)
             .aggregate(Sum("size_in_bytes"))
         )
-        return (
-            total_size["size_in_bytes__sum"] if total_size["size_in_bytes__sum"] else 0
-        )
+        return total_size["size_in_bytes__sum"] if total_size["size_in_bytes__sum"] else 0
 
     @classmethod
     def _get_job_stats(cls, jobs, range_param):
@@ -1368,11 +1333,7 @@ class Stats(APIView):
 
         if range_param:
             start_date = get_start_date(range_param)
-            start_filter = (
-                start_filter
-                | Q(start_time__gte=start_date)
-                | Q(start_time__isnull=True)
-            )
+            start_filter = start_filter | Q(start_time__gte=start_date) | Q(start_time__isnull=True)
 
         result = jobs.filter(start_filter).aggregate(
             total=Count("id"),
@@ -1399,9 +1360,7 @@ class Stats(APIView):
         result["average_time"] = (
             jobs.filter(start_filter)
             .filter(start_time__isnull=False, end_time__isnull=False, success=True)
-            .aggregate(average_time=Avg(F("end_time") - F("start_time")))[
-                "average_time"
-            ]
+            .aggregate(average_time=Avg(F("end_time") - F("start_time")))["average_time"]
         )
 
         if not result["average_time"]:
@@ -1414,12 +1373,8 @@ class Stats(APIView):
                 total=Count("id"),
                 successful=Count("id", filter=Q(success=True)),
                 failed=Count("id", filter=Q(success=False)),
-                pending=Count(
-                    "id", filter=Q(start_time__isnull=True, success__isnull=True)
-                ),
-                open=Count(
-                    "id", filter=Q(start_time__isnull=False, success__isnull=True)
-                ),
+                pending=Count("id", filter=Q(start_time__isnull=True, success__isnull=True)),
+                open=Count("id", filter=Q(start_time__isnull=False, success__isnull=True)),
             )
 
         return result
@@ -1429,9 +1384,9 @@ class Stats(APIView):
         result = {"total": objects.count()}
 
         if range_param:
-            result["timeline"] = cls._get_intervals(
-                objects, range_param, field
-            ).annotate(total=Count("id"))
+            result["timeline"] = cls._get_intervals(objects, range_param, field).annotate(
+                total=Count("id")
+            )
 
         return result
 
@@ -1441,20 +1396,14 @@ class Stats(APIView):
 
         # truncate the parameterized field so it can be annotated by range
         # ie. each day is composed of 24 hours...
-        start_trunc = Trunc(
-            field, range_to_trunc.get(range_param), output_field=DateTimeField()
-        )
+        start_trunc = Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())
 
         # get the correct start time for the range
         start_range = get_start_date(range_param)
 
         # annotate and filter in a single query
         # ref https://stackoverflow.com/a/38359913/763705
-        return (
-            objects.annotate(start=start_trunc)
-            .values("start")
-            .filter(start__gte=start_range)
-        )
+        return objects.annotate(start=start_trunc).values("start").filter(start__gte=start_range)
 
 
 ###
@@ -1773,21 +1722,14 @@ def handle404error(request, exception):
 
     # check to see if the 404ed request contained a version
     if not match(r"^/v[1-9]/.*", request.path):
-        message = (
-            "refine.bio API resources are only available through versioned requests."
-        )
+        message = "refine.bio API resources are only available through versioned requests."
 
-    return JsonResponse(
-        {"message": message, "docs": url, "status_code": 404,}, status=404
-    )
+    return JsonResponse({"message": message, "docs": url, "status_code": 404,}, status=404)
 
 
 def handle500error(request):
     return JsonResponse(
-        {
-            "message": "A server error occured. This has been reported.",
-            "status_code": 500,
-        },
+        {"message": "A server error occured. This has been reported.", "status_code": 500,},
         status=500,
     )
 

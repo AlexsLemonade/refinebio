@@ -22,16 +22,12 @@ hv.extension("bokeh")
 logger = get_and_configure_logger(__name__)
 
 
-def visualize(
-    input_frame, output_path, width=2000, height=2000, logz=True, backend="bokeh"
-):
+def visualize(input_frame, output_path, width=2000, height=2000, logz=True, backend="bokeh"):
     """
     Generates high resolution visualizations of supplied Pandas DataFrame using HoloViews.
     """
     try:
-        dask_df = daskdf.from_pandas(
-            input_frame, npartitions=multiprocessing.cpu_count()
-        ).persist()
+        dask_df = daskdf.from_pandas(input_frame, npartitions=multiprocessing.cpu_count()).persist()
         logger.info("Converted to Dask Frame..")
 
         num_genes, num_samples = input_frame.shape
@@ -52,9 +48,7 @@ def visualize(
         else:
             img = hv.Image((np.arange(num_samples), np.arange(num_genes), da))
             rasterized_img = rasterize(img, width=width, height=height)
-            rasterized_img.opts(
-                width=width, height=height, cmap=viridis_bad_black, logz=True
-            )
+            rasterized_img.opts(width=width, height=height, cmap=viridis_bad_black, logz=True)
             hv.save(rasterized_img, output_path, backend="bokeh")
 
         logger.info("Output visualization!", output_path=output_path)

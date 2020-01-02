@@ -114,11 +114,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
 
     # Write the file
     sum_frame.to_csv(
-        job_context["target_file"],
-        index=False,
-        header=False,
-        sep="\t",
-        encoding="utf-8",
+        job_context["target_file"], index=False, header=False, sep="\t", encoding="utf-8",
     )
     job_context["formatted_command"] = "qn_reference.py"
 
@@ -188,9 +184,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     annotation.data = {
         "organism_id": job_context["samples"]["ALL"][0].organism_id,
         "is_qn": True,
-        "platform_accession_code": job_context["samples"]["ALL"][
-            0
-        ].platform_accession_code,
+        "platform_accession_code": job_context["samples"]["ALL"][0].platform_accession_code,
         "samples": [sample.accession_code for sample in job_context["samples"]["ALL"]],
         "geneset": str(job_context["geneset"]),
         "num_valid_inputs": job_context["num_valid_inputs"],

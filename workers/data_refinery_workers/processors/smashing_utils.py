@@ -26,15 +26,11 @@ from data_refinery_common.models import ComputedFile, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
-MULTIPROCESSING_MAX_THREAD_COUNT = max(
-    1, math.floor(multiprocessing.cpu_count() / 2) - 1
-)
+MULTIPROCESSING_MAX_THREAD_COUNT = max(1, math.floor(multiprocessing.cpu_count() / 2) - 1)
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = (
-    Path("data_refinery_workers/processors/smasher_email.min.html")
-    .read_text()
-    .replace("\n", "")
+    Path("data_refinery_workers/processors/smasher_email.min.html").read_text().replace("\n", "")
 )
 BODY_ERROR_HTML = (
     Path("data_refinery_workers/processors/smasher_email_error.min.html")
@@ -53,10 +49,7 @@ def log_state(message, job_id, start_time=False):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
         logger.debug(
-            message,
-            total_cpu=psutil.cpu_percent(),
-            process_ram=ram_in_GB,
-            job_id=job_id,
+            message, total_cpu=psutil.cpu_percent(), process_ram=ram_in_GB, job_id=job_id,
         )
 
         if start_time:
@@ -170,9 +163,7 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
     return data
 
 
-def process_frame(
-    work_dir, computed_file, sample_accession_code, aggregate_by
-) -> pd.DataFrame:
+def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) -> pd.DataFrame:
     """ Downloads the computed file from S3 and tries to see if it's smashable.
     Returns a data frame if the file can be processed or False otherwise. """
 
@@ -214,9 +205,7 @@ def process_frame(
 
         # Ideally done in the NO-OPPER, but sanity check here.
         if (not computed_file.has_been_log2scaled()) and (data.max() > 100).any():
-            logger.info(
-                "Detected non-log2 microarray data.", computed_file_id=computed_file.id
-            )
+            logger.info("Detected non-log2 microarray data.", computed_file_id=computed_file.id)
             data = np.log2(data)
 
         # Explicitly title this dataframe
@@ -404,10 +393,7 @@ def process_frames_for_key(
         )
         log_state(
             log_template.format(
-                len(all_gene_identifiers),
-                key,
-                len(microarray_columns),
-                len(rnaseq_columns),
+                len(all_gene_identifiers), key, len(microarray_columns), len(rnaseq_columns),
             ),
             job_context["job"].id,
             start_gene_ids,
@@ -415,13 +401,9 @@ def process_frames_for_key(
 
     # Temporarily only cache mouse compendia because it may not succeed.
     if not first_pass_was_cached and key == "MUS_MUSCULUS":
-        cache_first_pass(
-            job_context, all_gene_identifiers, microarray_columns, rnaseq_columns
-        )
+        cache_first_pass(job_context, all_gene_identifiers, microarray_columns, rnaseq_columns)
 
-    start_build_matrix = log_state(
-        "Beginning to build the full matrices.", job_context["job"].id
-    )
+    start_build_matrix = log_state("Beginning to build the full matrices.", job_context["job"].id)
 
     # Sort the columns so that the matrices are in predictable orders.
     microarray_columns.sort()
@@ -431,10 +413,7 @@ def process_frames_for_key(
     # should prevent any operations from happening while we build it
     # up, so the only RAM used will be needed.
     job_context["microarray_matrix"] = pd.DataFrame(
-        data=None,
-        index=all_gene_identifiers,
-        columns=microarray_columns,
-        dtype=np.float32,
+        data=None, index=all_gene_identifiers, columns=microarray_columns, dtype=np.float32,
     )
     job_context["rnaseq_matrix"] = pd.DataFrame(
         data=None, index=all_gene_identifiers, columns=rnaseq_columns, dtype=np.float32
@@ -479,9 +458,7 @@ def process_frames_for_key(
         job_context["num_samples"] += len(job_context["rnaseq_matrix"].columns)
 
     log_state(
-        "Built full matrices for key {}".format(key),
-        job_context["job"].id,
-        start_build_matrix,
+        "Built full matrices for key {}".format(key), job_context["job"].id, start_build_matrix,
     )
 
     return job_context
@@ -489,9 +466,7 @@ def process_frames_for_key(
 
 # Modified from: http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
 def _index_marks(num_columns, chunk_size):
-    return range(
-        chunk_size, math.ceil(num_columns / chunk_size) * chunk_size, chunk_size
-    )
+    return range(chunk_size, math.ceil(num_columns / chunk_size) * chunk_size, chunk_size)
 
 
 def _split_dataframe_columns(dataframe, chunk_size):
@@ -515,9 +490,7 @@ def _quantile_normalize_matrix(target_vector, original_matrix):
         )
         # And finally convert back to Pandas
         ar = np.array(normalized_matrix)
-        new_merged = pd.DataFrame(
-            ar, columns=original_matrix.columns, index=original_matrix.index
-        )
+        new_merged = pd.DataFrame(ar, columns=original_matrix.columns, index=original_matrix.index)
     else:
         matrix_chunks = _split_dataframe_columns(original_matrix, QN_CHUNK_SIZE)
         for i, chunk in enumerate(matrix_chunks):
@@ -633,10 +606,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
         job_context["dataset"].failure_reason = failure_reason
         job_context["dataset"].save()
         raise utils.ProcessorJobError(
-            failure_reason,
-            success=False,
-            organism=organism,
-            dataset_id=job_context["dataset"].id,
+            failure_reason, success=False, organism=organism, dataset_id=job_context["dataset"].id,
         )
 
     qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
@@ -753,9 +723,7 @@ def write_non_data_files(job_context: Dict) -> Dict:
     try:
         write_tsv_json(job_context)
         # Metadata to JSON
-        job_context["metadata"]["created_at"] = timezone.now().strftime(
-            "%Y-%m-%dT%H:%M:%S"
-        )
+        job_context["metadata"]["created_at"] = timezone.now().strftime("%Y-%m-%dT%H:%M:%S")
         aggregated_metadata_path = os.path.join(
             job_context["output_dir"], "aggregated_metadata.json"
         )
@@ -769,10 +737,7 @@ def write_non_data_files(job_context: Dict) -> Dict:
             )
             with open(filtered_samples_path, "w", encoding="utf-8") as metadata_file:
                 json.dump(
-                    job_context["filtered_samples"],
-                    metadata_file,
-                    indent=4,
-                    sort_keys=True,
+                    job_context["filtered_samples"], metadata_file, indent=4, sort_keys=True,
                 )
 
             columns = get_tsv_columns(job_context["filtered_samples"])
@@ -780,14 +745,10 @@ def write_non_data_files(job_context: Dict) -> Dict:
                 job_context["output_dir"], "filtered_samples_metadata.tsv"
             )
             with open(filtered_samples_tsv_path, "w", encoding="utf-8") as tsv_file:
-                dw = csv.DictWriter(
-                    tsv_file, columns, delimiter="\t", extrasaction="ignore"
-                )
+                dw = csv.DictWriter(tsv_file, columns, delimiter="\t", extrasaction="ignore")
                 dw.writeheader()
                 for sample_metadata in job_context["filtered_samples"].values():
-                    dw.writerow(
-                        get_tsv_row_data(sample_metadata, job_context["dataset"].data)
-                    )
+                    dw.writerow(get_tsv_row_data(sample_metadata, job_context["dataset"].data))
 
     except Exception as e:
         logger.exception("Failed to write metadata TSV!", job_id=job_context["job"].id)
@@ -858,8 +819,7 @@ def get_tsv_row_data(sample_metadata, dataset_data):
             for annotation_key, annotation_value in annotation.items():
                 # "characteristic" in ArrayExpress annotation
                 if (
-                    sample_metadata.get("refinebio_source_database", "")
-                    == "ARRAY_EXPRESS"
+                    sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
                     and annotation_key == "characteristic"
                 ):
                     for pair_dict in annotation_value:
@@ -873,8 +833,7 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                             )
                 # "variable" in ArrayExpress annotation
                 elif (
-                    sample_metadata.get("refinebio_source_database", "")
-                    == "ARRAY_EXPRESS"
+                    sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
                     and annotation_key == "variable"
                 ):
                     for pair_dict in annotation_value:
@@ -885,8 +844,7 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                             )
                 # Skip "source" field ArrayExpress sample's annotation
                 elif (
-                    sample_metadata.get("refinebio_source_database", "")
-                    == "ARRAY_EXPRESS"
+                    sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
                     and annotation_key == "source"
                 ):
                     continue
@@ -909,31 +867,20 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                     and "name" in annotation_value
                 ):
                     _add_annotation_value(
-                        row_data,
-                        annotation_key,
-                        annotation_value["name"],
-                        sample_accession_code,
+                        row_data, annotation_key, annotation_value["name"], sample_accession_code,
                     )
                 # If annotation_value is a single-element array, extract the element directly:
                 elif isinstance(annotation_value, list) and len(annotation_value) == 1:
                     _add_annotation_value(
-                        row_data,
-                        annotation_key,
-                        annotation_value[0],
-                        sample_accession_code,
+                        row_data, annotation_key, annotation_value[0], sample_accession_code,
                     )
                 # Otherwise save all annotation fields in separate columns
                 else:
                     _add_annotation_value(
-                        row_data,
-                        annotation_key,
-                        annotation_value,
-                        sample_accession_code,
+                        row_data, annotation_key, annotation_value, sample_accession_code,
                     )
 
-    row_data["experiment_accession"] = get_experiment_accession(
-        sample_accession_code, dataset_data
-    )
+    row_data["experiment_accession"] = get_experiment_accession(sample_accession_code, dataset_data)
 
     return row_data
 
@@ -959,31 +906,24 @@ def get_tsv_columns(samples_metadata):
                     # For ArrayExpress samples, take out the fields
                     # nested in "characteristic" as separate columns.
                     if (
-                        sample_metadata.get("refinebio_source_database", "")
-                        == "ARRAY_EXPRESS"
+                        sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
                         and annotation_key == "characteristic"
                     ):
                         for pair_dict in annotation_value:
                             if "category" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(
-                                    annotation_columns, pair_dict["category"]
-                                )
+                                _add_annotation_column(annotation_columns, pair_dict["category"])
                     # For ArrayExpress samples, also take out the fields
                     # nested in "variable" as separate columns.
                     elif (
-                        sample_metadata.get("refinebio_source_database", "")
-                        == "ARRAY_EXPRESS"
+                        sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
                         and annotation_key == "variable"
                     ):
                         for pair_dict in annotation_value:
                             if "name" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(
-                                    annotation_columns, pair_dict["name"]
-                                )
+                                _add_annotation_column(annotation_columns, pair_dict["name"])
                     # For ArrayExpress samples, skip "source" field
                     elif (
-                        sample_metadata.get("refinebio_source_database", "")
-                        == "ARRAY_EXPRESS"
+                        sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
                         and annotation_key == "source"
                     ):
                         continue
@@ -1030,26 +970,15 @@ def write_tsv_json(job_context):
             experiment_dir = job_context["output_dir"] + experiment_title + "/"
             experiment_dir = experiment_dir.encode("ascii", "ignore")
             os.makedirs(experiment_dir, exist_ok=True)
-            tsv_path = (
-                experiment_dir.decode("utf-8") + "metadata_" + experiment_title + ".tsv"
-            )
+            tsv_path = experiment_dir.decode("utf-8") + "metadata_" + experiment_title + ".tsv"
             tsv_path = tsv_path.encode("ascii", "ignore")
             tsv_paths.append(tsv_path)
             with open(tsv_path, "w", encoding="utf-8") as tsv_file:
-                dw = csv.DictWriter(
-                    tsv_file, columns, delimiter="\t", extrasaction="ignore"
-                )
+                dw = csv.DictWriter(tsv_file, columns, delimiter="\t", extrasaction="ignore")
                 dw.writeheader()
-                for sample_accession_code, sample_metadata in metadata[
-                    "samples"
-                ].items():
-                    if (
-                        sample_accession_code
-                        in experiment_data["sample_accession_codes"]
-                    ):
-                        row_data = get_tsv_row_data(
-                            sample_metadata, job_context["dataset"].data
-                        )
+                for sample_accession_code, sample_metadata in metadata["samples"].items():
+                    if sample_accession_code in experiment_data["sample_accession_codes"]:
+                        row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
         return tsv_paths
     # Per-Species Metadata
@@ -1064,29 +993,22 @@ def write_tsv_json(job_context):
             with open(tsv_path, "w", encoding="utf-8") as tsv_file:
                 # See http://www.lucainvernizzi.net/blog/2015/08/03/8x-speed-up-for-python-s-csv-dictwriter/
                 # about extrasaction.
-                dw = csv.DictWriter(
-                    tsv_file, columns, delimiter="\t", extrasaction="ignore"
-                )
+                dw = csv.DictWriter(tsv_file, columns, delimiter="\t", extrasaction="ignore")
                 dw.writeheader()
                 i = 0
                 for sample_metadata in metadata["samples"].values():
                     if sample_metadata.get("refinebio_organism", "") == species:
-                        row_data = get_tsv_row_data(
-                            sample_metadata, job_context["dataset"].data
-                        )
+                        row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
                         samples_in_species.append(sample_metadata)
 
                     i = i + 1
                     if i % 1000 == 0:
                         progress_template = (
-                            "Done with {0} out of {1} lines of metadata "
-                            "for species {2}"
+                            "Done with {0} out of {1} lines of metadata " "for species {2}"
                         )
                         log_state(
-                            progress_template.format(
-                                i, len(metadata["samples"]), species
-                            ),
+                            progress_template.format(i, len(metadata["samples"]), species),
                             job_context["job"].id,
                         )
 
@@ -1103,14 +1025,10 @@ def write_tsv_json(job_context):
         os.makedirs(all_dir, exist_ok=True)
         tsv_path = all_dir + "metadata_ALL.tsv"
         with open(tsv_path, "w", encoding="utf-8") as tsv_file:
-            dw = csv.DictWriter(
-                tsv_file, columns, delimiter="\t", extrasaction="ignore"
-            )
+            dw = csv.DictWriter(tsv_file, columns, delimiter="\t", extrasaction="ignore")
             dw.writeheader()
             for sample_metadata in metadata["samples"].values():
-                row_data = get_tsv_row_data(
-                    sample_metadata, job_context["dataset"].data
-                )
+                row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                 dw.writerow(row_data)
         return [tsv_path]
 
@@ -1124,9 +1042,7 @@ def download_computed_file(download_tuple: Tuple[ComputedFile, str]):
         latest_computed_file.get_synced_file_path(path=output_file_path)
     except:
         # Let's not fail if there's an error syncing one of the quant.sf files
-        logger.exception(
-            "Failed to sync computed file", computed_file_id=latest_computed_file.pk
-        )
+        logger.exception("Failed to sync computed file", computed_file_id=latest_computed_file.pk)
 
 
 def sync_quant_files(output_path, samples: List[Sample]):
@@ -1141,8 +1057,7 @@ def sync_quant_files(output_path, samples: List[Sample]):
         # for all of them, so we do it in groups of 100, and then download all of the computed_files
         # in parallel
         for sample_page in (
-            samples[i * page_size : i + page_size]
-            for i in range(0, len(samples), page_size)
+            samples[i * page_size : i + page_size] for i in range(0, len(samples), page_size)
         ):
             sample_and_computed_files = []
             for sample in sample_page:
@@ -1150,9 +1065,7 @@ def sync_quant_files(output_path, samples: List[Sample]):
                 if not latest_computed_file:
                     continue
                 output_file_path = output_path + sample.accession_code + "_quant.sf"
-                sample_and_computed_files.append(
-                    (latest_computed_file, output_file_path)
-                )
+                sample_and_computed_files.append((latest_computed_file, output_file_path))
 
             # download this set of files, this will take a few seconds that should also help the db recover
             executor.map(download_computed_file, sample_and_computed_files)

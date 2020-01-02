@@ -46,8 +46,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         os.makedirs(job_context["work_dir"])
     except Exception as e:
         logger.exception(
-            "Could not create work directory for processor job.",
-            job_context=job_context,
+            "Could not create work directory for processor job.", job_context=job_context,
         )
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
@@ -114,9 +113,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     # Related: https://github.com/data-refinery/data-refinery/issues/141
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
     chip_pkg_map = _create_ensg_pkg_map()
-    job_context["brainarray_package"] = chip_pkg_map.get(
-        package_name_without_version, None
-    )
+    job_context["brainarray_package"] = chip_pkg_map.get(package_name_without_version, None)
     job_context["platform_accession_code"] = package_name_without_version
     return job_context
 

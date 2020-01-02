@@ -25,8 +25,7 @@ setup(
     include_package_data=True,
     license="BSD License",
     description=(
-        "Workers to run Downloader and Processor Jobs for"
-        + " the Data Refinery Project."
+        "Workers to run Downloader and Processor Jobs for" + " the Data Refinery Project."
     ),
     url="https://github.com/data-refinery/data_refinery/tree/master/workers",
     author="Kurt Wheeler",

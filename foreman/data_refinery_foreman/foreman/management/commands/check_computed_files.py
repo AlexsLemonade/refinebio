@@ -67,6 +67,5 @@ class Command(BaseCommand):
                     )
                 else:
                     logger.info(
-                        "Checked page %i of computed files, all of them were in S3."
-                        % page_number
+                        "Checked page %i of computed files, all of them were in S3." % page_number
                     )

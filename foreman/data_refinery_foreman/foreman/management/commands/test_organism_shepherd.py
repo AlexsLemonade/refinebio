@@ -24,16 +24,10 @@ from data_refinery_common.models import (
 
 
 class OrganismShepherdTestCase(TransactionTestCase):
-    @patch(
-        "data_refinery_foreman.foreman.management.commands.organism_shepherd.get_active_volumes"
-    )
-    @patch(
-        "data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job"
-    )
+    @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.get_active_volumes")
+    @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job")
     @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.Nomad")
-    def test_organism_shepherd_command(
-        self, mock_nomad, mock_send_job, mock_get_active_volumes
-    ):
+    def test_organism_shepherd_command(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         """Tests that the organism shepherd requeues jobs in the right order.
 
         The situation we're setting up is basically this:
@@ -60,9 +54,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
             return ret_value
 
         mock_nomad.side_effect = mock_init_nomad
-        zebrafish = Organism(
-            name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True
-        )
+        zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
         zebrafish.save()
 
         # Experiment that is 0% complete.
@@ -187,9 +179,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
 
         fifty_percent_processor_job = ProcessorJob()
         fifty_percent_processor_job.pipeline_applied = "SALMON"
-        fifty_percent_processor_job.accession_code = (
-            fifty_percent_unprocessed_sample.accession_code
-        )
+        fifty_percent_processor_job.accession_code = fifty_percent_unprocessed_sample.accession_code
         fifty_percent_processor_job.ram_amount = 12288
         fifty_percent_processor_job.start_time = timezone.now()
         fifty_percent_processor_job.end_time = timezone.now()
@@ -213,12 +203,9 @@ class OrganismShepherdTestCase(TransactionTestCase):
         first_call_job_object = mock_calls[0][2]["job"]
         self.assertEqual(first_call_job_type, ProcessorPipeline.SALMON)
         self.assertEqual(
-            first_call_job_object.pipeline_applied,
-            fifty_percent_processor_job.pipeline_applied,
+            first_call_job_object.pipeline_applied, fifty_percent_processor_job.pipeline_applied,
         )
-        self.assertEqual(
-            first_call_job_object.ram_amount, fifty_percent_processor_job.ram_amount
-        )
+        self.assertEqual(first_call_job_object.ram_amount, fifty_percent_processor_job.ram_amount)
         self.assertIn(first_call_job_object.volume_index, active_volumes)
 
         fifty_percent_processor_job.refresh_from_db()

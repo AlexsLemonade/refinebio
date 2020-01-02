@@ -8,9 +8,7 @@ from typing import List
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_common.performant_pagination.pagination import (
-    PerformantPaginator as Paginator,
-)
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ProcessorJob
 
@@ -51,8 +49,6 @@ class Command(BaseCommand):
                 i += 1
                 # Only queue 300 of these an hour so we don't overload ENA.
                 if i == 300:
-                    logger.info(
-                        "Requeued 300 more jobs (total %d). Sleeping for 1 hour.", total
-                    )
+                    logger.info("Requeued 300 more jobs (total %d). Sleeping for 1 hour.", total)
                     time.sleep(60 * 60)
                     i = 0

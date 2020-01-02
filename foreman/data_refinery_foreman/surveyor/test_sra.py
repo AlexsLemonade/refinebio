@@ -58,19 +58,13 @@ class SraSurveyorTestCase(TestCase):
 
         # Insert the organism into the database so the model doesn't call the
         # taxonomy API to populate it.
-        organism = Organism(
-            name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True
-        )
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
 
-        organism1 = Organism(
-            name="GALLUS_GALLUS", taxonomy_id=9031, is_scientific_name=True
-        )
+        organism1 = Organism(name="GALLUS_GALLUS", taxonomy_id=9031, is_scientific_name=True)
         organism1.save()
 
-        organism2 = Organism(
-            name="DANIO_RERIO", taxonomy_id=7955, is_scientific_name=True
-        )
+        organism2 = Organism(name="DANIO_RERIO", taxonomy_id=7955, is_scientific_name=True)
         organism2.save()
 
     def tearDown(self):
@@ -92,8 +86,7 @@ class SraSurveyorTestCase(TestCase):
         # Confirm the sample's protocol_info
         experiment = Experiment.objects.all().first()
         self.assertEqual(
-            samples.first().protocol_info[0]["Description"],
-            experiment.protocol_description,
+            samples.first().protocol_info[0]["Description"], experiment.protocol_description,
         )
 
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
@@ -151,10 +144,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["experiment_accession"], "DRX001563")
         self.assertEqual(
             metadata["experiment_design_description"],
-            (
-                "Experiment for mRNAseq of chicken at stage "
-                "HH16 (biological replicate 1)"
-            ),
+            ("Experiment for mRNAseq of chicken at stage " "HH16 (biological replicate 1)"),
         )
         self.assertEqual(
             metadata["experiment_title"],
@@ -211,9 +201,7 @@ class SraSurveyorTestCase(TestCase):
                 "methods."
             ),
         )
-        self.assertEqual(
-            metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013"
-        )
+        self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
 
         ncbi_url = SraSurveyor._build_ncbi_file_url(metadata["run_accession"])
         self.assertTrue(

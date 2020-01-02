@@ -17,12 +17,9 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
-MAIN_DIVISION_URL_TEMPLATE = (
-    "https://rest.ensembl.org/info/species?content-type=application/json"
-)
+MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 DIVISION_URL_TEMPLATE = (
-    "https://rest.ensembl.org/info/genomes/division/{division}"
-    "?content-type=application/json"
+    "https://rest.ensembl.org/info/genomes/division/{division}" "?content-type=application/json"
 )
 
 TRANSCRIPTOME_URL_TEMPLATE = (
@@ -51,12 +48,8 @@ DIVISION_LOOKUP = {
 # assemblies.  All divisions other than the main one have identical
 # release versions. These urls will return what the most recent
 # release version is.
-MAIN_RELEASE_URL = (
-    "https://rest.ensembl.org/info/software?content-type=application/json"
-)
-DIVISION_RELEASE_URL = (
-    "https://rest.ensembl.org/info/eg_version?content-type=application/json"
-)
+MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
+DIVISION_RELEASE_URL = "https://rest.ensembl.org/info/eg_version?content-type=application/json"
 
 
 class EnsemblUrlBuilder(ABC):
@@ -71,9 +64,7 @@ class EnsemblUrlBuilder(ABC):
 
     def __init__(self, species: Dict):
         """Species is a Dict containing parsed JSON from the Division API."""
-        self.url_root = (
-            "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
-        )
+        self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
         self.assembly_version = (
@@ -260,10 +251,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             species_files = self.discover_species()
         except Exception:
             logger.exception(
-                (
-                    "Exception caught while discovering species. "
-                    "Terminating survey job."
-                ),
+                ("Exception caught while discovering species. " "Terminating survey job."),
                 survey_job=self.survey_job.id,
             )
             return False
@@ -288,9 +276,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         ).value
 
         logger.info(
-            "Surveying %s division of ensembl.",
-            ensembl_division,
-            survey_job=self.survey_job.id,
+            "Surveying %s division of ensembl.", ensembl_division, survey_job=self.survey_job.id,
         )
 
         # The main division has a different base URL for its REST API.

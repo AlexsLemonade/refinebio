@@ -44,28 +44,16 @@ class DownloadGeoTestCase(TestCase):
         self.assertEqual(6, len(files))
 
         # GPL File
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/GSE10241/raw/GPL6102-tbl-1.txt")
-        )
+        self.assertTrue(os.path.isfile("/home/user/data_store/GSE10241/raw/GPL6102-tbl-1.txt"))
 
         # GSM Files
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258515-tbl-1.txt")
-        )
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258516-tbl-1.txt")
-        )
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258530-tbl-1.txt")
-        )
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258517-tbl-1.txt")
-        )
+        self.assertTrue(os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258515-tbl-1.txt"))
+        self.assertTrue(os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258516-tbl-1.txt"))
+        self.assertTrue(os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258530-tbl-1.txt"))
+        self.assertTrue(os.path.isfile("/home/user/data_store/GSE10241/raw/GSM258517-tbl-1.txt"))
 
         # Original family file
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/GSE10241/raw/GSE10241_family.xml")
-        )
+        self.assertTrue(os.path.isfile("/home/user/data_store/GSE10241/raw/GSE10241_family.xml"))
         self.assertTrue(
             os.path.isfile("/home/user/data_store/GSE10241/raw/GSE10241_family.xml.tgz")
         )
@@ -79,14 +67,10 @@ class DownloadGeoTestCase(TestCase):
             "/home/user/data_store/GSM254828/raw/GSM254828.txt.gz",
             dlj,
         )
-        archive_file = geo.ArchivedFile(
-            "/home/user/data_store/GSM254828/raw/GSM254828.txt.gz"
-        )
+        archive_file = geo.ArchivedFile("/home/user/data_store/GSM254828/raw/GSM254828.txt.gz")
         files = [file for file in archive_file.get_files()]
         self.assertEqual(1, len(files))
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/GSM254828/raw/GSM254828.txt")
-        )
+        self.assertTrue(os.path.isfile("/home/user/data_store/GSM254828/raw/GSM254828.txt"))
 
         geo._download_file(
             "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427_non-normalized.txt.gz",
@@ -100,9 +84,7 @@ class DownloadGeoTestCase(TestCase):
         self.assertEqual(1, len(files))
 
         self.assertTrue(
-            os.path.isfile(
-                "/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt"
-            )
+            os.path.isfile("/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt")
         )
 
     @tag("downloaders")
@@ -236,9 +218,7 @@ class DownloadGeoTestCase(TestCase):
         self.assertTrue(download_result)
         self.assertTrue(dlj.failure_reason is None)
         self.assertTrue(len(ProcessorJob.objects.all()) > 0)
-        self.assertEqual(
-            ProcessorJob.objects.all()[0].pipeline_applied, "AGILENT_TWOCOLOR_TO_PCL"
-        )
+        self.assertEqual(ProcessorJob.objects.all()[0].pipeline_applied, "AGILENT_TWOCOLOR_TO_PCL")
         self.assertEqual(ProcessorJob.objects.all()[0].ram_amount, 2048)
 
     @tag("downloaders")

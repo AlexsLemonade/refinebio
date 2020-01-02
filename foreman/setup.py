@@ -25,8 +25,7 @@ setup(
     include_package_data=True,
     license="BSD License",
     description=(
-        "Foreman to discover data and metadata, "
-        "along with coordinating the Data Refinery."
+        "Foreman to discover data and metadata, " "along with coordinating the Data Refinery."
     ),
     url="https://github.com/data-refinery/data_refinery/tree/master/foreman",
     author="Kurt Wheeler",

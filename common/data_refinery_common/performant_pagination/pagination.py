@@ -22,11 +22,7 @@ class PerformantPage(Page):
         self.next_token = next_token
 
     def __repr__(self):
-        return "<PerformantPage (%s, %s %s)>" % (
-            self.previous_token,
-            self.token,
-            self.next_token,
-        )
+        return "<PerformantPage (%s, %s %s)>" % (self.previous_token, self.token, self.next_token,)
 
     def has_next(self):
         return self.next_token is not None
@@ -76,9 +72,7 @@ class PerformantPaginator(object):
         self.allow_count = allow_count
 
         field = ordering.replace("-", "")
-        self._reverse_ordering = (
-            field if ordering[0] == "-" else "-{0}".format(ordering)
-        )
+        self._reverse_ordering = field if ordering[0] == "-" else "-{0}".format(ordering)
         self._field = field
 
     def __repr__(self):
@@ -188,11 +182,7 @@ class PerformantPaginator(object):
         # there's a prev
         if token:
             clause = self._token_to_clause(token, rev=True)
-            qs = (
-                self.queryset.filter(**clause)
-                .only(self._field)
-                .order_by(self._reverse_ordering)
-            )
+            qs = self.queryset.filter(**clause).only(self._field).order_by(self._reverse_ordering)
             try:
                 previous_token = self._object_to_token(qs[self.per_page - 1])
             except IndexError:

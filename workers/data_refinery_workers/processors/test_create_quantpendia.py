@@ -56,13 +56,13 @@ class QuantpendiaTestCase(TransactionTestCase):
         computed_file.s3_key = "smasher-test-quant.sf"
         computed_file.s3_bucket = "data-refinery-test-assets"
         computed_file.filename = "quant.sf"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/QUANT/smasher-test-quant.sf"
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/QUANT/smasher-test-quant.sf"
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.size_in_bytes = 123123
-        computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
+        computed_file.sha1 = (
+            "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
+        )
         computed_file.save()
 
         computed_file = ComputedFile()
@@ -93,15 +93,11 @@ class QuantpendiaTestCase(TransactionTestCase):
         final_context = create_quantpendia(job.id)
 
         self.assertTrue(
-            os.path.exists(
-                final_context["output_dir"] + "/GSE51088/GSM1237818_quant.sf"
-            )
+            os.path.exists(final_context["output_dir"] + "/GSE51088/GSM1237818_quant.sf")
         )
         self.assertTrue(os.path.exists(final_context["output_dir"] + "/README.md"))
         self.assertTrue(os.path.exists(final_context["output_dir"] + "/LICENSE.TXT"))
-        self.assertTrue(
-            os.path.exists(final_context["output_dir"] + "/aggregated_metadata.json")
-        )
+        self.assertTrue(os.path.exists(final_context["output_dir"] + "/aggregated_metadata.json"))
 
         self.assertTrue(final_context["metadata"]["quant_sf_only"])
         self.assertEqual(final_context["metadata"]["num_samples"], 1)

@@ -43,9 +43,7 @@ class Command(BaseCommand):
         else:
             logger.error(
                 'Invalid source database "{}"'.format(options["source_database"])
-                + "\nPossible source databases: {}".format(
-                    ", ".join(possible_source_databases)
-                )
+                + "\nPossible source databases: {}".format(", ".join(possible_source_databases))
             )
             sys.exit(1)
 
@@ -55,8 +53,7 @@ class Command(BaseCommand):
         while True:
             for experiment in experiments:
                 logger.debug(
-                    "Refreshing metadata for an experiment.",
-                    experiment=experiment.accession_code,
+                    "Refreshing metadata for an experiment.", experiment=experiment.accession_code,
                 )
                 if experiment.source_database == "SRA":
                     metadata = SraSurveyor.gather_all_metadata(
@@ -76,13 +73,9 @@ class Command(BaseCommand):
 
                 elif experiment.source_database == "ARRAY_EXPRESS":
                     request_url = EXPERIMENTS_URL + experiment.accession_code
-                    experiment_request = utils.requests_retry_session().get(
-                        request_url, timeout=60
-                    )
+                    experiment_request = utils.requests_retry_session().get(request_url, timeout=60)
                     try:
-                        parsed_json = experiment_request.json()["experiments"][
-                            "experiment"
-                        ][0]
+                        parsed_json = experiment_request.json()["experiments"]["experiment"][0]
                     except KeyError:
                         logger.error(
                             "Remote experiment has no Experiment data!",
@@ -90,9 +83,7 @@ class Command(BaseCommand):
                             survey_job=self.survey_job.id,
                         )
                         continue
-                    ArrayExpressSurveyor._apply_metadata_to_experiment(
-                        experiment, parsed_json
-                    )
+                    ArrayExpressSurveyor._apply_metadata_to_experiment(experiment, parsed_json)
 
                 experiment.save()
 

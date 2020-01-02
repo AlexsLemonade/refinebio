@@ -59,9 +59,7 @@ def create_downloader_job(
             # until we've checked all the files before calling it a
             # failure.
             try:
-                archive_file = OriginalFile.objects.filter(
-                    filename=archive_filename
-                ).first()
+                archive_file = OriginalFile.objects.filter(filename=archive_filename).first()
                 if not archive_file:
                     # We might need to match these up based on
                     # source_filenames rather than filenames so just
@@ -71,9 +69,7 @@ def create_downloader_job(
                     ).first()
 
                 original_downloader_job = (
-                    DownloaderJobOriginalFileAssociation.objects.filter(
-                        original_file=archive_file
-                    )
+                    DownloaderJobOriginalFileAssociation.objects.filter(original_file=archive_file)
                     .latest("id")
                     .downloader_job
                 )
@@ -172,9 +168,7 @@ def create_processor_jobs_for_original_files(
     Creates one processor job for each original file given.
     """
     for original_file in original_files:
-        create_processor_job_for_original_files(
-            [original_file], downloader_job, volume_index
-        )
+        create_processor_job_for_original_files([original_file], downloader_job, volume_index)
 
 
 def create_processor_job_for_original_files(

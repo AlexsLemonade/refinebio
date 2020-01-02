@@ -52,9 +52,7 @@ class QNRefTestCase(TransactionTestCase):
 
             computed_file = ComputedFile()
             computed_file.filename = code + ".tsv"
-            computed_file.absolute_file_path = (
-                "/home/user/data_store/QN/" + code + ".tsv"
-            )
+            computed_file.absolute_file_path = "/home/user/data_store/QN/" + code + ".tsv"
             computed_file.size_in_bytes = int(code)
             computed_file.result = cr
             computed_file.is_smashable = True
@@ -74,9 +72,7 @@ class QNRefTestCase(TransactionTestCase):
         dataset.data = {"12345": ["1", "2", "3", "4", "5", "6"]}
         dataset.aggregate_by = "ALL"
         dataset.scale_by = "NONE"
-        dataset.quantile_normalize = (
-            False  # We don't QN because we're creating the target now
-        )
+        dataset.quantile_normalize = False  # We don't QN because we're creating the target now
         dataset.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -114,12 +110,8 @@ class QNRefTestCase(TransactionTestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(final_context["success"])
 
-        np.testing.assert_almost_equal(
-            final_context["merged_qn"]["1"][0], -0.4379488527774811
-        )
-        np.testing.assert_almost_equal(
-            final_context["original_merged"]["1"][0], -0.5762109
-        )
+        np.testing.assert_almost_equal(final_context["merged_qn"]["1"][0], -0.4379488527774811)
+        np.testing.assert_almost_equal(final_context["original_merged"]["1"][0], -0.5762109)
 
     @tag("qn")
     def test_qn_management_command(self):
@@ -152,9 +144,7 @@ class QNRefTestCase(TransactionTestCase):
 
             computed_file = ComputedFile()
             computed_file.filename = code + ".tsv"
-            computed_file.absolute_file_path = (
-                "/home/user/data_store/QN/" + code + ".tsv"
-            )
+            computed_file.absolute_file_path = "/home/user/data_store/QN/" + code + ".tsv"
             computed_file.size_in_bytes = int(code)
             computed_file.result = cr
             computed_file.is_smashable = True

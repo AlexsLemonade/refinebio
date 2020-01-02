@@ -57,8 +57,7 @@ def _compute_paths(job_context: Dict) -> str:
         os.makedirs(job_context["work_dir"])
     except Exception as e:
         logger.exception(
-            "Could not create work directory for processor job.",
-            job_context=job_context,
+            "Could not create work directory for processor job.", job_context=job_context,
         )
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
@@ -74,12 +73,7 @@ def _compute_paths(job_context: Dict) -> str:
 
     stamp = str(timezone.now().timestamp()).split(".")[0]
     archive_file_name = (
-        job_context["organism_name"]
-        + "_"
-        + job_context["length"].upper()
-        + "_"
-        + stamp
-        + ".tar.gz"
+        job_context["organism_name"] + "_" + job_context["length"].upper() + "_" + stamp + ".tar.gz"
     )
 
     job_context["computed_archive"] = job_context["work_dir"] + archive_file_name
@@ -97,12 +91,8 @@ def _prepare_files(job_context: Dict) -> Dict:
         if "fa.gz" in og_file.source_filename:
             gzipped_fasta_file_path = og_file.absolute_file_path
             job_context["fasta_file"] = og_file
-            new_fasta_filename = gzipped_fasta_file_path.split("/")[-1].replace(
-                ".gz", ""
-            )
-            job_context["fasta_file_path"] = (
-                job_context["work_dir"] + new_fasta_filename
-            )
+            new_fasta_filename = gzipped_fasta_file_path.split("/")[-1].replace(".gz", "")
+            job_context["fasta_file_path"] = job_context["work_dir"] + new_fasta_filename
             with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, open(
                 job_context["fasta_file_path"], "wb"
             ) as gunzipped_file:
@@ -173,9 +163,7 @@ def _process_gtf(job_context: Dict) -> Dict:
     filtered_gtf_path = os.path.join(job_context["work_dir"], "no_pseudogenes.gtf")
     # Generate "genes_to_transcripts.txt" in job_context["output_dir"]
     # so that it will be included in the computed tarball.
-    genes_to_transcripts_path = os.path.join(
-        job_context["output_dir"], "genes_to_transcripts.txt"
-    )
+    genes_to_transcripts_path = os.path.join(job_context["output_dir"], "genes_to_transcripts.txt")
 
     with open(job_context["gtf_file_path"], "r") as input_gtf, open(
         filtered_gtf_path, "w"
@@ -202,9 +190,7 @@ def _process_gtf(job_context: Dict) -> Dict:
                 transcript_id = split_ids_column[transcript_id_index]
 
                 genes_to_transcripts.write(
-                    GENE_TO_TRANSCRIPT_TEMPLATE.format(
-                        gene_id=gene_id, transcript_id=transcript_id
-                    )
+                    GENE_TO_TRANSCRIPT_TEMPLATE.format(gene_id=gene_id, transcript_id=transcript_id)
                 )
 
     # Clean up the unfiltered gtf file, which we no longer need.
@@ -222,9 +208,7 @@ def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
         processor_job=job_context["job_id"],
     )
 
-    job_context["job"].failure_reason = (
-        "Shell call to {} failed because: ".format(command) + stderr
-    )
+    job_context["job"].failure_reason = "Shell call to {} failed because: ".format(command) + stderr
     job_context["success"] = False
 
 
@@ -248,9 +232,7 @@ def _create_index(job_context: Dict) -> Dict:
     # Version goes to stderr up until the version where it doesn't:
     # https://github.com/COMBINE-lab/salmon/issues/148
     job_context["salmon_version"] = (
-        subprocess.run(
-            ["salmon", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
-        )
+        subprocess.run(["salmon", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         .stdout.decode()
         .strip()
     )
@@ -337,8 +319,7 @@ def _zip_index(job_context: Dict) -> Dict:
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
             tar.add(
-                job_context["output_dir"],
-                arcname=os.path.basename(job_context["output_dir"]),
+                job_context["output_dir"], arcname=os.path.basename(job_context["output_dir"]),
             )
     except:
         logger.exception(
@@ -347,9 +328,7 @@ def _zip_index(job_context: Dict) -> Dict:
             processor_job=job_context["job_id"],
         )
         failure_template = "Exception caught while zipping index directory {}"
-        job_context["job"].failure_reason = failure_template.format(
-            job_context["output_dir"]
-        )
+        job_context["job"].failure_reason = failure_template.format(job_context["output_dir"])
         job_context["success"] = False
         try:
             os.remove(job_context["computed_archive"])
@@ -413,17 +392,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
             processor_job=job_context["job_id"],
         )
         timestamp = str(timezone.now().timestamp()).split(".")[0]
-        s3_key = (
-            organism_object.name
-            + "_"
-            + index_object.index_type
-            + "_"
-            + timestamp
-            + ".tar.gz"
-        )
-        sync_result = computed_file.sync_to_s3(
-            S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key
-        )
+        s3_key = organism_object.name + "_" + index_object.index_type + "_" + timestamp + ".tar.gz"
+        sync_result = computed_file.sync_to_s3(S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key)
         if sync_result:
             computed_file.delete_local_file()
     else:

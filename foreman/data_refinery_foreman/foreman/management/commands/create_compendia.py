@@ -38,10 +38,7 @@ class Command(BaseCommand):
         svd_algorithm = options["svd_algorithm"] or "ARPACK"
 
         svd_algorithm_choices = ["ARPACK", "RANDOMIZED", "NONE"]
-        if (
-            options["svd_algorithm"]
-            and options["svd_algorithm"] not in svd_algorithm_choices
-        ):
+        if options["svd_algorithm"] and options["svd_algorithm"] not in svd_algorithm_choices:
             raise Exception(
                 "Invalid svd_algorithm option provided. Possible values are "
                 + str(svd_algorithm_choices)
@@ -50,16 +47,12 @@ class Command(BaseCommand):
         target_organisms = self._get_target_organisms(options)
         grouped_organisms = group_organisms_by_biggest_platform(target_organisms)
 
-        logger.debug(
-            "Generating compendia for organisms", organism_groups=str(grouped_organisms)
-        )
+        logger.debug("Generating compendia for organisms", organism_groups=str(grouped_organisms))
 
         for organism in grouped_organisms:
             job = create_job_for_organism(organism, svd_algorithm)
             logger.info(
-                "Sending compendia job for Organism",
-                job_id=str(job.pk),
-                organism=str(organism),
+                "Sending compendia job for Organism", job_id=str(job.pk), organism=str(organism),
             )
             send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
 
@@ -67,9 +60,7 @@ class Command(BaseCommand):
         all_organisms = get_compendia_organisms()
 
         if options["organisms"] is None:
-            target_organisms = all_organisms.exclude(
-                name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"]
-            )
+            target_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
         else:
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
             target_organisms = all_organisms.filter(name__in=organisms)
@@ -125,9 +116,7 @@ def get_organism_microarray_platforms(organism):
     """ Returns the accession codes of the Affymetrix microarray platforms associated with an
     organism. Ordered by the number of samples for each platform in descending order """
     return (
-        organism.sample_set.filter(
-            has_raw=True, technology="MICROARRAY", is_processed=True
-        )
+        organism.sample_set.filter(has_raw=True, technology="MICROARRAY", is_processed=True)
         .values("platform_accession_code")
         .annotate(count=Count("id"))
         .order_by("-count")

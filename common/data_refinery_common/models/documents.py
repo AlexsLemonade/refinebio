@@ -10,9 +10,7 @@ from data_refinery_common.utils import (
 from .models import Sample, Experiment, Organism
 
 experiment_index = Index("experiments")
-experiment_index.settings(
-    number_of_shards=1, number_of_replicas=0, max_result_window=9999999
-)
+experiment_index.settings(number_of_shards=1, number_of_replicas=0, max_result_window=9999999)
 
 # via https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.2/advanced_usage_examples.html?highlight=ngram#id8
 # via https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/issues/110
@@ -59,14 +57,10 @@ class ExperimentDocument(Document):
         analyzer=html_strip, fielddata=True, fields={"raw": fields.KeywordField()}
     )
     technology = fields.TextField(
-        analyzer=html_strip_no_stop,
-        fielddata=True,
-        fields={"raw": fields.KeywordField()},
+        analyzer=html_strip_no_stop, fielddata=True, fields={"raw": fields.KeywordField()},
     )
     organism_names = fields.TextField(
-        analyzer=html_strip_no_ngram,
-        fielddata=True,
-        fields={"raw": fields.KeywordField()},
+        analyzer=html_strip_no_ngram, fielddata=True, fields={"raw": fields.KeywordField()},
     )
     platform_names = fields.TextField(
         analyzer=standard_keyword, fielddata=True, fields={"raw": fields.TextField()}

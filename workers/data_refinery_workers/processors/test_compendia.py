@@ -65,9 +65,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1487313_liver.PCL"
-        computed_file.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file.filename
-        )
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -136,9 +134,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         computed_file2 = ComputedFile()
         computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
-        computed_file2.absolute_file_path = (
-            "/home/user/data_store/PCL/" + computed_file2.filename
-        )
+        computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
         computed_file2.result = result2
         computed_file2.size_in_bytes = 234
         computed_file2.is_smashable = True
@@ -172,9 +168,7 @@ class CompendiaTestCase(TransactionTestCase):
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])
         self.assertEqual(
-            final_context["filtered_samples"]["GSM1487222"][
-                "experiment_accession_code"
-            ],
+            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"],
             "GSE1487313",
         )
 
@@ -239,9 +233,7 @@ class CompendiaTestCase(TransactionTestCase):
 
             computed_file = ComputedFile()
             computed_file.filename = file
-            computed_file.absolute_file_path = (
-                "/home/user/data_store/raw/TEST/MICROARRAY/" + file
-            )
+            computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/MICROARRAY/" + file
             computed_file.result = result
             computed_file.size_in_bytes = 123
             computed_file.is_smashable = True
@@ -285,9 +277,7 @@ class CompendiaTestCase(TransactionTestCase):
 
             computed_file = ComputedFile()
             computed_file.filename = file
-            computed_file.absolute_file_path = (
-                "/home/user/data_store/raw/TEST/RNASEQ/" + file
-            )
+            computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/RNASEQ/" + file
             computed_file.result = result
             computed_file.size_in_bytes = 123
             computed_file.is_smashable = True
@@ -346,18 +336,13 @@ class CompendiaTestCase(TransactionTestCase):
             final_context["compendium_result"].primary_organism.name,
             final_context["organism_name"],
         )
-        self.assertEqual(
-            final_context["compendium_result"].primary_organism.name, "DANIO_RERIO"
-        )
+        self.assertEqual(final_context["compendium_result"].primary_organism.name, "DANIO_RERIO")
         self.assertEqual(final_context["compendium_result"].organisms.count(), 1)
 
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])
         self.assertEqual(
-            final_context["filtered_samples"]["GSM1487222"][
-                "experiment_accession_code"
-            ],
-            "GSE5678",
+            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"], "GSE5678",
         )
 
         # It's maybe not worth asserting this until we're sure the behavior is correct
