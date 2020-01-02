@@ -185,6 +185,7 @@ if ! test -e ../.git/hooks/pre-commit > /dev/null; then
     if confirm "Would you like to configure a pre-commit hook for this project to run black (code formatter) prior to each commit?"; then
         echo "Installing pre-commit hook to auto-format code."
         cp hooks/autoformat.sh ../.git/hooks/pre-commit
+        chmod +x ../.git/hooks/pre-commit
     else
         echo "Not installing pre-commit hook to auto-format code."
     fi
