@@ -37,18 +37,16 @@ from data_refinery_common.performant_pagination.pagination import PerformantPagi
 
 logger = get_and_configure_logger(__name__)
 
-PAGE_SIZE=2000
+PAGE_SIZE = 2000
 
 
 def run_tximport():
     """Creates a tximport job for all eligible experiments."""
-    eligible_experiments = Experiment.objects.annotate(
-        num_organisms=Count('organisms')
-    ).filter(
-        num_organisms=1,
-        technology='RNA-SEQ',
-        num_processed_samples=0
-    ).prefetch_related('samples__results')
+    eligible_experiments = (
+        Experiment.objects.annotate(num_organisms=Count("organisms"))
+        .filter(num_organisms=1, technology="RNA-SEQ", num_processed_samples=0)
+        .prefetch_related("samples__results")
+    )
 
     paginator = Paginator(eligible_experiments, PAGE_SIZE)
     page = paginator.page()
@@ -93,18 +91,15 @@ def run_tximport():
                     # it later.
                     pass
 
-        logger.info(
-            "Created %d tximport jobs for experiments past the thresholds.",
-            creation_count
-        )
+        logger.info("Created %d tximport jobs for experiments past the thresholds.", creation_count)
 
         if not page.has_next():
             break
         else:
             page = paginator.page(page.next_page_number())
 
-class Command(BaseCommand):
 
+class Command(BaseCommand):
     def handle(self, *args, **options):
         """This command just calls run_tximport.
 

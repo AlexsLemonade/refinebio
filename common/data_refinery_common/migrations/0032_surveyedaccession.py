@@ -7,19 +7,25 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0031_auto_20190823_0218'),
+        ("data_refinery_common", "0031_auto_20190823_0218"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SurveyedAccession',
+            name="SurveyedAccession",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('accession_code', models.CharField(max_length=64, unique=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("accession_code", models.CharField(max_length=64, unique=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
             ],
-            options={
-                'db_table': 'surveyed_accessions',
-            },
+            options={"db_table": "surveyed_accessions",},
         ),
     ]

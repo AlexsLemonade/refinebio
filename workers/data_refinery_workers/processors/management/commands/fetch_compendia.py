@@ -15,7 +15,7 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation,
     ExperimentOrganismAssociation,
     OrganismIndex,
-    ExperimentSampleAssociation
+    ExperimentSampleAssociation,
 )
 
 logger = get_and_configure_logger(__name__)
@@ -23,10 +23,7 @@ logger = get_and_configure_logger(__name__)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--dataset-ids",
-            type=str,
-            help=("Comma-separated Dataset IDs."))
+        parser.add_argument("--dataset-ids", type=str, help=("Comma-separated Dataset IDs."))
 
     def handle(self, *args, **options):
         """ Given a dataset ID, fetch the resulting smashed object. 
@@ -34,23 +31,23 @@ class Command(BaseCommand):
 
         if options["dataset_ids"] is None:
             logger.error("You must specify dataset IDs.")
-            sys.exit(1) 
+            sys.exit(1)
 
-        dataset_ids = options["dataset_ids"].split(',')
+        dataset_ids = options["dataset_ids"].split(",")
 
         datasets = Dataset.objects.filter(id__in=dataset_ids)
         for dataset in datasets:
             try:
-                organism_name = dataset.email_address.split('@')[0].split('compendia_')[1]
+                organism_name = dataset.email_address.split("@")[0].split("compendia_")[1]
             except:
                 organism_name = str(dataset.pk)
 
             if dataset.is_available:
                 print(organism_name + ": " + dataset.s3_url())
-            
+
                 response = requests.get(dataset.s3_url(), stream=True)
                 response.raise_for_status()
-                with open(organism_name + '.zip', 'wb') as handle:
+                with open(organism_name + ".zip", "wb") as handle:
                     for block in response.iter_content(1024):
                         handle.write(block)
             else:

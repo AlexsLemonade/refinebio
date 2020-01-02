@@ -17,18 +17,18 @@ def extract_title(sample: Dict) -> str:
     """ Given a flat sample dictionary, find the title """
 
     # Specifically look up for imported, non-SDRF AE samples
-    for comment in sample.get('source_comment', []):
-        if 'title' in comment.get('name', ''):
-            return comment['value']
+    for comment in sample.get("source_comment", []):
+        if "title" in comment.get("name", ""):
+            return comment["value"]
 
     title_fields = [
-                    'title',
-                    'sample title',
-                    'sample name',
-                    'subject number',
-                    'labeled extract name',
-                    'extract name'
-                   ]
+        "title",
+        "sample title",
+        "sample name",
+        "subject number",
+        "labeled extract name",
+        "extract name",
+    ]
     title_fields = add_variants(title_fields)
     for key, value in sorted(sample.items(), key=lambda x: x[0].lower()):
         lower_key = key.lower().strip()
@@ -39,6 +39,7 @@ def extract_title(sample: Dict) -> str:
     # If we can't even find a unique title for this sample
     # something has gone horribly wrong.
     return None
+
 
 def harmonize(metadata: List) -> Dict:
     """
@@ -302,10 +303,16 @@ def harmonize(metadata: List) -> Dict:
         # something has gone horribly wrong.
         if title:
             if title in used_titles:
-                title = title + "_" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+                title = (
+                    title
+                    + "_"
+                    + "".join(
+                        random.choice(string.ascii_uppercase + string.digits) for _ in range(12)
+                    )
+                )
             used_titles.append(title)
             new_sample = sample.copy()
-            new_sample['title'] = title
+            new_sample["title"] = title
             original_samples.append(new_sample)
             harmonized_samples[title] = {}
         else:
@@ -315,66 +322,66 @@ def harmonize(metadata: List) -> Dict:
     # Sex!
     ##
     sex_fields = [
-                    'sex',
-                    'gender',
-                    'subject gender',
-                    'subjext sex',
-                    # This looks reduntant, but there are some samples which use
-                    # Characteristic[Characteristic[sex]]
-                    'characteristic [sex]',
-                    'characteristics [sex]',
-                   ]
+        "sex",
+        "gender",
+        "subject gender",
+        "subjext sex",
+        # This looks reduntant, but there are some samples which use
+        # Characteristic[Characteristic[sex]]
+        "characteristic [sex]",
+        "characteristics [sex]",
+    ]
     sex_fields = add_variants(sex_fields)
 
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in sex_fields:
-                if value.lower() in ['f', 'female', 'woman']:
-                    harmonized_samples[title]['sex'] = "female"
+                if value.lower() in ["f", "female", "woman"]:
+                    harmonized_samples[title]["sex"] = "female"
                     break
-                elif value.lower() in ['m', 'male', 'man']:
-                    harmonized_samples[title]['sex'] = "male"
+                elif value.lower() in ["m", "male", "man"]:
+                    harmonized_samples[title]["sex"] = "male"
                     break
                 else:
-                    harmonized_samples[title]['sex'] = value.lower()
+                    harmonized_samples[title]["sex"] = value.lower()
                     break
 
     ##
     # Age!
     ##
     age_fields = [
-                    'age',
-                    'patient age',
-                    'age of patient',
-                    'age (years)',
-                    'age (yrs)',
-                    'age (months)',
-                    'age (days)',
-                    'age (hours)',
-                    'age at diagnosis',
-                    'age at diagnosis years',
-                    'age at diagnosis months',
-                    'age at diagnosis days',
-                    'age at diagnosis hours',
-                    'characteristic [age]',
-                    'characteristics [age]',
-                ]
+        "age",
+        "patient age",
+        "age of patient",
+        "age (years)",
+        "age (yrs)",
+        "age (months)",
+        "age (days)",
+        "age (hours)",
+        "age at diagnosis",
+        "age at diagnosis years",
+        "age at diagnosis months",
+        "age at diagnosis days",
+        "age at diagnosis hours",
+        "characteristic [age]",
+        "characteristics [age]",
+    ]
     age_fields = add_variants(age_fields)
 
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in age_fields:
                 try:
-                    harmonized_samples[title]['age'] = float(value)
+                    harmonized_samples[title]["age"] = float(value)
                 except ValueError:
                     try:
-                        harmonized_samples[title]['age'] = float(value.split(' ')[0])
+                        harmonized_samples[title]["age"] = float(value.split(" ")[0])
                     except ValueError:
-                    	# This is probably something weird, like a '.'
+                        # This is probably something weird, like a '.'
                         continue
                 break
 
@@ -384,252 +391,245 @@ def harmonize(metadata: List) -> Dict:
     # See: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-376684079
     ##
     part_fields = [
-                    # AE
-                    'organism part',
-                    'cell type',
-                    'tissue',
-                    'tissue type',
-                    'tissue source',
-                    'tissue origin',
-                    'source tissue',
-                    'tissue subtype',
-                    'tissue/cell type',
-                    'tissue region',
-                    'tissue compartment',
-                    'tissues',
-                    'tissue of origin',
-                    'tissue-type',
-                    'tissue harvested',
-                    'cell/tissue type',
-                    'tissue subregion',
-                    'organ',
-                    'characteristic [organism part]',
-                    'characteristics [organism part]',
-
-                    # SRA
-                    'cell_type',
-                    'organismpart',
-
-                    # GEO
-                    'isolation source',
-                    'tissue sampled',
-                    'cell description'
-
-                ]
+        # AE
+        "organism part",
+        "cell type",
+        "tissue",
+        "tissue type",
+        "tissue source",
+        "tissue origin",
+        "source tissue",
+        "tissue subtype",
+        "tissue/cell type",
+        "tissue region",
+        "tissue compartment",
+        "tissues",
+        "tissue of origin",
+        "tissue-type",
+        "tissue harvested",
+        "cell/tissue type",
+        "tissue subregion",
+        "organ",
+        "characteristic [organism part]",
+        "characteristics [organism part]",
+        # SRA
+        "cell_type",
+        "organismpart",
+        # GEO
+        "isolation source",
+        "tissue sampled",
+        "cell description",
+    ]
     part_fields = add_variants(part_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in part_fields:
-                harmonized_samples[title]['specimen_part'] = value.lower().strip()
+                harmonized_samples[title]["specimen_part"] = value.lower().strip()
                 break
 
     ##
     # Genetic information!
     ##
     genetic_information_fields = [
-                    'strain/background',
-                    'strain',
-                    'strain or line',
-                    'background strain',
-                    'genotype',
-                    'genetic background',
-                    'genetic information',
-                    'genotype/variation',
-                    'ecotype',
-                    'cultivar',
-                    'strain/genotype',
-                ]
+        "strain/background",
+        "strain",
+        "strain or line",
+        "background strain",
+        "genotype",
+        "genetic background",
+        "genetic information",
+        "genotype/variation",
+        "ecotype",
+        "cultivar",
+        "strain/genotype",
+    ]
     genetic_information_fields = add_variants(genetic_information_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in genetic_information_fields:
-                harmonized_samples[title]['genetic_information'] = value.lower().strip()
+                harmonized_samples[title]["genetic_information"] = value.lower().strip()
 
     ##
     # Disease!
     ##
     disease_fields = [
-                    'disease',
-                    'disease state',
-                    'disease status',
-                    'diagnosis',
-                    'disease',
-                    'infection with',
-                    'sample type',
-                ]
+        "disease",
+        "disease state",
+        "disease status",
+        "diagnosis",
+        "disease",
+        "infection with",
+        "sample type",
+    ]
     disease_fields = add_variants(disease_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in disease_fields:
-                harmonized_samples[title]['disease'] = value.lower().strip()
+                harmonized_samples[title]["disease"] = value.lower().strip()
 
     ##
     # Disease Stage!
     ##
     disease_stage_fields = [
-                    'disease state',
-                    'disease staging',
-                    'disease stage',
-                    'grade',
-                    'tumor grade',
-                    'who grade',
-                    'histological grade',
-                    'tumor grading',
-                    'disease outcome',
-                    'subject status',
-                ]
+        "disease state",
+        "disease staging",
+        "disease stage",
+        "grade",
+        "tumor grade",
+        "who grade",
+        "histological grade",
+        "tumor grading",
+        "disease outcome",
+        "subject status",
+    ]
     disease_stage_fields = add_variants(disease_stage_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in disease_stage_fields:
-                harmonized_samples[title]['disease_stage'] = value.lower().strip()
+                harmonized_samples[title]["disease_stage"] = value.lower().strip()
 
     ##
     # Cell Line!
     ##
     cell_line_fields = [
-                    'cell line',
-                    'sample strain',
-                ]
+        "cell line",
+        "sample strain",
+    ]
     cell_line_fields = add_variants(cell_line_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in cell_line_fields:
-                harmonized_samples[title]['cell_line'] = value.lower().strip()
+                harmonized_samples[title]["cell_line"] = value.lower().strip()
 
     ##
     # Treatment!
     ##
     treatment_fields = [
-                    'treatment',
-                    'treatment group',
-                    'treatment protocol',
-                    'drug treatment',
-                    'clinical treatment',
-                ]
+        "treatment",
+        "treatment group",
+        "treatment protocol",
+        "drug treatment",
+        "clinical treatment",
+    ]
     treatment_fields = add_variants(treatment_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in treatment_fields:
-                harmonized_samples[title]['treatment'] = value.lower().strip()
+                harmonized_samples[title]["treatment"] = value.lower().strip()
     ##
     # Race!
     ##
     race_fields = [
-                    'race',
-                    'ethnicity',
-                    'race/ethnicity',
-                ]
+        "race",
+        "ethnicity",
+        "race/ethnicity",
+    ]
     race_fields = add_variants(race_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in race_fields:
-                harmonized_samples[title]['race'] = value.lower().strip()
+                harmonized_samples[title]["race"] = value.lower().strip()
 
     ##
     # Subject
     ##
     subject_fields = [
-                    # AE
-                    'subject',
-                    'subject id',
-                    'subject/sample source id',
-                    'subject identifier',
-                    'human subject anonymized id',
-                    'individual',
-                    'individual identifier',
-                    'individual id',
-                    'patient',
-                    'patient id',
-                    'patient identifier',
-                    'patient number',
-                    'patient no',
-                    'donor id',
-                    'donor',
-
-                    # SRA
-                    'sample_source_name'
-                ]
+        # AE
+        "subject",
+        "subject id",
+        "subject/sample source id",
+        "subject identifier",
+        "human subject anonymized id",
+        "individual",
+        "individual identifier",
+        "individual id",
+        "patient",
+        "patient id",
+        "patient identifier",
+        "patient number",
+        "patient no",
+        "donor id",
+        "donor",
+        # SRA
+        "sample_source_name",
+    ]
     subject_fields = add_variants(subject_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in subject_fields:
-                harmonized_samples[title]['subject'] = value.lower().strip()
+                harmonized_samples[title]["subject"] = value.lower().strip()
 
     ##
     # Developement Stage!
     ##
-    development_stage_fields = [
-                    'developmental stage',
-                    'development stage',
-                    'development stages'
-                ]
+    development_stage_fields = ["developmental stage", "development stage", "development stages"]
     development_stage_fields = add_variants(development_stage_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in development_stage_fields:
-                harmonized_samples[title]['developmental_stage'] = value.lower().strip()
+                harmonized_samples[title]["developmental_stage"] = value.lower().strip()
 
     ##
     # Compound!
     ##
     compound_fields = [
-                    'compound',
-                    'compound1',
-                    'compound2',
-                    'compound name',
-                    'drug',
-                    'drugs',
-                    'immunosuppressive drugs'
-                ]
+        "compound",
+        "compound1",
+        "compound2",
+        "compound name",
+        "drug",
+        "drugs",
+        "immunosuppressive drugs",
+    ]
     compound_fields = add_variants(compound_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in compound_fields:
-                harmonized_samples[title]['compound'] = value.lower().strip()
+                harmonized_samples[title]["compound"] = value.lower().strip()
 
     ##
     # Time!
     ##
     time_fields = [
-                    'time',
-                    'initial time point',
-                    'start time',
-                    'stop time',
-                    'time point',
-                    'sampling time point',
-                    'sampling time',
-                    'time post infection'
-                ]
+        "time",
+        "initial time point",
+        "start time",
+        "stop time",
+        "time point",
+        "sampling time point",
+        "sampling time",
+        "time post infection",
+    ]
     time_fields = add_variants(time_fields)
     for sample in original_samples:
-        title = sample['title']
+        title = sample["title"]
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in time_fields:
-                harmonized_samples[title]['time'] = value.lower().strip()
+                harmonized_samples[title]["time"] = value.lower().strip()
 
     return harmonized_samples
+
 
 def add_variants(original_list: List):
     """ Given a list of strings, create variations likely to give metadata hits.
@@ -640,10 +640,10 @@ def add_variants(original_list: List):
 
     # Variate forms of multi-word strings
     for item in original_list:
-        if ' ' in item:
-            precopy.append(item.replace(' ', '_'))
-            precopy.append(item.replace(' ', '-'))
-            precopy.append(item.replace(' ', ''))
+        if " " in item:
+            precopy.append(item.replace(" ", "_"))
+            precopy.append(item.replace(" ", "-"))
+            precopy.append(item.replace(" ", ""))
 
     # Variate to find common key patterns
     copy = precopy.copy()
@@ -662,8 +662,9 @@ def add_variants(original_list: List):
         copy.append("factor value [" + item + "]")
         copy.append("sample_" + item)
         copy.append("sample_host" + item)
-        copy.append("sample_sample_" + item) # Yes, seriously.
+        copy.append("sample_sample_" + item)  # Yes, seriously.
     return copy
+
 
 def parse_sdrf(sdrf_url: str) -> List:
     """ Given a URL to an SDRF file, download parses it into JSON. """
@@ -682,7 +683,7 @@ def parse_sdrf(sdrf_url: str) -> List:
 
     samples = []
 
-    reader = csv.reader(StringIO(sdrf_text), delimiter='\t')
+    reader = csv.reader(StringIO(sdrf_text), delimiter="\t")
     for offset, line in enumerate(reader):
 
         # Get the keys
@@ -704,6 +705,7 @@ def parse_sdrf(sdrf_url: str) -> List:
 
     return samples
 
+
 def preprocess_geo(items: List) -> List:
     """
     Prepares items from GEO for harmonization
@@ -718,8 +720,8 @@ def preprocess_geo(items: List) -> List:
 
                     # This will almost always happen, except if we get
                     # a malformed response from the server.
-                    if ':' in pair:
-                        split = pair.split(':', 1)
+                    if ":" in pair:
+                        split = pair.split(":", 1)
                         new_sample[split[0].strip()] = split[1].strip()
                 continue
 

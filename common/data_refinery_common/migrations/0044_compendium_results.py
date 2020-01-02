@@ -1,11 +1,13 @@
 from django.db import migrations, models
 
+
 def populate_compendium_results(apps, schema_editor):
     """ Fetch existing compendia and create compendium results"""
-    CompendiumResult = apps.get_model('data_refinery_common', 'CompendiumResult')
-    CompendiumResultOrganismAssociation = apps.get_model('data_refinery_common',
-                                                         'CompendiumResultOrganismAssociation')
-    ComputedFile = apps.get_model('data_refinery_common', 'ComputedFile')
+    CompendiumResult = apps.get_model("data_refinery_common", "CompendiumResult")
+    CompendiumResultOrganismAssociation = apps.get_model(
+        "data_refinery_common", "CompendiumResultOrganismAssociation"
+    )
+    ComputedFile = apps.get_model("data_refinery_common", "ComputedFile")
 
     compendium_computed_files = ComputedFile.objects.filter(is_compendia=True)
 
@@ -28,17 +30,15 @@ def populate_compendium_results(apps, schema_editor):
         compendium_result_organism_association = CompendiumResultOrganismAssociation()
         compendium_result_organism_association.compendium_result = compendium_result
         compendium_result_organism_association.organism = compendium_result.primary_organism
-        compendium_result_organism_associations.append(
-            compendium_result_organism_association)
+        compendium_result_organism_associations.append(compendium_result_organism_association)
 
-    CompendiumResultOrganismAssociation.objects.bulk_create(
-            compendium_result_organism_associations)
+    CompendiumResultOrganismAssociation.objects.bulk_create(compendium_result_organism_associations)
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0043_auto_20191108_2144'),
+        ("data_refinery_common", "0043_auto_20191108_2144"),
     ]
 
     operations = [

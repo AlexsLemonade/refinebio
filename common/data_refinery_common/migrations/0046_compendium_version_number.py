@@ -2,18 +2,20 @@ from django.db import migrations, models
 from django.db.models import F, Window
 from django.db.models.functions import RowNumber
 
+
 def compendium_version_number_fix(apps, schema_editor):
     """ Fetch existing compendia and fix their version_number."""
-    CompendiumResult = apps.get_model('data_refinery_common', 'CompendiumResult')
+    CompendiumResult = apps.get_model("data_refinery_common", "CompendiumResult")
 
     # normalized compendia
     # get each compendium against primary key sorted by created date
-    compendium_results = CompendiumResult.objects.filter(quant_sf_only=False)\
-                                                 .annotate(version_number=Window(
-                                                     expression=RowNumber(),
-                                                     partition_by=[F('primary_organism')],
-                                                     order_by=[F('result__created_at')]
-                                                 ))
+    compendium_results = CompendiumResult.objects.filter(quant_sf_only=False).annotate(
+        version_number=Window(
+            expression=RowNumber(),
+            partition_by=[F("primary_organism")],
+            order_by=[F("result__created_at")],
+        )
+    )
 
     for compendium_result in compendium_results:
         # assign the correct version if greater than 1
@@ -25,7 +27,7 @@ def compendium_version_number_fix(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0045_svd_algorithm'),
+        ("data_refinery_common", "0045_svd_algorithm"),
     ]
 
     operations = [

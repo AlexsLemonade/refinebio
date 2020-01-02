@@ -10,7 +10,7 @@ from data_refinery_common.models import (
     OriginalFile,
     DownloaderJobOriginalFileAssociation,
     Sample,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
 )
 from data_refinery_workers.downloaders import array_express, utils
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -23,16 +23,20 @@ class DownloadArrayExpressTestCase(TestCase):
         survey_job.save()
         self.survey_job = survey_job
 
-    @tag('downloaders')
-    @patch('data_refinery_workers.downloaders.utils.send_job')
+    @tag("downloaders")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     def test_download_and_extract_file(self, mock_send_job):
         dlj = DownloaderJob()
         dlj.save()
-        array_express._download_file('ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip', 'dlme.zip', dlj)
-        files = array_express._extract_files('dlme.zip', '123', dlj)
+        array_express._download_file(
+            "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip",
+            "dlme.zip",
+            dlj,
+        )
+        files = array_express._extract_files("dlme.zip", "123", dlj)
 
-    @tag('downloaders')
-    @patch('data_refinery_workers.downloaders.utils.send_job')
+    @tag("downloaders")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     def test_download_multiple_zips(self, mock_send_job):
         """Tests that each sample gets one processor job no matter what.
 
@@ -50,7 +54,7 @@ class DownloadArrayExpressTestCase(TestCase):
         directory.
         """
         dlj1 = DownloaderJob()
-        dlj1.accession_code = 'E-MEXP-433'
+        dlj1.accession_code = "E-MEXP-433"
         dlj1.save()
 
         original_file = OriginalFile()
@@ -64,7 +68,7 @@ class DownloadArrayExpressTestCase(TestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'E-MEXP-433-Waldhof_020604_R30_01-2753_U133A'
+        sample.accession_code = "E-MEXP-433-Waldhof_020604_R30_01-2753_U133A"
         sample.technology = "MICROARRAY"
         sample.manufacturer = "AFFYMETRIX"
         sample.has_raw = True
@@ -73,10 +77,12 @@ class DownloadArrayExpressTestCase(TestCase):
         sample.platform_accession_code = "hgu133a"
         sample.save()
 
-        OriginalFileSampleAssociation.objects.get_or_create(sample=sample, original_file=original_file)
+        OriginalFileSampleAssociation.objects.get_or_create(
+            sample=sample, original_file=original_file
+        )
 
         dlj2 = DownloaderJob()
-        dlj2.accession_code = 'E-MEXP-433'
+        dlj2.accession_code = "E-MEXP-433"
         dlj2.save()
 
         original_file = OriginalFile()
@@ -90,7 +96,7 @@ class DownloadArrayExpressTestCase(TestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'E-MEXP-433-N08_U133A'
+        sample.accession_code = "E-MEXP-433-N08_U133A"
         sample.technology = "MICROARRAY"
         sample.manufacturer = "AFFYMETRIX"
         sample.has_raw = True
@@ -99,7 +105,9 @@ class DownloadArrayExpressTestCase(TestCase):
         sample.platform_accession_code = "hgu133a"
         sample.save()
 
-        OriginalFileSampleAssociation.objects.get_or_create(sample=sample, original_file=original_file)
+        OriginalFileSampleAssociation.objects.get_or_create(
+            sample=sample, original_file=original_file
+        )
 
         array_express.download_array_express(dlj1.id)
         array_express.download_array_express(dlj2.id)

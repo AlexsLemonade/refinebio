@@ -7,23 +7,28 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0010_auto_20190125_1655'),
+        ("data_refinery_common", "0010_auto_20190125_1655"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='computedfile',
-            name='compendia_organism',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Organism'),
+            model_name="computedfile",
+            name="compendia_organism",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="data_refinery_common.Organism",
+            ),
         ),
         migrations.AddField(
-            model_name='computedfile',
-            name='compendia_version',
+            model_name="computedfile",
+            name="compendia_version",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='computedfile',
-            name='is_compendia',
+            model_name="computedfile",
+            name="is_compendia",
             field=models.BooleanField(default=False),
         ),
     ]

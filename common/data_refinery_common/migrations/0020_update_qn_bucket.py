@@ -13,20 +13,20 @@ S3_QN_TARGET_BUCKET_NAME = get_env_variable("S3_QN_TARGET_BUCKET_NAME")
 
 
 def update_qn_bucket(apps, schema_editor):
-    '''Sets the s3_bucket for QN Targets to a bucket just for them.
+    """Sets the s3_bucket for QN Targets to a bucket just for them.
 
     Based off of:
     https://simpleisbetterthancomplex.com/tutorial/2017/09/26/how-to-create-django-data-migrations.html
 
     We can't import the ComputedFile model directly as it may be a newer
     version than this migration expects. We use the historical version.
-    '''
+    """
 
     if not settings.RUNNING_IN_CLOUD:
         return
 
     # Pagination isn't necessary here because we have very few QN targets.
-    ComputedFile = apps.get_model('data_refinery_common', 'ComputedFile')
+    ComputedFile = apps.get_model("data_refinery_common", "ComputedFile")
     for computed_file in ComputedFile.objects.filter(is_qn_target=True):
         if not computed_file.s3_bucket or not computed_file.s3_key:
             continue
@@ -44,7 +44,7 @@ def update_qn_bucket(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0019_sample_is_blacklisted'),
+        ("data_refinery_common", "0019_sample_is_blacklisted"),
     ]
 
     operations = [

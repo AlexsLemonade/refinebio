@@ -2,26 +2,26 @@
 
 from django.db import migrations
 
+
 def set_alternate_accession_codes(apps, schema_editor):
-    '''
+    """
     We can't import the Experiment model directly as it may be a newer
     version than this migration expects. We use the historical version.
-    '''
-    Experiment = apps.get_model('data_refinery_common', 'Experiment')
+    """
+    Experiment = apps.get_model("data_refinery_common", "Experiment")
     for experiment in Experiment.objects.all():
-        if experiment.accession_code.startswith('GSE'):
-            experiment.alternate_accession_code = 'E-GEOD-' + experiment.accession_code[3:]
-        elif experiment.accession_code.startswith('E-GEOD-'):
-            experiment.alternate_accession_code = 'GSE' + accession_code[7:]
+        if experiment.accession_code.startswith("GSE"):
+            experiment.alternate_accession_code = "E-GEOD-" + experiment.accession_code[3:]
+        elif experiment.accession_code.startswith("E-GEOD-"):
+            experiment.alternate_accession_code = "GSE" + accession_code[7:]
 
         experiment.save()
+
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0003_experiment_alternate_accession_code'),
+        ("data_refinery_common", "0003_experiment_alternate_accession_code"),
     ]
 
-    operations = [
-        migrations.RunPython(set_alternate_accession_codes)
-    ]
+    operations = [migrations.RunPython(set_alternate_accession_codes)]

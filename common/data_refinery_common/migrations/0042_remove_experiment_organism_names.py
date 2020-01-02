@@ -6,12 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0041_auto_20190925_2041'),
+        ("data_refinery_common", "0041_auto_20190925_2041"),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='experiment',
-            name='organism_names',
-        ),
+        migrations.RemoveField(model_name="experiment", name="organism_names",),
     ]

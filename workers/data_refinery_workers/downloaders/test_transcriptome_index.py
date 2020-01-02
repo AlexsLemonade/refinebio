@@ -8,7 +8,7 @@ from data_refinery_common.models import (
     OriginalFile,
     DownloaderJobOriginalFileAssociation,
     DownloaderJob,
-    ProcessorJob
+    ProcessorJob,
 )
 from data_refinery_workers.downloaders import transcriptome_index
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -19,14 +19,17 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
         self.survey_job = survey_job
-        self.gtf_download_url = ("ftp://ftp.ensemblgenomes.org/pub/release-37/plants/gtf/"
-                                 "aegilops_tauschii/Aegilops_tauschii.ASM34733v1.37.gtf.gz")
+        self.gtf_download_url = (
+            "ftp://ftp.ensemblgenomes.org/pub/release-37/plants/gtf/"
+            "aegilops_tauschii/Aegilops_tauschii.ASM34733v1.37.gtf.gz"
+        )
         self.fasta_download_url = (
             "ftp://ftp.ensemblgenomes.org/pub/release-37/plants/fasta/"
-            "aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz")
+            "aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
+        )
 
-    @tag('downloaders')
-    @patch('data_refinery_workers.downloaders.transcriptome_index.send_job')
+    @tag("downloaders")
+    @patch("data_refinery_workers.downloaders.transcriptome_index.send_job")
     def test_download_file(self, mock_send_job):
         mock_send_job.return_value = None
         dlj = DownloaderJob()

@@ -9,7 +9,6 @@ CEL_FILE_ZEBRAFISH = "test-files/CONTROL6.cel.gz"
 
 
 class MicroarrayTestCase(TestCase):
-
     def test_get_platform_from_CEL(self):
         self.assertEqual("hgu95av2", microarray.get_platform_from_CEL(CEL_FILE_HUMAN))
         self.assertEqual("rgu34a", microarray.get_platform_from_CEL(CEL_FILE_RAT))

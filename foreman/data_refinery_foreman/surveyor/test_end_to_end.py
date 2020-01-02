@@ -10,7 +10,7 @@ from django.test import TransactionTestCase, tag
 from django.utils import timezone
 from unittest.mock import patch, Mock
 from unittest import skip
-from test.support import EnvironmentVarGuard # Python >=3
+from test.support import EnvironmentVarGuard  # Python >=3
 
 from data_refinery_common.models import (
     Organism,
@@ -40,13 +40,15 @@ from data_refinery_foreman.foreman.main import retry_lost_downloader_jobs
 
 # Import and set logger
 import logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 LOOP_TIME = 5  # seconds
 MAX_WAIT_TIME = timedelta(minutes=15)
 
-def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int=None):
+
+def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = None):
     """Monitors the `job_class` table for when `job` is done."""
     loop_time = loop_time if loop_time else LOOP_TIME
     job = job_class.objects.filter(id=job.id).get()
@@ -56,9 +58,7 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int=None
 
         # Don't log statuses more often than every 5 seconds.
         if timezone.now() - last_log_time > timedelta(seconds=5):
-            logger.info("Still polling the %s with ID %s.",
-                        job_class.__name__,
-                        job.nomad_job_id)
+            logger.info("Still polling the %s with ID %s.", job_class.__name__, job.nomad_job_id)
             last_log_time = timezone.now()
 
         job = job_class.objects.filter(id=job.id).get()
@@ -79,7 +79,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         # Clear out pre-existing work dirs so there's no conflicts:
 
         self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
+        self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
@@ -103,7 +103,9 @@ class NoOpEndToEndTestCase(TransactionTestCase):
                 downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time)
                 self.assertTrue(downloader_job.success)
 
-            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted processor jobs
+            processor_jobs = ProcessorJob.objects.all().exclude(
+                abort=True
+            )  # exclude aborted processor jobs
             self.assertGreater(processor_jobs.count(), 0)
 
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
@@ -139,7 +141,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
         """Survey, download, then process an experiment we know is NO_OP."""
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
+        self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
@@ -166,7 +168,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             # possible, so pass a short loop time and let the waiting
             # loop spin really fast so we lose as little time as
             # possible.
-            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, .1)
+            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, 0.1)
             self.assertTrue(downloader_job.success)
 
             # Now we're going to delete one of the extracted files but not the other.
@@ -182,7 +184,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             doomed_processor_job = deleted_file.processor_jobs.all()[0]
             logger.info(
                 "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
-                doomed_processor_job.nomad_job_id
+                doomed_processor_job.nomad_job_id,
             )
 
             start_time = timezone.now()
@@ -191,7 +193,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should now be two.
-            downloader_jobs = DownloaderJob.objects.all().order_by('-id')
+            downloader_jobs = DownloaderJob.objects.all().order_by("-id")
             self.assertEqual(downloader_jobs.count(), 2)
 
             # However DownloaderJobs don't get queued immediately, so
@@ -202,17 +204,16 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s",
-                recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
             # Once the Downloader job succeeds, it should create one
             # and only one processor job, after which the total goes back up
             # to NUM_SAMPLES_IN_EXPERIMENT:
-            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted processor jobs
+            processor_jobs = ProcessorJob.objects.all().exclude(
+                abort=True
+            )  # exclude aborted processor jobs
             self.assertEqual(processor_jobs.count(), NUM_SAMPLES_IN_EXPERIMENT)
 
             # And finally we can make sure that all of the
@@ -222,6 +223,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
                 self.assertTrue(processor_job.success)
+
 
 class GeoArchiveRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
@@ -233,7 +235,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
         """
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
+        self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
@@ -255,7 +257,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
 
             logger.info(
                 "Survey Job finished, waiting for Downloader Job with Nomad ID %s to complete.",
-                downloader_jobs[0].nomad_job_id
+                downloader_jobs[0].nomad_job_id,
             )
 
             # We're going to spin as fast as we can so we can delete
@@ -266,8 +268,9 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
                 non_archive_files = OriginalFile.objects.filter(is_archive=False)
                 for original_file in non_archive_files:
-                    if original_file.absolute_file_path \
-                       and os.path.exists(original_file.absolute_file_path):
+                    if original_file.absolute_file_path and os.path.exists(
+                        original_file.absolute_file_path
+                    ):
                         os.remove(original_file.absolute_file_path)
                         file_deleted = True
                         break
@@ -285,7 +288,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             if doomed_processor_job:
                 logger.info(
                     "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
-                    doomed_processor_job.nomad_job_id
+                    doomed_processor_job.nomad_job_id,
                 )
 
                 start_time = timezone.now()
@@ -294,7 +297,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should now be two.
-            downloader_jobs = DownloaderJob.objects.all().order_by('-id')
+            downloader_jobs = DownloaderJob.objects.all().order_by("-id")
             self.assertEqual(downloader_jobs.count(), 2)
 
             # However DownloaderJobs don't get queued immediately, so
@@ -305,10 +308,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s",
-                recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -316,7 +316,9 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             # processor jobs were successful, including the one that
             # got recreated.
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted processor jobs
+            processor_jobs = ProcessorJob.objects.all().exclude(
+                abort=True
+            )  # exclude aborted processor jobs
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
                 self.assertTrue(processor_job.success)
@@ -343,7 +345,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
         """
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
+        self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
@@ -375,8 +377,9 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
                 non_archive_files = OriginalFile.objects.filter(is_archive=False)
                 for original_file in non_archive_files:
-                    if original_file.absolute_file_path \
-                       and os.path.exists(original_file.absolute_file_path):
+                    if original_file.absolute_file_path and os.path.exists(
+                        original_file.absolute_file_path
+                    ):
                         os.remove(original_file.absolute_file_path)
                         file_deleted = True
                         break
@@ -396,7 +399,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             if doomed_processor_job:
                 logger.info(
                     "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
-                    doomed_processor_job.nomad_job_id
+                    doomed_processor_job.nomad_job_id,
                 )
 
                 start_time = timezone.now()
@@ -406,7 +409,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should
             # now be SAMPLES_IN_EXPERIMENT + 1 downloader jobs.
-            downloader_jobs = DownloaderJob.objects.all().order_by('-id')
+            downloader_jobs = DownloaderJob.objects.all().order_by("-id")
             self.assertEqual(downloader_jobs.count(), SAMPLES_IN_EXPERIMENT + 1)
 
             # However DownloaderJobs don't get queued immediately, so
@@ -417,10 +420,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s",
-                recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -429,7 +429,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # recreated. The processor job that recreated that job has
             # abort=True
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            processor_jobs = ProcessorJob.objects.all().exclude(abort=True) # exclude aborted jobs
+            processor_jobs = ProcessorJob.objects.all().exclude(abort=True)  # exclude aborted jobs
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
                 self.assertTrue(processor_job.success)
@@ -442,10 +442,12 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
         """Survey, download, then process a transcriptome index."""
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
+        self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
             for length in ["LONG", "SHORT"]:
-                work_dir_glob = LOCAL_ROOT_DIR + "/Caenorhabditis_elegans/" + length + "/processor_job_*"
+                work_dir_glob = (
+                    LOCAL_ROOT_DIR + "/Caenorhabditis_elegans/" + length + "/processor_job_*"
+                )
                 for work_dir in glob.glob(work_dir_glob):
                     shutil.rmtree(work_dir)
 
@@ -463,7 +465,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             logger.info(
                 "Survey Job finished, waiting for Downloader Job with Nomad ID %s to complete.",
-                downloader_jobs[0].nomad_job_id
+                downloader_jobs[0].nomad_job_id,
             )
             og_file_to_delete = OriginalFile.objects.all()[0]
             start_time = timezone.now()
@@ -473,7 +475,9 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # the processor job starts.
             while timezone.now() - start_time < MAX_WAIT_TIME:
                 og_file_to_delete.refresh_from_db()
-                if og_file_to_delete.absolute_file_path and os.path.exists(og_file_to_delete.absolute_file_path):
+                if og_file_to_delete.absolute_file_path and os.path.exists(
+                    og_file_to_delete.absolute_file_path
+                ):
                     os.remove(og_file_to_delete.absolute_file_path)
                     break
 
@@ -500,7 +504,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should now be two.
-            downloader_jobs = DownloaderJob.objects.all().order_by('-id')
+            downloader_jobs = DownloaderJob.objects.all().order_by("-id")
             self.assertEqual(downloader_jobs.count(), 2)
 
             # However DownloaderJobs don't get queued immediately, so
@@ -511,10 +515,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s",
-                recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -564,7 +565,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
         """Survey, download, then process an experiment we know is SRA."""
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
+        self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
@@ -594,7 +595,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
                 # possible, so pass a short loop time and let the waiting
                 # loop spin really fast so we lose as little time as
                 # possible.
-                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, .1)
+                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, 0.1)
                 self.assertTrue(downloader_job.success)
                 if not file_deleted:
                     for original_file in OriginalFile.objects.filter(is_downloaded=True):
@@ -617,7 +618,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             doomed_processor_job = original_file.processor_jobs.all()[0]
             logger.info(
                 "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
-                doomed_processor_job.nomad_job_id
+                doomed_processor_job.nomad_job_id,
             )
 
             start_time = timezone.now()
@@ -626,7 +627,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             # The processor job that had a missing file will have
             # recreated its DownloaderJob, which means there should
             # now be 5, but we also deleted on on purpose so there's 4.
-            downloader_jobs = DownloaderJob.objects.all().order_by('-id')
+            downloader_jobs = DownloaderJob.objects.all().order_by("-id")
             self.assertEqual(downloader_jobs.count(), 4)
 
             # However DownloaderJobs don't get queued immediately, so
@@ -637,10 +638,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             # DownloaderJob was successful as well:
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s",
-                recreated_job.nomad_job_id
-            )
+            logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
@@ -666,8 +664,9 @@ class SraRedownloadingTestCase(TransactionTestCase):
                 # finds that the file it wants to process is missing.
                 try:
                     processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-                    if not processor_job.success \
-                       and processor_job.failure_reason.startswith(good_failure_reason):
+                    if not processor_job.success and processor_job.failure_reason.startswith(
+                        good_failure_reason
+                    ):
                         successful_processor_jobs.append(processor_job)
                 except:
                     pass
@@ -682,7 +681,7 @@ class EnaFallbackTestCase(TransactionTestCase):
         """Survey, download, then process a sample we know is SRA and has unmated reads."""
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
+        self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
