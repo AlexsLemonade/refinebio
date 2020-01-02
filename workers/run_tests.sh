@@ -121,9 +121,11 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
     # Make sure CEL for test is downloaded from S3
     cel_name="GSM1426071_CD_colon_active_1.CEL"
     cel_name2="GSM45588.CEL"
+    cel_name3="GSM1364667_U_110208_7-02-10_S2.CEL"
     cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
     cel_test_data_1="$cel_test_raw_dir/$cel_name"
     cel_test_data_2="$cel_test_raw_dir/$cel_name2"
+    cel_test_data_3="$cel_test_raw_dir/$cel_name3"
     if [ ! -e "$cel_test_data_1" ]; then
         mkdir -p "$cel_test_raw_dir"
         echo "Downloading CEL for tests."
@@ -135,6 +137,12 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
         wget -q -O "$cel_test_data_2" \
              "$test_data_repo/$cel_name2"
     fi
+    if [ ! -e "$cel_test_data_3" ]; then
+        echo "Downloading Huex Brain Array CEL for tests."
+        wget -q -O "$cel_test_data_3" \
+             "$test_data_repo/$cel_name3"
+    fi
+
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "transcriptome" ]; then

@@ -12,6 +12,7 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
+from multiprocessing import current_process
 
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 
@@ -21,6 +22,7 @@ INSTANCE_ID = None
 SUPPORTED_MICROARRAY_PLATFORMS = None
 SUPPORTED_RNASEQ_PLATFORMS = None
 READABLE_PLATFORM_NAMES = None
+ANNOTATION_PACKAGE_OVERRIDES = None
 
 
 def get_env_variable(var_name: str, default: str = None) -> str:
@@ -166,7 +168,7 @@ def get_active_volumes_detailed() -> Dict:
 
 
 def get_supported_microarray_platforms(
-    platforms_csv: str = "config/supported_microarray_platforms.csv",
+    platforms_csv: str = "config/supported_microarray_platforms.csv"
 ) -> list:
     """
     Loads our supported microarray platforms file and returns a list of dictionaries
@@ -185,7 +187,7 @@ def get_supported_microarray_platforms(
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
-            if reader.line_num is 1:
+            if reader.line_num == 1:
                 continue
 
             external_accession = line[1]
@@ -228,7 +230,7 @@ def get_supported_microarray_platforms(
 
 
 def get_supported_rnaseq_platforms(
-    platforms_list: str = "config/supported_rnaseq_platforms.txt",
+    platforms_list: str = "config/supported_rnaseq_platforms.txt"
 ) -> list:
     """
     Returns a list of RNASeq platforms which are currently supported.
@@ -246,7 +248,7 @@ def get_supported_rnaseq_platforms(
 
 
 def get_readable_affymetrix_names(
-    mapping_csv: str = "config/readable_affymetrix_names.csv",
+    mapping_csv: str = "config/readable_affymetrix_names.csv"
 ) -> Dict:
     """
     Loads the mapping from human readble names to internal accessions for Affymetrix platforms.
@@ -265,12 +267,39 @@ def get_readable_affymetrix_names(
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
-            if reader.line_num is 1:
+            if reader.line_num == 1:
                 continue
 
             READABLE_PLATFORM_NAMES[line[1]] = line[0]
 
     return READABLE_PLATFORM_NAMES
+
+
+def get_affymetrix_annotation_package_name_overrides(
+    overrides_csv: str = "config/affymetrix_annotation_package_name_overrides.csv"
+) -> Dict:
+    """
+    Loads the mapping from annotation package name to internal accession for Affymetrix platforms.
+    CSV must be in the format:
+    Annotation Package Name | Inernal Accession
+    """
+    global ANNOTATION_PACKAGE_OVERRIDES
+
+    if ANNOTATION_PACKAGE_OVERRIDES is not None:
+        return ANNOTATION_PACKAGE_OVERRIDES
+
+    ANNOTATION_PACKAGE_OVERRIDES = {}
+    with open(overrides_csv, encoding='utf-8') as overrides_file:
+        reader = csv.reader(overrides_file, )
+        for line in reader:
+            # Skip the header row
+            # Lines are 1 indexed, #BecauseCSV
+            if reader.line_num == 1:
+                continue
+
+            ANNOTATION_PACKAGE_OVERRIDES[line[1]] = line[0]
+
+    return ANNOTATION_PACKAGE_OVERRIDES
 
 
 def get_internal_microarray_accession(accession_code):
@@ -334,12 +363,13 @@ def calculate_sha1(absolute_file_path):
 
 def get_sra_download_url(run_accession, protocol="fasp"):
     """Try getting the sra-download URL from CGI endpoint"""
-    # Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
+    # Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" \
+    #   https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
     cgi_url = "https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi"
     data = "acc=" + run_accession + "&accept-proto=" + protocol + "&version=2.0"
     try:
         resp = requests.post(cgi_url, data=data)
-    except Exception as e:
+    except Exception:
         # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
 
@@ -358,22 +388,16 @@ def get_sra_download_url(run_accession, protocol="fasp"):
             # Sometimes, the responses from names.cgi makes no sense at all on a per-accession-code basis. This helps us handle that.
             # $ curl --data "acc=SRR5818019&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
             # 2.0\nremote|SRR5818019|434259775|2017-07-11T21:32:08Z|a4bfc16dbab1d4f729c4552e3c9519d1|||400|Only 'https' protocol is allowed for this object
-            protocol_header = protocol + "://"
-            sra_url = resp.text.split("\n")[1].split("|")[6]
+            sra_url = resp.text.split('\n')[1].split('|')[6]
             return sra_url
-        except Exception as e:
-            # Our configured logger needs util, so we use the standard logging library for just this.
+        except Exception:
+            # Our configured logger needs util
+            # so we use the standard logging library for just this.
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.exception(
-                "Error parsing CGI response: "
-                + str(cgi_url)
-                + " "
-                + str(data)
-                + " "
-                + str(resp.text)
-            )
+            exception_template = "Error parsing CGI response: {0} {1} {2}"
+            logger.exception(exception_template.format(str(cgi_url), str(data), str(resp.text)))
             return None
 
 
@@ -403,7 +427,7 @@ def load_blacklist(blacklist_csv: str = "config/RNASeqRunBlackList.csv"):
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
-            if reader.line_num is 1:
+            if reader.line_num == 1:
                 continue
 
             blacklisted_samples.append(line[0].strip())
@@ -421,7 +445,8 @@ def get_nomad_jobs_breakdown():
     def get_job_volume(job):
         return get_job_details(job)[1]
 
-    # groupby must be executed on a sorted iterable https://docs.python.org/2/library/itertools.html#itertools.groupby
+    # groupby must be executed on a sorted iterable
+    # ref: https://docs.python.org/2/library/itertools.html#itertools.groupby
     sorted_jobs_by_type = sorted(filter(get_job_type, parameterized_jobs), key=get_job_type)
     aggregated_jobs_by_type = groupby(sorted_jobs_by_type, get_job_type)
     nomad_pending_jobs_by_type, nomad_running_jobs_by_type = _aggregate_nomad_jobs(

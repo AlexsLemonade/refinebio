@@ -1,17 +1,15 @@
 import boto3
-import requests
 
-from django.db.models import Count, Prefetch, Q
-from django.conf import settings
+from django.db.models import Count, Q
 from rest_framework import serializers
+from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
+
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
     Experiment,
     ExperimentAnnotation,
     Sample,
     SampleAnnotation,
-    ExperimentSampleAssociation,
-    ExperimentOrganismAssociation,
     Organism,
     OrganismIndex,
     OriginalFile,
@@ -420,6 +418,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
             "technologies",
         )
 
+    @staticmethod
     def setup_eager_loading(queryset):
         """ Perform necessary eager loading of data. """
         queryset = queryset.prefetch_related("samples").prefetch_related("organisms")
@@ -590,8 +589,8 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
 
 def validate_dataset(data):
     """ Basic dataset validation. Currently only checks formatting, not values. """
-    if data["data"] != None:
-        if type(data["data"]) != dict:
+    if data['data'] is not None:
+        if type(data['data']) != dict:
             raise serializers.ValidationError("`data` must be a dict of lists.")
 
         for key, value in data["data"].items():
@@ -814,7 +813,6 @@ class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
 # ElasticSearch Document Serializers
 ##
 
-from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 
 
 class ExperimentDocumentSerializer(DocumentSerializer):

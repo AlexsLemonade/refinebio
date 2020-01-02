@@ -391,34 +391,38 @@ def harmonize(metadata: List) -> Dict:
     # See: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-376684079
     ##
     part_fields = [
-        # AE
-        "organism part",
-        "cell type",
-        "tissue",
-        "tissue type",
-        "tissue source",
-        "tissue origin",
-        "source tissue",
-        "tissue subtype",
-        "tissue/cell type",
-        "tissue region",
-        "tissue compartment",
-        "tissues",
-        "tissue of origin",
-        "tissue-type",
-        "tissue harvested",
-        "cell/tissue type",
-        "tissue subregion",
-        "organ",
-        "characteristic [organism part]",
-        "characteristics [organism part]",
-        # SRA
-        "cell_type" "organismpart",
-        # GEO
-        "isolation source",
-        "tissue sampled",
-        "cell description",
-    ]
+                    # AE
+                    'organism part',
+                    'cell type',
+                    'tissue',
+                    'tissue type',
+                    'tissue source',
+                    'tissue origin',
+                    'source tissue',
+                    'tissue subtype',
+                    'tissue/cell type',
+                    'tissue region',
+                    'tissue compartment',
+                    'tissues',
+                    'tissue of origin',
+                    'tissue-type',
+                    'tissue harvested',
+                    'cell/tissue type',
+                    'tissue subregion',
+                    'organ',
+                    'characteristic [organism part]',
+                    'characteristics [organism part]',
+
+                    # SRA
+                    'cell_type',
+                    'organismpart',
+
+                    # GEO
+                    'isolation source',
+                    'tissue sampled',
+                    'cell description'
+
+                ]
     part_fields = add_variants(part_fields)
     for sample in original_samples:
         title = sample["title"]
