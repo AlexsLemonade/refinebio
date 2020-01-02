@@ -6,23 +6,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0006_auto_20181102_1526'),
+        ("data_refinery_common", "0006_auto_20181102_1526"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='originalfile',
-            name='downloader_jobs',
-            field=models.ManyToManyField(through='data_refinery_common.DownloaderJobOriginalFileAssociation', to='data_refinery_common.DownloaderJob'),
+            model_name="originalfile",
+            name="downloader_jobs",
+            field=models.ManyToManyField(
+                through="data_refinery_common.DownloaderJobOriginalFileAssociation",
+                to="data_refinery_common.DownloaderJob",
+            ),
         ),
         migrations.AddField(
-            model_name='originalfile',
-            name='processor_jobs',
-            field=models.ManyToManyField(through='data_refinery_common.ProcessorJobOriginalFileAssociation', to='data_refinery_common.ProcessorJob'),
+            model_name="originalfile",
+            name="processor_jobs",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ProcessorJobOriginalFileAssociation",
+                to="data_refinery_common.ProcessorJob",
+            ),
         ),
         migrations.AddField(
-            model_name='sample',
-            name='experiments',
-            field=models.ManyToManyField(through='data_refinery_common.ExperimentSampleAssociation', to='data_refinery_common.Experiment'),
+            model_name="sample",
+            name="experiments",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ExperimentSampleAssociation",
+                to="data_refinery_common.Experiment",
+            ),
         ),
     ]

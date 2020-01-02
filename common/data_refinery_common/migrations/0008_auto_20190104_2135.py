@@ -7,32 +7,46 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0007_auto_20190103_1555'),
+        ("data_refinery_common", "0007_auto_20190103_1555"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ExperimentResultAssociation',
+            name="ExperimentResultAssociation",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('experiment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Experiment')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "experiment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Experiment",
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'experiment_result_associations',
-            },
+            options={"db_table": "experiment_result_associations",},
         ),
         migrations.AddField(
-            model_name='computationalresult',
-            name='samples',
-            field=models.ManyToManyField(through='data_refinery_common.SampleResultAssociation', to='data_refinery_common.Sample'),
+            model_name="computationalresult",
+            name="samples",
+            field=models.ManyToManyField(
+                through="data_refinery_common.SampleResultAssociation",
+                to="data_refinery_common.Sample",
+            ),
         ),
         migrations.AddField(
-            model_name='experimentresultassociation',
-            name='result',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputationalResult'),
+            model_name="experimentresultassociation",
+            name="result",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="data_refinery_common.ComputationalResult",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='experimentresultassociation',
-            unique_together={('result', 'experiment')},
+            name="experimentresultassociation", unique_together={("result", "experiment")},
         ),
     ]

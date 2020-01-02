@@ -17,22 +17,20 @@ class Command(BaseCommand):
         parser.add_argument(
             "--job-name",
             type=str,
-            help=("The downloader job's name. Must be enumerated in job_lookup."))
-        parser.add_argument(
-            "--job-id",
-            type=int,
-            help=("The downloader job's ID."))
+            help=("The downloader job's name. Must be enumerated in job_lookup."),
+        )
+        parser.add_argument("--job-id", type=int, help=("The downloader job's ID."))
 
     def handle(self, *args, **options):
         if options["job_id"] is None:
             logger.error("You must specify a job ID.")
-            sys.exit(1) 
+            sys.exit(1)
 
         try:
             job_type = Downloaders[options["job_name"]]
         except KeyError:
             logger.error("You must specify a valid job name.")
-            sys.exit(1) 
+            sys.exit(1)
 
         if job_type is Downloaders.ARRAY_EXPRESS:
             download_array_express(options["job_id"])
@@ -43,10 +41,14 @@ class Command(BaseCommand):
         elif job_type is Downloaders.GEO:
             download_geo(options["job_id"])
         else:
-            logger.error(("A valid job name was specified for job %s with id %d but "
-                          "no downloader function is known to run it."),
-                         options["job_name"],
-                         options["job_id"])
-            sys.exit(1) 
+            logger.error(
+                (
+                    "A valid job name was specified for job %s with id %d but "
+                    "no downloader function is known to run it."
+                ),
+                options["job_name"],
+                options["job_id"],
+            )
+            sys.exit(1)
 
-        sys.exit(0) 
+        sys.exit(0)

@@ -5,8 +5,7 @@ from data_refinery_common.models import Pipeline
 
 
 class UtilsTestCase(TestCase):
-
-    @patch('data_refinery_common.utils.requests.get')
+    @patch("data_refinery_common.utils.requests.get")
     def test_get_instance_id_cloud(self, mock_get):
         """Test that a request is made and the global value is stored"""
         # Ensure utils.INSTANCE_ID hasn't been set yet in case the
@@ -14,7 +13,6 @@ class UtilsTestCase(TestCase):
         utils.INSTANCE_ID = None
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = "instance_id"
-
 
         with self.settings(RUNNING_IN_CLOUD=True):
             self.assertEqual(utils.get_instance_id(), "instance_id")
@@ -71,7 +69,9 @@ class UtilsTestCase(TestCase):
 
         self.assertEqual(utils.get_internal_microarray_accession("hgu133a"), "hgu133a")
         self.assertEqual(utils.get_internal_microarray_accession("A-AFFY-59"), "soybean")
-        self.assertEqual(utils.get_internal_microarray_accession("GPL23026"), "Illumina_HumanHT-12_V4.0")
+        self.assertEqual(
+            utils.get_internal_microarray_accession("GPL23026"), "Illumina_HumanHT-12_V4.0"
+        )
 
     def test_supported_rnaseq_platforms(self):
         """Test that supported RNASeq platforms setting is set correctly."""
@@ -96,9 +96,9 @@ class UtilsTestCase(TestCase):
     def test_volume_index(self):
         """Test that supported RNASeq platforms setting is set correctly."""
         self.assertEqual(utils.get_volume_index(), "0")
-        with open('/tmp/VOLUME_INDEX', 'wb') as f:
+        with open("/tmp/VOLUME_INDEX", "wb") as f:
             f.write("123".encode())
-        self.assertEqual(utils.get_volume_index(path='/tmp/VOLUME_INDEX'), "123")
+        self.assertEqual(utils.get_volume_index(path="/tmp/VOLUME_INDEX"), "123")
 
     def test_load_blacklist(self):
         blacklist = utils.load_blacklist()

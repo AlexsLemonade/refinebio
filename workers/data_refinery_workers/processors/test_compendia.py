@@ -20,18 +20,17 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     ProcessorJobDatasetAssociation,
     SampleAnnotation,
-    SampleResultAssociation
+    SampleResultAssociation,
 )
 from data_refinery_workers.processors import create_compendia, smasher, utils
 
 
 class CompendiaTestCase(TransactionTestCase):
-
-    @tag('compendia')
+    @tag("compendia")
     def test_sanity(self):
         print("Hey!")
 
-    @tag('compendia')
+    @tag("compendia")
     def test_create_compendia(self):
         job = ProcessorJob()
         job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
@@ -48,10 +47,10 @@ class CompendiaTestCase(TransactionTestCase):
         gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1487313'
-        sample.title = 'GSM1487313'
+        sample.accession_code = "GSM1487313"
+        sample.title = "GSM1487313"
         sample.organism = gallus_gallus
-        sample.technology="MICROARRAY"
+        sample.technology = "MICROARRAY"
         sample.save()
 
         sra = SampleResultAssociation()
@@ -77,6 +76,37 @@ class CompendiaTestCase(TransactionTestCase):
         assoc.computed_file = computed_file
         assoc.save()
 
+        # Missing sample that will be filtered
+        sample = Sample()
+        sample.accession_code = "GSM1487222"
+        sample.title = "this sample will be filtered"
+        sample.organism = gallus_gallus
+        sample.technology = "MICROARRAY"
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1487222_empty.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/doesnt_exists.PCL"
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
         # RNASEQ TECH
         experiment2 = Experiment()
         experiment2.accession_code = "SRS332914"
@@ -86,8 +116,8 @@ class CompendiaTestCase(TransactionTestCase):
         result2.save()
 
         sample2 = Sample()
-        sample2.accession_code = 'SRS332914'
-        sample2.title = 'SRS332914'
+        sample2.accession_code = "SRS332914"
+        sample2.title = "SRS332914"
         sample2.organism = gallus_gallus
         sample2.technology = "RNA-SEQ"
         sample2.save()
@@ -116,10 +146,10 @@ class CompendiaTestCase(TransactionTestCase):
         assoc2.save()
 
         dset = Dataset()
-        dset.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
-        dset.scale_by = 'NONE'
-        dset.aggregate_by = 'SPECIES'
-        dset.svd_algorithm = 'ARPACK'
+        dset.data = {"GSE1487313": ["GSM1487313", "GSM1487222"], "SRX332914": ["SRS332914"]}
+        dset.scale_by = "NONE"
+        dset.aggregate_by = "SPECIES"
+        dset.svd_algorithm = "ARPACK"
         dset.quantile_normalize = False
         dset.save()
 
@@ -128,13 +158,18 @@ class CompendiaTestCase(TransactionTestCase):
         pjda.dataset = dset
         pjda.save()
 
-#        with self.assertRaises(ValueError):
         final_context = create_compendia.create_compendia(job.id)
 
         self.assertFalse(job.success)
 
+        # check that sample with no computed file was skipped
+        self.assertTrue("GSM1487222" in final_context["filtered_samples"])
+        self.assertEqual(
+            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"],
+            "GSE1487313",
+        )
 
-    @tag('compendia')
+    @tag("compendia")
     def test_create_compendia_danio(self):
         job = ProcessorJob()
         job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
@@ -150,7 +185,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         qn_target = ComputedFile()
         qn_target.filename = "danio_target.tsv"
-        qn_target.absolute_file_path = '/home/user/data_store/QN/danio_target.tsv'
+        qn_target.absolute_file_path = "/home/user/data_store/QN/danio_target.tsv"
         qn_target.is_qn_target = True
         qn_target.size_in_bytes = "12345"
         qn_target.sha1 = "aabbccddeeff"
@@ -162,8 +197,8 @@ class CompendiaTestCase(TransactionTestCase):
 
         cra = ComputationalResultAnnotation()
         cra.data = {}
-        cra.data['organism_id'] = danio_rerio.id
-        cra.data['is_qn'] = True
+        cra.data["organism_id"] = danio_rerio.id
+        cra.data["is_qn"] = True
         cra.result = result
         cra.save()
 
@@ -171,9 +206,9 @@ class CompendiaTestCase(TransactionTestCase):
         result.save()
 
         micros = []
-        for file in os.listdir('/home/user/data_store/raw/TEST/MICROARRAY/'):
+        for file in os.listdir("/home/user/data_store/raw/TEST/MICROARRAY/"):
 
-            if 'microarray.txt' in file:
+            if "microarray.txt" in file:
                 continue
 
             sample = Sample()
@@ -215,16 +250,16 @@ class CompendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
         rnas = []
-        for file in os.listdir('/home/user/data_store/raw/TEST/RNASEQ/'):
+        for file in os.listdir("/home/user/data_store/raw/TEST/RNASEQ/"):
 
-            if 'rnaseq.txt' in file:
+            if "rnaseq.txt" in file:
                 continue
 
             sample = Sample()
             sample.accession_code = file
             sample.title = file
             sample.organism = danio_rerio
-            sample.technology="RNASEQ"
+            sample.technology = "RNASEQ"
             sample.save()
 
             sra = SampleResultAssociation()
@@ -252,11 +287,31 @@ class CompendiaTestCase(TransactionTestCase):
 
             rnas.append(file)
 
+        # Missing sample that will be filtered
+        sample = Sample()
+        sample.accession_code = "GSM1487222"
+        sample.title = "this sample will be filtered"
+        sample.organism = danio_rerio
+        sample.technology = "RNASEQ"
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        rnas.append(sample.accession_code)
+
         dset = Dataset()
-        dset.data = {'GSE1234': micros, 'GSE5678': rnas}
-        dset.scale_by = 'NONE'
-        dset.aggregate_by = 'SPECIES'
-        dset.svd_algorithm = 'ARPACK'
+        dset.data = {"GSE1234": micros, "GSE5678": rnas}
+        dset.scale_by = "NONE"
+        dset.aggregate_by = "SPECIES"
+        dset.svd_algorithm = "ARPACK"
         dset.quantile_normalize = False
         dset.save()
 
@@ -268,18 +323,23 @@ class CompendiaTestCase(TransactionTestCase):
         final_context = create_compendia.create_compendia(job.id)
 
         # Verify result
-        self.assertEqual(len(final_context['computed_files']), 1)
-        for file in final_context['computed_files']:
+        self.assertEqual(len(final_context["computed_files"]), 1)
+        for file in final_context["computed_files"]:
             self.assertTrue(os.path.exists(file.absolute_file_path))
 
         # test compendium_result
-        self.assertEqual(final_context['compendium_result'].svd_algorithm, 'ARPACK')
-        self.assertEqual(final_context['compendium_result'].primary_organism.name,
-                final_context['organism_name'])
-        self.assertEqual(final_context['compendium_result'].primary_organism.name,
-                'DANIO_RERIO')
-        self.assertEqual(final_context['compendium_result'].organisms.count(), 1)
+        self.assertEqual(final_context["compendium_result"].svd_algorithm, "ARPACK")
+        self.assertEqual(
+            final_context["compendium_result"].primary_organism.name, final_context["organism_name"]
+        )
+        self.assertEqual(final_context["compendium_result"].primary_organism.name, "DANIO_RERIO")
+        self.assertEqual(final_context["compendium_result"].organisms.count(), 1)
 
+        # check that sample with no computed file was skipped
+        self.assertTrue("GSM1487222" in final_context["filtered_samples"])
+        self.assertEqual(
+            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"], "GSE5678"
+        )
 
         # It's maybe not worth asserting this until we're sure the behavior is correct
         # self.assertEqual(final_context['merged_qn'].shape, (9045, 830))

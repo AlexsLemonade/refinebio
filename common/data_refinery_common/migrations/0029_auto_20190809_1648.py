@@ -6,20 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0028_auto_20190802_1957'),
+        ("data_refinery_common", "0028_auto_20190802_1957"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='originalfile',
-            index=models.Index(fields=['filename'], name='original_fi_filenam_d0ea88_idx'),
+            model_name="originalfile",
+            index=models.Index(fields=["filename"], name="original_fi_filenam_d0ea88_idx"),
         ),
         migrations.AddIndex(
-            model_name='originalfile',
-            index=models.Index(fields=['source_filename'], name='original_fi_source__6b971c_idx'),
+            model_name="originalfile",
+            index=models.Index(fields=["source_filename"], name="original_fi_source__6b971c_idx"),
         ),
         migrations.AddIndex(
-            model_name='sample',
-            index=models.Index(fields=['accession_code'], name='samples_accessi_b4dd7e_idx'),
+            model_name="sample",
+            index=models.Index(fields=["accession_code"], name="samples_accessi_b4dd7e_idx"),
         ),
     ]

@@ -152,6 +152,18 @@ if ! command -v nomad > /dev/null; then
     fi
 fi
 
+if ! command -v black > /dev/null; then
+    echo "Installing black..."
+    if [ $BREW ]; then
+        $INSTALL_CMD black > $OUTPUT
+    elif [ $APT ] || confirm "Would you like to automatically install black (code formatter) for amd64 linux?"; then
+        pip3 install black
+    else
+        echo "You need to manually install black (code formatter) before continuing..." >&2
+        exit 1
+    fi
+fi
+
 if ! command -v git-crypt > /dev/null; then
     echo "Installing git-crypt..."
     $INSTALL_CMD git-crypt > $OUTPUT || (echo "You must manually install git-crypt" && exit 1)
@@ -166,6 +178,16 @@ if ! command -v ip > /dev/null; then
         $INSTALL_CMD iproute2mac > $OUTPUT
     else
         $INSTALL_CMD iproute2 > $OUTPUT || (echo "You must manually install iproute2" && exit 1)
+    fi
+fi
+
+if ! test -e ../.git/hooks/pre-commit > /dev/null; then
+    if confirm "Would you like to configure a pre-commit hook for this project to run black (code formatter) prior to each commit?"; then
+        echo "Installing pre-commit hook to auto-format code."
+        cp hooks/autoformat.sh ../.git/hooks/pre-commit
+        chmod +x ../.git/hooks/pre-commit
+    else
+        echo "Not installing pre-commit hook to auto-format code."
     fi
 fi
 

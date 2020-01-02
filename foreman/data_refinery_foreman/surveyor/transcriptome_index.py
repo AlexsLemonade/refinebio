@@ -22,8 +22,9 @@ CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 
 MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
-DIVISION_URL_TEMPLATE = ("https://rest.ensembl.org/info/genomes/division/{division}"
-                         "?content-type=application/json")
+DIVISION_URL_TEMPLATE = (
+    "https://rest.ensembl.org/info/genomes/division/{division}" "?content-type=application/json"
+)
 
 SPECIES_DETAIL_URL_TEMPLATE = ("ftp://ftp.ensemblgenomes.org/pub/"
                                "{short_division}/current/species_{division}.txt")
@@ -36,11 +37,13 @@ GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{collection}{species_sub_dir}/"
 # For whatever reason the division in the download URL is shortened in
 # a way that doesn't seem to be discoverable programmatically. I've
 # therefore created this lookup map:
-DIVISION_LOOKUP = {"EnsemblPlants": "plants",
-                   "EnsemblFungi": "fungi",
-                   "EnsemblBacteria": "bacteria",
-                   "EnsemblProtists": "protists",
-                   "EnsemblMetazoa": "metazoa"}
+DIVISION_LOOKUP = {
+    "EnsemblPlants": "plants",
+    "EnsemblFungi": "fungi",
+    "EnsemblBacteria": "bacteria",
+    "EnsemblProtists": "protists",
+    "EnsemblMetazoa": "metazoa",
+}
 
 
 # Ensembl will periodically release updated versions of the
@@ -121,7 +124,6 @@ class EnsemblUrlBuilder(ABC):
 
         assembly_response = utils.requests_retry_session().get(DIVISION_RELEASE_URL)
         self.assembly_version = assembly_response.json()["version"]
-
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
 
@@ -183,8 +185,9 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        self.assembly_version = utils.requests_retry_session().get(
-            MAIN_RELEASE_URL).json()["release"]
+        self.assembly_version = (
+            utils.requests_retry_session().get(MAIN_RELEASE_URL).json()["release"]
+        )
         self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 
@@ -338,35 +341,34 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         try:
             species_files = self.discover_species()
         except Exception:
-            logger.exception(("Exception caught while discovering species. "
-                              "Terminating survey job."),
-                             survey_job=self.survey_job.id)
+            logger.exception(
+                ("Exception caught while discovering species. " "Terminating survey job."),
+                survey_job=self.survey_job.id,
+            )
             return False
 
         try:
             for specie_file_list in species_files:
-                self.queue_downloader_job_for_original_files(specie_file_list,
-                                                             is_transcriptome=True)
+                self.queue_downloader_job_for_original_files(
+                    specie_file_list, is_transcriptome=True
+                )
         except Exception:
-            logger.exception(("Failed to queue downloader jobs. "
-                              "Terminating survey job."),
-                             survey_job=self.survey_job.id)
+            logger.exception(
+                ("Failed to queue downloader jobs. " "Terminating survey job."),
+                survey_job=self.survey_job.id,
+            )
             return False
 
         return True
 
     def discover_species(self):
-        ensembl_division = (
-            SurveyJobKeyValue
-            .objects
-            .get(survey_job_id=self.survey_job.id,
-                 key__exact="ensembl_division")
-            .value
-        )
+        ensembl_division = SurveyJobKeyValue.objects.get(
+            survey_job_id=self.survey_job.id, key__exact="ensembl_division"
+        ).value
 
-        logger.info("Surveying %s division of ensembl.",
-                    ensembl_division,
-                    survey_job=self.survey_job.id)
+        logger.info(
+            "Surveying %s division of ensembl.", ensembl_division, survey_job=self.survey_job.id
+        )
 
         # The main division has a different base URL for its REST API.
         if ensembl_division == "Ensembl":
@@ -381,9 +383,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             specieses = r.json()
 
         try:
-            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id,
-                                                          key__exact="organism_name").value
-            organism_name = organism_name.lower().replace(' ', "_")
+            organism_name = SurveyJobKeyValue.objects.get(
+                survey_job_id=self.survey_job.id, key__exact="organism_name"
+            ).value
+            organism_name = organism_name.lower().replace(" ", "_")
         except SurveyJobKeyValue.DoesNotExist:
             organism_name = None
 
@@ -412,8 +415,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 all_new_species.append(self._generate_files(species))
 
         if len(all_new_species) == 0:
-            logger.error("Unable to find any species!",
-                         ensembl_division=ensembl_division,
-                         organism_name=organism_name)
+            logger.error(
+                "Unable to find any species!",
+                ensembl_division=ensembl_division,
+                organism_name=organism_name,
+            )
 
         return all_new_species

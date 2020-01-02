@@ -9,7 +9,7 @@ from data_refinery_foreman.surveyor.test_sra_xml import (
     RUN_XML,
     SAMPLE_XML,
     STUDY_XML,
-    SUBMISSION_XML
+    SUBMISSION_XML,
 )
 from data_refinery_common.models import (
     DownloaderJob,
@@ -17,7 +17,7 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
     Organism,
-    Sample
+    Sample,
 )
 
 EXPERIMENT_ACCESSION = "DRX001563"
@@ -51,26 +51,20 @@ class SraSurveyorTestCase(TestCase):
         survey_job.save()
         self.survey_job = survey_job
 
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="DRR002116")
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="experiment_accession_code", value="DRR002116"
+        )
         key_value_pair.save()
 
         # Insert the organism into the database so the model doesn't call the
         # taxonomy API to populate it.
-        organism = Organism(name="HOMO_SAPIENS",
-                            taxonomy_id=9606,
-                            is_scientific_name=True)
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
 
-        organism1 = Organism(name="GALLUS_GALLUS",
-                             taxonomy_id=9031,
-                             is_scientific_name=True)
+        organism1 = Organism(name="GALLUS_GALLUS", taxonomy_id=9031, is_scientific_name=True)
         organism1.save()
 
-        organism2 = Organism(name="DANIO_RERIO",
-                             taxonomy_id=7955,
-                             is_scientific_name=True)
+        organism2 = Organism(name="DANIO_RERIO", taxonomy_id=7955, is_scientific_name=True)
         organism2.save()
 
     def tearDown(self):
@@ -78,7 +72,7 @@ class SraSurveyorTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey(self, mock_send_task):
         """A Simple test of the SRA surveyor.
         """
@@ -91,18 +85,19 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(samples.count(), 1)
         # Confirm the sample's protocol_info
         experiment = Experiment.objects.all().first()
-        self.assertEqual(samples.first().protocol_info[0]['Description'],
-                         experiment.protocol_description)
+        self.assertEqual(
+            samples.first().protocol_info[0]["Description"], experiment.protocol_description
+        )
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_srp_survey(self, mock_send_task):
         """A slightly harder test of the SRA surveyor.
         """
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="SRP068364")
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="experiment_accession_code", value="SRP068364"
+        )
         key_value_pair.save()
 
         sra_surveyor = SraSurveyor(survey_job)
@@ -112,9 +107,9 @@ class SraSurveyorTestCase(TestCase):
 
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="SRP111553")
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="experiment_accession_code", value="SRP111553"
+        )
         key_value_pair.save()
 
         sra_surveyor = SraSurveyor(survey_job)
@@ -125,9 +120,9 @@ class SraSurveyorTestCase(TestCase):
 
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="DRP003977")
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="experiment_accession_code", value="DRP003977"
+        )
         key_value_pair.save()
 
         sra_surveyor = SraSurveyor(survey_job)
@@ -136,7 +131,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.accession_code, "DRP003977")
         self.assertEqual(len(samples), 9)
 
-    @patch('data_refinery_foreman.surveyor.sra.requests.get')
+    @patch("data_refinery_foreman.surveyor.sra.requests.get")
     def test_metadata_is_gathered_correctly(self, mock_get):
         mock_get.side_effect = mocked_requests_get
 
@@ -147,15 +142,21 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["ena-base-count"], "158881910957")
         self.assertEqual(metadata["ena-spot-count"], "1371813555")
         self.assertEqual(metadata["experiment_accession"], "DRX001563")
-        self.assertEqual(metadata["experiment_design_description"],
-                         ("Experiment for mRNAseq of chicken at stage "
-                          "HH16 (biological replicate 1)"))
-        self.assertEqual(metadata["experiment_title"],
-                         ("Illumina HiSeq 2000 sequencing; "
-                          "Exp_Gg_HH16_1_embryo_mRNAseq"))
-        self.assertEqual(metadata["lab_name"],
-                         ("Group for Morphological Evolution, Center for Developmental "
-                          "Biology, Kobe Institute, RIKEN"))
+        self.assertEqual(
+            metadata["experiment_design_description"],
+            ("Experiment for mRNAseq of chicken at stage " "HH16 (biological replicate 1)"),
+        )
+        self.assertEqual(
+            metadata["experiment_title"],
+            ("Illumina HiSeq 2000 sequencing; " "Exp_Gg_HH16_1_embryo_mRNAseq"),
+        )
+        self.assertEqual(
+            metadata["lab_name"],
+            (
+                "Group for Morphological Evolution, Center for Developmental "
+                "Biology, Kobe Institute, RIKEN"
+            ),
+        )
         self.assertEqual(metadata["library_layout"], "SINGLE")
         self.assertEqual(metadata["library_name"], "Gg_HH16_1_embryo_mRNAseq")
         self.assertEqual(metadata["library_selection"], "RANDOM")
@@ -181,25 +182,36 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["sample_ena_first_public"], "2013-07-20")
         self.assertEqual(metadata["sample_ena_last_update"], "2015-08-24")
         self.assertEqual(metadata["sample_ena_spot_count"], "32568360")
-        self.assertEqual(metadata["sample_sample_comment"],
-                         ("mRNAseq of chicken at stage HH16 (biological "
-                          "replicate 1)"))
+        self.assertEqual(
+            metadata["sample_sample_comment"],
+            ("mRNAseq of chicken at stage HH16 (biological " "replicate 1)"),
+        )
         self.assertEqual(metadata["sample_sample_name"], "DRS001521")
         self.assertEqual(metadata["sample_title"], "Gg_HH16_1_embryo_mRNAseq")
         self.assertEqual(metadata["spot_length"], "100")
         self.assertEqual(metadata["study_accession"], "DRP000595")
         self.assertEqual(metadata["submission_accession"], "DRA000567")
-        self.assertEqual(metadata["submission_comment"],
-                         ("Time course gene expression profiles of turtle "
-                          "(Pelodiscus sinensis) and chicken (Gallus gallus) "
-                          "embryos were examined. Whole transcriptome of turtle "
-                          "was also determined by uding stranded sequencing "
-                          "methods."))
+        self.assertEqual(
+            metadata["submission_comment"],
+            (
+                "Time course gene expression profiles of turtle "
+                "(Pelodiscus sinensis) and chicken (Gallus gallus) "
+                "embryos were examined. Whole transcriptome of turtle "
+                "was also determined by uding stranded sequencing "
+                "methods."
+            ),
+        )
         self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
 
         ncbi_url = SraSurveyor._build_ncbi_file_url(metadata["run_accession"])
-        self.assertTrue(ncbi_url in ['anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra',
-            'anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra', 'dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116'])
+        self.assertTrue(
+            ncbi_url
+            in [
+                "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra",
+                "anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra",
+                "dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116",
+            ]
+        )
 
     def test_sra_metadata_is_harmonized(self):
         metadata = SraSurveyor.gather_all_metadata("SRR3098582")

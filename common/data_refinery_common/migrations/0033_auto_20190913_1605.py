@@ -3,33 +3,29 @@
 from django.db import migrations
 from django.utils import timezone
 
+
 def populate_accessions(apps, schema_editor):
-    Experiment = apps.get_model('data_refinery_common', 'Experiment')
-    SurveyedAccession = apps.get_model('data_refinery_common', 'SurveyedAccession')
+    Experiment = apps.get_model("data_refinery_common", "Experiment")
+    SurveyedAccession = apps.get_model("data_refinery_common", "SurveyedAccession")
 
     # Populate from existing experiemnts
-    experiments = Experiment.objects.all().values(
-        'accession_code'
-    )
-    
+    experiments = Experiment.objects.all().values("accession_code")
+
     surveyed_experiments = []
     current_time = timezone.now()
 
     for experiment in experiments:
-        surveyed_experiments.append(SurveyedAccession(
-            accession_code=experiment['accession_code'],
-            created_at=current_time
-        ))
-     
+        surveyed_experiments.append(
+            SurveyedAccession(accession_code=experiment["accession_code"], created_at=current_time)
+        )
+
     SurveyedAccession.objects.bulk_create(surveyed_experiments, batch_size=10000)
 
-       
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0032_surveyedaccession'),
+        ("data_refinery_common", "0032_surveyedaccession"),
     ]
 
-    operations = [
-        migrations.RunPython(populate_accessions)
-    ]
+    operations = [migrations.RunPython(populate_accessions)]
