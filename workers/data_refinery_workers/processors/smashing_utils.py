@@ -596,12 +596,11 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     organism = job_context["organism"]
 
     if not organism.qn_target:
-        failure_reason = "Could not find QN target for Organism: " + str(organism)
-        job_context["dataset"].success = False
-        job_context["dataset"].failure_reason = failure_reason
-        job_context["dataset"].save()
         raise utils.ProcessorJobError(
-            failure_reason, success=False, organism=organism, dataset_id=job_context["dataset"].id
+            "Could not find QN target for Organism: " + str(organism),
+            success=False,
+            organism=organism,
+            dataset_id=job_context["dataset"].id,
         )
 
     qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
@@ -742,9 +741,8 @@ def write_non_data_files(job_context: Dict) -> Dict:
                 dw.writeheader()
                 for sample_metadata in job_context["filtered_samples"].values():
                     dw.writerow(get_tsv_row_data(sample_metadata, job_context["dataset"].data))
-
     except Exception as e:
-        logger.exception("Failed to write metadata TSV!", job_id=job_context["job"].id)
+        raise utils.ProcessorJobError("Failed to write metadata TSV!", success=False)
 
     return job_context
 
