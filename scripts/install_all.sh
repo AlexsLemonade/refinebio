@@ -153,8 +153,10 @@ if ! command -v nomad > /dev/null; then
 fi
 
 if ! command -v black > /dev/null; then
-    if confirm "Would you like to automatically install black (code formatter)?"; then
-        echo "Installing black..."
+    echo "Installing black..."
+    if [ $BREW ]; then
+        $INSTALL_CMD black > $OUTPUT
+    elif [ $APT ] || confirm "Would you like to automatically install black (code formatter) for amd64 linux?"; then
         pip3 install black
     else
         echo "You need to manually install black (code formatter) before continuing..." >&2

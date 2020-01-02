@@ -126,12 +126,12 @@ The following services will need to be installed:
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
-- [black](https://black.readthedocs.io/en/stable/) can be installed on Mac clients with `pip3 install black`
+- [black](https://black.readthedocs.io/en/stable/)
 
 Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
 on their respective homepages.
 
-Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq`.
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq black`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
