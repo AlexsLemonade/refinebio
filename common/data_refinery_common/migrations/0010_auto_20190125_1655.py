@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0009_es_cache'),
+        ("data_refinery_common", "0009_es_cache"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='sha1',
-            field=models.CharField(default='', max_length=64, null=True),
+            model_name="dataset",
+            name="sha1",
+            field=models.CharField(default="", max_length=64, null=True),
         ),
         migrations.AddField(
-            model_name='dataset',
-            name='size_in_bytes',
+            model_name="dataset",
+            name="size_in_bytes",
             field=models.BigIntegerField(blank=True, default=0, null=True),
         ),
     ]

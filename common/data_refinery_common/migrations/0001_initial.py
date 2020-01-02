@@ -13,591 +13,933 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='APIToken',
+            name="APIToken",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('is_activated', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("is_activated", models.BooleanField(default=False)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
         ),
         migrations.CreateModel(
-            name='ComputationalResult',
+            name="ComputationalResult",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('commands', django.contrib.postgres.fields.ArrayField(base_field=models.TextField(), default=[], size=None)),
-                ('is_ccdl', models.BooleanField(default=True)),
-                ('time_start', models.DateTimeField(blank=True, null=True)),
-                ('time_end', models.DateTimeField(blank=True, null=True)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "commands",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.TextField(), default=[], size=None
+                    ),
+                ),
+                ("is_ccdl", models.BooleanField(default=True)),
+                ("time_start", models.DateTimeField(blank=True, null=True)),
+                ("time_end", models.DateTimeField(blank=True, null=True)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+            ],
+            options={"db_table": "computational_results", "base_manager_name": "public_objects",},
+            managers=[
+                ("objects", django.db.models.manager.Manager()),
+                ("public_objects", django.db.models.manager.Manager()),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ComputationalResultAnnotation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("data", django.contrib.postgres.fields.jsonb.JSONField(default={})),
+                ("is_ccdl", models.BooleanField(default=True)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "result",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.ComputationalResult",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'computational_results',
-                'base_manager_name': 'public_objects',
+                "db_table": "computational_result_annotations",
+                "base_manager_name": "public_objects",
             },
             managers=[
-                ('objects', django.db.models.manager.Manager()),
-                ('public_objects', django.db.models.manager.Manager()),
+                ("objects", django.db.models.manager.Manager()),
+                ("public_objects", django.db.models.manager.Manager()),
             ],
         ),
         migrations.CreateModel(
-            name='ComputationalResultAnnotation',
+            name="ComputedFile",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data', django.contrib.postgres.fields.jsonb.JSONField(default={})),
-                ('is_ccdl', models.BooleanField(default=True)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-                ('result', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputationalResult')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("filename", models.CharField(max_length=255)),
+                ("absolute_file_path", models.CharField(blank=True, max_length=255, null=True)),
+                ("size_in_bytes", models.BigIntegerField()),
+                ("sha1", models.CharField(max_length=64)),
+                ("is_smashable", models.BooleanField(default=False)),
+                ("is_qc", models.BooleanField(default=False)),
+                ("is_qn_target", models.BooleanField(default=False)),
+                ("s3_bucket", models.CharField(blank=True, max_length=255, null=True)),
+                ("s3_key", models.CharField(blank=True, max_length=255, null=True)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "result",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.ComputationalResult",
+                    ),
+                ),
+            ],
+            options={"db_table": "computed_files", "get_latest_by": "created_at",},
+        ),
+        migrations.CreateModel(
+            name="Dataset",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("data", django.contrib.postgres.fields.jsonb.JSONField(default={})),
+                (
+                    "aggregate_by",
+                    models.CharField(
+                        choices=[
+                            ("ALL", "All"),
+                            ("EXPERIMENT", "Experiment"),
+                            ("SPECIES", "Species"),
+                        ],
+                        default="EXPERIMENT",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "scale_by",
+                    models.CharField(
+                        choices=[
+                            ("NONE", "None"),
+                            ("MINMAX", "Minmax"),
+                            ("STANDARD", "Standard"),
+                            ("ROBUST", "Robust"),
+                        ],
+                        default="NONE",
+                        max_length=255,
+                    ),
+                ),
+                ("quantile_normalize", models.BooleanField(default=True)),
+                ("is_processing", models.BooleanField(default=False)),
+                ("is_processed", models.BooleanField(default=False)),
+                ("is_available", models.BooleanField(default=False)),
+                ("success", models.NullBooleanField()),
+                ("failure_reason", models.TextField()),
+                ("email_address", models.CharField(blank=True, max_length=255, null=True)),
+                ("email_sent", models.BooleanField(default=False)),
+                ("expires_on", models.DateTimeField(blank=True, null=True)),
+                ("s3_bucket", models.CharField(max_length=255)),
+                ("s3_key", models.CharField(max_length=255)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+            ],
+        ),
+        migrations.CreateModel(
+            name="DownloaderJob",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("downloader_task", models.CharField(max_length=256)),
+                ("accession_code", models.CharField(blank=True, max_length=256, null=True)),
+                ("no_retry", models.BooleanField(default=False)),
+                ("start_time", models.DateTimeField(null=True)),
+                ("end_time", models.DateTimeField(null=True)),
+                ("success", models.NullBooleanField()),
+                ("nomad_job_id", models.CharField(max_length=256, null=True)),
+                ("num_retries", models.IntegerField(default=0)),
+                ("retried", models.BooleanField(default=False)),
+                ("worker_id", models.CharField(max_length=256, null=True)),
+                ("worker_version", models.CharField(max_length=128, null=True)),
+                ("failure_reason", models.TextField(null=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+            ],
+            options={"db_table": "downloader_jobs",},
+        ),
+        migrations.CreateModel(
+            name="DownloaderJobOriginalFileAssociation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "downloader_job",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.DownloaderJob",
+                    ),
+                ),
+            ],
+            options={"db_table": "downloaderjob_originalfile_associations",},
+        ),
+        migrations.CreateModel(
+            name="Experiment",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("accession_code", models.CharField(max_length=64, unique=True)),
+                ("source_database", models.CharField(max_length=32)),
+                ("source_url", models.TextField()),
+                ("title", models.TextField()),
+                ("description", models.TextField()),
+                (
+                    "protocol_description",
+                    django.contrib.postgres.fields.jsonb.JSONField(default={}),
+                ),
+                ("technology", models.CharField(blank=True, max_length=256)),
+                ("submitter_institution", models.CharField(blank=True, max_length=256)),
+                ("has_publication", models.BooleanField(default=False)),
+                ("publication_title", models.TextField(default="")),
+                ("publication_doi", models.CharField(blank=True, max_length=64)),
+                (
+                    "publication_authors",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.TextField(), default=[], size=None
+                    ),
+                ),
+                ("pubmed_id", models.CharField(blank=True, max_length=32)),
+                ("source_first_published", models.DateTimeField(null=True)),
+                ("source_last_modified", models.DateTimeField(null=True)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+            ],
+            options={"db_table": "experiments", "base_manager_name": "public_objects",},
+            managers=[
+                ("objects", django.db.models.manager.Manager()),
+                ("public_objects", django.db.models.manager.Manager()),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ExperimentAnnotation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("data", django.contrib.postgres.fields.jsonb.JSONField(default={})),
+                ("is_ccdl", models.BooleanField(default=False)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "experiment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Experiment",
+                    ),
+                ),
+            ],
+            options={"db_table": "experiment_annotations", "base_manager_name": "public_objects",},
+            managers=[
+                ("objects", django.db.models.manager.Manager()),
+                ("public_objects", django.db.models.manager.Manager()),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ExperimentOrganismAssociation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "experiment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Experiment",
+                    ),
+                ),
+            ],
+            options={"db_table": "experiment_organism_associations",},
+        ),
+        migrations.CreateModel(
+            name="ExperimentSampleAssociation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "experiment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Experiment",
+                    ),
+                ),
+            ],
+            options={"db_table": "experiment_sample_associations",},
+        ),
+        migrations.CreateModel(
+            name="Organism",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("name", models.CharField(max_length=256, unique=True)),
+                ("taxonomy_id", models.IntegerField(unique=True)),
+                ("is_scientific_name", models.BooleanField(default=False)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+            ],
+            options={"db_table": "organisms",},
+        ),
+        migrations.CreateModel(
+            name="OrganismIndex",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("index_type", models.CharField(max_length=255)),
+                ("source_version", models.CharField(default="93", max_length=255)),
+                ("assembly_name", models.CharField(default="UNKNOWN", max_length=255)),
+                ("salmon_version", models.CharField(default="0.9.1", max_length=255)),
+                (
+                    "absolute_directory_path",
+                    models.CharField(blank=True, default="", max_length=255, null=True),
+                ),
+                ("s3_url", models.CharField(default="", max_length=255)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "organism",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Organism",
+                    ),
+                ),
+                (
+                    "result",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.ComputationalResult",
+                    ),
+                ),
+            ],
+            options={"db_table": "organism_index", "base_manager_name": "public_objects",},
+            managers=[
+                ("objects", django.db.models.manager.Manager()),
+                ("public_objects", django.db.models.manager.Manager()),
+            ],
+        ),
+        migrations.CreateModel(
+            name="OriginalFile",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("filename", models.CharField(max_length=255)),
+                ("absolute_file_path", models.CharField(blank=True, max_length=255, null=True)),
+                ("size_in_bytes", models.BigIntegerField(blank=True, null=True)),
+                ("sha1", models.CharField(max_length=64)),
+                ("s3_bucket", models.CharField(blank=True, max_length=255, null=True)),
+                ("s3_key", models.CharField(blank=True, max_length=255, null=True)),
+                ("source_url", models.TextField()),
+                ("is_archive", models.BooleanField(default=True)),
+                ("source_filename", models.CharField(max_length=255)),
+                ("has_raw", models.BooleanField(default=True)),
+                ("is_downloaded", models.BooleanField(default=False)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+            ],
+            options={"db_table": "original_files",},
+        ),
+        migrations.CreateModel(
+            name="OriginalFileSampleAssociation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "original_file",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.OriginalFile",
+                    ),
+                ),
+            ],
+            options={"db_table": "original_file_sample_associations",},
+        ),
+        migrations.CreateModel(
+            name="Pipeline",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "steps",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.IntegerField(), default=[], size=None
+                    ),
+                ),
+            ],
+            options={"db_table": "pipelines",},
+        ),
+        migrations.CreateModel(
+            name="Processor",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("version", models.CharField(max_length=64)),
+                ("docker_image", models.CharField(max_length=255)),
+                ("environment", django.contrib.postgres.fields.jsonb.JSONField(default={})),
+            ],
+            options={"db_table": "processors",},
+        ),
+        migrations.CreateModel(
+            name="ProcessorJob",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("pipeline_applied", models.CharField(max_length=256)),
+                ("no_retry", models.BooleanField(default=False)),
+                ("ram_amount", models.IntegerField(default=2048)),
+                ("volume_index", models.CharField(max_length=3, null=True)),
+                ("start_time", models.DateTimeField(null=True)),
+                ("end_time", models.DateTimeField(null=True)),
+                ("success", models.NullBooleanField()),
+                ("nomad_job_id", models.CharField(max_length=256, null=True)),
+                ("num_retries", models.IntegerField(default=0)),
+                ("retried", models.BooleanField(default=False)),
+                ("worker_id", models.CharField(max_length=256, null=True)),
+                ("worker_version", models.CharField(max_length=128, null=True)),
+                ("failure_reason", models.TextField(null=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+            ],
+            options={"db_table": "processor_jobs",},
+        ),
+        migrations.CreateModel(
+            name="ProcessorJobDatasetAssociation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "dataset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Dataset",
+                    ),
+                ),
+                (
+                    "processor_job",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.ProcessorJob",
+                    ),
+                ),
+            ],
+            options={"db_table": "processorjob_dataset_associations",},
+        ),
+        migrations.CreateModel(
+            name="ProcessorJobOriginalFileAssociation",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "original_file",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.OriginalFile",
+                    ),
+                ),
+                (
+                    "processor_job",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.ProcessorJob",
+                    ),
+                ),
+            ],
+            options={"db_table": "processorjob_originalfile_associations",},
+        ),
+        migrations.CreateModel(
+            name="Sample",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("accession_code", models.CharField(max_length=255, unique=True)),
+                ("title", models.CharField(blank=True, max_length=255)),
+                ("source_database", models.CharField(max_length=255)),
+                ("source_archive_url", models.CharField(max_length=255)),
+                ("source_filename", models.CharField(max_length=255)),
+                ("source_absolute_file_path", models.CharField(max_length=255)),
+                ("has_raw", models.BooleanField(default=True)),
+                ("platform_accession_code", models.CharField(blank=True, max_length=256)),
+                ("platform_name", models.CharField(blank=True, max_length=256)),
+                ("technology", models.CharField(blank=True, max_length=256)),
+                ("manufacturer", models.CharField(blank=True, max_length=256)),
+                ("protocol_info", django.contrib.postgres.fields.jsonb.JSONField(default={})),
+                ("sex", models.CharField(blank=True, max_length=255)),
+                (
+                    "age",
+                    models.DecimalField(
+                        blank=True, decimal_places=3, max_digits=8, max_length=255, null=True
+                    ),
+                ),
+                ("specimen_part", models.CharField(blank=True, max_length=255)),
+                ("genotype", models.CharField(blank=True, max_length=255)),
+                ("disease", models.CharField(blank=True, max_length=255)),
+                ("disease_stage", models.CharField(blank=True, max_length=255)),
+                ("cell_line", models.CharField(blank=True, max_length=255)),
+                ("treatment", models.CharField(blank=True, max_length=255)),
+                ("race", models.CharField(blank=True, max_length=255)),
+                ("subject", models.CharField(blank=True, max_length=255)),
+                ("compound", models.CharField(blank=True, max_length=255)),
+                ("time", models.CharField(blank=True, max_length=255)),
+                ("is_processed", models.BooleanField(default=False)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
             options={
-                'db_table': 'computational_result_annotations',
-                'base_manager_name': 'public_objects',
+                "db_table": "samples",
+                "get_latest_by": "created_at",
+                "base_manager_name": "public_objects",
             },
             managers=[
-                ('objects', django.db.models.manager.Manager()),
-                ('public_objects', django.db.models.manager.Manager()),
+                ("objects", django.db.models.manager.Manager()),
+                ("public_objects", django.db.models.manager.Manager()),
             ],
         ),
         migrations.CreateModel(
-            name='ComputedFile',
+            name="SampleAnnotation",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('filename', models.CharField(max_length=255)),
-                ('absolute_file_path', models.CharField(blank=True, max_length=255, null=True)),
-                ('size_in_bytes', models.BigIntegerField()),
-                ('sha1', models.CharField(max_length=64)),
-                ('is_smashable', models.BooleanField(default=False)),
-                ('is_qc', models.BooleanField(default=False)),
-                ('is_qn_target', models.BooleanField(default=False)),
-                ('s3_bucket', models.CharField(blank=True, max_length=255, null=True)),
-                ('s3_key', models.CharField(blank=True, max_length=255, null=True)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-                ('result', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputationalResult')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("data", django.contrib.postgres.fields.jsonb.JSONField(default={})),
+                ("is_ccdl", models.BooleanField(default=False)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "sample",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Sample",
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'computed_files',
-                'get_latest_by': 'created_at',
-            },
-        ),
-        migrations.CreateModel(
-            name='Dataset',
-            fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('data', django.contrib.postgres.fields.jsonb.JSONField(default={})),
-                ('aggregate_by', models.CharField(choices=[('ALL', 'All'), ('EXPERIMENT', 'Experiment'), ('SPECIES', 'Species')], default='EXPERIMENT', max_length=255)),
-                ('scale_by', models.CharField(choices=[('NONE', 'None'), ('MINMAX', 'Minmax'), ('STANDARD', 'Standard'), ('ROBUST', 'Robust')], default='NONE', max_length=255)),
-                ('quantile_normalize', models.BooleanField(default=True)),
-                ('is_processing', models.BooleanField(default=False)),
-                ('is_processed', models.BooleanField(default=False)),
-                ('is_available', models.BooleanField(default=False)),
-                ('success', models.NullBooleanField()),
-                ('failure_reason', models.TextField()),
-                ('email_address', models.CharField(blank=True, max_length=255, null=True)),
-                ('email_sent', models.BooleanField(default=False)),
-                ('expires_on', models.DateTimeField(blank=True, null=True)),
-                ('s3_bucket', models.CharField(max_length=255)),
-                ('s3_key', models.CharField(max_length=255)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
-        ),
-        migrations.CreateModel(
-            name='DownloaderJob',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('downloader_task', models.CharField(max_length=256)),
-                ('accession_code', models.CharField(blank=True, max_length=256, null=True)),
-                ('no_retry', models.BooleanField(default=False)),
-                ('start_time', models.DateTimeField(null=True)),
-                ('end_time', models.DateTimeField(null=True)),
-                ('success', models.NullBooleanField()),
-                ('nomad_job_id', models.CharField(max_length=256, null=True)),
-                ('num_retries', models.IntegerField(default=0)),
-                ('retried', models.BooleanField(default=False)),
-                ('worker_id', models.CharField(max_length=256, null=True)),
-                ('worker_version', models.CharField(max_length=128, null=True)),
-                ('failure_reason', models.TextField(null=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
-            options={
-                'db_table': 'downloader_jobs',
-            },
-        ),
-        migrations.CreateModel(
-            name='DownloaderJobOriginalFileAssociation',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('downloader_job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.DownloaderJob')),
-            ],
-            options={
-                'db_table': 'downloaderjob_originalfile_associations',
-            },
-        ),
-        migrations.CreateModel(
-            name='Experiment',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('accession_code', models.CharField(max_length=64, unique=True)),
-                ('source_database', models.CharField(max_length=32)),
-                ('source_url', models.TextField()),
-                ('title', models.TextField()),
-                ('description', models.TextField()),
-                ('protocol_description', django.contrib.postgres.fields.jsonb.JSONField(default={})),
-                ('technology', models.CharField(blank=True, max_length=256)),
-                ('submitter_institution', models.CharField(blank=True, max_length=256)),
-                ('has_publication', models.BooleanField(default=False)),
-                ('publication_title', models.TextField(default='')),
-                ('publication_doi', models.CharField(blank=True, max_length=64)),
-                ('publication_authors', django.contrib.postgres.fields.ArrayField(base_field=models.TextField(), default=[], size=None)),
-                ('pubmed_id', models.CharField(blank=True, max_length=32)),
-                ('source_first_published', models.DateTimeField(null=True)),
-                ('source_last_modified', models.DateTimeField(null=True)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
-            options={
-                'db_table': 'experiments',
-                'base_manager_name': 'public_objects',
-            },
+            options={"db_table": "sample_annotations", "base_manager_name": "public_objects",},
             managers=[
-                ('objects', django.db.models.manager.Manager()),
-                ('public_objects', django.db.models.manager.Manager()),
+                ("objects", django.db.models.manager.Manager()),
+                ("public_objects", django.db.models.manager.Manager()),
             ],
         ),
         migrations.CreateModel(
-            name='ExperimentAnnotation',
+            name="SampleComputedFileAssociation",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data', django.contrib.postgres.fields.jsonb.JSONField(default={})),
-                ('is_ccdl', models.BooleanField(default=False)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-                ('experiment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Experiment')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "computed_file",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.ComputedFile",
+                    ),
+                ),
+                (
+                    "sample",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Sample",
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'experiment_annotations',
-                'base_manager_name': 'public_objects',
-            },
-            managers=[
-                ('objects', django.db.models.manager.Manager()),
-                ('public_objects', django.db.models.manager.Manager()),
-            ],
+            options={"db_table": "sample_computed_file_associations",},
         ),
         migrations.CreateModel(
-            name='ExperimentOrganismAssociation',
+            name="SampleResultAssociation",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('experiment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Experiment')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "result",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.ComputationalResult",
+                    ),
+                ),
+                (
+                    "sample",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.Sample",
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'experiment_organism_associations',
-            },
+            options={"db_table": "sample_result_associations",},
         ),
         migrations.CreateModel(
-            name='ExperimentSampleAssociation',
+            name="SurveyJob",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('experiment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Experiment')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("source_type", models.CharField(max_length=256)),
+                ("success", models.NullBooleanField()),
+                ("no_retry", models.BooleanField(default=False)),
+                ("start_time", models.DateTimeField(null=True)),
+                ("end_time", models.DateTimeField(null=True)),
+                ("failure_reason", models.TextField(null=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(default=django.utils.timezone.now, editable=False),
+                ),
+                ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={
-                'db_table': 'experiment_sample_associations',
-            },
+            options={"db_table": "survey_jobs",},
         ),
         migrations.CreateModel(
-            name='Organism',
+            name="SurveyJobKeyValue",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256, unique=True)),
-                ('taxonomy_id', models.IntegerField(unique=True)),
-                ('is_scientific_name', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("key", models.CharField(max_length=256)),
+                ("value", models.CharField(max_length=256)),
+                (
+                    "survey_job",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="data_refinery_common.SurveyJob",
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'organisms',
-            },
-        ),
-        migrations.CreateModel(
-            name='OrganismIndex',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('index_type', models.CharField(max_length=255)),
-                ('source_version', models.CharField(default='93', max_length=255)),
-                ('assembly_name', models.CharField(default='UNKNOWN', max_length=255)),
-                ('salmon_version', models.CharField(default='0.9.1', max_length=255)),
-                ('absolute_directory_path', models.CharField(blank=True, default='', max_length=255, null=True)),
-                ('s3_url', models.CharField(default='', max_length=255)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-                ('organism', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Organism')),
-                ('result', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputationalResult')),
-            ],
-            options={
-                'db_table': 'organism_index',
-                'base_manager_name': 'public_objects',
-            },
-            managers=[
-                ('objects', django.db.models.manager.Manager()),
-                ('public_objects', django.db.models.manager.Manager()),
-            ],
-        ),
-        migrations.CreateModel(
-            name='OriginalFile',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('filename', models.CharField(max_length=255)),
-                ('absolute_file_path', models.CharField(blank=True, max_length=255, null=True)),
-                ('size_in_bytes', models.BigIntegerField(blank=True, null=True)),
-                ('sha1', models.CharField(max_length=64)),
-                ('s3_bucket', models.CharField(blank=True, max_length=255, null=True)),
-                ('s3_key', models.CharField(blank=True, max_length=255, null=True)),
-                ('source_url', models.TextField()),
-                ('is_archive', models.BooleanField(default=True)),
-                ('source_filename', models.CharField(max_length=255)),
-                ('has_raw', models.BooleanField(default=True)),
-                ('is_downloaded', models.BooleanField(default=False)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
-            options={
-                'db_table': 'original_files',
-            },
-        ),
-        migrations.CreateModel(
-            name='OriginalFileSampleAssociation',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('original_file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.OriginalFile')),
-            ],
-            options={
-                'db_table': 'original_file_sample_associations',
-            },
-        ),
-        migrations.CreateModel(
-            name='Pipeline',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('steps', django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), default=[], size=None)),
-            ],
-            options={
-                'db_table': 'pipelines',
-            },
-        ),
-        migrations.CreateModel(
-            name='Processor',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('version', models.CharField(max_length=64)),
-                ('docker_image', models.CharField(max_length=255)),
-                ('environment', django.contrib.postgres.fields.jsonb.JSONField(default={})),
-            ],
-            options={
-                'db_table': 'processors',
-            },
-        ),
-        migrations.CreateModel(
-            name='ProcessorJob',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('pipeline_applied', models.CharField(max_length=256)),
-                ('no_retry', models.BooleanField(default=False)),
-                ('ram_amount', models.IntegerField(default=2048)),
-                ('volume_index', models.CharField(max_length=3, null=True)),
-                ('start_time', models.DateTimeField(null=True)),
-                ('end_time', models.DateTimeField(null=True)),
-                ('success', models.NullBooleanField()),
-                ('nomad_job_id', models.CharField(max_length=256, null=True)),
-                ('num_retries', models.IntegerField(default=0)),
-                ('retried', models.BooleanField(default=False)),
-                ('worker_id', models.CharField(max_length=256, null=True)),
-                ('worker_version', models.CharField(max_length=128, null=True)),
-                ('failure_reason', models.TextField(null=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
-            options={
-                'db_table': 'processor_jobs',
-            },
-        ),
-        migrations.CreateModel(
-            name='ProcessorJobDatasetAssociation',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('dataset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Dataset')),
-                ('processor_job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ProcessorJob')),
-            ],
-            options={
-                'db_table': 'processorjob_dataset_associations',
-            },
-        ),
-        migrations.CreateModel(
-            name='ProcessorJobOriginalFileAssociation',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('original_file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.OriginalFile')),
-                ('processor_job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ProcessorJob')),
-            ],
-            options={
-                'db_table': 'processorjob_originalfile_associations',
-            },
-        ),
-        migrations.CreateModel(
-            name='Sample',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('accession_code', models.CharField(max_length=255, unique=True)),
-                ('title', models.CharField(blank=True, max_length=255)),
-                ('source_database', models.CharField(max_length=255)),
-                ('source_archive_url', models.CharField(max_length=255)),
-                ('source_filename', models.CharField(max_length=255)),
-                ('source_absolute_file_path', models.CharField(max_length=255)),
-                ('has_raw', models.BooleanField(default=True)),
-                ('platform_accession_code', models.CharField(blank=True, max_length=256)),
-                ('platform_name', models.CharField(blank=True, max_length=256)),
-                ('technology', models.CharField(blank=True, max_length=256)),
-                ('manufacturer', models.CharField(blank=True, max_length=256)),
-                ('protocol_info', django.contrib.postgres.fields.jsonb.JSONField(default={})),
-                ('sex', models.CharField(blank=True, max_length=255)),
-                ('age', models.DecimalField(blank=True, decimal_places=3, max_digits=8, max_length=255, null=True)),
-                ('specimen_part', models.CharField(blank=True, max_length=255)),
-                ('genotype', models.CharField(blank=True, max_length=255)),
-                ('disease', models.CharField(blank=True, max_length=255)),
-                ('disease_stage', models.CharField(blank=True, max_length=255)),
-                ('cell_line', models.CharField(blank=True, max_length=255)),
-                ('treatment', models.CharField(blank=True, max_length=255)),
-                ('race', models.CharField(blank=True, max_length=255)),
-                ('subject', models.CharField(blank=True, max_length=255)),
-                ('compound', models.CharField(blank=True, max_length=255)),
-                ('time', models.CharField(blank=True, max_length=255)),
-                ('is_processed', models.BooleanField(default=False)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
-            options={
-                'db_table': 'samples',
-                'get_latest_by': 'created_at',
-                'base_manager_name': 'public_objects',
-            },
-            managers=[
-                ('objects', django.db.models.manager.Manager()),
-                ('public_objects', django.db.models.manager.Manager()),
-            ],
-        ),
-        migrations.CreateModel(
-            name='SampleAnnotation',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data', django.contrib.postgres.fields.jsonb.JSONField(default={})),
-                ('is_ccdl', models.BooleanField(default=False)),
-                ('is_public', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-                ('sample', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Sample')),
-            ],
-            options={
-                'db_table': 'sample_annotations',
-                'base_manager_name': 'public_objects',
-            },
-            managers=[
-                ('objects', django.db.models.manager.Manager()),
-                ('public_objects', django.db.models.manager.Manager()),
-            ],
-        ),
-        migrations.CreateModel(
-            name='SampleComputedFileAssociation',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('computed_file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputedFile')),
-                ('sample', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Sample')),
-            ],
-            options={
-                'db_table': 'sample_computed_file_associations',
-            },
-        ),
-        migrations.CreateModel(
-            name='SampleResultAssociation',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('result', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputationalResult')),
-                ('sample', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Sample')),
-            ],
-            options={
-                'db_table': 'sample_result_associations',
-            },
-        ),
-        migrations.CreateModel(
-            name='SurveyJob',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('source_type', models.CharField(max_length=256)),
-                ('success', models.NullBooleanField()),
-                ('no_retry', models.BooleanField(default=False)),
-                ('start_time', models.DateTimeField(null=True)),
-                ('end_time', models.DateTimeField(null=True)),
-                ('failure_reason', models.TextField(null=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
-            options={
-                'db_table': 'survey_jobs',
-            },
-        ),
-        migrations.CreateModel(
-            name='SurveyJobKeyValue',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('key', models.CharField(max_length=256)),
-                ('value', models.CharField(max_length=256)),
-                ('survey_job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.SurveyJob')),
-            ],
-            options={
-                'db_table': 'survey_job_key_values',
-            },
+            options={"db_table": "survey_job_key_values",},
         ),
         migrations.AddField(
-            model_name='sample',
-            name='computed_files',
-            field=models.ManyToManyField(through='data_refinery_common.SampleComputedFileAssociation', to='data_refinery_common.ComputedFile'),
+            model_name="sample",
+            name="computed_files",
+            field=models.ManyToManyField(
+                through="data_refinery_common.SampleComputedFileAssociation",
+                to="data_refinery_common.ComputedFile",
+            ),
         ),
         migrations.AddField(
-            model_name='sample',
-            name='organism',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='data_refinery_common.Organism'),
+            model_name="sample",
+            name="organism",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="data_refinery_common.Organism",
+            ),
         ),
         migrations.AddField(
-            model_name='sample',
-            name='original_files',
-            field=models.ManyToManyField(through='data_refinery_common.OriginalFileSampleAssociation', to='data_refinery_common.OriginalFile'),
+            model_name="sample",
+            name="original_files",
+            field=models.ManyToManyField(
+                through="data_refinery_common.OriginalFileSampleAssociation",
+                to="data_refinery_common.OriginalFile",
+            ),
         ),
         migrations.AddField(
-            model_name='sample',
-            name='results',
-            field=models.ManyToManyField(through='data_refinery_common.SampleResultAssociation', to='data_refinery_common.ComputationalResult'),
+            model_name="sample",
+            name="results",
+            field=models.ManyToManyField(
+                through="data_refinery_common.SampleResultAssociation",
+                to="data_refinery_common.ComputationalResult",
+            ),
         ),
         migrations.AddField(
-            model_name='processorjob',
-            name='datasets',
-            field=models.ManyToManyField(through='data_refinery_common.ProcessorJobDatasetAssociation', to='data_refinery_common.Dataset'),
+            model_name="processorjob",
+            name="datasets",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ProcessorJobDatasetAssociation",
+                to="data_refinery_common.Dataset",
+            ),
         ),
         migrations.AddField(
-            model_name='processorjob',
-            name='original_files',
-            field=models.ManyToManyField(through='data_refinery_common.ProcessorJobOriginalFileAssociation', to='data_refinery_common.OriginalFile'),
+            model_name="processorjob",
+            name="original_files",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ProcessorJobOriginalFileAssociation",
+                to="data_refinery_common.OriginalFile",
+            ),
         ),
         migrations.AddField(
-            model_name='processorjob',
-            name='retried_job',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='data_refinery_common.ProcessorJob'),
+            model_name="processorjob",
+            name="retried_job",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="data_refinery_common.ProcessorJob",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='processor',
-            unique_together={('name', 'version', 'docker_image', 'environment')},
+            name="processor", unique_together={("name", "version", "docker_image", "environment")},
         ),
         migrations.AddField(
-            model_name='originalfilesampleassociation',
-            name='sample',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Sample'),
+            model_name="originalfilesampleassociation",
+            name="sample",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="data_refinery_common.Sample"
+            ),
         ),
         migrations.AddField(
-            model_name='originalfile',
-            name='samples',
-            field=models.ManyToManyField(through='data_refinery_common.OriginalFileSampleAssociation', to='data_refinery_common.Sample'),
+            model_name="originalfile",
+            name="samples",
+            field=models.ManyToManyField(
+                through="data_refinery_common.OriginalFileSampleAssociation",
+                to="data_refinery_common.Sample",
+            ),
         ),
         migrations.AddField(
-            model_name='experimentsampleassociation',
-            name='sample',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Sample'),
+            model_name="experimentsampleassociation",
+            name="sample",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="data_refinery_common.Sample"
+            ),
         ),
         migrations.AddField(
-            model_name='experimentorganismassociation',
-            name='organism',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Organism'),
+            model_name="experimentorganismassociation",
+            name="organism",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="data_refinery_common.Organism"
+            ),
         ),
         migrations.AddField(
-            model_name='experiment',
-            name='organisms',
-            field=models.ManyToManyField(through='data_refinery_common.ExperimentOrganismAssociation', to='data_refinery_common.Organism'),
+            model_name="experiment",
+            name="organisms",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ExperimentOrganismAssociation",
+                to="data_refinery_common.Organism",
+            ),
         ),
         migrations.AddField(
-            model_name='experiment',
-            name='samples',
-            field=models.ManyToManyField(through='data_refinery_common.ExperimentSampleAssociation', to='data_refinery_common.Sample'),
+            model_name="experiment",
+            name="samples",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ExperimentSampleAssociation",
+                to="data_refinery_common.Sample",
+            ),
         ),
         migrations.AddField(
-            model_name='downloaderjoboriginalfileassociation',
-            name='original_file',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.OriginalFile'),
+            model_name="downloaderjoboriginalfileassociation",
+            name="original_file",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="data_refinery_common.OriginalFile"
+            ),
         ),
         migrations.AddField(
-            model_name='downloaderjob',
-            name='original_files',
-            field=models.ManyToManyField(through='data_refinery_common.DownloaderJobOriginalFileAssociation', to='data_refinery_common.OriginalFile'),
+            model_name="downloaderjob",
+            name="original_files",
+            field=models.ManyToManyField(
+                through="data_refinery_common.DownloaderJobOriginalFileAssociation",
+                to="data_refinery_common.OriginalFile",
+            ),
         ),
         migrations.AddField(
-            model_name='downloaderjob',
-            name='retried_job',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='data_refinery_common.DownloaderJob'),
+            model_name="downloaderjob",
+            name="retried_job",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="data_refinery_common.DownloaderJob",
+            ),
         ),
         migrations.AddField(
-            model_name='computedfile',
-            name='samples',
-            field=models.ManyToManyField(through='data_refinery_common.SampleComputedFileAssociation', to='data_refinery_common.Sample'),
+            model_name="computedfile",
+            name="samples",
+            field=models.ManyToManyField(
+                through="data_refinery_common.SampleComputedFileAssociation",
+                to="data_refinery_common.Sample",
+            ),
         ),
         migrations.AddField(
-            model_name='computationalresult',
-            name='organism_index',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='data_refinery_common.OrganismIndex'),
+            model_name="computationalresult",
+            name="organism_index",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="data_refinery_common.OrganismIndex",
+            ),
         ),
         migrations.AddField(
-            model_name='computationalresult',
-            name='processor',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Processor'),
+            model_name="computationalresult",
+            name="processor",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="data_refinery_common.Processor",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='sampleresultassociation',
-            unique_together={('result', 'sample')},
+            name="sampleresultassociation", unique_together={("result", "sample")},
         ),
         migrations.AlterUniqueTogether(
-            name='samplecomputedfileassociation',
-            unique_together={('sample', 'computed_file')},
+            name="samplecomputedfileassociation", unique_together={("sample", "computed_file")},
         ),
         migrations.AlterUniqueTogether(
-            name='processorjoboriginalfileassociation',
-            unique_together={('processor_job', 'original_file')},
+            name="processorjoboriginalfileassociation",
+            unique_together={("processor_job", "original_file")},
         ),
         migrations.AlterUniqueTogether(
-            name='originalfilesampleassociation',
-            unique_together={('original_file', 'sample')},
+            name="originalfilesampleassociation", unique_together={("original_file", "sample")},
         ),
         migrations.AlterUniqueTogether(
-            name='experimentsampleassociation',
-            unique_together={('experiment', 'sample')},
+            name="experimentsampleassociation", unique_together={("experiment", "sample")},
         ),
         migrations.AlterUniqueTogether(
-            name='experimentorganismassociation',
-            unique_together={('experiment', 'organism')},
+            name="experimentorganismassociation", unique_together={("experiment", "organism")},
         ),
         migrations.AlterUniqueTogether(
-            name='downloaderjoboriginalfileassociation',
-            unique_together={('downloader_job', 'original_file')},
+            name="downloaderjoboriginalfileassociation",
+            unique_together={("downloader_job", "original_file")},
         ),
     ]

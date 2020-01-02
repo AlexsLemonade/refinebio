@@ -18,6 +18,7 @@ from data_refinery_common.models import (
 from data_refinery_foreman.foreman.management.commands.create_missing_processor_jobs import Command
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
+
 class SurveyTestCase(TransactionTestCase):
     # @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_create_missing_jobs(self):
@@ -63,8 +64,7 @@ class SurveyTestCase(TransactionTestCase):
         ma_sample_doesnt_need_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=ma_sample_doesnt_need_processor,
-            original_file=ma_og_doesnt_need_processor
+            sample=ma_sample_doesnt_need_processor, original_file=ma_og_doesnt_need_processor
         )
 
         ma_dl_job_doesnt_need_processor = DownloaderJob()
@@ -75,7 +75,7 @@ class SurveyTestCase(TransactionTestCase):
 
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
             downloader_job=ma_dl_job_doesnt_need_processor,
-            original_file=ma_og_doesnt_need_processor
+            original_file=ma_og_doesnt_need_processor,
         )
 
         ma_processor_job = ProcessorJob()
@@ -85,8 +85,7 @@ class SurveyTestCase(TransactionTestCase):
         ma_processor_job.save()
 
         ProcessorJobOriginalFileAssociation.objects.get_or_create(
-            processor_job=ma_processor_job,
-            original_file=ma_og_doesnt_need_processor
+            processor_job=ma_processor_job, original_file=ma_og_doesnt_need_processor
         )
 
         ma_og_needs_processor_1 = OriginalFile()
@@ -117,12 +116,10 @@ class SurveyTestCase(TransactionTestCase):
         ma_sample_needs_processor_1.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=ma_sample_needs_processor_1,
-            original_file=ma_og_needs_processor_1
+            sample=ma_sample_needs_processor_1, original_file=ma_og_needs_processor_1
         )
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=ma_sample_needs_processor_1,
-            original_file=ma_og_archive
+            sample=ma_sample_needs_processor_1, original_file=ma_og_archive
         )
 
         ma_sample_needs_processor_2 = Sample()
@@ -132,12 +129,10 @@ class SurveyTestCase(TransactionTestCase):
         ma_sample_needs_processor_2.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=ma_sample_needs_processor_2,
-            original_file=ma_og_needs_processor_2
+            sample=ma_sample_needs_processor_2, original_file=ma_og_needs_processor_2
         )
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=ma_sample_needs_processor_2,
-            original_file=ma_og_archive
+            sample=ma_sample_needs_processor_2, original_file=ma_og_archive
         )
 
         ma_dl_job_needs_processor = DownloaderJob()
@@ -147,16 +142,13 @@ class SurveyTestCase(TransactionTestCase):
         ma_dl_job_needs_processor.save()
 
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=ma_dl_job_needs_processor,
-            original_file=ma_og_needs_processor_1
+            downloader_job=ma_dl_job_needs_processor, original_file=ma_og_needs_processor_1
         )
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=ma_dl_job_needs_processor,
-            original_file=ma_og_needs_processor_2
+            downloader_job=ma_dl_job_needs_processor, original_file=ma_og_needs_processor_2
         )
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=ma_dl_job_needs_processor,
-            original_file=ma_og_archive
+            downloader_job=ma_dl_job_needs_processor, original_file=ma_og_archive
         )
 
         # RNA-Seq File/Samples/Jobs
@@ -174,8 +166,7 @@ class SurveyTestCase(TransactionTestCase):
         rna_sample_doesnt_need_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=rna_sample_doesnt_need_processor,
-            original_file=rna_og_doesnt_need_processor
+            sample=rna_sample_doesnt_need_processor, original_file=rna_og_doesnt_need_processor
         )
 
         rna_dl_job_doesnt_need_processor = DownloaderJob()
@@ -186,7 +177,7 @@ class SurveyTestCase(TransactionTestCase):
 
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
             downloader_job=rna_dl_job_doesnt_need_processor,
-            original_file=rna_og_doesnt_need_processor
+            original_file=rna_og_doesnt_need_processor,
         )
 
         rna_processor_job = ProcessorJob()
@@ -197,8 +188,7 @@ class SurveyTestCase(TransactionTestCase):
         rna_processor_job.save()
 
         ProcessorJobOriginalFileAssociation.objects.get_or_create(
-            processor_job=rna_processor_job,
-            original_file=rna_og_doesnt_need_processor
+            processor_job=rna_processor_job, original_file=rna_og_doesnt_need_processor
         )
 
         rna_og_needs_processor = OriginalFile()
@@ -215,8 +205,7 @@ class SurveyTestCase(TransactionTestCase):
         rna_sample_needs_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
-            sample=rna_sample_needs_processor,
-            original_file=rna_og_needs_processor
+            sample=rna_sample_needs_processor, original_file=rna_og_needs_processor
         )
 
         rna_dl_job_needs_processor = DownloaderJob()
@@ -226,8 +215,7 @@ class SurveyTestCase(TransactionTestCase):
         rna_dl_job_needs_processor.save()
 
         DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=rna_dl_job_needs_processor,
-            original_file=rna_og_needs_processor
+            downloader_job=rna_dl_job_needs_processor, original_file=rna_og_needs_processor
         )
 
         # Setup is done, actually run the command.
@@ -240,19 +228,17 @@ class SurveyTestCase(TransactionTestCase):
             1,
             ProcessorJobOriginalFileAssociation.objects.filter(
                 original_file=ma_og_needs_processor_1
-            ).count()
+            ).count(),
         )
         self.assertEqual(
             1,
             ProcessorJobOriginalFileAssociation.objects.filter(
                 original_file=ma_og_needs_processor_2
-            ).count()
+            ).count(),
         )
         self.assertEqual(
             0,
-            ProcessorJobOriginalFileAssociation.objects.filter(
-                original_file=ma_og_archive
-            ).count()
+            ProcessorJobOriginalFileAssociation.objects.filter(original_file=ma_og_archive).count(),
         )
 
         ## Test that a processor job that wasn't missing wasn't created.
@@ -262,7 +248,7 @@ class SurveyTestCase(TransactionTestCase):
             1,
             ProcessorJobOriginalFileAssociation.objects.filter(
                 original_file=ma_og_doesnt_need_processor
-            ).count()
+            ).count(),
         )
 
         # Test Microarray was handled correctly.
@@ -271,7 +257,7 @@ class SurveyTestCase(TransactionTestCase):
             1,
             ProcessorJobOriginalFileAssociation.objects.filter(
                 original_file=rna_og_needs_processor
-            ).count()
+            ).count(),
         )
 
         ## Test that a processor job that wasn't missing wasn't created.
@@ -281,5 +267,5 @@ class SurveyTestCase(TransactionTestCase):
             1,
             ProcessorJobOriginalFileAssociation.objects.filter(
                 original_file=rna_og_doesnt_need_processor
-            ).count()
+            ).count(),
         )

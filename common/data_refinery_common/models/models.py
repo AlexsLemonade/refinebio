@@ -22,19 +22,25 @@ from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1, FileUtils
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_s3_url,
+    calculate_file_size,
+    calculate_sha1,
+    FileUtils,
+)
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
-S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
+S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # We store what salmon ouptuts as its version, therefore for
 # comparisions or defaults we shouldn't just store the version string,
 # we need something with the pattern: 'salmon X.X.X'
-CURRENT_SALMON_VERSION = 'salmon ' + get_env_variable("SALMON_VERSION", "0.13.1")
-CHUNK_SIZE = 1024 * 256 # chunk_size is in bytes
+CURRENT_SALMON_VERSION = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
+CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 """
 # First Order Classes
@@ -44,17 +50,21 @@ and filtering against.
 
 """
 
+
 class PublicObjectsManager(models.Manager):
     """
     Only returns objects that have is_public
     """
+
     def get_queryset(self):
         return super().get_queryset().filter(is_public=True)
+
 
 class ProcessedObjectsManager(models.Manager):
     """
     Only returns objects that have is_processed and is_public
     """
+
     def get_queryset(self):
         return super().get_queryset().filter(is_processed=True, is_public=True)
 
@@ -70,7 +80,7 @@ class Sample(models.Model):
         get_latest_by = "created_at"
 
         indexes = [
-            models.Index(fields=['accession_code']),
+            models.Index(fields=["accession_code"]),
         ]
 
     def __str__(self):
@@ -87,10 +97,10 @@ class Sample(models.Model):
 
     # Relations
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
-    results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
-    original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
-    computed_files = models.ManyToManyField('ComputedFile', through='SampleComputedFileAssociation')
-    experiments = models.ManyToManyField('Experiment', through='ExperimentSampleAssociation')
+    results = models.ManyToManyField("ComputationalResult", through="SampleResultAssociation")
+    original_files = models.ManyToManyField("OriginalFile", through="OriginalFileSampleAssociation")
+    computed_files = models.ManyToManyField("ComputedFile", through="SampleComputedFileAssociation")
+    experiments = models.ManyToManyField("Experiment", through="ExperimentSampleAssociation")
 
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
@@ -102,7 +112,7 @@ class Sample(models.Model):
     # Technological Properties
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
-    technology = models.CharField(max_length=256, blank=True) # MICROARRAY, RNA-SEQ
+    technology = models.CharField(max_length=256, blank=True)  # MICROARRAY, RNA-SEQ
     manufacturer = models.CharField(max_length=256, blank=True)
     protocol_info = JSONField(default=dict)
 
@@ -142,26 +152,26 @@ class Sample(models.Model):
     def to_metadata_dict(self):
         """Render this Sample as a dict."""
         metadata = {}
-        metadata['refinebio_title'] = self.title
-        metadata['refinebio_accession_code'] = self.accession_code
-        metadata['refinebio_organism'] = self.organism.name if self.organism else None
-        metadata['refinebio_source_database'] = self.source_database
-        metadata['refinebio_source_archive_url'] = self.source_archive_url
-        metadata['refinebio_sex'] = self.sex
-        metadata['refinebio_age'] = self.age or ''
-        metadata['refinebio_specimen_part'] = self.specimen_part
-        metadata['refinebio_genetic_information'] = self.genotype
-        metadata['refinebio_disease'] = self.disease
-        metadata['refinebio_disease_stage'] = self.disease_stage
-        metadata['refinebio_cell_line'] = self.cell_line
-        metadata['refinebio_treatment'] = self.treatment
-        metadata['refinebio_race'] = self.race
-        metadata['refinebio_subject'] = self.subject
-        metadata['refinebio_compound'] = self.compound
-        metadata['refinebio_time'] = self.time
-        metadata['refinebio_platform'] = self.pretty_platform
-        metadata['refinebio_annotations'] = [
-            data for data in self.sampleannotation_set.all().values_list('data', flat=True)
+        metadata["refinebio_title"] = self.title
+        metadata["refinebio_accession_code"] = self.accession_code
+        metadata["refinebio_organism"] = self.organism.name if self.organism else None
+        metadata["refinebio_source_database"] = self.source_database
+        metadata["refinebio_source_archive_url"] = self.source_archive_url
+        metadata["refinebio_sex"] = self.sex
+        metadata["refinebio_age"] = self.age or ""
+        metadata["refinebio_specimen_part"] = self.specimen_part
+        metadata["refinebio_genetic_information"] = self.genotype
+        metadata["refinebio_disease"] = self.disease
+        metadata["refinebio_disease_stage"] = self.disease_stage
+        metadata["refinebio_cell_line"] = self.cell_line
+        metadata["refinebio_treatment"] = self.treatment
+        metadata["refinebio_race"] = self.race
+        metadata["refinebio_subject"] = self.subject
+        metadata["refinebio_compound"] = self.compound
+        metadata["refinebio_time"] = self.time
+        metadata["refinebio_platform"] = self.pretty_platform
+        metadata["refinebio_annotations"] = [
+            data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
 
         return metadata
@@ -194,8 +204,7 @@ class Sample(models.Model):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         try:
             latest_computed_file = self.computed_files.filter(
-                is_public=True,
-                is_smashable=True,
+                is_public=True, is_smashable=True,
             ).latest()
             return latest_computed_file
         except ComputedFile.DoesNotExist as e:
@@ -206,11 +215,16 @@ class Sample(models.Model):
         """ Returns the latest quant.sf file that was generated for this sample.
         Note: We don't associate that file to the computed_files of this sample, that's
         why we have to go through the computational results. """
-        return ComputedFile.objects\
-            .filter(result__in=self.results.all(), filename='quant.sf',
-                    s3_key__isnull=False, s3_bucket__isnull=False)\
-            .order_by('-created_at')\
+        return (
+            ComputedFile.objects.filter(
+                result__in=self.results.all(),
+                filename="quant.sf",
+                s3_key__isnull=False,
+                s3_bucket__isnull=False,
+            )
+            .order_by("-created_at")
             .first()
+        )
 
     @property
     def pretty_platform(self):
@@ -223,18 +237,19 @@ class Sample(models.Model):
         Affymetrix HT HG-U133+ PM Array Plate (hthgu133pluspm)
 
         """
-        if ']' in self.platform_name:
-            platform_base = self.platform_name.split(']')[1].strip()
+        if "]" in self.platform_name:
+            platform_base = self.platform_name.split("]")[1].strip()
         else:
             platform_base = self.platform_name
-        return platform_base + ' (' + self.platform_accession_code + ')'
+        return platform_base + " (" + self.platform_accession_code + ")"
+
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
 
     class Meta:
         db_table = "sample_annotations"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
 
     # Managers
     objects = models.Manager()
@@ -265,10 +280,9 @@ class ProcessedPublicObjectsManager(models.Manager):
     """
     Only returns Experiments that are is_public and have related is_processed Samples.
     """
+
     def get_queryset(self):
-        return super().get_queryset().filter(
-            is_public=True,
-            num_processed_samples__gt=0)
+        return super().get_queryset().filter(is_public=True, num_processed_samples__gt=0)
 
 
 class Experiment(models.Model):
@@ -276,7 +290,7 @@ class Experiment(models.Model):
 
     class Meta:
         db_table = "experiments"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
 
     def __str__(self):
         return "Experiment: " + self.accession_code
@@ -287,8 +301,8 @@ class Experiment(models.Model):
     processed_public_objects = ProcessedPublicObjectsManager()
 
     # Relations
-    samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
-    organisms = models.ManyToManyField('Organism', through='ExperimentOrganismAssociation')
+    samples = models.ManyToManyField("Sample", through="ExperimentSampleAssociation")
+    organisms = models.ManyToManyField("Organism", through="ExperimentOrganismAssociation")
 
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
@@ -336,51 +350,57 @@ class Experiment(models.Model):
         self.last_modified = current_time
 
         if self.accession_code and not self.alternate_accession_code:
-            if self.accession_code.startswith('GSE'):
-                self.alternate_accession_code = 'E-GEOD-' + self.accession_code[3:]
-            elif self.accession_code.startswith('E-GEOD-'):
-                self.alternate_accession_code = 'GSE' + self.accession_code[7:]
+            if self.accession_code.startswith("GSE"):
+                self.alternate_accession_code = "E-GEOD-" + self.accession_code[3:]
+            elif self.accession_code.startswith("E-GEOD-"):
+                self.alternate_accession_code = "GSE" + self.accession_code[7:]
 
         return super(Experiment, self).save(*args, **kwargs)
 
     def update_num_samples(self):
         """ Update our cache values """
         aggregates = self.samples.aggregate(
-            num_total_samples=Count('id'),
-            num_processed_samples=Count('id', filter=Q(is_processed=True)),
-            num_downloadable_samples=Count('id', filter=Q(is_processed=True, organism__qn_target__isnull=False))
+            num_total_samples=Count("id"),
+            num_processed_samples=Count("id", filter=Q(is_processed=True)),
+            num_downloadable_samples=Count(
+                "id", filter=Q(is_processed=True, organism__qn_target__isnull=False)
+            ),
         )
-        self.num_total_samples = aggregates['num_total_samples']
-        self.num_processed_samples = aggregates['num_processed_samples']
-        self.num_downloadable_samples = aggregates['num_downloadable_samples']
+        self.num_total_samples = aggregates["num_total_samples"]
+        self.num_processed_samples = aggregates["num_processed_samples"]
+        self.num_downloadable_samples = aggregates["num_downloadable_samples"]
         self.save()
 
     def to_metadata_dict(self):
         """ Render this Experiment as a dict """
 
         metadata = {}
-        metadata['title'] = self.title
-        metadata['accession_code'] = self.accession_code
-        metadata['organisms'] = list(self.organisms.all().values_list('name', flat=True))
-        metadata['sample_accession_codes'] = list(self.samples.all().values_list('accession_code', flat=True))
-        metadata['description'] = self.description
-        metadata['protocol_description'] = self.protocol_description
-        metadata['technology'] = self.technology
-        metadata['submitter_institution'] = self.submitter_institution
-        metadata['has_publication'] = self.has_publication
-        metadata['publication_title'] = self.publication_title
-        metadata['publication_doi'] = self.publication_doi
-        metadata['pubmed_id'] = self.pubmed_id
+        metadata["title"] = self.title
+        metadata["accession_code"] = self.accession_code
+        metadata["organisms"] = list(self.organisms.all().values_list("name", flat=True))
+        metadata["sample_accession_codes"] = list(
+            self.samples.all().values_list("accession_code", flat=True)
+        )
+        metadata["description"] = self.description
+        metadata["protocol_description"] = self.protocol_description
+        metadata["technology"] = self.technology
+        metadata["submitter_institution"] = self.submitter_institution
+        metadata["has_publication"] = self.has_publication
+        metadata["publication_title"] = self.publication_title
+        metadata["publication_doi"] = self.publication_doi
+        metadata["pubmed_id"] = self.pubmed_id
         if self.source_first_published:
-            metadata['source_first_published'] = self.source_first_published.strftime(
-                '%Y-%m-%dT%H:%M:%S')
+            metadata["source_first_published"] = self.source_first_published.strftime(
+                "%Y-%m-%dT%H:%M:%S"
+            )
         else:
-            metadata['source_first_published'] = ''
+            metadata["source_first_published"] = ""
         if self.source_last_modified:
-            metadata['source_last_modified'] = self.source_last_modified.strftime(
-                '%Y-%m-%dT%H:%M:%S')
+            metadata["source_last_modified"] = self.source_last_modified.strftime(
+                "%Y-%m-%dT%H:%M:%S"
+            )
         else:
-            metadata['source_last_modified'] = ''
+            metadata["source_last_modified"] = ""
 
         return metadata
 
@@ -390,12 +410,24 @@ class Experiment(models.Model):
         """
         fields = []
 
-        possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
-                           'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
+        possible_fields = [
+            "sex",
+            "age",
+            "specimen_part",
+            "genotype",
+            "disease",
+            "disease_stage",
+            "cell_line",
+            "treatment",
+            "race",
+            "subject",
+            "compound",
+            "time",
+        ]
         samples = self.samples.all()
         for field in possible_fields:
             for sample in samples:
-                if getattr(sample, field) != None and getattr(sample, field) != '':
+                if getattr(sample, field) != None and getattr(sample, field) != "":
                     fields.append(field)
                     break
 
@@ -435,15 +467,18 @@ class Experiment(models.Model):
 
     @property
     def processed_samples(self):
-        return list([sample.accession_code for sample in self.samples.all() if sample.is_processed == True])
+        return list(
+            [sample.accession_code for sample in self.samples.all() if sample.is_processed == True]
+        )
 
     @property
     def organism_names(self):
         """ Get a list of unique organism names that has at least one downloadable sample """
-        result = self.samples\
-            .filter(is_processed=True, organism__qn_target__isnull=False)\
-            .values_list('organism__name', flat=True)\
+        result = (
+            self.samples.filter(is_processed=True, organism__qn_target__isnull=False)
+            .values_list("organism__name", flat=True)
             .distinct()
+        )
         return list(result)
 
     @property
@@ -453,9 +488,11 @@ class Experiment(models.Model):
         This is indexed on elastic search and used to count the number of samples
         on the filters.
         """
-        return list(self.samples.filter(is_processed=True, organism__qn_target__isnull=False)\
-                                      .values_list('accession_code', flat=True))
-
+        return list(
+            self.samples.filter(is_processed=True, organism__qn_target__isnull=False).values_list(
+                "accession_code", flat=True
+            )
+        )
 
 
 class ExperimentAnnotation(models.Model):
@@ -463,7 +500,7 @@ class ExperimentAnnotation(models.Model):
 
     class Meta:
         db_table = "experiment_annotations"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
 
     # Managers
     objects = models.Manager()
@@ -489,6 +526,7 @@ class ExperimentAnnotation(models.Model):
         self.last_modified = current_time
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
+
 class Pipeline(models.Model):
     """Pipeline that is associated with a series of ComputationalResult records."""
 
@@ -509,10 +547,14 @@ class Processor(models.Model):
 
     class Meta:
         db_table = "processors"
-        unique_together = ('name', 'version', 'docker_image', 'environment')
+        unique_together = ("name", "version", "docker_image", "environment")
 
     def __str__(self):
-        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
+        return "Processor: %s (version: %s, docker_image: %s)" % (
+            self.name,
+            self.version,
+            self.docker_image,
+        )
 
 
 class ComputationalResult(models.Model):
@@ -520,7 +562,7 @@ class ComputationalResult(models.Model):
 
     class Meta:
         db_table = "computational_results"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
 
     def __str__(self):
         processor_name_str = ""
@@ -536,10 +578,12 @@ class ComputationalResult(models.Model):
     commands = ArrayField(models.TextField(), default=list)
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
 
-    samples = models.ManyToManyField('Sample', through='SampleResultAssociation')
+    samples = models.ManyToManyField("Sample", through="SampleResultAssociation")
 
     # The Organism Index used to process the sample.
-    organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
+    organism_index = models.ForeignKey(
+        "OrganismIndex", blank=True, null=True, on_delete=models.SET_NULL
+    )
 
     is_ccdl = models.BooleanField(default=True)
 
@@ -563,7 +607,7 @@ class ComputationalResult(models.Model):
     def remove_computed_files_from_s3(self):
         """ Removes all associated computed files from S3. Use this before deleting a computational result. """
         for computed_file in self.computedfile_set.all():
-                computed_file.delete_s3_file()
+            computed_file.delete_s3_file()
 
 
 class ComputationalResultAnnotation(models.Model):
@@ -571,7 +615,7 @@ class ComputationalResultAnnotation(models.Model):
 
     class Meta:
         db_table = "computational_result_annotations"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
 
     # Managers
     objects = models.Manager()
@@ -579,7 +623,8 @@ class ComputationalResultAnnotation(models.Model):
 
     # Relations
     result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     # Properties
     data = JSONField(default=dict)
@@ -602,6 +647,7 @@ class ComputationalResultAnnotation(models.Model):
 # Compendium Computational Result
 class CompendiumResult(models.Model):
     """ Computational Result For A Compendium """
+
     class Meta:
         db_table = "compendium_results"
         base_manager_name = "public_objects"
@@ -610,9 +656,9 @@ class CompendiumResult(models.Model):
         return "CompendiumResult " + str(self.pk)
 
     SVD_ALGORITHM_CHOICES = (
-        ('NONE', 'None'),
-        ('RANDOMIZED', 'randomized'),
-        ('ARPACK', 'arpack'),
+        ("NONE", "None"),
+        ("RANDOMIZED", "randomized"),
+        ("ARPACK", "arpack"),
     )
 
     # Managers
@@ -620,19 +666,23 @@ class CompendiumResult(models.Model):
     public_objects = PublicObjectsManager()
 
     # Relations
-    result = models.ForeignKey(ComputationalResult,
-                               blank=False,
-                               null=False,
-                               related_name='compendium_result',
-                               on_delete=models.CASCADE)
-    primary_organism = models.ForeignKey(Organism,
-                                         blank=False,
-                                         null=False,
-                                         related_name='primary_compendium_results',
-                                         on_delete=models.CASCADE)
-    organisms = models.ManyToManyField(Organism,
-                                       related_name='compendium_results',
-                                       through='CompendiumResultOrganismAssociation')
+    result = models.ForeignKey(
+        ComputationalResult,
+        blank=False,
+        null=False,
+        related_name="compendium_result",
+        on_delete=models.CASCADE,
+    )
+    primary_organism = models.ForeignKey(
+        Organism,
+        blank=False,
+        null=False,
+        related_name="primary_compendium_results",
+        on_delete=models.CASCADE,
+    )
+    organisms = models.ManyToManyField(
+        Organism, related_name="compendium_results", through="CompendiumResultOrganismAssociation"
+    )
 
     # Properties
     quant_sf_only = models.BooleanField(default=False)
@@ -641,21 +691,21 @@ class CompendiumResult(models.Model):
         max_length=255,
         choices=SVD_ALGORITHM_CHOICES,
         default="NONE",
-        help_text='The SVD algorithm that was used to impute the compendium result.'
+        help_text="The SVD algorithm that was used to impute the compendium result.",
     )
 
     # Common Properties
     is_public = models.BooleanField(default=True)
 
-    #helper
+    # helper
     def get_computed_file(self):
         """ Short hand method for getting the computed file for this compendium"""
         return ComputedFile.objects.filter(result=self.result).first()
 
-
-# TODO
-# class Gene(models.Model):
+    # TODO
+    # class Gene(models.Model):
     """ A representation of a Gene """
+
 
 #     class Meta:
 #         db_table = "genes"
@@ -666,11 +716,19 @@ class OrganismIndex(models.Model):
 
     class Meta:
         db_table = "organism_index"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
 
     def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + \
-            ' [' + self.index_type + '] - ' + str(self.salmon_version)
+        return (
+            "OrganismIndex "
+            + str(self.pk)
+            + ": "
+            + self.organism.name
+            + " ["
+            + self.index_type
+            + "] - "
+            + str(self.salmon_version)
+        )
 
     # Managers
     objects = models.Manager()
@@ -679,7 +737,8 @@ class OrganismIndex(models.Model):
     # Relations
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
     result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     index_type = models.CharField(max_length=255)
@@ -734,8 +793,8 @@ class OriginalFile(models.Model):
         db_table = "original_files"
 
         indexes = [
-            models.Index(fields=['filename']),
-            models.Index(fields=['source_filename']),
+            models.Index(fields=["filename"]),
+            models.Index(fields=["source_filename"]),
         ]
 
     def __str__(self):
@@ -756,9 +815,13 @@ class OriginalFile(models.Model):
     s3_key = models.CharField(max_length=255, blank=True, null=True)
 
     # Relations
-    samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
-    processor_jobs = models.ManyToManyField('data_refinery_common.ProcessorJob', through='ProcessorJobOriginalFileAssociation')
-    downloader_jobs = models.ManyToManyField('data_refinery_common.DownloaderJob', through='DownloaderJobOriginalFileAssociation')
+    samples = models.ManyToManyField("Sample", through="OriginalFileSampleAssociation")
+    processor_jobs = models.ManyToManyField(
+        "data_refinery_common.ProcessorJob", through="ProcessorJobOriginalFileAssociation"
+    )
+    downloader_jobs = models.ManyToManyField(
+        "data_refinery_common.DownloaderJob", through="DownloaderJobOriginalFileAssociation"
+    )
 
     # Historical Properties
     source_url = models.TextField()
@@ -784,7 +847,7 @@ class OriginalFile(models.Model):
         self.last_modified = current_time
         return super(OriginalFile, self).save(*args, **kwargs)
 
-    def set_downloaded(self, absolute_file_path, filename = None):
+    def set_downloaded(self, absolute_file_path, filename=None):
         """ Marks the file as downloaded, if `filename` is not provided it will
         be parsed from the `absolute_file_path` """
         self.is_downloaded = True
@@ -831,8 +894,8 @@ class OriginalFile(models.Model):
         except TypeError:
             pass
         except Exception as e:
-            logger.exception("Unexpected delete file exception.",
-                absolute_file_path=self.absolute_file_path
+            logger.exception(
+                "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path
             )
         self.is_downloaded = False
         self.save()
@@ -846,9 +909,7 @@ class OriginalFile(models.Model):
         # If the file has a processor job that hasn't even started
         # yet, then it doesn't need another.
         incomplete_processor_jobs = self.processor_jobs.filter(
-            end_time__isnull=True,
-            success__isnull=True,
-            retried=False
+            end_time__isnull=True, success__isnull=True, retried=False
         )
 
         if own_processor_id:
@@ -888,9 +949,12 @@ class OriginalFile(models.Model):
             if not computed_file:
                 return True
 
-            if computed_file.s3_bucket and computed_file.s3_key \
-               and computed_file.result.organism_index is not None \
-               and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION:
+            if (
+                computed_file.s3_bucket
+                and computed_file.s3_key
+                and computed_file.result.organism_index is not None
+                and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION
+            ):
                 # If the file wasn't computed with the latest
                 # version of salmon, then it should be rerun
                 # with the latest version of salmon.
@@ -908,8 +972,9 @@ class OriginalFile(models.Model):
                 computed_file = sample.get_most_recent_smashable_result_file()
                 if not computed_file:
                     return True
-                if settings.RUNNING_IN_CLOUD \
-                    and (computed_file.s3_bucket is None or computed_file.s3_key is None):
+                if settings.RUNNING_IN_CLOUD and (
+                    computed_file.s3_bucket is None or computed_file.s3_key is None
+                ):
                     return True
 
             return False
@@ -925,14 +990,11 @@ class OriginalFile(models.Model):
         """
         # If the file is downloaded and the file actually exists on disk,
         # then it doens't need to be downloaded.
-        if self.absolute_file_path \
-           and os.path.exists(self.absolute_file_path):
+        if self.absolute_file_path and os.path.exists(self.absolute_file_path):
             return False
 
         unstarted_downloader_jobs = self.downloader_jobs.filter(
-            start_time__isnull=True,
-            success__isnull=True,
-            retried=False
+            start_time__isnull=True, success__isnull=True, retried=False
         )
 
         # If the file has a downloader job that hasn't even started yet,
@@ -947,8 +1009,9 @@ class OriginalFile(models.Model):
         """Return true if original_file is a CEL file or a gzipped CEL file.
         """
         upper_name = self.source_filename.upper()
-        return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") \
-            or (len(upper_name) > 7 and upper_name[-7:] == ".CEL.GZ")
+        return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") or (
+            len(upper_name) > 7 and upper_name[-7:] == ".CEL.GZ"
+        )
 
 
 class ComputedFile(models.Model):
@@ -959,16 +1022,16 @@ class ComputedFile(models.Model):
         get_latest_by = "created_at"
 
         indexes = [
-            models.Index(fields=['filename']),
+            models.Index(fields=["filename"]),
         ]
 
     def __str__(self):
         return "ComputedFile: " + str(self.filename)
 
     SVD_ALGORITHM_CHOICES = (
-        ('NONE', 'None'),
-        ('RANDOMIZED', 'randomized'),
-        ('ARPACK', 'arpack'),
+        ("NONE", "None"),
+        ("RANDOMIZED", "randomized"),
+        ("ARPACK", "arpack"),
     )
 
     # Managers
@@ -976,7 +1039,7 @@ class ComputedFile(models.Model):
     public_objects = PublicObjectsManager()
 
     # Object relations
-    samples = models.ManyToManyField('Sample', through='SampleComputedFileAssociation')
+    samples = models.ManyToManyField("Sample", through="SampleComputedFileAssociation")
 
     # File related
     filename = models.CharField(max_length=255)
@@ -988,7 +1051,8 @@ class ComputedFile(models.Model):
 
     # Relations
     result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     # Scientific
     is_smashable = models.BooleanField(default=False)
@@ -1002,13 +1066,11 @@ class ComputedFile(models.Model):
         max_length=255,
         choices=SVD_ALGORITHM_CHOICES,
         default="NONE",
-        help_text='The SVD algorithm that was used to generate the file.'
+        help_text="The SVD algorithm that was used to generate the file.",
     )
-    compendia_organism = models.ForeignKey(Organism,
-                                        blank=True,
-                                        null=True,
-                                        on_delete=models.CASCADE
-                                    )
+    compendia_organism = models.ForeignKey(
+        Organism, blank=True, null=True, on_delete=models.CASCADE
+    )
     compendia_version = models.IntegerField(blank=True, null=True)
 
     # AWS
@@ -1039,20 +1101,18 @@ class ComputedFile(models.Model):
 
         try:
             S3.upload_file(
-                        self.absolute_file_path,
-                        s3_bucket,
-                        s3_key,
-                        ExtraArgs={
-                            'ACL': 'public-read',
-                            'StorageClass': 'STANDARD_IA'
-                        }
-                    )
+                self.absolute_file_path,
+                s3_bucket,
+                s3_key,
+                ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
+            )
             self.save()
         except Exception as e:
-            logger.exception('Error uploading computed file to S3',
+            logger.exception(
+                "Error uploading computed file to S3",
                 computed_file_id=self.pk,
                 s3_key=self.s3_key,
-                s3_bucket=self.s3_bucket
+                s3_bucket=self.s3_bucket,
             )
             self.s3_bucket = None
             self.s3_key = None
@@ -1084,14 +1144,10 @@ class ComputedFile(models.Model):
         os.makedirs(target_directory, exist_ok=True)
 
         if not self.s3_bucket or not self.s3_key:
-            raise ValueError('Tried to download a computed file with no s3_bucket or s3_key')
+            raise ValueError("Tried to download a computed file with no s3_bucket or s3_key")
 
         try:
-            S3.download_file(
-                        self.s3_bucket,
-                        self.s3_key,
-                        path
-                    )
+            S3.download_file(self.s3_bucket, self.s3_key, path)
 
             # Veryify sync integrity
             synced_sha1 = calculate_sha1(path)
@@ -1113,21 +1169,18 @@ class ComputedFile(models.Model):
         """
         old_bucket = self.s3_bucket
         old_key = self.s3_key
-        copy_source = {
-            'Bucket': old_bucket,
-            'Key': old_key
-        }
+        copy_source = {"Bucket": old_bucket, "Key": old_key}
         try:
-            response = S3.copy_object(Bucket=new_bucket,
-                                      CopySource=copy_source,
-                                      Key=new_key)
+            response = S3.copy_object(Bucket=new_bucket, CopySource=copy_source, Key=new_key)
         except:
-            logger.exception("Could not copy computed file within S3",
-                             computed_file_id=self.id,
-                             source_bucket=old_bucket,
-                             source_key=old_key,
-                             destination_bucket=new_bucket,
-                             destination_key=new_key)
+            logger.exception(
+                "Could not copy computed file within S3",
+                computed_file_id=self.id,
+                source_bucket=old_bucket,
+                source_key=old_key,
+                destination_bucket=new_bucket,
+                destination_key=new_key,
+            )
             return False
 
         try:
@@ -1135,23 +1188,27 @@ class ComputedFile(models.Model):
             self.s3_key = new_key
             self.save()
         except:
-            logger.exception("Could not save computed file after it was copied!!!",
-                             computed_file_id=self.id,
-                             source_bucket=old_bucket,
-                             source_key=old_key,
-                             destination_bucket=new_bucket,
-                             destination_key=new_key)
+            logger.exception(
+                "Could not save computed file after it was copied!!!",
+                computed_file_id=self.id,
+                source_bucket=old_bucket,
+                source_key=old_key,
+                destination_bucket=new_bucket,
+                destination_key=new_key,
+            )
             return False
 
         try:
             response = S3.delete_object(Bucket=old_bucket, Key=old_key)
         except:
-            logger.exception("Could not delete computed file after it was copied and saved!!!",
-                             computed_file_id=self.id,
-                             source_bucket=old_bucket,
-                             source_key=old_key,
-                             destination_bucket=new_bucket,
-                             destination_key=new_key)
+            logger.exception(
+                "Could not delete computed file after it was copied and saved!!!",
+                computed_file_id=self.id,
+                source_bucket=old_bucket,
+                source_key=old_key,
+                destination_bucket=new_bucket,
+                destination_key=new_key,
+            )
             return False
 
         return True
@@ -1180,8 +1237,8 @@ class ComputedFile(models.Model):
         except TypeError:
             pass
         except Exception as e:
-            logger.exception("Unexpected delete file exception.",
-                absolute_file_path=self.absolute_file_path
+            logger.exception(
+                "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path
             )
 
     def delete_s3_file(self, force=False):
@@ -1193,9 +1250,11 @@ class ComputedFile(models.Model):
         try:
             S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
         except:
-            logger.exception("Failed to delete S3 object for Computed File.",
-                             computed_file=self.id,
-                             s3_object=self.s3_key)
+            logger.exception(
+                "Failed to delete S3 object for Computed File.",
+                computed_file=self.id,
+                s3_object=self.s3_key,
+            )
             return False
 
         self.s3_key = None
@@ -1238,12 +1297,9 @@ class ComputedFile(models.Model):
         """ Create a temporary URL from which the file can be downloaded."""
         if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
             return S3.generate_presigned_url(
-                ClientMethod='get_object',
-                Params={
-                    'Bucket': self.s3_bucket,
-                    'Key': self.s3_key
-                },
-                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
+                ClientMethod="get_object",
+                Params={"Bucket": self.s3_bucket, "Key": self.s3_key},
+                ExpiresIn=(60 * 60 * 7 * 24),  # 7 days in seconds.
             )
         else:
             return None
@@ -1256,23 +1312,19 @@ class ComputedFile(models.Model):
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
-    AGGREGATE_CHOICES = (
-        ('ALL', 'All'),
-        ('EXPERIMENT', 'Experiment'),
-        ('SPECIES', 'Species')
-    )
+    AGGREGATE_CHOICES = (("ALL", "All"), ("EXPERIMENT", "Experiment"), ("SPECIES", "Species"))
 
     SCALE_CHOICES = (
-        ('NONE', 'None'),
-        ('MINMAX', 'Minmax'),
-        ('STANDARD', 'Standard'),
-        ('ROBUST', 'Robust'),
+        ("NONE", "None"),
+        ("MINMAX", "Minmax"),
+        ("STANDARD", "Standard"),
+        ("ROBUST", "Robust"),
     )
 
     SVD_ALGORITHM_CHOICES = (
-        ('NONE', 'None'),
-        ('RANDOMIZED', 'randomized'),
-        ('ARPACK', 'arpack'),
+        ("NONE", "None"),
+        ("RANDOMIZED", "randomized"),
+        ("ARPACK", "arpack"),
     )
 
     # ID
@@ -1281,24 +1333,46 @@ class Dataset(models.Model):
     # Experiments and samples live here: {'E-ABC-1': ['SAMP1', 'SAMP2']}
     # This isn't going to be queryable, so we can use JSON-in-text, just make
     # sure we validate properly in and out!
-    data = JSONField(default=dict, help_text="This is a dictionary where the keys are experiment accession codes and the values are lists with sample accession codes. Eg: `{'E-ABC-1': ['SAMP1', 'SAMP2']}`")
+    data = JSONField(
+        default=dict,
+        help_text="This is a dictionary where the keys are experiment accession codes and the values are lists with sample accession codes. Eg: `{'E-ABC-1': ['SAMP1', 'SAMP2']}`",
+    )
 
     # Processing properties
-    aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT", help_text="Specifies how samples are [aggregated](http://docs.refine.bio/en/latest/main_text.html#aggregations).")
-    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE", help_text="Specifies options for [transformations](http://docs.refine.bio/en/latest/main_text.html#transformations).")
+    aggregate_by = models.CharField(
+        max_length=255,
+        choices=AGGREGATE_CHOICES,
+        default="EXPERIMENT",
+        help_text="Specifies how samples are [aggregated](http://docs.refine.bio/en/latest/main_text.html#aggregations).",
+    )
+    scale_by = models.CharField(
+        max_length=255,
+        choices=SCALE_CHOICES,
+        default="NONE",
+        help_text="Specifies options for [transformations](http://docs.refine.bio/en/latest/main_text.html#transformations).",
+    )
     quantile_normalize = models.BooleanField(
         default=True,
-        help_text="Part of the advanced options. Allows [skipping quantile normalization](http://docs.refine.bio/en/latest/faq.html#what-does-it-mean-to-skip-quantile-normalization-for-rna-seq-samples) for RNA-Seq samples."
+        help_text="Part of the advanced options. Allows [skipping quantile normalization](http://docs.refine.bio/en/latest/faq.html#what-does-it-mean-to-skip-quantile-normalization-for-rna-seq-samples) for RNA-Seq samples.",
     )
-    quant_sf_only = models.BooleanField(default=False, help_text="Include only quant.sf files in the generated dataset.")
-    svd_algorithm = models.CharField(max_length=255, choices=SVD_ALGORITHM_CHOICES, default="NONE", help_text="Specifies choice of SVD algorithm")
+    quant_sf_only = models.BooleanField(
+        default=False, help_text="Include only quant.sf files in the generated dataset."
+    )
+    svd_algorithm = models.CharField(
+        max_length=255,
+        choices=SVD_ALGORITHM_CHOICES,
+        default="NONE",
+        help_text="Specifies choice of SVD algorithm",
+    )
 
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
     is_processed = models.BooleanField(default=False)  # Result has been made
     is_available = models.BooleanField(default=False)  # Result is ready for delivery
 
-    processor_jobs = models.ManyToManyField('data_refinery_common.ProcessorJob', through='ProcessorJobDataSetAssociation')
+    processor_jobs = models.ManyToManyField(
+        "data_refinery_common.ProcessorJob", through="ProcessorJobDataSetAssociation"
+    )
 
     # Fail handling
     success = models.NullBooleanField(null=True)
@@ -1313,8 +1387,13 @@ class Dataset(models.Model):
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
-    size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0, help_text="Contains the size in bytes of the processed dataset.")
-    sha1 = models.CharField(max_length=64, null=True, default='')
+    size_in_bytes = models.BigIntegerField(
+        blank=True,
+        null=True,
+        default=0,
+        help_text="Contains the size in bytes of the processed dataset.",
+    )
+    sha1 = models.CharField(max_length=64, null=True, default="")
 
     # Common Properties
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -1368,7 +1447,7 @@ class Dataset(models.Model):
         """ Uses aggregate_by to return a smasher-ready sample dict. """
 
         if self.aggregate_by == "ALL":
-            return {'ALL': self.get_samples()}
+            return {"ALL": self.get_samples()}
         elif self.aggregate_by == "EXPERIMENT":
             return self.get_samples_by_experiment()
         else:
@@ -1377,7 +1456,7 @@ class Dataset(models.Model):
     def is_cross_technology(self):
         """ Determine if this involves both Microarray + RNASeq"""
 
-        if len(self.get_samples().values('technology').distinct()) > 1:
+        if len(self.get_samples().values("technology").distinct()) > 1:
             return True
         else:
             return False
@@ -1391,12 +1470,9 @@ class Dataset(models.Model):
         """ Create a temporary URL from which the file can be downloaded."""
         if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
             return S3.generate_presigned_url(
-                ClientMethod='get_object',
-                Params={
-                    'Bucket': self.s3_bucket,
-                    'Key': self.s3_key
-                },
-                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
+                ClientMethod="get_object",
+                Params={"Bucket": self.s3_bucket, "Key": self.s3_key},
+                ExpiresIn=(60 * 60 * 7 * 24),  # 7 days in seconds.
             )
         else:
             return None
@@ -1412,6 +1488,7 @@ class Dataset(models.Model):
     def has_email(self):
         """ Returns if the email is set or not """
         return bool(self.email_address)
+
 
 class APIToken(models.Model):
     """ Required for starting a smash job """
@@ -1439,6 +1516,7 @@ class APIToken(models.Model):
         """ """
         return settings.TERMS_AND_CONDITIONS
 
+
 """
 # Associations
 
@@ -1453,7 +1531,7 @@ class ExperimentSampleAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_sample_associations"
-        unique_together = ('experiment', 'sample')
+        unique_together = ("experiment", "sample")
 
 
 class ExperimentOrganismAssociation(models.Model):
@@ -1463,37 +1541,42 @@ class ExperimentOrganismAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_organism_associations"
-        unique_together = ('experiment', 'organism')
+        unique_together = ("experiment", "organism")
 
 
 class DownloaderJobOriginalFileAssociation(models.Model):
 
     downloader_job = models.ForeignKey(
-        "data_refinery_common.DownloaderJob", blank=False, null=False, on_delete=models.CASCADE)
+        "data_refinery_common.DownloaderJob", blank=False, null=False, on_delete=models.CASCADE
+    )
     original_file = models.ForeignKey(
-        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     class Meta:
         db_table = "downloaderjob_originalfile_associations"
-        unique_together = ('downloader_job', 'original_file')
+        unique_together = ("downloader_job", "original_file")
 
 
 class ProcessorJobOriginalFileAssociation(models.Model):
 
     processor_job = models.ForeignKey(
-        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE
+    )
     original_file = models.ForeignKey(
-        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     class Meta:
         db_table = "processorjob_originalfile_associations"
-        unique_together = ('processor_job', 'original_file')
+        unique_together = ("processor_job", "original_file")
 
 
 class ProcessorJobDatasetAssociation(models.Model):
 
     processor_job = models.ForeignKey(
-        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE
+    )
     dataset = models.ForeignKey(Dataset, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
@@ -1503,54 +1586,58 @@ class ProcessorJobDatasetAssociation(models.Model):
 class OriginalFileSampleAssociation(models.Model):
 
     original_file = models.ForeignKey(
-        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE
+    )
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "original_file_sample_associations"
-        unique_together = ('original_file', 'sample')
+        unique_together = ("original_file", "sample")
 
 
 class SampleResultAssociation(models.Model):
 
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
     result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     class Meta:
         db_table = "sample_result_associations"
-        unique_together = ('result', 'sample')
+        unique_together = ("result", "sample")
 
 
 class SampleComputedFileAssociation(models.Model):
 
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
     computed_file = models.ForeignKey(
-        ComputedFile, blank=False, null=False, on_delete=models.CASCADE)
+        ComputedFile, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     class Meta:
         db_table = "sample_computed_file_associations"
-        unique_together = ('sample', 'computed_file')
+        unique_together = ("sample", "computed_file")
 
 
 class ExperimentResultAssociation(models.Model):
 
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
     result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE
+    )
 
     class Meta:
         db_table = "experiment_result_associations"
-        unique_together = ('result', 'experiment')
+        unique_together = ("result", "experiment")
 
 
 class CompendiumResultOrganismAssociation(models.Model):
 
     compendium_result = models.ForeignKey(
-        CompendiumResult, blank=False, null=False, on_delete=models.CASCADE)
-    organism = models.ForeignKey(
-        Organism, blank=False, null=False, on_delete=models.CASCADE)
+        CompendiumResult, blank=False, null=False, on_delete=models.CASCADE
+    )
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "compendium_result_organism_associations"
-        unique_together = ('compendium_result', 'organism')
+        unique_together = ("compendium_result", "organism")

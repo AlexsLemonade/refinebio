@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0023_fix_platform_names_spaces'),
+        ("data_refinery_common", "0023_fix_platform_names_spaces"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='processor_jobs',
-            field=models.ManyToManyField(through='data_refinery_common.ProcessorJobDatasetAssociation', to='data_refinery_common.ProcessorJob'),
+            model_name="dataset",
+            name="processor_jobs",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ProcessorJobDatasetAssociation",
+                to="data_refinery_common.ProcessorJob",
+            ),
         ),
     ]

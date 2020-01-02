@@ -28,13 +28,17 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
-DOWNLOAD_SOURCE = "NCBI" # or "ENA". Change this to download from NCBI (US) or ENA (UK).
+DOWNLOAD_SOURCE = "NCBI"  # or "ENA". Change this to download from NCBI (US) or ENA (UK).
 ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}"
 ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
-NCBI_DOWNLOAD_URL_TEMPLATE = ("anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
-                             "{first_three}/{first_six}/{accession}/{accession}.sra")
-NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE = ("anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
-                             "{first_three}/{first_six}/{accession}/{accession}.sra")
+NCBI_DOWNLOAD_URL_TEMPLATE = (
+    "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
+    "{first_three}/{first_six}/{accession}/{accession}.sra"
+)
+NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE = (
+    "anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
+    "{first_three}/{first_six}/{accession}/{accession}.sra"
+)
 
 
 class UnsupportedDataTypeError(Exception):
@@ -68,8 +72,8 @@ class SraSurveyor(ExternalSourceSurveyor):
         submission_metadata = submission_xml.attrib
 
         # We already have these
-        submission_metadata.pop("accession", '')
-        submission_metadata.pop("alias", '')
+        submission_metadata.pop("accession", "")
+        submission_metadata.pop("alias", "")
 
         metadata.update(submission_metadata)
 
@@ -92,8 +96,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         if metadata["library_strategy"] != "RNA-Seq":
             raise UnsupportedDataTypeError("library_strategy not RNA-Seq.")
         if metadata["library_source"] not in ["TRANSCRIPTOMIC", "OTHER"]:
-            raise UnsupportedDataTypeError("library_source: " + metadata["library_source"]
-                                           + " not TRANSCRIPTOMIC or OTHER.")
+            raise UnsupportedDataTypeError(
+                "library_source: " + metadata["library_source"] + " not TRANSCRIPTOMIC or OTHER."
+            )
 
     @staticmethod
     def parse_read_spec(metadata: Dict, read_spec: ET.Element, counter: int) -> None:
@@ -159,7 +164,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         return (key, value)
 
     @staticmethod
-    def parse_attribute(attribute: ET.ElementTree, key_prefix: str ="") -> (str, str):
+    def parse_attribute(attribute: ET.ElementTree, key_prefix: str = "") -> (str, str):
         """Parse an XML attribute.
 
         Takes an optional key_prefix which is used to differentiate
@@ -184,9 +189,9 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
 
-
         response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(run_accession))
+            ENA_METADATA_URL_TEMPLATE.format(run_accession)
+        )
         try:
             run_xml = ET.fromstring(response.text)
         except Exception as e:
@@ -300,15 +305,11 @@ class SraSurveyor(ExternalSourceSurveyor):
             # ..else, load balancing via coin flip.
             if random.choice([True, False]):
                 download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
-                    first_three=first_three,
-                    first_six=first_six,
-                    accession=accession
+                    first_three=first_three, first_six=first_six, accession=accession
                 )
             else:
                 download_url = NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE.format(
-                    first_three=first_three,
-                    first_six=first_six,
-                    accession=accession
+                    first_three=first_three, first_six=first_six, accession=accession
                 )
 
         return download_url
@@ -355,7 +356,10 @@ class SraSurveyor(ExternalSourceSurveyor):
             # key is present but its value is None, in which case None
             # is returned, causing our database constraint to be
             # violated.
-            if "library_construction_protocol" in metadata and metadata["library_construction_protocol"]:
+            if (
+                "library_construction_protocol" in metadata
+                and metadata["library_construction_protocol"]
+            ):
                 experiment.protocol_description = metadata["library_construction_protocol"]
             else:
                 experiment.protocol_description = "Protocol was never provided."
@@ -366,25 +370,29 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment.publication_title = pubmed_metadata[0]
             experiment.publication_authors = pubmed_metadata[1]
 
-
-    def _generate_experiment_and_samples(self, run_accession: str, study_accession: str=None) -> (Experiment, List[Sample]):
+    def _generate_experiment_and_samples(
+        self, run_accession: str, study_accession: str = None
+    ) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
 
         if metadata == {}:
             if study_accession:
-                logger.error("Could not discover any metadata for run.",
-                             accession=run_accession,
-                             study_accession=study_accession)
+                logger.error(
+                    "Could not discover any metadata for run.",
+                    accession=run_accession,
+                    study_accession=study_accession,
+                )
             else:
-                logger.error("Could not discover any metadata for run.",
-                             accession=run_accession)
+                logger.error("Could not discover any metadata for run.", accession=run_accession)
             return (None, None)  # This will cascade properly
 
         if DOWNLOAD_SOURCE == "ENA":
             if metadata["library_layout"] == "PAIRED":
-                files_urls = [_build_ena_file_url(run_accession, "_1"),
-                              _build_ena_file_url(run_accession, "_2")]
+                files_urls = [
+                    _build_ena_file_url(run_accession, "_1"),
+                    _build_ena_file_url(run_accession, "_2"),
+                ]
             else:
                 files_urls = [_build_ena_file_url(run_accession)]
         else:
@@ -393,8 +401,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         # Figure out the Organism for this sample
         organism_name = metadata.pop("organism_name", None)
         if not organism_name:
-            logger.error("Could not discover organism type for run.",
-                         accession=run_accession)
+            logger.error("Could not discover organism type for run.", accession=run_accession)
             return (None, None)  # This will cascade properly
 
         organism_name = organism_name.upper()
@@ -404,12 +411,14 @@ class SraSurveyor(ExternalSourceSurveyor):
         # Experiment
         ##
 
-        experiment_accession_code = metadata.get('study_accession')
+        experiment_accession_code = metadata.get("study_accession")
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
-            logger.debug("Experiment already exists, skipping object creation.",
-                         experiment_accession_code=experiment_accession_code,
-                         survey_job=self.survey_job.id)
+            logger.debug(
+                "Experiment already exists, skipping object creation.",
+                experiment_accession_code=experiment_accession_code,
+                survey_job=self.survey_job.id,
+            )
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
@@ -429,7 +438,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         # Samples
         ##
 
-        sample_accession_code = metadata.pop('run_accession')
+        sample_accession_code = metadata.pop("run_accession")
         # Create the sample object
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
@@ -438,16 +447,18 @@ class SraSurveyor(ExternalSourceSurveyor):
             protocol_info, is_updated = self.update_sample_protocol_info(
                 sample_object.protocol_info,
                 experiment_object.protocol_description,
-                experiment_object.source_url
+                experiment_object.source_url,
             )
             if is_updated:
                 sample_object.protocol_info = protocol_info
                 sample_object.save()
 
-            logger.debug("Sample %s already exists, skipping object creation.",
-                         sample_accession_code,
-                         experiment_accession_code=experiment_object.accession_code,
-                         survey_job=self.survey_job.id)
+            logger.debug(
+                "Sample %s already exists, skipping object creation.",
+                sample_accession_code,
+                experiment_accession_code=experiment_object.accession_code,
+                survey_job=self.survey_job.id,
+            )
         except Sample.DoesNotExist:
             sample_object = Sample()
             sample_object.source_database = "SRA"
@@ -459,8 +470,10 @@ class SraSurveyor(ExternalSourceSurveyor):
             # accession codes shouldn't have spaces though:
             sample_object.platform_accession_code = sample_object.platform_name.replace(" ", "")
             sample_object.technology = "RNA-SEQ"
-            if "ILLUMINA" in sample_object.platform_name.upper() \
-            or "NEXTSEQ" in sample_object.platform_name.upper():
+            if (
+                "ILLUMINA" in sample_object.platform_name.upper()
+                or "NEXTSEQ" in sample_object.platform_name.upper()
+            ):
                 sample_object.manufacturer = "ILLUMINA"
             elif "ION TORRENT" in sample_object.platform_name.upper():
                 sample_object.manufacturer = "ION_TORRENT"
@@ -472,7 +485,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             protocol_info, is_updated = self.update_sample_protocol_info(
                 existing_protocols=[],
                 experiment_protocol=experiment_object.protocol_description,
-                experiment_url=experiment_object.source_url
+                experiment_url=experiment_object.source_url,
             )
             # Do not check is_updated the first time because we must
             # save a list so we can append to it later.
@@ -482,24 +495,22 @@ class SraSurveyor(ExternalSourceSurveyor):
 
             for file_url in files_urls:
                 original_file = OriginalFile.objects.get_or_create(
-                        source_url = file_url,
-                        source_filename = file_url.split('/')[-1],
-                        has_raw = True
-                    )[0]
+                    source_url=file_url, source_filename=file_url.split("/")[-1], has_raw=True
+                )[0]
                 original_file_sample_association = OriginalFileSampleAssociation.objects.get_or_create(
-                        original_file = original_file,
-                        sample = sample_object
-                    )
+                    original_file=original_file, sample=sample_object
+                )
 
         # Create associations if they don't already exist
         ExperimentSampleAssociation.objects.get_or_create(
-            experiment=experiment_object, sample=sample_object)
+            experiment=experiment_object, sample=sample_object
+        )
 
         ExperimentOrganismAssociation.objects.get_or_create(
-            experiment=experiment_object, organism=organism)
+            experiment=experiment_object, organism=organism
+        )
 
         return experiment_object, [sample_object]
-
 
     @staticmethod
     def update_sample_protocol_info(existing_protocols, experiment_protocol, experiment_url):
@@ -514,16 +525,12 @@ class SraSurveyor(ExternalSourceSurveyor):
         if experiment_protocol == "Protocol was never provided.":
             return (existing_protocols, False)
 
-        existing_descriptions = [protocol['Description'] for protocol in existing_protocols]
+        existing_descriptions = [protocol["Description"] for protocol in existing_protocols]
         if experiment_protocol in existing_descriptions:
             return (existing_protocols, False)
 
-        existing_protocols.append({
-            'Description': experiment_protocol,
-            'Reference': experiment_url
-        })
+        existing_protocols.append({"Description": experiment_protocol, "Reference": experiment_url})
         return (existing_protocols, True)
-
 
     def discover_experiment_and_samples(self):
         """Returns an experiment and a list of samples for an SRA accession"""
@@ -532,22 +539,24 @@ class SraSurveyor(ExternalSourceSurveyor):
         accession = survey_job_properties["experiment_accession_code"]
 
         # SRA Surveyor is mainly designed for SRRs, this handles SRPs
-        if 'SRP' in accession or 'ERP' in accession or 'DRP' in accession:
-            response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(accession))
+        if "SRP" in accession or "ERP" in accession or "DRP" in accession:
+            response = utils.requests_retry_session().get(
+                ENA_METADATA_URL_TEMPLATE.format(accession)
+            )
             experiment_xml = ET.fromstring(response.text)[0]
             study_links = experiment_xml[2]  # STUDY_LINKS
 
             accessions_to_run = []
             for child in study_links:
-                if child[0][0].text == 'ENA-RUN':
+                if child[0][0].text == "ENA-RUN":
 
                     all_runs = child[0][1].text
 
                     # Ranges can be disjoint, separated by commas
-                    run_segments = all_runs.split(',')
+                    run_segments = all_runs.split(",")
                     for segment in run_segments:
-                        if '-' in segment:
-                            start, end = segment.split('-')
+                        if "-" in segment:
+                            start, end = segment.split("-")
                         else:
                             start = segment
                             end = segment
@@ -562,12 +571,16 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment = None
             all_samples = []
             for run_id in accessions_to_run:
-                logger.debug("Surveying SRA Run Accession %s for Experiment %s",
-                             run_id,
-                             accession,
-                             survey_job=self.survey_job.id)
+                logger.debug(
+                    "Surveying SRA Run Accession %s for Experiment %s",
+                    run_id,
+                    accession,
+                    survey_job=self.survey_job.id,
+                )
 
-                returned_experiment, samples = self._generate_experiment_and_samples(run_id, accession)
+                returned_experiment, samples = self._generate_experiment_and_samples(
+                    run_id, accession
+                )
 
                 # Some runs may return (None, None). If this happens
                 # we don't want to set experiment to None.
@@ -584,7 +597,5 @@ class SraSurveyor(ExternalSourceSurveyor):
             return experiment, all_samples
 
         else:
-            logger.debug("Surveying SRA Run Accession %s",
-                         accession,
-                         survey_job=self.survey_job.id)
+            logger.debug("Surveying SRA Run Accession %s", accession, survey_job=self.survey_job.id)
             return self._generate_experiment_and_samples(accession)

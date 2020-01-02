@@ -13,8 +13,7 @@ import sys
 
 # fix sys path so we don't need to setup PYTHONPATH
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
-os.environ['DJANGO_SETTINGS_MODULE'] = \
-    'performant_pagination.runtests.settings'
+os.environ["DJANGO_SETTINGS_MODULE"] = "performant_pagination.runtests.settings"
 
 import django
 from django.conf import settings
@@ -37,19 +36,20 @@ def main():
 
     test_runner = TestRunner()
     if len(sys.argv) == 2:
-        test_case = '.' + sys.argv[1]
+        test_case = "." + sys.argv[1]
     elif len(sys.argv) == 1:
-        test_case = ''
+        test_case = ""
     else:
         print(usage())
         sys.exit(1)
-    test_module_name = 'performant_pagination.tests'
+    test_module_name = "performant_pagination.tests"
     if django.VERSION[0] == 1 and django.VERSION[1] < 6:
-        test_module_name = 'tests'
+        test_module_name = "tests"
 
     failures = test_runner.run_tests([test_module_name + test_case])
 
     sys.exit(failures)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

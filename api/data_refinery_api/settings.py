@@ -25,72 +25,68 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_env_variable('DJANGO_SECRET_KEY')
+SECRET_KEY = get_env_variable("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_variable('DJANGO_DEBUG') == "True"
+DEBUG = get_env_variable("DJANGO_DEBUG") == "True"
 
 # XXX: Should be closed down when we figure out domain endpoints
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_HEADERS = default_headers + (
-    'API-KEY',
-)
+CORS_ALLOW_HEADERS = default_headers + ("API-KEY",)
 
 # Application definition
 
 INSTALLED_APPS = [
     # Framework
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.postgres',
-    'django.contrib.staticfiles',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.postgres",
+    "django.contrib.staticfiles",
     # 3rd Party
-    'rest_framework',
-    'rest_framework_hstore',
-    'coreapi',
-    'django_filters',
-    'corsheaders',
-    'raven.contrib.django.raven_compat',
-    'django_elasticsearch_dsl',
-    'django_elasticsearch_dsl_drf',
-    'drf_yasg',
-
+    "rest_framework",
+    "rest_framework_hstore",
+    "coreapi",
+    "django_filters",
+    "corsheaders",
+    "raven.contrib.django.raven_compat",
+    "django_elasticsearch_dsl",
+    "django_elasticsearch_dsl_drf",
+    "drf_yasg",
     # Local
-    'data_refinery_common',
-    'data_refinery_api'
+    "data_refinery_common",
+    "data_refinery_api",
 ]
 
 MIDDLEWARE = [
-    'data_refinery_api.middleware.RevisionMiddleware',
-    'data_refinery_api.middleware.SentryCatchBadRequestMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "data_refinery_api.middleware.RevisionMiddleware",
+    "data_refinery_api.middleware.SentryCatchBadRequestMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'data_refinery_api.urls'
+ROOT_URLCONF = "data_refinery_api.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
@@ -104,16 +100,14 @@ TEMPLATES = [
 
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': get_env_variable('DATABASE_NAME'),
-        'USER': get_env_variable('DATABASE_USER'),
-        'PASSWORD': get_env_variable('DATABASE_PASSWORD'),
-        'HOST': get_env_variable('DATABASE_HOST'),
-        'PORT': get_env_variable('DATABASE_PORT'),
-        'OPTIONS': {
-            'connect_timeout': get_env_variable('DATABASE_TIMEOUT')
-        }
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": get_env_variable("DATABASE_NAME"),
+        "USER": get_env_variable("DATABASE_USER"),
+        "PASSWORD": get_env_variable("DATABASE_PASSWORD"),
+        "HOST": get_env_variable("DATABASE_HOST"),
+        "PORT": get_env_variable("DATABASE_PORT"),
+        "OPTIONS": {"connect_timeout": get_env_variable("DATABASE_TIMEOUT")},
     }
 }
 
@@ -122,31 +116,19 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': ('django.contrib.auth.password_validation' +
-                 '.UserAttributeSimilarityValidator'),
-    },
-    {
-        'NAME': ('django.contrib.auth.password_validation.' +
-                 'MinimumLengthValidator'),
-    },
-    {
-        'NAME': ('django.contrib.auth.password_validation' +
-                 '.CommonPasswordValidator'),
-    },
-    {
-        'NAME': ('django.contrib.auth.password_validation' +
-                 '.NumericPasswordValidator'),
-    },
+    {"NAME": ("django.contrib.auth.password_validation" + ".UserAttributeSimilarityValidator"),},
+    {"NAME": ("django.contrib.auth.password_validation." + "MinimumLengthValidator"),},
+    {"NAME": ("django.contrib.auth.password_validation" + ".CommonPasswordValidator"),},
+    {"NAME": ("django.contrib.auth.password_validation" + ".NumericPasswordValidator"),},
 ]
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -158,10 +140,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATIC_ROOT = "/tmp/www/static/"
 STATICFILES_DIRS = [
-    '',
+    "",
 ]
 
 
@@ -169,9 +151,9 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/2.2/topics/cache/
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'cache_table',
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "cache_table",
     }
 }
 
@@ -186,14 +168,14 @@ ENABLE_SERVER_SIDE_CURSORS = False
 ##
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 25,
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 25,
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
 }
 
 SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,
-    'SECURITY_DEFINITIONS': {},
+    "USE_SESSION_AUTH": False,
+    "SECURITY_DEFINITIONS": {},
 }
 
 # Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
@@ -201,38 +183,41 @@ SWAGGER_SETTINGS = {
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-raven_dsn = get_env_variable_gracefully('RAVEN_DSN_API', False)
+raven_dsn = get_env_variable_gracefully("RAVEN_DSN_API", False)
 if raven_dsn != "not set":
     RAVEN_CONFIG = {
-        'dsn': raven_dsn,
+        "dsn": raven_dsn,
         # Only send 5% of errors for the API, since we aren't going to
         # be interested in any single one.
-        'sampleRate': 0.25
+        "sampleRate": 0.25,
     }
 else:
     # Preven raven from logging about how it's not configured...
     import logging
-    raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
+
+    raven_logger = logging.getLogger("raven.contrib.django.client.DjangoClient")
     raven_logger.setLevel(logging.CRITICAL)
 
-RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
+RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
-ENVIRONMENT = get_env_variable_gracefully('ENVIRONMENT')
+ENVIRONMENT = get_env_variable_gracefully("ENVIRONMENT")
 
 # Elastic Search
 ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': get_env_variable('ELASTICSEARCH_HOST') + ":" + get_env_variable('ELASTICSEARCH_PORT')
+    "default": {
+        "hosts": get_env_variable("ELASTICSEARCH_HOST")
+        + ":"
+        + get_env_variable("ELASTICSEARCH_PORT")
     }
 }
 
-if 'test' in sys.argv:
+if "test" in sys.argv:
     ELASTICSEARCH_INDEX_NAMES = {
-        'data_refinery_common.models.documents': 'experiments_test',
+        "data_refinery_common.models.documents": "experiments_test",
     }
 else:
     ELASTICSEARCH_INDEX_NAMES = {
-        'data_refinery_common.models.documents': 'experiments',
+        "data_refinery_common.models.documents": "experiments",
     }
     ELASTICSEARCH_DSL_AUTOSYNC = False
 
@@ -353,4 +338,4 @@ Last Updated: March 2, 2018
 """
 
 # EngagementBot
-ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully('ENGAGEMENTBOT_WEBHOOK')
+ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
