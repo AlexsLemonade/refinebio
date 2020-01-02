@@ -11,7 +11,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     Sample,
     OriginalFileSampleAssociation,
-    Organism
+    Organism,
 )
 from django.utils import timezone
 from data_refinery_workers.processors import utils
@@ -25,7 +25,9 @@ def prepare_job():
     original_file = OriginalFile()
     original_file.source_filename = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"
     original_file.filename = "GSM1426071_CD_colon_active_1.CEL"
-    original_file.absolute_file_path = "/home/user/data_store/raw/TEST/CEL/GSM1426071_CD_colon_active_1.CEL"
+    original_file.absolute_file_path = (
+        "/home/user/data_store/raw/TEST/CEL/GSM1426071_CD_colon_active_1.CEL"
+    )
     original_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
@@ -34,7 +36,7 @@ def prepare_job():
     assoc1.save()
 
     c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
-    
+
     sample = Sample()
     sample.title = "Heyo"
     sample.organism = c_elegans
@@ -59,9 +61,9 @@ class StartJobTestCase(TestCase):
         # start_job preserves the "job" key
         self.assertEqual(job_context["job"], processor_job)
 
-        job_context['success'] = True
+        job_context["success"] = True
         job_context = utils.end_job(job_context)
-        for sample in job_context['samples']:
+        for sample in job_context["samples"]:
             self.assertTrue(sample.is_processed)
 
     def test_failure(self):
@@ -89,6 +91,7 @@ class StartJobTestCase(TestCase):
 
             self.assertRaises(utils.start_job({"job": job}))
 
+
 class RunPipelineTestCase(TestCase):
     def test_no_job(self):
         mock_processor = MagicMock()
@@ -98,9 +101,7 @@ class RunPipelineTestCase(TestCase):
     def test_processor_failure(self):
         processor_job = ProcessorJob()
         processor_job.save()
-        job_context = {"job_id": processor_job.id,
-                       "job": processor_job,
-                       "batches": []}
+        job_context = {"job_id": processor_job.id, "job": processor_job, "batches": []}
 
         mock_processor = MagicMock()
         mock_processor.__name__ = "Fake processor."

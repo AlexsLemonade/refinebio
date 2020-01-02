@@ -20,7 +20,7 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import (
     get_env_variable,
     get_readable_affymetrix_names,
-    get_affymetrix_annotation_package_name_overrides
+    get_affymetrix_annotation_package_name_overrides,
 )
 from data_refinery_workers.processors import utils
 
@@ -46,8 +46,9 @@ def _prepare_files(job_context: Dict) -> Dict:
     try:
         os.makedirs(job_context["work_dir"])
     except Exception as e:
-        logger.exception("Could not create work directory for processor job.",
-                         job_context=job_context)
+        logger.exception(
+            "Could not create work directory for processor job.", job_context=job_context
+        )
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
         return job_context
@@ -86,10 +87,12 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     """
     input_file = job_context["input_file_path"]
     try:
-        header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
+        header = ro.r["::"]("affyio", "read.celfile.header")(input_file)
     except RRuntimeError as e:
-        error_template = ("Unable to read Affy header in input file {0}"
-                          " while running AFFY_TO_PCL due to error: {1}")
+        error_template = (
+            "Unable to read Affy header in input file {0}"
+            " while running AFFY_TO_PCL due to error: {1}"
+        )
         error_message = error_template.format(input_file, str(e))
         logger.info(error_message, processor_job=job_context["job"].id)
         job_context["job"].failure_reason = error_message
@@ -116,8 +119,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
 
     # ref: https://github.com/AlexsLemonade/refinebio/issues/1986
     job_context["annotation_override"] = get_affymetrix_annotation_package_name_overrides().get(
-        package_name_without_version,
-        None
+        package_name_without_version, None
     )
 
     return job_context
@@ -147,8 +149,8 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         # filtering all of them we silence a lot of useless output
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            scan_upc = ro.r['::']('SCAN.UPC', 'SCANfast')
-            job_context['time_start'] = timezone.now()
+            scan_upc = ro.r["::"]("SCAN.UPC", "SCANfast")
+            job_context["time_start"] = timezone.now()
 
             # Related: https://github.com/AlexsLemonade/refinebio/issues/64
             if job_context["brainarray_package"]:
@@ -165,7 +167,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
             scan_upc_named_args = {
                 "probeSummaryPackage": job_context["brainarray_package"],
-                "annotationPackageName": job_context["annotation_override"]
+                "annotationPackageName": job_context["annotation_override"],
             }
 
             # rpy2 doesn't like None as a value for arguments so let's filter them out
@@ -173,11 +175,13 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
             scan_upc(input_file, job_context["output_file_path"], **optional_args)
 
-            job_context['time_end'] = timezone.now()
+            job_context["time_end"] = timezone.now()
 
     except RRuntimeError as e:
-        error_template = ("Encountered error in R code while running AFFY_TO_PCL"
-                          " pipeline during processing of {0}: {1}")
+        error_template = (
+            "Encountered error in R code while running AFFY_TO_PCL"
+            " pipeline during processing of {0}: {1}"
+        )
         error_message = error_template.format(input_file, str(e))
         logger.error(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
@@ -191,12 +195,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.commands.append('SCAN.UPC::SCANfast')
+    result.commands.append("SCAN.UPC::SCANfast")
     result.is_ccdl = True
     result.is_public = True
 
-    result.time_start = job_context['time_start']
-    result.time_end = job_context['time_end']
+    result.time_start = job_context["time_start"]
+    result.time_end = job_context["time_end"]
     try:
         processor_key = "AFFYMETRIX_SCAN"
         result.processor = utils.find_processor(processor_key)
@@ -204,7 +208,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         return utils.handle_processor_exception(job_context, processor_key, e)
 
     result.save()
-    job_context['pipeline'].steps.append(result.id)
+    job_context["pipeline"].steps.append(result.id)
 
     # Create a ComputedFile for the sample
     computed_file = ComputedFile()
@@ -216,20 +220,19 @@ def _create_result_objects(job_context: Dict) -> Dict:
     computed_file.is_smashable = True
     computed_file.is_qc = False
     computed_file.save()
-    job_context['computed_files'].append(computed_file)
+    job_context["computed_files"].append(computed_file)
 
-    for sample in job_context['samples']:
+    for sample in job_context["samples"]:
         assoc = SampleResultAssociation()
         assoc.sample = sample
         assoc.result = result
         assoc.save()
 
         SampleComputedFileAssociation.objects.get_or_create(
-            sample=sample,
-            computed_file=computed_file)
+            sample=sample, computed_file=computed_file
+        )
 
-    logger.debug("Created %s", result,
-                 processor_job=job_context["job_id"])
+    logger.debug("Created %s", result, processor_job=job_context["job_id"])
     job_context["success"] = True
 
     return job_context
@@ -237,10 +240,14 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
 def affy_to_pcl(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.ARRAY_EXPRESS.value)
-    utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
-                       [utils.start_job,
-                        _prepare_files,
-                        _determine_brainarray_package,
-                        _run_scan_upc,
-                        _create_result_objects,
-                        utils.end_job])
+    utils.run_pipeline(
+        {"job_id": job_id, "pipeline": pipeline},
+        [
+            utils.start_job,
+            _prepare_files,
+            _determine_brainarray_package,
+            _run_scan_upc,
+            _create_result_objects,
+            utils.end_job,
+        ],
+    )

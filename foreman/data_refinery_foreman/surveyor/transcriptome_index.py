@@ -18,23 +18,30 @@ logger = get_and_configure_logger(__name__)
 
 
 MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
-DIVISION_URL_TEMPLATE = ("https://rest.ensembl.org/info/genomes/division/{division}"
-                         "?content-type=application/json")
+DIVISION_URL_TEMPLATE = (
+    "https://rest.ensembl.org/info/genomes/division/{division}" "?content-type=application/json"
+)
 
-TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
-                              "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
-GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
-                    "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
+TRANSCRIPTOME_URL_TEMPLATE = (
+    "ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
+    "{filename_species}.{assembly}.dna.{schema_type}.fa.gz"
+)
+GTF_URL_TEMPLATE = (
+    "ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
+    "{filename_species}.{assembly}.{assembly_version}.gtf.gz"
+)
 
 
 # For whatever reason the division in the download URL is shortened in
 # a way that doesn't seem to be discoverable programmatically. I've
 # therefore created this lookup map:
-DIVISION_LOOKUP = {"EnsemblPlants": "plants",
-                   "EnsemblFungi": "fungi",
-                   "EnsemblBacteria": "bacteria",
-                   "EnsemblProtists": "protists",
-                   "EnsemblMetazoa": "metazoa"}
+DIVISION_LOOKUP = {
+    "EnsemblPlants": "plants",
+    "EnsemblFungi": "fungi",
+    "EnsemblBacteria": "bacteria",
+    "EnsemblProtists": "protists",
+    "EnsemblMetazoa": "metazoa",
+}
 
 
 # Ensembl will periodically release updated versions of the
@@ -60,7 +67,9 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
+        self.assembly_version = (
+            utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
+        )
 
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
@@ -71,13 +80,16 @@ class EnsemblUrlBuilder(ABC):
         self.taxonomy_id = species["taxonomy_id"]
 
     def build_transcriptome_url(self) -> str:
-        url_root = self.url_root.format(assembly_version=self.assembly_version,
-                                        short_division=self.short_division)
-        url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
-                                                species_sub_dir=self.species_sub_dir,
-                                                filename_species=self.filename_species,
-                                                assembly=self.assembly,
-                                                schema_type="primary_assembly")
+        url_root = self.url_root.format(
+            assembly_version=self.assembly_version, short_division=self.short_division
+        )
+        url = TRANSCRIPTOME_URL_TEMPLATE.format(
+            url_root=url_root,
+            species_sub_dir=self.species_sub_dir,
+            filename_species=self.filename_species,
+            assembly=self.assembly,
+            schema_type="primary_assembly",
+        )
 
         # If the primary_assembly is not available use toplevel instead.
         try:
@@ -92,13 +104,16 @@ class EnsemblUrlBuilder(ABC):
         return url
 
     def build_gtf_url(self) -> str:
-        url_root = self.url_root.format(assembly_version=self.assembly_version,
-                                        short_division=self.short_division)
-        return GTF_URL_TEMPLATE.format(url_root=url_root,
-                                       species_sub_dir=self.species_sub_dir,
-                                       filename_species=self.filename_species,
-                                       assembly=self.assembly,
-                                       assembly_version=self.assembly_version)
+        url_root = self.url_root.format(
+            assembly_version=self.assembly_version, short_division=self.short_division
+        )
+        return GTF_URL_TEMPLATE.format(
+            url_root=url_root,
+            species_sub_dir=self.species_sub_dir,
+            filename_species=self.filename_species,
+            assembly=self.assembly,
+            assembly_version=self.assembly_version,
+        )
 
 
 class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
@@ -118,8 +133,9 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        self.assembly_version = utils.requests_retry_session().get(
-            MAIN_RELEASE_URL).json()["release"]
+        self.assembly_version = (
+            utils.requests_retry_session().get(MAIN_RELEASE_URL).json()["release"]
+        )
         self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 
@@ -197,7 +213,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
-        
+
         platform_accession_code = species.pop("division")
         self._clean_metadata(species)
 
@@ -234,35 +250,34 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         try:
             species_files = self.discover_species()
         except Exception:
-            logger.exception(("Exception caught while discovering species. "
-                              "Terminating survey job."),
-                             survey_job=self.survey_job.id)
+            logger.exception(
+                ("Exception caught while discovering species. " "Terminating survey job."),
+                survey_job=self.survey_job.id,
+            )
             return False
 
         try:
             for specie_file_list in species_files:
-                self.queue_downloader_job_for_original_files(specie_file_list,
-                                                             is_transcriptome=True)
+                self.queue_downloader_job_for_original_files(
+                    specie_file_list, is_transcriptome=True
+                )
         except Exception:
-            logger.exception(("Failed to queue downloader jobs. "
-                              "Terminating survey job."),
-                             survey_job=self.survey_job.id)
+            logger.exception(
+                ("Failed to queue downloader jobs. " "Terminating survey job."),
+                survey_job=self.survey_job.id,
+            )
             return False
 
         return True
 
     def discover_species(self):
-        ensembl_division = (
-            SurveyJobKeyValue
-            .objects
-            .get(survey_job_id=self.survey_job.id,
-                 key__exact="ensembl_division")
-            .value
-        )
+        ensembl_division = SurveyJobKeyValue.objects.get(
+            survey_job_id=self.survey_job.id, key__exact="ensembl_division"
+        ).value
 
-        logger.info("Surveying %s division of ensembl.",
-                    ensembl_division,
-                    survey_job=self.survey_job.id)
+        logger.info(
+            "Surveying %s division of ensembl.", ensembl_division, survey_job=self.survey_job.id
+        )
 
         # The main division has a different base URL for its REST API.
         if ensembl_division == "Ensembl":
@@ -272,13 +287,16 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             # distinguish between a singlular species and multiple species.
             specieses = r.json()["species"]
         else:
-            r = utils.requests_retry_session().get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
+            r = utils.requests_retry_session().get(
+                DIVISION_URL_TEMPLATE.format(division=ensembl_division)
+            )
             specieses = r.json()
 
         try:
-            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id,
-                                                          key__exact="organism_name").value
-            organism_name = organism_name.lower().replace(' ', "_")
+            organism_name = SurveyJobKeyValue.objects.get(
+                survey_job_id=self.survey_job.id, key__exact="organism_name"
+            ).value
+            organism_name = organism_name.lower().replace(" ", "_")
         except SurveyJobKeyValue.DoesNotExist:
             organism_name = None
 
@@ -288,8 +306,9 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 # This key varies based on whether the division is the
                 # main one or not... why couldn't they just make them
                 # consistent?
-                if ('species' in species and species['species'] == organism_name) \
-                   or ('name' in species and species['name'] == organism_name):
+                if ("species" in species and species["species"] == organism_name) or (
+                    "name" in species and species["name"] == organism_name
+                ):
                     all_new_species.append(self._generate_files(species))
                     break
         else:
@@ -297,8 +316,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 all_new_species.append(self._generate_files(species))
 
         if len(all_new_species) == 0:
-            logger.error("Unable to find any species!",
-                         ensembl_division=ensembl_division,
-                         organism_name=organism_name)
+            logger.error(
+                "Unable to find any species!",
+                ensembl_division=ensembl_division,
+                organism_name=organism_name,
+            )
 
         return all_new_species

@@ -22,10 +22,11 @@ from data_refinery_common.models import (
     Sample,
 )
 
+
 class OrganismShepherdTestCase(TransactionTestCase):
-    @patch('data_refinery_foreman.foreman.management.commands.organism_shepherd.get_active_volumes')
-    @patch('data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job')
-    @patch('data_refinery_foreman.foreman.management.commands.organism_shepherd.Nomad')
+    @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.get_active_volumes")
+    @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job")
+    @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.Nomad")
     def test_organism_shepherd_command(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         """Tests that the organism shepherd requeues jobs in the right order.
 
@@ -42,7 +43,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes =  {"1", "2", "3"}
+        active_volumes = {"1", "2", "3"}
         mock_get_active_volumes.return_value = active_volumes
 
         def mock_init_nomad(host, port=0, timeout=0):
@@ -52,30 +53,30 @@ class OrganismShepherdTestCase(TransactionTestCase):
             ret_value.jobs.get_jobs.side_effect = lambda: []
             return ret_value
 
-        mock_nomad.side_effect=mock_init_nomad
+        mock_nomad.side_effect = mock_init_nomad
         zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
         zebrafish.save()
 
-
         # Experiment that is 0% complete.
-        zero_percent_experiment = Experiment(accession_code='ERP037000')
-        zero_percent_experiment.technology = 'RNA-SEQ'
+        zero_percent_experiment = Experiment(accession_code="ERP037000")
+        zero_percent_experiment.technology = "RNA-SEQ"
         zero_percent_experiment.save()
 
         organism_assoc = ExperimentOrganismAssociation.objects.create(
-            organism=zebrafish,
-            experiment=zero_percent_experiment
+            organism=zebrafish, experiment=zero_percent_experiment
         )
 
         zero_percent = OriginalFile()
         zero_percent.filename = "ERR037001.fastq.gz"
         zero_percent.source_filename = "ERR037001.fastq.gz"
-        zero_percent.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR037/ERR037001/ERR037001_1.fastq.gz"
+        zero_percent.source_url = (
+            "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR037/ERR037001/ERR037001_1.fastq.gz"
+        )
         zero_percent.is_archive = True
         zero_percent.save()
 
         zero_percent_sample = Sample()
-        zero_percent_sample.accession_code = 'ERR037001'
+        zero_percent_sample.accession_code = "ERR037001"
         zero_percent_sample.organism = zebrafish
         zero_percent_sample.save()
 
@@ -104,13 +105,12 @@ class OrganismShepherdTestCase(TransactionTestCase):
         assoc.save()
 
         # Experiment that is 50% complete.
-        fify_percent_experiment = Experiment(accession_code='ERP036000')
-        fify_percent_experiment.technology = 'RNA-SEQ'
+        fify_percent_experiment = Experiment(accession_code="ERP036000")
+        fify_percent_experiment.technology = "RNA-SEQ"
         fify_percent_experiment.save()
 
         organism_assoc = ExperimentOrganismAssociation.objects.create(
-            organism=zebrafish,
-            experiment=fify_percent_experiment
+            organism=zebrafish, experiment=fify_percent_experiment
         )
 
         ## First sample, this one has been processed.
@@ -126,12 +126,14 @@ class OrganismShepherdTestCase(TransactionTestCase):
         successful_og = OriginalFile()
         successful_og.filename = "ERR036000.fastq.gz"
         successful_og.source_filename = "ERR036000.fastq.gz"
-        successful_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
+        successful_og.source_url = (
+            "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
+        )
         successful_og.is_archive = True
         successful_og.save()
 
         successful_sample = Sample()
-        successful_sample.accession_code = 'ERR036000'
+        successful_sample.accession_code = "ERR036000"
         successful_sample.organism = zebrafish
         successful_sample.save()
 
@@ -154,12 +156,14 @@ class OrganismShepherdTestCase(TransactionTestCase):
         fifty_percent_unprocessed_og = OriginalFile()
         fifty_percent_unprocessed_og.filename = "ERR036001.fastq.gz"
         fifty_percent_unprocessed_og.source_filename = "ERR036001.fastq.gz"
-        fifty_percent_unprocessed_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036001/ERR036001_1.fastq.gz"
+        fifty_percent_unprocessed_og.source_url = (
+            "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036001/ERR036001_1.fastq.gz"
+        )
         fifty_percent_unprocessed_og.is_archive = True
         fifty_percent_unprocessed_og.save()
 
         fifty_percent_unprocessed_sample = Sample()
-        fifty_percent_unprocessed_sample.accession_code = 'ERR036001'
+        fifty_percent_unprocessed_sample.accession_code = "ERR036001"
         fifty_percent_unprocessed_sample.organism = zebrafish
         fifty_percent_unprocessed_sample.save()
 
@@ -198,7 +202,9 @@ class OrganismShepherdTestCase(TransactionTestCase):
         first_call_job_type = mock_calls[0][1][0]
         first_call_job_object = mock_calls[0][2]["job"]
         self.assertEqual(first_call_job_type, ProcessorPipeline.SALMON)
-        self.assertEqual(first_call_job_object.pipeline_applied, fifty_percent_processor_job.pipeline_applied)
+        self.assertEqual(
+            first_call_job_object.pipeline_applied, fifty_percent_processor_job.pipeline_applied
+        )
         self.assertEqual(first_call_job_object.ram_amount, fifty_percent_processor_job.ram_amount)
         self.assertIn(first_call_job_object.volume_index, active_volumes)
 

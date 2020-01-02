@@ -38,7 +38,6 @@ class UnsupportedPlatformException(Exception):
 
 
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
-
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
 
@@ -70,8 +69,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         experiment_object.description = experiment_descripton
 
         experiment_object.source_first_published = parse_datetime(parsed_json["releasedate"])
-        experiment_object.source_last_modified \
-            = parse_datetime(cls._get_last_update_date(parsed_json))
+        experiment_object.source_last_modified = parse_datetime(
+            cls._get_last_update_date(parsed_json)
+        )
 
     def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
         """Given an experiment accession code, create an Experiment object.
@@ -90,9 +90,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             parsed_json = experiment_request.json()["experiments"]["experiment"][0]
         except KeyError:
-            logger.error("Remote experiment has no Experiment data!",
-                         experiment_accession_code=experiment_accession_code,
-                         survey_job=self.survey_job.id)
+            logger.error(
+                "Remote experiment has no Experiment data!",
+                experiment_accession_code=experiment_accession_code,
+                survey_job=self.survey_job.id,
+            )
             raise
 
         experiment = {}
@@ -100,10 +102,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         experiment["experiment_accession_code"] = experiment_accession_code
 
         # This experiment has no platform at all, and is therefore useless.
-        if 'arraydesign' not in parsed_json or len(parsed_json["arraydesign"]) == 0:
-            logger.warn("Remote experiment has no arraydesign listed.",
-                        experiment_accession_code=experiment_accession_code,
-                        survey_job=self.survey_job.id)
+        if "arraydesign" not in parsed_json or len(parsed_json["arraydesign"]) == 0:
+            logger.warn(
+                "Remote experiment has no arraydesign listed.",
+                experiment_accession_code=experiment_accession_code,
+                survey_job=self.survey_job.id,
+            )
             raise UnsupportedPlatformException
         # If there is more than one arraydesign listed in the experiment
         # then there is no other way to determine which array was used
@@ -112,7 +116,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # downloaded so we can just mark it as UNKNOWN and let the
         # downloader inspect the downloaded file to determine the
         # array then.
-        elif len(parsed_json["arraydesign"]) != 1 or "accession" not in parsed_json["arraydesign"][0]:
+        elif (
+            len(parsed_json["arraydesign"]) != 1 or "accession" not in parsed_json["arraydesign"][0]
+        ):
             experiment["platform_accession_code"] = UNKNOWN
             experiment["platform_accession_name"] = UNKNOWN
             experiment["manufacturer"] = UNKNOWN
@@ -120,7 +126,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             external_accession = parsed_json["arraydesign"][0]["accession"]
             for platform in get_supported_microarray_platforms():
                 if platform["external_accession"] == external_accession:
-                    experiment["platform_accession_code"] = get_normalized_platform(platform["platform_accession"])
+                    experiment["platform_accession_code"] = get_normalized_platform(
+                        platform["platform_accession"]
+                    )
 
                     # Illumina appears in the accession codes for
                     # platforms manufactured by Illumina
@@ -134,7 +142,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                         experiment["manufacturer"] = "AFFYMETRIX"
                         platform_mapping = get_readable_affymetrix_names()
                         experiment["platform_accession_name"] = platform_mapping[
-                            platform["platform_accession"]]
+                            platform["platform_accession"]
+                        ]
 
             if "platform_accession_code" not in experiment:
                 # We don't know what platform this accession corresponds to.
@@ -148,9 +157,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # Create the experiment object
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
-            logger.debug("Experiment already exists, skipping object creation.",
-                         experiment_accession_code=experiment_accession_code,
-                         survey_job=self.survey_job.id)
+            logger.debug(
+                "Experiment already exists, skipping object creation.",
+                experiment_accession_code=experiment_accession_code,
+                survey_job=self.survey_job.id,
+            )
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
@@ -169,10 +180,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
 
-            lines = idf_text.split('\n')
+            lines = idf_text.split("\n")
             idf_dict = {}
             for line in lines:
-                keyval = line.strip().split('\t')
+                keyval = line.strip().split("\t")
                 if len(keyval) == 2:
                     idf_dict[keyval[0]] = keyval[1]
                 elif len(keyval) > 2:
@@ -184,67 +195,78 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             idf_xa.is_ccdl = False
             idf_xa.save()
 
-            if 'Investigation Title' in idf_dict and isinstance(idf_dict['Investigation Title'], str):
-                experiment_object.title = idf_dict['Investigation Title']
-            if 'Person Affiliation' in idf_dict:
+            if "Investigation Title" in idf_dict and isinstance(
+                idf_dict["Investigation Title"], str
+            ):
+                experiment_object.title = idf_dict["Investigation Title"]
+            if "Person Affiliation" in idf_dict:
                 # This is very rare, ex: E-MEXP-32
-                if isinstance(idf_dict['Person Affiliation'], list):
+                if isinstance(idf_dict["Person Affiliation"], list):
 
-                    unique_people = list(set(idf_dict['Person Affiliation']))
+                    unique_people = list(set(idf_dict["Person Affiliation"]))
                     experiment_object.submitter_institution = ", ".join(unique_people)[:255]
                 else:
-                    experiment_object.submitter_institution = idf_dict['Person Affiliation']
+                    experiment_object.submitter_institution = idf_dict["Person Affiliation"]
 
             # Get protocol_description from "<experiment_url>/protocols"
             # instead of from idf_dict, because the former provides more
             # details.
-            protocol_url = request_url + '/protocols'
+            protocol_url = request_url + "/protocols"
             protocol_request = utils.requests_retry_session().get(protocol_url, timeout=60)
             try:
-                experiment_object.protocol_description = protocol_request.json()['protocols']
+                experiment_object.protocol_description = protocol_request.json()["protocols"]
             except KeyError:
-                logger.warning("Remote experiment has no protocol data!",
-                               experiment_accession_code=experiment_accession_code,
-                               survey_job=self.survey_job.id)
+                logger.warning(
+                    "Remote experiment has no protocol data!",
+                    experiment_accession_code=experiment_accession_code,
+                    survey_job=self.survey_job.id,
+                )
 
-            if 'Publication Title' in idf_dict:
+            if "Publication Title" in idf_dict:
                 # This will happen for some superseries.
                 # Ex: E-GEOD-29536
                 # Assume most recent is "best:, store the rest in experiment annotation.
-                if isinstance(idf_dict['Publication Title'], list):
-                    experiment_object.publication_title = "; ".join(idf_dict['Publication Title'])
+                if isinstance(idf_dict["Publication Title"], list):
+                    experiment_object.publication_title = "; ".join(idf_dict["Publication Title"])
                 else:
-                    experiment_object.publication_title = idf_dict['Publication Title']
+                    experiment_object.publication_title = idf_dict["Publication Title"]
                 experiment_object.has_publication = True
-            if 'Publication DOI' in idf_dict:
-                if isinstance(idf_dict['Publication DOI'], list):
-                    experiment_object.publication_doi = ", ".join(idf_dict['Publication DOI'])
+            if "Publication DOI" in idf_dict:
+                if isinstance(idf_dict["Publication DOI"], list):
+                    experiment_object.publication_doi = ", ".join(idf_dict["Publication DOI"])
                 else:
-                    experiment_object.publication_doi = idf_dict['Publication DOI']
+                    experiment_object.publication_doi = idf_dict["Publication DOI"]
                 experiment_object.has_publication = True
-            if 'PubMed ID' in idf_dict:
-                if isinstance(idf_dict['PubMed ID'], list):
-                    experiment_object.pubmed_id = ", ".join(idf_dict['PubMed ID'])
+            if "PubMed ID" in idf_dict:
+                if isinstance(idf_dict["PubMed ID"], list):
+                    experiment_object.pubmed_id = ", ".join(idf_dict["PubMed ID"])
                 else:
-                    experiment_object.pubmed_id = idf_dict['PubMed ID']
+                    experiment_object.pubmed_id = idf_dict["PubMed ID"]
                 experiment_object.has_publication = True
 
             # Scrape publication title and authorship from Pubmed
             if experiment_object.pubmed_id:
-                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
+                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(
+                    experiment_object.pubmed_id
+                )
                 experiment_object.publication_title = pubmed_metadata[0]
                 experiment_object.publication_authors = pubmed_metadata[1]
 
             experiment_object.save()
 
         platform_dict = {}
-        for k in ('platform_accession_code', 'platform_accession_name', 'manufacturer'):
+        for k in ("platform_accession_code", "platform_accession_name", "manufacturer"):
             platform_dict[k] = experiment[k]
 
         return experiment_object, platform_dict
 
-    def determine_sample_accession(self, experiment_accession: str, sample_source_name: str,
-                                   sample_assay_name: str, filename: str) -> str:
+    def determine_sample_accession(
+        self,
+        experiment_accession: str,
+        sample_source_name: str,
+        sample_assay_name: str,
+        filename: str,
+    ) -> str:
         """Determine what to use as the sample's accession code.
 
         This is a complicated heuristic to determine the sample
@@ -307,7 +329,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         ]
         """
         if not protocol_text:
-            return ''
+            return ""
         elif type(protocol_text) == str:
             return protocol_text.strip()
         elif type(protocol_text) == list:
@@ -331,37 +353,40 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         multiple protocol entries.
         """
 
-        if not 'protocol' in experiment_protocol:
+        if not "protocol" in experiment_protocol:
             return (existing_protocols, False)
 
         is_updated = False
         # Compare each entry in experiment protocol with the existing
         # protocols; if the entry is new, add it to exising_protocols.
-        for new_protocol in experiment_protocol['protocol']:
-            new_protocol_text = new_protocol.get('text', '')
+        for new_protocol in experiment_protocol["protocol"]:
+            new_protocol_text = new_protocol.get("text", "")
             new_protocol_text = ArrayExpressSurveyor.extract_protocol_text(new_protocol_text)
 
             # Ignore experiment-level protocols whose accession or text
             # field is unavailable or empty.
-            if (not new_protocol.get('accession', '').strip() or
-                not new_protocol_text):
+            if not new_protocol.get("accession", "").strip() or not new_protocol_text:
                 continue
 
             new_protocol_is_found = False
             for existing_protocol in existing_protocols:
-                if (new_protocol.get('accession', '') == existing_protocol['Accession']
-                    and new_protocol_text == existing_protocol['Text']
-                    and new_protocol.get('type', '') == existing_protocol['Type']):
+                if (
+                    new_protocol.get("accession", "") == existing_protocol["Accession"]
+                    and new_protocol_text == existing_protocol["Text"]
+                    and new_protocol.get("type", "") == existing_protocol["Type"]
+                ):
                     new_protocol_is_found = True
                     break
             if not new_protocol_is_found:
-               existing_protocols.append({
-                   'Accession': new_protocol['accession'],
-                   'Text': new_protocol_text,
-                   'Type': new_protocol.get('type', ''),  # in case 'type' field is unavailable
-                   'Reference': protocol_url
-               })
-               is_updated = True
+                existing_protocols.append(
+                    {
+                        "Accession": new_protocol["accession"],
+                        "Text": new_protocol_text,
+                        "Type": new_protocol.get("type", ""),  # in case 'type' field is unavailable
+                        "Reference": protocol_url,
+                    }
+                )
+                is_updated = True
 
         return (existing_protocols, is_updated)
 
@@ -371,10 +396,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         for key, value in harmonized_metadata.items():
             setattr(sample, key, value)
 
-    def create_samples_from_api(self,
-                                experiment: Experiment,
-                                platform_dict: Dict
-                                ) -> List[Sample]:
+    def create_samples_from_api(self, experiment: Experiment, platform_dict: Dict) -> List[Sample]:
         """Generates a Sample item for each sample in an AE experiment.
 
         There are many possible data situations for a sample:
@@ -413,7 +435,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         for sample_data in samples:
 
             # For some reason, this sample has no files associated with it.
-            if "file" not in sample_data or len(sample_data['file']) == 0:
+            if "file" not in sample_data or len(sample_data["file"]) == 0:
                 continue
 
             # Each sample is given an experimenatlly-unique title.
@@ -424,35 +446,38 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             # If there is raw data, take that.
             # If not, take the derived.
             has_raw = False
-            for sub_file in sample_data['file']:
+            for sub_file in sample_data["file"]:
 
                 # For ex: E-GEOD-15645
-                if isinstance(sub_file['comment'], list):
+                if isinstance(sub_file["comment"], list):
                     sub_file_mod = sub_file
-                    sub_file_mod['comment'] = sub_file['comment'][0]
+                    sub_file_mod["comment"] = sub_file["comment"][0]
                 else:
                     sub_file_mod = sub_file
 
                 # Some have the 'data' field, but not the actual data
                 # Ex: E-GEOD-9656
-                if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
+                if (
+                    sub_file_mod["type"] == "data"
+                    and sub_file_mod["comment"].get("value", None) != None
+                ):
                     has_raw = True
 
                 # 'value' can be None, convert to an empty string to
                 # make it easier to use.
-                comment_value = sub_file_mod['comment'].get('value', '')  or ''
-                if 'raw' in comment_value:
+                comment_value = sub_file_mod["comment"].get("value", "") or ""
+                if "raw" in comment_value:
                     has_raw = True
 
             skip_sample = False
-            for sub_file in sample_data['file']:
+            for sub_file in sample_data["file"]:
 
                 # Don't get the raw data if it's only a 1-color sample.
-                if 'Cy3' in str(sample_data) and 'Cy5' not in str(sample_data):
+                if "Cy3" in str(sample_data) and "Cy5" not in str(sample_data):
                     has_raw = False
 
                 # Skip derived data if we have it raw.
-                if has_raw and "derived data" in sub_file['type']:
+                if has_raw and "derived data" in sub_file["type"]:
                     continue
 
                 download_url = None
@@ -477,20 +502,24 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     download_url = comments["value"]
 
                 if not download_url:
-                    logger.error("Sample %s did not specify a download url, skipping.",
-                                 sample_accession_code,
-                                 experiment_accession_code=experiment.accession_code,
-                                 survey_job=self.survey_job.id,
-                                 sub_file=sub_file)
+                    logger.error(
+                        "Sample %s did not specify a download url, skipping.",
+                        sample_accession_code,
+                        experiment_accession_code=experiment.accession_code,
+                        survey_job=self.survey_job.id,
+                        sub_file=sub_file,
+                    )
                     skip_sample = True
                     continue
 
                 if not filename:
-                    logger.error("Sample %s did not specify a filename, skipping.",
-                                 sample_accession_code,
-                                 experiment_accession_code=experiment.accession_code,
-                                 survey_job=self.survey_job.id,
-                                 sub_file=sub_file)
+                    logger.error(
+                        "Sample %s did not specify a filename, skipping.",
+                        sample_accession_code,
+                        experiment_accession_code=experiment.accession_code,
+                        survey_job=self.survey_job.id,
+                        sub_file=sub_file,
+                    )
                     skip_sample = True
                     continue
 
@@ -501,10 +530,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             sample_source_name = sample_data["source"].get("name", "")
             sample_assay_name = sample_data["assay"].get("name", "")
             sample_accession_code = self.determine_sample_accession(
-                experiment.accession_code,
-                sample_source_name,
-                sample_assay_name,
-                filename)
+                experiment.accession_code, sample_source_name, sample_assay_name, filename
+            )
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
@@ -513,10 +540,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     organism_name = characteristic["value"].upper()
 
             if organism_name == UNKNOWN:
-                logger.error("Sample %s did not specify the organism name.",
-                               sample_accession_code,
-                               experiment_accession_code=experiment.accession_code,
-                               survey_job=self.survey_job.id)
+                logger.error(
+                    "Sample %s did not specify the organism name.",
+                    sample_accession_code,
+                    experiment_accession_code=experiment.accession_code,
+                    survey_job=self.survey_job.id,
+                )
                 organism = None
                 continue
             else:
@@ -536,16 +565,18 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 protocol_info, is_updated = self.update_sample_protocol_info(
                     existing_protocols,
                     experiment.protocol_description,
-                    experiment.source_url + '/protocols'
+                    experiment.source_url + "/protocols",
                 )
                 if is_updated:
                     sample_object.protocol_info = protocol_info
                     sample_obejct.save()
 
-                logger.debug("Sample %s already exists, skipping object creation.",
-                             sample_accession_code,
-                             experiment_accession_code=experiment.accession_code,
-                             survey_job=self.survey_job.id)
+                logger.debug(
+                    "Sample %s already exists, skipping object creation.",
+                    sample_accession_code,
+                    experiment_accession_code=experiment.accession_code,
+                    survey_job=self.survey_job.id,
+                )
             except Sample.DoesNotExist:
                 sample_object = Sample()
 
@@ -563,7 +594,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 protocol_info, is_updated = self.update_sample_protocol_info(
                     existing_protocols=[],
                     experiment_protocol=experiment.protocol_description,
-                    protocol_url=experiment.source_url + '/protocols'
+                    protocol_url=experiment.source_url + "/protocols",
                 )
                 # Do not check is_updated the first time because we must
                 # save a list so we can append to it later.
@@ -573,7 +604,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 # Directly assign the harmonized properties
                 harmonized_sample = harmonized_samples[title]
-                ArrayExpressSurveyor._apply_harmonized_metadata_to_sample(sample_object, harmonized_sample)
+                ArrayExpressSurveyor._apply_harmonized_metadata_to_sample(
+                    sample_object, harmonized_sample
+                )
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.data = sample_data
@@ -597,44 +630,50 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 created_samples.append(sample_object)
 
-                logger.debug("Created " + str(sample_object),
-                             experiment_accession_code=experiment.accession_code,
-                             survey_job=self.survey_job.id,
-                             sample=sample_object.id)
+                logger.debug(
+                    "Created " + str(sample_object),
+                    experiment_accession_code=experiment.accession_code,
+                    survey_job=self.survey_job.id,
+                    sample=sample_object.id,
+                )
 
             # Create associations if they don't already exist
             ExperimentSampleAssociation.objects.get_or_create(
-                experiment=experiment, sample=sample_object)
+                experiment=experiment, sample=sample_object
+            )
 
             ExperimentOrganismAssociation.objects.get_or_create(
-                experiment=experiment, organism=organism)
+                experiment=experiment, organism=organism
+            )
 
         return created_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
 
-        experiment_accession_code = (
-            SurveyJobKeyValue
-            .objects
-            .get(survey_job_id=self.survey_job.id,
-                 key__exact="experiment_accession_code")
-            .value
-        )
+        experiment_accession_code = SurveyJobKeyValue.objects.get(
+            survey_job_id=self.survey_job.id, key__exact="experiment_accession_code"
+        ).value
 
-        logger.info("Surveying experiment with accession code: %s.",
-                    experiment_accession_code,
-                    survey_job=self.survey_job.id)
+        logger.info(
+            "Surveying experiment with accession code: %s.",
+            experiment_accession_code,
+            survey_job=self.survey_job.id,
+        )
 
         try:
             experiment, platform_dict = self.create_experiment_from_api(experiment_accession_code)
         except UnsupportedPlatformException as e:
-            logger.info("Experiment was not on a supported platform, skipping.",
-                        experiment_accession_code=experiment_accession_code,
-                        survey_job=self.survey_job.id)
+            logger.info(
+                "Experiment was not on a supported platform, skipping.",
+                experiment_accession_code=experiment_accession_code,
+                survey_job=self.survey_job.id,
+            )
             return None, []
         except:
-            logger.exception("Error occurred while surveying experiment!",
-                             experiment_accession_code=experiment_accession_code)
+            logger.exception(
+                "Error occurred while surveying experiment!",
+                experiment_accession_code=experiment_accession_code,
+            )
             return None, []
 
         samples = self.create_samples_from_api(experiment, platform_dict)

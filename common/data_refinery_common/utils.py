@@ -52,6 +52,7 @@ def get_instance_id() -> str:
     global INSTANCE_ID
     if INSTANCE_ID is None:
         if settings.RUNNING_IN_CLOUD:
+
             @retry(stop_max_attempt_number=3)
             def retrieve_instance_id():
                 return requests.get(os.path.join(METADATA_URL, "instance-id")).text
@@ -68,7 +69,7 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
-def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
+def get_volume_index(path="/home/user/data_store/VOLUME_INDEX") -> str:
     """ Reads the contents of the VOLUME_INDEX file, else returns default """
 
     if settings.RUNNING_IN_CLOUD:
@@ -77,12 +78,13 @@ def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
         default = "0"
 
     try:
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             v_id = f.read().strip()
             return v_id
     except Exception as e:
         # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(str(e))
         logger.info("Could not read volume index file, using default: " + str(default))
@@ -116,9 +118,13 @@ def get_active_volumes() -> Set[str]:
     try:
         for node in nomad_client.nodes.get_nodes():
             node_detail = nomad_client.node.get_node(node["ID"])
-            if 'Status' in node_detail and node_detail['Status'] == 'ready' \
-               and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
-                volumes.add(node_detail['Meta']['volume_index'])
+            if (
+                "Status" in node_detail
+                and node_detail["Status"] == "ready"
+                and "Meta" in node_detail
+                and "volume_index" in node_detail["Meta"]
+            ):
+                volumes.add(node_detail["Meta"]["volume_index"])
     except nomad.api.exceptions.BaseNomadException:
         # Nomad is down, return the empty set.
         pass
@@ -141,14 +147,19 @@ def get_active_volumes_detailed() -> Dict:
         for node in nomad_client.nodes.get_nodes():
             node_detail = nomad_client.node.get_node(node["ID"])
             allocations = len(nomad_client.node.get_allocations(node["ID"]))
-            if 'Status' in node_detail and node_detail['Status'] == 'ready' \
-               and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+            if (
+                "Status" in node_detail
+                and node_detail["Status"] == "ready"
+                and "Meta" in node_detail
+                and "volume_index" in node_detail["Meta"]
+            ):
                 volume_info = dict()
-                volume_info["type"] = node_detail['Attributes'].get("platform.aws.instance-type",
-                                                                    None)
+                volume_info["type"] = node_detail["Attributes"].get(
+                    "platform.aws.instance-type", None
+                )
                 volume_info["allocations"] = allocations
 
-                volumes[node_detail['Meta']['volume_index']] = volume_info
+                volumes[node_detail["Meta"]["volume_index"]] = volume_info
     except nomad.api.exceptions.BaseNomadException:
         # Nomad is down, return the empty dict.
         pass
@@ -157,7 +168,7 @@ def get_active_volumes_detailed() -> Dict:
 
 
 def get_supported_microarray_platforms(
-    platforms_csv: str = "config/supported_microarray_platforms.csv"
+    platforms_csv: str = "config/supported_microarray_platforms.csv",
 ) -> list:
     """
     Loads our supported microarray platforms file and returns a list of dictionaries
@@ -180,10 +191,14 @@ def get_supported_microarray_platforms(
                 continue
 
             external_accession = line[1]
-            is_brainarray = True if line[2] == 'y' else False
-            SUPPORTED_MICROARRAY_PLATFORMS.append({"platform_accession": line[0],
-                                                   "external_accession": external_accession,
-                                                   "is_brainarray": is_brainarray})
+            is_brainarray = True if line[2] == "y" else False
+            SUPPORTED_MICROARRAY_PLATFORMS.append(
+                {
+                    "platform_accession": line[0],
+                    "external_accession": external_accession,
+                    "is_brainarray": is_brainarray,
+                }
+            )
 
             # A-GEOD-13158 is the same platform as GPL13158 and this
             # pattern is generalizable. Since we don't want to have to
@@ -191,23 +206,31 @@ def get_supported_microarray_platforms(
             # we just convert them and add them to the list.
             if external_accession[:6] == "A-GEOD":
                 converted_accession = external_accession.replace("A-GEOD-", "GPL")
-                SUPPORTED_MICROARRAY_PLATFORMS.append({"platform_accession": line[0],
-                                                       "external_accession": converted_accession,
-                                                       "is_brainarray": is_brainarray})
+                SUPPORTED_MICROARRAY_PLATFORMS.append(
+                    {
+                        "platform_accession": line[0],
+                        "external_accession": converted_accession,
+                        "is_brainarray": is_brainarray,
+                    }
+                )
 
             # Our list of supported platforms contains both A-GEOD-*
             # and GPL*, so convert both ways.
             if external_accession[:3] == "GPL":
                 converted_accession = external_accession.replace("GPL", "A-GEOD-")
-                SUPPORTED_MICROARRAY_PLATFORMS.append({"platform_accession": line[0],
-                                                       "external_accession": converted_accession,
-                                                       "is_brainarray": is_brainarray})
+                SUPPORTED_MICROARRAY_PLATFORMS.append(
+                    {
+                        "platform_accession": line[0],
+                        "external_accession": converted_accession,
+                        "is_brainarray": is_brainarray,
+                    }
+                )
 
     return SUPPORTED_MICROARRAY_PLATFORMS
 
 
 def get_supported_rnaseq_platforms(
-    platforms_list: str = "config/supported_rnaseq_platforms.txt"
+    platforms_list: str = "config/supported_rnaseq_platforms.txt",
 ) -> list:
     """
     Returns a list of RNASeq platforms which are currently supported.
@@ -225,7 +248,7 @@ def get_supported_rnaseq_platforms(
 
 
 def get_readable_affymetrix_names(
-    mapping_csv: str = "config/readable_affymetrix_names.csv"
+    mapping_csv: str = "config/readable_affymetrix_names.csv",
 ) -> Dict:
     """
     Loads the mapping from human readble names to internal accessions for Affymetrix platforms.
@@ -239,8 +262,8 @@ def get_readable_affymetrix_names(
         return READABLE_PLATFORM_NAMES
 
     READABLE_PLATFORM_NAMES = {}
-    with open(mapping_csv, encoding='utf-8') as mapping_file:
-        reader = csv.reader(mapping_file, )
+    with open(mapping_csv, encoding="utf-8") as mapping_file:
+        reader = csv.reader(mapping_file,)
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
@@ -253,7 +276,7 @@ def get_readable_affymetrix_names(
 
 
 def get_affymetrix_annotation_package_name_overrides(
-    overrides_csv: str = "config/affymetrix_annotation_package_name_overrides.csv"
+    overrides_csv: str = "config/affymetrix_annotation_package_name_overrides.csv",
 ) -> Dict:
     """
     Loads the mapping from annotation package name to internal accession for Affymetrix platforms.
@@ -266,8 +289,8 @@ def get_affymetrix_annotation_package_name_overrides(
         return ANNOTATION_PACKAGE_OVERRIDES
 
     ANNOTATION_PACKAGE_OVERRIDES = {}
-    with open(overrides_csv, encoding='utf-8') as overrides_file:
-        reader = csv.reader(overrides_file, )
+    with open(overrides_csv, encoding="utf-8") as overrides_file:
+        reader = csv.reader(overrides_file,)
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
@@ -283,10 +306,10 @@ def get_internal_microarray_accession(accession_code):
     platforms = get_supported_microarray_platforms()
 
     for platform in platforms:
-        if platform['external_accession'] == accession_code:
-            return platform['platform_accession']
-        elif platform['platform_accession'] == accession_code:
-            return platform['platform_accession']
+        if platform["external_accession"] == accession_code:
+            return platform["platform_accession"]
+        elif platform["platform_accession"] == accession_code:
+            return platform["platform_accession"]
 
     return None
 
@@ -299,7 +322,7 @@ def get_normalized_platform(external_accession):
 
     matches = re.findall(r"stv\d$", external_accession)
     for match in matches:
-        external_accession = external_accession.replace(match, 'st')
+        external_accession = external_accession.replace(match, "st")
 
     return external_accession
 
@@ -309,12 +332,12 @@ def parse_s3_url(url):
     Parses S3 URL.
     Returns bucket (domain) and file (full path).
     """
-    bucket = ''
-    path = ''
+    bucket = ""
+    path = ""
     if url:
         result = urlparse(url)
         bucket = result.netloc
-        path = result.path.strip('/')
+        path = result.path.strip("/")
     return bucket, path
 
 
@@ -331,8 +354,8 @@ def calculate_file_size(absolute_file_path):
 
 def calculate_sha1(absolute_file_path):
     hash_object = hashlib.sha1()
-    with open(absolute_file_path, mode='rb') as open_file:
-        for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
+    with open(absolute_file_path, mode="rb") as open_file:
+        for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b""):
             hash_object.update(buf)
 
     return hash_object.hexdigest()
@@ -349,6 +372,7 @@ def get_sra_download_url(run_accession, protocol="fasp"):
     except Exception:
         # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
+
         logger = logging.getLogger(__name__)
         logger.exception("Bad CGI request!: " + str(cgi_url) + ", " + str(data))
         return None
@@ -364,12 +388,13 @@ def get_sra_download_url(run_accession, protocol="fasp"):
             # Sometimes, the responses from names.cgi makes no sense at all on a per-accession-code basis. This helps us handle that.
             # $ curl --data "acc=SRR5818019&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
             # 2.0\nremote|SRR5818019|434259775|2017-07-11T21:32:08Z|a4bfc16dbab1d4f729c4552e3c9519d1|||400|Only 'https' protocol is allowed for this object
-            sra_url = resp.text.split('\n')[1].split('|')[6]
+            sra_url = resp.text.split("\n")[1].split("|")[6]
             return sra_url
         except Exception:
             # Our configured logger needs util
             # so we use the standard logging library for just this.
             import logging
+
             logger = logging.getLogger(__name__)
             exception_template = "Error parsing CGI response: {0} {1} {2}"
             logger.exception(exception_template.format(str(cgi_url), str(data), str(resp.text)))
@@ -380,9 +405,9 @@ def get_fasp_sra_download(run_accession: str):
     """Get an URL for SRA using the FASP protocol.
 
     These URLs should not actually include the protcol."""
-    full_url = get_sra_download_url(run_accession, 'fasp')
+    full_url = get_sra_download_url(run_accession, "fasp")
     if full_url:
-        sra_url = full_url.split('fasp://')[1]
+        sra_url = full_url.split("fasp://")[1]
         return sra_url
     else:
         return None
@@ -390,15 +415,15 @@ def get_fasp_sra_download(run_accession: str):
 
 def get_https_sra_download(run_accession: str):
     """Get an HTTPS URL for SRA."""
-    return get_sra_download_url(run_accession, 'https')
+    return get_sra_download_url(run_accession, "https")
 
 
 def load_blacklist(blacklist_csv: str = "config/RNASeqRunBlackList.csv"):
     """ Loads the SRA run blacklist """
 
     blacklisted_samples = []
-    with open(blacklist_csv, encoding='utf-8') as blacklist_file:
-        reader = csv.reader(blacklist_file, )
+    with open(blacklist_csv, encoding="utf-8") as blacklist_file:
+        reader = csv.reader(blacklist_file,)
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
@@ -412,7 +437,7 @@ def load_blacklist(blacklist_csv: str = "config/RNASeqRunBlackList.csv"):
 
 def get_nomad_jobs_breakdown():
     jobs = get_nomad_jobs()
-    parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
+    parameterized_jobs = [job for job in jobs if job["ParameterizedJob"]]
 
     def get_job_type(job):
         return get_job_details(job)[0]
@@ -424,8 +449,9 @@ def get_nomad_jobs_breakdown():
     # ref: https://docs.python.org/2/library/itertools.html#itertools.groupby
     sorted_jobs_by_type = sorted(filter(get_job_type, parameterized_jobs), key=get_job_type)
     aggregated_jobs_by_type = groupby(sorted_jobs_by_type, get_job_type)
-    nomad_pending_jobs_by_type, nomad_running_jobs_by_type = \
-        _aggregate_nomad_jobs(aggregated_jobs_by_type)
+    nomad_pending_jobs_by_type, nomad_running_jobs_by_type = _aggregate_nomad_jobs(
+        aggregated_jobs_by_type
+    )
 
     # To get the total jobs for running and pending, the easiest
     # AND the most efficient way is to sum up the stats we've
@@ -435,8 +461,9 @@ def get_nomad_jobs_breakdown():
 
     sorted_jobs_by_volume = sorted(filter(get_job_volume, parameterized_jobs), key=get_job_volume)
     aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, get_job_volume)
-    nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = \
-        _aggregate_nomad_jobs(aggregated_jobs_by_volume)
+    nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = _aggregate_nomad_jobs(
+        aggregated_jobs_by_volume
+    )
 
     return {
         "nomad_pending_jobs": nomad_pending_jobs,
@@ -444,7 +471,7 @@ def get_nomad_jobs_breakdown():
         "nomad_pending_jobs_by_type": nomad_pending_jobs_by_type,
         "nomad_running_jobs_by_type": nomad_running_jobs_by_type,
         "nomad_pending_jobs_by_volume": nomad_pending_jobs_by_volume,
-        "nomad_running_jobs_by_volume": nomad_running_jobs_by_volume
+        "nomad_running_jobs_by_volume": nomad_running_jobs_by_volume,
     }
 
 
@@ -460,7 +487,7 @@ def get_job_details(job):
     if not name_match:
         return False, False
 
-    return name_match.group('type'), name_match.group('volume_id')
+    return name_match.group("type"), name_match.group("volume_id")
 
 
 def _aggregate_nomad_jobs(aggregated_jobs):
@@ -514,7 +541,7 @@ class FileUtils:
         if not extension:
             return False
 
-        return extension in ['.tar', '.tgz', '.gz', '.zip']
+        return extension in [".tar", ".tgz", ".gz", ".zip"]
 
     @staticmethod
     def get_filename(file_path):

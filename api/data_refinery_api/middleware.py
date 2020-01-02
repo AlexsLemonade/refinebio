@@ -14,19 +14,17 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
             return response
 
         # format error message
-        message = (
-            "{status_code} code returned for URL: {url}"
-            "with message: {message}"
-        ).format(status_code=response.status_code,
-                 url=request.build_absolute_uri(),
-                 message=str(response.content))
+        message = ("{status_code} code returned for URL: {url}" "with message: {message}").format(
+            status_code=response.status_code,
+            url=request.build_absolute_uri(),
+            message=str(response.content),
+        )
 
         # create data representation
         data = client.get_data_from_request(request)
-        data.update({
-            "level": logging.WARN,
-            "logger": "BadRequestMiddleware",
-        })
+        data.update(
+            {"level": logging.WARN, "logger": "BadRequestMiddleware",}
+        )
 
         client.captureMessage(message=message, data=data)
 
@@ -39,15 +37,14 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
             return
 
         data = client.get_data_from_request(request)
-        data.update({
-            "level": logging.WARN,
-            "logger": "BadRequestMiddleware",
-        })
+        data.update(
+            {"level": logging.WARN, "logger": "BadRequestMiddleware",}
+        )
 
         client.captureMessage(message=str(exception), data=data)
 
 
 class RevisionMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
-        response['X-Source-Revision'] = get_env_variable_gracefully("SYSTEM_VERSION")
+        response["X-Source-Revision"] = get_env_variable_gracefully("SYSTEM_VERSION")
         return response

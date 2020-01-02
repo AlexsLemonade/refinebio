@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import  ProcessorJob
+from data_refinery_common.models import ProcessorJob
 
 
 logger = get_and_configure_logger(__name__)
@@ -19,9 +19,9 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     def handle(self, *args, **options):
         timed_out_jobs = ProcessorJob.objects.filter(
-            success='f',
-            failure_reason='Salmon timed out because it failed to complete within 3 hours.',
-            retried_job_id__isnull=True # Only get jobs that weren't retried.
+            success="f",
+            failure_reason="Salmon timed out because it failed to complete within 3 hours.",
+            retried_job_id__isnull=True,  # Only get jobs that weren't retried.
         )
 
         total = 0
@@ -50,5 +50,5 @@ class Command(BaseCommand):
                 # Only queue 300 of these an hour so we don't overload ENA.
                 if i == 300:
                     logger.info("Requeued 300 more jobs (total %d). Sleeping for 1 hour.", total)
-                    time.sleep(60*60)
+                    time.sleep(60 * 60)
                     i = 0

@@ -28,7 +28,7 @@ from data_refinery_common.models import (
     Dataset,
     ProcessorJobDatasetAssociation,
     SampleComputedFileAssociation,
-    ComputationalResultAnnotation
+    ComputationalResultAnnotation,
 )
 from data_refinery_workers.processors import smasher, smashing_utils
 
@@ -48,13 +48,13 @@ def prepare_job():
     homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
     sample = Sample()
-    sample.accession_code = 'GSM1237810'
-    sample.title = 'GSM1237810'
+    sample.accession_code = "GSM1237810"
+    sample.title = "GSM1237810"
     sample.organism = homo_sapiens
     sample.save()
 
     sample_annotation = SampleAnnotation()
-    sample_annotation.data = {'hi': 'friend'}
+    sample_annotation.data = {"hi": "friend"}
     sample_annotation.sample = sample
     sample_annotation.save()
 
@@ -82,8 +82,8 @@ def prepare_job():
     assoc.save()
 
     sample = Sample()
-    sample.accession_code = 'GSM1237812'
-    sample.title = 'GSM1237812'
+    sample.accession_code = "GSM1237812"
+    sample.title = "GSM1237812"
     sample.organism = homo_sapiens
     sample.save()
 
@@ -124,11 +124,11 @@ def prepare_job():
     assoc.save()
 
     ds = Dataset()
-    ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
-    ds.aggregate_by = 'EXPERIMENT' # [ALL or SPECIES or EXPERIMENT]
-    ds.scale_by = 'STANDARD' # [NONE or MINMAX or STANDARD or ROBUST]
+    ds.data = {"GSE51081": ["GSM1237810", "GSM1237812"]}
+    ds.aggregate_by = "EXPERIMENT"  # [ALL or SPECIES or EXPERIMENT]
+    ds.scale_by = "STANDARD"  # [NONE or MINMAX or STANDARD or ROBUST]
     ds.email_address = "null@derp.com"
-    #ds.email_address = "miserlou+heyo@gmail.com"
+    # ds.email_address = "miserlou+heyo@gmail.com"
     ds.quantile_normalize = False
     ds.save()
 
@@ -138,6 +138,7 @@ def prepare_job():
     pjda.save()
 
     return pj
+
 
 def prepare_dual_tech_job():
     pj = ProcessorJob()
@@ -155,10 +156,10 @@ def prepare_dual_tech_job():
     gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
 
     sample = Sample()
-    sample.accession_code = 'GSM1487313'
-    sample.title = 'GSM1487313'
+    sample.accession_code = "GSM1487313"
+    sample.title = "GSM1487313"
     sample.organism = gallus_gallus
-    sample.technology="MICROARRAY"
+    sample.technology = "MICROARRAY"
     sample.save()
 
     sra = SampleResultAssociation()
@@ -193,8 +194,8 @@ def prepare_dual_tech_job():
     result2.save()
 
     sample2 = Sample()
-    sample2.accession_code = 'SRR332914'
-    sample2.title = 'SRR332914'
+    sample2.accession_code = "SRR332914"
+    sample2.title = "SRR332914"
     sample2.organism = gallus_gallus
     sample2.technology = "RNA-SEQ"
     sample2.save()
@@ -223,24 +224,24 @@ def prepare_dual_tech_job():
     assoc2.save()
     return pj
 
-class SmasherTestCase(TransactionTestCase):
 
+class SmasherTestCase(TransactionTestCase):
     @tag("smasher")
     def test_smasher(self):
         """ Main tester. """
         job = prepare_job()
 
-        anno_samp = Sample.objects.get(accession_code='GSM1237810')
-        self.assertTrue('hi' in anno_samp.to_metadata_dict()['refinebio_annotations'][0].keys())
+        anno_samp = Sample.objects.get(accession_code="GSM1237810")
+        self.assertTrue("hi" in anno_samp.to_metadata_dict()["refinebio_annotations"][0].keys())
 
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
-        dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+        dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
         job_context_check = {}
         job_context_check["dataset"] = dataset
         job_context_check["samples"] = dataset.get_samples()
         job_context_check["experiments"] = dataset.get_experiments()
-        self.assertEqual(len(job_context_check['samples']), 2)
-        self.assertEqual(len(job_context_check['experiments']), 1)
+        self.assertEqual(len(job_context_check["samples"]), 2)
+        self.assertEqual(len(job_context_check["experiments"]), 1)
 
         # Smoke test while we're here..
         dataset.get_samples_by_experiment()
@@ -250,62 +251,62 @@ class SmasherTestCase(TransactionTestCase):
         # XXX: agg_type 'SPECIES' hangs on Linux, not OSX.
         # Don't know why yet.
         # for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
-        for ag_type in ['ALL', 'EXPERIMENT']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+        for ag_type in ["ALL", "EXPERIMENT"]:
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.aggregate_by = ag_type
             dataset.save()
 
-            print ("Smashing " + ag_type)
+            print("Smashing " + ag_type)
             final_context = smasher.smash(job.pk, upload=False)
             # Make sure the file exists and is a valid size
-            self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
-            self.assertEqual(final_context['dataset'].is_processed, True)
+            self.assertNotEqual(os.path.getsize(final_context["output_file"]), 0)
+            self.assertEqual(final_context["dataset"].is_processed, True)
 
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.is_processed = False
             dataset.save()
 
             # Cleanup
-            os.remove(final_context['output_file'])
+            os.remove(final_context["output_file"])
             job.start_time = None
             job.end_time = None
             job.save()
 
-        for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
-            dataset.aggregate_by = 'EXPERIMENT'
+        for scale_type in ["NONE", "MINMAX", "STANDARD", "ROBUST"]:
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
+            dataset.aggregate_by = "EXPERIMENT"
             dataset.scale_by = scale_type
             dataset.save()
 
-            print ("Smashing " + scale_type)
+            print("Smashing " + scale_type)
             final_context = smasher.smash(job.pk, upload=False)
             # Make sure the file exists and is a valid size
-            self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
-            self.assertEqual(final_context['dataset'].is_processed, True)
+            self.assertNotEqual(os.path.getsize(final_context["output_file"]), 0)
+            self.assertEqual(final_context["dataset"].is_processed, True)
 
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.is_processed = False
             dataset.save()
 
             # Cleanup
-            os.remove(final_context['output_file'])
+            os.remove(final_context["output_file"])
             job.start_time = None
             job.end_time = None
             job.save()
 
         # Stats
-        for scale_type in ['MINMAX', 'STANDARD']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
-            dataset.aggregate_by = 'EXPERIMENT'
+        for scale_type in ["MINMAX", "STANDARD"]:
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
+            dataset.aggregate_by = "EXPERIMENT"
             dataset.scale_by = scale_type
             dataset.save()
 
             print("###")
             print("# " + scale_type)
-            print('###')
+            print("###")
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context.get('final_frame')
+            final_frame = final_context.get("final_frame")
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -314,33 +315,33 @@ class SmasherTestCase(TransactionTestCase):
             final_frame.std(axis=1)
             final_frame.median(axis=1)
 
-            zf = zipfile.ZipFile(final_context['output_file'])
+            zf = zipfile.ZipFile(final_context["output_file"])
             namelist = zf.namelist()
 
-            self.assertFalse(True in final_frame.index.str.contains('AFFX-'))
-            self.assertTrue('GSE51081/metadata_GSE51081.tsv' in namelist)
-            self.assertTrue('aggregated_metadata.json' in namelist)
-            self.assertTrue('README.md' in namelist)
-            self.assertTrue('LICENSE.TXT' in namelist)
-            self.assertTrue('GSE51081/GSE51081.tsv' in namelist)
+            self.assertFalse(True in final_frame.index.str.contains("AFFX-"))
+            self.assertTrue("GSE51081/metadata_GSE51081.tsv" in namelist)
+            self.assertTrue("aggregated_metadata.json" in namelist)
+            self.assertTrue("README.md" in namelist)
+            self.assertTrue("LICENSE.TXT" in namelist)
+            self.assertTrue("GSE51081/GSE51081.tsv" in namelist)
 
-            os.remove(final_context['output_file'])
+            os.remove(final_context["output_file"])
             job.start_time = None
             job.end_time = None
             job.save()
 
-        for scale_type in ['MINMAX', 'STANDARD']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
-            dataset.aggregate_by = 'SPECIES'
+        for scale_type in ["MINMAX", "STANDARD"]:
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
+            dataset.aggregate_by = "SPECIES"
             dataset.scale_by = scale_type
             dataset.save()
 
             print("###")
             print("# " + scale_type)
-            print('###')
+            print("###")
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context.get('final_frame')
+            final_frame = final_context.get("final_frame")
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -349,32 +350,32 @@ class SmasherTestCase(TransactionTestCase):
             final_frame.std(axis=1)
             final_frame.median(axis=1)
 
-            zf = zipfile.ZipFile(final_context['output_file'])
+            zf = zipfile.ZipFile(final_context["output_file"])
             namelist = zf.namelist()
 
-            self.assertTrue('HOMO_SAPIENS/metadata_HOMO_SAPIENS.tsv' in namelist)
-            self.assertTrue('aggregated_metadata.json' in namelist)
-            self.assertTrue('README.md' in namelist)
-            self.assertTrue('LICENSE.TXT' in namelist)
-            self.assertTrue('HOMO_SAPIENS/HOMO_SAPIENS.tsv' in namelist)
+            self.assertTrue("HOMO_SAPIENS/metadata_HOMO_SAPIENS.tsv" in namelist)
+            self.assertTrue("aggregated_metadata.json" in namelist)
+            self.assertTrue("README.md" in namelist)
+            self.assertTrue("LICENSE.TXT" in namelist)
+            self.assertTrue("HOMO_SAPIENS/HOMO_SAPIENS.tsv" in namelist)
 
-            os.remove(final_context['output_file'])
+            os.remove(final_context["output_file"])
             job.start_time = None
             job.end_time = None
             job.save()
 
-        for scale_type in ['MINMAX', 'STANDARD']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
-            dataset.aggregate_by = 'ALL'
+        for scale_type in ["MINMAX", "STANDARD"]:
+            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
+            dataset.aggregate_by = "ALL"
             dataset.scale_by = scale_type
             dataset.save()
 
             print("###")
             print("# " + scale_type)
-            print('###')
+            print("###")
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context.get('final_frame')
+            final_frame = final_context.get("final_frame")
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -383,23 +384,23 @@ class SmasherTestCase(TransactionTestCase):
             final_frame.std(axis=1)
             final_frame.median(axis=1)
 
-            zf = zipfile.ZipFile(final_context['output_file'])
+            zf = zipfile.ZipFile(final_context["output_file"])
             namelist = zf.namelist()
 
-            self.assertTrue('ALL/metadata_ALL.tsv' in namelist)
-            self.assertTrue('aggregated_metadata.json' in namelist)
-            self.assertTrue('README.md' in namelist)
-            self.assertTrue('LICENSE.TXT' in namelist)
-            self.assertTrue('ALL/ALL.tsv' in namelist)
+            self.assertTrue("ALL/metadata_ALL.tsv" in namelist)
+            self.assertTrue("aggregated_metadata.json" in namelist)
+            self.assertTrue("README.md" in namelist)
+            self.assertTrue("LICENSE.TXT" in namelist)
+            self.assertTrue("ALL/ALL.tsv" in namelist)
 
-            with zf.open('aggregated_metadata.json') as aggregated_metadata:
+            with zf.open("aggregated_metadata.json") as aggregated_metadata:
                 metadata_str = aggregated_metadata.read().decode()
                 parsed_metadata = json.loads(metadata_str)
                 # This dataset isn't quantile normalized, but we
                 # should still be providing this value as False
-                self.assertFalse(parsed_metadata['quantile_normalized'])
+                self.assertFalse(parsed_metadata["quantile_normalized"])
 
-            os.remove(final_context['output_file'])
+            os.remove(final_context["output_file"])
             job.start_time = None
             job.end_time = None
             job.save()
@@ -409,7 +410,7 @@ class SmasherTestCase(TransactionTestCase):
         """ Test our ability to collect the appropriate samples. """
 
         sample = Sample()
-        sample.accession_code = 'GSM45588'
+        sample.accession_code = "GSM45588"
         sample.save()
 
         result = ComputationalResult()
@@ -455,8 +456,8 @@ class SmasherTestCase(TransactionTestCase):
         result.save()
 
         sample = Sample()
-        sample.accession_code = 'XXX'
-        sample.title = 'XXX'
+        sample.accession_code = "XXX"
+        sample.title = "XXX"
         sample.organism = Organism.get_object_for_name("HOMO_SAPIENS")
         sample.save()
 
@@ -479,9 +480,9 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE51081': ['XXX']}
-        ds.aggregate_by = 'EXPERIMENT'
-        ds.scale_by = 'MINMAX'
+        ds.data = {"GSE51081": ["XXX"]}
+        ds.aggregate_by = "EXPERIMENT"
+        ds.scale_by = "MINMAX"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = False
         ds.save()
@@ -499,8 +500,8 @@ class SmasherTestCase(TransactionTestCase):
         final_context = smasher.smash(job.pk, upload=False)
         ds = Dataset.objects.get(id=dsid)
         print(ds.failure_reason)
-        print(final_context['dataset'].failure_reason)
-        self.assertNotEqual(final_context['unsmashable_files'], [])
+        print(final_context["dataset"].failure_reason)
+        self.assertNotEqual(final_context["unsmashable_files"], [])
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
@@ -523,8 +524,8 @@ class SmasherTestCase(TransactionTestCase):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1237810'
-        sample.title = 'GSM1237810'
+        sample.accession_code = "GSM1237810"
+        sample.title = "GSM1237810"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -561,8 +562,8 @@ class SmasherTestCase(TransactionTestCase):
         mus_mus = Organism.get_object_for_name("MUS_MUSCULUS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1238108'
-        sample.title = 'GSM1238108'
+        sample.accession_code = "GSM1238108"
+        sample.title = "GSM1238108"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -590,9 +591,9 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE51081': ['GSM1237810'], 'GSE51084': ['GSM1238108']}
-        ds.aggregate_by = 'ALL'
-        ds.scale_by = 'STANDARD'
+        ds.data = {"GSE51081": ["GSM1237810"], "GSE51084": ["GSM1238108"]}
+        ds.aggregate_by = "ALL"
+        ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = False
         ds.save()
@@ -607,9 +608,9 @@ class SmasherTestCase(TransactionTestCase):
         dsid = ds.id
         ds = Dataset.objects.get(id=dsid)
         print(ds.failure_reason)
-        print(final_context['dataset'].failure_reason)
+        print(final_context["dataset"].failure_reason)
 
-        self.assertEqual(final_context['unsmashable_files'], ['GSM1237810_T09-1084.PCL'])
+        self.assertEqual(final_context["unsmashable_files"], ["GSM1237810_T09-1084.PCL"])
 
     @tag("smasher")
     def test_qn_targets_only(self):
@@ -628,8 +629,8 @@ class SmasherTestCase(TransactionTestCase):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1237818'
-        sample.title = 'GSM1237818'
+        sample.accession_code = "GSM1237818"
+        sample.title = "GSM1237818"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -651,7 +652,9 @@ class SmasherTestCase(TransactionTestCase):
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.size_in_bytes = 123123
-        computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967" # this matches with the downloaded file
+        computed_file.sha1 = (
+            "08c7ea90b66b52f7cd9d9a569717a1f5f3874967"  # this matches with the downloaded file
+        )
         computed_file.save()
 
         computed_file = ComputedFile()
@@ -667,11 +670,11 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE51088': ['GSM1237818']}
-        ds.aggregate_by = 'SPECIES'
-        ds.scale_by = 'STANDARD'
+        ds.data = {"GSE51088": ["GSM1237818"]}
+        ds.aggregate_by = "SPECIES"
+        ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
-        ds.quant_sf_only = True # Make the dataset include quant.sf files only
+        ds.quant_sf_only = True  # Make the dataset include quant.sf files only
         ds.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -682,11 +685,13 @@ class SmasherTestCase(TransactionTestCase):
         final_context = smasher.smash(job.pk, upload=False)
 
         # Check that the sample was really generated
-        self.assertTrue(os.path.exists(final_context['output_dir'] + '/HOMO_SAPIENS/GSM1237818_quant.sf'))
-        self.assertTrue(final_context['metadata']['quant_sf_only'])
-        self.assertEqual(final_context['metadata']['num_samples'], 1)
-        self.assertEqual(final_context['metadata']['num_experiments'], 1)
-        self.assertTrue('aggregate_by' not in final_context['metadata'])
+        self.assertTrue(
+            os.path.exists(final_context["output_dir"] + "/HOMO_SAPIENS/GSM1237818_quant.sf")
+        )
+        self.assertTrue(final_context["metadata"]["quant_sf_only"])
+        self.assertEqual(final_context["metadata"]["num_samples"], 1)
+        self.assertEqual(final_context["metadata"]["num_experiments"], 1)
+        self.assertTrue("aggregate_by" not in final_context["metadata"])
 
     @tag("smasher")
     def test_no_smash_dupe(self):
@@ -706,8 +711,8 @@ class SmasherTestCase(TransactionTestCase):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1237810'
-        sample.title = 'GSM1237810'
+        sample.accession_code = "GSM1237810"
+        sample.title = "GSM1237810"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -738,8 +743,8 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'GSM1237811'
-        sample.title = 'GSM1237811'
+        sample.accession_code = "GSM1237811"
+        sample.title = "GSM1237811"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -762,9 +767,9 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE51081': ['GSM1237810', 'GSM1237811']}
-        ds.aggregate_by = 'ALL'
-        ds.scale_by = 'STANDARD'
+        ds.data = {"GSE51081": ["GSM1237810", "GSM1237811"]}
+        ds.aggregate_by = "ALL"
+        ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = False
         ds.save()
@@ -780,8 +785,8 @@ class SmasherTestCase(TransactionTestCase):
         ds = Dataset.objects.get(id=dsid)
 
         self.assertTrue(ds.success)
-        for column in final_context['original_merged'].columns:
-            self.assertTrue('_x' not in column)
+        for column in final_context["original_merged"].columns:
+            self.assertTrue("_x" not in column)
 
     @tag("smasher")
     def test_no_smash_dupe_two(self):
@@ -801,8 +806,8 @@ class SmasherTestCase(TransactionTestCase):
         danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
 
         sample = Sample()
-        sample.accession_code = 'SRR1731761'
-        sample.title = 'Danio rerio'
+        sample.accession_code = "SRR1731761"
+        sample.title = "Danio rerio"
         sample.organism = danio_rerio
         sample.save()
 
@@ -833,8 +838,8 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'SRR1731762'
-        sample.title = 'Danio rerio'
+        sample.accession_code = "SRR1731762"
+        sample.title = "Danio rerio"
         sample.organism = danio_rerio
         sample.save()
 
@@ -865,9 +870,9 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'SRP051449': ['SRR1731761', 'SRR1731762']}
-        ds.aggregate_by = 'SPECIES'
-        ds.scale_by = 'NONE'
+        ds.data = {"SRP051449": ["SRR1731761", "SRR1731762"]}
+        ds.aggregate_by = "SPECIES"
+        ds.scale_by = "NONE"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = True
         ds.save()
@@ -889,12 +894,12 @@ class SmasherTestCase(TransactionTestCase):
         computed_file.save()
 
         cra = ComputationalResultAnnotation()
-        cra.data = {'organism_id': danio_rerio.id, 'is_qn': True}
+        cra.data = {"organism_id": danio_rerio.id, "is_qn": True}
         cra.result = cr
         cra.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-        self.assertTrue(final_context['success'])
+        self.assertTrue(final_context["success"])
 
         # Test single file smash
 
@@ -903,9 +908,9 @@ class SmasherTestCase(TransactionTestCase):
         job.save()
 
         ds = Dataset()
-        ds.data = {'SRP051449': ['SRR1731761']}
-        ds.aggregate_by = 'EXPERIMENT'
-        ds.scale_by = 'NONE'
+        ds.data = {"SRP051449": ["SRR1731761"]}
+        ds.aggregate_by = "EXPERIMENT"
+        ds.scale_by = "NONE"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = True
         ds.save()
@@ -916,15 +921,14 @@ class SmasherTestCase(TransactionTestCase):
         pjda.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-        self.assertTrue(final_context['success'])
+        self.assertTrue(final_context["success"])
 
-        zf = zipfile.ZipFile(final_context['output_file'])
+        zf = zipfile.ZipFile(final_context["output_file"])
 
-        with zf.open('aggregated_metadata.json') as aggregated_metadata:
+        with zf.open("aggregated_metadata.json") as aggregated_metadata:
             metadata_str = aggregated_metadata.read().decode()
             parsed_metadata = json.loads(metadata_str)
-            self.assertTrue(parsed_metadata['quantile_normalized'])
-
+            self.assertTrue(parsed_metadata["quantile_normalized"])
 
     @tag("smasher")
     def test_log2(self):
@@ -945,8 +949,8 @@ class SmasherTestCase(TransactionTestCase):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1084806'
-        sample.title = 'GSM1084806'
+        sample.accession_code = "GSM1084806"
+        sample.title = "GSM1084806"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -974,8 +978,8 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'GSM1084807'
-        sample.title = 'GSM1084807'
+        sample.accession_code = "GSM1084807"
+        sample.title = "GSM1084807"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -1003,9 +1007,9 @@ class SmasherTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE44421': ['GSM1084806', 'GSM1084807']}
-        ds.aggregate_by = 'EXPERIMENT'
-        ds.scale_by = 'MINMAX'
+        ds.data = {"GSE44421": ["GSM1084806", "GSM1084807"]}
+        ds.aggregate_by = "EXPERIMENT"
+        ds.scale_by = "MINMAX"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = False
         ds.save()
@@ -1018,7 +1022,7 @@ class SmasherTestCase(TransactionTestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
 
-        self.assertTrue(final_context['success'])
+        self.assertTrue(final_context["success"])
 
     @tag("smasher")
     def test_dualtech_smash(self):
@@ -1027,9 +1031,9 @@ class SmasherTestCase(TransactionTestCase):
         pj = prepare_dual_tech_job()
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
-        ds.data = {'GSE1487313': ['GSM1487313'], 'SRP332914': ['SRR332914']}
-        ds.aggregate_by = 'SPECIES'
-        ds.scale_by = 'STANDARD'
+        ds.data = {"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]}
+        ds.aggregate_by = "SPECIES"
+        ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = False
         ds.save()
@@ -1041,12 +1045,12 @@ class SmasherTestCase(TransactionTestCase):
 
         self.assertTrue(ds.is_cross_technology())
         final_context = smasher.smash(pj.pk, upload=False)
-        self.assertTrue(os.path.exists(final_context['output_file']))
-        os.remove(final_context['output_file'])
-        self.assertEqual(len(final_context['final_frame'].columns), 2)
+        self.assertTrue(os.path.exists(final_context["output_file"]))
+        os.remove(final_context["output_file"])
+        self.assertEqual(len(final_context["final_frame"].columns), 2)
 
         # THEN BY EXPERIMENT
-        ds.aggregate_by = 'EXPERIMENT'
+        ds.aggregate_by = "EXPERIMENT"
         ds.save()
 
         dsid = ds.id
@@ -1057,12 +1061,12 @@ class SmasherTestCase(TransactionTestCase):
         pj.save()
 
         final_context = smasher.smash(pj.pk, upload=False)
-        self.assertTrue(os.path.exists(final_context['output_file']))
-        os.remove(final_context['output_file'])
-        self.assertEqual(len(final_context['final_frame'].columns), 1)
+        self.assertTrue(os.path.exists(final_context["output_file"]))
+        os.remove(final_context["output_file"])
+        self.assertEqual(len(final_context["final_frame"].columns), 1)
 
         # THEN BY ALL
-        ds.aggregate_by = 'ALL'
+        ds.aggregate_by = "ALL"
         ds.save()
 
         dsid = ds.id
@@ -1072,8 +1076,8 @@ class SmasherTestCase(TransactionTestCase):
         pj.end_time = None
         pj.save()
         final_context = smasher.smash(pj.pk, upload=False)
-        self.assertTrue(os.path.exists(final_context['output_file']))
-        self.assertEqual(len(final_context['final_frame'].columns), 2)
+        self.assertTrue(os.path.exists(final_context["output_file"]))
+        self.assertEqual(len(final_context["final_frame"].columns), 2)
 
     @tag("smasher")
     def test_sanity_imports(self):
@@ -1120,9 +1124,9 @@ class SmasherTestCase(TransactionTestCase):
     def test_notify(self):
 
         ds = Dataset()
-        ds.data = {'GSM1487313': ['GSM1487313'], 'SRS332914': ['SRS332914']}
-        ds.aggregate_by = 'SPECIES'
-        ds.scale_by = 'STANDARD'
+        ds.data = {"GSM1487313": ["GSM1487313"], "SRS332914": ["SRS332914"]}
+        ds.aggregate_by = "SPECIES"
+        ds.scale_by = "STANDARD"
         ds.email_address = "shoopdawoop@mailinator.com"
         ds.quantile_normalize = False
         ds.save()
@@ -1137,13 +1141,15 @@ class SmasherTestCase(TransactionTestCase):
         pjda.save()
 
         job_context = {}
-        job_context['job'] = pj
-        job_context['dataset'] = ds
-        job_context['upload'] = True
-        job_context['result_url'] = 'https://s3.amazonaws.com/data-refinery-test-assets/all_the_things.jpg'
+        job_context["job"] = pj
+        job_context["dataset"] = ds
+        job_context["upload"] = True
+        job_context[
+            "result_url"
+        ] = "https://s3.amazonaws.com/data-refinery-test-assets/all_the_things.jpg"
 
         final_context = smasher._notify(job_context)
-        self.assertTrue(final_context.get('success', True))
+        self.assertTrue(final_context.get("success", True))
 
 
 class CompendiaTestCase(TransactionTestCase):
@@ -1160,7 +1166,7 @@ class CompendiaTestCase(TransactionTestCase):
         csio_out = StringIO()
         sys.stderr = csio_err
         sys.stdout = csio_out
-        self.assertRaises(BaseException, call_command, 'create_compendia')
+        self.assertRaises(BaseException, call_command, "create_compendia")
         sys.stderr = old_stderr
         sys.stdout = old_stdout
 
@@ -1172,23 +1178,23 @@ class CompendiaTestCase(TransactionTestCase):
         csio_out = StringIO()
         sys.stderr = csio_err
         sys.stdout = csio_out
-        self.assertRaises(BaseException, call_command, 'fetch_compendia')
+        self.assertRaises(BaseException, call_command, "fetch_compendia")
         sys.stderr = old_stderr
         sys.stdout = old_stdout
 
 
 class AggregationTestCase(TransactionTestCase):
     """Test the tsv file generation."""
+
     def setUp(self):
         self.metadata = {
-            'experiments': {
+            "experiments": {
                 "E-GEOD-44719": {
                     "accession_code": "E-GEOD-44719",
-                    "sample_accession_codes": [ "IFNa DC_LB016_IFNa", "undefined_sample" ]
+                    "sample_accession_codes": ["IFNa DC_LB016_IFNa", "undefined_sample"],
                 }
             },
-
-            'samples': {
+            "samples": {
                 "IFNa DC_LB016_IFNa": {  # Sample #1 is an ArrayExpress sample
                     "refinebio_title": "IFNa DC_LB016_IFNa",
                     "refinebio_accession_code": "E-GEOD-44719-GSM1089311",
@@ -1200,81 +1206,70 @@ class AggregationTestCase(TransactionTestCase):
                         {
                             "detected_platform": "illuminaHumanv3",
                             "detection_percentage": 98.44078,
-                            "mapped_percentage": 100.0
+                            "mapped_percentage": 100.0,
                         },
                         # annotation #2
                         {
-                            "assay": { "name": "GSM1089311" },
+                            "assay": {"name": "GSM1089311"},
                             # Special field that will be taken out as separate columns
                             "characteristic": [
-                                { "category": "cell population",
-                                  "value": "IFNa DC"
+                                {"category": "cell population", "value": "IFNa DC"},
+                                {
+                                    "category": "dose",  # also available in "variable"
+                                    "value": "1 mL",
                                 },
-                                { "category": "dose",   # also available in "variable"
-                                  "value": "1 mL"
-                                },
-                                { "category": "donor id",
-                                  "value": "LB016"
-                                }
+                                {"category": "donor id", "value": "LB016"},
                             ],
                             # Another special field in Array Express sample
                             "variable": [
-                                { "name": "dose",  # also available in "characteristic"
-                                  "value": "1 mL"
+                                {
+                                    "name": "dose",  # also available in "characteristic"
+                                    "value": "1 mL",
                                 },
-                                { "name": "stimulation",
-                                  "value": "IFNa"
-                                }
+                                {"name": "stimulation", "value": "IFNa"},
                             ],
                             # "source" field in Array Express sample annotation will be
                             # skipped in tsv file.
-                            'source': {
-                                'name': 'GSM1288968 1',
-                                'comment': [
-                                    { 'name': 'Sample_source_name',
-                                      'value': 'pineal glands at CT18, after light exposure'
+                            "source": {
+                                "name": "GSM1288968 1",
+                                "comment": [
+                                    {
+                                        "name": "Sample_source_name",
+                                        "value": "pineal glands at CT18, after light exposure",
                                     },
-                                    { 'name': 'Sample_title',
-                                      'value': 'Pineal_Light_CT18'
-                                    }
-                                ]
+                                    {"name": "Sample_title", "value": "Pineal_Light_CT18"},
+                                ],
                             },
-
                             # For single-key object whose key is "name",
                             # the key will be ignored in tsv file.
-                            "extract": { "name": "GSM1089311 extract 1" }
-                        }
-                    ]  # end of annotations
+                            "extract": {"name": "GSM1089311 extract 1"},
+                        },
+                    ],  # end of annotations
                 },  # end of sample #1
-
                 "Bone.Marrow_OA_No_ST03": {  # Sample #2 is a GEO sample
                     "refinebio_title": "Bone.Marrow_OA_No_ST03",
                     "refinebio_accession_code": "GSM1361050",
                     "refinebio_source_database": "GEO",
                     "refinebio_organism": "homo_sapiens",
-
                     "refinebio_annotations": [
                         {
-                            "channel_count": [ "1" ],
-
+                            "channel_count": ["1"],
                             # Special field that will be taken out as separate columns
                             "characteristics_ch1": [
                                 "tissue: Bone Marrow",
                                 "disease: OA",
-                                "serum: Low Serum"
+                                "serum: Low Serum",
                             ],
-
                             # For single-element array, the element will
                             # be saved directly in tsv file.
-                            "contact_address": [ "Crown Street" ],
-                            "contact_country": [ "United Kingdom" ],
-                            "data_processing": [ "Data was processed and normalized" ],
-                            "geo_accession": [ "GSM1361050" ],
+                            "contact_address": ["Crown Street"],
+                            "contact_country": ["United Kingdom"],
+                            "data_processing": ["Data was processed and normalized"],
+                            "geo_accession": ["GSM1361050"],
                         }
-                    ]  # end of annotations
-                }  # end of sample #2
-
-            }  # end of "samples"
+                    ],  # end of annotations
+                },  # end of sample #2
+            },  # end of "samples"
         }
 
         self.smash_path = "/tmp/"
@@ -1285,18 +1280,16 @@ class AggregationTestCase(TransactionTestCase):
         pj.pipeline_applied = "SMASHER"
         pj.save()
 
-        job_context = {
-            'job': pj
-        }
+        job_context = {"job": pj}
 
-        columns = smashing_utils.get_tsv_columns(self.metadata['samples'])
+        columns = smashing_utils.get_tsv_columns(self.metadata["samples"])
         self.assertEqual(len(columns), 22)
-        self.assertEqual(columns[0], 'refinebio_accession_code')
-        self.assertTrue('refinebio_accession_code' in columns)
-        self.assertTrue('cell population' in columns)
-        self.assertTrue('dose' in columns)
-        self.assertTrue('stimulation' in columns)
-        self.assertTrue('serum' in columns)
+        self.assertEqual(columns[0], "refinebio_accession_code")
+        self.assertTrue("refinebio_accession_code" in columns)
+        self.assertTrue("cell population" in columns)
+        self.assertTrue("dose" in columns)
+        self.assertTrue("stimulation" in columns)
+        self.assertTrue("serum" in columns)
 
     @tag("smasher")
     def test_all_samples(self):
@@ -1306,30 +1299,31 @@ class AggregationTestCase(TransactionTestCase):
         pj.save()
 
         job_context = {
-            'job': pj,
-            'output_dir': self.smash_path,
-            'metadata': self.metadata,
-            'dataset': Dataset.objects.create(aggregate_by='ALL',
-                                              data={'GSE56409': ['GSM1361050'],
-                                                    'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
+            "job": pj,
+            "output_dir": self.smash_path,
+            "metadata": self.metadata,
+            "dataset": Dataset.objects.create(
+                aggregate_by="ALL",
+                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"]},
+            ),
         }
         smashing_utils.write_tsv_json(job_context)
         tsv_filename = self.smash_path + "ALL/metadata_ALL.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
 
         with open(tsv_filename) as tsv_file:
-            reader = csv.DictReader(tsv_file, delimiter='\t')
+            reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                if row['refinebio_accession_code'] == 'E-GEOD-44719-GSM1089311':
-                    self.assertEqual(row['cell population'], 'IFNa DC') # ArrayExpress specific
-                    self.assertEqual(row['dose'], '1 mL')               # ArrayExpress specific
-                    self.assertFalse('source' in row)                   # ArrayExpress specific
-                    self.assertEqual(row['detection_percentage'], '98.44078')
+                if row["refinebio_accession_code"] == "E-GEOD-44719-GSM1089311":
+                    self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
+                    self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                    self.assertFalse("source" in row)  # ArrayExpress specific
+                    self.assertEqual(row["detection_percentage"], "98.44078")
                     self.assertEqual(row["extract"], "GSM1089311 extract 1")
                     self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                elif row['refinebio_accession_code'] == 'GSM1361050':
-                    self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
-                    self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
+                elif row["refinebio_accession_code"] == "GSM1361050":
+                    self.assertEqual(row["tissue"], "Bone Marrow")  # GEO specific
+                    self.assertEqual(row["refinebio_organism"], "homo_sapiens")
                     self.assertEqual(row["contact_address"], "Crown Street")
                     self.assertEqual(row["experiment_accession"], "GSE56409")
 
@@ -1344,12 +1338,13 @@ class AggregationTestCase(TransactionTestCase):
         pj.save()
 
         job_context = {
-            'job': pj,
-            'output_dir': self.smash_path,
-            'metadata': self.metadata,
-            'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT',
-                                              data={'GSE56409': ['GSM1361050'],
-                                                    'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
+            "job": pj,
+            "output_dir": self.smash_path,
+            "metadata": self.metadata,
+            "dataset": Dataset.objects.create(
+                aggregate_by="EXPERIMENT",
+                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"]},
+            ),
         }
         smashing_utils.write_tsv_json(job_context)
 
@@ -1357,40 +1352,36 @@ class AggregationTestCase(TransactionTestCase):
         self.assertTrue(os.path.isfile(tsv_filename))
 
         with open(tsv_filename) as tsv_file:
-            reader = csv.DictReader(tsv_file, delimiter='\t')
+            reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
-                self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
-                self.assertEqual(row['detection_percentage'], '98.44078')
+                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
+                self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                self.assertEqual(row["detection_percentage"], "98.44078")
 
-        self.assertEqual(row_num, 0) # only one data row in tsv file
+        self.assertEqual(row_num, 0)  # only one data row in tsv file
         os.remove(tsv_filename)
 
     @tag("smasher")
     def test_unicode_writer(self):
         self.unicode_metadata = {
-            'experiments': {
+            "experiments": {
                 "E-GEOD-😎": {
                     "accession_code": "E-GEOD-😎",
-                    "sample_accession_codes": [ "😎", "undefined_sample" ]
+                    "sample_accession_codes": ["😎", "undefined_sample"],
                 }
             },
-            'samples': {
+            "samples": {
                 "😎": {  # Sample #1 is an ArrayExpress sample
                     "refinebio_😎": "😎",
                     "refinebio_accession_code": "eyy",
                     "refinebio_annotations": [
                         # annotation #1
-                        {
-                            "😎😎": "😎😎",
-                            "detection_percentage": 98.44078,
-                            "mapped_percentage": 100.0
-                        }
-                    ]  # end of annotations
+                        {"😎😎": "😎😎", "detection_percentage": 98.44078, "mapped_percentage": 100.0}
+                    ],  # end of annotations
                 },  # end of sample #1
-            }  # end of "samples"
+            },  # end of "samples"
         }
         self.smash_path = "/tmp/"
 
@@ -1399,54 +1390,52 @@ class AggregationTestCase(TransactionTestCase):
         pj.save()
 
         job_context = {
-            'job': pj,
-            'output_dir': self.smash_path,
-            'metadata': self.unicode_metadata,
-            'dataset': Dataset.objects.create(aggregate_by='ALL'),
-            'group_by_keys': [],
-            'input_files': {
-            }
+            "job": pj,
+            "output_dir": self.smash_path,
+            "metadata": self.unicode_metadata,
+            "dataset": Dataset.objects.create(aggregate_by="ALL"),
+            "group_by_keys": [],
+            "input_files": {},
         }
         final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
-        with open(reso, encoding='utf-8') as tsv_file:
-            reader = csv.DictReader(tsv_file, delimiter='\t')
+        with open(reso, encoding="utf-8") as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                print(str(row).encode('utf-8'))
+                print(str(row).encode("utf-8"))
 
         job_context = {
-            'job': pj,
-            'output_dir': self.smash_path,
-            'metadata': self.unicode_metadata,
-            'group_by_keys': [],
-            'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT'),
-            'input_files': {
-            }
+            "job": pj,
+            "output_dir": self.smash_path,
+            "metadata": self.unicode_metadata,
+            "group_by_keys": [],
+            "dataset": Dataset.objects.create(aggregate_by="EXPERIMENT"),
+            "input_files": {},
         }
         final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
-        with open(reso, encoding='utf-8') as tsv_file:
-            reader = csv.DictReader(tsv_file, delimiter='\t')
+        with open(reso, encoding="utf-8") as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                print(str(row).encode('utf-8'))
+                print(str(row).encode("utf-8"))
 
         job_context = {
-            'job': pj,
-            'output_dir': self.smash_path,
-            'metadata': self.unicode_metadata,
-            'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
-            'group_by_keys': ['homo_sapiens', 'fake_species'],
-            'input_files': {
-                'homo_sapiens': [], # only the key matters in this test
-                'fake_species': []  # only the key matters in this test
-            }
+            "job": pj,
+            "output_dir": self.smash_path,
+            "metadata": self.unicode_metadata,
+            "dataset": Dataset.objects.create(aggregate_by="SPECIES"),
+            "group_by_keys": ["homo_sapiens", "fake_species"],
+            "input_files": {
+                "homo_sapiens": [],  # only the key matters in this test
+                "fake_species": [],  # only the key matters in this test
+            },
         }
         final_context = smashing_utils.write_tsv_json(job_context)
         reso = final_context[0]
-        with open(reso, encoding='utf-8') as tsv_file:
-            reader = csv.DictReader(tsv_file, delimiter='\t')
+        with open(reso, encoding="utf-8") as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                print(str(row).encode('utf-8'))
+                print(str(row).encode("utf-8"))
 
     @tag("smasher")
     def test_species(self):
@@ -1457,17 +1446,18 @@ class AggregationTestCase(TransactionTestCase):
         pj.save()
 
         job_context = {
-            'job': pj,
-            'output_dir': self.smash_path,
-            'metadata': self.metadata,
-            'dataset': Dataset.objects.create(aggregate_by='SPECIES',
-                                              data={'GSE56409': ['GSM1361050'],
-                                                    'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']}),
-            'group_by_keys': ['homo_sapiens', 'fake_species'],
-            'input_files': {
-                'homo_sapiens': [], # only the key matters in this test
-                'fake_species': []  # only the key matters in this test
-            }
+            "job": pj,
+            "output_dir": self.smash_path,
+            "metadata": self.metadata,
+            "dataset": Dataset.objects.create(
+                aggregate_by="SPECIES",
+                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"]},
+            ),
+            "group_by_keys": ["homo_sapiens", "fake_species"],
+            "input_files": {
+                "homo_sapiens": [],  # only the key matters in this test
+                "fake_species": [],  # only the key matters in this test
+            },
         }
         # Generate two TSV files, one should include only "GSM1361050",
         # and the other should include only "E-GEOD-44719-GSM1089311".
@@ -1477,14 +1467,14 @@ class AggregationTestCase(TransactionTestCase):
         tsv_filename = self.smash_path + "homo_sapiens/metadata_homo_sapiens.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
         with open(tsv_filename) as tsv_file:
-            reader = csv.DictReader(tsv_file, delimiter='\t')
+            reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                self.assertEqual(row['refinebio_accession_code'], 'GSM1361050')
+                self.assertEqual(row["refinebio_accession_code"], "GSM1361050")
                 self.assertEqual(row["experiment_accession"], "GSE56409")
-                self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
-                self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
+                self.assertEqual(row["tissue"], "Bone Marrow")  # GEO specific
+                self.assertEqual(row["refinebio_organism"], "homo_sapiens")
 
-        self.assertEqual(row_num, 0) # only one data row in tsv file
+        self.assertEqual(row_num, 0)  # only one data row in tsv file
         os.remove(tsv_filename)
 
         # Test json file of "homo_sapiens"
@@ -1492,25 +1482,24 @@ class AggregationTestCase(TransactionTestCase):
         self.assertTrue(os.path.isfile(json_filename))
         with open(json_filename) as json_fp:
             species_metadada = json.load(json_fp)
-        self.assertEqual(species_metadada['species'], 'homo_sapiens')
-        self.assertEqual(len(species_metadada['samples']), 1)
-        self.assertEqual(species_metadada['samples'][0]['refinebio_accession_code'],
-                         'GSM1361050')
-        #os.remove(json_filename)
+        self.assertEqual(species_metadada["species"], "homo_sapiens")
+        self.assertEqual(len(species_metadada["samples"]), 1)
+        self.assertEqual(species_metadada["samples"][0]["refinebio_accession_code"], "GSM1361050")
+        # os.remove(json_filename)
 
         # Test tsv file of "fake_species"
         tsv_filename = self.smash_path + "fake_species/metadata_fake_species.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
         with open(tsv_filename) as tsv_file:
-            reader = csv.DictReader(tsv_file, delimiter='\t')
+            reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
-                self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
-                self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
-                self.assertEqual(row['detection_percentage'], '98.44078')
+                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
+                self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                self.assertEqual(row["detection_percentage"], "98.44078")
 
-        self.assertEqual(row_num, 0) # only one data row in tsv file
+        self.assertEqual(row_num, 0)  # only one data row in tsv file
         os.remove(tsv_filename)
 
         # Test json file of "fake_species"
@@ -1519,10 +1508,11 @@ class AggregationTestCase(TransactionTestCase):
 
         with open(json_filename) as json_fp:
             species_metadada = json.load(json_fp)
-        self.assertEqual(species_metadada['species'], 'fake_species')
-        self.assertEqual(len(species_metadada['samples']), 1)
-        self.assertEqual(species_metadada['samples'][0]['refinebio_accession_code'],
-                         'E-GEOD-44719-GSM1089311')
+        self.assertEqual(species_metadada["species"], "fake_species")
+        self.assertEqual(len(species_metadada["samples"]), 1)
+        self.assertEqual(
+            species_metadada["samples"][0]["refinebio_accession_code"], "E-GEOD-44719-GSM1089311"
+        )
         os.remove(json_filename)
 
     @tag("smasher")
@@ -1543,13 +1533,13 @@ class AggregationTestCase(TransactionTestCase):
         homo_sapiens.save()
 
         sample = Sample()
-        sample.accession_code = 'GSM1237810'
-        sample.title = 'GSM1237810'
+        sample.accession_code = "GSM1237810"
+        sample.title = "GSM1237810"
         sample.organism = homo_sapiens
         sample.save()
 
         sample_annotation = SampleAnnotation()
-        sample_annotation.data = {'hi': 'friend'}
+        sample_annotation.data = {"hi": "friend"}
         sample_annotation.sample = sample
         sample_annotation.save()
 
@@ -1565,7 +1555,9 @@ class AggregationTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "big.PCL"
-        computed_file.absolute_file_path = "/home/user/data_store/BADSMASH/" + computed_file.filename
+        computed_file.absolute_file_path = (
+            "/home/user/data_store/BADSMASH/" + computed_file.filename
+        )
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -1577,8 +1569,8 @@ class AggregationTestCase(TransactionTestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'GSM1237812'
-        sample.title = 'GSM1237812'
+        sample.accession_code = "GSM1237812"
+        sample.title = "GSM1237812"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -1599,7 +1591,9 @@ class AggregationTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "small.PCL"
-        computed_file.absolute_file_path = "/home/user/data_store/BADSMASH/" + computed_file.filename
+        computed_file.absolute_file_path = (
+            "/home/user/data_store/BADSMASH/" + computed_file.filename
+        )
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -1611,11 +1605,11 @@ class AggregationTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
-        ds.aggregate_by = 'ALL' # [ALL or SPECIES or EXPERIMENT]
-        ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
+        ds.data = {"GSE51081": ["GSM1237810", "GSM1237812"]}
+        ds.aggregate_by = "ALL"  # [ALL or SPECIES or EXPERIMENT]
+        ds.scale_by = "NONE"  # [NONE or MINMAX or STANDARD or ROBUST]
         ds.email_address = "null@derp.com"
-        #ds.email_address = "miserlou+heyo@gmail.com"
+        # ds.email_address = "miserlou+heyo@gmail.com"
         ds.quantile_normalize = False
         ds.save()
 
@@ -1647,8 +1641,8 @@ class AggregationTestCase(TransactionTestCase):
 
         # Now, make sure the bad can't zero this out.
         sample = Sample()
-        sample.accession_code = 'GSM999'
-        sample.title = 'GSM999'
+        sample.accession_code = "GSM999"
+        sample.title = "GSM999"
         sample.organism = homo_sapiens
         sample.save()
 
@@ -1664,7 +1658,9 @@ class AggregationTestCase(TransactionTestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "bad.PCL"
-        computed_file.absolute_file_path = "/home/user/data_store/BADSMASH/" + computed_file.filename
+        computed_file.absolute_file_path = (
+            "/home/user/data_store/BADSMASH/" + computed_file.filename
+        )
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
@@ -1676,9 +1672,9 @@ class AggregationTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812', 'GSM999']}
-        ds.aggregate_by = 'ALL'
-        ds.scale_by = 'NONE'
+        ds.data = {"GSE51081": ["GSM1237810", "GSM1237812", "GSM999"]}
+        ds.aggregate_by = "ALL"
+        ds.scale_by = "NONE"
         ds.email_address = "null@derp.com"
         ds.quantile_normalize = False
         ds.save()
@@ -1691,4 +1687,4 @@ class AggregationTestCase(TransactionTestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
 
-        self.assertEqual(len(final_context['final_frame']), 4)
+        self.assertEqual(len(final_context["final_frame"]), 4)

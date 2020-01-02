@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0030_update_sample_manufacturer'),
+        ("data_refinery_common", "0030_update_sample_manufacturer"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='organismindex',
-            name='salmon_version',
-            field=models.CharField(default='salmon 0.13.1', max_length=255),
+            model_name="organismindex",
+            name="salmon_version",
+            field=models.CharField(default="salmon 0.13.1", max_length=255),
         ),
     ]

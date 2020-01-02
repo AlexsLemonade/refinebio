@@ -116,29 +116,25 @@ class OrganismModelTestCase(TestCase):
     def tearDown(self):
         Organism.objects.all().delete()
 
-    @patch('data_refinery_common.models.organism.requests.get')
+    @patch("data_refinery_common.models.organism.requests.get")
     def test_cached_names_are_found(self, mock_get):
-        Organism.objects.create(name="HOMO_SAPIENS",
-                                taxonomy_id=9606,
-                                is_scientific_name=True)
+        Organism.objects.create(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
 
         name = Organism.get_name_for_id(9606)
 
         self.assertEqual(name, "HOMO_SAPIENS")
         mock_get.assert_not_called()
 
-    @patch('data_refinery_common.models.organism.requests.get')
+    @patch("data_refinery_common.models.organism.requests.get")
     def test_cached_ids_are_found(self, mock_get):
-        Organism.objects.create(name="HOMO_SAPIENS",
-                                taxonomy_id=9606,
-                                is_scientific_name=True)
+        Organism.objects.create(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
 
         id = Organism.get_id_for_name("Homo Sapiens")
 
         self.assertEqual(id, 9606)
         mock_get.assert_not_called()
 
-    @patch('data_refinery_common.models.organism.requests.get')
+    @patch("data_refinery_common.models.organism.requests.get")
     def test_uncached_scientific_names_are_found(self, mock_get):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = ESEARCH_RESPONSE_XML
@@ -148,7 +144,12 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(taxonomy_id, 9606)
         mock_get.assert_called_once_with(
             ESEARCH_URL,
-            {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "field": "scin", "term": "HOMO_SAPIENS"}
+            {
+                "db": "taxonomy",
+                "api_key": "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09",
+                "field": "scin",
+                "term": "HOMO_SAPIENS",
+            },
         )
 
         # The first call should have stored the organism record in the
@@ -159,18 +160,34 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(new_id, 9606)
         mock_get.assert_not_called()
 
-    @patch('data_refinery_common.models.organism.requests.get')
+    @patch("data_refinery_common.models.organism.requests.get")
     def test_uncached_other_names_are_found(self, mock_get):
         mock_get.side_effect = mocked_requests_get
 
         taxonomy_id = Organism.get_id_for_name("Human")
 
         self.assertEqual(taxonomy_id, 9606)
-        mock_get.assert_has_calls([
-            call(ESEARCH_URL,
-                 {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "field": "scin", "term": "HUMAN"}),
-            call(ESEARCH_URL,
-                 {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "term": "HUMAN"})])
+        mock_get.assert_has_calls(
+            [
+                call(
+                    ESEARCH_URL,
+                    {
+                        "db": "taxonomy",
+                        "api_key": "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09",
+                        "field": "scin",
+                        "term": "HUMAN",
+                    },
+                ),
+                call(
+                    ESEARCH_URL,
+                    {
+                        "db": "taxonomy",
+                        "api_key": "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09",
+                        "term": "HUMAN",
+                    },
+                ),
+            ]
+        )
 
         # The first call should have stored the organism record in the
         # database so this call should not make a request.
@@ -180,7 +197,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(new_id, 9606)
         mock_get.assert_not_called()
 
-    @patch('data_refinery_common.models.organism.requests.get')
+    @patch("data_refinery_common.models.organism.requests.get")
     def test_uncached_ids_are_found(self, mock_get):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = EFETCH_RESPONSE_XML
@@ -190,7 +207,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(organism_name, "HOMO_SAPIENS")
         mock_get.assert_called_once_with(
             EFETCH_URL,
-            {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "id": "9606"}
+            {"db": "taxonomy", "api_key": "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09", "id": "9606"},
         )
 
         # The first call should have stored the organism record in the
@@ -201,7 +218,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(new_name, "HOMO_SAPIENS")
         mock_get.assert_not_called()
 
-    @patch('data_refinery_common.models.organism.requests.get')
+    @patch("data_refinery_common.models.organism.requests.get")
     def test_invalid_ids_cause_exceptions(self, mock_get):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = EFETCH_NOT_FOUND_XML
@@ -209,7 +226,7 @@ class OrganismModelTestCase(TestCase):
         with self.assertRaises(InvalidNCBITaxonomyId):
             Organism.get_name_for_id(0)
 
-    @patch('data_refinery_common.models.organism.requests.get')
+    @patch("data_refinery_common.models.organism.requests.get")
     def test_unfound_names_return_0(self, mock_get):
         """If we can't find an NCBI taxonomy ID for an organism name
         we can keep things moving for a while without it.
@@ -224,11 +241,27 @@ class OrganismModelTestCase(TestCase):
         taxonomy_id = Organism.get_id_for_name("blah")
 
         self.assertEqual(taxonomy_id, 0)
-        mock_get.assert_has_calls([
-            call(ESEARCH_URL,
-                 {"db": "taxonomy", "field": "scin", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "term": "BLAH"}),
-            call(ESEARCH_URL,
-                 {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "term": "BLAH"})])
+        mock_get.assert_has_calls(
+            [
+                call(
+                    ESEARCH_URL,
+                    {
+                        "db": "taxonomy",
+                        "field": "scin",
+                        "api_key": "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09",
+                        "term": "BLAH",
+                    },
+                ),
+                call(
+                    ESEARCH_URL,
+                    {
+                        "db": "taxonomy",
+                        "api_key": "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09",
+                        "term": "BLAH",
+                    },
+                ),
+            ]
+        )
 
         # The first call should have stored the organism record in the
         # database so this call should not make a request.

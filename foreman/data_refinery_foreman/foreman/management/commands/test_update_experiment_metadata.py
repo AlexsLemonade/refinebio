@@ -14,7 +14,7 @@ class SurveyTestCase(TransactionTestCase):
     def tearDown(self):
         Experiment.objects.all().delete()
 
-    @patch('data_refinery_foreman.surveyor.sra.requests.get')
+    @patch("data_refinery_foreman.surveyor.sra.requests.get")
     def test_sra_experiment_missing_metadata(self, mock_get):
         """Tests that an SRA experiment has its missing metadata added."""
         mock_get.side_effect = mocked_requests_get
@@ -38,10 +38,7 @@ class SurveyTestCase(TransactionTestCase):
         sample.title = "Not important"
         sample.save()
 
-        ExperimentSampleAssociation.objects.get_or_create(
-            experiment=experiment,
-            sample=sample
-        )
+        ExperimentSampleAssociation.objects.get_or_create(experiment=experiment, sample=sample)
 
         # 3. Setup is done, actually run the command.
         command = Command()
@@ -50,7 +47,7 @@ class SurveyTestCase(TransactionTestCase):
         # Test that the title was fixed
         self.assertNotEqual(
             Experiment.objects.get_or_create(accession_code=experiment.accession_code)[0].title,
-            BAD_TITLE
+            BAD_TITLE,
         )
 
         # Run the command again to make sure that it does not fail if there are no changes
@@ -77,7 +74,7 @@ class SurveyTestCase(TransactionTestCase):
         # Test that the title was fixed
         self.assertNotEqual(
             Experiment.objects.get_or_create(accession_code=experiment.accession_code)[0].title,
-            BAD_TITLE
+            BAD_TITLE,
         )
 
         # Run the command again to make sure that it does not fail if there are no changes
@@ -104,7 +101,7 @@ class SurveyTestCase(TransactionTestCase):
         # Test that the title was fixed
         self.assertNotEqual(
             Experiment.objects.get_or_create(accession_code=experiment.accession_code)[0].title,
-            BAD_TITLE
+            BAD_TITLE,
         )
 
         # Run the command again to make sure that it does not fail if there are no changes
