@@ -124,7 +124,7 @@ jobs:
       - run: sudo pip3 install black isort seed-isort-config
 
       # Check that the imports are sorted
-      - run: seed-isort-config
+      # - run: seed-isort-config
       - run: isort --check-only --quiet
 
       # Check for syntax errors in our project. Also make sure the code is formatted correctly.
