@@ -21,17 +21,13 @@ logger = get_and_configure_logger(__name__)
 CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 
-MAIN_DIVISION_URL_TEMPLATE = (
-    "https://rest.ensembl.org/info/species?content-type=application/json"
-)
+MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 DIVISION_URL_TEMPLATE = (
-    "https://rest.ensembl.org/info/genomes/division/{division}"
-    "?content-type=application/json"
+    "https://rest.ensembl.org/info/genomes/division/{division}" "?content-type=application/json"
 )
 
 SPECIES_DETAIL_URL_TEMPLATE = (
-    "ftp://ftp.ensemblgenomes.org/pub/"
-    "{short_division}/current/species_{division}.txt"
+    "ftp://ftp.ensemblgenomes.org/pub/" "{short_division}/current/species_{division}.txt"
 )
 TRANSCRIPTOME_URL_TEMPLATE = (
     "ftp://ftp.{url_root}/fasta/{collection}{species_sub_dir}/dna/"
@@ -59,12 +55,8 @@ DIVISION_LOOKUP = {
 # assemblies.  All divisions other than the main one have identical
 # release versions. These urls will return what the most recent
 # release version is.
-MAIN_RELEASE_URL = (
-    "https://rest.ensembl.org/info/software?content-type=application/json"
-)
-DIVISION_RELEASE_URL = (
-    "https://rest.ensembl.org/info/eg_version?content-type=application/json"
-)
+MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
+DIVISION_RELEASE_URL = "https://rest.ensembl.org/info/eg_version?content-type=application/json"
 
 
 def get_strain_mapping_for_organism(
@@ -122,9 +114,7 @@ class EnsemblUrlBuilder(ABC):
 
     def __init__(self, species: Dict):
         """Species is a Dict containing parsed JSON from the Division API."""
-        self.url_root = (
-            "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
-        )
+        self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.division = species["division"]
         self.short_division = DIVISION_LOOKUP[species["division"]]
 
@@ -364,10 +354,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             species_files = self.discover_species()
         except Exception:
             logger.exception(
-                (
-                    "Exception caught while discovering species. "
-                    "Terminating survey job."
-                ),
+                "Exception caught while discovering species. Terminating survey job.",
                 survey_job=self.survey_job.id,
             )
             return False
@@ -379,7 +366,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 )
         except Exception:
             logger.exception(
-                ("Failed to queue downloader jobs. " "Terminating survey job."),
+                "Failed to queue downloader jobs. Terminating survey job.",
                 survey_job=self.survey_job.id,
             )
             return False
@@ -392,9 +379,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         ).value
 
         logger.info(
-            "Surveying %s division of ensembl.",
-            ensembl_division,
-            survey_job=self.survey_job.id,
+            "Surveying %s division of ensembl.", ensembl_division, survey_job=self.survey_job.id,
         )
 
         try:
@@ -433,9 +418,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             # distinguish between a singlular species and multiple species.
             specieses = r.json()["species"]
         else:
-            formatted_division_url = DIVISION_URL_TEMPLATE.format(
-                division=ensembl_division
-            )
+            formatted_division_url = DIVISION_URL_TEMPLATE.format(division=ensembl_division)
             r = utils.requests_retry_session().get(formatted_division_url)
             specieses = r.json()
 
@@ -455,10 +438,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                     # just have to discover one species for the
                     # organism, and then our strain mapping will make
                     # sure we use the correct strain and assembly.
-                    if (
-                        ensembl_division == "EnsemblFungi"
-                        and organism_name != species["name"]
-                    ):
+                    if ensembl_division == "EnsemblFungi" and organism_name != species["name"]:
                         species["name"] = organism_name
 
                     all_new_species.append(self._generate_files(species))
