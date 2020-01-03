@@ -76,6 +76,30 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
+    def test_single_plant(self):
+        """ Tests that the files returned actually exist.
+
+        Tests the Metazoa division instead of the main division.
+        """
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="ensembl_division", value="EnsemblPlants"
+        )
+        key_value_pair.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="organism_name", value="Arabidopsis thaliana"
+        )
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
+        files = surveyor.discover_species()[0]
+
+        for file in files:
+            urllib.request.urlopen(file.source_url)
+
     def test_correct_index_location_protist(self):
         """ Tests that the files returned actually exist.
 
