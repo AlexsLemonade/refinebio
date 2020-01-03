@@ -11,6 +11,8 @@ set -e
 
 files=`git diff --staged --name-only --diff-filter=d -- "*.py"`
 
+seed-isort-config
+
 for file in $files; do
   isort -y $file
   black --line-length 100 $file

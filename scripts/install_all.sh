@@ -164,6 +164,16 @@ if ! command -v black > /dev/null; then
     fi
 fi
 
+if ! command -v isort > /dev/null; then
+    echo "Installing isort..."
+    if [ $APT ] || confirm "Would you like to automatically install isort?"; then
+        pip3 install isort seed-isort-config
+    else
+        echo "You need to manually install isort (code formatter) before continuing..." >&2
+        exit 1
+    fi
+fi
+
 if ! command -v git-crypt > /dev/null; then
     echo "Installing git-crypt..."
     $INSTALL_CMD git-crypt > $OUTPUT || (echo "You must manually install git-crypt" && exit 1)
