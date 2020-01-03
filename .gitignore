@@ -9,7 +9,6 @@ workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz
 volumes_postgres/
 aspera*
 common/version
-.isort.cfg
 
 # Project-specific Nomad related files
 nomad.logs
