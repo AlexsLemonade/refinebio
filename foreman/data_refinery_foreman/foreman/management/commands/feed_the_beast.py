@@ -10,9 +10,11 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from nomad import Nomad
 
-from data_refinery_common.utils import  get_env_variable
+from data_refinery_common.utils import get_env_variable
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
-from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import queue_surveyor_for_accession
+from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
+    queue_surveyor_for_accession,
+)
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Experiment, ProcessorJob, SurveyedAccession
 
@@ -43,17 +45,17 @@ class Command(BaseCommand):
         while batch_accessions:
             logger.info(
                 "Looping through another batch of 1000 experiments, starting with accession code: %s",
-                batch_accessions[0]
+                batch_accessions[0],
             )
 
             # Check against surveyed accessions table to prevent resurveying
             surveyed_experiments = SurveyedAccession.objects.filter(
                 accession_code__in=batch_accessions
-            ).values(
-                'accession_code'
-            )
+            ).values("accession_code")
 
-            surveyed_accessions = [experiment['accession_code'] for experiment in surveyed_experiments]
+            surveyed_accessions = [
+                experiment["accession_code"] for experiment in surveyed_experiments
+            ]
 
             missing_accessions = set(batch_accessions) - set(surveyed_accessions)
             while len(missing_accessions) > 0:
@@ -62,9 +64,13 @@ class Command(BaseCommand):
 
                     num_surveyor_jobs = 0
                     for job in all_surveyor_jobs:
-                        if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
-                            num_surveyor_jobs = num_surveyor_jobs + job['JobSummary']['Children']['Pending']
-                            num_surveyor_jobs = num_surveyor_jobs + job['JobSummary']['Children']['Running']
+                        if job["ParameterizedJob"] and job["JobSummary"].get("Children", None):
+                            num_surveyor_jobs = (
+                                num_surveyor_jobs + job["JobSummary"]["Children"]["Pending"]
+                            )
+                            num_surveyor_jobs = (
+                                num_surveyor_jobs + job["JobSummary"]["Children"]["Running"]
+                            )
                 except:
                     logger.exception("Exception caught counting surveyor jobs!")
                     # Probably having trouble communicating with Nomad, let's try again next loop.
@@ -78,8 +84,10 @@ class Command(BaseCommand):
                         time.sleep(30)
                     except:
                         # We don't want to stop, gotta keep feeding the beast!!!!
-                        logger.exception("Exception caught while looping through all accessions!",
-                                         accession_code=accession_code)
+                        logger.exception(
+                            "Exception caught while looping through all accessions!",
+                            accession_code=accession_code,
+                        )
                 else:
                     # Do it here so we don't sleep when there's an exception
                     time.sleep(30)
@@ -89,10 +97,9 @@ class Command(BaseCommand):
             current_time = timezone.now()
 
             for accession in fed_accessions:
-                new_surveyed_accessions.append(SurveyedAccession(
-                    accession_code=accession,
-                    created_at=current_time
-                ))
+                new_surveyed_accessions.append(
+                    SurveyedAccession(accession_code=accession, created_at=current_time)
+                )
 
             SurveyedAccession.objects.bulk_create(new_surveyed_accessions)
             fed_accessions = []

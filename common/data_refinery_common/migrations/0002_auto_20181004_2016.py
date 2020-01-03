@@ -8,58 +8,64 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0001_initial'),
+        ("data_refinery_common", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='computationalresult',
-            name='commands',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.TextField(), default=list, size=None),
+            model_name="computationalresult",
+            name="commands",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.TextField(), default=list, size=None
+            ),
         ),
         migrations.AlterField(
-            model_name='computationalresultannotation',
-            name='data',
+            model_name="computationalresultannotation",
+            name="data",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name='dataset',
-            name='data',
+            model_name="dataset",
+            name="data",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name='experiment',
-            name='protocol_description',
+            model_name="experiment",
+            name="protocol_description",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name='experiment',
-            name='publication_authors',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.TextField(), default=list, size=None),
+            model_name="experiment",
+            name="publication_authors",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.TextField(), default=list, size=None
+            ),
         ),
         migrations.AlterField(
-            model_name='experimentannotation',
-            name='data',
+            model_name="experimentannotation",
+            name="data",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name='pipeline',
-            name='steps',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), default=list, size=None),
+            model_name="pipeline",
+            name="steps",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.IntegerField(), default=list, size=None
+            ),
         ),
         migrations.AlterField(
-            model_name='processor',
-            name='environment',
+            model_name="processor",
+            name="environment",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name='sample',
-            name='protocol_info',
+            model_name="sample",
+            name="protocol_info",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name='sampleannotation',
-            name='data',
+            model_name="sampleannotation",
+            name="data",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
     ]

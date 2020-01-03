@@ -1,5 +1,5 @@
 from django.contrib import admin
-from data_refinery_common.models import ( 
+from data_refinery_common.models import (
     ProcessorJob,
     DownloaderJob,
     SurveyJob,
@@ -7,7 +7,7 @@ from data_refinery_common.models import (
     Sample,
     OriginalFile,
     ComputationalResult,
-    OrganismIndex
+    OrganismIndex,
 )
 
 admin.site.register(ProcessorJob)
@@ -19,4 +19,3 @@ admin.site.register(Sample)
 admin.site.register(OriginalFile)
 admin.site.register(ComputationalResult)
 admin.site.register(OrganismIndex)
-

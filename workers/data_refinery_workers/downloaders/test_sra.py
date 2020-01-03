@@ -10,7 +10,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
     Sample,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
 )
 from data_refinery_workers.downloaders import sra, utils
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -57,9 +57,9 @@ class DownloadSraTestCase(TestCase):
 
     #     success = sra.download_sra(dlj.pk)
 
-    @tag('downloaders')
-    @tag('downloaders_sra')
-    @patch('data_refinery_workers.downloaders.utils.send_job')
+    @tag("downloaders")
+    @tag("downloaders_sra")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     def test_download_file_ncbi(self, mock_send_job):
         mock_send_job.return_value = None
 
@@ -72,7 +72,7 @@ class DownloadSraTestCase(TestCase):
         og.is_archive = True
         og.save()
         sample = Sample()
-        sample.accession_code = 'SRR9117853'
+        sample.accession_code = "SRR9117853"
         sample.save()
         assoc = OriginalFileSampleAssociation()
         assoc.sample = sample
@@ -85,12 +85,12 @@ class DownloadSraTestCase(TestCase):
         result, downloaded_files = sra.download_sra(dlj.pk)
         utils.end_downloader_job(dlj, result)
         self.assertTrue(result)
-        self.assertEqual(downloaded_files[0].sha1, 'e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc')
+        self.assertEqual(downloaded_files[0].sha1, "e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc")
         self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
 
-    @tag('downloaders')
-    @tag('downloaders_sra')
-    @patch('data_refinery_workers.downloaders.utils.send_job')
+    @tag("downloaders")
+    @tag("downloaders_sra")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     def test_download_file_swapper(self, mock_send_job):
         mock_send_job.return_value = None
 
@@ -103,7 +103,7 @@ class DownloadSraTestCase(TestCase):
         og.is_archive = True
         og.save()
         sample = Sample()
-        sample.accession_code = 'SRR9117853'
+        sample.accession_code = "SRR9117853"
         sample.save()
         assoc = OriginalFileSampleAssociation()
         assoc.sample = sample

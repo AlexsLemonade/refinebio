@@ -17,7 +17,10 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples import update_salmon_all_experiments
+from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples import (
+    update_salmon_all_experiments,
+)
+
 
 def setup_experiments() -> None:
     """Creates three experiments for testing purposes.
@@ -31,83 +34,72 @@ def setup_experiments() -> None:
 
     # Experiment that needs to be re-surveyed
     experiment = Experiment.objects.create(
-        accession_code="GSE12417",
-        organism_names=['HOMO_SAPIENS'],
-        technology='MICROARRAY',
-        source_database='GEO'
+        accession_code="GSE12417", technology="MICROARRAY", source_database="GEO"
     )
 
     # Correct platform
     sample = Sample.objects.create(
-        accession_code='GSM311750',
-        source_database='GEO',
-        technology='MICROARRAY',
-        platform_accession_code='hgu133a'
+        accession_code="GSM311750",
+        source_database="GEO",
+        technology="MICROARRAY",
+        platform_accession_code="hgu133a",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
     # Incorrect Platform
     sample = Sample.objects.create(
-        accession_code='GSM316652',
+        accession_code="GSM316652",
         organism=organism,
-        source_database='GEO',
-        technology='MICROARRAY',
-        platform_accession_code='hgu133a'
+        source_database="GEO",
+        technology="MICROARRAY",
+        platform_accession_code="hgu133a",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
-
 
     # Experiment that does not need to be re-surveyed
     experiment = Experiment.objects.create(
-        accession_code="GSE9890",
-        organism_names=['HOMO_SAPIENS'],
-        technology='MICROARRAY',
-        source_database='GEO'
+        accession_code="GSE9890", technology="MICROARRAY", source_database="GEO"
     )
 
     sample = Sample.objects.create(
-        accession_code='GSM249671',
-        source_database='GEO',
-        technology='MICROARRAY',
-        platform_accession_code='hgu133plus2'
+        accession_code="GSM249671",
+        source_database="GEO",
+        technology="MICROARRAY",
+        platform_accession_code="hgu133plus2",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
     sample = Sample.objects.create(
-        accession_code='GSM249672',
+        accession_code="GSM249672",
         organism=organism,
-        source_database='GEO',
-        technology='MICROARRAY',
-        platform_accession_code='hgu133plus2'
+        source_database="GEO",
+        technology="MICROARRAY",
+        platform_accession_code="hgu133plus2",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
-
 
     # Experiment that isn't even the right source_database.
     experiment = Experiment.objects.create(
-        accession_code="SRP12345",
-        organism_names=['HOMO_SAPIENS'],
-        technology='RNA-SEQ',
-        source_database='SRA'
+        accession_code="SRP12345", technology="RNA-SEQ", source_database="SRA"
     )
 
     sample = Sample.objects.create(
-        accession_code='SRR123145',
+        accession_code="SRR123145",
         organism=organism,
-        source_database='SRA',
-        technology='RNA-SEQ',
-        platform_accession_code='IlluminaHiSeq1000'
+        source_database="SRA",
+        technology="RNA-SEQ",
+        platform_accession_code="IlluminaHiSeq1000",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
     # This second sample is just to make checking things easy because
     # all experiments start with 2 samples in these tests.
     sample = Sample.objects.create(
-        accession_code='SRR123146',
+        accession_code="SRR123146",
         organism=organism,
-        source_database='SRA',
-        technology='RNA-SEQ',
-        platform_accession_code='IlluminaHiSeq1000'
+        source_database="SRA",
+        technology="RNA-SEQ",
+        platform_accession_code="IlluminaHiSeq1000",
     )
     ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
@@ -117,6 +109,7 @@ class CorrectAffyCdfTestCase(TestCase):
     Tests that new processor jobs are created for samples that belong to experiments that were
     processed with multiple versions of Salmon
     """
+
     def test_dry_run(self):
         setup_experiments()
         # Setup is done, actually run the command.
@@ -138,7 +131,9 @@ class CorrectAffyCdfTestCase(TestCase):
         call_command("correct_affy_cdfs", *args, **options)
 
         # Verify that the two experiments with correct platform information do not get queued.
-        unchanged_experiments = Experiment.objects.filter(accession_code__in=["GSE9890", "SRP12345"])
+        unchanged_experiments = Experiment.objects.filter(
+            accession_code__in=["GSE9890", "SRP12345"]
+        )
 
         for experiment in unchanged_experiments:
             self.assertEqual(2, experiment.samples.count())

@@ -6,12 +6,13 @@ import string
 import subprocess
 import sys
 import yaml
+import pickle
 
 from django.conf import settings
 from django.utils import timezone
 from typing import List, Dict, Callable
 
-from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline
+from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline, SMASHER_JOB_TYPES
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -48,27 +49,24 @@ CURRENT_JOB = None
 def signal_handler(sig, frame):
     """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
-    if not CURRENT_JOB:
-        sys.exit(0)
-    else:
-        CURRENT_JOB.start_time = None
-        CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
-        CURRENT_JOB.failure_reason = "Caught either a SIGTERM or SIGINT signal."
+    if CURRENT_JOB:
         CURRENT_JOB.success = False
+        CURRENT_JOB.end_time = timezone.now()
+        CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT: " + str(sig)
         CURRENT_JOB.save()
-        sys.exit(0)
+
+    sys.exit(0)
+
 
 def prepare_original_files(job_context):
     """ Provision in the Job context for OriginalFile-driven processors
     """
     job = job_context["job"]
-    original_files = OriginalFile.objects.filter(processor_jobs=job)
+    original_files = job.original_files.all()
 
     if original_files.count() == 0:
-        logger.error("No files found.", processor_job=job.id)
-        job_context["success"] = False
-        job.failure_reason = "No files were found for the job."
-        return job_context
+        raise ProcessorJobError("No files were found for the job.", success=False)
 
     undownloaded_files = set()
     for original_file in original_files:
@@ -84,39 +82,35 @@ def prepare_original_files(job_context):
 
     if undownloaded_files:
         logger.info(
-            ("One or more files found which were missing or not downloaded."
-             " Creating downloader jobs for them and deleting this job."),
+            (
+                "One or more files found which were missing or not downloaded."
+                " Creating downloader jobs for them and deleting this job."
+            ),
             processor_job=job.id,
-            missing_files=list(undownloaded_files)
+            missing_files=list(undownloaded_files),
         )
 
         was_job_created = create_downloader_job(
-            undownloaded_files,
-            processor_job_id=job_context["job_id"],
-            force=True
+            undownloaded_files, processor_job_id=job_context["job_id"], force=True
         )
         if not was_job_created:
-            failure_reason = "Missing file for processor job but unable to recreate downloader jobs!"
-            logger.error(failure_reason, processor_job=job.id)
-            job_context["success"] = False
-            job.failure_reason = failure_reason
-            return job_context
+            raise ProcessorJobError(
+                "Missing file for processor job but unable to recreate downloader jobs!",
+                success=False,
+            )
 
-        # If we can't process the data because it's not on the disk we
-        # can't mark the job as a success since it obviously didn't
-        # succeed. However if we mark it as a failure the job could be
-        # retried triggering yet another DownloaderJob to be created
-        # to re-download the data. Therefore the best option is to
-        # delete this job.
-        job.delete()
-        job_context["delete_self"] = True
-
-        return job_context
+        raise ProcessorJobError(
+            "We can not process the data because it is not on the disk",
+            success=False,
+            no_retry=True,  # this job should not be retried again
+            abort=True,  # abort the job and don't do anything else
+            undownloaded_files=[file.id for file in undownloaded_files],
+        )
 
     job_context["original_files"] = original_files
     first_original_file = original_files.first()
     samples = Sample.objects.filter(original_files=first_original_file)
-    job_context['samples'] = samples
+    job_context["samples"] = samples
     job_context["computed_files"] = []
 
     return job_context
@@ -126,23 +120,19 @@ def prepare_dataset(job_context):
     """ Provision in the Job context for Dataset-driven processors
     """
     job = job_context["job"]
-    relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
+    job_datasets = job.datasets.all()
 
     # This should never be more than one!
-    if relations.count() > 1:
-        failure_reason = "More than one dataset for processor job!"
-        logger.error(failure_reason, processor_job=job.id)
-        job_context["success"] = False
-        job.failure_reason = failure_reason
-        return job_context
-    elif relations.count() == 0:
-        failure_reason = "No datasets found for processor job!"
-        logger.error(failure_reason, processor_job=job.id)
-        job_context["success"] = False
-        job.failure_reason = failure_reason
-        return job_context
+    if job_datasets.count() > 1:
+        raise ProcessorJobError(
+            "More than one dataset for processor job!", success=False, no_retry=True
+        )
+    elif job_datasets.count() == 0:
+        raise ProcessorJobError(
+            "No datasets found for processor job!", success=False, no_retry=True
+        )
 
-    dataset = Dataset.objects.get(id=relations[0].dataset_id)
+    dataset = job_datasets.first()
     dataset.is_processing = True
     dataset.save()
 
@@ -156,6 +146,7 @@ def prepare_dataset(job_context):
     job_context["computed_files"] = []
     return job_context
 
+
 def start_job(job_context: Dict):
     """A processor function to start jobs.
 
@@ -166,19 +157,21 @@ def start_job(job_context: Dict):
     job = job_context["job"]
 
     original_file = job.original_files.first()
-    if not job.pipeline_applied == ProcessorPipeline.TXIMPORT.value and original_file\
-       and not original_file.needs_processing(job_context["job_id"]):
-        failure_reason = ("Sample has a good computed file, it must have been processed, "
-                          "so it doesn't need to be downloaded! Aborting!")
-        logger.error(failure_reason,
-                     job_id=job.id,
-                     original_file=original_file
+    if (
+        not job.pipeline_applied == ProcessorPipeline.TXIMPORT.value
+        and original_file
+        and not original_file.needs_processing(job_context["job_id"])
+    ):
+        failure_reason = (
+            "Sample has a good computed file, it must have been processed, "
+            "so it doesn't need to be downloaded! Aborting!"
         )
+        logger.error(failure_reason, job_id=job.id, original_file=original_file)
         job_context["original_files"] = []
         job_context["computed_files"] = []
-        job_context['abort'] = True
+        job_context["abort"] = True
         # Will be saved by end_job.
-        job_context['job'].failure_reason = failure_reason
+        job_context["job"].failure_reason = failure_reason
         return job_context
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
@@ -192,12 +185,14 @@ def start_job(job_context: Dict):
     if job.start_time is not None and settings.RUNNING_IN_CLOUD:
         # Let's just log the event and let the job run instead of failing
         # and also reset the endtime and failure reason, since those fields might have been set
-        logger.warn('ProcessorJob was restarted by Nomad. We do not know why this happened',
-                        processor_job=job.id,
-                        success=job.success,
-                        failure_reason=job.failure_reason,
-                        start_time=job.start_time,
-                        end_time=job.end_time)
+        logger.warn(
+            "ProcessorJob was restarted by Nomad. We do not know why this happened",
+            processor_job=job.id,
+            success=job.success,
+            failure_reason=job.failure_reason,
+            start_time=job.start_time,
+            end_time=job.end_time,
+        )
         job.end_time = None
         job.failure_reason = None
 
@@ -214,11 +209,12 @@ def start_job(job_context: Dict):
     # Janitor jobs don't operate on file objects.
     # Tximport jobs don't need to download the original file, they
     # just need it to know what experiment to process.
-    if job.pipeline_applied not in [ProcessorPipeline.JANITOR.value, ProcessorPipeline.TXIMPORT.value]:
+    if job.pipeline_applied not in [
+        ProcessorPipeline.JANITOR.value,
+        ProcessorPipeline.TXIMPORT.value,
+    ]:
         # Some jobs take OriginalFiles, other take Datasets
-        if job.pipeline_applied not in [ProcessorPipeline.SMASHER.value,
-                                        ProcessorPipeline.QN_REFERENCE.value,
-                                        ProcessorPipeline.CREATE_COMPENDIA.value]:
+        if ProcessorPipeline[job.pipeline_applied] not in SMASHER_JOB_TYPES:
             job_context = prepare_original_files(job_context)
             if not job_context.get("success", True):
                 return job_context
@@ -241,11 +237,7 @@ def end_job(job_context: Dict, abort=False):
     the samples have been processed if not aborted.
     """
     job = job_context["job"]
-
-    if "success" in job_context:
-        success = job_context["success"]
-    else:
-        success = True
+    success = job_context.get("success", True)
 
     # Upload first so if this fails we can set success = False and let
     # the rest of the function mark it as failed.
@@ -258,34 +250,50 @@ def end_job(job_context: Dict, abort=False):
             s3_bucket = S3_BUCKET_NAME
 
         # S3-sync Computed Files
-        for computed_file in job_context.get('computed_files', []):
+        for computed_file in job_context.get("computed_files", []):
             # Ensure even distribution across S3 servers
-            nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(24))
+            nonce = "".join(
+                random.choice(string.ascii_lowercase + string.digits) for _ in range(24)
+            )
             result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
 
-            if result:
+            if result and settings.RUNNING_IN_CLOUD:
                 computed_file.delete_local_file()
-            else:
+            elif not result:
                 success = False
-                job_context['success'] = False
+                job_context["success"] = False
                 job.failure_reason = "Failed to upload computed file."
                 break
 
     if not success:
-        for computed_file in job_context.get('computed_files', []):
+        for computed_file in job_context.get("computed_files", []):
             computed_file.delete_local_file()
             if computed_file.id:
                 computed_file.delete()
 
+        # if the processor job fails mark all datasets as failed
+        if ProcessorPipeline[job.pipeline_applied] in SMASHER_JOB_TYPES:
+            for dataset in job.datasets.all():
+                dataset.failure_reason = job.failure_reason
+                dataset.is_processing = False
+                dataset.save()
+
     if not abort:
-        if job_context.get("success", False) \
-           and not (job_context["job"].pipeline_applied in [ProcessorPipeline.SMASHER.value,
-                                                            ProcessorPipeline.QN_REFERENCE.value,
-                                                            ProcessorPipeline.CREATE_COMPENDIA.value,
-                                                            ProcessorPipeline.JANITOR.value]):
+        if job_context.get("success", False) and not (
+            job_context["job"].pipeline_applied
+            in [
+                ProcessorPipeline.SMASHER.value,
+                ProcessorPipeline.QN_REFERENCE.value,
+                ProcessorPipeline.CREATE_COMPENDIA.value,
+                ProcessorPipeline.CREATE_QUANTPENDIA.value,
+                ProcessorPipeline.JANITOR.value,
+            ]
+        ):
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
-            if (job_context["job"].pipeline_applied == "SALMON" and not job_context.get('tximported', False)):
+            if job_context["job"].pipeline_applied == "SALMON" and not job_context.get(
+                "tximported", False
+            ):
                 mark_as_processed = False
 
             if mark_as_processed:
@@ -295,11 +303,13 @@ def end_job(job_context: Dict, abort=False):
                     sample.is_processed = True
                     sample.save()
                     if sample.experiments.all().count() > 0:
-                        unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
+                        unique_experiments = list(
+                            set(unique_experiments + sample.experiments.all()[::1])
+                        )
 
                 # Explicitly for the single-salmon scenario
-                if 'sample' in job_context:
-                    sample = job_context['sample']
+                if "sample" in job_context:
+                    sample = job_context["sample"]
                     sample.is_processed = True
                     sample.save()
 
@@ -311,39 +321,50 @@ def end_job(job_context: Dict, abort=False):
     # different" can use them.
     if (success or job.no_retry) and not abort:
         # Cleanup Original Files
-        if 'original_files' in job_context:
-            for original_file in job_context['original_files']:
+        if "original_files" in job_context:
+            for original_file in job_context["original_files"]:
                 original_file.delete_local_file()
 
     # If the pipeline includes any steps, save it.
-    if 'pipeline' in job_context:
-        pipeline = job_context['pipeline']
+    if "pipeline" in job_context:
+        pipeline = job_context["pipeline"]
         if len(pipeline.steps):
             pipeline.save()
 
-    if "work_dir" in job_context and settings.RUNNING_IN_CLOUD:
+    if (
+        "work_dir" in job_context
+        and job_context["job"].pipeline_applied != ProcessorPipeline.CREATE_COMPENDIA.value
+        and settings.RUNNING_IN_CLOUD
+    ):
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
+    job.abort = abort
     job.success = success
     job.end_time = timezone.now()
     job.save()
 
     if success:
-        logger.debug("Processor job completed successfully.",
-                    processor_job=job.id,
-                    pipeline_applied=job.pipeline_applied)
+        logger.debug(
+            "Processor job completed successfully.",
+            processor_job=job.id,
+            pipeline_applied=job.pipeline_applied,
+        )
     else:
         if not job.failure_reason:
-            logger.error("Processor job failed without having failure_reason set. FIX ME!!!!!!!!",
-                         processor_job=job.id,
-                         pipeline_applied=job.pipeline_applied,
-                         no_retry=job.no_retry)
+            logger.error(
+                "Processor job failed without having failure_reason set. FIX ME!!!!!!!!",
+                processor_job=job.id,
+                pipeline_applied=job.pipeline_applied,
+                no_retry=job.no_retry,
+            )
         else:
-            logger.error("Processor job failed!",
-                         processor_job=job.id,
-                         pipeline_applied=job.pipeline_applied,
-                         no_retry=job.no_retry,
-                         failure_reason=job.failure_reason)
+            logger.error(
+                "Processor job failed!",
+                processor_job=job.id,
+                pipeline_applied=job.pipeline_applied,
+                no_retry=job.no_retry,
+                failure_reason=job.failure_reason,
+            )
 
     # Return Final Job context so testers can check it
     return job_context
@@ -375,40 +396,76 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         return
 
     if len(pipeline) == 0:
-        logger.error("Empty pipeline specified.",
-                     procesor_job=job_id)
+        logger.error("Empty pipeline specified.", procesor_job=job_id)
 
     last_result = start_value
     last_result["job"] = job
     for processor in pipeline:
         try:
             last_result = processor(last_result)
+        except ProcessorJobError as e:
+            e.update_job(job)
+            logger.exception(e.failure_reason, processor_job=job.id, **e.context)
+            if e.success is False:
+                # end_job will use this and set the value
+                last_result["success"] = False
+            return end_job(last_result, abort=bool(e.abort))
         except Exception as e:
-            failure_reason = ("Unhandled exception caught while running processor"
-                              " function {} in pipeline: ").format(processor.__name__)
-            logger.exception(failure_reason,
-                             no_retry=job.no_retry,
-                             processor_job=job_id)
+            failure_reason = (
+                "Unhandled exception caught while running processor" " function {} in pipeline: "
+            ).format(processor.__name__)
+            logger.exception(failure_reason, no_retry=job.no_retry, processor_job=job_id)
             last_result["success"] = False
             last_result["job"].failure_reason = failure_reason + str(e)
             return end_job(last_result)
 
         if "success" in last_result and last_result["success"] is False:
-            logger.error("Processor function %s failed. Terminating pipeline.",
-                         processor.__name__,
-                         processor_job=job_id,
-                         failure_reason=last_result["job"].failure_reason)
+            logger.error(
+                "Processor function %s failed. Terminating pipeline.",
+                processor.__name__,
+                processor_job=job_id,
+                failure_reason=last_result["job"].failure_reason,
+            )
             return end_job(last_result)
-
-        # We don't want to run end_job at all if the job has deleted
-        # itself, which happens if the data for the job was missing.
-        if last_result.get("delete_self", False):
-            break
 
         if last_result.get("abort", False):
             return end_job(last_result, abort=True)
 
     return last_result
+
+
+class ProcessorJobError(Exception):
+    """ General processor job error class. """
+
+    def __init__(
+        self, failure_reason, *, success=None, no_retry=None, retried=None, abort=None, **context
+    ):
+        super(ProcessorJobError, self).__init__(failure_reason)
+        self.failure_reason = failure_reason
+        self.success = success
+        self.no_retry = no_retry
+        self.retried = retried
+        self.abort = abort
+        # additional context to be included when logging
+        self.context = context
+
+    def update_job(self, job):
+        job.failure_reason = self.failure_reason
+        if self.success is not None:
+            job.success = self.success
+        if self.no_retry is not None:
+            job.no_retry = self.no_retry
+        if self.retried is not None:
+            job.retried = self.retried
+        if self.abort is not None:
+            job.abort = self.abort
+        job.save()
+
+        # also update the failure reason if this is a dataset's processor job
+        for dataset in job.datasets.all():
+            dataset.failure_reason = self.failure_reason
+            dataset.success = False
+            dataset.save()
 
 
 def get_os_distro():
@@ -420,8 +477,8 @@ def get_os_distro():
     A more cross-platform solution is using "platform" module in Python.
     """
 
-    with open('/etc/issue') as distro_fh:
-      return distro_fh.readline().strip('\l\n\\n ')
+    with open("/etc/issue") as distro_fh:
+        return distro_fh.readline().strip("\l\n\\n ")
 
 
 def get_os_pkgs(pkg_list):
@@ -432,15 +489,15 @@ def get_os_pkgs(pkg_list):
 
     pkg_info = dict()
     for pkg in pkg_list:
-        process_done = subprocess.run(['dpkg-query', '--show', pkg],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
+        process_done = subprocess.run(
+            ["dpkg-query", "--show", pkg], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         if process_done.returncode:
-            raise Exception("OS-level package %s not found: %s" %
-                            (pkg, process_done.stderr.decode().strip())
+            raise Exception(
+                "OS-level package %s not found: %s" % (pkg, process_done.stderr.decode().strip())
             )
 
-        version = process_done.stdout.decode().strip().split('\t')[-1]
+        version = process_done.stdout.decode().strip().split("\t")[-1]
         pkg_info[pkg] = version
 
     return pkg_info
@@ -453,12 +510,10 @@ def get_cmd_lines(cmd_list):
 
     cmd_info = dict()
     for cmd in cmd_list:
-        process_done = subprocess.run(cmd.split(),
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
+        process_done = subprocess.run(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if process_done.returncode:
-            raise Exception("Failed to run command line '%s': %s" %
-                            (cmd, process_done.stderr.decode().strip())
+            raise Exception(
+                "Failed to run command line '%s': %s" % (cmd, process_done.stderr.decode().strip())
             )
 
         output_bytes = process_done.stdout
@@ -487,9 +542,7 @@ def get_pip_pkgs(pkg_list):
     resource.
     """
 
-    process_done = subprocess.run(['pip', 'freeze'],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+    process_done = subprocess.run(["pip", "freeze"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if process_done.returncode:
         raise Exception("'pip freeze' failed: %s" % process_done.stderr.decode().strip())
 
@@ -518,37 +571,22 @@ def get_bioc_version():
     """
 
     r_command = "tools:::.BioC_version_associated_with_R_version()"
-    process_done = subprocess.run(['Rscript', '-e', r_command],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+    process_done = subprocess.run(
+        ["Rscript", "-e", r_command], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     if process_done.returncode:
-        raise Exception('R command failed to retrieve Bioconductor version: %s' %
-                        process_done.stderr.decode().strip()
+        raise Exception(
+            "R command failed to retrieve Bioconductor version: %s"
+            % process_done.stderr.decode().strip()
         )
 
     version = process_done.stdout.decode().strip().split()[-1]
     version = version[1:-1]  # Remove the leading and trailing non-ascii characters.
 
     if len(version) == 0:
-        raise Exception('Bioconductor not found')
+        raise Exception("Bioconductor not found")
 
     return version
-
-
-def get_most_recent_qn_target_for_organism(organism):
-    """ Returns a ComputedFile for QN run for an Organism """
-
-    try:
-        annotation = ComputationalResultAnnotation.objects.filter(
-            data__organism_id=organism.id,
-            data__is_qn=True
-        ).order_by(
-            '-created_at'
-        ).first()
-        file = annotation.result.computedfile_set.first()
-        return file
-    except Exception:
-        return None
 
 
 def get_r_pkgs(pkg_list):
@@ -562,27 +600,28 @@ def get_r_pkgs(pkg_list):
     colnames(packages.df) <- NULL; \
     print(packages.df, row.names=FALSE);"
 
-    process_done = subprocess.run(['Rscript', '-e', r_commands],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+    process_done = subprocess.run(
+        ["Rscript", "-e", r_commands], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     if process_done.returncode:
-        raise Exception('R command failed to retrieves installed packages: %s' %
-                        process_done.stderr.decode().strip()
+        raise Exception(
+            "R command failed to retrieves installed packages: %s"
+            % process_done.stderr.decode().strip()
         )
 
     r_pkgs = dict()
-    for item in process_done.stdout.decode().strip().split('\n'):
+    for item in process_done.stdout.decode().strip().split("\n"):
         name, version = item.strip().split()
         r_pkgs[name] = version
 
     # "Brainarray" is a collection that consists of 121 ".*ensgprobe" packages.
     # They share the same version number, so we use 'hgu133plus2hsensgprobe'
     # package to report this uniform version.
-    ba_proxy_pkg = 'hgu133plus2hsensgprobe'
+    ba_proxy_pkg = "hgu133plus2hsensgprobe"
 
     pkg_info = dict()
     for pkg in pkg_list:
-        if pkg == 'Bioconductor':
+        if pkg == "Bioconductor":
             version = get_bioc_version()
         else:
             try:
@@ -603,12 +642,11 @@ def get_checksums(filenames_list):
     checksums = dict()
     for filename in filenames_list:
         abs_filepath = os.path.join(DIRNAME, filename)
-        process_done = subprocess.run(['md5sum', abs_filepath],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
+        process_done = subprocess.run(
+            ["md5sum", abs_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         if process_done.returncode:
-            raise Exception("md5sum command error:",
-                            process_done.stderr.decode().strip())
+            raise Exception("md5sum command error:", process_done.stderr.decode().strip())
         checksum_str = process_done.stdout.decode().strip().split()[0]
         checksums[filename] = checksum_str
 
@@ -626,17 +664,17 @@ def get_runtime_env(yml_filename):
     with open(yml_filename) as yml_fh:
         pkgs = yaml.load(yml_fh)
         for pkg_type, pkg_list in pkgs.items():
-            if pkg_type == 'os_distribution':
+            if pkg_type == "os_distribution":
                 value = get_os_distro()
-            elif pkg_type == 'os_pkg':
+            elif pkg_type == "os_pkg":
                 value = get_os_pkgs(pkg_list)
-            elif pkg_type == 'cmd_line':
+            elif pkg_type == "cmd_line":
                 value = get_cmd_lines(pkg_list)
-            elif pkg_type == 'python':
+            elif pkg_type == "python":
                 value = get_pip_pkgs(pkg_list)
-            elif pkg_type == 'R':
+            elif pkg_type == "R":
                 value = get_r_pkgs(pkg_list)
-            elif pkg_type == 'checksum':
+            elif pkg_type == "checksum":
                 value = get_checksums(pkg_list)
             else:
                 raise Exception("Unknown category in %s: %s" % (yml_filename, pkg_type))
@@ -651,16 +689,15 @@ def find_processor(enum_key):
     database that matches the current processor name, version and environment.
     """
 
-    name = ProcessorEnum[enum_key].value['name']
-    docker_image = ProcessorEnum[enum_key].value['docker_img']
+    name = ProcessorEnum[enum_key].value["name"]
+    docker_image = ProcessorEnum[enum_key].value["docker_img"]
 
     # In current implementation, ALWAYS get the runtime environment.
-    yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value['yml_file'])
+    yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value["yml_file"])
     environment = get_runtime_env(yml_path)
-    obj, status = Processor.objects.get_or_create(name=name,
-                                                  version=SYSTEM_VERSION,
-                                                  docker_image=docker_image,
-                                                  environment=environment)
+    obj, status = Processor.objects.get_or_create(
+        name=name, version=SYSTEM_VERSION, docker_image=docker_image, environment=environment
+    )
     return obj
 
 
@@ -670,3 +707,52 @@ def handle_processor_exception(job_context, processor_key, ex):
     job_context["job"].failure_reason = err_str
     job_context["success"] = False
     return job_context
+
+
+def cache_keys(*keys, work_dir_key="work_dir"):
+    """ Decorator to be applied to a pipeline function.
+    Returns a new function that calls the original one and caches the given
+    keys into the `work_dir`. On the next call it will load those keys (if they
+    exist) and add them to the job_context instead of executing the function. """
+
+    def inner(func):
+        # generate a unique name for the cache based on the pipeline name
+        # and the cached keys
+        cache_name = "__".join(list(keys) + [func.__name__])
+
+        def pipeline(job_context):
+            cache_path = os.path.join(job_context[work_dir_key], cache_name)
+            if os.path.exists(cache_path):
+                # cached values exist, load keys from cacke
+                try:
+                    values = pickle.load(open(cache_path, "rb"))
+                    return {**job_context, **values}
+                except:
+                    # don't fail if we can't load the cache
+                    logger.warning(
+                        "Failed to load cached data for pipeline function.",
+                        function_name=func.__name__,
+                        keys=keys,
+                    )
+                    pass
+
+            # execute the actual function
+            job_context = func(job_context)
+
+            try:
+                # save cached data for the next run
+                values = {key: job_context[key] for key in keys}
+                pickle.dump(values, open(cache_path, "wb"))
+            except:
+                # don't fail if we can't save the cache
+                logger.warning(
+                    "Failed to cache data for pipeline function.",
+                    function_name=func.__name__,
+                    keys=keys,
+                )
+                pass
+            return job_context
+
+        return pipeline
+
+    return inner

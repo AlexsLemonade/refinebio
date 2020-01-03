@@ -1,98 +1,170 @@
-import sys
+from typing import List
 
 from django.core.management.base import BaseCommand
+from django.db.models.aggregates import Count
+from django.db.models.expressions import Q
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.models import (Dataset, Experiment, Organism,
-                                         ProcessorJob,
-                                         ProcessorJobDatasetAssociation)
+from data_refinery_common.models import (
+    Dataset,
+    Experiment,
+    Organism,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+)
 from data_refinery_common.utils import queryset_iterator
 
 logger = get_and_configure_logger(__name__)
 
-def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorithm='ARPACK'):
+
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--organisms", type=str, help=("Comma separated list of organism names.")
+        )
+
+        parser.add_argument(
+            "--svd-algorithm",
+            type=str,
+            help=(
+                "Specify SVD algorithm applied during imputation ARPACK, RANDOMIZED or NONE to skip."
+            ),
+        )
+
+    def handle(self, *args, **options):
+        """Create a compendium for one or more organisms."""
+        svd_algorithm = options["svd_algorithm"] or "ARPACK"
+
+        svd_algorithm_choices = ["ARPACK", "RANDOMIZED", "NONE"]
+        if options["svd_algorithm"] and options["svd_algorithm"] not in svd_algorithm_choices:
+            raise Exception(
+                "Invalid svd_algorithm option provided. Possible values are "
+                + str(svd_algorithm_choices)
+            )
+
+        target_organisms = self._get_target_organisms(options)
+        grouped_organisms = group_organisms_by_biggest_platform(target_organisms)
+
+        logger.debug("Generating compendia for organisms", organism_groups=str(grouped_organisms))
+
+        for organism in grouped_organisms:
+            job = create_job_for_organism(organism, svd_algorithm)
+            logger.info(
+                "Sending compendia job for Organism", job_id=str(job.pk), organism=str(organism)
+            )
+            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
+
+    def _get_target_organisms(self, options):
+        all_organisms = get_compendia_organisms()
+
+        if options["organisms"] is None:
+            target_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
+        else:
+            organisms = options["organisms"].upper().replace(" ", "_").split(",")
+            target_organisms = all_organisms.filter(name__in=organisms)
+
+        return target_organisms
+
+
+def get_compendia_organisms():
+    """ We start with the organisms that have QN targets associated with them. """
+    return Organism.objects.filter(qn_target__isnull=False)
+
+
+def group_organisms_by_biggest_platform(target_organisms):
+    """ Create groups of organisms that share the same platform
+    ref https://github.com/AlexsLemonade/refinebio/issues/1736 """
+    result = []
+
+    # process the organisms with the most platforms first
+    target_organisms_sorted = target_organisms.annotate(
+        num_platforms=Count("sample__platform_accession_code", distinct=True)
+    ).order_by("-num_platforms")
+
+    for organism in target_organisms_sorted:
+        added_with_another_organism = any(
+            any(item == organism for item in group) for group in result
+        )
+        if added_with_another_organism:
+            continue
+
+        organism_group = [organism]
+
+        platform_list = list(get_organism_microarray_platforms(organism))
+
+        genus_prefix = organism.get_genus() + "_"
+        organisms_sharing_genus = Organism.objects.exclude(id=organism.id).filter(
+            name__startswith=genus_prefix
+        )
+        for genus_organism in organisms_sharing_genus:
+            # Group together the orgenisms that share at least one processed
+            # sample in a microarray platform
+            platforms = get_organism_microarray_platforms(genus_organism).filter(
+                platform_accession_code__in=platform_list
+            )
+            if platforms.exists():
+                organism_group.append(genus_organism)
+
+        result.append(organism_group)
+
+    return result
+
+
+def get_organism_microarray_platforms(organism):
+    """ Returns the accession codes of the Affymetrix microarray platforms associated with an
+    organism. Ordered by the number of samples for each platform in descending order """
+    return (
+        organism.sample_set.filter(has_raw=True, technology="MICROARRAY", is_processed=True)
+        .values("platform_accession_code")
+        .annotate(count=Count("id"))
+        .order_by("-count")
+        .values_list("platform_accession_code", flat=True)
+    )
+
+
+def create_job_for_organism(organisms: List[Organism], svd_algorithm="ARPACK"):
     """Returns a compendia job for the provided organism.
 
     Fetch all of the experiments and compile large but normally formated Dataset.
     """
-    data = {}
-    experiments = Experiment.objects.filter(organisms=organism).prefetch_related('samples')
-
-    for experiment in queryset_iterator(experiments):
-        data[experiment.accession_code] = list(experiment.samples.filter(organism=organism).values_list('accession_code', flat=True))
-
     job = ProcessorJob()
     job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
     job.save()
 
-    dset = Dataset()
-    dset.data = data
-    dset.scale_by = 'NONE'
-    dset.aggregate_by = 'SPECIES'
-    dset.quantile_normalize = False
-    dset.quant_sf_only = quant_sf_only
-    dset.svd_algorithm = svd_algorithm
-    dset.save()
+    dataset = Dataset()
+    dataset.data = get_dataset(organisms)
+    dataset.scale_by = "NONE"
+    dataset.aggregate_by = "SPECIES"
+    dataset.quantile_normalize = False
+    dataset.quant_sf_only = False
+    dataset.svd_algorithm = svd_algorithm
+    dataset.save()
 
     pjda = ProcessorJobDatasetAssociation()
     pjda.processor_job = job
-    pjda.dataset = dset
+    pjda.dataset = dataset
     pjda.save()
 
     return job
 
 
-class Command(BaseCommand):
+def get_dataset(organisms: List[Organism]):
+    """ Builds a dataset with the samples associated with the given organisms """
+    dataset = {}
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--organisms",
-            type=str,
-            help=("Comma separated list of organism names."))
+    filter_query = Q()
+    for organism in organisms:
+        filter_query = filter_query | Q(organisms=organism)
 
-        parser.add_argument(
-            "--quant-sf-only",
-            type=lambda x: x == "True",
-            help=("Whether to create a quantpendium or normal compendium."))
+    experiments = Experiment.objects.filter(filter_query).prefetch_related("samples")
 
-        parser.add_argument(
-            "--svd-algorithm",
-            type=str,
-            help=("Specify SVD algorithm applied during imputation ARPACK, RANDOMIZED or NONE to skip."))
+    for experiment in queryset_iterator(experiments):
+        experiment_samples = experiment.samples.filter(
+            organism__in=organisms, is_processed=True
+        ).values_list("accession_code", flat=True)
 
-    def handle(self, *args, **options):
-        """Create a compendium for one or more organisms.
+        dataset[experiment.accession_code] = list(experiment_samples)
 
-        If --organism is supplied will immediately create a compedium
-        for it. If not a new job will be dispatched for each organism
-        with enough microarray samples except for human and mouse.
-        """
-        if options["organisms"] is None:
-            all_organisms = Organism.objects.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
-        else:
-            organisms = options["organisms"].upper().replace(" ", "_").split(",")
-            all_organisms = Organism.objects.filter(name__in=organisms)
-
-        # I think we could just use options["quant_sf_only"] but I
-        # wanna make sure that values that are not True do not trigger
-        # a truthy evaluation.
-        quant_sf_only = False
-        if options["quant_sf_only"] is True:
-            quant_sf_only = True
-
-        # default algorithm to arpack until we decide that ranomized is preferred
-        svd_algorithm = 'NONE' if quant_sf_only else 'ARPACK'
-        if options["svd_algorithm"] in ['ARPACK', 'RANDOMIZED', 'NONE']:
-            svd_algorithm = options["svd_algorithm"]
-
-        logger.debug(all_organisms)
-
-        for organism in all_organisms:
-            logger.debug(organism)
-            job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
-            logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
-            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
-
-        sys.exit(0)
+    return dataset

@@ -7,18 +7,22 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0012_experiment_platform_accession_codes'),
+        ("data_refinery_common", "0012_experiment_platform_accession_codes"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='downloaderjob',
-            name='was_recreated',
+            model_name="downloaderjob",
+            name="was_recreated",
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
-            model_name='processorjob',
-            name='retried_job',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='data_refinery_common.ProcessorJob'),
+            model_name="processorjob",
+            name="retried_job",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="data_refinery_common.ProcessorJob",
+            ),
         ),
     ]

@@ -2,6 +2,7 @@ import logging
 from django.utils.deprecation import MiddlewareMixin
 from data_refinery_common.utils import get_env_variable_gracefully
 
+
 class SentryCatchBadRequestMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         if response.status_code < 400 or response.status_code == 404:
@@ -12,23 +13,20 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
         if not client.is_enabled():
             return response
 
+        # format error message
+        message = ("{status_code} code returned for URL: {url}" "with message: {message}").format(
+            status_code=response.status_code,
+            url=request.build_absolute_uri(),
+            message=str(response.content),
+        )
+
+        # create data representation
         data = client.get_data_from_request(request)
-        data.update({
-            "level": logging.WARN,
-            "logger": "BadRequestMiddleware",
-        })
-        message_template = "{status_code} code returned for URL: {url} {content}"
+        data.update(
+            {"level": logging.WARN, "logger": "BadRequestMiddleware",}
+        )
 
-        content = ""
-        try:
-            content = "with message: {}".format(str(response.content))
-        except:
-            pass
-
-        message = message_template.format(status_code=response.status_code,
-                                          url=request.build_absolute_uri(),
-                                          content=content)
-        result = client.captureMessage(message=message, data=data)
+        client.captureMessage(message=message, data=data)
 
         return response
 
@@ -39,14 +37,14 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
             return
 
         data = client.get_data_from_request(request)
-        data.update({
-            "level": logging.WARN,
-            "logger": "BadRequestMiddleware",
-        })
+        data.update(
+            {"level": logging.WARN, "logger": "BadRequestMiddleware",}
+        )
 
         client.captureMessage(message=str(exception), data=data)
 
+
 class RevisionMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
-        response['X-Source-Revision'] = get_env_variable_gracefully("SYSTEM_VERSION")
+        response["X-Source-Revision"] = get_env_variable_gracefully("SYSTEM_VERSION")
         return response

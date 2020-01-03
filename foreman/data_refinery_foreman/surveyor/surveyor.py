@@ -1,4 +1,5 @@
 import signal
+import sys
 
 from django.utils import timezone
 
@@ -12,20 +13,24 @@ from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeInde
 
 logger = get_and_configure_logger(__name__)
 
+CURRENT_JOB = None
+
 
 class SourceNotSupportedError(Exception):
     pass
 
-def sigterm_handler(sig, frame):
-    """ SIGTERM Handler """
+
+def signal_handler(sig, frame):
+    """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
-    if not CURRENT_JOB:
-        sys.exit(0)
-    else:
-        CURRENT_JOB.start_time = None
+    if CURRENT_JOB:
+        CURRENT_JOB.success = False
+        CURRENT_JOB.end_time = timezone.now()
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT: " + str(sig)
         CURRENT_JOB.save()
-        sys.exit(0)
+
+    sys.exit(0)
 
 
 def _get_surveyor_for_source(survey_job: SurveyJob):
@@ -39,15 +44,18 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
     if survey_job.source_type == "GEO":
         return GeoSurveyor(survey_job)
     else:
-        raise SourceNotSupportedError(
-            "Source " + survey_job.source_type + " is not supported.")
+        raise SourceNotSupportedError("Source " + survey_job.source_type + " is not supported.")
 
 
 def _start_job(survey_job: SurveyJob) -> SurveyJob:
     """Start survey job, setting time properties."""
-    logger.debug("Starting Survey Job for source type: %s.",
-                survey_job.source_type,
-                survey_job=survey_job.id)
+    logger.debug(
+        "Starting Survey Job for source type: %s.", survey_job.source_type, survey_job=survey_job.id
+    )
+
+    # Set up the SIGTERM handler so we can appropriately handle being interrupted.
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
     survey_job.start_time = timezone.now()
     survey_job.save()
@@ -74,9 +82,7 @@ def run_job(survey_job: SurveyJob) -> SurveyJob:
     try:
         surveyor = _get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
-        logger.error("Unable to run Survey Job because: %s",
-                     e,
-                     survey_job=survey_job.id)
+        logger.error("Unable to run Survey Job because: %s", e, survey_job=survey_job.id)
 
         _end_job(survey_job, False)
         return survey_job
@@ -84,8 +90,7 @@ def run_job(survey_job: SurveyJob) -> SurveyJob:
     try:
         job_success = surveyor.survey(source_type=survey_job.source_type)
     except Exception as e:
-        logger.exception("Exception caught while running Survey Job.",
-                         survey_job=survey_job.id)
+        logger.exception("Exception caught while running Survey Job.", survey_job=survey_job.id)
         survey_job.failure_reason = str(e)
         job_success = False
 
@@ -104,16 +109,16 @@ def survey_experiment(experiment_accession: str, source_type: str):
     """
     survey_job = SurveyJob(source_type=source_type)
     survey_job.save()
-    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                       key="experiment_accession_code",
-                                       value=experiment_accession)
+    key_value_pair = SurveyJobKeyValue(
+        survey_job=survey_job, key="experiment_accession_code", value=experiment_accession
+    )
     key_value_pair.save()
     run_job(survey_job)
 
     return survey_job
 
 
-def survey_transcriptome_index(organism_name=None, ensembl_division='Ensembl'):
+def survey_transcriptome_index(organism_name=None, ensembl_division="Ensembl"):
     """Special one-off surveyor to build transcriptome indices.
 
     The external source this uses is ensembl.org which is divided into
@@ -123,15 +128,15 @@ def survey_transcriptome_index(organism_name=None, ensembl_division='Ensembl'):
     """
     survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
     survey_job.save()
-    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                       key="ensembl_division",
-                                       value=ensembl_division)
+    key_value_pair = SurveyJobKeyValue(
+        survey_job=survey_job, key="ensembl_division", value=ensembl_division
+    )
     key_value_pair.save()
 
     if organism_name:
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="organism_name",
-                                           value=organism_name)
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="organism_name", value=organism_name
+        )
         key_value_pair.save()
 
     run_job(survey_job)

@@ -27,10 +27,14 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleResultAssociation,
+    ExperimentOrganismAssociation,
 )
 from data_refinery_foreman.foreman.management.commands import run_tximport
 
-def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_accessions: List[str]) -> Dict:
+
+def run_tximport_at_progress_point(
+    complete_accessions: List[str], incomplete_accessions: List[str]
+) -> Dict:
     """Create an experiment and associated objects and run tximport on it.
 
     Creates a sample for each accession contained in either input
@@ -39,16 +43,16 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     incomplete_accessions won't.
     """
     # Create the experiment
-    experiment_accession = 'SRP095529'
-    data_dir = '/home/user/data_store/'
+    experiment_accession = "SRP095529"
+    data_dir = "/home/user/data_store/"
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(
-        accession_code=experiment_accession,
-        organism_names=['HOMO_SAPIENS'],
-        technology='RNA-SEQ'
+        accession_code=experiment_accession, technology="RNA-SEQ"
     )
 
     zebrafish = Organism.get_object_for_name("DANIO_RERIO")
+
+    ExperimentOrganismAssociation.objects.get_or_create(experiment=experiment, organism=zebrafish)
 
     # Create the transcriptome processor and result:
     transcriptome_processor = Processor()
@@ -65,15 +69,17 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version = 'salmon 0.13.1'
+    organism_index.salmon_version = "salmon 0.13.1"
     organism_index.save()
 
     comp_file = ComputedFile()
     # This path will not be used because we already have the files extracted.
-    comp_file.absolute_file_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    comp_file.absolute_file_path = (
+        "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    )
     comp_file.result = computational_result_short
-    comp_file.size_in_bytes=1337
-    comp_file.sha1="ABC"
+    comp_file.size_in_bytes = 1337
+    comp_file.sha1 = "ABC"
     comp_file.s3_key = "key"
     comp_file.s3_bucket = "bucket"
     comp_file.save()
@@ -82,17 +88,19 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
         sample = Sample.objects.create(
             accession_code=accession_code,
             organism=zebrafish,
-            source_database='SRA',
-            technology='RNA-SEQ'
+            source_database="SRA",
+            technology="RNA-SEQ",
         )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
         original_file = OriginalFile()
-        original_file.filename=accession_code+'.SRA'
-        original_file.source_filename=accession_code+'.SRA'
+        original_file.filename = accession_code + ".SRA"
+        original_file.source_filename = accession_code + ".SRA"
         original_file.save()
 
-        OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
+        OriginalFileSampleAssociation.objects.get_or_create(
+            original_file=original_file, sample=sample
+        )
 
     quant_processor = Processor()
     quant_processor.name = "Salmon Quant"
@@ -115,17 +123,19 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
         sample = Sample.objects.create(
             accession_code=accession_code,
             organism=zebrafish,
-            source_database='SRA',
-            technology='RNA-SEQ'
+            source_database="SRA",
+            technology="RNA-SEQ",
         )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
         original_file = OriginalFile()
-        original_file.filename=accession_code+'.SRA'
-        original_file.source_filename=accession_code+'.SRA'
+        original_file.filename = accession_code + ".SRA"
+        original_file.source_filename = accession_code + ".SRA"
         original_file.save()
 
-        OriginalFileSampleAssociation.objects.get_or_create(original_file=original_file, sample=sample)
+        OriginalFileSampleAssociation.objects.get_or_create(
+            original_file=original_file, sample=sample
+        )
 
         # Create and associate quant result and files.
         quant_result = ComputationalResult()
@@ -156,7 +166,9 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
 
         quant_file = ComputedFile()
         quant_file.filename = "quant.sf"
-        quant_file.absolute_file_path = experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+        quant_file.absolute_file_path = (
+            experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+        )
         quant_file.is_public = False
         quant_file.is_smashable = False
         quant_file.is_qc = False
@@ -166,14 +178,10 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
         quant_file.s3_key = "key"
         quant_file.save()
 
-        SampleResultAssociation.objects.get_or_create(
-            sample=sample,
-            result=quant_result
-        )
+        SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
 
     # Setup is done, actually run the command.
     run_tximport.run_tximport()
-
 
 
 class RunTximportTestCase(TestCase):
@@ -188,8 +196,9 @@ class RunTximportTestCase(TestCase):
     too few samples, and one that has too low of a copmpletion
     percent.
     """
-    @patch('data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes')
-    @patch('data_refinery_foreman.foreman.management.commands.run_tximport.send_job')
+
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
     def test_early_tximport(self, mock_send_job, mock_get_active_volumes):
         """Tests that tximport jobs are created when the experiment is past the thresholds.
 
@@ -204,7 +213,7 @@ class RunTximportTestCase(TestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes =  {"1", "2", "3"}
+        active_volumes = {"1", "2", "3"}
         mock_get_active_volumes.return_value = active_volumes
 
         # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
@@ -252,8 +261,8 @@ class RunTximportTestCase(TestCase):
         first_call_job_type = mock_calls[0][1][0]
         self.assertEqual(first_call_job_type, ProcessorPipeline.TXIMPORT)
 
-    @patch('data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes')
-    @patch('data_refinery_foreman.foreman.management.commands.run_tximport.send_job')
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
     def test_tximport_percent_cutoff(self, mock_send_job, mock_get_active_volumes):
         """Tests logic for determining if tximport should be run early.
 
@@ -268,7 +277,7 @@ class RunTximportTestCase(TestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes =  {"1", "2", "3"}
+        active_volumes = {"1", "2", "3"}
         mock_get_active_volumes.return_value = active_volumes
 
         # Accessions SRR5125615-SRR5125620 don't exist in SRA, but we
@@ -316,8 +325,8 @@ class RunTximportTestCase(TestCase):
         mock_calls = mock_send_job.mock_calls
         self.assertEqual(len(mock_calls), 0)
 
-    @patch('data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes')
-    @patch('data_refinery_foreman.foreman.management.commands.run_tximport.send_job')
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
+    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
     def test_tximport_numerical_cutoff(self, mock_send_job, mock_get_active_volumes):
         """Tests logic for determining if tximport should be run early.
 
@@ -331,7 +340,7 @@ class RunTximportTestCase(TestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes =  {"1", "2", "3"}
+        active_volumes = {"1", "2", "3"}
         mock_get_active_volumes.return_value = active_volumes
 
         # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we

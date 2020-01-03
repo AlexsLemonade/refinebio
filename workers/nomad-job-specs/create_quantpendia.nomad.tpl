@@ -1,4 +1,4 @@
-job "RUN_QN_JOB" {
+job "CREATE_QUANTPENDIA" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -27,7 +27,7 @@ job "RUN_QN_JOB" {
       size = "10"
     }
 
-    task "create_qn_target" {
+    task "create_quantpendia" {
       driver = "docker"
 
       kill_timeout = "30s"
@@ -51,15 +51,16 @@ job "RUN_QN_JOB" {
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
 
-        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
-        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
-
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
+        S3_RESULTS_BUCKET_NAME = "${{S3_RESULTS_BUCKET_NAME}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
-        S3_QN_TARGET_BUCKET_NAME = "${{S3_QN_TARGET_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
+        MAX_DOWNLOADER_JOBS_PER_NODE = "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"
+
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
 
         LOG_LEVEL = "${{LOG_LEVEL}}"
       }
@@ -67,9 +68,8 @@ job "RUN_QN_JOB" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 2048
-        # Memory is in MB of RAM.
-        memory = 131072
+        cpu =   4000
+        memory = 64000
       }
 
       logs {
@@ -77,15 +77,10 @@ job "RUN_QN_JOB" {
         max_file_size = 1
       }
 
-      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
-      constraint {
-        attribute = "${meta.is_smasher}"
-        operator = "!="
-        value = "true"
-      }
+      ${{SMASHER_CONSTRAINT}}
 
       config {
-        image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.

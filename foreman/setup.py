@@ -12,8 +12,10 @@ try:
     with open(VERSION_FILE, "rt") as version_file:
         version_string = version_file.read().strip()
 except:
-    print("Cannot read version to determine System Version."
-          " Please create a file foreman/version containing an up to date System Version.")
+    print(
+        "Cannot read version to determine System Version."
+        " Please create a file foreman/version containing an up to date System Version."
+    )
     raise
 
 setup(
@@ -22,8 +24,9 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     license="BSD License",
-    description=("Foreman to discover data and metadata, "
-                 "along with coordinating the Data Refinery."),
+    description=(
+        "Foreman to discover data and metadata, " "along with coordinating the Data Refinery."
+    ),
     url="https://github.com/data-refinery/data_refinery/tree/master/foreman",
     author="Kurt Wheeler",
     author_email="team@greenelab.com",

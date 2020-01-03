@@ -7,6 +7,7 @@ from data_refinery_common.models import (
     ProcessorJob,
 )
 
+
 class SanityTestJobsTestCase(TestCase):
     def test_jobs_sanity(self):
         """Just makes sure creating Jobs doesn't fail"""

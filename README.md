@@ -84,6 +84,9 @@ have been tested on Ubuntu 16.04 or later, but other Linux distributions
 _should_ be able to run the necessary services. Microsoft Windows is currently
 unsupported by this project.
 
+__Note__: The install_all.sh script will configure a git pre-commit hook to auto-format your python code.
+This will format your code in the same way as the rest of the project, allowing it to pass our linting check.
+
 #### Automatic
 
 The easiest way to run Refine.bio locally is to run `./scripts/install_all.sh`
@@ -104,6 +107,7 @@ so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./scripts/install_nomad.sh`.
 - [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
+- [black](https://black.readthedocs.io/en/stable/) can be installed on Linux clients with `pip3 install black`
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
@@ -122,11 +126,12 @@ The following services will need to be installed:
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
+- [black](https://black.readthedocs.io/en/stable/)
 
 Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
 on their respective homepages.
 
-Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq`.
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq black`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -563,30 +568,38 @@ If you want to quantile normalize combined outputs, you'll first need to create 
 nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
 
+To create QN targets for all organisms, do so with the dispatcher:
+
+```bash
+nomad job dispatch QN_DISPATCHER
+```
+
+This will at some point move to the foreman and then it will take a list of organisms to create QN targets for.
+
 ### Creating Compendia
 
 Creating species-wide compendia for a given species can be done in a production environment by running the following on the Foreman instance:
 
 ```bash
-./run_management_command.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --organisms=DANIO_RERIO --svd-algorithm=ARPACK
 ```
 
 or for a list of organisms:
 
 ```bash
-./run_management_command.sh create_compendia --organisms=DANIO_RERIO,HOMO_SAPIENS --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --organisms=DANIO_RERIO,HOMO_SAPIENS --svd-algorithm=ARPACK
 ```
 
 or for all organisms with sufficient data:
 
 ```bash
-./run_management_command.sh create_compendia --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_command.sh create_compendia --svd-algorithm=ARPACK
 ```
 
-Alternatively a compendium can be created which only includes quant.sf files by specifying the nomad meta field `QUANT_SF_ONLY=True` like so:
+Alternatively a compendium can be created which only includes quant.sf files by using the create_quantpentida command:
 
 ```
-./run_management_command.sh create_compendia --organisms=DANIO_RERIO --quant-sf-only=True --svd-algorithm=None
+./run_management_command.sh create_quantpendia --organisms=DANIO_RERIO
 ```
 
 Compendia jobs run on the smasher instance.

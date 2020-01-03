@@ -9,6 +9,7 @@ logger = get_and_configure_logger(__name__)
 
 ENSG_PKG_FILENAME = "/home/user/r_ensg_probe_pkgs.txt"
 
+
 def get_platform_from_CEL(cel_file_path: str) -> str:
     """.CEL files have a header which contains platform information.
 
@@ -19,10 +20,12 @@ def get_platform_from_CEL(cel_file_path: str) -> str:
     accession).
     """
     try:
-        header = ro.r['::']('affyio', 'read.celfile.header')(cel_file_path)
+        header = ro.r["::"]("affyio", "read.celfile.header")(cel_file_path)
     except RRuntimeError as e:
-        error_template = ("Unable to read Affy header in input file {0}"
-                          " while running AFFY_TO_PCL due to error: {1}")
+        error_template = (
+            "Unable to read Affy header in input file {0}"
+            " while running AFFY_TO_PCL due to error: {1}"
+        )
         logger.info(error_template.format(cel_file_path, str(e)))
         raise
 

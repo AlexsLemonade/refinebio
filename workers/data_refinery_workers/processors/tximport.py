@@ -37,11 +37,12 @@ from data_refinery_workers.processors import utils, salmon
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
-S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
+S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
 logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+
 
 def _set_job_prefix(job_context: Dict) -> Dict:
     """ Sets the `job_dir_prefix` value in the job context object."""
@@ -58,15 +59,14 @@ def _prepare_files(job_context: Dict) -> Dict:
     # (A single sample could belong to multiple experiments, meaning
     # that it could be run more than once, potentially even at the
     # same time.)
-    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
-                                           job_context["job_dir_prefix"]) + "/"
+    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     # Technically unsafe, but if either of these objects don't exist we need to fail anyway.
     sample = job_context["job"].original_files.first().samples.first()
-    job_context['sample'] = sample
-    job_context['samples'] = []
-    job_context['organism'] = sample.organism
+    job_context["sample"] = sample
+    job_context["samples"] = []
+    job_context["organism"] = sample.organism
     job_context["success"] = True
     job_context["is_tximport_only"] = True
 
@@ -82,12 +82,16 @@ def tximport(job_id: int) -> None:
     Runs tximport command line tool on an experiment.
     """
     pipeline = Pipeline(name=PipelineEnum.TXIMPORT.value)
-    final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
-                       [utils.start_job,
-                        _set_job_prefix,
-                        _prepare_files,
-                        salmon.get_tximport_inputs,
-                        salmon._find_or_download_index,
-                        salmon.tximport,
-                        utils.end_job])
+    final_context = utils.run_pipeline(
+        {"job_id": job_id, "pipeline": pipeline},
+        [
+            utils.start_job,
+            _set_job_prefix,
+            _prepare_files,
+            salmon.get_tximport_inputs,
+            salmon._find_or_download_index,
+            salmon.tximport,
+            utils.end_job,
+        ],
+    )
     return final_context

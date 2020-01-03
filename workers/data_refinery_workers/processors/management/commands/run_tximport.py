@@ -18,12 +18,12 @@ logger = get_and_configure_logger(__name__)
 
 
 class Command(BaseCommand):
-
     def add_arguments(self, parser):
         parser.add_argument(
             "--experiment-accession",
             type=str,
-            help=("Accession code for the experiment to run tximport on."))
+            help=("Accession code for the experiment to run tximport on."),
+        )
 
     def handle(self, *args, **options):
         """Run tximport on an experiment for the samples that have been processed by Salmon.
@@ -52,8 +52,10 @@ class Command(BaseCommand):
                         break
 
         if not original_file:
-            logger.error("Could not find a single sample in the experiment that had a successful Salmon job.",
-                         experiment=accession_code)
+            logger.error(
+                "Could not find a single sample in the experiment that had a successful Salmon job.",
+                experiment=accession_code,
+            )
             sys.exit(1)
 
         job = ProcessorJob()

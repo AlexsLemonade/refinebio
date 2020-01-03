@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 
 
 def make_sample_platform_names_readable(apps, schema_editor):
-    '''Makes the platform_names on the Sample model human readable.
+    """Makes the platform_names on the Sample model human readable.
     We were removing spaces from rnaSeq samples' platforms, which made
     them unfriendly to users. This reverts the platform names to the
     original that didn't have spaces in them.
@@ -16,31 +16,30 @@ def make_sample_platform_names_readable(apps, schema_editor):
     originally.
     We can't import the Sample model directly as it may be a newer
     version than this migration expects. We use the historical version.
-    '''
-    Sample = apps.get_model('data_refinery_common', 'Sample')
+    """
+    Sample = apps.get_model("data_refinery_common", "Sample")
 
     # Build a mapping of strings that will match with munged sample platform_names
     # to the platforms that they represent.
     platform_mapping = {}
     for platform in get_supported_rnaseq_platforms():
-        platform_mapping[platform.replace(' ', '').upper()] = platform
+        platform_mapping[platform.replace(" ", "").upper()] = platform
 
-    paginator = Paginator(Sample.objects.all().order_by('id'), 200)
+    paginator = Paginator(Sample.objects.all().order_by("id"), 200)
 
     for page_idx in range(1, paginator.num_pages):
         for sample in paginator.page(page_idx).object_list:
-            munged_sample_platform = sample.platform_name.replace(' ', '').upper()
+            munged_sample_platform = sample.platform_name.replace(" ", "").upper()
             if munged_sample_platform in platform_mapping:
                 sample.platform_name = platform_mapping[munged_sample_platform]
                 sample.save()
         print("Updating page " + str(page_idx))
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0016_auto_20190312_1807'),
+        ("data_refinery_common", "0016_auto_20190312_1807"),
     ]
 
-    operations = [
-        migrations.RunPython(make_sample_platform_names_readable)
-    ]
+    operations = [migrations.RunPython(make_sample_platform_names_readable)]
