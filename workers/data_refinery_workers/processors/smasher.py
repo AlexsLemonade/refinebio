@@ -237,41 +237,17 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
 
     # Quantile Normalization
     if job_context["dataset"].quantile_normalize:
-        try:
-            job_context["merged_no_qn"] = merged
-            job_context["organism"] = job_context["dataset"].get_samples().first().organism
-            job_context = smashing_utils.quantile_normalize(job_context)
-            merged = job_context.get("merged_qn", None)
-
-            # We probably don't have an QN target or there is another error,
-            # so let's fail gracefully.
-            assert merged is not None, "Problem occured during quantile normalization: No merged_qn"
-        except Exception as e:
-            logger.exception(
-                "Problem occured during quantile normalization",
-                dataset_id=job_context["dataset"].id,
-                processor_job_id=job_context["job"].id,
-            )
-            job_context["dataset"].success = False
-
-            if not job_context["job"].failure_reason:
-                job_context["job"].failure_reason = "Failure reason: " + str(e)
-                job_context["dataset"].failure_reason = "Failure reason: " + str(e)
-
-            job_context["dataset"].save()
-            # Delay failing this pipeline until the failure notify has been sent
-            job_context["job"].success = False
-            job_context["failure_reason"] = str(e)
-            return job_context
+        job_context["merged_no_qn"] = merged
+        job_context["organism"] = job_context["dataset"].get_samples().first().organism
+        job_context = smashing_utils.quantile_normalize(job_context)
+        merged = job_context.get("merged_qn", None)
 
     # End QN
     log_state("end qn", job_context["job"].id, start_qn)
+
     # Transpose before scaling
-    # Do this even if we don't want to scale in case transpose
-    # modifies the data in any way. (Which it shouldn't but
-    # we're paranoid.)
-    # TODO: stop the paranoia because Josh has alleviated it.
     transposed = merged.transpose()
+
     start_scaler = log_state("starting scaler", job_context["job"].id)
     # Scaler
     if job_context["dataset"].scale_by != "NONE":
@@ -291,13 +267,6 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     # This is just for quality assurance in tests.
     job_context["final_frame"] = untransposed
 
-    # Write to temp file with dataset UUID in filename.
-    subdir = ""
-    if job_context["dataset"].aggregate_by in ["SPECIES", "EXPERIMENT"]:
-        subdir = key
-    elif job_context["dataset"].aggregate_by == "ALL":
-        subdir = "ALL"
-
     # Normalize the Header format
     untransposed.index.rename("Gene", inplace=True)
 
@@ -316,46 +285,39 @@ def _smash_all(job_context: Dict) -> Dict:
     """Perform smashing on all species/experiments in the dataset.
     """
     start_smash = log_state("start smash", job_context["job"].id)
-    # We have already failed - return now so we can send our fail email.
-    if job_context["job"].success is False:
-        return job_context
+
+    job_context["unsmashable_files"] = []
+    job_context["num_samples"] = 0
+
+    # Smash all of the sample sets
+    logger.debug(
+        "About to smash!",
+        dataset_count=len(job_context["dataset"].data),
+        job_id=job_context["job"].id,
+    )
 
     try:
-        job_context["unsmashable_files"] = []
-        job_context["num_samples"] = 0
-
-        # Smash all of the sample sets
-        logger.debug(
-            "About to smash!",
-            dataset_count=len(job_context["dataset"].data),
-            job_id=job_context["job"].id,
-        )
-
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context.pop("input_files").items():
             job_context = _smash_key(job_context, key, input_files)
-
-        smashing_utils.write_non_data_files(job_context)
-
-        # Finally, compress all files into a zip
-        final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
-        shutil.make_archive(final_zip_base, "zip", job_context["output_dir"])
-        job_context["output_file"] = final_zip_base + ".zip"
     except Exception as e:
-        logger.exception(
-            "Could not smash dataset.",
+        raise utils.ProcessorJobError(
+            "Could not smash dataset: " + str(e),
+            success=False,
             dataset_id=job_context["dataset"].id,
-            processor_job_id=job_context["job_id"],
             num_input_files=job_context["num_input_files"],
         )
-        job_context["dataset"].success = False
-        job_context["job"].failure_reason = "Failure reason: " + str(e)
-        job_context["dataset"].failure_reason = "Failure reason: " + str(e)
-        job_context["dataset"].save()
-        # Delay failing this pipeline until the failure notify has been sent
-        job_context["job"].success = False
-        job_context["failure_reason"] = str(e)
-        return job_context
+
+    smashing_utils.write_non_data_files(job_context)
+
+    # Finally, compress all files into a zip
+    final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
+    try:
+        shutil.make_archive(final_zip_base, "zip", job_context["output_dir"])
+    except:
+        raise utils.ProcessorJobError("Smash Error while generating zip file", success=False)
+
+    job_context["output_file"] = final_zip_base + ".zip"
 
     job_context["dataset"].success = True
     job_context["dataset"].save()
@@ -368,57 +330,37 @@ def _smash_all(job_context: Dict) -> Dict:
 
 def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
-
-    # There has been a failure already, don't try to upload anything.
-    if not job_context.get("output_file", None):
-        logger.error(
-            "Was told to upload a smash result without an output_file.",
-            job_id=job_context["job"].id,
-        )
+    if not job_context.get("upload", True) or not settings.RUNNING_IN_CLOUD:
         return job_context
 
+    s3_client = boto3.client("s3")
+    output_filename = job_context["output_file"].split("/")[-1]
+
     try:
-        if job_context.get("upload", True) and settings.RUNNING_IN_CLOUD:
-            s3_client = boto3.client("s3")
-
-            # Note that file expiry is handled by the S3 object lifecycle,
-            # managed by terraform.
-            s3_client.upload_file(
-                job_context["output_file"],
-                RESULTS_BUCKET,
-                job_context["output_file"].split("/")[-1],
-                ExtraArgs={"ACL": "public-read"},
-            )
-            result_url = (
-                "https://s3.amazonaws.com/"
-                + RESULTS_BUCKET
-                + "/"
-                + job_context["output_file"].split("/")[-1]
-            )
-
-            job_context["result_url"] = result_url
-
-            logger.debug("Result uploaded!", result_url=job_context["result_url"])
-
-            job_context["dataset"].s3_bucket = RESULTS_BUCKET
-            job_context["dataset"].s3_key = job_context["output_file"].split("/")[-1]
-            job_context["dataset"].size_in_bytes = calculate_file_size(job_context["output_file"])
-            job_context["dataset"].sha1 = calculate_sha1(job_context["output_file"])
-
-            job_context["dataset"].save()
-
-            # File is uploaded, we can delete the local.
-            try:
-                os.remove(job_context["output_file"])
-            except OSError:
-                pass
-
+        # Note that file expiry is handled by the S3 object lifecycle,
+        # managed by terraform.
+        s3_client.upload_file(
+            job_context["output_file"],
+            RESULTS_BUCKET,
+            output_filename,
+            ExtraArgs={"ACL": "public-read"},
+        )
     except Exception as e:
-        logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
-        job_context["job"].success = False
-        job_context["job"].failure_reason = "Failure reason: " + str(e)
-        # Delay failing this pipeline until the failure notify has been sent
-        # job_context['success'] = False
+        raise utils.ProcessorJobError(
+            "Failed to upload smash result file.", success=False, file=job_context["output_file"]
+        )
+
+    result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + output_filename
+
+    job_context["result_url"] = result_url
+
+    logger.debug("Result uploaded!", result_url=job_context["result_url"])
+
+    # File is uploaded, we can delete the local.
+    try:
+        os.remove(job_context["output_file"])
+    except OSError:
+        pass
 
     return job_context
 
@@ -579,8 +521,12 @@ def _notify_send_email(job_context):
 
 def _update_result_objects(job_context: Dict) -> Dict:
     """Closes out the dataset object."""
-
     dataset = job_context["dataset"]
+
+    dataset.s3_bucket = RESULTS_BUCKET
+    dataset.s3_key = job_context["output_file"].split("/")[-1]
+    dataset.size_in_bytes = calculate_file_size(job_context["output_file"])
+    dataset.sha1 = calculate_sha1(job_context["output_file"])
     dataset.is_processing = False
     dataset.is_processed = True
     dataset.is_available = True

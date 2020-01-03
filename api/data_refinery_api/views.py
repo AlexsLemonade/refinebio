@@ -537,16 +537,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                             city = "COULD_NOT_DETERMINE"
 
                         user_agent = self.request.META.get("HTTP_USER_AGENT", None)
-                        total_samples = len(
-                            set(
-                                [
-                                    accession_code
-                                    for experiment in new_data.values()
-                                    for accession_code in experiment
-                                ]
-                            )
-                        )
-                        response = requests.post(
+                        total_downloads = Dataset.objects.filter(
+                            email_address=supplied_email_address
+                        ).count()
+                        requests.post(
                             settings.ENGAGEMENTBOT_WEBHOOK,
                             json={
                                 "channel": "ccdl-general",  # Move to robots when we get sick of these
@@ -558,7 +552,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                                         "title": "New dataset download",
                                         "fallback": "New dataset download",
                                         "title_link": "http://www.refine.bio/dataset/{0}".format(
-                                            old_object.id
+                                            obj.id
                                         ),
                                         "text": "New user {0} from {1} downloaded a dataset!".format(
                                             supplied_email_address, city
@@ -568,17 +562,15 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                                         ),
                                         "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
                                         "fields": [
-                                            {"title": "Dataset id", "value": str(old_object.id),},
+                                            {"title": "Dataset id", "value": str(obj.id),},
                                             {
                                                 "title": "Total downloads",
-                                                "value": Dataset.objects.filter(
-                                                    email_address=supplied_email_address
-                                                ).count(),
+                                                "value": total_downloads,
                                                 "short": True,
                                             },
                                             {
                                                 "title": "Samples",
-                                                "value": total_samples,
+                                                "value": obj.get_total_samples(),
                                                 "short": True,
                                             },
                                         ],

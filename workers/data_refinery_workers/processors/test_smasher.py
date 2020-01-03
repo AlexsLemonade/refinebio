@@ -899,6 +899,9 @@ class SmasherTestCase(TransactionTestCase):
         cra.result = cr
         cra.save()
 
+        danio_rerio.qn_target = cr
+        danio_rerio.save()
+
         final_context = smasher.smash(job.pk, upload=False)
         self.assertTrue(final_context["success"])
 

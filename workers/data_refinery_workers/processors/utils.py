@@ -237,11 +237,7 @@ def end_job(job_context: Dict, abort=False):
     the samples have been processed if not aborted.
     """
     job = job_context["job"]
-
-    if "success" in job_context:
-        success = job_context["success"]
-    else:
-        success = True
+    success = job_context.get("success", True)
 
     # Upload first so if this fails we can set success = False and let
     # the rest of the function mark it as failed.
@@ -274,6 +270,13 @@ def end_job(job_context: Dict, abort=False):
             computed_file.delete_local_file()
             if computed_file.id:
                 computed_file.delete()
+
+        # if the processor job fails mark all datasets as failed
+        if ProcessorPipeline[job.pipeline_applied] in SMASHER_JOB_TYPES:
+            for dataset in job.datasets.all():
+                dataset.failure_reason = job.failure_reason
+                dataset.is_processing = False
+                dataset.save()
 
     if not abort:
         if job_context.get("success", False) and not (
