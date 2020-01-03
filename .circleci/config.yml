@@ -121,7 +121,10 @@ jobs:
       - checkout
 
       # Install flake8
-      - run: sudo pip install black
+      - run: sudo pip install black isort
+
+      # Check that the imports are sorted
+      - run: isort --check-only --quiet
 
       # Check for syntax errors in our project. Also make sure the code is formatted correctly.
       - run: black . --line-length=100 --check --quiet
