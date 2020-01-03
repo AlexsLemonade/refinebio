@@ -121,11 +121,10 @@ jobs:
       - checkout
 
       # Install flake8
-      - run: sudo pip install flake8
+      - run: sudo pip install black
 
-      # Check for syntax errors in our project
-      # (--select=E9 only checks for SyntaxErrors)
-      - run: flake8 foreman workers common api --count --select=E9 --show-source --statistics
+      # Check for syntax errors in our project. Also make sure the code is formatted correctly.
+      - run: black . --line-length=100 --check --quiet
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
