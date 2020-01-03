@@ -23,11 +23,11 @@ CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 DIVISION_URL_TEMPLATE = (
-    "https://rest.ensembl.org/info/genomes/division/{division}" "?content-type=application/json"
+    "https://rest.ensembl.org/info/genomes/division/{division}?content-type=application/json"
 )
 
 SPECIES_DETAIL_URL_TEMPLATE = (
-    "ftp://ftp.ensemblgenomes.org/pub/" "{short_division}/current/species_{division}.txt"
+    "ftp://ftp.ensemblgenomes.org/pub/{short_division}/current/species_{division}.txt"
 )
 TRANSCRIPTOME_URL_TEMPLATE = (
     "ftp://ftp.{url_root}/fasta/{collection}{species_sub_dir}/dna/"
@@ -213,7 +213,7 @@ class EnsemblProtistsUrlBuilder(EnsemblUrlBuilder):
 
     def __init__(self, species: Dict):
         super().__init__(species)
-        self.filename_species = species["species"].capitalize()
+        self.filename_species = species["name"].capitalize()
 
 
 class EnsemblBacteriaUrlBuilder(EnsemblUrlBuilder):

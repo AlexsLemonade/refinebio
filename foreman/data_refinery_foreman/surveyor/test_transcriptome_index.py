@@ -3,9 +3,7 @@ from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import DownloaderJob, SurveyJob, SurveyJobKeyValue
-from data_refinery_foreman.surveyor.transcriptome_index import (
-    TranscriptomeIndexSurveyor,
-)
+from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 
 
 class SurveyTestCase(TestCase):
@@ -69,6 +67,30 @@ class SurveyTestCase(TestCase):
 
         key_value_pair = SurveyJobKeyValue(
             survey_job=survey_job, key="organism_name", value="Octopus bimaculoides"
+        )
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(survey_job)
+        files = surveyor.discover_species()[0]
+
+        for file in files:
+            urllib.request.urlopen(file.source_url)
+
+    def test_correct_index_location_protist(self):
+        """ Tests that the files returned actually exist.
+
+        Tests the Metazoa division instead of the main division.
+        """
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="ensembl_division", value="EnsemblProtists"
+        )
+        key_value_pair.save()
+
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="organism_name", value="Leishmania major"
         )
         key_value_pair.save()
 
