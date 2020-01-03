@@ -120,8 +120,7 @@ jobs:
     steps:
       - checkout
 
-      # Install flake8
-      - run: sudo pip install black isort
+      - run: sudo pip3 install black isort
 
       # Check that the imports are sorted
       - run: isort --check-only --quiet
