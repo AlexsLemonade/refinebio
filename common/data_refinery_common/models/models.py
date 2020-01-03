@@ -7,17 +7,15 @@ from datetime import datetime
 from functools import partial
 from typing import Dict, Set
 
+import boto3
+import pytz
+from botocore.client import Config
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models, transaction
 from django.db.models import Count, DateTimeField, Prefetch
 from django.db.models.expressions import F, Q
 from django.utils import timezone
-
-import pytz
-
-import boto3
-from botocore.client import Config
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism

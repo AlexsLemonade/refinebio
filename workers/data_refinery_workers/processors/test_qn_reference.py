@@ -1,10 +1,9 @@
 import os
 
+import numpy as np
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
 from django.utils.six import StringIO
-
-import numpy as np
 
 from data_refinery_common.models import (
     ComputationalResult,

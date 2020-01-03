@@ -3,9 +3,8 @@ import string
 import warnings
 from typing import Dict
 
-from django.utils import timezone
-
 import rpy2.robjects as ro
+from django.utils import timezone
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.job_lookup import PipelineEnum

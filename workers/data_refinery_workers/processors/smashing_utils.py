@@ -11,14 +11,12 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from django.utils import timezone
-
 import numpy as np
 import pandas as pd
-
 import psutil
 import rpy2.robjects as ro
 import simplejson as json
+from django.utils import timezone
 from rpy2.robjects import pandas2ri, r as rlang
 from rpy2.robjects.packages import importr
 

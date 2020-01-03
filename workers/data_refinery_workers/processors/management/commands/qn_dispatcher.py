@@ -1,11 +1,10 @@
 import uuid
 
-from django.core.management.base import BaseCommand
-from django.db.models import Count
-
 import boto3
 import botocore
 import nomad
+from django.core.management.base import BaseCommand
+from django.db.models import Count
 from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.job_lookup import ProcessorPipeline, SurveyJobTypes

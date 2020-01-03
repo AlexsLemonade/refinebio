@@ -3,6 +3,8 @@ from itertools import groupby
 from re import match
 from typing import Dict
 
+import nomad
+import requests
 from django.conf import settings
 from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
 from django.db.models.aggregates import Avg, Sum
@@ -13,11 +15,6 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-
-import requests
-from six import iteritems
-
-import nomad
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE,
     LOOKUP_QUERY_GT,
@@ -41,8 +38,7 @@ from rest_framework.exceptions import APIException, NotFound
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from .serializers import ExperimentDocumentSerializer
+from six import iteritems
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
@@ -67,6 +63,8 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.models.documents import ExperimentDocument
 from data_refinery_common.utils import get_active_volumes, get_nomad_jobs, get_nomad_jobs_breakdown
+
+from .serializers import ExperimentDocumentSerializer
 
 from data_refinery_api.serializers import (  # Job; Dataset
     APITokenSerializer,

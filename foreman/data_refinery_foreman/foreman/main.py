@@ -7,12 +7,11 @@ import traceback
 from functools import wraps
 from typing import List, Set
 
+import nomad
 from django.conf import settings
 from django.db import transaction
 from django.db.models.expressions import Q
 from django.utils import timezone
-
-import nomad
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 

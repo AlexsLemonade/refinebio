@@ -3,7 +3,6 @@ import os
 from typing import Dict, List
 
 from django.db import transaction
-
 from retrying import retry
 
 from data_refinery_common import job_lookup, logging, message_queue

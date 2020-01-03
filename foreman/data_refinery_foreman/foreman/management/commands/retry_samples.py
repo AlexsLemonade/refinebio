@@ -4,10 +4,9 @@ import sys
 import time
 from typing import Dict, List
 
+from dateutil.parser import parse as parse_date
 from django.core.management.base import BaseCommand
 from django.db.models import Count, OuterRef, Subquery
-
-from dateutil.parser import parse as parse_date
 
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger

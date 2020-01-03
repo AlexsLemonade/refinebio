@@ -1,11 +1,10 @@
 from multiprocessing import Pool
 
-from django.core.management.base import BaseCommand
-from django.db import connections
-
 import boto3
 from botocore.client import Config
 from botocore.errorfactory import ClientError
+from django.core.management.base import BaseCommand
+from django.db import connections
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile

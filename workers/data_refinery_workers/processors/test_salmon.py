@@ -7,10 +7,9 @@ from contextlib import closing
 from typing import Dict, List
 from unittest.mock import MagicMock
 
-from django.test import TestCase, tag
-
 import numpy
 import scipy.stats
+from django.test import TestCase, tag
 
 from data_refinery_common.job_lookup import ProcessorEnum
 from data_refinery_common.models import (

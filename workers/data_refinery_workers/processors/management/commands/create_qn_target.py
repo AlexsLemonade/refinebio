@@ -1,9 +1,8 @@
 import sys
 
+import requests
 from django.core.management.base import BaseCommand
 from django.db.models import Count
-
-import requests
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger

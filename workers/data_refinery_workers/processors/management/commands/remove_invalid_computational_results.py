@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 
-from .create_qn_target import organism_can_have_qn_target
-
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -9,6 +7,8 @@ from data_refinery_common.models import (
     ComputedFile,
     Organism,
 )
+
+from .create_qn_target import organism_can_have_qn_target
 
 logger = get_and_configure_logger(__name__)
 

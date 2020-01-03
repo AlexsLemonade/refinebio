@@ -1,8 +1,6 @@
 from django.core.management import call_command
 from django.test import TransactionTestCase
 
-from .test_create_quantpendia import get_organism_with_qn_target, make_test_data
-
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
@@ -16,6 +14,8 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
+
+from .test_create_quantpendia import get_organism_with_qn_target, make_test_data
 
 
 class CompendiaCommandTestCase(TransactionTestCase):

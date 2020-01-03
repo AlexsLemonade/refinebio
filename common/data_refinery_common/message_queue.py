@@ -4,9 +4,8 @@ from __future__ import absolute_import, unicode_literals
 
 from enum import Enum
 
-from django.conf import settings
-
 import nomad
+from django.conf import settings
 from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.job_lookup import (

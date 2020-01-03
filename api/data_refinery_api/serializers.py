@@ -1,8 +1,7 @@
 from collections import defaultdict
 
-from django.db.models import Count, Q
-
 import boto3
+from django.db.models import Count, Q
 from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 from rest_framework import serializers
 

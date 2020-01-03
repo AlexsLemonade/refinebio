@@ -6,10 +6,9 @@ import subprocess
 import warnings
 from typing import Dict
 
-from django.utils import timezone
-
 import numpy as np
 import pandas as pd
+from django.utils import timezone
 
 from data_refinery_common.job_lookup import PipelineEnum, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger

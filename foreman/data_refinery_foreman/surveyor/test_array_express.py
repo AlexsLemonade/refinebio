@@ -2,9 +2,8 @@ import datetime
 import json
 from unittest.mock import Mock, call, patch
 
-from django.test import TestCase
-
 import requests
+from django.test import TestCase
 
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (

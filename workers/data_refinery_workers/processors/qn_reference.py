@@ -2,9 +2,8 @@ import subprocess
 import time
 from typing import Dict
 
-from django.utils import timezone
-
 import pandas as pd
+from django.utils import timezone
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger

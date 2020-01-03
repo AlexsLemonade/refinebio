@@ -8,7 +8,6 @@ import sys
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 from django.db.models.expressions import Q
-
 from nomad import Nomad
 
 from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline

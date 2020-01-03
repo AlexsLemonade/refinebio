@@ -9,15 +9,13 @@ import subprocess
 import tarfile
 from typing import Dict, List
 
+import boto3
+import numpy as np
+import pandas as pd
+from botocore.client import Config
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-
-import numpy as np
-import pandas as pd
-
-import boto3
-from botocore.client import Config
 
 from data_refinery_common.job_lookup import Downloaders, PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger

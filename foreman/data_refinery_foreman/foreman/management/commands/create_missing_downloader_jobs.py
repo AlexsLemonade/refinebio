@@ -7,10 +7,9 @@ without any luck.
 
 import time
 
+from dateutil.parser import parse as parse_date
 from django.core.management.base import BaseCommand
 from django.db.models import Count
-
-from dateutil.parser import parse as parse_date
 
 from data_refinery_common import job_lookup
 from data_refinery_common.job_management import create_downloader_job

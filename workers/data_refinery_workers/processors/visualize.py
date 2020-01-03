@@ -2,12 +2,11 @@ import copy
 import multiprocessing
 import time
 
+import datashader as ds
+import holoviews as hv
 import matplotlib as mpl
 import numpy as np
 import pandas as pd
-
-import datashader as ds
-import holoviews as hv
 from dask import dataframe as daskdf
 from datashader import transfer_functions as tf
 from holoviews import opts

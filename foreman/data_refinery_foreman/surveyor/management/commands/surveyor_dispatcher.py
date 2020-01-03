@@ -6,11 +6,10 @@ one experiment accession code per line.
 import time
 import uuid
 
-from django.core.management.base import BaseCommand
-
 import boto3
 import botocore
 import nomad
+from django.core.management.base import BaseCommand
 from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.job_lookup import SurveyJobTypes

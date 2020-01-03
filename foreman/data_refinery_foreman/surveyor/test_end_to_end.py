@@ -9,10 +9,9 @@ from test.support import EnvironmentVarGuard  # Python >=3
 from unittest import skip
 from unittest.mock import Mock, patch
 
+import requests
 from django.test import TransactionTestCase, tag
 from django.utils import timezone
-
-import requests
 
 from data_refinery_common.models import (
     ComputationalResult,

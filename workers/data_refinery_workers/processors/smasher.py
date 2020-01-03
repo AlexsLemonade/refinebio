@@ -12,19 +12,17 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from urllib.parse import quote
 
-from django.conf import settings
-from django.utils import timezone
-
+import boto3
 import numpy as np
 import pandas as pd
-import requests
-
-import boto3
 import psutil
+import requests
 import rpy2
 import rpy2.robjects as ro
 import simplejson as json
 from botocore.exceptions import ClientError
+from django.conf import settings
+from django.utils import timezone
 from rpy2.robjects import pandas2ri, r as rlang
 from rpy2.robjects.packages import importr
 from sklearn import preprocessing
