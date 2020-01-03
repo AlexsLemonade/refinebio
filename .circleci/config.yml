@@ -120,10 +120,7 @@ jobs:
     steps:
       - checkout
 
-      - run: sudo pip3 install black isort
-
-      # Check that the imports are sorted
-      - run: isort --check-only --quiet
+      - run: sudo pip install black
 
       # Check for syntax errors in our project. Also make sure the code is formatted correctly.
       - run: black . --line-length=100 --check --quiet
