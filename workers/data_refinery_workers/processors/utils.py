@@ -320,7 +320,11 @@ def end_job(job_context: Dict, abort=False):
         # Cleanup Original Files
         if "original_files" in job_context:
             for original_file in job_context["original_files"]:
-                original_file.delete_local_file()
+                if (
+                    job.pipeline_applied == "TRANSCRIPTOME_INDEX"
+                    and not original_file.needs_processing(job.id)
+                ):
+                    original_file.delete_local_file()
 
     # If the pipeline includes any steps, save it.
     if "pipeline" in job_context:
