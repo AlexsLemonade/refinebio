@@ -36,8 +36,6 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-
-# from django.core.paginator import Paginator
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.utils import (
     get_active_volumes,

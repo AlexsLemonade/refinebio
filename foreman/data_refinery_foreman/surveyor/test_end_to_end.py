@@ -1,7 +1,5 @@
 import glob
 import json
-
-# Import and set logger
 import logging
 import os
 import shutil
