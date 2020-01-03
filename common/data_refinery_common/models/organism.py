@@ -1,9 +1,10 @@
 from xml.etree import ElementTree
 
-import requests
 from django.apps import apps
 from django.db import models
 from django.utils import timezone
+
+import requests
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.base_models import TimeTrackedModel

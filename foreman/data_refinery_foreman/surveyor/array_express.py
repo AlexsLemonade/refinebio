@@ -1,7 +1,8 @@
 from typing import Dict, List
 
-import requests
 from django.utils.dateparse import parse_datetime
+
+import requests
 
 from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger

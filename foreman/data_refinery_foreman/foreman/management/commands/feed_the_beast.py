@@ -8,6 +8,7 @@ from typing import List
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+
 from nomad import Nomad
 
 from data_refinery_common.logging import get_and_configure_logger

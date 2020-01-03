@@ -8,9 +8,10 @@ import sys
 import zipfile
 from io import StringIO
 
-import pandas as pd
 from django.core.management import call_command
 from django.test import TestCase, TransactionTestCase, tag
+
+import pandas as pd
 
 from data_refinery_common.models import (
     ComputationalResult,

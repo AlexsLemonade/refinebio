@@ -3,10 +3,11 @@ import signal
 import sys
 from typing import Dict, List
 
-import psutil
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+
+import psutil
 from retrying import retry
 
 from data_refinery_common.job_lookup import (

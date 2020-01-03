@@ -3,8 +3,9 @@ import json
 import logging
 from unittest.mock import Mock, call, patch
 
-import GEOparse
 from django.test import TestCase, tag
+
+import GEOparse
 
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (

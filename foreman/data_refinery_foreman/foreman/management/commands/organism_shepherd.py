@@ -10,6 +10,7 @@ import time
 from typing import Dict, List
 
 from django.core.management.base import BaseCommand
+
 from nomad import Nomad
 
 from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline

@@ -3,8 +3,6 @@ from itertools import groupby
 from re import match
 from typing import Dict
 
-import nomad
-import requests
 from django.conf import settings
 from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
 from django.db.models.aggregates import Avg, Sum
@@ -15,6 +13,9 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+
+import nomad
+import requests
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE,
     LOOKUP_QUERY_GT,

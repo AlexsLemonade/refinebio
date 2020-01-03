@@ -1,8 +1,9 @@
 import sys
 import time
 
-import GEOparse
 from django.core.management.base import BaseCommand
+
+import GEOparse
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Experiment

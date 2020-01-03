@@ -11,9 +11,10 @@ the experiment and reprocess it correctly.
 
 import os
 
-import GEOparse
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+
+import GEOparse
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import CdfCorrectedAccession, Experiment, Sample

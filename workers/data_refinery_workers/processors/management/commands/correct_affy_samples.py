@@ -16,8 +16,9 @@ import string
 import urllib
 from typing import Dict
 
-import rpy2.robjects as ro
 from django.core.management.base import BaseCommand
+
+import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger

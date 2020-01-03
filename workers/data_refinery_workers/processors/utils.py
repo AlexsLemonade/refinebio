@@ -8,9 +8,10 @@ import subprocess
 import sys
 from typing import Callable, Dict, List
 
-import yaml
 from django.conf import settings
 from django.utils import timezone
+
+import yaml
 
 from data_refinery_common.job_lookup import SMASHER_JOB_TYPES, ProcessorEnum, ProcessorPipeline
 from data_refinery_common.job_management import create_downloader_job

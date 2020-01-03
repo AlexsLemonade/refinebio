@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, call, patch
 
 from django.core.management import call_command
 from django.test import TestCase, tag
+
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 

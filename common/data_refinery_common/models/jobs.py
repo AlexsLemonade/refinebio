@@ -2,6 +2,7 @@ from typing import Dict, Set
 
 from django.db import models, transaction
 from django.utils import timezone
+
 from nomad import Nomad
 
 from data_refinery_common.models.models import Experiment, OriginalFile, Sample
