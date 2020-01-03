@@ -1416,6 +1416,19 @@ class Dataset(models.Model):
 
         return Sample.objects.filter(accession_code__in=all_samples)
 
+    def get_total_samples(self):
+        """ Returns the total number of samples, this counts the number of unique
+        accession codes in `data`. """
+        return len(
+            set(
+                [
+                    accession_code
+                    for experiment in self.data.values()
+                    for accession_code in experiment
+                ]
+            )
+        )
+
     def get_experiments(self):
         """ Retuns all of the Experiments objects in this Dataset """
         all_experiments = self.data.keys()
