@@ -1,4 +1,3 @@
-
 from django.test import TestCase, tag
 from typing import List
 from unittest.mock import patch, call

@@ -44,8 +44,7 @@ def get_and_configure_logger(name: str) -> logging.Logger:
 
     # This is the local handler
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
-        fmt=FORMAT_STRING, keywords=[]))
+    handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(fmt=FORMAT_STRING, keywords=[]))
     logger.logger.addHandler(handler)
 
     # This is the Sentry handler
@@ -57,8 +56,9 @@ def get_and_configure_logger(name: str) -> logging.Logger:
         from raven.contrib.django.handlers import SentryHandler
 
         handler = SentryHandler()
-        handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
-            fmt=FORMAT_STRING, keywords=[]))
+        handler.setFormatter(
+            daiquiri.formatter.ColorExtrasFormatter(fmt=FORMAT_STRING, keywords=[])
+        )
         handler.setLevel(logging.WARNING)
         logger.logger.addHandler(handler)
 

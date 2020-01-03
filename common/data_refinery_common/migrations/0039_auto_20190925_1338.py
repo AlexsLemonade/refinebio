@@ -6,12 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0038_paginate_default_svd_algorithm'),
+        ("data_refinery_common", "0038_paginate_default_svd_algorithm"),
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='computedfile',
-            name='computed_fi_filenam_64958d_idx',
-        ),
+        migrations.RemoveIndex(model_name="computedfile", name="computed_fi_filenam_64958d_idx",),
     ]

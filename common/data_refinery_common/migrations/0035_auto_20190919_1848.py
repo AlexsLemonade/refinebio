@@ -6,18 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0034_cdfcorrectedaccession'),
+        ("data_refinery_common", "0034_cdfcorrectedaccession"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='computedfile',
-            name='quant_sf_only',
+            model_name="computedfile",
+            name="quant_sf_only",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='dataset',
-            name='quant_sf_only',
-            field=models.BooleanField(default=False, help_text='Include only quant.sf files in the generated dataset.'),
+            model_name="dataset",
+            name="quant_sf_only",
+            field=models.BooleanField(
+                default=False, help_text="Include only quant.sf files in the generated dataset."
+            ),
         ),
     ]

@@ -6,18 +6,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0004_auto_20181026_2018'),
+        ("data_refinery_common", "0004_auto_20181026_2018"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='surveyjob',
-            name='num_retries',
-            field=models.IntegerField(default=0),
+            model_name="surveyjob", name="num_retries", field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='surveyjob',
-            name='retried',
-            field=models.BooleanField(default=False),
+            model_name="surveyjob", name="retried", field=models.BooleanField(default=False),
         ),
     ]

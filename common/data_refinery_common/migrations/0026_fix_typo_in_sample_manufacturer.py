@@ -4,11 +4,11 @@ from django.db import migrations
 
 
 def fix_typo_in_sample_manufacturer(apps, schema_editor):
-    '''Fixes affymetrix samples that have their manufacturer set to "AFFYMETRTIX" or "NEXTSEQ"
+    """Fixes affymetrix samples that have their manufacturer set to "AFFYMETRTIX" or "NEXTSEQ"
     Based off of:
     https://simpleisbetterthancomplex.com/tutorial/2017/09/26/how-to-create-django-data-migrations.html
-    '''
-    Sample = apps.get_model('data_refinery_common', 'Sample')
+    """
+    Sample = apps.get_model("data_refinery_common", "Sample")
     Sample.objects.all().filter(platform_name="AFFYMETRTIX").update(platform_name="AFFYMETRIX")
     Sample.objects.all().filter(platform_name="NEXTSEQ").update(platform_name="ILLUMINA")
 
@@ -16,7 +16,7 @@ def fix_typo_in_sample_manufacturer(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0025_downloaderjob_volume_index'),
+        ("data_refinery_common", "0025_downloaderjob_volume_index"),
     ]
 
     operations = [

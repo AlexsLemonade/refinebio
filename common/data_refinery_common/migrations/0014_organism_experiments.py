@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0013_auto_20190206_1535'),
+        ("data_refinery_common", "0013_auto_20190206_1535"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='organism',
-            name='experiments',
-            field=models.ManyToManyField(through='data_refinery_common.ExperimentOrganismAssociation', to='data_refinery_common.Experiment'),
+            model_name="organism",
+            name="experiments",
+            field=models.ManyToManyField(
+                through="data_refinery_common.ExperimentOrganismAssociation",
+                to="data_refinery_common.Experiment",
+            ),
         ),
     ]
-

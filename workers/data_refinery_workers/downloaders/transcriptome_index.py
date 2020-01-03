@@ -20,7 +20,7 @@ from data_refinery_workers.downloaders import utils
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
-CHUNK_SIZE = 1024 * 256 # chunk_size is in bytes
+CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> DownloaderJob:
@@ -33,10 +33,9 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Dow
 
     """
     try:
-        logger.debug("Downloading file from %s to %s.",
-                     download_url,
-                     file_path,
-                     downloader_job=job.id)
+        logger.debug(
+            "Downloading file from %s to %s.", download_url, file_path, downloader_job=job.id
+        )
         urllib.request.urlcleanup()
         target_file = open(file_path, "wb")
         with closing(urllib.request.urlopen(download_url)) as request:
@@ -46,9 +45,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Dow
         urllib.request.urlcleanup()
     except Exception:
         failure_template = "Exception caught while downloading file from: %s"
-        logger.exception(failure_template,
-                         download_url,
-                         downloader_job=job.id)
+        logger.exception(failure_template, download_url, downloader_job=job.id)
         job.failure_reason = failure_template % download_url
         job.success = False
         return job
@@ -57,6 +54,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Dow
 
     job.success = True
     return job
+
 
 def download_transcriptome(job_id: int) -> None:
     """The main function for the Transcriptome Index Downloader.
@@ -77,13 +75,13 @@ def download_transcriptome(job_id: int) -> None:
         original_file = assoc.original_file
 
         if original_file.is_archive:
-            filename_species = ''.join(original_file.source_filename.split('.')[:-2])
+            filename_species = "".join(original_file.source_filename.split(".")[:-2])
         else:
             # Does this ever happen?
-            filename_species = ''.join(original_file.source_filename.split('.')[:-1])
+            filename_species = "".join(original_file.source_filename.split(".")[:-1])
 
-        os.makedirs(LOCAL_ROOT_DIR + '/' + filename_species, exist_ok=True)
-        dl_file_path = LOCAL_ROOT_DIR + '/' + filename_species + '/' + original_file.source_filename
+        os.makedirs(LOCAL_ROOT_DIR + "/" + filename_species, exist_ok=True)
+        dl_file_path = LOCAL_ROOT_DIR + "/" + filename_species + "/" + original_file.source_filename
         job = _download_file(original_file.source_url, dl_file_path, job)
 
         if not job.success:
@@ -100,12 +98,12 @@ def download_transcriptome(job_id: int) -> None:
         files_to_process.append(original_file)
 
     if job.success:
-        logger.debug("Files downloaded successfully.",
-                     downloader_job=job_id)
+        logger.debug("Files downloaded successfully.", downloader_job=job_id)
 
         create_long_and_short_processor_jobs(files_to_process)
 
     utils.end_downloader_job(job, job.success)
+
 
 def create_long_and_short_processor_jobs(files_to_process):
     """ Creates two processor jobs for the files needed for this transcriptome"""

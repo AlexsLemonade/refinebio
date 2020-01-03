@@ -4,30 +4,31 @@ from django.db import migrations
 
 
 def associate_experiments_to_organisms(apps, schema_editor):
-    '''Creates missing associations between experiments and organisms.
+    """Creates missing associations between experiments and organisms.
 
     Based off of:
     https://simpleisbetterthancomplex.com/tutorial/2017/09/26/how-to-create-django-data-migrations.html
     We can't import the Experiment model directly as it may be a newer
     version than this migration expects. We use the historical version.
-    '''
+    """
     # I don't think this is truly necessary in this particular
     # migration, but it seems to be a best practice for Django
     # migrations and a lil extra safety never hurts.
-    Experiment = apps.get_model('data_refinery_common', 'Experiment')
-    ExperimentOrganismAssociation = apps.get_model('data_refinery_common', 'ExperimentOrganismAssociation')
+    Experiment = apps.get_model("data_refinery_common", "Experiment")
+    ExperimentOrganismAssociation = apps.get_model(
+        "data_refinery_common", "ExperimentOrganismAssociation"
+    )
 
     for experiment in Experiment.objects.all():
         organisms = experiment.organisms.all()
-        samples = experiment.samples.distinct(
-            'organism'
-        ).exclude(
-            organism_id__in=organisms.values('id')
+        samples = experiment.samples.distinct("organism").exclude(
+            organism_id__in=organisms.values("id")
         )
 
         for sample in samples:
             ExperimentOrganismAssociation.objects.get_or_create(
-                experiment=experiment, organism=sample.organism)
+                experiment=experiment, organism=sample.organism
+            )
 
         # This is the same as experiment.update_organism_names but we
         # can't use that method because of the apps.get_model
@@ -44,7 +45,7 @@ def associate_experiments_to_organisms(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0015_dataset_email_ccdl_ok'),
+        ("data_refinery_common", "0015_dataset_email_ccdl_ok"),
     ]
 
     operations = [

@@ -6,7 +6,7 @@ from data_refinery_common.models.jobs import (
     SurveyJob,
     SurveyJobKeyValue,
     DownloaderJob,
-    ProcessorJob
+    ProcessorJob,
 )
 from data_refinery_common.models.organism import Organism
 from data_refinery_common.models.models import (

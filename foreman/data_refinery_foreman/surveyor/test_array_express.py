@@ -10,17 +10,16 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
     Organism,
-    Sample
+    Sample,
 )
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
+
 
 class SurveyTestCase(TestCase):
     def setUp(self):
         # Insert human organism into the database so the model doesn't call the
         # taxonomy API to populate it.
-        organism = Organism(name="HOMO_SAPIENS",
-                            taxonomy_id=9606,
-                            is_scientific_name=True)
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
 
     def tearDown(self):
@@ -32,14 +31,14 @@ class SurveyTestCase(TestCase):
         survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
 
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value=accession_code)
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="experiment_accession_code", value=accession_code
+        )
         key_value_pair.save()
 
         return survey_job
 
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey(self, mock_send_task):
         """A Simple test of the ArrayExpress surveyor."""
         survey_job = self.create_job_for_accession("E-MTAB-3050")
@@ -56,23 +55,22 @@ class SurveyTestCase(TestCase):
         self.assertEqual(downloader_jobs.count(), 1)
 
         sample = Sample.objects.first()
-        self.assertTrue(' (hgu95av2)' in sample.pretty_platform)
+        self.assertTrue(" (hgu95av2)" in sample.pretty_platform)
         # Confirm the sample's protocol_info
         self.assertEqual(len(sample.protocol_info), 9)
-        self.assertEqual(sample.protocol_info[0]['Accession'], "P-MTAB-41854")
-        self.assertEqual(sample.protocol_info[0]['Text'], "Aliquoting of biomaterials.")
-        self.assertEqual(sample.protocol_info[0]['Type'], "split")
+        self.assertEqual(sample.protocol_info[0]["Accession"], "P-MTAB-41854")
+        self.assertEqual(sample.protocol_info[0]["Text"], "Aliquoting of biomaterials.")
+        self.assertEqual(sample.protocol_info[0]["Type"], "split")
 
         survey_job2 = self.create_job_for_accession("E-GEOD-44719")
         ae_surveyor = ArrayExpressSurveyor(survey_job2)
         ae_surveyor.survey()
 
         # We are expecting this to discover 77 samples.
-        self.assertEqual(samples.count(), 77+5)
+        self.assertEqual(samples.count(), 77 + 5)
 
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 2)
-
 
     def test_survey_with_protocol_list(self):
         """Tests an edge case that came up after months:
@@ -91,7 +89,6 @@ class SurveyTestCase(TestCase):
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 1)
 
-
     def test_determine_accession(self):
         """Test of the `determine_sample_accession` function
         """
@@ -102,13 +99,13 @@ class SurveyTestCase(TestCase):
         SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 
         ex_accessions = [
-                            "E-MTAB-3050",
-                            "E-MEXP-669",
-                            "E-MEXP-2215",
-                            "E-MEXP-2288",
-                            "E-MEXP-2381",
-                            "E-MTAB-6739",
-                        ]
+            "E-MTAB-3050",
+            "E-MEXP-669",
+            "E-MEXP-2215",
+            "E-MEXP-2288",
+            "E-MEXP-2381",
+            "E-MTAB-6739",
+        ]
 
         for ex_accession in ex_accessions:
             samples_endpoint = SAMPLES_URL.format(ex_accession)
@@ -119,7 +116,7 @@ class SurveyTestCase(TestCase):
             for sample in samples:
 
                 # For some reason, this sample has no files associated with it.
-                if "file" not in sample or len(sample['file']) == 0:
+                if "file" not in sample or len(sample["file"]) == 0:
                     continue
 
                 # The accession code is not a simple matter to determine.
@@ -127,32 +124,33 @@ class SurveyTestCase(TestCase):
                 sample_assay_name = sample["assay"].get("name", "")
 
                 has_raw = False
-                for sub_file in sample['file']:
+                for sub_file in sample["file"]:
 
                     # For ex: E-GEOD-15645
-                    if isinstance(sub_file['comment'], list):
+                    if isinstance(sub_file["comment"], list):
                         sub_file_mod = sub_file
-                        sub_file_mod['comment'] = sub_file['comment'][0]
+                        sub_file_mod["comment"] = sub_file["comment"][0]
                     else:
                         sub_file_mod = sub_file
 
-                    if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
+                    if (
+                        sub_file_mod["type"] == "data"
+                        and sub_file_mod["comment"].get("value", None) != None
+                    ):
                         has_raw = True
-                    if 'raw' in sub_file_mod['comment'].get('value', ''):
+                    if "raw" in sub_file_mod["comment"].get("value", ""):
                         has_raw = True
 
                     # Skip derived data if we have it raw.
-                    if has_raw and "derived data" in sub_file['type']:
+                    if has_raw and "derived data" in sub_file["type"]:
                         continue
-                    elif (not has_raw) and "derived data" not in sub_file['type']:
+                    elif (not has_raw) and "derived data" not in sub_file["type"]:
                         # If there is a platform warning then we don't want raw data.
                         has_raw = False
                         continue
                     filename = sub_file["name"]
 
                 sample_accession_code = ae_surveyor.determine_sample_accession(
-                    ex_accession,
-                    sample_source_name,
-                    sample_assay_name,
-                    filename)
+                    ex_accession, sample_source_name, sample_assay_name, filename
+                )
                 self.assertTrue(sample_accession_code is not None)
