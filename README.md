@@ -101,8 +101,7 @@ named differently in your package manager than in Ubuntu's.
 The following services will need to be installed:
 - Python3 and Pip: `sudo apt-get -y install python3-pip`
 - [Docker](https://www.docker.com/community-edition): Be sure to follow the
-[post installation steps]
-(https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
+[post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./scripts/install_nomad.sh`.
