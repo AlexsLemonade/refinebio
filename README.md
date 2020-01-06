@@ -341,7 +341,7 @@ In addition to following pep8, python files must also conform to the formatting 
 (`black`'s highly opinionated style is a strict sub-set of pep8.)
 The easiest way to conform to this style is to run `black . --line-length=100`.
 This will auto-format your code.
-Running the `./scripts/install_all.sh` script will install a pre-commit git hook that will run this formatter on every commit you make locally.
+Running the `./scripts/install_all.sh` script will install a pre-commit git hook that will run this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/) you can also install the git hook directly by running `pip3 install pre-commit & pre-commit install`.
 To install `black` see the [installation instructions](#installation).
 Any Pull Requests that do not conform to the style enforced by `black` will be flagged by our continous integration and will not be accepted until that check passes.
 
@@ -351,6 +351,8 @@ be POSIX-compliant and have the extension `.sh`, but if bashisms are necessary
 it should have the extension `.bash`. To install `shellcheck`, you can run
 `apt-get install shellcheck` or `brew install shellcheck`. Then, you can lint
 scripts with `shellcheck FILE`.
+
+
 
 ### Gotchas
 
