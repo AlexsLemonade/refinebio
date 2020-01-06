@@ -120,11 +120,13 @@ jobs:
     steps:
       - checkout
 
-      # Install flake8
-      - run: sudo pip install black
+      - run:
+          name: Install build & test dependencies
+          command: sudo pip3 install pre-commit==1.21.0
 
-      # Check for syntax errors in our project. Also make sure the code is formatted correctly.
-      - run: black . --line-length=100 --check --quiet
+      - run:
+          name: Run pre-commit hooks on all files
+          command: pre-commit run --all-files --show-diff-on-failure
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
