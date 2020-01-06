@@ -1,11 +1,11 @@
+import csv
 import re
+import shutil
 import urllib
 from abc import ABC
 from typing import Dict, List
 
-from django.utils import timezone
-
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import OriginalFile, SurveyJobKeyValue
 from data_refinery_foreman.surveyor import utils
@@ -14,17 +14,23 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
+CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
+
+
 MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 DIVISION_URL_TEMPLATE = (
-    "https://rest.ensembl.org/info/genomes/division/{division}" "?content-type=application/json"
+    "https://rest.ensembl.org/info/genomes/division/{division}?content-type=application/json"
 )
 
+SPECIES_DETAIL_URL_TEMPLATE = (
+    "ftp://ftp.ensemblgenomes.org/pub/{short_division}/current/species_{division}.txt"
+)
 TRANSCRIPTOME_URL_TEMPLATE = (
-    "ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
+    "ftp://ftp.{url_root}/fasta/{collection}{species_sub_dir}/dna/"
     "{filename_species}.{assembly}.dna.{schema_type}.fa.gz"
 )
 GTF_URL_TEMPLATE = (
-    "ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
+    "ftp://ftp.{url_root}/gtf/{collection}{species_sub_dir}/"
     "{filename_species}.{assembly}.{assembly_version}.gtf.gz"
 )
 
@@ -49,6 +55,49 @@ MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=applicat
 DIVISION_RELEASE_URL = "https://rest.ensembl.org/info/eg_version?content-type=application/json"
 
 
+def get_strain_mapping_for_organism(
+    species_name: str, config_file="config/organism_strain_mapping.csv"
+) -> List[Dict]:
+    """Returns the row of the strain/organism mapping for the species_name
+    """
+    upper_name = species_name.upper()
+    with open(config_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if row["organism"] == upper_name:
+                return row
+
+    return None
+
+
+def get_species_detail_by_assembly(assembly: str, division: str) -> str:
+    """Returns additional detail about a species given an assembly and a division.
+
+    These details are necessary because the FTP directory for
+    EnsemblBacteria and EnsemblFungi have an additional level in their
+    paths that can only be determined by parsing this file. I found
+    this out via the Ensembl dev mailing list.
+    """
+    bacteria_species_detail_url = SPECIES_DETAIL_URL_TEMPLATE.format(
+        short_division=DIVISION_LOOKUP[division], division=division
+    )
+
+    urllib.request.urlcleanup()
+    collection_path = assembly + "_collection.tsv"
+    with open(collection_path, "wb") as collection_file:
+        with urllib.request.urlopen(bacteria_species_detail_url) as request:
+            shutil.copyfileobj(request, collection_file, CHUNK_SIZE)
+
+    # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
+    urllib.request.urlcleanup()
+
+    with open(collection_path) as csvfile:
+        reader = csv.DictReader(csvfile, delimiter="\t")
+        for row in reader:
+            if row["assembly"] == assembly:
+                return row
+
+
 class EnsemblUrlBuilder(ABC):
     """Generates URLs for different divisions of Ensembl.
 
@@ -62,12 +111,19 @@ class EnsemblUrlBuilder(ABC):
     def __init__(self, species: Dict):
         """Species is a Dict containing parsed JSON from the Division API."""
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
+        self.division = species["division"]
         self.short_division = DIVISION_LOOKUP[species["division"]]
-        self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = (
-            utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
-        )
 
+        mapping = get_strain_mapping_for_organism(species["name"])
+        if mapping:
+            self.assembly = mapping["assembly"]
+            self.strain = mapping["strain"]
+        else:
+            self.assembly = species["assembly_name"].replace(" ", "_")
+            self.strain = None
+
+        assembly_response = utils.requests_retry_session().get(DIVISION_RELEASE_URL)
+        self.assembly_version = assembly_response.json()["version"]
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
 
@@ -76,6 +132,9 @@ class EnsemblUrlBuilder(ABC):
         self.scientific_name = species["name"].upper()
         self.taxonomy_id = species["taxonomy_id"]
 
+        # This field is only needed for EnsemblBacteria and EnsemblFungi.
+        self.collection = ""
+
     def build_transcriptome_url(self) -> str:
         url_root = self.url_root.format(
             assembly_version=self.assembly_version, short_division=self.short_division
@@ -83,6 +142,7 @@ class EnsemblUrlBuilder(ABC):
         url = TRANSCRIPTOME_URL_TEMPLATE.format(
             url_root=url_root,
             species_sub_dir=self.species_sub_dir,
+            collection=self.collection,
             filename_species=self.filename_species,
             assembly=self.assembly,
             schema_type="primary_assembly",
@@ -95,7 +155,7 @@ class EnsemblUrlBuilder(ABC):
             file_handle = urllib.request.urlopen(url)
             file_handle.close()
             urllib.request.urlcleanup()
-        except:
+        except Exception:
             url = url.replace("primary_assembly", "toplevel")
 
         return url
@@ -107,6 +167,7 @@ class EnsemblUrlBuilder(ABC):
         return GTF_URL_TEMPLATE.format(
             url_root=url_root,
             species_sub_dir=self.species_sub_dir,
+            collection=self.collection,
             filename_species=self.filename_species,
             assembly=self.assembly,
             assembly_version=self.assembly_version,
@@ -128,6 +189,7 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.url_root = "ensembl.org/pub/release-{assembly_version}"
         self.short_division = None
         self.species_sub_dir = species["name"]
+        self.collection = ""
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
         self.assembly_version = (
@@ -147,11 +209,35 @@ class EnsemblProtistsUrlBuilder(EnsemblUrlBuilder):
 
     def __init__(self, species: Dict):
         super().__init__(species)
-        self.filename_species = species["species"].capitalize()
+        self.filename_species = species["name"].capitalize()
 
 
-class EnsemblFungiUrlBuilder(EnsemblProtistsUrlBuilder):
-    """The EnsemblFungi URLs work the similarly to Protists division.
+class EnsemblBacteriaUrlBuilder(EnsemblUrlBuilder):
+    """The EnsemblBacteria URLs are extra tricky because they have an extra layer in them.
+
+    This requires parsing a special file to find out what collection
+    the species belongs to.
+    """
+
+    def __init__(self, species: Dict):
+        super().__init__(species)
+        species_detail = get_species_detail_by_assembly(self.assembly, self.division)
+
+        if species_detail:
+            self.species_sub_dir = species_detail["species"]
+            self.filename_species = species_detail["species"].capitalize()
+            collection_pattern = r"bacteria_.+_collection"
+            match = re.match(collection_pattern, species_detail["core_db"])
+            if match:
+                # Need to append a / to the collection because it's not
+                # present in all the routes so we don't want to put it in the
+                # template and end up with a // in the path if collection is
+                # blank.
+                self.collection = match.group(0) + "/"
+
+
+class EnsemblFungiUrlBuilder(EnsemblUrlBuilder):
+    """The EnsemblFungi URLs work similarly to EnsemblBacteria.
 
     EnsemblFungi is special because there is an assembly_name TIGR
     which needs to be corrected to CADRE for some reason.
@@ -161,6 +247,20 @@ class EnsemblFungiUrlBuilder(EnsemblProtistsUrlBuilder):
         super().__init__(species)
         if self.assembly == "TIGR":
             self.assembly = "CADRE"
+
+        species_detail = get_species_detail_by_assembly(self.assembly, self.division)
+
+        if species_detail:
+            self.species_sub_dir = species_detail["species"]
+            self.filename_species = species_detail["species"].capitalize()
+            collection_pattern = r"fungi_.+_collection"
+            match = re.match(collection_pattern, species_detail["core_db"])
+            if match:
+                # Need to append a / to the collection because it's not
+                # present in all the routes so we don't want to put it in the
+                # template and end up with a // in the path if collection is
+                # blank.
+                self.collection = match.group(0) + "/"
 
 
 def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
@@ -174,6 +274,8 @@ def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
         return EnsemblFungiUrlBuilder(species)
     elif species["division"] == "EnsemblVertebrates":
         return MainEnsemblUrlBuilder(species)
+    elif species["division"] == "EnsemblBacteria":
+        return EnsemblBacteriaUrlBuilder(species)
     else:
         return EnsemblUrlBuilder(species)
 
@@ -248,7 +350,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             species_files = self.discover_species()
         except Exception:
             logger.exception(
-                ("Exception caught while discovering species. " "Terminating survey job."),
+                "Exception caught while discovering species. Terminating survey job.",
                 survey_job=self.survey_job.id,
             )
             return False
@@ -260,7 +362,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 )
         except Exception:
             logger.exception(
-                ("Failed to queue downloader jobs. " "Terminating survey job."),
+                "Failed to queue downloader jobs. Terminating survey job.",
                 survey_job=self.survey_job.id,
             )
             return False
@@ -273,21 +375,8 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         ).value
 
         logger.info(
-            "Surveying %s division of ensembl.", ensembl_division, survey_job=self.survey_job.id
+            "Surveying %s division of ensembl.", ensembl_division, survey_job=self.survey_job.id,
         )
-
-        # The main division has a different base URL for its REST API.
-        if ensembl_division == "Ensembl":
-            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
-
-            # Yes I'm aware that specieses isn't a word. However I need to
-            # distinguish between a singlular species and multiple species.
-            specieses = r.json()["species"]
-        else:
-            r = utils.requests_retry_session().get(
-                DIVISION_URL_TEMPLATE.format(division=ensembl_division)
-            )
-            specieses = r.json()
 
         try:
             organism_name = SurveyJobKeyValue.objects.get(
@@ -297,15 +386,57 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         except SurveyJobKeyValue.DoesNotExist:
             organism_name = None
 
+        if ensembl_division in ["EnsemblFungi", "EnsemblBacteria"]:
+            if organism_name is None:
+                logger.error(
+                    "Organism name must be specified for Fungi and Bacteria divisions.",
+                    ensembl_division=ensembl_division,
+                    organism_name=organism_name,
+                )
+                return []
+            else:
+                if get_strain_mapping_for_organism(organism_name) is None:
+                    logger.error(
+                        (
+                            "Organism name must be listed in config/organism_strain_"
+                            "mappings.csv for Fungi and Bacteria divisions."
+                        ),
+                        ensembl_division=ensembl_division,
+                        organism_name=organism_name,
+                    )
+                    return []
+
+        # The main division has a different base URL for its REST API.
+        if ensembl_division == "Ensembl":
+            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
+
+            # Yes I'm aware that specieses isn't a word. However I need to
+            # distinguish between a singlular species and multiple species.
+            specieses = r.json()["species"]
+        else:
+            formatted_division_url = DIVISION_URL_TEMPLATE.format(division=ensembl_division)
+            r = utils.requests_retry_session().get(formatted_division_url)
+            specieses = r.json()
+
         all_new_species = []
         if organism_name:
             for species in specieses:
                 # This key varies based on whether the division is the
                 # main one or not... why couldn't they just make them
                 # consistent?
-                if ("species" in species and species["species"] == organism_name) or (
-                    "name" in species and species["name"] == organism_name
+                if ("species" in species and organism_name in species["species"]) or (
+                    "name" in species and organism_name in species["name"]
                 ):
+                    # Fungi have a strain identifier in their
+                    # names. This is different than everything else,
+                    # so we're going to handle this special case by
+                    # just overwriting this. This is okay because we
+                    # just have to discover one species for the
+                    # organism, and then our strain mapping will make
+                    # sure we use the correct strain and assembly.
+                    if ensembl_division == "EnsemblFungi" and organism_name != species["name"]:
+                        species["name"] = organism_name
+
                     all_new_species.append(self._generate_files(species))
                     break
         else:
