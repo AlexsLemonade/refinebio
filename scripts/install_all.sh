@@ -152,15 +152,16 @@ if ! command -v nomad > /dev/null; then
     fi
 fi
 
-if ! command -v black > /dev/null; then
-    echo "Installing black..."
-    if [ $BREW ]; then
-        $INSTALL_CMD black > $OUTPUT
-    elif [ $APT ] || confirm "Would you like to automatically install black (code formatter) for amd64 linux?"; then
-        pip3 install black
+if ! command -v pre-commit > /dev/null; then
+    message="Would you like to automatically install pre-commit? \
+Note: This will install all the required dependencies (black, isort, etc) \
+using an additional ~185MB of disk space."
+    if [ $APT ] || confirm $message; then
+        echo "Installing pre-commit..."
+        pip3 install pre-commit
+        pre-commit install
     else
-        echo "You need to manually install black (code formatter) before continuing..." >&2
-        exit 1
+        echo "Skipping installation of pre-commit."
     fi
 fi
 
