@@ -1,30 +1,14 @@
 import json
-import random
-import time
 
-from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.core.management import call_command
 from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from unittest.mock import patch, Mock
 
-from data_refinery_api.serializers import (
-    DetailedExperimentSerializer,
-    DetailedSampleSerializer,
-    ExperimentSerializer,
-    InstitutionSerializer,
-    OrganismIndexSerializer,
-    OrganismSerializer,
-    PlatformSerializer,
-    SampleSerializer,
-    # Jobs
-    DownloaderJobSerializer,
-    ProcessorJobSerializer,
-    ProcessorSerializer,
-    SurveyJobSerializer,
-)
-from data_refinery_api.views import ExperimentList, Stats, DatasetView
+from data_refinery_api.views import ExperimentList, DatasetView
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
@@ -630,7 +614,6 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.json()["count"], 1)
 
-        qs = Experiment.processed_public_objects
         self.assertEqual(len(experiment.processed_samples), 1)
 
         experiment.delete()
@@ -821,7 +804,6 @@ class APITestCases(APITestCase):
         result.commands.append("create_qn_target.py")
         result.is_ccdl = True
         result.is_public = True
-        processor_key = "QN_REFERENCE"
         result.processor = None
         result.save()
 
@@ -973,10 +955,6 @@ class StatsTestCases(APITestCase):
         self.assertEqual(response.json()["nomad_running_jobs_by_type"]["SALMON"], 2)
         self.assertEqual(response.json()["nomad_running_jobs_by_volume"]["1"], 1)
         self.assertEqual(response.json()["nomad_running_jobs_by_volume"]["2"], 1)
-
-
-from django.core.management import call_command
-from django.core.cache import cache
 
 
 class ESTestCases(APITestCase):
@@ -1189,7 +1167,7 @@ class ProcessorTestCases(APITestCase):
         result = ComputationalResult.objects.create(
             processor=self.salmon_quant_proc, organism_index=organism_index
         )
-        sra = SampleResultAssociation.objects.create(sample=sample, result=result)
+        SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(
             reverse(
