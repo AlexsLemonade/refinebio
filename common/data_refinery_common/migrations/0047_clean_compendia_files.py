@@ -1,5 +1,5 @@
 from django.db import migrations, models
-from django.db.models import F, Count
+from django.db.models import Count, F
 
 
 def clean_compendium_files(apps, schema_editor):

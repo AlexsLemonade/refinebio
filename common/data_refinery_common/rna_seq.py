@@ -1,15 +1,11 @@
 from typing import Dict, List
+
 from django.db.models import OuterRef, Subquery
 
 from data_refinery_common.job_lookup import ProcessorEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputedFile,
-    Experiment,
-)
+from data_refinery_common.models import ComputationalResult, ComputedFile, Experiment
 from data_refinery_common.utils import get_env_variable
-
 
 logger = get_and_configure_logger(__name__)
 

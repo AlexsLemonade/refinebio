@@ -10,7 +10,6 @@ from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor.sra import SraSurveyor
 from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 
-
 logger = get_and_configure_logger(__name__)
 
 CURRENT_JOB = None

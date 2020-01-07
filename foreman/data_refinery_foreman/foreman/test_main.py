@@ -1,13 +1,15 @@
-from unittest.mock import patch, MagicMock
 import datetime
 import math
 import time
+from test.support import EnvironmentVarGuard  # Python >=3
+from unittest.mock import MagicMock, patch
+
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
-from django.test import TransactionTestCase, TestCase
-from data_refinery_foreman.foreman import main
+
 from data_refinery_common.models import (
-    ComputedFile,
     ComputationalResult,
+    ComputedFile,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -24,7 +26,7 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from test.support import EnvironmentVarGuard  # Python >=3
+from data_refinery_foreman.foreman import main
 
 # For use in tests that test the JOB_CREATED_AT_CUTOFF functionality.
 DAY_BEFORE_JOB_CUTOFF = main.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)

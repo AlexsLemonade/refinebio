@@ -1,13 +1,14 @@
 from django.contrib import admin
+
 from data_refinery_common.models import (
-    ProcessorJob,
-    DownloaderJob,
-    SurveyJob,
-    Experiment,
-    Sample,
-    OriginalFile,
     ComputationalResult,
+    DownloaderJob,
+    Experiment,
     OrganismIndex,
+    OriginalFile,
+    ProcessorJob,
+    Sample,
+    SurveyJob,
 )
 
 admin.site.register(ProcessorJob)

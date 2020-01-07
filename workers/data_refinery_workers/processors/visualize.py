@@ -1,20 +1,17 @@
 import copy
+import multiprocessing
 import time
 
 import datashader as ds
-import pandas as pd
-import numpy as np
 import holoviews as hv
 import matplotlib as mpl
-from holoviews import opts
-from datashader import transfer_functions as tf
+import numpy as np
+import pandas as pd
 from dask import dataframe as daskdf
-
-import multiprocessing
-
-from holoviews.operation.datashader import datashade, shade, dynspread, rasterize
-from holoviews.operation import decimate
+from datashader import transfer_functions as tf
 from holoviews import opts
+from holoviews.operation import decimate
+from holoviews.operation.datashader import datashade, dynspread, rasterize, shade
 
 from data_refinery_common.logging import get_and_configure_logger
 

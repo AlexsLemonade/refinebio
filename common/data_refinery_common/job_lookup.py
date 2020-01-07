@@ -1,5 +1,4 @@
 import re
-
 from enum import Enum, unique
 
 from data_refinery_common import utils
@@ -10,7 +9,6 @@ from data_refinery_common.models import (
     ProcessorJob,
     Sample,
 )
-
 
 logger = get_and_configure_logger(__name__)
 

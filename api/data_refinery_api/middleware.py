@@ -1,5 +1,7 @@
 import logging
+
 from django.utils.deprecation import MiddlewareMixin
+
 from data_refinery_common.utils import get_env_variable_gracefully
 
 

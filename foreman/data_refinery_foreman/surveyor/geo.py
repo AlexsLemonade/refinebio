@@ -1,13 +1,13 @@
-import GEOparse
-import dateutil.parser
 import logging
-import requests
 import shutil
+from re import match, split, sub
+from typing import Dict, List
 
-from re import sub, split, match
-from typing import List, Dict
+import dateutil.parser
+import GEOparse
+import requests
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,
@@ -22,15 +22,14 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
 )
 from data_refinery_common.utils import (
+    FileUtils,
     get_normalized_platform,
     get_readable_affymetrix_names,
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,
-    FileUtils,
 )
-from data_refinery_foreman.surveyor import utils, harmony
+from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-
 
 logger = get_and_configure_logger(__name__)
 GEOparse.logger.set_verbosity("WARN")

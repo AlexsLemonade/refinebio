@@ -1,12 +1,14 @@
 import os
 import shutil
+
 from django.test import TestCase, tag
+
 from data_refinery_common.models import (
-    ProcessorJob,
-    OriginalFile,
-    ProcessorJobOriginalFileAssociation,
     ComputationalResult,
     ComputedFile,
+    OriginalFile,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
 )
 from data_refinery_workers.processors import array_express
 

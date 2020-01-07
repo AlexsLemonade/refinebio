@@ -3,6 +3,7 @@ This command will clear out the database to make repeating tests easier.
 """
 
 from django.core.management.base import BaseCommand
+
 from data_refinery_common.models import *
 
 

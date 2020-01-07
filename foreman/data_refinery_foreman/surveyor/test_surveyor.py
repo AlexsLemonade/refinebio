@@ -1,6 +1,8 @@
-from unittest.mock import patch
-from django.test import TestCase
 import datetime
+from unittest.mock import patch
+
+from django.test import TestCase
+
 from data_refinery_common.models import SurveyJob
 from data_refinery_foreman.surveyor import surveyor
 

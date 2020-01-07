@@ -3,8 +3,9 @@ from __future__ import absolute_import, unicode_literals
 import os
 import string
 import warnings
-from django.utils import timezone
 from typing import Dict
+
+from django.utils import timezone
 
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
@@ -12,16 +13,16 @@ from rpy2.rinterface import RRuntimeError
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    OriginalFile,
     ComputationalResult,
     ComputedFile,
-    SampleResultAssociation,
-    SampleComputedFileAssociation,
+    OriginalFile,
     Pipeline,
     Processor,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
 )
-from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
+from data_refinery_workers.processors import utils
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 

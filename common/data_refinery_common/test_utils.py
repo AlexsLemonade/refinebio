@@ -1,5 +1,7 @@
 from unittest.mock import Mock, patch
+
 from django.test import TestCase
+
 from data_refinery_common import utils
 from data_refinery_common.models import Pipeline
 

@@ -1,13 +1,13 @@
-from elasticsearch_dsl import analyzer
-
 from django_elasticsearch_dsl import Document, Index, fields
+from elasticsearch_dsl import analyzer
 from elasticsearch_dsl.analysis import token_filter
 
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,
 )
-from .models import Sample, Experiment, Organism
+
+from .models import Experiment, Organism, Sample
 
 experiment_index = Index("experiments")
 experiment_index.settings(number_of_shards=1, number_of_replicas=0, max_result_window=9999999)
