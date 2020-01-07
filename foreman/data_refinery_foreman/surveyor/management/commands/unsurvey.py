@@ -242,7 +242,7 @@ class Command(BaseCommand):
             logger.info("Purging Experiment with accession: %s", accession)
             try:
                 purge_experiment(accession)
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     "Exception caught while purging experiment with accession: %s", accession
                 )

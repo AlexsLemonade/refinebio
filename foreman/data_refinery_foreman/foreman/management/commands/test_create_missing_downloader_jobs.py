@@ -1,5 +1,3 @@
-from unittest.mock import Mock, call, patch
-
 from django.test import TransactionTestCase, tag
 
 from data_refinery_common.models import (

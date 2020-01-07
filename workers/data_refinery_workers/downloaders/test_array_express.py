@@ -1,7 +1,4 @@
-import datetime
-import os
-from typing import List
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 from django.test import TestCase, tag
 
@@ -35,7 +32,7 @@ class DownloadArrayExpressTestCase(TestCase):
             "dlme.zip",
             dlj,
         )
-        files = array_express._extract_files("dlme.zip", "123", dlj)
+        array_express._extract_files("dlme.zip", "123", dlj)
 
     @tag("downloaders")
     @patch("data_refinery_workers.downloaders.utils.send_job")

@@ -1,8 +1,3 @@
-import datetime
-import json
-import logging
-from unittest.mock import Mock, call, patch
-
 from django.test import TestCase, tag
 
 import GEOparse
@@ -215,7 +210,7 @@ class HarmonyTestCase(TestCase):
             if not metadata:
                 continue
             # No assertions, just making sure we don't barf.
-            harmonized = harmonize(metadata)
+            harmonize(metadata)
 
     def test_sra_harmony(self):
         """
@@ -270,8 +265,8 @@ class HarmonyTestCase(TestCase):
         for accession in lots:
             try:
                 metadata = SraSurveyor.gather_all_metadata(accession)
-                harmonized = harmonize([metadata])
-            except UnsupportedDataTypeError as udte:
+                harmonize([metadata])
+            except UnsupportedDataTypeError:
                 continue
 
     def test_geo_harmony(self):

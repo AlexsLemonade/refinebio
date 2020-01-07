@@ -1,5 +1,4 @@
 import glob
-import json
 import logging
 import os
 import shutil
@@ -7,7 +6,6 @@ import time
 from datetime import datetime, timedelta
 from test.support import EnvironmentVarGuard  # Python >=3
 from unittest import skip
-from unittest.mock import Mock, patch
 
 from django.test import TransactionTestCase, tag
 from django.utils import timezone

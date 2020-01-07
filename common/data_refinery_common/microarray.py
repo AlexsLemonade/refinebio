@@ -1,6 +1,4 @@
-import re
 import string
-from typing import Dict
 
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError

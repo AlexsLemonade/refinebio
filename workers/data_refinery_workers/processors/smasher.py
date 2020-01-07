@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import csv
 import logging
 import os
 import shutil
-import string
 import time
-import warnings
 from datetime import timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from urllib.parse import quote
 
 from django.conf import settings
@@ -344,7 +341,7 @@ def _upload(job_context: Dict) -> Dict:
             output_filename,
             ExtraArgs={"ACL": "public-read"},
         )
-    except Exception as e:
+    except Exception:
         raise utils.ProcessorJobError(
             "Failed to upload smash result file.", success=False, file=job_context["output_file"]
         )
@@ -390,7 +387,7 @@ def _notify(job_context: Dict) -> Dict:
                 exc_info=1,
                 client_error_message=e.response["Error"]["Message"],
             )
-        except Exception as e:
+        except Exception:
             raise utils.ProcessorJobError(
                 "General failure when trying to send email.",
                 success=False,

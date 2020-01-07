@@ -5,7 +5,6 @@ https://github.com/alexslemonade/refinebio/issues/1391
 without any luck.
 """
 
-import time
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count

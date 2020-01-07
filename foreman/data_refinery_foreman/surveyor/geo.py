@@ -1,6 +1,5 @@
-import logging
 import shutil
-from re import match, split, sub
+from re import sub
 from typing import Dict, List
 
 import dateutil.parser
@@ -116,11 +115,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
             # Example of it being a list: GSE113945
             channel1_temp = sample_metadata.get("label_protocol_ch1", "")
             if type(channel1_temp) != list:
-                channel1_protocol = channel1_temp.upper()
+                channel1_temp.upper()
             elif len(channel1_temp) > 0:
-                channel1_protocol = channel1_temp[0].upper()
+                channel1_temp[0].upper()
             else:
-                channel1_protocol = ""
+                pass
 
             platform = sample_object.pretty_platform.upper()
             if "AGILENT" in platform:

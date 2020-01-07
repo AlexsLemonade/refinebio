@@ -7,9 +7,6 @@ split experiments into multiple tximport jobs.
 """
 
 import random
-import sys
-import time
-from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count
@@ -77,7 +74,7 @@ def run_tximport():
                 # experiment will work. Tximport is somewhat special
                 # in that it doesn't actuallhy use original files so
                 # this is just used to point to the experiment.
-                samples = experiment.samples.all()
+                experiment.samples.all()
                 assoc.original_file = experiment.samples.all()[0].original_files.all()[0]
                 assoc.processor_job = processor_job
                 assoc.save()

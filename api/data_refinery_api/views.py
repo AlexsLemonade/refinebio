@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from itertools import groupby
 from re import match
-from typing import Dict
 
 from django.conf import settings
 from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
@@ -579,7 +578,6 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                     except Exception as e:
                         # It doens't really matter if this didn't work
                         logger.error(e)
-                        pass
 
                 return obj
 

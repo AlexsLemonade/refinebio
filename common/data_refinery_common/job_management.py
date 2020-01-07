@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List
+from typing import List
 
 from data_refinery_common import job_lookup
 from data_refinery_common.job_lookup import (

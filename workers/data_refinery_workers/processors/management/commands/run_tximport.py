@@ -67,6 +67,6 @@ class Command(BaseCommand):
         pjofa.original_file = original_file
         pjofa.save()
 
-        final_context = tximport.tximport(job.id)
+        tximport.tximport(job.id)
 
         sys.exit(0)

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import List
 
 from django.db.models import OuterRef, Subquery
 
