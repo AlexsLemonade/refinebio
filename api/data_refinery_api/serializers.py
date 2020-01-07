@@ -381,7 +381,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 
 
 class ExperimentSerializer(serializers.ModelSerializer):
-    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    organism_names = serializers.StringRelatedField(many=True, source="organisms", read_only=True)
     platforms = serializers.ReadOnlyField()
     processed_samples = serializers.StringRelatedField(many=True)
     total_samples_count = serializers.IntegerField(read_only=True)
@@ -408,7 +408,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
             "publication_authors",
             "pubmed_id",
             "total_samples_count",
-            "organisms",
+            "organism_names",
             "submitter_institution",
             "created_at",
             "last_modified",
@@ -447,7 +447,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source="experimentannotation_set")
     samples = DetailedExperimentSampleSerializer(many=True)
     sample_metadata = serializers.ReadOnlyField(source="sample_metadata_fields")
-    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    organism_names = serializers.StringRelatedField(many=True, source="organisms", read_only=True)
 
     class Meta:
         model = Experiment
@@ -471,7 +471,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
             "submitter_institution",
             "last_modified",
             "created_at",
-            "organisms",
+            "organism_names",
             "sample_metadata",
             "num_total_samples",
             "num_processed_samples",
@@ -630,12 +630,11 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
     page
     """
 
-    organisms = serializers.ReadOnlyField(source="organism_names")
     sample_metadata = serializers.ReadOnlyField(source="sample_metadata_fields")
 
     class Meta:
         model = Experiment
-        fields = ("title", "accession_code", "organisms", "sample_metadata", "technology")
+        fields = ("title", "accession_code", "organism_names", "sample_metadata", "technology")
 
 
 class DatasetSerializer(serializers.ModelSerializer):
@@ -766,16 +765,16 @@ class APITokenSerializer(serializers.ModelSerializer):
 
 
 class CompendiumResultSerializer(serializers.ModelSerializer):
-    primary_organism = serializers.StringRelatedField(read_only=True)
-    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    primary_organism_name = serializers.StringRelatedField(read_only=True, source="primary_organism")
+    organism_names = serializers.StringRelatedField(many=True, source="organisms", read_only=True)
     computed_file = ComputedFileSerializer(source="get_computed_file", read_only=True)
 
     class Meta:
         model = CompendiumResult
         fields = (
             "id",
-            "primary_organism",
-            "organisms",
+            "primary_organism_name",
+            "organism_names",
             "svd_algorithm",
             "quant_sf_only",
             "compendium_version",
@@ -785,16 +784,16 @@ class CompendiumResultSerializer(serializers.ModelSerializer):
 
 
 class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
-    primary_organism = serializers.StringRelatedField(read_only=True)
-    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    primary_organism_name = serializers.StringRelatedField(read_only=True, source="primary_organism")
+    organism_names = serializers.StringRelatedField(many=True, source="organisms", read_only=True)
     computed_file = ComputedFileWithUrlSerializer(source="get_computed_file", read_only=True)
 
     class Meta:
         model = CompendiumResult
         fields = (
             "id",
-            "primary_organism",
-            "organisms",
+            "primary_organism_name",
+            "organism_names",
             "svd_algorithm",
             "quant_sf_only",
             "compendium_version",
