@@ -13,6 +13,11 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from rest_framework import filters, generics, status
+from rest_framework.exceptions import APIException, NotFound
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 import nomad
 import requests
@@ -34,11 +39,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from elasticsearch_dsl import TermsFacet
-from rest_framework import filters, generics, status
-from rest_framework.exceptions import APIException, NotFound
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from six import iteritems
 
 from data_refinery_common.job_lookup import ProcessorPipeline
