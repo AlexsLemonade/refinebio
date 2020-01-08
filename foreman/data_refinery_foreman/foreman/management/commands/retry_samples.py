@@ -1,8 +1,4 @@
-import random
-import re
-import sys
 import time
-from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count, OuterRef, Subquery

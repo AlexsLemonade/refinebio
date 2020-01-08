@@ -1,6 +1,4 @@
-import datetime
-import json
-from unittest.mock import Mock, call, patch
+from unittest.mock import patch
 
 from django.test import TestCase
 

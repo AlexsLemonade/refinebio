@@ -209,7 +209,7 @@ def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) 
         # Explicitly title this dataframe
         try:
             data.columns = [sample_accession_code]
-        except ValueError as e:
+        except ValueError:
             # This sample might have multiple channels, or something else.
             # Don't mess with it.
             logger.warn(
@@ -218,7 +218,7 @@ def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) 
                 computed_file_path=computed_file_path,
             )
             return None
-        except Exception as e:
+        except Exception:
             # Okay, somebody probably forgot to create a SampleComputedFileAssociation
             # Don't mess with it.
             logger.warn(
@@ -228,7 +228,7 @@ def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) 
             )
             return None
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unable to smash file", file=computed_file_path)
         return None
     # TEMPORARY for iterating on compendia more quickly.
@@ -741,7 +741,7 @@ def write_non_data_files(job_context: Dict) -> Dict:
                 dw.writeheader()
                 for sample_metadata in job_context["filtered_samples"].values():
                     dw.writerow(get_tsv_row_data(sample_metadata, job_context["dataset"].data))
-    except Exception as e:
+    except Exception:
         raise utils.ProcessorJobError("Failed to write metadata TSV!", success=False)
 
     return job_context

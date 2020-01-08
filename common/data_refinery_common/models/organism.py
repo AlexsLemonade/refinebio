@@ -37,7 +37,7 @@ def get_scientific_name(taxonomy_id: int) -> str:
     try:
         root = ElementTree.fromstring(response.text)
         taxon_list = root.findall("Taxon")
-    except Exception as e:
+    except Exception:
         logger.error("Bad response from eUtils.", text=response.text)
         raise
 
@@ -58,7 +58,7 @@ def get_taxonomy_id(organism_name: str) -> int:
     try:
         root = ElementTree.fromstring(response.text)
         id_list = root.find("IdList").findall("Id")
-    except Exception as e:
+    except Exception:
         logger.error("Bad response from eUtils.", text=response.text)
         raise
 
@@ -88,7 +88,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     try:
         root = ElementTree.fromstring(response.text)
         id_list = root.find("IdList").findall("Id")
-    except Exception as e:
+    except Exception:
         logger.error("Bad response from eUtils.", text=response.text)
         raise
 

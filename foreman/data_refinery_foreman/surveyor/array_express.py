@@ -663,7 +663,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         try:
             experiment, platform_dict = self.create_experiment_from_api(experiment_accession_code)
-        except UnsupportedPlatformException as e:
+        except UnsupportedPlatformException:
             logger.info(
                 "Experiment was not on a supported platform, skipping.",
                 experiment_accession_code=experiment_accession_code,

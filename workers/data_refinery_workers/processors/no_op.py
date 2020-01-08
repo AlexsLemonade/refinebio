@@ -1,6 +1,5 @@
 import csv
 import os
-import shutil
 import subprocess
 from typing import Dict
 
@@ -306,7 +305,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                 high_db = platform
                 high_mapped_percent = float(results[1].strip())
 
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Could not detect database for file!", platform=platform, job_context=job_context
             )
@@ -425,7 +424,7 @@ def check_output_quality(output_file_path: str):
                 # we consider this bad data. (Likely old machine/processing!)
                 if len(row) > 2:
                     return False
-    except Exception as e:
+    except Exception:
         return False
 
     return True

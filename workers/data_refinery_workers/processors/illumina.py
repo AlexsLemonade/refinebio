@@ -1,9 +1,7 @@
 import csv
 import multiprocessing
 import os
-import string
 import subprocess
-import warnings
 from typing import Dict
 
 from django.utils import timezone
@@ -319,7 +317,6 @@ def _run_illumina(job_context: Dict) -> Dict:
     Expects a job_context which has been pre-populated with inputs, outputs
     and the column identifiers which the R script needs for processing.
     """
-    input_file_path = job_context["input_file_path"]
 
     try:
         job_context["time_start"] = timezone.now()

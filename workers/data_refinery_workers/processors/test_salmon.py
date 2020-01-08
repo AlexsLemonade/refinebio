@@ -3,9 +3,7 @@ import os
 import random
 import shutil
 import subprocess
-from contextlib import closing
 from typing import Dict, List
-from unittest.mock import MagicMock
 
 from django.test import TestCase, tag
 
@@ -237,6 +235,7 @@ class SalmonTestCase(TestCase):
         sample_object.save()
 
         job_context = salmon.salmon(job.pk)
+        self.assertIsNotNone(job_context)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
         self.assertEqual(
@@ -274,6 +273,7 @@ class SalmonTestCase(TestCase):
 
         job, files = prepare_dotsra_job("i-dont-exist.sra")
         job_context = salmon.salmon(job.pk)
+        self.assertIsNotNone(job_context)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
 
@@ -762,7 +762,7 @@ class RuntimeProcessorTest(TestCase):
         job_context["job"] = ProcessorJob.objects.create()
         job_context["success"] = True
         try:
-            proc1 = utils.find_processor(proc_key)
+            utils.find_processor(proc_key)
         except Exception as e:
             utils.handle_processor_exception(job_context, proc_key, e)
 
@@ -856,7 +856,7 @@ def create_tximport_job_context(
 
     # Create tximport result and files
     quant_processor = utils.find_processor("SALMON_QUANT")
-    tximport_processor = utils.find_processor("TXIMPORT")
+    utils.find_processor("TXIMPORT")
 
     # Create the already processed samples along with their
     # ComputationalResults and ComputedFiles. They don't need

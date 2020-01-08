@@ -4,7 +4,6 @@ is most likely to be a temporary patch until we can figure out why
 downloader jobs are failing to create processor jobs.
 """
 
-from typing import List
 
 from django.core.management.base import BaseCommand
 

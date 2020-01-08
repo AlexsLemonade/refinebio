@@ -1,7 +1,5 @@
 import os
-from typing import List
-from unittest.mock import call, patch
-from urllib.error import URLError
+from unittest.mock import patch
 
 from django.test import TestCase, tag
 

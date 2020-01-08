@@ -3,7 +3,6 @@
 import csv
 import json
 import os
-import shutil
 import sys
 import zipfile
 from io import StringIO
@@ -559,8 +558,6 @@ class SmasherTestCase(TransactionTestCase):
         experiment = Experiment()
         experiment.accession_code = "GSE51084"
         experiment.save()
-
-        mus_mus = Organism.get_object_for_name("MUS_MUSCULUS")
 
         sample = Sample()
         sample.accession_code = "GSM1238108"

@@ -1,5 +1,4 @@
 import json
-import random
 import time
 from unittest.mock import Mock, patch
 
@@ -629,7 +628,6 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.json()["count"], 1)
 
-        qs = Experiment.processed_public_objects
         self.assertEqual(len(experiment.processed_samples), 1)
 
         experiment.delete()
@@ -827,7 +825,6 @@ class APITestCases(APITestCase):
         result.commands.append("create_qn_target.py")
         result.is_ccdl = True
         result.is_public = True
-        processor_key = "QN_REFERENCE"
         result.processor = None
         result.save()
 
