@@ -291,7 +291,6 @@ class ForemanTestCase(TestCase):
         main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
-        DownloaderJob.objects.order_by("id")
         self.assertEqual(1, DownloaderJob.objects.all().count())
 
     @patch("data_refinery_foreman.foreman.main.send_job")
@@ -715,7 +714,6 @@ class ForemanTestCase(TestCase):
         main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
-        ProcessorJob.objects.order_by("id")
         self.assertEqual(1, ProcessorJob.objects.all().count())
 
     @patch("data_refinery_foreman.foreman.main.get_active_volumes")
@@ -1003,7 +1001,6 @@ class ForemanTestCase(TestCase):
         main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
-        SurveyJob.objects.order_by("id")
         self.assertEqual(1, SurveyJob.objects.all().count())
 
     @patch("data_refinery_foreman.foreman.main.send_job")

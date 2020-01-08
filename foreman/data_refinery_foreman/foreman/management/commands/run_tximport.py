@@ -74,7 +74,6 @@ def run_tximport():
                 # experiment will work. Tximport is somewhat special
                 # in that it doesn't actuallhy use original files so
                 # this is just used to point to the experiment.
-                experiment.samples.all()
                 assoc.original_file = experiment.samples.all()[0].original_files.all()[0]
                 assoc.processor_job = processor_job
                 assoc.save()

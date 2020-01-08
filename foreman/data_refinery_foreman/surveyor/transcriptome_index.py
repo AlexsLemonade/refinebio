@@ -313,7 +313,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
 
-        species.pop("division")
+        species.pop("division")  # platform_accession_code
         self._clean_metadata(species)
 
         all_new_files = []

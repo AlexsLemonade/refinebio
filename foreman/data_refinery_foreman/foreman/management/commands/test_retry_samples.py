@@ -33,8 +33,6 @@ def setup_experiment() -> Dict:
 
     # Create the experiment
     experiment_accession = "SRP095529"
-    data_dir = "/home/user/data_store/"
-    data_dir + experiment_accession
     experiment = Experiment.objects.create(
         accession_code=experiment_accession, technology="RNA-SEQ"
     )

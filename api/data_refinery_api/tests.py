@@ -628,7 +628,6 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.json()["count"], 1)
 
-        Experiment.processed_public_objects
         self.assertEqual(len(experiment.processed_samples), 1)
 
         experiment.delete()
