@@ -617,6 +617,15 @@ class ComputationalResult(models.Model):
 
         return None
 
+    def get_quant_sf_file(self):
+        return (
+            ComputedFile.objects.filter(
+                result=self, filename="quant.sf", s3_key__isnull=False, s3_bucket__isnull=False,
+            )
+            .order_by("-id")
+            .first()
+        )
+
 
 class ComputationalResultAnnotation(models.Model):
     """ Non-standard information associated with an ComputationalResult """
