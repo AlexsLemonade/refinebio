@@ -209,7 +209,6 @@ class HarmonyTestCase(TestCase):
             )
             if not metadata:
                 continue
-            # No assertions, just making sure we don't barf.
             harmonized = harmonize(metadata)
             self.assertIsNotNone(harmonized)
 
