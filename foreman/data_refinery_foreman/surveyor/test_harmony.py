@@ -210,7 +210,8 @@ class HarmonyTestCase(TestCase):
             if not metadata:
                 continue
             # No assertions, just making sure we don't barf.
-            harmonize(metadata)
+            harmonized = harmonize(metadata)
+            self.assertIsNotNone(harmonized)
 
     def test_sra_harmony(self):
         """
@@ -265,7 +266,8 @@ class HarmonyTestCase(TestCase):
         for accession in lots:
             try:
                 metadata = SraSurveyor.gather_all_metadata(accession)
-                harmonize([metadata])
+                harmonized = harmonize([metadata])
+                self.assertIsNotNone(harmonized)
             except UnsupportedDataTypeError:
                 continue
 

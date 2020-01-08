@@ -559,8 +559,6 @@ class SmasherTestCase(TransactionTestCase):
         experiment.accession_code = "GSE51084"
         experiment.save()
 
-        Organism.get_object_for_name("MUS_MUSCULUS")
-
         sample = Sample()
         sample.accession_code = "GSM1238108"
         sample.title = "GSM1238108"

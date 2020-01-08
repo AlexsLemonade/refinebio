@@ -234,7 +234,8 @@ class SalmonTestCase(TestCase):
         sample_object.source_database = "GEO"
         sample_object.save()
 
-        salmon.salmon(job.pk)
+        job_context = salmon.salmon(job.pk)
+        self.assertIsNotNone(job_context)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
         self.assertEqual(
@@ -271,7 +272,8 @@ class SalmonTestCase(TestCase):
             pass
 
         job, files = prepare_dotsra_job("i-dont-exist.sra")
-        salmon.salmon(job.pk)
+        job_context = salmon.salmon(job.pk)
+        self.assertIsNotNone(job_context)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
 
