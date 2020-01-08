@@ -626,22 +626,16 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
         salmon_quant_results = get_quant_results_for_experiment(experiment)
         is_tximport_job = "is_tximport_only" in job_context and job_context["is_tximport_only"]
 
-        if is_tximport_job and salmon_quant_results.count() > 0:
+        first_salmon_quant_result = salmon_quant_results.first()
+        if is_tximport_job and first_salmon_quant_result:
             # If the job is only running tximport, then index_length
             # hasn't been set on the job context because we don't have
             # a raw file to run it on. Therefore pull it from one of
             # the result annotations.
-
-            annotations = ComputationalResultAnnotation.objects.filter(
-                result=salmon_quant_results[0]
-            )
-
-            for annotation_json in annotations:
-                if "index_length" in annotation_json.data:
-                    job_context["index_length"] = annotation_json.data["index_length"]
-                    break
-
-            if not "index_length" in job_context:
+            index_length = first_salmon_quant_result.get_index_length()
+            if index_length:
+                job_context["index_length"] = index_length
+            elif not "index_length" in job_context:
                 raise utils.ProcessorJobError(
                     "Found quant result without an annotation specifying its index length. Why did this happen?!?",
                     success=False,
