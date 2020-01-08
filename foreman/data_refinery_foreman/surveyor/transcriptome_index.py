@@ -284,37 +284,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.TRANSCRIPTOME_INDEX.value
 
-    def _clean_metadata(self, species: Dict) -> Dict:
-        """Removes fields from metadata which shouldn't be stored.
-
-        Also cast any None values to str so they can be stored in the
-        database.
-        These fields shouldn't be stored because:
-        The taxonomy id is stored as fields on the Organism.
-        Aliases and groups are lists we don't need.
-        """
-        species.pop("taxon_id") if "taxon_id" in species else None
-        species.pop("taxonomy_id") if "taxonomy_id" in species else None
-        species.pop("aliases") if "aliases" in species else None
-        species.pop("groups") if "groups" in species else None
-
-        # Cast to List since we're modifying the size of the dict
-        # while iterating over it
-        for k, v in list(species.items()):
-            if v is None:
-                species.pop(k)
-            else:
-                species[k] = str(v)
-
-        return species
-
     def _generate_files(self, species: Dict) -> None:
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
-
-        species.pop("division")  # platform_accession_code
-        self._clean_metadata(species)
 
         all_new_files = []
 
