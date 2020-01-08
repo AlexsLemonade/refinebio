@@ -1,13 +1,13 @@
 import sys
 
 from django.core.management.base import BaseCommand
+
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_workers.downloaders.array_express import download_array_express
-from data_refinery_workers.downloaders.transcriptome_index import download_transcriptome
-from data_refinery_workers.downloaders.sra import download_sra
 from data_refinery_workers.downloaders.geo import download_geo
-
+from data_refinery_workers.downloaders.sra import download_sra
+from data_refinery_workers.downloaders.transcriptome_index import download_transcriptome
 
 logger = get_and_configure_logger(__name__)
 

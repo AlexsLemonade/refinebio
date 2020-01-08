@@ -15,11 +15,11 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os
 import sys
 
+from coverage import coverage
+
 # fix sys path so we don't need to setup PYTHONPATH
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 os.environ["DJANGO_SETTINGS_MODULE"] = "performant_pagination.runtests.settings"
-
-from coverage import coverage
 
 
 def main():

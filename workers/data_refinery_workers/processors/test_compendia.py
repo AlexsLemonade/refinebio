@@ -1,26 +1,28 @@
 import os
 import shutil
 from contextlib import closing
-from django.test import TransactionTestCase, TestCase, tag
 from unittest.mock import MagicMock
+
+from django.test import TestCase, TransactionTestCase, tag
+
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
-    SurveyJob,
-    ProcessorJob,
-    OriginalFile,
-    Sample,
-    Organism,
-    SampleComputedFileAssociation,
-    ProcessorJobOriginalFileAssociation,
-    Dataset,
-    ComputedFile,
     ComputationalResult,
     ComputationalResultAnnotation,
+    ComputedFile,
+    Dataset,
     Experiment,
     ExperimentSampleAssociation,
+    Organism,
+    OriginalFile,
+    ProcessorJob,
     ProcessorJobDatasetAssociation,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
     SampleAnnotation,
+    SampleComputedFileAssociation,
     SampleResultAssociation,
+    SurveyJob,
 )
 from data_refinery_workers.processors import create_compendia, smasher, utils
 

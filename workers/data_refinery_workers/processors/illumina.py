@@ -4,9 +4,10 @@ import os
 import string
 import subprocess
 import warnings
+from typing import Dict
 
 from django.utils import timezone
-from typing import Dict
+
 import numpy as np
 import pandas as pd
 
@@ -29,7 +30,6 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
-
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")

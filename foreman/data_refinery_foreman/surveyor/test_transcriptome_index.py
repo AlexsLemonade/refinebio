@@ -1,6 +1,8 @@
 import urllib
-from unittest.mock import patch, call
+from unittest.mock import call, patch
+
 from django.test import TestCase
+
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import DownloaderJob, SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor

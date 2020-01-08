@@ -1,10 +1,10 @@
-import boto3
 import csv
 import os
 import shutil
 import subprocess
-
 from typing import Dict
+
+import boto3
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -19,7 +19,6 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
 from data_refinery_workers.processors import utils
-
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")

@@ -1,18 +1,19 @@
 import os
 import shutil
-from django.test import TestCase, tag
 from unittest.mock import patch
+
+from django.test import TestCase, tag
+
 from data_refinery_common.models import (
-    SurveyJob,
     Organism,
-    Sample,
-    Processor,
     OriginalFile,
     OriginalFileSampleAssociation,
-    ProcessorJobOriginalFileAssociation,
+    Processor,
     ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+    SurveyJob,
 )
-from unittest.mock import patch
 from data_refinery_workers.processors import transcriptome_index, utils
 
 

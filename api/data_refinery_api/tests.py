@@ -1,4 +1,5 @@
 import json
+from unittest.mock import Mock, patch
 
 from django.core.cache import cache
 from django.core.management import call_command
@@ -6,14 +7,12 @@ from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from unittest.mock import patch, Mock
 
-from data_refinery_api.views import ExperimentList, DatasetView
-from data_refinery_common.utils import get_env_variable
+from data_refinery_api.views import DatasetView, ExperimentList
 from data_refinery_common.models import (
     ComputationalResult,
-    ComputedFile,
     ComputationalResultAnnotation,
+    ComputedFile,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -33,6 +32,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.models.documents import ExperimentDocument
+from data_refinery_common.utils import get_env_variable
 
 API_VERSION = "v1"
 

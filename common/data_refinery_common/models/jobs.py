@@ -1,11 +1,11 @@
 from typing import Dict, Set
 
-from django.db import transaction
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
+
 from nomad import Nomad
 
-from data_refinery_common.models.models import Sample, Experiment, OriginalFile
+from data_refinery_common.models.models import Experiment, OriginalFile, Sample
 from data_refinery_common.utils import get_env_variable
 
 

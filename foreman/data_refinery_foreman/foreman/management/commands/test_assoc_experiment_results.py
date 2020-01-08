@@ -1,7 +1,9 @@
-import json
 import datetime
-from unittest.mock import Mock, patch, call
+import json
+from unittest.mock import Mock, call, patch
+
 from django.test import TransactionTestCase
+
 from data_refinery_common.models import (
     ComputationalResult,
     Experiment,

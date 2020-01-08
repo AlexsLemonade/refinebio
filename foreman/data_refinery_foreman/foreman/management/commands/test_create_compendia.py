@@ -1,18 +1,18 @@
-from django.test import TransactionTestCase
 from django.core.management import call_command
+from django.test import TransactionTestCase
 
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
     Dataset,
     Experiment,
+    ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
     Organism,
     ProcessorJob,
     Sample,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    ExperimentOrganismAssociation,
 )
 
 from .test_create_quantpendia import get_organism_with_qn_target, make_test_data

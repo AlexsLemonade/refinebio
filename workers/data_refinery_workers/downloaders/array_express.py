@@ -3,11 +3,11 @@ import shutil
 import time
 import urllib.request
 import zipfile
-
 from contextlib import closing
 from typing import List
 
 from data_refinery_common import microarray
+from data_refinery_common.job_management import create_processor_jobs_for_original_files
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     DownloaderJob,
@@ -24,8 +24,6 @@ from data_refinery_common.utils import (
     get_supported_microarray_platforms,
 )
 from data_refinery_workers.downloaders import utils
-from data_refinery_common.job_management import create_processor_jobs_for_original_files
-
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")

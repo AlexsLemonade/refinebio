@@ -1,9 +1,10 @@
-import requests
+from typing import Dict, List
 
 from django.utils.dateparse import parse_datetime
-from typing import List, Dict
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+import requests
+
+from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,

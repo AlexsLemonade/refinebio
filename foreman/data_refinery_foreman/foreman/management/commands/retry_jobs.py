@@ -6,6 +6,7 @@ those jobs it detects as failed.
 """
 
 from django.core.management.base import BaseCommand
+
 from data_refinery_foreman.foreman.main import monitor_jobs
 
 
