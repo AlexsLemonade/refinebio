@@ -502,27 +502,23 @@ def _run_tximport_for_experiment(
     try:
         tximport_result = subprocess.run(cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except Exception as e:
-        error_template = "Encountered error in R code while running tximport.R: {}"
-        error_message = error_template.format(str(e))
-        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-        return job_context
+        raise utils.ProcessorJobError(
+            "Encountered error in R code while running tximport.R: {}".format(str(e)),
+            success=False,
+            experiment=experiment.id,
+        )
 
     if tximport_result.returncode != 0:
-        error_template = "Found non-zero exit code from R code while running tximport.R: {}"
-        error_message = error_template.format(tximport_result.stderr.decode().strip())
-        logger.error(
-            error_message,
-            processor_job=job_context["job_id"],
+        raise utils.ProcessorJobError(
+            "Found non-zero exit code from R code while running tximport.R: {}".format(
+                tximport_result.stderr.decode().strip()
+            ),
+            success=False,
             experiment=experiment.id,
             quant_files=quant_files,
             cmd_tokens=cmd_tokens,
             quant_file_paths=quant_file_paths,
         )
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-        return job_context
 
     result.time_end = timezone.now()
     result.commands.append(" ".join(cmd_tokens))
@@ -531,7 +527,9 @@ def _run_tximport_for_experiment(
         processor_key = "TXIMPORT"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        return utils.handle_processor_exception(job_context, processor_key, e)
+        raise utils.ProcessorJobError(
+            "Failed to set processor: {}".format(e), success=False, processor_key=processor_key
+        )
 
     result.save()
     job_context["pipeline"].steps.append(result.id)
@@ -569,7 +567,8 @@ def _run_tximport_for_experiment(
         frame.to_csv(frame_path, sep="\t", encoding="utf-8")
 
         # The frame column header is based off of the path, which includes _output.
-        sample = Sample.objects.get(accession_code=frame.columns.values[0].replace("_output", ""))
+        sample_accession_code = frame.columns.values[0].replace("_output", "")
+        sample = Sample.objects.get(accession_code=sample_accession_code)
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path
@@ -655,13 +654,10 @@ def tximport(job_context: Dict) -> Dict:
     of genes_to_transcripts.txt.
     """
     tximport_inputs = job_context["tximport_inputs"]
+
     quantified_experiments = 0
     for experiment, quant_files in tximport_inputs.items():
         job_context = _run_tximport_for_experiment(job_context, experiment, quant_files)
-        # If `tximport` on any related experiment fails, exit immediately.
-        if not job_context["success"]:
-            return job_context
-
         quantified_experiments += 1
 
     if (
@@ -669,11 +665,9 @@ def tximport(job_context: Dict) -> Dict:
         and "is_tximport_job" in job_context
         and job_context["is_tximport_only"]
     ):
-        failure_reason = "Tximport job ran on no experiments... Why?!?!?"
-        logger.error(failure_reason, processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = failure_reason
-        job_context["job"].no_retry = True
-        job_context["success"] = False
+        raise utils.ProcessorJobError(
+            "Tximport job ran on no experiments... Why?!?!?", success=False, no_retry=True
+        )
 
     return job_context
 
