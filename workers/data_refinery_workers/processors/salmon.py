@@ -614,16 +614,13 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
     mapping to a list of paths to the quant.sf file for each sample in
     that experiment.
     """
-    experiments = Experiment.objects.filter(
-        samples=job_context["sample"]
-    )  # https://stackoverflow.com/a/18317340/763705
+    experiments = job_context["sample"].experiments.all()
 
     quantified_experiments = {}
     for experiment in experiments:
         # We only want to consider samples that we actually can run salmon on.
         eligible_samples = experiment.samples.filter(source_database="SRA", technology="RNA-SEQ")
-        num_eligible_samples = eligible_samples.count()
-        if num_eligible_samples == 0:
+        if not eligible_samples.exists():
             continue
 
         salmon_quant_results = get_quant_results_for_experiment(experiment)
@@ -645,15 +642,11 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
                     break
 
             if not "index_length" in job_context:
-                failure_reason = (
-                    "Found quant result without an annotation specifying its index length. "
-                    "Why did this happen?!?"
+                raise utils.ProcessorJobError(
+                    "Found quant result without an annotation specifying its index length. Why did this happen?!?",
+                    success=False,
+                    no_retry=True,
                 )
-                logger.error(failure_reason, processor_job=job_context["job_id"])
-                job_context["job"].failure_reason = failure_reason
-                job_context["job"].no_retry = True
-                job_context["success"] = False
-                return job_context
 
         if should_run_tximport(experiment, salmon_quant_results, is_tximport_job):
             quantified_experiments[experiment] = get_quant_files_for_results(salmon_quant_results)

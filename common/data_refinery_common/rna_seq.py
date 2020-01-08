@@ -75,7 +75,7 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
 
 
 def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions=True):
-    """Returns a list of salmon quant results from `experiment`."""
+    """Returns a queryset of salmon quant results from `experiment`."""
     # Subquery to calculate quant results
     # https://docs.djangoproject.com/en/2.2/ref/models/expressions/#subquery-expressions
 
