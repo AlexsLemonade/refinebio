@@ -1,6 +1,8 @@
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
+
+import vcr
 
 from data_refinery_common.models import (
     DownloaderJob,
@@ -88,6 +90,7 @@ class SraSurveyorTestCase(TestCase):
             samples.first().protocol_info[0]["Description"], experiment.protocol_description
         )
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.srp_survey.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_srp_survey(self, mock_send_task):
         """A slightly harder test of the SRA surveyor.
