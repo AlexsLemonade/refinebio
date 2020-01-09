@@ -543,8 +543,8 @@ def smash(job_id: int, upload=True) -> None:
             utils.start_job,
             smashing_utils.prepare_files,
             _smash_all,
-            _upload,
             _update_result_objects,
+            _upload,
             utils.end_job,
         ],
     )
