@@ -352,12 +352,6 @@ def _upload(job_context: Dict) -> Dict:
 
     logger.debug("Result uploaded!", result_url=job_context["result_url"])
 
-    # File is uploaded, we can delete the local.
-    try:
-        os.remove(job_context["output_file"])
-    except OSError:
-        pass
-
     return job_context
 
 
@@ -528,6 +522,13 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.is_available = True
     dataset.expires_on = timezone.now() + timedelta(days=7)
     dataset.save()
+
+    if settings.RUNNING_IN_CLOUD and job_context.get("upload", True):
+        # File is uploaded and the metadata is updated, can delete the local.
+        try:
+            os.remove(job_context["output_file"])
+        except OSError:
+            pass
 
     job_context["success"] = True
 
