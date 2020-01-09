@@ -1,10 +1,14 @@
-from data_refinery_common.models.jobs import (
+from data_refinery_common.models.command_progress import (  # noqa
+    CdfCorrectedAccession,
+    SurveyedAccession,
+)
+from data_refinery_common.models.jobs import (  # noqa
     DownloaderJob,
     ProcessorJob,
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_common.models.models import (
+from data_refinery_common.models.models import (  # noqa
     APIToken,
     CompendiumResult,
     CompendiumResultOrganismAssociation,
@@ -30,3 +34,4 @@ from data_refinery_common.models.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
+from data_refinery_common.models.organism import Organism  # noqa
