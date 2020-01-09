@@ -21,8 +21,7 @@ class DownloadArrayExpressTestCase(TestCase):
         self.survey_job = survey_job
 
     @tag("downloaders")
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    def test_download_and_extract_file(self, mock_send_job):
+    def test_download_and_extract_file(self):
         dlj = DownloaderJob()
         dlj.save()
         array_express._download_file(
@@ -58,8 +57,7 @@ class DownloadArrayExpressTestCase(TestCase):
         self.assertEqual(sorted(filenames), sorted(EXPECTED_FILES))
 
     @tag("downloaders")
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    def test_download_multiple_zips(self, mock_send_job):
+    def test_download_multiple_zips(self):
         """Tests that each sample gets one processor job no matter what.
 
         https://github.com/AlexsLemonade/refinebio/pull/351 deals with
