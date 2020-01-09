@@ -1,7 +1,7 @@
 # R dependencies
 In this directory, we store all the scripts for installing our R dependencies.
 These scripts are managed via `cranlock`, our system for locking versions of
-transitive dependencies. 
+transitive dependencies.
 
 ## Layout
 In each directory, there are three files: `packages.txt`,

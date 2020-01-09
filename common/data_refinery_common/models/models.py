@@ -1,3 +1,19 @@
+"""
+# First Order Classes
+
+This represent the primary data types we will be querying
+and filtering against.
+
+# Files
+
+These are the database representations of files
+which live on local disk, on ephemeral storage,
+or on AWS cloud services.
+
+# Associations
+
+These represent the relationships between items in the other tables.
+"""
 import os
 import shutil
 import uuid
@@ -35,14 +51,6 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # we need something with the pattern: 'salmon X.X.X'
 CURRENT_SALMON_VERSION = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
 CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
-
-"""
-# First Order Classes
-
-This represent the primary data types we will be querying
-and filtering against.
-
-"""
 
 
 class PublicObjectsManager(models.Manager):
@@ -769,15 +777,6 @@ class OrganismIndex(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(OrganismIndex, self).save(*args, **kwargs)
-
-
-"""
-# Files
-
-These are the database representations of files
-which live on local disk, on ephemeral storage,
-or on AWS cloud services.
-"""
 
 
 class OriginalFile(models.Model):
@@ -1522,13 +1521,6 @@ class APIToken(models.Model):
     def terms_and_conditions(self):
         """ """
         return settings.TERMS_AND_CONDITIONS
-
-
-"""
-# Associations
-
-These represent the relationships between items in the other tables.
-"""
 
 
 class ExperimentSampleAssociation(models.Model):

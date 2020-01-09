@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Unlock encrypted files
 cd ~/refinebio/.circleci
 git clean -f
