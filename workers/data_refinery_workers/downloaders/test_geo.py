@@ -13,7 +13,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
 )
-from data_refinery_workers.downloaders import geo, utils
+from data_refinery_workers.downloaders import geo
 
 
 class DownloadGeoTestCase(TestCase):

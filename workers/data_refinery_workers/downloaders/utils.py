@@ -1,12 +1,8 @@
 import signal
 import sys
 
-from django.conf import settings
-from django.db import transaction
 from django.utils import timezone
 
-import psutil
-from retrying import retry
 
 from data_refinery_common.job_lookup import (
     ProcessorPipeline,
@@ -14,7 +10,6 @@ from data_refinery_common.job_lookup import (
     determine_ram_amount,
 )
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,

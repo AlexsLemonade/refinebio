@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from itertools import groupby
 from re import match
 
 from django.conf import settings
@@ -7,7 +6,7 @@ from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.db.models.functions import Left, Trunc
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -18,7 +17,6 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-import nomad
 import requests
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE,
@@ -744,7 +742,9 @@ class SampleList(generics.ListAPIView):
         """
         queryset = (
             Sample.public_objects.prefetch_related("organism")
-            .prefetch_related(Prefetch("results", queryset=ComputationalResult.objects.order_by('time_start')))
+            .prefetch_related(
+                Prefetch("results", queryset=ComputationalResult.objects.order_by("time_start"))
+            )
             .prefetch_related("results__processor")
             .prefetch_related("results__computationalresultannotation_set")
             .prefetch_related("results__computedfile_set")

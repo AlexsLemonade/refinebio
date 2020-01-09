@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 from django.test import TestCase, tag
 
-from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -12,8 +11,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
-from data_refinery_common.utils import get_instance_id
-from data_refinery_workers.downloaders import array_express, utils
+from data_refinery_workers.downloaders import array_express
 
 
 class DownloadArrayExpressTestCase(TestCase):

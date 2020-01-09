@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 import os
 import sys
 
-from django.core.exceptions import ImproperlyConfigured
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 

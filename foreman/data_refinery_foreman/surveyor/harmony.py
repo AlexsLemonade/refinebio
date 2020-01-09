@@ -4,10 +4,8 @@ import string
 from io import StringIO
 from typing import Dict, List
 
-import requests
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import Sample
 from data_refinery_foreman.surveyor.utils import requests_retry_session
 
 logger = get_and_configure_logger(__name__)

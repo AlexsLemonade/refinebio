@@ -1,16 +1,11 @@
 import os
 from typing import Dict
 
-from django.conf import settings
-from django.db import transaction
-from django.utils import timezone
 
 import boto3
-import numpy as np
-import pandas as pd
 from botocore.client import Config
 
-from data_refinery_common.job_lookup import Downloaders, PipelineEnum
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,

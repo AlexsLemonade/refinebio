@@ -2,7 +2,6 @@ import json
 import time
 from unittest.mock import Mock, patch
 
-from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.management import call_command
 from django.http import HttpResponseForbidden, HttpResponseServerError
@@ -24,7 +23,7 @@ from data_refinery_api.serializers import (  # Jobs
     SampleSerializer,
     SurveyJobSerializer,
 )
-from data_refinery_api.views import DatasetView, ExperimentList, Stats
+from data_refinery_api.views import DatasetView, ExperimentList
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
