@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 
-from django.core.exceptions import ImproperlyConfigured
 
 from .utils import get_env_variable
 

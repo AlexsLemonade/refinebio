@@ -1,4 +1,3 @@
-from data_refinery_common.models.command_progress import CdfCorrectedAccession, SurveyedAccession
 from data_refinery_common.models.jobs import (
     DownloaderJob,
     ProcessorJob,
@@ -31,4 +30,3 @@ from data_refinery_common.models.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
-from data_refinery_common.models.organism import Organism

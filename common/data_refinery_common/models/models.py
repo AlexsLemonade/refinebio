@@ -5,13 +5,12 @@ from typing import Set
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
-from django.db import models, transaction
-from django.db.models import Count, DateTimeField, Prefetch
-from django.db.models.expressions import F, Q
+from django.db import models
+from django.db.models import Count
+from django.db.models.expressions import Q
 from django.utils import timezone
 
 import boto3
-import pytz
 from botocore.client import Config
 
 from data_refinery_common.logging import get_and_configure_logger
