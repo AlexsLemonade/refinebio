@@ -3,7 +3,7 @@
 # Usage: slackpost "<channel>" "<username>" "<message>"
 
 # ------------
-webhook_url="https://hooks.slack.com/services/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"
+webhook_url="https://hooks.slack.com/services/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"
 
 # ------------
 channel=$1
