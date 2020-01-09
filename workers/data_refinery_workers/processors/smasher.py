@@ -523,11 +523,12 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.expires_on = timezone.now() + timedelta(days=7)
     dataset.save()
 
-    # File is uploaded and the metadata is updated, can delete the local.
-    try:
-        os.remove(job_context["output_file"])
-    except OSError:
-        pass
+    if settings.RUNNING_IN_CLOUD and job_context.get("upload", True):
+        # File is uploaded and the metadata is updated, can delete the local.
+        try:
+            os.remove(job_context["output_file"])
+        except OSError:
+            pass
 
     job_context["success"] = True
 
