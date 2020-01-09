@@ -3,7 +3,6 @@ import sys
 
 from django.utils import timezone
 
-
 from data_refinery_common.job_lookup import (
     ProcessorPipeline,
     determine_processor_pipeline,

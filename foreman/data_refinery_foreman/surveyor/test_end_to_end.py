@@ -10,7 +10,6 @@ from unittest import skip
 from django.test import TransactionTestCase, tag
 from django.utils import timezone
 
-
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,

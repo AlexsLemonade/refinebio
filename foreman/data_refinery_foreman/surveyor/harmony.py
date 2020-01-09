@@ -4,7 +4,6 @@ import string
 from io import StringIO
 from typing import Dict, List
 
-
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_foreman.surveyor.utils import requests_retry_session
 

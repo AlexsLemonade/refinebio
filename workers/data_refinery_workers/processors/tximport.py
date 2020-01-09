@@ -1,7 +1,6 @@
 import os
 from typing import Dict
 
-
 import boto3
 from botocore.client import Config
 

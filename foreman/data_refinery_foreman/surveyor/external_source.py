@@ -1,7 +1,6 @@
 import abc
 from typing import List
 
-
 from data_refinery_common import job_lookup, logging, message_queue
 from data_refinery_common.models import (
     DownloaderJob,

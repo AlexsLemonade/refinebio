@@ -10,7 +10,6 @@ from io import StringIO
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
 
-
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,

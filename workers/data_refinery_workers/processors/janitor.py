@@ -1,7 +1,6 @@
 import os
 import shutil
 
-
 from nomad import Nomad
 from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
 
