@@ -3,9 +3,6 @@
 # Usage: slackpost "<channel>" "<username>" "<message>"
 
 # ------------
-webhook_url="https://hooks.slack.com/services/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"
-
-# ------------
 channel=$1
 if [[ $channel == "" ]]
 then
@@ -38,4 +35,4 @@ escapedText=$(echo "$text" | sed 's/"/\"/g' | sed "s/'/\'/g" )
 
 json="{\"channel\": \"$channel\", \"username\":\"$username\", \"icon_emoji\":\":veerapan:\", \"attachments\":[{\"color\":\"danger\" , \"text\": \"$escapedText\"}]}"
 
-curl -s -d "payload=$json" "$webhook_url"
+curl -s -d "payload=$json" "$ENGAGEMENT_WEBHOOK"
