@@ -744,7 +744,9 @@ class SampleList(generics.ListAPIView):
         """
         queryset = (
             Sample.public_objects.prefetch_related("organism")
-            .prefetch_related(Prefetch("results", queryset=ComputationalResult.objects.order_by('time_start')))
+            .prefetch_related(
+                Prefetch("results", queryset=ComputationalResult.objects.order_by("time_start"))
+            )
             .prefetch_related("results__processor")
             .prefetch_related("results__computationalresultannotation_set")
             .prefetch_related("results__computedfile_set")
