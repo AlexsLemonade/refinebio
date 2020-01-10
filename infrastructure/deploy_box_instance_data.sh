@@ -38,6 +38,9 @@
 # Click 'Add Variable' and set the name to DEPLOY_IP_ADDRESS and the value to the
 # IP address of the EC2 instance you created.
 
+# Also, if you want to be notified on slack after the deploy finishes, you can add
+# another environment variable named ENGAGEMENTBOT_WEBHOOK with the url to a slack webhook.
+
 # Now any deploys that are triggered will run on the instance you created.
 
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
