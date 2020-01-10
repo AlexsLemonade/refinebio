@@ -1,8 +1,6 @@
 from django.core.management import call_command
 from django.test import TestCase
-from django.utils import timezone
 
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.models import (
     Experiment,
     ExperimentSampleAssociation,

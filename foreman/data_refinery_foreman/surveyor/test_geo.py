@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 from django.test import TransactionTestCase
 
-from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
     Organism,

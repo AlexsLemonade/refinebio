@@ -1,8 +1,6 @@
 import os
 import shutil
 
-from django.utils import timezone
-
 from nomad import Nomad
 from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
 

@@ -4,7 +4,6 @@ from django.test import TestCase
 
 import requests
 
-from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
     Organism,

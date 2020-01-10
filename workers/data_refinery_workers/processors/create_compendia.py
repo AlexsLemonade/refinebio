@@ -5,7 +5,6 @@ import shutil
 import time
 from typing import Dict
 
-from django.db.models import Count, Q
 from django.utils import timezone
 
 import numpy as np

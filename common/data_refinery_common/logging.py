@@ -1,7 +1,6 @@
 import logging
 import sys
 
-import boto3
 import daiquiri
 
 from data_refinery_common.utils import (

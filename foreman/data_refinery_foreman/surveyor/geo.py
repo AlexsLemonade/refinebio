@@ -4,9 +4,8 @@ from typing import Dict, List
 
 import dateutil.parser
 import GEOparse
-import requests
 
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,

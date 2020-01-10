@@ -4,7 +4,7 @@ from django.core.management import call_command
 from django.test import TransactionTestCase
 from django.utils import timezone
 
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,

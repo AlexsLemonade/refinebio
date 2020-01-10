@@ -14,7 +14,6 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SurveyJob,
 )
-from data_refinery_workers.processors import utils
 
 
 def prepare_illumina_job(species="Homo sapiens"):

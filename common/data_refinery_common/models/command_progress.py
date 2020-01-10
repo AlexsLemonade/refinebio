@@ -1,8 +1,4 @@
-from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
-from django.db import models, transaction
-from django.db.models import Count, DateTimeField, Prefetch
-from django.db.models.expressions import F, Q
+from django.db import models
 from django.utils import timezone
 
 

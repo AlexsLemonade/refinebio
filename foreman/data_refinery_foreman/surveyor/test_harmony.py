@@ -2,7 +2,6 @@ from django.test import TestCase, tag
 
 import GEOparse
 
-from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
     Organism,
@@ -11,8 +10,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
 )
 from data_refinery_foreman.surveyor import utils
-from data_refinery_foreman.surveyor.array_express import SAMPLES_URL, ArrayExpressSurveyor
-from data_refinery_foreman.surveyor.geo import GeoSurveyor
+from data_refinery_foreman.surveyor.array_express import SAMPLES_URL
 from data_refinery_foreman.surveyor.harmony import (
     extract_title,
     harmonize,
