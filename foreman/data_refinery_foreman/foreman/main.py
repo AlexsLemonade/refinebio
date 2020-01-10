@@ -7,7 +7,6 @@ import traceback
 from typing import List
 
 from django.conf import settings
-from django.db import transaction
 from django.db.models.expressions import Q
 from django.utils import timezone
 

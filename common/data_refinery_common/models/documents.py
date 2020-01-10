@@ -7,7 +7,7 @@ from data_refinery_common.utils import (
     get_supported_rnaseq_platforms,
 )
 
-from .models import Experiment, Organism, Sample
+from .models import Experiment
 
 experiment_index = Index("experiments")
 experiment_index.settings(number_of_shards=1, number_of_replicas=0, max_result_window=9999999)

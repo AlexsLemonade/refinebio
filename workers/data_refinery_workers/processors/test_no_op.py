@@ -13,7 +13,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
-from data_refinery_workers.processors import no_op, utils
+from data_refinery_workers.processors import no_op
 
 
 class NOOPTestCase(TestCase):

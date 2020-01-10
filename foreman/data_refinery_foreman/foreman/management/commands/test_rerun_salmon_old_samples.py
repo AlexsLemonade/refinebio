@@ -2,9 +2,8 @@ import os
 from typing import Dict, List
 
 from django.test import TestCase
-from django.utils import timezone
 
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,

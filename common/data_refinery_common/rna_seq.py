@@ -75,7 +75,7 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
 
 
 def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions=True):
-    """Returns a list of salmon quant results from `experiment`."""
+    """Returns a queryset of salmon quant results from `experiment`."""
     # Subquery to calculate quant results
     # https://docs.djangoproject.com/en/2.2/ref/models/expressions/#subquery-expressions
 
@@ -119,28 +119,16 @@ def get_quant_files_for_results(results: List[ComputationalResult]):
     quant_files = []
 
     for result in results:
-        try:
-            quant_files.append(
-                ComputedFile.objects.filter(
-                    result=result,
-                    filename="quant.sf",
-                    s3_key__isnull=False,
-                    s3_bucket__isnull=False,
-                ).order_by("-id")[0]
-            )
-        except Exception as e:
-            try:
-                sample = result.samples.first()
-            except:
-                sample = None
-
+        quant_sf_file = result.get_quant_sf_file()
+        if quant_sf_file:
+            quant_files.append(quant_sf_file)
+        else:
             logger.exception(
                 "Salmon quant result found without quant.sf ComputedFile!",
                 quant_result=result.id,
-                sample=sample.id,
-                experiment=experiment.id,
+                sample=result.samples.first(),
             )
-            raise e
+            raise Exception("Salmon quant result found without quant.sf ComputedFile!")
 
     return quant_files
 

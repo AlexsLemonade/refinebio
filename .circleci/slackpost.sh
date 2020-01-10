@@ -2,8 +2,11 @@
 
 # Usage: slackpost "<channel>" "<username>" "<message>"
 
-# ------------
-webhook_url="https://hooks.slack.com/services/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"
+if [[ $ENGAGEMENT_WEBHOOK == "" ]]
+then
+    echo "No webhook url. Set ENGAGEMENT_WEBHOOK in the environment variables if you want to be notified of deploys on slack"
+    exit 0
+fi
 
 # ------------
 channel=$1
@@ -38,4 +41,4 @@ escapedText=$(echo "$text" | sed 's/"/\"/g' | sed "s/'/\'/g" )
 
 json="{\"channel\": \"$channel\", \"username\":\"$username\", \"icon_emoji\":\":veerapan:\", \"attachments\":[{\"color\":\"danger\" , \"text\": \"$escapedText\"}]}"
 
-curl -s -d "payload=$json" "$webhook_url"
+curl -s -d "payload=$json" "$ENGAGEMENT_WEBHOOK"

@@ -13,16 +13,10 @@ from django.conf import settings
 from django.utils import timezone
 
 import boto3
-import numpy as np
 import pandas as pd
 import psutil
 import requests
-import rpy2
-import rpy2.robjects as ro
-import simplejson as json
 from botocore.exceptions import ClientError
-from rpy2.robjects import pandas2ri, r as rlang
-from rpy2.robjects.packages import importr
 from sklearn import preprocessing
 
 from data_refinery_common.job_lookup import PipelineEnum

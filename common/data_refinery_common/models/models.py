@@ -5,13 +5,12 @@ from typing import Set
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
-from django.db import models, transaction
-from django.db.models import Count, DateTimeField, Prefetch
-from django.db.models.expressions import F, Q
+from django.db import models
+from django.db.models import Count
+from django.db.models.expressions import Q
 from django.utils import timezone
 
 import boto3
-import pytz
 from botocore.client import Config
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -602,6 +601,25 @@ class ComputationalResult(models.Model):
         """ Removes all associated computed files from S3. Use this before deleting a computational result. """
         for computed_file in self.computedfile_set.all():
             computed_file.delete_s3_file()
+
+    def get_index_length(self):
+        """ Pull the index_length from one of the result annotations """
+        annotations = ComputationalResultAnnotation.objects.filter(result=self)
+
+        for annotation_json in annotations:
+            if "index_length" in annotation_json.data:
+                return annotation_json.data["index_length"]
+
+        return None
+
+    def get_quant_sf_file(self):
+        return (
+            ComputedFile.objects.filter(
+                result=self, filename="quant.sf", s3_key__isnull=False, s3_bucket__isnull=False,
+            )
+            .order_by("-id")
+            .first()
+        )
 
 
 class ComputationalResultAnnotation(models.Model):

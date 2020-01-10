@@ -1,4 +1,3 @@
-from django.core.paginator import Paginator
 from django.db import migrations
 
 from data_refinery_common.utils import get_supported_rnaseq_platforms
