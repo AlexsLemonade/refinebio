@@ -1,5 +1,4 @@
 import json
-import time
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
@@ -9,20 +8,6 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.serializers import (  # Jobs
-    DetailedExperimentSerializer,
-    DetailedSampleSerializer,
-    DownloaderJobSerializer,
-    ExperimentSerializer,
-    InstitutionSerializer,
-    OrganismIndexSerializer,
-    OrganismSerializer,
-    PlatformSerializer,
-    ProcessorJobSerializer,
-    ProcessorSerializer,
-    SampleSerializer,
-    SurveyJobSerializer,
-)
 from data_refinery_api.views import DatasetView, ExperimentList
 from data_refinery_common.models import (
     ComputationalResult,
@@ -81,20 +66,27 @@ class APITestCases(APITestCase):
         experiment_annotation.experiment = experiment
         experiment_annotation.save()
 
-        organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
+        ailuropoda = Organism(
+            name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
+        )
+        ailuropoda.save()
+        self.homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        self.homo_sapiens.save()
+        self.danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
+        self.danio_rerio.save()
 
         sample = Sample()
         sample.title = "123"
         sample.accession_code = "123"
         sample.is_processed = True
-        sample.organism = organism
+        sample.organism = ailuropoda
         sample.save()
 
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
         sample.is_processed = True
-        sample.organism = organism
+        sample.organism = ailuropoda
         sample.save()
         self.sample = sample
 
@@ -108,11 +100,11 @@ class APITestCases(APITestCase):
 
         cra = ComputationalResultAnnotation()
         cra.result = result
-        cra.data = {"organism_id": organism.id, "is_qn": True}
+        cra.data = {"organism_id": ailuropoda.id, "is_qn": True}
         cra.save()
 
-        organism.qn_target = result
-        organism.save()
+        ailuropoda.qn_target = result
+        ailuropoda.save()
 
         sample_annotation = SampleAnnotation()
         sample_annotation.data = {"goodbye": "world", "789": 123}
@@ -167,9 +159,6 @@ class APITestCases(APITestCase):
         sra.result = result
         sra.save()
 
-        zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
-        zebrafish.save()
-
         processor = Processor()
         processor.name = "Salmon Quant"
         processor.version = "v9.9.9"
@@ -182,7 +171,7 @@ class APITestCases(APITestCase):
 
         organism_index = OrganismIndex()
         organism_index.index_type = "TRANSCRIPTOME_SHORT"
-        organism_index.organism = zebrafish
+        organism_index.organism = self.danio_rerio
         organism_index.result = computational_result_short
         organism_index.absolute_directory_path = (
             "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT"
@@ -326,8 +315,6 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_compendia(self):
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
 
         result = ComputationalResult()
         result.save()
@@ -341,7 +328,7 @@ class APITestCases(APITestCase):
         hsc1.is_qn_target = False
         hsc1.result = result
         hsc1.is_compendia = True
-        hsc1.compendia_organism = homo_sapiens
+        hsc1.compendia_organism = self.homo_sapiens
         hsc1.compendia_version = 1
         hsc1.s3_bucket = "dr-compendia"
         hsc1.s3_key = "hsc1.tsv"
@@ -356,7 +343,7 @@ class APITestCases(APITestCase):
         hsc2.is_qn_target = False
         hsc2.result = result
         hsc2.is_compendia = True
-        hsc2.compendia_organism = homo_sapiens
+        hsc2.compendia_organism = self.homo_sapiens
         hsc2.compendia_version = 2
         hsc2.s3_bucket = "dr-compendia"
         hsc2.s3_key = "hsc2.tsv"
@@ -371,7 +358,7 @@ class APITestCases(APITestCase):
         drc1.is_qn_target = False
         drc1.result = result
         drc1.is_compendia = True
-        drc1.compendia_organism = danio_rerio
+        drc1.compendia_organism = self.danio_rerio
         drc1.compendia_version = 1
         drc1.s3_bucket = "dr-compendia"
         drc1.s3_key = "drc2.tsv"
@@ -636,12 +623,10 @@ class APITestCases(APITestCase):
     def test_dataset_stats(self):
         """ Test the dataset stats endpoint """
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-        time.sleep(30)
-        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
-        time.sleep(30)
-        equus_ferus = Organism.get_object_for_name("EQUUS_FERUS")
-        time.sleep(30)
+        gallus_gallus = Organism(name="GALLUS_GALLUS", taxonomy_id=9031, is_scientific_name=True)
+        gallus_gallus.save()
+        equus_ferus = Organism(name="EQUUS_FERUS", taxonomy_id=1114792, is_scientific_name=True)
+        equus_ferus.save()
 
         ex = Experiment()
         ex.accession_code = "XYZ123"
@@ -663,7 +648,7 @@ class APITestCases(APITestCase):
         sample1.title = "1"
         sample1.accession_code = "1"
         sample1.platform_name = "AFFY"
-        sample1.organism = homo_sapiens
+        sample1.organism = self.homo_sapiens
         sample1.save()
 
         sample2 = Sample()
@@ -682,7 +667,7 @@ class APITestCases(APITestCase):
 
         xoa = ExperimentOrganismAssociation()
         xoa.experiment = ex
-        xoa.organism = homo_sapiens
+        xoa.organism = self.homo_sapiens
         xoa.save()
 
         xoa = ExperimentOrganismAssociation()
@@ -813,11 +798,6 @@ class APITestCases(APITestCase):
 
     def test_qn_endpoints(self):
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
-        homo_sapiens.save()
-        danio_rerio.save()
-
         # create two additional qn endpoints
 
         result = ComputationalResult()
@@ -830,7 +810,7 @@ class APITestCases(APITestCase):
         cra = ComputationalResultAnnotation()
         cra.result = result
         cra.data = {
-            "organism_id": danio_rerio.id,  # Danio
+            "organism_id": self.danio_rerio.id,  # Danio
             "is_qn": True,
             "platform_accession_code": "zebrafish",
             "samples": [],
@@ -840,7 +820,7 @@ class APITestCases(APITestCase):
         cra = ComputationalResultAnnotation()
         cra.result = result
         cra.data = {
-            "organism_id": homo_sapiens.id,  # IDK
+            "organism_id": self.homo_sapiens.id,  # IDK
             "is_qn": True,
             "platform_accession_code": "zebrafishplusone",
             "samples": [],
@@ -848,10 +828,10 @@ class APITestCases(APITestCase):
         }
         cra.save()
 
-        homo_sapiens.qn_target = result
-        homo_sapiens.save()
-        danio_rerio.qn_target = result
-        danio_rerio.save()
+        self.homo_sapiens.qn_target = result
+        self.homo_sapiens.save()
+        self.danio_rerio.qn_target = result
+        self.danio_rerio.save()
 
         response = self.client.get(reverse("qn_targets_available", kwargs={"version": API_VERSION}))
         # there's another qn endpoint that is created in the setup method of this test case
@@ -1012,11 +992,16 @@ class ESTestCases(APITestCase):
         sample.accession_code = "123"
         sample.save()
 
+        organism = Organism(
+            name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
+        )
+        organism.save()
+
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
         sample.is_processed = True
-        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
+        sample.organism = organism
         sample.save()
 
         sample_annotation = SampleAnnotation()
@@ -1173,15 +1158,16 @@ class ProcessorTestCases(APITestCase):
 
     def test_processor_and_organism_in_sample(self):
         sample = Sample.objects.create(accession_code="ACCESSION", title="fake sample")
-        organism = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        homo_sapiens.save()
         transcriptome_result = ComputationalResult.objects.create()
         organism_index = OrganismIndex.objects.create(
-            organism=organism, result=transcriptome_result, index_type="TRANSCRIPTOME_LONG"
+            organism=homo_sapiens, result=transcriptome_result, index_type="TRANSCRIPTOME_LONG"
         )
         result = ComputationalResult.objects.create(
             processor=self.salmon_quant_proc, organism_index=organism_index
         )
-        sra = SampleResultAssociation.objects.create(sample=sample, result=result)
+        SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(
             reverse(

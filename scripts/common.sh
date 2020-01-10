@@ -8,9 +8,19 @@ export CCDL_WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcri
 
 get_ip_address () {
     if [ "$(uname)" = "Linux" ]; then
-        ip route get 8.8.8.8 | grep -oE 'src ([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $2; exit}'
+        # If we're not connected to the internet return an error code.
+        ip_out=$(ip route get 8.8.8.8)
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        echo $ip_out | grep -oE 'src ([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $2; exit}'
     elif [ "$(uname)" = 'Darwin' ]; then # MacOS
-        ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2 | tail -1
+         ip_out=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2 | tail -1)
+         if [ -z "$ip_out" ]; then
+             return 1
+         fi
+         echo $ip_out 
+
     fi
 }
 
