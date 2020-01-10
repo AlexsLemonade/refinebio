@@ -4,7 +4,6 @@ us to time out. It will only queue 300 an hour so as to not overload ENA.
 """
 
 import time
-from typing import List
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone

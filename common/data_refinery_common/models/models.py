@@ -1,11 +1,7 @@
-import hashlib
-import io
 import os
 import shutil
 import uuid
-from datetime import datetime
-from functools import partial
-from typing import Dict, Set
+from typing import Set
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
@@ -891,7 +887,7 @@ class OriginalFile(models.Model):
             pass
         except TypeError:
             pass
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path
             )
@@ -1105,7 +1101,7 @@ class ComputedFile(models.Model):
                 ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
             )
             self.save()
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Error uploading computed file to S3",
                 computed_file_id=self.pk,
@@ -1234,7 +1230,7 @@ class ComputedFile(models.Model):
             pass
         except TypeError:
             pass
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path
             )

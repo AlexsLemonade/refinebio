@@ -1,7 +1,4 @@
-import copy
-import shutil
-from typing import List
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 from django.test import TestCase, tag
 

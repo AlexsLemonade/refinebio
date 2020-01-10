@@ -1,11 +1,5 @@
-import csv
-import json
 import os
-import shutil
-import sys
-import zipfile
-from io import StringIO
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.test import TestCase, tag

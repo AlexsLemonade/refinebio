@@ -1,7 +1,5 @@
 import os
 import shutil
-from contextlib import closing
-from unittest.mock import MagicMock
 
 from django.test import TestCase, tag
 

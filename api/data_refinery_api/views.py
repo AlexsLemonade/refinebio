@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from itertools import groupby
 from re import match
-from typing import Dict
 
 from django.conf import settings
 from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
@@ -579,7 +578,6 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                     except Exception as e:
                         # It doens't really matter if this didn't work
                         logger.error(e)
-                        pass
 
                 return obj
 
@@ -746,7 +744,9 @@ class SampleList(generics.ListAPIView):
         """
         queryset = (
             Sample.public_objects.prefetch_related("organism")
-            .prefetch_related("results")
+            .prefetch_related(
+                Prefetch("results", queryset=ComputationalResult.objects.order_by("time_start"))
+            )
             .prefetch_related("results__processor")
             .prefetch_related("results__computationalresultannotation_set")
             .prefetch_related("results__computedfile_set")

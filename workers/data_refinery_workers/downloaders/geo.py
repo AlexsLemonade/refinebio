@@ -7,7 +7,7 @@ import tarfile
 import time
 import urllib.request
 from contextlib import closing
-from typing import Dict, List
+from typing import List
 
 from data_refinery_common.job_management import create_processor_jobs_for_original_files
 from data_refinery_common.logging import get_and_configure_logger
@@ -322,7 +322,6 @@ def download_geo(job_id: int) -> None:
     original_file.is_downloaded = True
     original_file.save()
 
-    has_raw = True
     unpacked_sample_files = []
 
     try:

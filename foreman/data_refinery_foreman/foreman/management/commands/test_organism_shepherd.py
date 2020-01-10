@@ -1,6 +1,4 @@
-import datetime
-import json
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.test import TransactionTestCase

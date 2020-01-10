@@ -735,7 +735,6 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                         function_name=func.__name__,
                         keys=keys,
                     )
-                    pass
 
             # execute the actual function
             job_context = func(job_context)
@@ -751,7 +750,6 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                     function_name=func.__name__,
                     keys=keys,
                 )
-                pass
             return job_context
 
         return pipeline

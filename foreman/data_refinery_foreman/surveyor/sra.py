@@ -194,7 +194,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         )
         try:
             run_xml = ET.fromstring(response.text)
-        except Exception as e:
+        except Exception:
             logger.exception("Unable to decode response", response=response.text)
             return {}
 

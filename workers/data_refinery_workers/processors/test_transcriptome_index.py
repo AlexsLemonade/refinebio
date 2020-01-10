@@ -1,6 +1,5 @@
 import os
 import shutil
-from unittest.mock import patch
 
 from django.test import TestCase, tag
 

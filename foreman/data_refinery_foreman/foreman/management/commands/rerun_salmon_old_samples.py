@@ -2,7 +2,6 @@
 that multiple versions of salmon have been used on the samples.
 """
 
-import random
 import sys
 
 from django.core.management.base import BaseCommand

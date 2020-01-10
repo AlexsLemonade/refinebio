@@ -1,11 +1,5 @@
 import os
-import random
 import shutil
-import string
-import subprocess
-import time
-import warnings
-from typing import Dict
 
 from django.utils import timezone
 
@@ -64,22 +58,21 @@ def _find_and_remove_expired_jobs(job_context):
                     # This job is running, don't delete the working directory.
                     if job_status in ["running", "pending"]:
                         continue
-                except URLNotFoundNomadException as e:
+                except URLNotFoundNomadException:
                     # Nomad has no record of this job, meaning it has likely been GC'd after death.
                     # It can be purged.
                     pass
-                except BaseNomadException as e:
+                except BaseNomadException:
                     # If we can't currently access Nomad,
                     # just continue until we can again.
                     continue
-                except Exception as e:
+                except Exception:
                     # This job is likely vanished.
                     # Or, possibly, another Nomad error outside of BaseNomadException.
                     continue
             except ProcessorJob.DoesNotExist:
                 # This job has vanished from the DB - clean it up!
                 logger.error("Janitor found no record of " + item + " - why?")
-                pass
             except Exception:
                 # We're unable to connect to the DB right now (or something), so hold onto it for right now.
                 logger.exception("Problem finding job record for " + item + " - why?")
@@ -95,7 +88,7 @@ def _find_and_remove_expired_jobs(job_context):
                 )
                 shutil.rmtree(to_delete)
                 job_context["deleted_items"].append(to_delete)
-            except Exception as e:
+            except Exception:
                 # This job is likely vanished. No need for this directory.
                 pass
 
@@ -122,7 +115,7 @@ def _find_and_remove_expired_jobs(job_context):
                     )
                     shutil.rmtree(sub_item_path)
                     job_context["deleted_items"].append(sub_item_path)
-                except Exception as e:
+                except Exception:
                     # This job is likely vanished. No need for this directory.
                     pass
 

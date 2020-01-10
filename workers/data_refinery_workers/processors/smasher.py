@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import csv
 import logging
 import os
 import shutil
-import string
 import time
-import warnings
 from datetime import timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from urllib.parse import quote
 
 from django.conf import settings
@@ -344,7 +341,7 @@ def _upload(job_context: Dict) -> Dict:
             output_filename,
             ExtraArgs={"ACL": "public-read"},
         )
-    except Exception as e:
+    except Exception:
         raise utils.ProcessorJobError(
             "Failed to upload smash result file.", success=False, file=job_context["output_file"]
         )
@@ -354,12 +351,6 @@ def _upload(job_context: Dict) -> Dict:
     job_context["result_url"] = result_url
 
     logger.debug("Result uploaded!", result_url=job_context["result_url"])
-
-    # File is uploaded, we can delete the local.
-    try:
-        os.remove(job_context["output_file"])
-    except OSError:
-        pass
 
     return job_context
 
@@ -390,7 +381,7 @@ def _notify(job_context: Dict) -> Dict:
                 exc_info=1,
                 client_error_message=e.response["Error"]["Message"],
             )
-        except Exception as e:
+        except Exception:
             raise utils.ProcessorJobError(
                 "General failure when trying to send email.",
                 success=False,
@@ -531,6 +522,13 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.is_available = True
     dataset.expires_on = timezone.now() + timedelta(days=7)
     dataset.save()
+
+    if settings.RUNNING_IN_CLOUD and job_context.get("upload", True):
+        # File is uploaded and the metadata is updated, can delete the local.
+        try:
+            os.remove(job_context["output_file"])
+        except OSError:
+            pass
 
     job_context["success"] = True
 
