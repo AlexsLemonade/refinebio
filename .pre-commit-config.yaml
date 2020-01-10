@@ -12,10 +12,9 @@ repos:
         args: [--fix=lf]
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-      - id: check-added-large-files
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
-      - id: check-docstring-first
+      # - id: check-docstring-first # We can enable this rule once models.py is simplified
       - id: check-yaml
 
   - repo: https://github.com/pre-commit/mirrors-isort
