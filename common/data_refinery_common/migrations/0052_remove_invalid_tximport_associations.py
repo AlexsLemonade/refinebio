@@ -1,5 +1,4 @@
-from django.db import migrations, models
-from django.db.models import Count, F
+from django.db import migrations
 
 
 def remove_tximport_invalid_associations(apps, schema_editor):
