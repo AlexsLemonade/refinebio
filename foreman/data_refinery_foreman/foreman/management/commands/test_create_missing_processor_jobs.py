@@ -1,5 +1,4 @@
 from django.test import TransactionTestCase
-from unittest.mock import Mock, patch, call
 
 from data_refinery_common.models import (
     DownloaderJob,

@@ -1,28 +1,25 @@
 import datetime
-import nomad
 import random
 import socket
 import sys
 import time
 import traceback
+from typing import List
 
 from django.conf import settings
-
-# from django.core.paginator import Paginator
-from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from django.db import transaction
 from django.db.models.expressions import Q
 from django.utils import timezone
-from functools import wraps
+
+import nomad
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
-from typing import List, Set
 
 from data_refinery_common.job_lookup import (
+    SMASHER_JOB_TYPES,
     Downloaders,
     ProcessorPipeline,
     SurveyJobTypes,
-    SMASHER_JOB_TYPES,
     does_processor_job_have_samples,
     is_file_rnaseq,
 )
@@ -38,13 +35,13 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.utils import (
     get_active_volumes,
-    get_nomad_jobs_breakdown,
     get_env_variable,
     get_env_variable_gracefully,
+    get_nomad_jobs_breakdown,
 )
-
 
 logger = get_and_configure_logger(__name__)
 
@@ -1041,7 +1038,6 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     last_job.num_retries.
     """
 
-    lost_jobs = []
     num_retries = last_job.num_retries + 1
 
     new_job = SurveyJob(num_retries=num_retries, source_type=last_job.source_type)
@@ -1296,7 +1292,7 @@ def send_janitor_jobs():
         logger.info("Sending Janitor with index: ", job_id=new_job.id, index=volume_index)
         try:
             send_job(ProcessorPipeline["JANITOR"], job=new_job, is_dispatch=True)
-        except Exception as e:
+        except Exception:
             # If we can't dispatch this job, something else has gone wrong.
             continue
 
@@ -1396,7 +1392,6 @@ def cleanup_the_queue():
                     job_type=job_type,
                 )
                 # If we can't do this for some reason, we'll get it next loop.
-                pass
 
     logger.info("Removed %d jobs from the Nomad queue.", num_jobs_killed)
 
@@ -1470,7 +1465,7 @@ def monitor_jobs():
         for function in requeuing_functions_in_order:
             try:
                 function()
-            except Exception as e:
+            except Exception:
                 logger.error("Caught exception in %s: ", function.__name__)
                 traceback.print_exc(chain=False)
 

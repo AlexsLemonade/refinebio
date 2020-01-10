@@ -10,6 +10,7 @@ The assumption this command is relying on is:
 """
 
 from django.core.management.base import BaseCommand
+
 from data_refinery_common.models import *
 
 

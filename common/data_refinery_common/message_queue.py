@@ -1,25 +1,27 @@
 """Provides an interface to send messages to the Message Queue."""
 
 from __future__ import absolute_import, unicode_literals
-import nomad
+
+from enum import Enum
 
 from django.conf import settings
-from enum import Enum
+
+import nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 
+from data_refinery_common.job_lookup import (
+    SMASHER_JOB_TYPES,
+    Downloaders,
+    ProcessorPipeline,
+    SurveyJobTypes,
+)
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import DownloaderJob, ProcessorJob, SurveyJob
 from data_refinery_common.utils import (
     get_env_variable,
     get_env_variable_gracefully,
     get_volume_index,
 )
-from data_refinery_common.models import ProcessorJob, SurveyJob, DownloaderJob
-from data_refinery_common.job_lookup import (
-    ProcessorPipeline,
-    Downloaders,
-    SurveyJobTypes,
-    SMASHER_JOB_TYPES,
-)
-from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
 

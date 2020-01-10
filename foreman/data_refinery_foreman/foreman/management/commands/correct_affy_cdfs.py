@@ -9,21 +9,21 @@ experiment and all related data from the database so we can re-survey
 the experiment and reprocess it correctly.
 """
 
-import GEOparse
 import os
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from data_refinery_common.models import Experiment, Sample, CdfCorrectedAccession
+import GEOparse
+
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_internal_microarray_accession
+from data_refinery_common.models import CdfCorrectedAccession, Experiment, Sample
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
+from data_refinery_common.utils import get_internal_microarray_accession
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
 )
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
-
 
 logger = get_and_configure_logger(__name__)
 

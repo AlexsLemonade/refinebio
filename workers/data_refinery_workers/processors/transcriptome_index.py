@@ -3,10 +3,10 @@ import os
 import shutil
 import subprocess
 import tarfile
+from typing import Dict
 
 from django.conf import settings
 from django.utils import timezone
-from typing import Dict
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -22,7 +22,6 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 from data_refinery_workers.processors import utils
-
 
 logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"

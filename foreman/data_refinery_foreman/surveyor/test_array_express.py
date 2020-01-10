@@ -1,16 +1,16 @@
-import json
-import datetime
+from unittest.mock import patch
+
+from django.test import TestCase
+
 import requests
 
-from unittest.mock import Mock, patch, call
-from django.test import TestCase
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
-    SurveyJob,
-    SurveyJobKeyValue,
     Organism,
     Sample,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 

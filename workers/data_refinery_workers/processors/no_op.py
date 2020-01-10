@@ -1,10 +1,9 @@
-import boto3
 import csv
 import os
-import shutil
 import subprocess
-
 from typing import Dict
+
+import boto3
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -19,7 +18,6 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
 from data_refinery_workers.processors import utils
-
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
@@ -307,7 +305,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                 high_db = platform
                 high_mapped_percent = float(results[1].strip())
 
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Could not detect database for file!", platform=platform, job_context=job_context
             )
@@ -426,7 +424,7 @@ def check_output_quality(output_file_path: str):
                 # we consider this bad data. (Likely old machine/processing!)
                 if len(row) > 2:
                     return False
-    except Exception as e:
+    except Exception:
         return False
 
     return True

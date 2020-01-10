@@ -1,20 +1,16 @@
 import copy
-import time
-
-import datashader as ds
-import pandas as pd
-import numpy as np
-import holoviews as hv
-import matplotlib as mpl
-from holoviews import opts
-from datashader import transfer_functions as tf
-from dask import dataframe as daskdf
-
 import multiprocessing
 
-from holoviews.operation.datashader import datashade, shade, dynspread, rasterize
-from holoviews.operation import decimate
+import datashader as ds
+import holoviews as hv
+import matplotlib as mpl
+import numpy as np
+import pandas as pd
+from dask import dataframe as daskdf
+from datashader import transfer_functions as tf
 from holoviews import opts
+from holoviews.operation import decimate
+from holoviews.operation.datashader import datashade, dynspread, rasterize, shade
 
 from data_refinery_common.logging import get_and_configure_logger
 
@@ -54,7 +50,7 @@ def visualize(input_frame, output_path, width=2000, height=2000, logz=True, back
         logger.info("Output visualization!", output_path=output_path)
         return output_path
 
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unable to visualize dataframe!",
             output_path=output_path,

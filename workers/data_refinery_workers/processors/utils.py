@@ -1,18 +1,19 @@
 import os
+import pickle
 import random
 import shutil
 import signal
 import string
 import subprocess
 import sys
-import yaml
-import pickle
+from typing import Callable, Dict, List
 
 from django.conf import settings
 from django.utils import timezone
-from typing import List, Dict, Callable
 
-from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline, SMASHER_JOB_TYPES
+import yaml
+
+from data_refinery_common.job_lookup import SMASHER_JOB_TYPES, ProcessorEnum, ProcessorPipeline
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -35,7 +36,6 @@ from data_refinery_common.utils import (
     get_env_variable_gracefully,
     get_instance_id,
 )
-
 
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
@@ -323,7 +323,8 @@ def end_job(job_context: Dict, abort=False):
         # Cleanup Original Files
         if "original_files" in job_context:
             for original_file in job_context["original_files"]:
-                original_file.delete_local_file()
+                if original_file.needs_processing(job.id):
+                    original_file.delete_local_file()
 
     # If the pipeline includes any steps, save it.
     if "pipeline" in job_context:
@@ -734,7 +735,6 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                         function_name=func.__name__,
                         keys=keys,
                     )
-                    pass
 
             # execute the actual function
             job_context = func(job_context)
@@ -750,7 +750,6 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                     function_name=func.__name__,
                     keys=keys,
                 )
-                pass
             return job_context
 
         return pipeline

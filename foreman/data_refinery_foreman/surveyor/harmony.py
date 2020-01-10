@@ -1,10 +1,10 @@
 import csv
 import random
-import requests
 import string
-
 from io import StringIO
 from typing import Dict, List
+
+import requests
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Sample
@@ -671,7 +671,7 @@ def parse_sdrf(sdrf_url: str) -> List:
 
     try:
         sdrf_response = requests_retry_session().get(sdrf_url, timeout=60)
-    except Exception as e:
+    except Exception:
         logger.exception("Unable to fetch URL: " + sdrf_url)
         return []
 

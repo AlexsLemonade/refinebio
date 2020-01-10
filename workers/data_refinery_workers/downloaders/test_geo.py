@@ -1,16 +1,17 @@
 import os
-from django.test import TestCase, tag
 from unittest.mock import patch
+
+from django.test import TestCase, tag
 
 from data_refinery_common.models import (
     DownloaderJob,
-    OriginalFile,
     DownloaderJobOriginalFileAssociation,
-    Sample,
-    SampleAnnotation,
+    OriginalFile,
     OriginalFileSampleAssociation,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
+    Sample,
+    SampleAnnotation,
 )
 from data_refinery_workers.downloaders import geo, utils
 

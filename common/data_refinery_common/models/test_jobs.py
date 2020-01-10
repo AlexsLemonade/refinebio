@@ -1,11 +1,7 @@
 from django.test import TestCase
 from django.utils import timezone
 
-from data_refinery_common.models import (
-    SurveyJob,
-    DownloaderJob,
-    ProcessorJob,
-)
+from data_refinery_common.models import DownloaderJob, ProcessorJob, SurveyJob
 
 
 class SanityTestJobsTestCase(TestCase):

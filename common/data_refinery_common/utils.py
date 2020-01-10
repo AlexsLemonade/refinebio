@@ -5,14 +5,16 @@ import os
 import re
 from functools import partial
 from itertools import groupby
+from multiprocessing import current_process
 from typing import Dict, Set
 from urllib.parse import urlparse
-import nomad
-import requests
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+
+import nomad
+import requests
 from retrying import retry
-from multiprocessing import current_process
 
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 

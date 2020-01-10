@@ -1,7 +1,15 @@
-from typing import List, Dict, Callable
+from typing import List
 
 from data_refinery_common import job_lookup
+from data_refinery_common.job_lookup import (
+    Downloaders,
+    ProcessorEnum,
+    ProcessorPipeline,
+    determine_processor_pipeline,
+    determine_ram_amount,
+)
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -15,15 +23,6 @@ from data_refinery_common.utils import (
     get_instance_id,
     get_volume_index,
 )
-from data_refinery_common.job_lookup import (
-    determine_processor_pipeline,
-    determine_ram_amount,
-    ProcessorEnum,
-    ProcessorPipeline,
-    Downloaders,
-)
-from data_refinery_common.message_queue import send_job
-
 
 logger = get_and_configure_logger(__name__)
 

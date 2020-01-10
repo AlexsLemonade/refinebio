@@ -1,8 +1,6 @@
-import datetime
-import json
+from unittest.mock import patch
 
 from django.test import TransactionTestCase
-from unittest.mock import Mock, patch, call
 
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (

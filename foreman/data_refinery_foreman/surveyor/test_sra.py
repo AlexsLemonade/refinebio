@@ -1,23 +1,22 @@
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, patch
+
 from django.test import TestCase
-from data_refinery_foreman.surveyor.sra import (
-    SraSurveyor,
-    ENA_METADATA_URL_TEMPLATE,
+
+from data_refinery_common.models import (
+    DownloaderJob,
+    Experiment,
+    Organism,
+    Sample,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
+from data_refinery_foreman.surveyor.sra import ENA_METADATA_URL_TEMPLATE, SraSurveyor
 from data_refinery_foreman.surveyor.test_sra_xml import (
     EXPERIMENT_XML,
     RUN_XML,
     SAMPLE_XML,
     STUDY_XML,
     SUBMISSION_XML,
-)
-from data_refinery_common.models import (
-    DownloaderJob,
-    Experiment,
-    SurveyJob,
-    SurveyJobKeyValue,
-    Organism,
-    Sample,
 )
 
 EXPERIMENT_ACCESSION = "DRX001563"

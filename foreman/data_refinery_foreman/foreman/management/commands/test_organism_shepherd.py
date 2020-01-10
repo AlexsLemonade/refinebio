@@ -1,12 +1,10 @@
-import json
-import datetime
+from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.test import TransactionTestCase
 from django.utils import timezone
-from unittest.mock import MagicMock, Mock, patch, call
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -14,9 +12,9 @@ from data_refinery_common.models import (
     ExperimentOrganismAssociation,
     ExperimentResultAssociation,
     ExperimentSampleAssociation,
+    Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
-    Organism,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,

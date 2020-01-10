@@ -1,22 +1,20 @@
-import boto3
-import glob
-import io
 import json
-import multiprocessing
 import os
 import re
 import shutil
 import subprocess
 import tarfile
-import untangle
+from typing import Dict, List
 
-from botocore.client import Config
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from typing import Dict, List
+
+import boto3
 import numpy as np
 import pandas as pd
+import untangle
+from botocore.client import Config
 
 from data_refinery_common.job_lookup import Downloaders, PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -34,8 +32,8 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.rna_seq import (
-    get_quant_results_for_experiment,
     get_quant_files_for_results,
+    get_quant_results_for_experiment,
     should_run_tximport,
 )
 from data_refinery_common.utils import get_env_variable
@@ -534,16 +532,6 @@ def _run_tximport_for_experiment(
 
     result.save()
     job_context["pipeline"].steps.append(result.id)
-
-    # Associate this result with all samples in this experiment.
-    # TODO: This may not be completely sensible, because `tximport` is
-    # done at experiment level, not at sample level.
-    # Could be very problematic if SRA's data model allows many
-    # Experiments to one Run.
-    # https://github.com/AlexsLemonade/refinebio/issues/297
-    for sample in experiment.samples.all():
-        s_r = SampleResultAssociation(sample=sample, result=result)
-        s_r.save()
 
     rds_file = ComputedFile()
     rds_file.absolute_file_path = rds_file_path

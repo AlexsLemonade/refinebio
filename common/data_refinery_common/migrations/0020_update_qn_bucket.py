@@ -4,8 +4,8 @@ import sys
 
 from django.conf import settings
 from django.db import migrations
-from data_refinery_common.utils import get_env_variable
 
+from data_refinery_common.utils import get_env_variable
 
 # We want this to throw if it can't access this, no point in running a
 # migration to set everything to a bad value.
