@@ -602,6 +602,25 @@ class ComputationalResult(models.Model):
         for computed_file in self.computedfile_set.all():
             computed_file.delete_s3_file()
 
+    def get_index_length(self):
+        """ Pull the index_length from one of the result annotations """
+        annotations = ComputationalResultAnnotation.objects.filter(result=self)
+
+        for annotation_json in annotations:
+            if "index_length" in annotation_json.data:
+                return annotation_json.data["index_length"]
+
+        return None
+
+    def get_quant_sf_file(self):
+        return (
+            ComputedFile.objects.filter(
+                result=self, filename="quant.sf", s3_key__isnull=False, s3_bucket__isnull=False,
+            )
+            .order_by("-id")
+            .first()
+        )
+
 
 class ComputationalResultAnnotation(models.Model):
     """ Non-standard information associated with an ComputationalResult """
