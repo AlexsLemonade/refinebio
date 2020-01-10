@@ -19,7 +19,7 @@ get_ip_address () {
          if [ -z "$ip_out" ]; then
              return 1
          fi
-         echo $ip_out 
+         echo $ip_out
 
     fi
 }
