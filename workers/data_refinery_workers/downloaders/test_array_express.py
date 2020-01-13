@@ -1,8 +1,10 @@
+import csv
+import os
+import shutil
+import urllib.request
 from unittest.mock import patch
 
 from django.test import TestCase, tag
-
-import vcr
 
 from data_refinery_common.models import (
     DownloaderJob,
@@ -15,6 +17,13 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers.downloaders import array_express
 
+DOWNLOADED_FILES_DIR = "/home/user/data_store/test_download_files/"
+DOWNLOADED_FILES_REGISTRY = DOWNLOADED_FILES_DIR + "test_file_registry.csv"
+# chunk_size is in bytes
+CHUNK_SIZE = 1024 * 256
+
+original_urlopen = urllib.request.urlopen
+
 
 def file_caching_urlopen(download_url, *args, **kwargs):
     """Open a local file if it exists, otherwise download it and open it.
@@ -25,7 +34,27 @@ def file_caching_urlopen(download_url, *args, **kwargs):
     the file with urllib.request.urlopen(), add it to the registry,
     open the file, and return the file handler.
     """
-    return open("/home/user/data_store/test_download_files/E-GEOD-59071.raw.3.zip", "rb")
+    registry = {}
+    with open(DOWNLOADED_FILES_REGISTRY, newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            registry[row["download_url"]] = row["file_path"]
+
+    if download_url in registry:
+        return open(registry[download_url], "rb")
+
+    # We don't have it yet, we have to actually download it.
+    file_path = DOWNLOADED_FILES_DIR + os.path.basename(download_url)
+    with open(file_path, "wb") as target_file:
+        with original_urlopen(download_url, timeout=60) as request:
+            shutil.copyfileobj(request, target_file, CHUNK_SIZE)
+
+    with open(DOWNLOADED_FILES_REGISTRY, "a", newline="") as csvfile:
+        fieldnames = ["download_url", "file_path"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writerow({"download_url": download_url, "file_path": file_path})
+
+    return open(file_path, "rb")
 
 
 class DownloadArrayExpressTestCase(TestCase):
