@@ -281,7 +281,7 @@ docker run \
 
 # Make sure to clear out any old nomad job specifications since we
 # will register everything in this directory.
-rm -r nomad-job-specs
+rm -rf nomad-job-specs
 
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
