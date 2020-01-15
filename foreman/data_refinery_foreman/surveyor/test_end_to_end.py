@@ -64,6 +64,8 @@ EXTERNAL_FILE_URL_MAPPING = {
     "ftp://ftp.ensembl.org/pub/release-98/fasta/caenorhabditis_elegans/dna/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz",  # noqa
     # No Op:
     "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-3303/E-GEOD-3303.processed.1.zip": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/E-GEOD-3303.processed.1.zip",  # noqa
+    # GEO:
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE102nnn/GSE102571/miniml/GSE102571_family.xml.tgz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSE102571_family.xml.tgz",  # noqa
 }
 
 
@@ -92,11 +94,18 @@ def build_surveyor_init_mock(source_type):
             )
 
         def mock_queue_downloader_jobs(experiment, samples):
-            print("Oh yeah bae beee")
+            # We don't want to change the same file's url more than
+            # once and sometimes multiple samples are associated with
+            # the same file.
+            original_file_ids = set()
             for sample in samples:
                 for original_file in sample.original_files.all():
-                    original_file.source_url = EXTERNAL_FILE_URL_MAPPING[original_file.source_url]
-                    original_file.save()
+                    if original_file.id not in original_file_ids:
+                        original_file.source_url = EXTERNAL_FILE_URL_MAPPING[
+                            original_file.source_url
+                        ]
+                        original_file.save()
+                        original_file_ids.add(original_file.id)
 
             return original_surveyor.queue_downloader_jobs(ret_value, experiment, samples)
 
@@ -142,10 +151,10 @@ class NoOpEndToEndTestCase(TransactionTestCase):
     @patch("data_refinery_foreman.surveyor.surveyor.ArrayExpressSurveyor")
     def test_no_op(self, mock_surveyor):
         """Survey, download, then process an experiment we know is NO_OP."""
-        # Clear out pre-existing work dirs so there's no conflicts:
 
         mock_surveyor.side_effect = build_surveyor_init_mock("ARRAY_EXPRESS")
 
+        # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
@@ -205,8 +214,15 @@ class NoOpEndToEndTestCase(TransactionTestCase):
 
 class ArrayexpressRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
-    def test_array_express_redownloading(self):
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.test_end_to_end.array_express_redownloading.yaml",
+        ignore_hosts=["nomad"],
+    )
+    @patch("data_refinery_foreman.surveyor.surveyor.ArrayExpressSurveyor")
+    def test_array_express_redownloading(self, mock_surveyor):
         """Survey, download, then process an experiment we know is NO_OP."""
+
+        mock_surveyor.side_effect = build_surveyor_init_mock("ARRAY_EXPRESS")
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
@@ -295,11 +311,18 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
 
 class GeoArchiveRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.test_end_to_end.geo_archive_redownloading.yaml",
+        ignore_hosts=["nomad"],
+    )
     def test_geo_archive_redownloading(self):
         """Survey, download, then process an experiment we know is NO_OP.
 
         All the data for the experiment are in the same archive, which
         is one of ways we expect GEO data to come.
+
+        This is another test which uses Aspera so it unfortunately
+        cannot be made to run without relying on NCBI's aspera server.
         """
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
@@ -405,11 +428,18 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
 class GeoCelgzRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("affymetrix")
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.test_end_to_end.geo_celgz_redownloading.yaml",
+        ignore_hosts=["nomad"],
+    )
     def test_geo_celgz_redownloading(self):
         """Survey, download, then process an experiment we know is Affymetrix.
 
         Each of the experiment's samples are in their own .cel.gz
         file, which is another way we expect GEO data to come.
+
+        This is another test which uses Aspera so it unfortunately
+        cannot be made to run without relying on NCBI's aspera server.
         """
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
