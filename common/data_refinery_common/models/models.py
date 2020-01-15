@@ -33,6 +33,9 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # we need something with the pattern: 'salmon X.X.X'
 CURRENT_SALMON_VERSION = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
 CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
+# Let this fail if SYSTEM_VERSION is unset.
+SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
+
 
 """
 # First Order Classes
@@ -915,7 +918,9 @@ class OriginalFile(models.Model):
         # If the file has a processor job that should not have been
         # retried, then it still shouldn't be retried.
         # Exclude the ones that were aborted.
-        no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True).exclude(abort=True)
+        no_retry_processor_jobs = self.processor_jobs.filter(
+            no_retry=True, worker_version=SYSTEM_VERSION
+        ).exclude(abort=True)
 
         # If the file has a processor job that hasn't even started
         # yet, then it doesn't need another.
