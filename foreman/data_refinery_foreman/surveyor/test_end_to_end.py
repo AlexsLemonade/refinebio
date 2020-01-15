@@ -44,14 +44,69 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 LOOP_TIME = 5  # seconds
 MAX_WAIT_TIME = timedelta(minutes=15)
 
-original_queue_downloader_jobs = (
-    surveyor.TranscriptomeIndexSurveyor.queue_downloader_job_for_original_files
-)
+# We don't want our end-to-end tests to be dependent upon external
+# services, so we host the files we would download fromt hem on S3. We
+# then have to replace the source_urls of downloader jobs that are
+# generated for end-to-end tests to pull from S3 instead of the
+# original location. The following constants and function wait until
+# the original files have been created and then swap out their
+# source_urls based on the mapping below.
+# We have to save references to the actual surveyor classes before
+# they get overwritten with mocks.
+ORIGINAL_ARRAY_EXPRESS_SURVEYOR = surveyor.ArrayExpressSurveyor
+ORIGINAL_SRA_SURVEYOR = surveyor.SraSurveyor
+ORIGINAL_TRANSCRIPTOME_SURVEYOR = surveyor.TranscriptomeIndexSurveyor
+ORIGINAL_GEO_SURVEYOR = surveyor.GeoSurveyor
 
 EXTERNAL_FILE_URL_MAPPING = {
+    # Transcriptome:
     "ftp://ftp.ensembl.org/pub/release-98/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.98.gtf.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.98.gtf.gz",  # noqa
     "ftp://ftp.ensembl.org/pub/release-98/fasta/caenorhabditis_elegans/dna/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz",  # noqa
+    # No Op:
+    "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-3303/E-GEOD-3303.processed.1.zip": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/E-GEOD-3303.processed.1.zip",  # noqa
 }
+
+
+def build_surveyor_init_mock(source_type):
+    if source_type == "ARRAY_EXPRESS":
+        original_surveyor = ORIGINAL_ARRAY_EXPRESS_SURVEYOR
+    if source_type == "SRA":
+        original_surveyor = ORIGINAL_SRA_SURVEYOR
+    if source_type == "TRANSCRIPTOME_INDEX":
+        original_surveyor = ORIGINAL_TRANSCRIPTOME_SURVEYOR
+    if source_type == "GEO":
+        original_surveyor = ORIGINAL_GEO_SURVEYOR
+
+    def mock_init_surveyor(survey_job):
+        ret_value = original_surveyor(survey_job)
+
+        def mock_queue_downloader_job_for_original_files(
+            original_files, experiment_accession_code: str = None, is_transcriptome: bool = False,
+        ):
+            for original_file in original_files:
+                original_file.source_url = EXTERNAL_FILE_URL_MAPPING[original_file.source_url]
+                original_file.save()
+
+            return original_surveyor.queue_downloader_job_for_original_files(
+                ret_value, original_files, experiment_accession_code, is_transcriptome
+            )
+
+        def mock_queue_downloader_jobs(experiment, samples):
+            print("Oh yeah bae beee")
+            for sample in samples:
+                for original_file in sample.original_files.all():
+                    original_file.source_url = EXTERNAL_FILE_URL_MAPPING[original_file.source_url]
+                    original_file.save()
+
+            return original_surveyor.queue_downloader_jobs(ret_value, experiment, samples)
+
+        ret_value.queue_downloader_job_for_original_files = (
+            mock_queue_downloader_job_for_original_files
+        )
+        ret_value.queue_downloader_jobs = mock_queue_downloader_jobs
+        return ret_value
+
+    return mock_init_surveyor
 
 
 def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = None):
@@ -80,9 +135,16 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
 # job in the database because it'd be stuck in a transaction.
 class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
-    def test_no_op(self):
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.test_end_to_end.no_op.yaml",
+        ignore_hosts=["nomad"],
+    )
+    @patch("data_refinery_foreman.surveyor.surveyor.ArrayExpressSurveyor")
+    def test_no_op(self, mock_surveyor):
         """Survey, download, then process an experiment we know is NO_OP."""
         # Clear out pre-existing work dirs so there's no conflicts:
+
+        mock_surveyor.side_effect = build_surveyor_init_mock("ARRAY_EXPRESS")
 
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
@@ -443,9 +505,6 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             self.assertEqual(processor_jobs.count(), SAMPLES_IN_EXPERIMENT)
 
 
-original_transcriptome_surveyor = surveyor.TranscriptomeIndexSurveyor
-
-
 class TranscriptomeRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("transcriptome")
@@ -457,26 +516,7 @@ class TranscriptomeRedownloadingTestCase(TransactionTestCase):
     def test_transcriptome_redownloading(self, mock_surveyor):
         """Survey, download, then process a transcriptome index. """
 
-        def mock_init_surveyor(survey_job):
-            ret_value = original_transcriptome_surveyor(survey_job)
-
-            def shim(
-                original_files,
-                experiment_accession_code: str = None,
-                is_transcriptome: bool = False,
-            ):
-                for original_file in original_files:
-                    original_file.source_url = EXTERNAL_FILE_URL_MAPPING[original_file.source_url]
-                    original_file.save()
-
-                return original_queue_downloader_jobs(
-                    ret_value, original_files, experiment_accession_code, is_transcriptome
-                )
-
-            ret_value.queue_downloader_job_for_original_files = shim
-            return ret_value
-
-        mock_surveyor.side_effect = mock_init_surveyor
+        mock_surveyor.side_effect = build_surveyor_init_mock("TRANSCRIPTOME_INDEX")
 
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
