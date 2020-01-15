@@ -217,11 +217,6 @@ resource "aws_iam_role_policy_attachment" "cloudwatch" {
   policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }
 
-resource "aws_iam_role" "cloudtrail_role" {
-  name = "data-refinery-cloudtrail-${var.user}-${var.stage}"
-  assume_role_policy = "${data.aws_iam_policy_document.cloudwatch_assume_role.json}"
-}
-
 data "aws_iam_policy_document" "cloudwatch_assume_role" {
   statement {
     actions = [
@@ -237,9 +232,9 @@ data "aws_iam_policy_document" "cloudwatch_assume_role" {
   }
 }
 
-resource "aws_iam_role_policy" "cloudwatch_logs" {
-  policy = "${data.aws_iam_policy_document.cloudwatch_logs_role.json}"
-  role   = "${aws_iam_role.cloudtrail_role.id}"
+resource "aws_iam_role" "cloudtrail_role" {
+  name = "data-refinery-cloudtrail-${var.user}-${var.stage}"
+  assume_role_policy = "${data.aws_iam_policy_document.cloudwatch_assume_role.json}"
 }
 
 data "aws_iam_policy_document" "cloudwatch_logs_role" {
@@ -253,37 +248,17 @@ data "aws_iam_policy_document" "cloudwatch_logs_role" {
     ]
     sid = "AWSCloudTrailLogging"
   }
-}
 
-resource "aws_s3_bucket_policy" "cloudtrail_bucket_policy" {
-  bucket = "${aws_s3_bucket.data_refinery_bucket.id}"
-  policy = "${data.aws_iam_policy_document.cloudtrail_bucket_policy.json}"
-}
-
-# Access policy for CloudTrail <> S3
-# See: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-s3-bucket-policy-for-cloudtrail.html
-data "aws_iam_policy_document" "cloudtrail_bucket_policy" {
   statement {
     sid       = "AWSCloudTrailAclCheck"
     actions   = ["s3:GetBucketAcl"]
     resources = ["${aws_s3_bucket.data_refinery_bucket.arn}"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudtrail.amazonaws.com"]
-    }
   }
 
   statement {
     sid     = "AWSCloudTrailWrite"
     actions = ["s3:PutObject"]
-
     resources = ["${aws_s3_bucket.data_refinery_bucket.arn}/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudtrail.amazonaws.com"]
-    }
 
     condition {
       test     = "StringEquals"
@@ -291,4 +266,9 @@ data "aws_iam_policy_document" "cloudtrail_bucket_policy" {
       values   = ["bucket-owner-full-control"]
     }
   }
+}
+
+resource "aws_iam_role_policy" "cloudwatch_logs" {
+  policy = "${data.aws_iam_policy_document.cloudwatch_logs_role.json}"
+  role   = "${aws_iam_role.cloudtrail_role.id}"
 }
