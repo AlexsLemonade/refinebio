@@ -6,9 +6,12 @@ import time
 from datetime import datetime, timedelta
 from test.support import EnvironmentVarGuard  # Python >=3
 from unittest import skip
+from unittest.mock import patch
 
 from django.test import TransactionTestCase, tag
 from django.utils import timezone
+
+import vcr
 
 from data_refinery_common.models import (
     ComputationalResult,
@@ -28,8 +31,6 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    SurveyJob,
-    SurveyJobKeyValue,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_foreman.foreman.main import retry_lost_downloader_jobs
@@ -38,9 +39,19 @@ from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_ex
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.getLogger("vcr").setLevel(logging.WARN)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 LOOP_TIME = 5  # seconds
 MAX_WAIT_TIME = timedelta(minutes=15)
+
+original_queue_downloader_jobs = (
+    surveyor.TranscriptomeIndexSurveyor.queue_downloader_job_for_original_files
+)
+
+EXTERNAL_FILE_URL_MAPPING = {
+    "ftp://ftp.ensembl.org/pub/release-98/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.98.gtf.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.98.gtf.gz",  # noqa
+    "ftp://ftp.ensembl.org/pub/release-98/fasta/caenorhabditis_elegans/dna/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz",  # noqa
+}
 
 
 def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = None):
@@ -431,10 +442,42 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             self.assertEqual(processor_jobs.count(), SAMPLES_IN_EXPERIMENT)
 
+
+original_transcriptome_surveyor = surveyor.TranscriptomeIndexSurveyor
+
+
+class TranscriptomeRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("transcriptome")
-    def test_transcriptome_redownloading(self):
-        """Survey, download, then process a transcriptome index."""
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.test_end_to_end.transcriptome_redownloading.yaml",
+        ignore_hosts=["nomad"],
+    )
+    @patch("data_refinery_foreman.surveyor.surveyor.TranscriptomeIndexSurveyor")
+    def test_transcriptome_redownloading(self, mock_surveyor):
+        """Survey, download, then process a transcriptome index. """
+
+        def mock_init_surveyor(survey_job):
+            ret_value = original_transcriptome_surveyor(survey_job)
+
+            def shim(
+                original_files,
+                experiment_accession_code: str = None,
+                is_transcriptome: bool = False,
+            ):
+                for original_file in original_files:
+                    original_file.source_url = EXTERNAL_FILE_URL_MAPPING[original_file.source_url]
+                    original_file.save()
+
+                return original_queue_downloader_jobs(
+                    ret_value, original_files, experiment_accession_code, is_transcriptome
+                )
+
+            ret_value.queue_downloader_job_for_original_files = shim
+            return ret_value
+
+        mock_surveyor.side_effect = mock_init_surveyor
+
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
@@ -514,10 +557,10 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
-            # Once the Downloader job succeeds, it should create one
-            # and only one processor job, which the total goes back up to 2:
+            # Once the Downloader job succeeds, it should create two
+            # processor jobs, one for long and one for short indices.:
             processor_jobs = ProcessorJob.objects.all()
-            self.assertEqual(processor_jobs.count(), 3)
+            self.assertEqual(processor_jobs.count(), 4)
 
             # And finally we can make sure that both of the
             # processor jobs were successful, including the one that
@@ -672,8 +715,21 @@ class SraRedownloadingTestCase(TransactionTestCase):
 class EnaFallbackTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.test_end_to_end.unmated_reads.yaml",
+        ignore_hosts=["nomad"],
+    )
     def test_unmated_reads(self):
-        """Survey, download, then process a sample we know is SRA and has unmated reads."""
+        """Survey, download, then process a sample we know is SRA and has unmated reads.
+
+        This test uses VCR to remove the dependence upon NCBI's
+        servers, but the downloader job hits ENA's FTP and aspera
+        servers. Unfortunately there's not much that can be done to
+        avoid that behavior from here because the downloader jobs
+        always check ENA's FTP server to see if the file has an
+        unmated read. For now we'll just have to be content with the
+        fact that NCBI going down won't affect this test.
+        """
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")

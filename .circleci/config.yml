@@ -171,11 +171,13 @@ jobs:
       # For the salmon end-to-end tests.
       - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
+      - run: ./scripts/prepare_image.sh -i transcriptome -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_transcriptome
       # This docker image should have already been built, but with the wrong dockerhub repo.
       - run: ./scripts/prepare_image.sh -i salmon -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_salmon
 
-      - run: ./foreman/run_tests.sh --tag=salmon
+      - run: ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
 
   tx_illumina_tests:
     working_directory: ~/refinebio
