@@ -20,7 +20,6 @@ from data_refinery_common.utils import (
     calculate_file_size,
     calculate_sha1,
     get_env_variable,
-    get_s3_url,
 )
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
