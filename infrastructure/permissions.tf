@@ -104,6 +104,44 @@ resource "aws_iam_role_policy_attachment" "s3" {
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
 }
 
+resource "aws_s3_bucket_policy" "cloudtrail_bucket_policy" {
+  bucket = "${aws_s3_bucket.data_refinery_bucket.id}"
+  policy = "${data.aws_iam_policy_document.cloudtrail_log_access.json}"
+}
+
+# Access policy for CloudTrail <> S3
+# See: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-s3-bucket-policy-for-cloudtrail.html
+data "aws_iam_policy_document" "cloudtrail_log_access" {
+  statement {
+    sid       = "AWSCloudTrailAclCheck"
+    actions   = ["s3:GetBucketAcl"]
+    resources = ["${aws_s3_bucket.data_refinery_bucket.arn}"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudtrail.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid     = "AWSCloudTrailWrite"
+    actions = ["s3:PutObject"]
+
+    resources = ["${aws_s3_bucket.data_refinery_bucket.arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudtrail.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+  }
+}
+
 resource "aws_iam_policy" "ec2_access_policy" {
   name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
   description = "Allows EC2 Permissions."
