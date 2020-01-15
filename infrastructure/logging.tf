@@ -6,8 +6,11 @@ resource "aws_cloudtrail" "data_refinery_s3_cloudtrail" {
   include_global_service_events = false
   depends_on                    = ["aws_s3_bucket.data_refinery_bucket"]
 
+  cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.data_refinery_log_group.arn}"
+  cloud_watch_logs_role_arn     = "${aws_iam_role.cloudtrail_role.arn}"
+
   event_selector {
-    read_write_type           = "All"
+    read_write_type           = "ReadOnly"
     include_management_events = false
 
     data_resource {

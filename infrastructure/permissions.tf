@@ -104,44 +104,6 @@ resource "aws_iam_role_policy_attachment" "s3" {
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
 }
 
-resource "aws_s3_bucket_policy" "cloudtrail_bucket_policy" {
-  bucket = "${aws_s3_bucket.data_refinery_bucket.id}"
-  policy = "${data.aws_iam_policy_document.cloudtrail_log_access.json}"
-}
-
-# Access policy for CloudTrail <> S3
-# See: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-s3-bucket-policy-for-cloudtrail.html
-data "aws_iam_policy_document" "cloudtrail_log_access" {
-  statement {
-    sid       = "AWSCloudTrailAclCheck"
-    actions   = ["s3:GetBucketAcl"]
-    resources = ["${aws_s3_bucket.data_refinery_bucket.arn}"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudtrail.amazonaws.com"]
-    }
-  }
-
-  statement {
-    sid     = "AWSCloudTrailWrite"
-    actions = ["s3:PutObject"]
-
-    resources = ["${aws_s3_bucket.data_refinery_bucket.arn}/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudtrail.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "s3:x-amz-acl"
-      values   = ["bucket-owner-full-control"]
-    }
-  }
-}
-
 resource "aws_iam_policy" "ec2_access_policy" {
   name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
   description = "Allows EC2 Permissions."
@@ -253,4 +215,80 @@ EOF
 resource "aws_iam_role_policy_attachment" "cloudwatch" {
   role = "${aws_iam_role.data_refinery_instance.name}"
   policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
+}
+
+resource "aws_iam_role" "cloudtrail_role" {
+  name = "data-refinery-cloudtrail-${var.user}-${var.stage}"
+  assume_role_policy = "${data.aws_iam_policy_document.cloudwatch_assume_role.json}"
+}
+
+data "aws_iam_policy_document" "cloudwatch_assume_role" {
+  statement {
+    actions = [
+      "sts:AssumeRole",
+    ]
+
+    principals {
+      identifiers = [
+        "cloudtrail.amazonaws.com",
+      ]
+      type = "Service"
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "cloudwatch_logs" {
+  policy = "${data.aws_iam_policy_document.cloudwatch_logs_role.json}"
+  role   = "${aws_iam_role.cloudtrail_role.id}"
+}
+
+data "aws_iam_policy_document" "cloudwatch_logs_role" {
+  statement {
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = [
+      "${aws_cloudwatch_log_group.data_refinery_log_group.arn}",
+    ]
+    sid = "AWSCloudTrailLogging"
+  }
+}
+
+resource "aws_s3_bucket_policy" "cloudtrail_bucket_policy" {
+  bucket = "${aws_s3_bucket.data_refinery_bucket.id}"
+  policy = "${data.aws_iam_policy_document.cloudtrail_bucket_policy.json}"
+}
+
+# Access policy for CloudTrail <> S3
+# See: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-s3-bucket-policy-for-cloudtrail.html
+data "aws_iam_policy_document" "cloudtrail_bucket_policy" {
+  statement {
+    sid       = "AWSCloudTrailAclCheck"
+    actions   = ["s3:GetBucketAcl"]
+    resources = ["${aws_s3_bucket.data_refinery_bucket.arn}"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudtrail.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid     = "AWSCloudTrailWrite"
+    actions = ["s3:PutObject"]
+
+    resources = ["${aws_s3_bucket.data_refinery_bucket.arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudtrail.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+  }
 }
