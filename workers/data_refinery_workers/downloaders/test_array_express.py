@@ -77,9 +77,33 @@ class DownloadArrayExpressTestCase(TestCase):
         )
         files = array_express._extract_files("dlme.zip", "123", dlj)
 
+        # Test that all files were correctly extracted
+        filenames = [file["filename"] for file in files]
+        EXPECTED_FILES = [
+            "GSM1426089_controle_colon_86.CEL",
+            "GSM1426088_controle_colon_85.CEL",
+            "GSM1426087_controle_colon_84.CEL",
+            "GSM1426086_controle_colon_83.CEL",
+            "GSM1426085_controle_colon_82.CEL",
+            "GSM1426084_controle_colon_81.CEL",
+            "GSM1426083_controle_colon_80.CEL",
+            "GSM1426082_controle_colon_79.CEL",
+            "GSM1426081_controle_colon_78.CEL",
+            "GSM1426080_controle_colon_77.CEL",
+            "GSM1426079_controle_colon_76.CEL",
+            "GSM1426078_CD_colon_active_8.CEL",
+            "GSM1426077_CD_colon_active_7.CEL",
+            "GSM1426076_CD_colon_active_6.CEL",
+            "GSM1426075_CD_colon_active_5.CEL",
+            "GSM1426074_CD_colon_active_4.CEL",
+            "GSM1426073_CD_colon_active_3.CEL",
+            "GSM1426072_CD_colon_active_2.CEL",
+            "GSM1426071_CD_colon_active_1.CEL",
+        ]
+        self.assertEqual(sorted(filenames), sorted(EXPECTED_FILES))
+
     @tag("downloaders")
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    def test_download_multiple_zips(self, mock_send_job):
+    def test_download_multiple_zips(self):
         """Tests that each sample gets one processor job no matter what.
 
         https://github.com/AlexsLemonade/refinebio/pull/351 deals with

@@ -60,7 +60,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
         try:
             input_filepath = file.get_synced_file_path()
             input_frame = smashing_utils._load_and_sanitize_file(input_filepath)
-        except Exception as e:
+        except Exception:
             logger.warn(
                 "No file loaded for input file",
                 exc_info=1,

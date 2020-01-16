@@ -1,7 +1,3 @@
-import datetime
-import json
-from unittest.mock import Mock, call, patch
-
 from django.test import TransactionTestCase
 
 from data_refinery_common.models import (
@@ -17,7 +13,6 @@ from data_refinery_common.models import (
 from data_refinery_foreman.foreman.management.commands.assoc_experiment_results import (
     make_experiment_result_associations,
 )
-from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
 
 class SurveyTestCase(TransactionTestCase):

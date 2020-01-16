@@ -1,7 +1,5 @@
 import os
 import shutil
-from contextlib import closing
-from unittest.mock import MagicMock
 
 from django.test import TestCase, tag
 
@@ -16,7 +14,6 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SurveyJob,
 )
-from data_refinery_workers.processors import utils
 
 
 def prepare_illumina_job(species="Homo sapiens"):

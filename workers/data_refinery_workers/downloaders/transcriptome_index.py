@@ -2,7 +2,6 @@ import os
 import shutil
 import urllib.request
 from contextlib import closing
-from typing import List
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger

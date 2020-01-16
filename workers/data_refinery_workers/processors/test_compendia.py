@@ -1,9 +1,6 @@
 import os
-import shutil
-from contextlib import closing
-from unittest.mock import MagicMock
 
-from django.test import TestCase, TransactionTestCase, tag
+from django.test import TransactionTestCase, tag
 
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
@@ -24,7 +21,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
     SurveyJob,
 )
-from data_refinery_workers.processors import create_compendia, smasher, utils
+from data_refinery_workers.processors import create_compendia
 
 
 class CompendiaTestCase(TransactionTestCase):

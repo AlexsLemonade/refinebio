@@ -7,16 +7,11 @@ split experiments into multiple tximport jobs.
 """
 
 import random
-import sys
-import time
-from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 
-from nomad import Nomad
-
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
@@ -33,7 +28,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.rna_seq import get_quant_results_for_experiment, should_run_tximport
-from data_refinery_common.utils import get_active_volumes, get_env_variable
+from data_refinery_common.utils import get_active_volumes
 
 logger = get_and_configure_logger(__name__)
 
@@ -77,7 +72,6 @@ def run_tximport():
                 # experiment will work. Tximport is somewhat special
                 # in that it doesn't actuallhy use original files so
                 # this is just used to point to the experiment.
-                samples = experiment.samples.all()
                 assoc.original_file = experiment.samples.all()[0].original_files.all()[0]
                 assoc.processor_job = processor_job
                 assoc.save()

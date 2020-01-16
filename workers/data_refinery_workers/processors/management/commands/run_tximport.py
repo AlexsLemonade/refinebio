@@ -2,9 +2,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     Experiment,
     OriginalFile,
@@ -67,6 +65,6 @@ class Command(BaseCommand):
         pjofa.original_file = original_file
         pjofa.save()
 
-        final_context = tximport.tximport(job.id)
+        tximport.tximport(job.id)
 
         sys.exit(0)

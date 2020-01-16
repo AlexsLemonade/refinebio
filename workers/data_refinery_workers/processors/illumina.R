@@ -1,7 +1,7 @@
 ###
 # illumina.R
 #
-# Originally written by Stephen Piccolo, 
+# Originally written by Stephen Piccolo,
 # modified by Rich Jones for Alex's Lemonade Stand Foundation.
 #
 ###
@@ -318,21 +318,21 @@ sig = function(y, m, verbose=TRUE)
 suppressPackageStartupMessages(library("optparse"))
 
 option_list = list(
-  make_option(c("-p", "--probeId"), type="character", default="PROBE_ID", 
+  make_option(c("-p", "--probeId"), type="character", default="PROBE_ID",
               help="Probe ID", metavar="character"),
-  make_option(c("-e", "--expression"), type="character", default=".AVG_Signal", 
+  make_option(c("-e", "--expression"), type="character", default=".AVG_Signal",
               help="expression", metavar="character"),
-  make_option(c("-d", "--detection"), type="character", default="Detection Pval", 
+  make_option(c("-d", "--detection"), type="character", default="Detection Pval",
               help="Detection Pval", metavar="character"),
-  make_option(c("-l", "--platform"), type="character", default="illuminaHumanv4", 
+  make_option(c("-l", "--platform"), type="character", default="illuminaHumanv4",
               help="Platform", metavar="character"),
-  make_option(c("-c", "--cores"), type="character", default="1", 
+  make_option(c("-c", "--cores"), type="character", default="1",
               help="Number of cores", metavar="character"),
-  make_option(c("-i", "--inputFile"), type="character", default="", 
+  make_option(c("-i", "--inputFile"), type="character", default="",
               help="inputFile", metavar="character"),
-  make_option(c("-o", "--outputFile"), type="character", default="", 
+  make_option(c("-o", "--outputFile"), type="character", default="",
               help="outputFile", metavar="character")
-); 
+);
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);

@@ -5,14 +5,12 @@ https://github.com/alexslemonade/refinebio/issues/1391
 without any luck.
 """
 
-import time
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 
 from dateutil.parser import parse as parse_date
 
-from data_refinery_common import job_lookup
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Sample

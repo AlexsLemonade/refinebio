@@ -13,7 +13,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
 )
-from data_refinery_workers.downloaders import geo, utils
+from data_refinery_workers.downloaders import geo
 
 
 class DownloadGeoTestCase(TestCase):
@@ -157,8 +157,7 @@ class DownloadGeoTestCase(TestCase):
         self.assertTrue(dlj.failure_reason != None)
 
     @tag("downloaders")
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    def test_download_geo(self, mock_send_task):
+    def test_download_geo(self):
         """ Tests the main 'download_geo' function. """
 
         dlj = DownloaderJob()

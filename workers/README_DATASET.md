@@ -14,7 +14,7 @@ Currently, we only support skipping quantile normalization for RNA-seq experimen
 * Individual gene expression matrices and their corresponding sample metadata files are in their own directories.
 
 * Gene expression matrices are the tab-separated value (TSV) files named by the experiment accession number (if aggregated by experiment) or species name (if aggregated by species).
-Note that samples are _columns_ and rows are _genes_ or _features_. 
+Note that samples are _columns_ and rows are _genes_ or _features_.
 This pattern is consistent with the input for many programs specifically designed for working with high-throughput gene expression data but may be transposed from what other machine learning libraries are expecting.
 
 * Sample metadata (e.g. disease vs. control labels) are contained in TSV files with `metadata` in the filename as well as any JSON files.
@@ -72,6 +72,6 @@ If you would prefer to report issues via e-mail, you can also email [ccdl@alexsl
 
 Please use the following:
 
-Casey S. Greene, Dongbo Hu, Richard W. W. Jones, Stephanie Liu, David S. Mejia, Rob Patro, Stephen R. Piccolo, Ariel Rodriguez Romero, Hirak Sarkar, Candace L. Savonen, Jaclyn N. Taroni, William E. Vauclain, Deepashree Venkatesh Prasad, Kurt G. Wheeler. **refine.bio: a resource of uniformly processed publicly available gene expression datasets.** URL: https://www.refine.bio 
+Casey S. Greene, Dongbo Hu, Richard W. W. Jones, Stephanie Liu, David S. Mejia, Rob Patro, Stephen R. Piccolo, Ariel Rodriguez Romero, Hirak Sarkar, Candace L. Savonen, Jaclyn N. Taroni, William E. Vauclain, Deepashree Venkatesh Prasad, Kurt G. Wheeler. **refine.bio: a resource of uniformly processed publicly available gene expression datasets.** URL: https://www.refine.bio
 
 _Note that the contributor list is in alphabetical order as we prepare a manuscript for submission._

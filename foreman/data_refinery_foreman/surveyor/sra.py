@@ -4,9 +4,7 @@ from typing import Dict, List
 
 from django.utils.dateparse import parse_datetime
 
-import requests
-
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,
@@ -194,7 +192,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         )
         try:
             run_xml = ET.fromstring(response.text)
-        except Exception as e:
+        except Exception:
             logger.exception("Unable to decode response", response=response.text)
             return {}
 

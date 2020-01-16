@@ -1,13 +1,7 @@
-import datetime
-import json
-import logging
-from unittest.mock import Mock, call, patch
-
 from django.test import TestCase, tag
 
 import GEOparse
 
-from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
     Organism,
@@ -16,8 +10,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
 )
 from data_refinery_foreman.surveyor import utils
-from data_refinery_foreman.surveyor.array_express import SAMPLES_URL, ArrayExpressSurveyor
-from data_refinery_foreman.surveyor.geo import GeoSurveyor
+from data_refinery_foreman.surveyor.array_express import SAMPLES_URL
 from data_refinery_foreman.surveyor.harmony import (
     extract_title,
     harmonize,
@@ -214,8 +207,8 @@ class HarmonyTestCase(TestCase):
             )
             if not metadata:
                 continue
-            # No assertions, just making sure we don't barf.
             harmonized = harmonize(metadata)
+            self.assertIsNotNone(harmonized)
 
     def test_sra_harmony(self):
         """
@@ -271,7 +264,8 @@ class HarmonyTestCase(TestCase):
             try:
                 metadata = SraSurveyor.gather_all_metadata(accession)
                 harmonized = harmonize([metadata])
-            except UnsupportedDataTypeError as udte:
+                self.assertIsNotNone(harmonized)
+            except UnsupportedDataTypeError:
                 continue
 
     def test_geo_harmony(self):

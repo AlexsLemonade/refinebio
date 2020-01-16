@@ -1,6 +1,5 @@
 import os
 import shutil
-from unittest.mock import patch
 
 from django.test import TestCase, tag
 
@@ -14,7 +13,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
-from data_refinery_workers.processors import transcriptome_index, utils
+from data_refinery_workers.processors import transcriptome_index
 
 
 def prepare_job(length):

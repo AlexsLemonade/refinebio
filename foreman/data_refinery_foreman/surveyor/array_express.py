@@ -2,9 +2,7 @@ from typing import Dict, List
 
 from django.utils.dateparse import parse_datetime
 
-import requests
-
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,
@@ -663,7 +661,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         try:
             experiment, platform_dict = self.create_experiment_from_api(experiment_accession_code)
-        except UnsupportedPlatformException as e:
+        except UnsupportedPlatformException:
             logger.info(
                 "Experiment was not on a supported platform, skipping.",
                 experiment_accession_code=experiment_accession_code,

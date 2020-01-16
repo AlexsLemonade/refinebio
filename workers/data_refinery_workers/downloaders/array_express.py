@@ -158,7 +158,7 @@ def download_array_express(job_id: int) -> None:
                 for platform in get_supported_microarray_platforms():
                     if platform["platform_accession"] == cel_file_platform:
                         platform_accession_code = platform["platform_accession"]
-            except Exception as e:
+            except Exception:
                 platform_accession_code = "UNDETERMINABLE"
                 logger.warn(
                     "Unable to determine platform from CEL file: "

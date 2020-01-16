@@ -1,5 +1,4 @@
 import glob
-import json
 import logging
 import os
 import shutil
@@ -7,12 +6,9 @@ import time
 from datetime import datetime, timedelta
 from test.support import EnvironmentVarGuard  # Python >=3
 from unittest import skip
-from unittest.mock import Mock, patch
 
 from django.test import TransactionTestCase, tag
 from django.utils import timezone
-
-import requests
 
 from data_refinery_common.models import (
     ComputationalResult,
@@ -37,7 +33,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_foreman.foreman.main import retry_lost_downloader_jobs
-from data_refinery_foreman.surveyor import surveyor, utils
+from data_refinery_foreman.surveyor import surveyor
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 
 logging.basicConfig(level=logging.INFO)

@@ -22,4 +22,3 @@ consul {
   server_auto_join    = false
   client_auto_join    = false
 }
-

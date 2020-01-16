@@ -1,13 +1,10 @@
-import datetime
-import json
 import os
 from typing import Dict, List
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import patch
 
 from django.test import TestCase
-from django.utils import timezone
 
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -374,7 +371,7 @@ class RunTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+        run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample' and it

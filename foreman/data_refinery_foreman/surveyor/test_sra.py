@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -12,38 +12,13 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.surveyor.sra import ENA_METADATA_URL_TEMPLATE, SraSurveyor
-from data_refinery_foreman.surveyor.test_sra_xml import (
-    EXPERIMENT_XML,
-    RUN_XML,
-    SAMPLE_XML,
-    STUDY_XML,
-    SUBMISSION_XML,
-)
+from data_refinery_foreman.surveyor.sra import SraSurveyor
 
 EXPERIMENT_ACCESSION = "DRX001563"
 RUN_ACCESSION = "DRR002116"
 SAMPLE_ACCESSION = "DRS001521"
 STUDY_ACCESSION = "DRP000595"
 SUBMISSION_ACCESSION = "DRA000567"
-
-
-def mocked_requests_get(url, timeout=1):
-    mock = Mock(ok=True)
-    if url == ENA_METADATA_URL_TEMPLATE.format(EXPERIMENT_ACCESSION):
-        mock.text = EXPERIMENT_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format(RUN_ACCESSION):
-        mock.text = RUN_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format(SAMPLE_ACCESSION):
-        mock.text = SAMPLE_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format(STUDY_ACCESSION):
-        mock.text = STUDY_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format(SUBMISSION_ACCESSION):
-        mock.text = SUBMISSION_XML
-    else:
-        raise Exception("Was not expecting the url: " + url)
-
-    return mock
 
 
 class SraSurveyorTestCase(TestCase):
@@ -73,8 +48,7 @@ class SraSurveyorTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
-    def test_survey(self, mock_send_task):
+    def test_survey(self):
         """A Simple test of the SRA surveyor.
         """
         sra_surveyor = SraSurveyor(self.survey_job)
@@ -133,9 +107,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.accession_code, "DRP003977")
         self.assertEqual(len(samples), 9)
 
-    @patch("data_refinery_foreman.surveyor.sra.requests.get")
-    def test_metadata_is_gathered_correctly(self, mock_get):
-        mock_get.side_effect = mocked_requests_get
+    def test_metadata_is_gathered_correctly(self):
 
         metadata = SraSurveyor.gather_all_metadata("DRR002116")
 

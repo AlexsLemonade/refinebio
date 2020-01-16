@@ -60,6 +60,8 @@ job "SMASHER" {
         NOMAD_PORT = "${{NOMAD_PORT}}"
 
         LOG_LEVEL = "${{LOG_LEVEL}}"
+
+        ENGAGEMENTBOT_WEBHOOK = "${{ENGAGEMENTBOT_WEBHOOK}}"
       }
 
       # The resources the job will require.

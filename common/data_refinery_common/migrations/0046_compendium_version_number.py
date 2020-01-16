@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 from django.db.models import F, Window
 from django.db.models.functions import RowNumber
 
