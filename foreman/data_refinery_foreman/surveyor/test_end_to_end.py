@@ -785,6 +785,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
 class EnaFallbackTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
+    @skip("This code doesn't handle the FTP server being down, so skip until it does.")
     @vcr.use_cassette(
         "/home/user/data_store/cassettes/surveyor.test_end_to_end.unmated_reads.yaml",
         ignore_hosts=["nomad"],
