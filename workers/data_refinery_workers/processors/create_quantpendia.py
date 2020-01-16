@@ -170,14 +170,15 @@ def _create_result_objects(job_context: Dict) -> Dict:
     s3_key = compendia_organism.name + "_" + str(compendia_version) + "_" + timestamp + ".zip"
     uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, s3_key)
 
-    if uploaded_to_s3:
-        archive_computed_file.delete_local_file()
-    else:
+    if not uploaded_to_s3:
         raise utils.ProcessorJobError(
             "Failed to upload compendia to S3",
             success=False,
             computed_file_id=archive_computed_file.id,
         )
+
+    if settings.RUNNING_IN_CLOUD:
+        archive_computed_file.delete_local_file()
 
     job_context["result"] = result
     job_context["success"] = True
