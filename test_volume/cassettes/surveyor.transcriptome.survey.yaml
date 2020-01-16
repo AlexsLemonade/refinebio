@@ -1,0 +1,2957 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/genomes/division/EnsemblPlants?content-type=application/json
+  response:
+    body:
+      string: '[{"name":"arabidopsis_halleri","has_pan_compara":0,"serotype":null,"base_count":196243198,"assembly_id":47640,"has_genome_alignments":1,"assembly_level":"supercontig","scientific_name":"Arabidopsis
+        halleri subsp. gemmifera","has_variations":0,"is_reference":0,"genebuild":"2016-09-UZH","taxonomy_id":63677,"assembly_ucsc":null,"url_name":"Arabidopsis_halleri","has_synteny":0,"has_other_alignments":1,"assembly_accession":"GCA_900078215.1","strain":"W302","assembly_default":"Ahal2.2","assembly_name":"Ahal2.2","display_name":"Arabidopsis
+        halleri","organism_id":51359,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":81970},{"assembly_level":"chromosome","has_genome_alignments":1,"name":"dioscorea_rotundata","assembly_id":380,"base_count":456674974,"serotype":null,"has_pan_compara":0,"has_variations":0,"scientific_name":"Dioscorea
+        rotundata","taxonomy_id":55577,"genebuild":"2017-08-IBRC","has_other_alignments":1,"assembly_ucsc":null,"url_name":"Dioscorea_rotundata","has_synteny":0,"is_reference":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":55577,"data_release_id":54,"assembly_name":"TDr96_F1_Pseudo_Chromosome_v1.0","assembly_default":"TDr96_F1_Pseudo_Chromosome_v1.0","display_name":"Dioscorea
+        rotundata","assembly_accession":"GCA_002240015.2","strain":"TDr96_F1","organism_id":380},{"is_reference":0,"taxonomy_id":3659,"genebuild":"2014-10-BGI","has_other_alignments":1,"has_synteny":0,"assembly_ucsc":null,"url_name":"Cucumis_sativus","assembly_name":"ASM407v2","assembly_accession":"GCA_000004075.2","display_name":"Cucumis
+        sativus","assembly_default":"ASM407v2","strain":"9930","organism_id":682,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":3659,"data_release_id":54,"name":"cucumis_sativus","assembly_id":682,"base_count":193829320,"serotype":null,"has_pan_compara":0,"assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Cucumis
+        sativus","has_variations":0},{"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":3625,"assembly_name":"Red5_PS1_1.69.0","assembly_accession":"GCA_003024255.1","assembly_default":"Red5_PS1_1.69.0","strain":"Red5","display_name":"Actinidia
+        chinensis","organism_id":51397,"genebuild":"2018-04ENA","taxonomy_id":1590841,"assembly_ucsc":null,"url_name":"Actinidia_chinensis","has_synteny":1,"has_other_alignments":0,"is_reference":0,"has_variations":0,"scientific_name":"Actinidia
+        chinensis var. chinensis","has_genome_alignments":1,"assembly_level":"chromosome","name":"actinidia_chinensis","has_pan_compara":0,"serotype":null,"assembly_id":47647,"base_count":553842477},{"name":"cyanidioschyzon_merolae","has_pan_compara":1,"serotype":null,"assembly_id":353,"base_count":16728945,"has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Cyanidioschyzon
+        merolae strain 10D","has_variations":0,"is_reference":0,"genebuild":"2008-11-NIG","taxonomy_id":280699,"has_synteny":0,"assembly_ucsc":null,"url_name":"Cyanidioschyzon_merolae","has_other_alignments":0,"assembly_name":"ASM9120v1","assembly_default":"ASM9120v1","assembly_accession":"GCA_000091205.1","strain":"10D","display_name":"Cyanidioschyzon
+        merolae","organism_id":353,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":45157},{"has_variations":0,"scientific_name":"Amborella
+        trichopoda","assembly_level":"supercontig","has_genome_alignments":1,"assembly_id":369,"base_count":706332640,"has_pan_compara":1,"serotype":null,"name":"amborella_trichopoda","species_taxonomy_id":13333,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":369,"assembly_accession":"GCA_000471905.1","assembly_default":"AMTR1.0","assembly_name":"AMTR1.0","display_name":"Amborella
+        trichopoda","strain":null,"has_other_alignments":1,"url_name":"Amborella_trichopoda","assembly_ucsc":null,"has_synteny":0,"taxonomy_id":13333,"genebuild":"2014-01-AGD","is_reference":0},{"serotype":null,"has_pan_compara":0,"assembly_id":370,"base_count":206667935,"name":"arabidopsis_lyrata","has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Arabidopsis
+        lyrata subsp. lyrata","has_variations":0,"is_reference":0,"assembly_ucsc":null,"url_name":"Arabidopsis_lyrata","has_synteny":1,"has_other_alignments":1,"genebuild":"2008-12-JGI","taxonomy_id":81972,"organism_id":370,"assembly_name":"v.1.0","assembly_default":"v.1.0","assembly_accession":"GCA_000004255.1","strain":"MN47","display_name":"Arabidopsis
+        lyrata","data_release_id":54,"species_taxonomy_id":59689,"division":"EnsemblPlants","has_peptide_compara":1},{"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":2769,"data_release_id":54,"assembly_default":"ASM35022v2","assembly_name":"ASM35022v2","assembly_accession":"GCA_000350225.2","strain":"Stackhouse","display_name":"Chondrus
+        crispus","organism_id":1945,"taxonomy_id":2769,"genebuild":"2015-09-Genoscope","has_other_alignments":0,"assembly_ucsc":null,"url_name":"Chondrus_crispus","has_synteny":0,"is_reference":0,"has_variations":0,"scientific_name":"Chondrus
+        crispus","assembly_level":"chromosome","has_genome_alignments":1,"name":"chondrus_crispus","base_count":104980420,"assembly_id":1945,"has_pan_compara":0,"serotype":null},{"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":210143,"data_release_id":54,"assembly_default":"CCACVL1_1.0","assembly_name":"CCACVL1_1.0","assembly_accession":"GCA_001974805.1","strain":"CVL-1","display_name":"Corchorus
+        capsularis","organism_id":1164,"taxonomy_id":210143,"genebuild":"2017-02-BJRI","has_other_alignments":1,"url_name":"Corchorus_capsularis","assembly_ucsc":null,"has_synteny":0,"is_reference":0,"has_variations":0,"scientific_name":"Corchorus
+        capsularis","assembly_level":"supercontig","has_genome_alignments":1,"name":"corchorus_capsularis","base_count":317178409,"assembly_id":1163,"has_pan_compara":0,"serotype":null},{"serotype":null,"has_pan_compara":0,"base_count":568611505,"assembly_id":47792,"name":"coffea_canephora","has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Coffea
+        canephora str. DH200-94","has_variations":0,"is_reference":0,"url_name":"Coffea_canephora","assembly_ucsc":null,"has_synteny":1,"has_other_alignments":0,"genebuild":"2015-09-ENA","taxonomy_id":49390,"organism_id":51645,"assembly_name":"AUK_PRJEB4211_v1","assembly_default":"AUK_PRJEB4211_v1","assembly_accession":"GCA_900059795.1","strain":"DH200-94","display_name":"Coffea
+        canephora","data_release_id":54,"species_taxonomy_id":49390,"division":"EnsemblPlants","has_peptide_compara":1},{"has_variations":0,"scientific_name":"Beta
+        vulgaris subsp. vulgaris","has_genome_alignments":1,"assembly_level":"chromosome","name":"beta_vulgaris","serotype":null,"has_pan_compara":0,"assembly_id":36243,"base_count":566181630,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":161934,"strain":"KWS2320
+        DH","assembly_accession":"GCA_000511025.2","assembly_name":"RefBeet-1.2.2","assembly_default":"RefBeet-1.2.2","display_name":"Beta
+        vulgaris","organism_id":36244,"genebuild":"2015-07-BOKU","taxonomy_id":3555,"assembly_ucsc":null,"has_synteny":0,"url_name":"Beta_vulgaris","has_other_alignments":1,"is_reference":0},{"has_variations":0,"scientific_name":"Brassica
+        oleracea var. oleracea","has_genome_alignments":1,"assembly_level":"chromosome","serotype":null,"has_pan_compara":0,"assembly_id":674,"base_count":488622507,"name":"brassica_oleracea","data_release_id":54,"species_taxonomy_id":3712,"division":"EnsemblPlants","has_peptide_compara":1,"organism_id":674,"assembly_accession":"GCA_000695525.1","assembly_name":"BOL","display_name":"Brassica
+        oleracea","assembly_default":"BOL","strain":"TO1000","has_synteny":0,"assembly_ucsc":null,"url_name":"Brassica_oleracea","has_other_alignments":1,"genebuild":"2014-05-CanSeq","taxonomy_id":109376,"is_reference":0},{"name":"chlamydomonas_reinhardtii","base_count":111098438,"assembly_id":47203,"has_pan_compara":1,"serotype":null,"assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Chlamydomonas
+        reinhardtii","has_variations":0,"is_reference":0,"taxonomy_id":3055,"genebuild":"2018-01-JGI","has_other_alignments":1,"has_synteny":0,"assembly_ucsc":null,"url_name":"Chlamydomonas_reinhardtii","assembly_default":"Chlamydomonas_reinhardtii_v5.5","strain":"CC-503
+        cw92 mt+","assembly_name":"Chlamydomonas_reinhardtii_v5.5","assembly_accession":"GCA_000002595.3","display_name":"Chlamydomonas
+        reinhardtii","organism_id":348,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":3055,"data_release_id":54},{"scientific_name":"Brachypodium
+        distachyon","has_variations":1,"assembly_id":47205,"base_count":271163419,"serotype":null,"has_pan_compara":1,"name":"brachypodium_distachyon","assembly_level":"chromosome","has_genome_alignments":1,"organism_id":376,"assembly_accession":"GCA_000005505.4","assembly_name":"Brachypodium_distachyon_v3.0","assembly_default":"Brachypodium_distachyon_v3.0","strain":"Bd21","display_name":"Brachypodium
+        distachyon","species_taxonomy_id":15368,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","is_reference":0,"has_other_alignments":1,"assembly_ucsc":null,"has_synteny":1,"url_name":"Brachypodium_distachyon","taxonomy_id":15368,"genebuild":"2018-01-JGI"},{"genebuild":"2019-05-TPI","taxonomy_id":110835,"has_synteny":0,"assembly_ucsc":null,"url_name":"Eragrostis_tef","has_other_alignments":0,"is_reference":0,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":110835,"assembly_accession":"GCA_000970635.1","assembly_default":"ASM97063v1","assembly_name":"ASM97063v1","display_name":"Eragrostis
+        tef","strain":"Tsedey","organism_id":51647,"has_genome_alignments":1,"assembly_level":"supercontig","name":"eragrostis_tef","has_pan_compara":0,"serotype":null,"assembly_id":47794,"base_count":607317615,"has_variations":0,"scientific_name":"Eragrostis
+        tef"},{"organism_id":50347,"assembly_default":"ASM162521v1","assembly_name":"ASM162521v1","assembly_accession":"GCA_001625215.1","display_name":"Daucus
+        carota","strain":"DH1","data_release_id":54,"species_taxonomy_id":4039,"division":"EnsemblPlants","has_peptide_compara":1,"is_reference":0,"assembly_ucsc":null,"url_name":"Daucus_carota","has_synteny":0,"has_other_alignments":1,"genebuild":"2016-06-USDA","taxonomy_id":79200,"scientific_name":"Daucus
+        carota subsp. sativus","has_variations":0,"has_pan_compara":0,"serotype":null,"assembly_id":47204,"base_count":421502825,"name":"daucus_carota","has_genome_alignments":1,"assembly_level":"chromosome"},{"scientific_name":"Cynara
+        cardunculus var. scolymus","has_variations":0,"serotype":null,"has_pan_compara":0,"assembly_id":47793,"base_count":724667265,"name":"cynara_cardunculus","has_genome_alignments":1,"assembly_level":"supercontig","organism_id":51646,"assembly_default":"CcrdV1","assembly_name":"CcrdV1","strain":null,"assembly_accession":"GCA_001531365.1","display_name":"Cynara
+        cardunculus","data_release_id":54,"species_taxonomy_id":4265,"division":"EnsemblPlants","has_peptide_compara":1,"is_reference":0,"assembly_ucsc":null,"url_name":"Cynara_cardunculus","has_synteny":0,"has_other_alignments":0,"genebuild":"2018-04-ENA","taxonomy_id":59895},{"has_genome_alignments":1,"assembly_level":"supercontig","has_pan_compara":0,"serotype":null,"base_count":13712004,"assembly_id":378,"name":"galdieria_sulphuraria","has_variations":0,"scientific_name":"Galdieria
+        sulphuraria","has_synteny":0,"assembly_ucsc":null,"url_name":"Galdieria_sulphuraria","has_other_alignments":0,"genebuild":"2013-02-GsGP","taxonomy_id":130081,"is_reference":0,"data_release_id":54,"species_taxonomy_id":130081,"division":"EnsemblPlants","has_peptide_compara":1,"organism_id":378,"assembly_name":"ASM34128v1","display_name":"Galdieria
+        sulphuraria","assembly_default":"ASM34128v1","assembly_accession":"GCA_000341285.1","strain":"074W"},{"has_variations":0,"scientific_name":"Capsicum
+        annuum","assembly_level":"chromosome","has_genome_alignments":1,"assembly_id":47795,"base_count":3063864880,"serotype":null,"has_pan_compara":0,"name":"capsicum_annuum","species_taxonomy_id":4072,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":51648,"assembly_default":"ASM51225v2","assembly_accession":"GCA_000512255.2","assembly_name":"ASM51225v2","display_name":"Capsicum
+        annuum","strain":"Criollo de Morelos 334","has_other_alignments":0,"has_synteny":1,"assembly_ucsc":null,"url_name":"Capsicum_annuum","taxonomy_id":4072,"genebuild":"2017-11-ENA","is_reference":0},{"has_variations":1,"scientific_name":"Arabidopsis
+        thaliana","assembly_level":"chromosome","has_genome_alignments":1,"assembly_id":1053,"base_count":119667750,"has_pan_compara":1,"serotype":null,"name":"arabidopsis_thaliana","species_taxonomy_id":3702,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":1055,"assembly_default":"TAIR10","assembly_name":"TAIR10","display_name":"Arabidopsis
+        thaliana","assembly_accession":"GCA_000001735.1","strain":"Columbia","has_other_alignments":1,"url_name":"Arabidopsis_thaliana","assembly_ucsc":null,"has_synteny":1,"taxonomy_id":3702,"genebuild":"2016-06-Araport11","is_reference":0},{"assembly_level":"chromosome","has_genome_alignments":1,"assembly_id":416,"base_count":283822783,"has_pan_compara":0,"serotype":null,"name":"brassica_rapa","has_variations":0,"scientific_name":"Brassica
+        rapa","has_other_alignments":1,"assembly_ucsc":null,"has_synteny":1,"url_name":"Brassica_rapa","taxonomy_id":3711,"genebuild":"2012-03-IVFCAAS","is_reference":0,"species_taxonomy_id":3711,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":417,"assembly_name":"Brapa_1.0","assembly_default":"Brapa_1.0","assembly_accession":"GCA_000309985.1","display_name":"Brassica
+        rapa","strain":"Chiifu-401-42"},{"has_variations":0,"scientific_name":"Marchantia
+        polymorpha str. Tak-1","assembly_level":"supercontig","has_genome_alignments":1,"base_count":225760816,"assembly_id":47703,"has_pan_compara":1,"serotype":null,"name":"marchantia_polymorpha","species_taxonomy_id":3197,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":51406,"assembly_name":"Marchanta_polymorpha_v1","assembly_default":"Marchanta_polymorpha_v1","assembly_accession":"GCA_003032435.1","display_name":"Marchantia
+        polymorpha","strain":"Tak-1","has_other_alignments":0,"url_name":"Marchantia_polymorpha","assembly_ucsc":null,"has_synteny":0,"taxonomy_id":3197,"genebuild":"2018-04-ENA","is_reference":0},{"name":"oryza_brachyantha","has_pan_compara":0,"serotype":null,"base_count":260838168,"assembly_id":540,"has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Oryza
+        brachyantha","has_variations":0,"is_reference":0,"genebuild":"2011-05-OGE","taxonomy_id":4533,"has_synteny":1,"assembly_ucsc":null,"url_name":"Oryza_brachyantha","has_other_alignments":1,"strain":"IRGC:101232","assembly_name":"Oryza_brachyantha.v1.4b","assembly_accession":"GCA_000231095.2","assembly_default":"Oryza_brachyantha.v1.4b","display_name":"Oryza
+        brachyantha","organism_id":540,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":4533},{"genebuild":"2012-08-Cirad","taxonomy_id":214687,"url_name":"Musa_acuminata","assembly_ucsc":null,"has_synteny":1,"has_other_alignments":1,"is_reference":0,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":4641,"assembly_accession":"GCA_000313855.1","assembly_default":"ASM31385v1","assembly_name":"ASM31385v1","display_name":"Musa
+        acuminata","strain":"DH-Pahang","organism_id":1836,"has_genome_alignments":1,"assembly_level":"chromosome","name":"musa_acuminata","has_pan_compara":0,"serotype":null,"assembly_id":1836,"base_count":472960417,"has_variations":0,"scientific_name":"Musa
+        acuminata subsp. malaccensis"},{"has_synteny":0,"assembly_ucsc":null,"url_name":"Manihot_esculenta","has_other_alignments":1,"genebuild":"2017-09-JGI","taxonomy_id":3983,"is_reference":0,"data_release_id":54,"species_taxonomy_id":3983,"division":"EnsemblPlants","has_peptide_compara":1,"organism_id":1380,"assembly_accession":"GCA_001659605.1","assembly_name":"Manihot
+        esculenta v6","assembly_default":"Manihot_esculenta_v6","display_name":"Manihot
+        esculenta","strain":"AM560-2","has_genome_alignments":1,"assembly_level":"chromosome","serotype":null,"has_pan_compara":0,"base_count":582117524,"assembly_id":1379,"name":"manihot_esculenta","has_variations":0,"scientific_name":"Manihot
+        esculenta"},{"is_reference":0,"url_name":"Oryza_glaberrima","assembly_ucsc":null,"has_synteny":1,"has_other_alignments":1,"genebuild":"2011-05-OGE","taxonomy_id":4538,"organism_id":635,"assembly_accession":"GCA_000147395.1","display_name":"Oryza
+        glaberrima","assembly_name":"Oryza_glaberrima_V1","assembly_default":"Oryza_glaberrima_V1","strain":"CG14","data_release_id":54,"species_taxonomy_id":4538,"division":"EnsemblPlants","has_peptide_compara":1,"has_pan_compara":0,"serotype":null,"assembly_id":634,"base_count":316419574,"name":"oryza_glaberrima","has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Oryza
+        glaberrima","has_variations":1},{"taxonomy_id":65489,"genebuild":"2014-05-OGE","has_other_alignments":1,"assembly_ucsc":null,"url_name":"Oryza_barthii","has_synteny":1,"is_reference":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":65489,"data_release_id":54,"assembly_default":"O.barthii_v1","assembly_name":"O.barthii_v1","assembly_accession":"GCA_000182155.2","strain":"IRGC:105608","display_name":"Oryza
+        barthii","organism_id":1152,"assembly_level":"chromosome","has_genome_alignments":1,"name":"oryza_barthii","assembly_id":1152,"base_count":308272304,"has_pan_compara":0,"serotype":null,"has_variations":0,"scientific_name":"Oryza
+        barthii"},{"taxonomy_id":4537,"genebuild":"2013-09-OGE","has_other_alignments":1,"assembly_ucsc":null,"has_synteny":1,"url_name":"Oryza_punctata","is_reference":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":4537,"data_release_id":54,"assembly_name":"Oryza_punctata_v1.2","assembly_default":"Oryza_punctata_v1.2","assembly_accession":"GCA_000573905.1","strain":"IRGC:105690","display_name":"Oryza
+        punctata","organism_id":690,"assembly_level":"chromosome","has_genome_alignments":1,"name":"oryza_punctata","assembly_id":690,"base_count":393816603,"has_pan_compara":0,"serotype":null,"has_variations":0,"scientific_name":"Oryza
+        punctata"},{"organism_id":2654,"assembly_name":"Aet v4.0","assembly_accession":"GCA_002575655.1","assembly_default":"Aet_v4.0","strain":"AL8/78","display_name":"Aegilops
+        tauschii","species_taxonomy_id":37682,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","is_reference":0,"has_other_alignments":1,"has_synteny":1,"assembly_ucsc":null,"url_name":"Aegilops_tauschii","taxonomy_id":200361,"genebuild":"2017-10-UCD","scientific_name":"Aegilops
+        tauschii subsp. strangulata","has_variations":0,"base_count":4224915394,"assembly_id":47631,"has_pan_compara":0,"serotype":null,"name":"aegilops_tauschii","assembly_level":"chromosome","has_genome_alignments":1},{"serotype":null,"has_pan_compara":0,"assembly_id":1327,"base_count":609203021,"name":"lupinus_angustifolius","has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Lupinus
+        angustifolius","has_variations":0,"is_reference":0,"assembly_ucsc":null,"has_synteny":0,"url_name":"Lupinus_angustifolius","has_other_alignments":1,"genebuild":"2017-07-CSIRO","taxonomy_id":3871,"organism_id":1328,"assembly_accession":"GCA_001865875.1","assembly_name":"LupAngTanjil_v1.0","strain":"Tanjil","assembly_default":"LupAngTanjil_v1.0","display_name":"Lupinus
+        angustifolius","data_release_id":54,"species_taxonomy_id":3871,"division":"EnsemblPlants","has_peptide_compara":1},{"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":3708,"data_release_id":54,"assembly_default":"AST_PRJEB5043_v1","assembly_name":"AST_PRJEB5043_v1","assembly_accession":"GCA_000751015.1","display_name":"Brassica
+        napus","strain":"Darmor-bzh","organism_id":2315,"taxonomy_id":3708,"genebuild":"2015-09-GSC","has_other_alignments":1,"url_name":"Brassica_napus","assembly_ucsc":null,"has_synteny":0,"is_reference":0,"has_variations":0,"scientific_name":"Brassica
+        napus","assembly_level":"supercontig","has_genome_alignments":1,"name":"brassica_napus","assembly_id":2315,"base_count":848200303,"has_pan_compara":0,"serotype":null},{"assembly_level":"scaffold","has_genome_alignments":1,"name":"oryza_longistaminata","assembly_id":879,"base_count":326442508,"serotype":null,"has_pan_compara":0,"has_variations":0,"scientific_name":"Oryza
+        longistaminata","taxonomy_id":4528,"genebuild":"2015-05-OGE","has_other_alignments":1,"has_synteny":0,"assembly_ucsc":null,"url_name":"Oryza_longistaminata","is_reference":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":4528,"data_release_id":54,"assembly_name":"O_longistaminata_v1.0","strain":null,"assembly_default":"O_longistaminata_v1.0","assembly_accession":"GCA_000789195.1","display_name":"Oryza
+        longistaminata","organism_id":881},{"scientific_name":"Panicum hallii str.
+        FIL2","has_variations":0,"assembly_id":47646,"base_count":535889049,"serotype":null,"has_pan_compara":0,"name":"panicum_hallii_fil2","assembly_level":"chromosome","has_genome_alignments":1,"organism_id":51395,"assembly_name":"PHallii_v3.1","assembly_accession":"GCA_002211085.2","strain":"FIL2","assembly_default":"PHallii_v3.1","display_name":"Panicum
+        hallii FIL2","species_taxonomy_id":206008,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","is_reference":0,"has_other_alignments":0,"has_synteny":1,"assembly_ucsc":null,"url_name":"Panicum_hallii_fil2","taxonomy_id":206008,"genebuild":"2018-05ENA"},{"has_genome_alignments":1,"assembly_level":"chromosome","name":"oryza_meridionalis","has_pan_compara":0,"serotype":null,"assembly_id":558,"base_count":335668232,"has_variations":0,"scientific_name":"Oryza
+        meridionalis","genebuild":"2014-10-OGE","taxonomy_id":40149,"has_synteny":0,"assembly_ucsc":null,"url_name":"Oryza_meridionalis","has_other_alignments":1,"is_reference":0,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":40149,"assembly_accession":"GCA_000338895.2","assembly_name":"Oryza_meridionalis_v1.3","assembly_default":"Oryza_meridionalis_v1.3","display_name":"Oryza
+        meridionalis","strain":"OR44 (W2112)","organism_id":558},{"is_reference":0,"taxonomy_id":77586,"genebuild":"2013-09-OGE","has_other_alignments":1,"assembly_ucsc":null,"url_name":"Leersia_perrieri","has_synteny":1,"assembly_default":"Lperr_V1.4","assembly_name":"Lperr_V1.4","assembly_accession":"GCA_000325765.3","display_name":"Leersia
+        perrieri","strain":"IRGC:105164","organism_id":1272,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":77586,"data_release_id":54,"name":"leersia_perrieri","assembly_id":1272,"base_count":266687832,"serotype":null,"has_pan_compara":0,"assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Leersia
+        perrieri","has_variations":0},{"data_release_id":54,"species_taxonomy_id":3218,"division":"EnsemblPlants","has_peptide_compara":1,"organism_id":344,"assembly_accession":"GCA_000002425.2","assembly_name":"Phypa
+        V3","assembly_default":"Phypa_V3","display_name":"Physcomitrella patens","strain":"Gransden
+        2004","has_synteny":0,"assembly_ucsc":null,"url_name":"Physcomitrella_patens","has_other_alignments":1,"genebuild":"2018-04-JGI","taxonomy_id":3218,"is_reference":0,"has_variations":0,"scientific_name":"Physcomitrella
+        patens","has_genome_alignments":1,"assembly_level":"chromosome","serotype":null,"has_pan_compara":1,"assembly_id":47208,"base_count":471852792,"name":"physcomitrella_patens"},{"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":4536,"assembly_name":"Oryza_nivara_v1.0","display_name":"Oryza
+        nivara","assembly_default":"Oryza_nivara_v1.0","assembly_accession":"GCA_000576065.1","strain":"IRGC:100897","organism_id":1562,"genebuild":"2013-09-OGE","taxonomy_id":4536,"url_name":"Oryza_nivara","assembly_ucsc":null,"has_synteny":1,"has_other_alignments":1,"is_reference":0,"has_variations":0,"scientific_name":"Oryza
+        sativa f. spontanea","has_genome_alignments":1,"assembly_level":"chromosome","name":"oryza_nivara","serotype":null,"has_pan_compara":0,"assembly_id":1561,"base_count":337950324},{"species_taxonomy_id":4530,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":363,"assembly_accession":"GCA_000004655.2","assembly_default":"ASM465v1","assembly_name":"ASM465v1","strain":"93-11","display_name":"Oryza
+        sativa Indica Group","has_other_alignments":1,"assembly_ucsc":null,"url_name":"Oryza_indica","has_synteny":1,"taxonomy_id":39946,"genebuild":"2010-07-BGI","is_reference":0,"has_variations":1,"scientific_name":"Oryza
+        sativa Indica Group","assembly_level":"chromosome","has_genome_alignments":1,"assembly_id":363,"base_count":427004890,"serotype":null,"has_pan_compara":0,"name":"oryza_indica"},{"has_variations":0,"scientific_name":"Helianthus
+        annuus","has_genome_alignments":1,"assembly_level":"chromosome","name":"helianthus_annuus","has_pan_compara":0,"serotype":null,"assembly_id":2059,"base_count":3027844945,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":4232,"assembly_accession":"GCA_002127325.1","assembly_default":"HanXRQr1.0","assembly_name":"HanXRQr1.0","display_name":"Helianthus
+        annuus","strain":"XRQ/B","organism_id":2059,"genebuild":"2017-09-ICSG","taxonomy_id":4232,"has_synteny":0,"assembly_ucsc":null,"url_name":"Helianthus_annuus","has_other_alignments":1,"is_reference":0},{"taxonomy_id":4529,"genebuild":"2013-09-OGE","has_other_alignments":1,"has_synteny":1,"assembly_ucsc":null,"url_name":"Oryza_rufipogon","is_reference":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":4529,"data_release_id":54,"assembly_default":"OR_W1943","assembly_accession":"GCA_000817225.1","assembly_name":"OR_W1943","strain":"W1943","display_name":"Oryza
+        rufipogon","organism_id":1803,"assembly_level":"chromosome","has_genome_alignments":1,"name":"oryza_rufipogon","assembly_id":1803,"base_count":338040714,"has_pan_compara":0,"serotype":null,"has_variations":0,"scientific_name":"Oryza
+        rufipogon"},{"has_variations":0,"scientific_name":"Panicum hallii var. hallii
+        str. HAL2","has_genome_alignments":1,"assembly_level":"chromosome","name":"panicum_hallii_hal2","serotype":null,"has_pan_compara":0,"base_count":487473734,"assembly_id":47645,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":206008,"assembly_name":"PhalliiHAL_v2.1","assembly_default":"PhalliiHAL_v2.1","assembly_accession":"GCA_003061485.1","strain":"HAL2","display_name":"Panicum
+        hallii HAL2","organism_id":51396,"genebuild":"2018-05ENA","taxonomy_id":1504633,"assembly_ucsc":null,"has_synteny":1,"url_name":"Panicum_hallii_hal2","has_other_alignments":0,"is_reference":0},{"is_reference":0,"has_other_alignments":1,"url_name":"Nicotiana_attenuata","assembly_ucsc":null,"has_synteny":0,"taxonomy_id":49451,"genebuild":"2017-09-MPI-CE","organism_id":1210,"assembly_default":"NIATTr2","assembly_accession":"GCA_001879085.1","assembly_name":"NIATTr2","strain":"UT","display_name":"Nicotiana
+        attenuata","species_taxonomy_id":49451,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","base_count":2365682703,"assembly_id":1209,"serotype":null,"has_pan_compara":0,"name":"nicotiana_attenuata","assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Nicotiana
+        attenuata","has_variations":0},{"name":"ostreococcus_lucimarinus","assembly_id":377,"base_count":13204888,"serotype":null,"has_pan_compara":0,"assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Ostreococcus
+        lucimarinus CCE9901","has_variations":0,"is_reference":0,"taxonomy_id":436017,"genebuild":"2011-01-JGI","has_other_alignments":1,"url_name":"Ostreococcus_lucimarinus","assembly_ucsc":null,"has_synteny":0,"assembly_default":"ASM9206v1","assembly_name":"ASM9206v1","strain":"CCE9901","assembly_accession":"GCA_000092065.1","display_name":"Ostreococcus
+        lucimarinus","organism_id":377,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":242159,"data_release_id":54},{"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":29730,"data_release_id":54,"assembly_default":"Graimondii2_0","assembly_name":"Graimondii2_0","assembly_accession":"GCA_000327365.1","strain":"CMD
+        10","display_name":"Gossypium raimondii","organism_id":36345,"taxonomy_id":29730,"genebuild":"2017-09-JGI","has_other_alignments":1,"url_name":"Gossypium_raimondii","assembly_ucsc":null,"has_synteny":0,"is_reference":0,"has_variations":0,"scientific_name":"Gossypium
+        raimondii","assembly_level":"chromosome","has_genome_alignments":1,"name":"gossypium_raimondii","base_count":761405269,"assembly_id":36345,"has_pan_compara":0,"serotype":null},{"scientific_name":"Phaseolus
+        vulgaris","has_variations":0,"serotype":null,"has_pan_compara":0,"assembly_id":1231,"base_count":521076696,"name":"phaseolus_vulgaris","has_genome_alignments":1,"assembly_level":"chromosome","organism_id":1232,"assembly_name":"PhaVulg1_0","assembly_default":"PhaVulg1_0","assembly_accession":"GCA_000499845.1","strain":"G19833","display_name":"Phaseolus
+        vulgaris","data_release_id":54,"species_taxonomy_id":3885,"division":"EnsemblPlants","has_peptide_compara":1,"is_reference":0,"assembly_ucsc":null,"has_synteny":1,"url_name":"Phaseolus_vulgaris","has_other_alignments":1,"genebuild":"2017-09-JGI","taxonomy_id":3885},{"is_reference":0,"has_other_alignments":0,"assembly_ucsc":null,"has_synteny":1,"url_name":"Theobroma_cacao","taxonomy_id":3641,"genebuild":"2019-03-CGH","organism_id":36242,"assembly_name":"Criollo_cocoa_genome_V2","assembly_default":"Criollo_cocoa_genome_V2","assembly_accession":"GCA_000208745.2","strain":"Criollo
+        B97-61/B2","display_name":"Theobroma cacao","species_taxonomy_id":3641,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","assembly_id":47704,"base_count":324719311,"has_pan_compara":0,"serotype":null,"name":"theobroma_cacao","assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Theobroma
+        cacao","has_variations":0},{"has_pan_compara":0,"serotype":null,"assembly_id":441,"base_count":304842038,"name":"trifolium_pratense","has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Trifolium
+        pratense","has_variations":0,"is_reference":0,"assembly_ucsc":null,"has_synteny":0,"url_name":"Trifolium_pratense","has_other_alignments":1,"genebuild":"2016-04-TGAC","taxonomy_id":57577,"organism_id":441,"assembly_name":"Trpr","assembly_default":"Trpr","display_name":"Trifolium
+        pratense","assembly_accession":"GCA_900079335.1","strain":"Milvus B","data_release_id":54,"species_taxonomy_id":57577,"division":"EnsemblPlants","has_peptide_compara":1},{"url_name":"Solanum_tuberosum","assembly_ucsc":null,"has_synteny":1,"has_other_alignments":1,"genebuild":"2011-05-SolTub_3.0","taxonomy_id":4113,"is_reference":0,"data_release_id":54,"species_taxonomy_id":4113,"division":"EnsemblPlants","has_peptide_compara":1,"organism_id":1207,"assembly_name":"SolTub_3.0","assembly_accession":"GCA_000226075.1","assembly_default":"SolTub_3.0","display_name":"Solanum
+        tuberosum","strain":"DM 1-3 516 R44","has_genome_alignments":1,"assembly_level":"chromosome","has_pan_compara":0,"serotype":null,"base_count":810654046,"assembly_id":1202,"name":"solanum_tuberosum","has_variations":0,"scientific_name":"Solanum
+        tuberosum"},{"has_genome_alignments":1,"assembly_level":"chromosome","has_pan_compara":0,"serotype":null,"base_count":708735318,"assembly_id":1515,"name":"sorghum_bicolor","has_variations":1,"scientific_name":"Sorghum
+        bicolor","url_name":"Sorghum_bicolor","assembly_ucsc":null,"has_synteny":1,"has_other_alignments":1,"genebuild":"2017-06-JGI","taxonomy_id":4558,"is_reference":0,"data_release_id":54,"species_taxonomy_id":4558,"division":"EnsemblPlants","has_peptide_compara":1,"organism_id":1515,"display_name":"Sorghum
+        bicolor","assembly_name":"Sorghum_bicolor_NCBIv3","assembly_default":"Sorghum_bicolor_NCBIv3","assembly_accession":"GCA_000003195.3","strain":"BTx623"},{"has_variations":0,"scientific_name":"Prunus
+        persica","has_genome_alignments":1,"assembly_level":"chromosome","has_pan_compara":0,"serotype":null,"assembly_id":610,"base_count":227411381,"name":"prunus_persica","data_release_id":54,"species_taxonomy_id":3760,"division":"EnsemblPlants","has_peptide_compara":1,"organism_id":610,"display_name":"Prunus
+        persica","assembly_name":"Prunus_persica_NCBIv2","assembly_default":"Prunus_persica_NCBIv2","assembly_accession":"GCA_000346465.2","strain":"Lovell","url_name":"Prunus_persica","assembly_ucsc":null,"has_synteny":1,"has_other_alignments":1,"genebuild":"2017-09-JGI","taxonomy_id":3760,"is_reference":0},{"has_variations":0,"scientific_name":"Glycine
+        max","has_genome_alignments":1,"assembly_level":"chromosome","name":"glycine_max","serotype":null,"has_pan_compara":0,"base_count":978491270,"assembly_id":47639,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":3847,"assembly_accession":"GCA_000004515.4","display_name":"Glycine
+        max","assembly_default":"Glycine_max_v2.1","assembly_name":"Glycine_max_v2.1","strain":"Williams
+        82","organism_id":1067,"genebuild":"2018-08-JGI","taxonomy_id":3847,"assembly_ucsc":null,"has_synteny":0,"url_name":"Glycine_max","has_other_alignments":1,"is_reference":0},{"assembly_accession":"GCA_000576495.1","assembly_name":"Oryza_glumaepatula_v1.5","assembly_default":"Oryza_glumaepatula_v1.5","display_name":"Oryza
+        glumipatula","strain":null,"organism_id":50414,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":40148,"data_release_id":54,"is_reference":0,"taxonomy_id":40148,"genebuild":"2013-09-OGE","has_other_alignments":1,"url_name":"Oryza_glumipatula","assembly_ucsc":null,"has_synteny":1,"scientific_name":"Oryza
+        glumipatula","has_variations":1,"name":"oryza_glumipatula","assembly_id":1509,"base_count":372860283,"has_pan_compara":0,"serotype":null,"assembly_level":"chromosome","has_genome_alignments":1},{"has_variations":1,"scientific_name":"Solanum
+        lycopersicum","assembly_level":"chromosome","has_genome_alignments":1,"base_count":827747456,"assembly_id":47638,"has_pan_compara":1,"serotype":null,"name":"solanum_lycopersicum","species_taxonomy_id":4081,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":360,"assembly_name":"SL3.0","assembly_default":"SL3.0","display_name":"Solanum
+        lycopersicum","assembly_accession":"GCA_000188115.3","strain":"Heinz 1706","has_other_alignments":1,"assembly_ucsc":null,"url_name":"Solanum_lycopersicum","has_synteny":1,"taxonomy_id":4081,"genebuild":"2017-02-SOL","is_reference":0},{"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":3880,"assembly_name":"MedtrA17_4.0","assembly_default":"MedtrA17_4.0","assembly_accession":"GCA_000219495.2","display_name":"Medicago
+        truncatula","strain":"A17","organism_id":827,"genebuild":"2014-06-ENA","taxonomy_id":3880,"has_synteny":1,"assembly_ucsc":null,"url_name":"Medicago_truncatula","has_other_alignments":1,"is_reference":0,"has_variations":0,"scientific_name":"Medicago
+        truncatula","has_genome_alignments":1,"assembly_level":"chromosome","name":"medicago_truncatula","has_pan_compara":0,"serotype":null,"assembly_id":827,"base_count":412800391},{"has_other_alignments":1,"has_synteny":0,"assembly_ucsc":null,"url_name":"Populus_trichocarpa","taxonomy_id":3694,"genebuild":"2018-04-JGI","is_reference":0,"species_taxonomy_id":3694,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":439,"assembly_accession":"GCA_000002775.3","assembly_name":"Pop_tri_v3","assembly_default":"Pop_tri_v3","strain":"Nisqually
+        1","display_name":"Populus trichocarpa","assembly_level":"chromosome","has_genome_alignments":1,"base_count":434132815,"assembly_id":47207,"serotype":null,"has_pan_compara":0,"name":"populus_trichocarpa","has_variations":0,"scientific_name":"Populus
+        trichocarpa"},{"taxonomy_id":29760,"genebuild":"2012-07-CRIBI","has_other_alignments":1,"assembly_ucsc":null,"has_synteny":1,"url_name":"Vitis_vinifera","is_reference":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":29760,"data_release_id":54,"assembly_name":"12X","strain":"PN40024","assembly_default":"12X","assembly_accession":"GCA_000003745.2","display_name":"Vitis
+        vinifera","organism_id":364,"assembly_level":"chromosome","has_genome_alignments":1,"name":"vitis_vinifera","assembly_id":364,"base_count":486265422,"serotype":null,"has_pan_compara":1,"has_variations":1,"scientific_name":"Vitis
+        vinifera"},{"has_variations":0,"scientific_name":"Selaginella moellendorffii","assembly_level":"supercontig","has_genome_alignments":1,"base_count":212645483,"assembly_id":366,"has_pan_compara":1,"serotype":null,"name":"selaginella_moellendorffii","species_taxonomy_id":88036,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":366,"assembly_default":"v1.0","assembly_name":"v1.0","strain":null,"assembly_accession":"GCA_000143415.1","display_name":"Selaginella
+        moellendorffii","has_other_alignments":1,"assembly_ucsc":null,"has_synteny":0,"url_name":"Selaginella_moellendorffii","taxonomy_id":88036,"genebuild":"2011-05-JGI","is_reference":0},{"assembly_level":"chromosome","has_genome_alignments":1,"base_count":405732883,"assembly_id":47206,"serotype":null,"has_pan_compara":0,"name":"setaria_italica","has_variations":0,"scientific_name":"Setaria
+        italica","has_other_alignments":1,"assembly_ucsc":null,"url_name":"Setaria_italica","has_synteny":1,"taxonomy_id":4555,"genebuild":"2015-11-JGI","is_reference":0,"species_taxonomy_id":4555,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":1376,"strain":"Yugu1","assembly_default":"Setaria_italica_v2.0","assembly_name":"Setaria_italica_v2.0","assembly_accession":"GCA_000263155.2","display_name":"Setaria
+        italica"},{"assembly_level":"chromosome","has_genome_alignments":1,"base_count":375049285,"assembly_id":1560,"has_pan_compara":1,"serotype":null,"name":"oryza_sativa","has_variations":1,"scientific_name":"Oryza
+        sativa Japonica Group","has_other_alignments":1,"has_synteny":1,"assembly_ucsc":null,"url_name":"Oryza_sativa","taxonomy_id":39947,"genebuild":"2019-06-DDBJ","is_reference":0,"species_taxonomy_id":4530,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":1560,"assembly_accession":"GCA_001433935.1","assembly_default":"IRGSP-1.0","strain":"Nipponbare","assembly_name":"IRGSP-1.0","display_name":"Oryza
+        sativa Japonica Group"},{"has_variations":0,"scientific_name":"Triticum urartu","assembly_level":"chromosome","has_genome_alignments":1,"assembly_id":2520,"base_count":3747163292,"serotype":null,"has_pan_compara":0,"name":"triticum_urartu","species_taxonomy_id":4572,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":2612,"assembly_default":"ASM34745v1","assembly_accession":"GCA_000347455.1","assembly_name":"ASM34745v1","display_name":"Triticum
+        urartu","strain":"G1812 (PI428198)","has_other_alignments":1,"has_synteny":0,"assembly_ucsc":null,"url_name":"Triticum_urartu","taxonomy_id":4572,"genebuild":"2013-04-BGI","is_reference":0},{"is_reference":0,"assembly_ucsc":null,"url_name":"Zea_mays","has_synteny":1,"has_other_alignments":1,"genebuild":"2016-12-CSHL","taxonomy_id":4577,"organism_id":1874,"assembly_accession":"GCA_000005005.6","assembly_default":"B73_RefGen_v4","assembly_name":"B73
+        RefGen_v4","display_name":"Zea mays","strain":"B73","data_release_id":54,"species_taxonomy_id":4577,"division":"EnsemblPlants","has_peptide_compara":1,"has_pan_compara":0,"serotype":null,"assembly_id":1874,"base_count":2135083061,"name":"zea_mays","has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Zea
+        mays","has_variations":1},{"is_reference":0,"has_other_alignments":1,"assembly_ucsc":null,"has_synteny":1,"url_name":"Triticum_aestivum","taxonomy_id":4565,"genebuild":"2018-04-IWGSC","organism_id":36563,"assembly_default":"IWGSC","assembly_accession":"GCA_900519105.1","assembly_name":"IWGSC","strain":"Chinese
+        spring","display_name":"Triticum aestivum","species_taxonomy_id":4565,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","assembly_id":47295,"base_count":14547261565,"has_pan_compara":0,"serotype":null,"name":"triticum_aestivum","assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Triticum
+        aestivum","has_variations":1},{"has_variations":0,"scientific_name":"Triticum
+        dicoccoides","assembly_level":"chromosome","has_genome_alignments":1,"name":"triticum_dicoccoides","assembly_id":47294,"base_count":10079039394,"serotype":null,"has_pan_compara":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":85692,"data_release_id":54,"assembly_accession":"GCA_002162155.1","assembly_name":"WEWSeq
+        v.1.0","display_name":"Triticum dicoccoides","assembly_default":"WEWSeq_v.1.0","strain":"Zavitan
+        (Atlit2015)","organism_id":50485,"taxonomy_id":85692,"genebuild":"2017-05-WEWSeq","has_other_alignments":1,"url_name":"Triticum_dicoccoides","assembly_ucsc":null,"has_synteny":1,"is_reference":0},{"is_reference":0,"assembly_ucsc":null,"has_synteny":1,"url_name":"Vigna_angularis","has_other_alignments":1,"genebuild":"2015-08-BUA","taxonomy_id":3914,"organism_id":50348,"assembly_name":"Vigan1.1","assembly_default":"Vigan1.1","strain":"Jingnong
+        6","assembly_accession":"GCA_001190045.1","display_name":"Vigna angularis","data_release_id":54,"species_taxonomy_id":3914,"division":"EnsemblPlants","has_peptide_compara":1,"serotype":null,"has_pan_compara":0,"assembly_id":47209,"base_count":466744453,"name":"vigna_angularis","has_genome_alignments":1,"assembly_level":"chromosome","scientific_name":"Vigna
+        angularis","has_variations":0},{"assembly_level":"chromosome","has_genome_alignments":1,"base_count":463085359,"assembly_id":47268,"serotype":null,"has_pan_compara":0,"name":"vigna_radiata","has_variations":0,"scientific_name":"Vigna
+        radiata var. radiata","has_other_alignments":1,"assembly_ucsc":null,"url_name":"Vigna_radiata","has_synteny":1,"taxonomy_id":3916,"genebuild":"2015-10-SNU","is_reference":0,"species_taxonomy_id":157791,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","organism_id":50446,"assembly_default":"Vradiata_ver6","assembly_accession":"GCA_000741045.2","assembly_name":"Vradiata_ver6","display_name":"Vigna
+        radiata","strain":"VC1973A"},{"is_reference":0,"genebuild":"2019-09-GDR","taxonomy_id":42229,"assembly_ucsc":null,"url_name":"Prunus_avium","has_synteny":0,"has_other_alignments":0,"assembly_name":"PAV_r1.0","assembly_accession":"GCA_002207925.1","assembly_default":"PAV_r1.0","display_name":"Prunus
+        avium","strain":"Satonishiki","organism_id":51674,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":42229,"name":"prunus_avium","serotype":null,"has_pan_compara":0,"assembly_id":47837,"base_count":272361615,"has_genome_alignments":1,"assembly_level":"supercontig","scientific_name":"Prunus
+        avium","has_variations":0},{"taxonomy_id":35885,"genebuild":"2019-09-GT4SP","has_other_alignments":0,"url_name":"Ipomoea_triloba","assembly_ucsc":null,"has_synteny":0,"is_reference":0,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":35885,"data_release_id":54,"display_name":"Ipomoea
+        triloba","assembly_name":"ASM357664v1","assembly_default":"ASM357664v1","assembly_accession":"GCA_003576645.1","strain":"NCNSP0323","organism_id":51675,"assembly_level":"chromosome","has_genome_alignments":1,"name":"ipomoea_triloba","base_count":461827428,"assembly_id":47838,"serotype":null,"has_pan_compara":0,"has_variations":0,"scientific_name":"Ipomoea
+        triloba"},{"name":"saccharum_spontaneum","base_count":2900240836,"assembly_id":47839,"has_pan_compara":0,"serotype":null,"assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Saccharum
+        spontaneum","has_variations":0,"is_reference":0,"taxonomy_id":62335,"genebuild":"2019-08-UIL","has_other_alignments":0,"assembly_ucsc":null,"url_name":"Saccharum_spontaneum","has_synteny":0,"assembly_name":"Sspon.HiC_chr_asm","assembly_default":"Sspon.HiC_chr_asm","assembly_accession":"GCA_003544955.1","display_name":"Saccharum
+        spontaneum","strain":"AP85-441","organism_id":51676,"has_peptide_compara":1,"division":"EnsemblPlants","species_taxonomy_id":62335,"data_release_id":54},{"is_reference":0,"has_other_alignments":0,"url_name":"Citrus_clementina","assembly_ucsc":null,"has_synteny":0,"taxonomy_id":85681,"genebuild":"2013-11-ENA","organism_id":51680,"assembly_default":"Citrus_clementina_v1.0","assembly_name":"Citrus_clementina_v1.0","assembly_accession":"GCA_000493195.1","display_name":"Citrus
+        clementina","strain":"Clemenules","species_taxonomy_id":85681,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants","assembly_id":47844,"base_count":301364702,"has_pan_compara":0,"serotype":null,"name":"citrus_clementina","assembly_level":"supercontig","has_genome_alignments":1,"scientific_name":"Citrus
+        clementina","has_variations":0},{"scientific_name":"Hordeum vulgare subsp.
+        vulgare","has_variations":1,"name":"hordeum_vulgare","serotype":null,"has_pan_compara":0,"base_count":4834432680,"assembly_id":47928,"has_genome_alignments":1,"assembly_level":"chromosome","assembly_name":"IBSC
+        v2","assembly_accession":"GCA_901482405.1","assembly_default":"IBSC_v2","strain":"Morex","display_name":"Hordeum
+        vulgare","organism_id":2058,"division":"EnsemblPlants","has_peptide_compara":1,"data_release_id":54,"species_taxonomy_id":4513,"is_reference":0,"genebuild":"2019-04-IBSC","taxonomy_id":112509,"url_name":"Hordeum_vulgare","assembly_ucsc":null,"has_synteny":0,"has_other_alignments":1},{"base_count":10463058104,"assembly_id":47930,"serotype":null,"has_pan_compara":0,"name":"triticum_turgidum","assembly_level":"chromosome","has_genome_alignments":1,"scientific_name":"Triticum
+        turgidum","has_variations":1,"is_reference":0,"has_other_alignments":0,"assembly_ucsc":null,"url_name":"Triticum_turgidum","has_synteny":0,"taxonomy_id":4567,"genebuild":"2017-05-Svevo.v1","organism_id":51650,"assembly_name":"svevo","assembly_default":"Svevo.v1","assembly_accession":"GCA_900231445.1","strain":"svevo","display_name":"Triticum
+        turgidum","species_taxonomy_id":4567,"data_release_id":54,"has_peptide_compara":1,"division":"EnsemblPlants"}]'
+    headers:
+      Content-Length:
+      - '46856'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:09 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54991'
+      X-RateLimit-Reset:
+      - '2331'
+      X-Runtime:
+      - '0.170401'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:10 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54990'
+      X-RateLimit-Reset:
+      - '2330'
+      X-Runtime:
+      - '0.010505'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:12 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54989'
+      X-RateLimit-Reset:
+      - '2328'
+      X-Runtime:
+      - '0.038591'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:13 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54988'
+      X-RateLimit-Reset:
+      - '2327'
+      X-Runtime:
+      - '0.008442'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:15 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54987'
+      X-RateLimit-Reset:
+      - '2325'
+      X-Runtime:
+      - '0.008011'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:17 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54986'
+      X-RateLimit-Reset:
+      - '2323'
+      X-Runtime:
+      - '0.009508'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:18 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54985'
+      X-RateLimit-Reset:
+      - '2322'
+      X-Runtime:
+      - '0.033993'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:20 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54984'
+      X-RateLimit-Reset:
+      - '2320'
+      X-Runtime:
+      - '0.035866'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:22 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54983'
+      X-RateLimit-Reset:
+      - '2318'
+      X-Runtime:
+      - '0.008629'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:24 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54982'
+      X-RateLimit-Reset:
+      - '2316'
+      X-Runtime:
+      - '0.035284'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:25 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54981'
+      X-RateLimit-Reset:
+      - '2315'
+      X-Runtime:
+      - '0.007923'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:27 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54980'
+      X-RateLimit-Reset:
+      - '2313'
+      X-Runtime:
+      - '0.010590'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:29 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54979'
+      X-RateLimit-Reset:
+      - '2311'
+      X-Runtime:
+      - '0.008754'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:30 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54978'
+      X-RateLimit-Reset:
+      - '2310'
+      X-Runtime:
+      - '0.008094'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:32 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54977'
+      X-RateLimit-Reset:
+      - '2308'
+      X-Runtime:
+      - '0.007954'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:34 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54976'
+      X-RateLimit-Reset:
+      - '2306'
+      X-Runtime:
+      - '0.045793'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:36 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54975'
+      X-RateLimit-Reset:
+      - '2304'
+      X-Runtime:
+      - '0.007229'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:37 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54974'
+      X-RateLimit-Reset:
+      - '2303'
+      X-Runtime:
+      - '0.042746'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:39 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54973'
+      X-RateLimit-Reset:
+      - '2301'
+      X-Runtime:
+      - '0.040690'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:41 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54972'
+      X-RateLimit-Reset:
+      - '2299'
+      X-Runtime:
+      - '0.029414'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:42 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54971'
+      X-RateLimit-Reset:
+      - '2298'
+      X-Runtime:
+      - '0.008165'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:44 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54970'
+      X-RateLimit-Reset:
+      - '2296'
+      X-Runtime:
+      - '0.008241'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:46 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54969'
+      X-RateLimit-Reset:
+      - '2294'
+      X-Runtime:
+      - '0.007797'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:47 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54968'
+      X-RateLimit-Reset:
+      - '2293'
+      X-Runtime:
+      - '0.010468'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:49 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54967'
+      X-RateLimit-Reset:
+      - '2291'
+      X-Runtime:
+      - '0.123303'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:51 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54966'
+      X-RateLimit-Reset:
+      - '2289'
+      X-Runtime:
+      - '0.010627'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:52 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54965'
+      X-RateLimit-Reset:
+      - '2288'
+      X-Runtime:
+      - '0.010732'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:54 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54964'
+      X-RateLimit-Reset:
+      - '2286'
+      X-Runtime:
+      - '0.029646'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:56 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54963'
+      X-RateLimit-Reset:
+      - '2284'
+      X-Runtime:
+      - '0.010139'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:58 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54962'
+      X-RateLimit-Reset:
+      - '2282'
+      X-Runtime:
+      - '0.009544'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:21:59 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54961'
+      X-RateLimit-Reset:
+      - '2281'
+      X-Runtime:
+      - '0.011589'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:01 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54960'
+      X-RateLimit-Reset:
+      - '2279'
+      X-Runtime:
+      - '0.059073'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:03 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54959'
+      X-RateLimit-Reset:
+      - '2277'
+      X-Runtime:
+      - '0.007039'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:04 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54958'
+      X-RateLimit-Reset:
+      - '2276'
+      X-Runtime:
+      - '0.101819'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:06 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54957'
+      X-RateLimit-Reset:
+      - '2274'
+      X-Runtime:
+      - '0.008148'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:08 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54956'
+      X-RateLimit-Reset:
+      - '2272'
+      X-Runtime:
+      - '0.009673'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:10 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54955'
+      X-RateLimit-Reset:
+      - '2270'
+      X-Runtime:
+      - '0.048349'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:11 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54954'
+      X-RateLimit-Reset:
+      - '2269'
+      X-Runtime:
+      - '0.033673'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:13 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54953'
+      X-RateLimit-Reset:
+      - '2267'
+      X-Runtime:
+      - '0.008287'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:15 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54952'
+      X-RateLimit-Reset:
+      - '2265'
+      X-Runtime:
+      - '0.007621'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:16 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54951'
+      X-RateLimit-Reset:
+      - '2264'
+      X-Runtime:
+      - '0.057220'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:18 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54950'
+      X-RateLimit-Reset:
+      - '2262'
+      X-Runtime:
+      - '0.008998'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:20 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54949'
+      X-RateLimit-Reset:
+      - '2260'
+      X-Runtime:
+      - '0.011929'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:21 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54948'
+      X-RateLimit-Reset:
+      - '2259'
+      X-Runtime:
+      - '0.007586'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:23 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54947'
+      X-RateLimit-Reset:
+      - '2257'
+      X-Runtime:
+      - '0.013469'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:25 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54946'
+      X-RateLimit-Reset:
+      - '2255'
+      X-Runtime:
+      - '0.007907'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:27 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54945'
+      X-RateLimit-Reset:
+      - '2253'
+      X-Runtime:
+      - '0.007514'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:29 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54944'
+      X-RateLimit-Reset:
+      - '2251'
+      X-Runtime:
+      - '0.008516'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:30 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54943'
+      X-RateLimit-Reset:
+      - '2250'
+      X-Runtime:
+      - '0.008429'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:32 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54942'
+      X-RateLimit-Reset:
+      - '2248'
+      X-Runtime:
+      - '0.010218'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:34 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54941'
+      X-RateLimit-Reset:
+      - '2246'
+      X-Runtime:
+      - '0.008285'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:35 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54940'
+      X-RateLimit-Reset:
+      - '2245'
+      X-Runtime:
+      - '0.009502'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:37 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54939'
+      X-RateLimit-Reset:
+      - '2243'
+      X-Runtime:
+      - '0.012999'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:39 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54938'
+      X-RateLimit-Reset:
+      - '2241'
+      X-Runtime:
+      - '0.011348'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:41 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54937'
+      X-RateLimit-Reset:
+      - '2239'
+      X-Runtime:
+      - '0.012071'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:42 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54936'
+      X-RateLimit-Reset:
+      - '2238'
+      X-Runtime:
+      - '0.006785'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:44 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54935'
+      X-RateLimit-Reset:
+      - '2236'
+      X-Runtime:
+      - '0.031896'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:46 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54934'
+      X-RateLimit-Reset:
+      - '2234'
+      X-Runtime:
+      - '0.007407'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:48 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54933'
+      X-RateLimit-Reset:
+      - '2232'
+      X-Runtime:
+      - '0.139281'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:49 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54932'
+      X-RateLimit-Reset:
+      - '2231'
+      X-Runtime:
+      - '0.015738'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:51 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54931'
+      X-RateLimit-Reset:
+      - '2229'
+      X-Runtime:
+      - '0.007608'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:53 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54930'
+      X-RateLimit-Reset:
+      - '2227'
+      X-Runtime:
+      - '0.009253'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:54 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54929'
+      X-RateLimit-Reset:
+      - '2226'
+      X-Runtime:
+      - '0.014596'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:56 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54928'
+      X-RateLimit-Reset:
+      - '2224'
+      X-Runtime:
+      - '0.006938'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:22:58 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54927'
+      X-RateLimit-Reset:
+      - '2222'
+      X-Runtime:
+      - '0.049565'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:23:00 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54926'
+      X-RateLimit-Reset:
+      - '2220'
+      X-Runtime:
+      - '0.007874'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:23:01 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54925'
+      X-RateLimit-Reset:
+      - '2219'
+      X-Runtime:
+      - '0.053655'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:23:03 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54924'
+      X-RateLimit-Reset:
+      - '2217'
+      X-Runtime:
+      - '0.007951'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:23:05 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54923'
+      X-RateLimit-Reset:
+      - '2215'
+      X-Runtime:
+      - '0.030621'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:23:06 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54922'
+      X-RateLimit-Reset:
+      - '2214'
+      X-Runtime:
+      - '0.007050'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:23:08 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54921'
+      X-RateLimit-Reset:
+      - '2212'
+      X-Runtime:
+      - '0.076034'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 16 Jan 2020 20:23:10 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54920'
+      X-RateLimit-Reset:
+      - '2210'
+      X-Runtime:
+      - '0.011540'
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -3,12 +3,15 @@ from unittest.mock import call, patch
 
 from django.test import TestCase
 
+import vcr
+
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import DownloaderJob, SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 
 
 class SurveyTestCase(TestCase):
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey(self, mock_send_job):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
@@ -30,6 +33,9 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.transcriptome.correct_index_location.yaml"
+    )
     def test_correct_index_location(self):
         """ Tests that the files returned actually exist.
 
@@ -54,6 +60,9 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.transcriptome.correct_location_metazoa.yaml"
+    )
     def test_correct_index_location_metazoa(self):
         """ Tests that the files returned actually exist.
 
@@ -78,6 +87,7 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.single_plant.yaml")
     def test_single_plant(self):
         """ Tests that the files returned actually exist.
 
@@ -102,6 +112,9 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.transcriptome.correct_location_protist.yaml"
+    )
     def test_correct_index_location_protist(self):
         """ Tests that the files returned actually exist.
 
@@ -126,6 +139,7 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey_fungi.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey_fungi(self, mock_send_job):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
@@ -152,6 +166,7 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey_bacteria.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey_bacteria(self, mock_send_job):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
@@ -178,6 +193,9 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.transcriptome.survey_bacteria_none.yaml"
+    )
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey_bacteria_none(self, mock_send_job):
         """When surveying fungi an organism_name must be supplied."""
@@ -197,6 +215,9 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_not_called()
 
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.transcriptome.survey_fungi_none.yaml"
+    )
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey_fungi_none(self, mock_send_job):
         """When surveying fungi an organism_name must be supplied."""
