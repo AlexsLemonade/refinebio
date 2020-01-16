@@ -30,7 +30,7 @@ from data_refinery_workers.processors import smashing_utils, utils
 pd.set_option("mode.chained_assignment", None)
 
 
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery")
 BYTES_IN_GB = 1024 * 1024 * 1024
 SMASHING_DIR = "/home/user/data_store/smashed/"
 logger = get_and_configure_logger(__name__)
@@ -485,7 +485,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Upload the result to S3
     timestamp = str(int(time.time()))
     key = job_context["organism_name"] + "_" + str(compendium_version) + "_" + timestamp + ".zip"
-    uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
+    uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, key)
 
     if uploaded_to_s3:
         archive_computed_file.delete_local_file()
