@@ -177,6 +177,9 @@ jobs:
       - run: ./scripts/prepare_image.sh -i salmon -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_salmon
 
+      # Containers run as a different user so we need to give them permission to the test directory.
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume
+
       - run: ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
 
   tx_illumina_tests:
