@@ -107,6 +107,9 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.accession_code, "DRP003977")
         self.assertEqual(len(samples), 9)
 
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.sra.metadata_is_gathered_correctly.yaml"
+    )
     def test_metadata_is_gathered_correctly(self):
 
         metadata = SraSurveyor.gather_all_metadata("DRR002116")

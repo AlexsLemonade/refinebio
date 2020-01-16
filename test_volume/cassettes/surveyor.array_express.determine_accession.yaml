@@ -1,0 +1,738 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/samples
+  response:
+    body:
+      string: '{"experiment":{"api-version":3,"api-revision":"091015","version":1.0,"revision":"091015","accession":"E-MTAB-3050","sample":[{"assay":{"name":"1007409-C30057"},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"organism part","value":"islet"},{"category":"sex","value":"female"},{"category":"developmental
+        stage","value":"adult"},{"category":"age","value":54,"unit":"year"}],"extract":{"name":"donor
+        A islets RNA"},"file":[{"type":"data","name":"C30057.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip\/C30057.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip"}},{"type":"derived
+        data","name":"C30057.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip\/C30057.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip"}}],"labeled-extract":{"name":"donor
+        A islets LEX","label":"biotin"},"source":{"name":"donor A islets"},"variable":[{"name":"cell
+        type","value":"freshly isolated"},{"name":"individual","value":"A"},{"name":"test
+        result","value":"NA"}]},{"assay":{"name":"1007409-C30058"},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"organism part","value":"islet"},{"category":"sex","value":"female"},{"category":"developmental
+        stage","value":"adult"},{"category":"age","value":54,"unit":"year"}],"extract":{"name":"donor
+        A expanded cells RNA"},"file":[{"type":"data","name":"C30058.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip\/C30058.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip"}},{"type":"derived
+        data","name":"C30058.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip\/C30058.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip"}}],"labeled-extract":{"name":"donor
+        A expanded cells LEX","label":"biotin"},"source":{"name":"donor A islets"},"variable":[{"name":"cell
+        type","value":"expanded"},{"name":"individual","value":"A"},{"name":"test
+        result","value":"NA"}]},{"assay":{"name":"1009003-C30059"},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"organism part","value":"islet"},{"category":"sex","value":"female"},{"category":"developmental
+        stage","value":"adult"},{"category":"age","value":54,"unit":"year"}],"extract":{"name":"donor
+        A differentiated cells RNA"},"file":[{"type":"data","name":"C30059.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip\/C30059.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip"}},{"type":"derived
+        data","name":"C30059.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip\/C30059.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip"}}],"labeled-extract":{"name":"donor
+        A differentiated cells LEX","label":"biotin"},"source":{"name":"donor A islets"},"variable":[{"name":"cell
+        type","value":"differentiated"},{"name":"individual","value":"A"},{"name":"test
+        result","value":"successful"}]},{"assay":{"name":"1009003-C30060"},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"organism part","value":"islet"},{"category":"sex","value":"male"},{"category":"developmental
+        stage","value":"adult"},{"category":"age","value":38,"unit":"year"}],"extract":{"name":"donor
+        B expanded cells RNA"},"file":[{"type":"data","name":"C30060.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip\/C30060.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip"}},{"type":"derived
+        data","name":"C30060.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip\/C30060.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip"}}],"labeled-extract":{"name":"donor
+        B expanded cells LEX","label":"biotin"},"source":{"name":"donor B islets"},"variable":[{"name":"cell
+        type","value":"expanded"},{"name":"individual","value":"B"},{"name":"test
+        result","value":"NA"}]},{"assay":{"name":"1009003-C30061"},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"organism part","value":"islet"},{"category":"sex","value":"male"},{"category":"developmental
+        stage","value":"adult"},{"category":"age","value":38,"unit":"year"}],"extract":{"name":"donor
+        B differentiated cells RNA"},"file":[{"type":"data","name":"C30061.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip\/C30061.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.raw.1.zip"}},{"type":"derived
+        data","name":"C30061.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip\/C30061.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-3050\/E-MTAB-3050.processed.1.zip"}}],"labeled-extract":{"name":"donor
+        B differentiated cells LEX","label":"biotin"},"source":{"name":"donor B islets"},"variable":[{"name":"cell
+        type","value":"differentiated"},{"name":"individual","value":"B"},{"name":"test
+        result","value":"unsuccessful"}]}]}}'
+    headers:
+      Cache-Control:
+      - no-cache
+      - must-revalidate
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Thu, 16 Jan 2020 19:34:50 GMT
+      Expires:
+      - Fri, 16 May 2008 10:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - AeLoggedUser=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-669/samples
+  response:
+    body:
+      string: '{"experiment":{"api-version":3,"api-revision":"091015","version":1.0,"revision":"091015","accession":"E-MEXP-669","sample":[{"assay":{"name":"UZG0008_HG_U133A"},"characteristic":[{"category":"Sex","value":"female"},{"category":"Individual","value":"99T84"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"low-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"abdomen"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB2"},"file":[{"type":"data","name":"UZG0008_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0008_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB2","label":"biotin"},"scan":{"name":"UZG0008_HG_U133A"},"source":{"name":"NB2"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"low-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0004_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"02\/4295
+        cortex"},{"category":"Organism","value":"Homo sapiens"},{"category":"DiseaseState","value":"normal"},{"category":"TargetedCellType","value":"adrenal
+        cortex cell"},{"category":"OrganismPart","value":"adrenal gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":"embryo"},{"category":"ClinicalInformation","value":"spontaneous
+        abortion for unknown reasons"}],"extract":{"name":"E_cortex2"},"file":[{"type":"data","name":"UZG0004_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0004_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_cortex2","label":"biotin"},"scan":{"name":"UZG0004_HG_U133A"},"source":{"name":"cortex2"},"variable":[{"name":"cell
+        type","value":"adrenal cortex cell"},{"name":"disease state","value":"normal"}]},{"assay":{"name":"UZG0017_HG_U133A"},"characteristic":[{"category":"Sex","value":"male"},{"category":"Individual","value":"99T125"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB10"},"file":[{"type":"data","name":"UZG0017_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0017_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB10","label":"biotin"},"scan":{"name":"UZG0017_HG_U133A"},"source":{"name":"NB10"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0021W_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"E002"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"abdomen"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB14"},"file":[{"type":"data","name":"UZG0021W_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0021W_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB14","label":"biotin"},"scan":{"name":"UZG0021W_HG_U133A"},"source":{"name":"NB14"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0025W_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"E121"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"abdomen"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB17"},"file":[{"type":"data","name":"UZG0025W_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0025W_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB17","label":"biotin"},"scan":{"name":"UZG0025W_HG_U133A"},"source":{"name":"NB17"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0005_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"case4
+        neuroblast"},{"category":"Organism","value":"Homo sapiens"},{"category":"DiseaseState","value":"normal"},{"category":"TargetedCellType","value":"adrenal
+        neuroblast"},{"category":"OrganismPart","value":"adrenal gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":"embryo"},{"category":"ClinicalInformation","value":"abortion
+        for social reasons"}],"extract":{"name":"E_neuroblast3"},"file":[{"type":"data","name":"UZG0005_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0005_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_neuroblast3","label":"biotin"},"scan":{"name":"UZG0005_HG_U133A"},"source":{"name":"neuroblast3"},"variable":[{"name":"cell
+        type","value":"adrenal neuroblast"},{"name":"disease state","value":"normal"}]},{"assay":{"name":"UZG0020_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"D031"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"abdomen"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB13"},"file":[{"type":"data","name":"UZG0020_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0020_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB13","label":"biotin"},"scan":{"name":"UZG0020_HG_U133A"},"source":{"name":"NB13"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0016_HG_U133A"},"characteristic":[{"category":"Sex","value":"male"},{"category":"Individual","value":"00T35"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB9"},"file":[{"type":"data","name":"UZG0016_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0016_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB9","label":"biotin"},"scan":{"name":"UZG0016_HG_U133A"},"source":{"name":"NB9"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0009_HG_U133A"},"characteristic":[{"category":"Sex","value":"female"},{"category":"Individual","value":"96T82"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"low-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB3"},"file":[{"type":"data","name":"UZG0009_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0009_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB3","label":"biotin"},"scan":{"name":"UZG0009_HG_U133A"},"source":{"name":"NB3"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"low-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0006_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"case4
+        cortex"},{"category":"Organism","value":"Homo sapiens"},{"category":"DiseaseState","value":"normal"},{"category":"TargetedCellType","value":"adrenal
+        cortex cell"},{"category":"OrganismPart","value":"adrenal gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":"embryo"},{"category":"ClinicalInformation","value":"abortion
+        for social reasons"}],"extract":{"name":"E_cortex3"},"file":[{"type":"data","name":"UZG0006_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0006_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_cortex3","label":"biotin"},"scan":{"name":"UZG0006_HG_U133A"},"source":{"name":"cortex3"},"variable":[{"name":"cell
+        type","value":"adrenal cortex cell"},{"name":"disease state","value":"normal"}]},{"assay":{"name":"UZG0023W_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"E044"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB16"},"file":[{"type":"data","name":"UZG0023W_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0023W_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB16","label":"biotin"},"scan":{"name":"UZG0023W_HG_U133A"},"source":{"name":"NB16"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0001_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"case1
+        neuroblast"},{"category":"Organism","value":"Homo sapiens"},{"category":"DiseaseState","value":"normal"},{"category":"TargetedCellType","value":"adrenal
+        neuroblast"},{"category":"OrganismPart","value":"adrenal gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":"embryo"},{"category":"ClinicalInformation","value":"therapeutical
+        abortion because of trisomy 21"}],"extract":{"name":"E_neuroblast1"},"file":[{"type":"data","name":"UZG0001_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0001_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_neuroblast1","label":"biotin"},"scan":{"name":"UZG0001_HG_U133A"},"source":{"name":"neuroblast1"},"variable":[{"name":"cell
+        type","value":"adrenal neuroblast"},{"name":"disease state","value":"normal"}]},{"assay":{"name":"UZG0014_HG_U133A"},"characteristic":[{"category":"Sex","value":"male"},{"category":"Individual","value":"03T236"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB7"},"file":[{"type":"data","name":"UZG0014_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0014_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB7","label":"biotin"},"scan":{"name":"UZG0014_HG_U133A"},"source":{"name":"NB7"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0015_HG_U133A"},"characteristic":[{"category":"Sex","value":"female"},{"category":"Individual","value":"00T54"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"low-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB8"},"file":[{"type":"data","name":"UZG0015_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0015_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB8","label":"biotin"},"scan":{"name":"UZG0015_HG_U133A"},"source":{"name":"NB8"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"low-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0010_HG_U133A"},"characteristic":[{"category":"Sex","value":"female"},{"category":"Individual","value":"99T129"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"low-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB4"},"file":[{"type":"data","name":"UZG0010_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0010_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB4","label":"biotin"},"scan":{"name":"UZG0010_HG_U133A"},"source":{"name":"NB4"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"low-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0019_HG_U133A"},"characteristic":[{"category":"Sex","value":"male"},{"category":"Individual","value":"02T192"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"abdomen"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB12"},"file":[{"type":"data","name":"UZG0019_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0019_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB12","label":"biotin"},"scan":{"name":"UZG0019_HG_U133A"},"source":{"name":"NB12"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0007_HG_U133A"},"characteristic":[{"category":"Sex","value":"male"},{"category":"Individual","value":"98T33"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"low-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB1"},"file":[{"type":"data","name":"UZG0007_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0007_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB1","label":"biotin"},"scan":{"name":"UZG0007_HG_U133A"},"source":{"name":"NB1"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"low-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0022W_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"E037"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"abdomen"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB15"},"file":[{"type":"data","name":"UZG0022W_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0022W_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB15","label":"biotin"},"scan":{"name":"UZG0022W_HG_U133A"},"source":{"name":"NB15"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0013_HG_U133A"},"characteristic":[{"category":"Sex","value":"male"},{"category":"Individual","value":"03T304"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"abdomen"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB6"},"file":[{"type":"data","name":"UZG0013_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0013_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB6","label":"biotin"},"scan":{"name":"UZG0013_HG_U133A"},"source":{"name":"NB6"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0002_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"case1
+        cortex"},{"category":"Organism","value":"Homo sapiens"},{"category":"DiseaseState","value":"normal"},{"category":"TargetedCellType","value":"adrenal
+        cortex cell"},{"category":"OrganismPart","value":"adrenal gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":"embryo"},{"category":"ClinicalInformation","value":"therapeutical
+        abortion because of trisomy 21"}],"extract":{"name":"E_cortex1"},"file":[{"type":"data","name":"UZG0002_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0002_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_cortex1","label":"biotin"},"scan":{"name":"UZG0002_HG_U133A"},"source":{"name":"cortex1"},"variable":[{"name":"cell
+        type","value":"adrenal cortex cell"},{"name":"disease state","value":"normal"}]},{"assay":{"name":"UZG0003_HG_U133A"},"characteristic":[{"category":"Sex","value":null},{"category":"Individual","value":"02\/4295
+        neuroblast"},{"category":"Organism","value":"Homo sapiens"},{"category":"DiseaseState","value":"normal"},{"category":"TargetedCellType","value":"adrenal
+        neuroblast"},{"category":"OrganismPart","value":"adrenal gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":"embryo"},{"category":"ClinicalInformation","value":"spontaneous
+        abortion for unknown reasons"}],"extract":{"name":"E_neuroblast2"},"file":[{"type":"data","name":"UZG0003_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0003_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_neuroblast2","label":"biotin"},"scan":{"name":"UZG0003_HG_U133A"},"source":{"name":"neuroblast2"},"variable":[{"name":"cell
+        type","value":"adrenal neuroblast"},{"name":"disease state","value":"normal"}]},{"assay":{"name":"UZG0018_HG_U133A"},"characteristic":[{"category":"Sex","value":"female"},{"category":"Individual","value":"99T129
+        (= NB4)"},{"category":"Organism","value":"Homo sapiens"},{"category":"DiseaseState","value":"low-stage
+        neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB11"},"file":[{"type":"data","name":"UZG0018_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0018_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB11","label":"biotin"},"scan":{"name":"UZG0018_HG_U133A"},"source":{"name":"NB11"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"low-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0012_HG_U133A"},"characteristic":[{"category":"Sex","value":"male"},{"category":"Individual","value":"01T28"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB5"},"file":[{"type":"data","name":"UZG0012_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0012_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB5","label":"biotin"},"scan":{"name":"UZG0012_HG_U133A"},"source":{"name":"NB5"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]},{"assay":{"name":"UZG0026W_HG_U133A"},"characteristic":[{"category":"Sex","value":"female"},{"category":"Individual","value":"04T121"},{"category":"Organism","value":"Homo
+        sapiens"},{"category":"DiseaseState","value":"high-stage neuroblastoma"},{"category":"TargetedCellType","value":"neuroblastoma"},{"category":"OrganismPart","value":"adrenal
+        gland"},{"category":"BioSourceType","value":"frozen_sample"},{"category":"DevelopmentalStage","value":null},{"category":"ClinicalInformation","value":null}],"extract":{"name":"E_NB18"},"file":[{"type":"data","name":"UZG0026W_HG_U133A.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip\/UZG0026W_HG_U133A.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.raw.1.zip"}},{"type":"derived
+        data matrix","name":"RMA_normalised_data_EBI._txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip\/RMA_normalised_data_EBI._txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-669\/E-MEXP-669.processed.1.zip"}}],"labeled-extract":{"name":"L_NB18","label":"biotin"},"scan":{"name":"UZG0026W_HG_U133A"},"source":{"name":"NB18"},"variable":[{"name":"cell
+        type","value":"neuroblastoma"},{"name":"disease state","value":"high-stage
+        neuroblastoma"}]}]}}'
+    headers:
+      Cache-Control:
+      - no-cache
+      - must-revalidate
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Thu, 16 Jan 2020 19:34:52 GMT
+      Expires:
+      - Fri, 16 May 2008 10:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - AeLoggedUser=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2215/samples
+  response:
+    body:
+      string: '{"experiment":{"api-version":3,"api-revision":"091015","version":1.0,"revision":"091015","accession":"E-MEXP-2215","sample":[{"assay":{"name":"cls-4d-1.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"sox10 -\/-"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_cls-4d-1"},"file":[{"type":"data","name":"cls-4d-1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/cls-4d-1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_cls-4d-1","label":"biotin"},"scan":{"name":"cls-4d-1.CEL"},"source":{"name":"cls-4d-1"},"variable":[{"name":"GENOTYPE","value":"sox10
+        -\/-"}]},{"assay":{"name":"hps-4d-1.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"erbb3b -\/-"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_hps-4d-1"},"file":[{"type":"data","name":"hps-4d-1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/hps-4d-1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_hps-4d-1","label":"biotin"},"scan":{"name":"hps-4d-1.CEL"},"source":{"name":"hps-4d-1"},"variable":[{"name":"GENOTYPE","value":"erbb3b
+        -\/-"}]},{"assay":{"name":"cls-4d-2.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"sox10 -\/-"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_cls-4d-2"},"file":[{"type":"data","name":"cls-4d-2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/cls-4d-2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_cls-4d-2","label":"biotin"},"scan":{"name":"cls-4d-2.CEL"},"source":{"name":"cls-4d-2"},"variable":[{"name":"GENOTYPE","value":"sox10
+        -\/-"}]},{"assay":{"name":"hps-4d-2.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"erbb3b -\/-"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_hps-4d-2"},"file":[{"type":"data","name":"hps-4d-2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/hps-4d-2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_hps-4d-2","label":"biotin"},"scan":{"name":"hps-4d-2.CEL"},"source":{"name":"hps-4d-2"},"variable":[{"name":"GENOTYPE","value":"erbb3b
+        -\/-"}]},{"assay":{"name":"cls-sib-4d-1.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"sox10 +\/-; sox10 +\/+"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_cls-sib-4d-1"},"file":[{"type":"data","name":"cls-sib-4d-1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/cls-sib-4d-1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_cls-sib-4d-1","label":"biotin"},"scan":{"name":"cls-sib-4d-1.CEL"},"source":{"name":"cls-sib-4d-1"},"variable":[{"name":"GENOTYPE","value":"sox10
+        +\/-; sox10 +\/+"}]},{"assay":{"name":"hps-ctrl-4d-1.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"erbb3b +\/+"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_hps-ctrl-4d-1"},"file":[{"type":"data","name":"hps-ctrl-4d-1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/hps-ctrl-4d-1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_hps-ctrl-4d-1","label":"biotin"},"scan":{"name":"hps-ctrl-4d-1.CEL"},"source":{"name":"hps-ctrl-4d-1"},"variable":[{"name":"GENOTYPE","value":"erbb3b
+        +\/+"}]},{"assay":{"name":"cls-sib-4d-2.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"sox10 +\/-; sox10 +\/+"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_cls-sib-4d-2"},"file":[{"type":"data","name":"cls-sib-4d-2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/cls-sib-4d-2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_cls-sib-4d-2","label":"biotin"},"scan":{"name":"cls-sib-4d-2.CEL"},"source":{"name":"cls-sib-4d-2"},"variable":[{"name":"GENOTYPE","value":"sox10
+        +\/-; sox10 +\/+"}]},{"assay":{"name":"hps-ctrl-4d-2.CEL"},"characteristic":[{"category":"Age","value":"4
+        days"},{"category":"InitialTimePoint","value":"fertilization"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"Genotype","value":"erbb3b +\/+"},{"category":"DevelopmentalStage","value":"larva"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"E_hps-ctrl-4d-2"},"file":[{"type":"data","name":"hps-ctrl-4d-2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip\/hps-ctrl-4d-2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.raw.1.zip"}},{"type":"derived
+        data matrix","name":"expression-cls-hps-rma.txt.magetab","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip\/expression-cls-hps-rma.txt.magetab","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2215\/E-MEXP-2215.processed.1.zip"}}],"labeled-extract":{"name":"L_hps-ctrl-4d-2","label":"biotin"},"scan":{"name":"hps-ctrl-4d-2.CEL"},"source":{"name":"hps-ctrl-4d-2"},"variable":[{"name":"GENOTYPE","value":"erbb3b
+        +\/+"}]}]}}'
+    headers:
+      Cache-Control:
+      - no-cache
+      - must-revalidate
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Thu, 16 Jan 2020 19:34:53 GMT
+      Expires:
+      - Fri, 16 May 2008 10:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - AeLoggedUser=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2288/samples
+  response:
+    body:
+      string: '{"experiment":{"api-version":3,"api-revision":"091015","version":1.0,"revision":"091015","accession":"E-MEXP-2288","sample":[{"assay":{"name":"Ca
+        2","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ca
+        2"},"file":[{"type":"data","name":"CuCa_2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/CuCa_2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ca
+        2","label":"biotin"},"scan":{"name":"Ca_2.CEL"},"source":{"name":"Ca 2"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Ctrl
+        3","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ctrl
+        3"},"file":[{"type":"data","name":"Control_3.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Control_3.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ctrl
+        3","label":"biotin"},"scan":{"name":"Control_3.CEL"},"source":{"name":"Ctrl
+        3"},"variable":[{"name":"COMPOUND1","value":"none"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Na
+        3","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Na
+        3"},"file":[{"type":"data","name":"Na_3.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Na_3.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Na
+        3","label":"biotin"},"scan":{"name":"Na_3.CEL"},"source":{"name":"Na 3"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Na
+        4","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Na
+        4"},"file":[{"type":"data","name":"Na_4.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Na_4.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Na
+        4","label":"biotin"},"scan":{"name":"Na_4.CEL"},"source":{"name":"Na 4"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"CaCu
+        4","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"CaCu
+        4"},"file":[{"type":"data","name":"CuCa_4.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/CuCa_4.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"CaCu
+        4","label":"biotin"},"scan":{"name":"CuCa_4.CEL"},"source":{"name":"CaCu 4"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"copper"}]},{"assay":{"name":"Ca
+        3","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ca
+        3"},"file":[{"type":"data","name":"Ca_3.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Ca_3.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ca
+        3","label":"biotin"},"scan":{"name":"Ca_3.CEL"},"source":{"name":"Ca 3"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Ctrl
+        1","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ctrl
+        1"},"file":[{"type":"data","name":"Control_1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Control_1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ctrl
+        1","label":"biotin"},"scan":{"name":"Control_1.CEL"},"source":{"name":"Ctrl
+        1"},"variable":[{"name":"COMPOUND1","value":"none"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Cu
+        2","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Cu
+        2"},"file":[{"type":"data","name":"Cu_2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Cu_2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Cu
+        2","label":"biotin"},"scan":{"name":"Cu_2.CEL"},"source":{"name":"Cu 2"},"variable":[{"name":"COMPOUND1","value":"copper"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Ca
+        4","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ca
+        4"},"file":[{"type":"data","name":"Ca_4.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Ca_4.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ca
+        4","label":"biotin"},"scan":{"name":"Ca_4.CEL"},"source":{"name":"Ca 4"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Na
+        1","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Na
+        1"},"file":[{"type":"data","name":"Na_1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Na_1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Na
+        1","label":"biotin"},"scan":{"name":"Na_1.CEL"},"source":{"name":"Na 1"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"CaCu
+        3","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"CaCu
+        3"},"file":[{"type":"data","name":"CuCa_3_2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/CuCa_3_2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"CaCu
+        3","label":"biotin"},"scan":{"name":"CuCa_3_2.CEL"},"source":{"name":"CaCu
+        3"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"copper"}]},{"assay":{"name":"Cu
+        3","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Cu
+        3"},"file":[{"type":"data","name":"NaCu_3.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/NaCu_3.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Cu
+        3","label":"biotin"},"scan":{"name":"Cu_3.CEL"},"source":{"name":"Cu 3"},"variable":[{"name":"COMPOUND1","value":"copper"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"NaCu
+        3","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"NaCu
+        3"},"file":[{"type":"data","name":"NaCu_3.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/NaCu_3.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"NaCu
+        3","label":"biotin"},"scan":{"name":"NaCu_3.CEL"},"source":{"name":"NaCu 3"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"copper"}]},{"assay":{"name":"NaCu
+        1","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"NaCu
+        1"},"file":[{"type":"data","name":"NaCu_1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/NaCu_1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"NaCu
+        1","label":"biotin"},"scan":{"name":"NaCu_1.CEL"},"source":{"name":"NaCu 1"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"copper"}]},{"assay":{"name":"NaCu
+        4","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"NaCu
+        4"},"file":[{"type":"data","name":"NaCu-4.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/NaCu-4.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"NaCu
+        4","label":"biotin"},"scan":{"name":"NaCu-4.CEL"},"source":{"name":"NaCu 4"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"copper"}]},{"assay":{"name":"Cu
+        1","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Cu
+        1"},"file":[{"type":"data","name":"NaCu_1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/NaCu_1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Cu
+        1","label":"biotin"},"scan":{"name":"Cu_1.CEL"},"source":{"name":"Cu 1"},"variable":[{"name":"COMPOUND1","value":"copper"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Ctrl
+        4","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ctrl
+        4"},"file":[{"type":"data","name":"Control_4.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Control_4.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ctrl
+        4","label":"biotin"},"scan":{"name":"Control_4.CEL"},"source":{"name":"Ctrl
+        4"},"variable":[{"name":"COMPOUND1","value":"none"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Cu
+        4","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Cu
+        4"},"file":[{"type":"data","name":"Cu_4.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Cu_4.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Cu
+        4","label":"biotin"},"scan":{"name":"Cu_4.CEL"},"source":{"name":"Cu 4"},"variable":[{"name":"COMPOUND1","value":"copper"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Ctrl
+        2","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ctrl
+        2"},"file":[{"type":"data","name":"Control_2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Control_2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ctrl
+        2","label":"biotin"},"scan":{"name":"Control_2.CEL"},"source":{"name":"Ctrl
+        2"},"variable":[{"name":"COMPOUND1","value":"none"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"Na
+        2","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Na
+        2"},"file":[{"type":"data","name":"Na_2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Na_2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Na
+        2","label":"biotin"},"scan":{"name":"Na_2.CEL"},"source":{"name":"Na 2"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"NaCu
+        2","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"NaCu
+        2"},"file":[{"type":"data","name":"NaCu_2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/NaCu_2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"NaCu
+        2","label":"biotin"},"scan":{"name":"NaCu_2.CEL"},"source":{"name":"NaCu 2"},"variable":[{"name":"COMPOUND1","value":"sodium"},{"name":"COMPOUND2","value":"copper"}]},{"assay":{"name":"Ca
+        1","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"Ca
+        1"},"file":[{"type":"data","name":"Ca_1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/Ca_1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"Ca
+        1","label":"biotin"},"scan":{"name":"Ca_1.CEL"},"source":{"name":"Ca 1"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"none"}]},{"assay":{"name":"CaCu
+        1","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"CaCu
+        1"},"file":[{"type":"data","name":"CuCa_1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/CuCa_1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"CaCu
+        1","label":"biotin"},"scan":{"name":"CuCa_1.CEL"},"source":{"name":"CaCu 1"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"copper"}]},{"assay":{"name":"CaCu
+        2","comment":{"name":"Array Design URI","value":"http:\/\/www.ebi.ac.uk\/aerep\/result?queryFor=PhysicalArrayDesign&aAccession=A-AFFY-38"}},"characteristic":[{"category":"OrganismPart","value":"liver"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"DevelopmentalStage","value":"adult"},{"category":"Sex","value":"mixed_sex"},{"category":"BioSourceType","value":"frozen_sample"}],"extract":{"name":"CaCu
+        2"},"file":[{"type":"data","name":"CuCa_2.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip\/CuCa_2.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.raw.1.zip"}},{"type":"derived
+        data matrix","name":"E-MEXP-2288-processed-data-1778089999.txt","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip\/E-MEXP-2288-processed-data-1778089999.txt","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2288\/E-MEXP-2288.processed.1.zip"}}],"labeled-extract":{"name":"CaCu
+        2","label":"biotin"},"scan":{"name":"CuCa_2.CEL"},"source":{"name":"CaCu 2"},"variable":[{"name":"COMPOUND1","value":"calcium"},{"name":"COMPOUND2","value":"copper"}]}]}}'
+    headers:
+      Cache-Control:
+      - no-cache
+      - must-revalidate
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Thu, 16 Jan 2020 19:34:54 GMT
+      Expires:
+      - Fri, 16 May 2008 10:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - AeLoggedUser=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381/samples
+  response:
+    body:
+      string: '{"experiment":{"api-version":3,"api-revision":"091015","version":1.0,"revision":"091015","accession":"E-MEXP-2381","sample":[{"assay":{"name":"SAMPLE229091SUB6092"},"characteristic":[{"category":"Age","value":"48
+        hours"},{"category":"GeneticModification","value":"induced_mutation"},{"category":"Organism","value":"Danio
+        rerio"},{"category":"BioSourceType","value":"fresh_sample"},{"category":"Genotype","value":"RPL11
+        mutation"},{"category":"DevelopmentalStage","value":"embryo"}],"extract":{"name":"SAMPLE229091SUB6092"},"file":[{"type":"data","name":"135354-135352_ExpPt1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2381\/E-MEXP-2381.raw.1.zip\/135354-135352_ExpPt1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2381\/E-MEXP-2381.raw.1.zip"}}],"labeled-extract":{"name":"SAMPLE229091SUB6092","label":"biotin"},"scan":{"name":"135354-135352_ExpPt1.CEL"},"source":{"name":"SAMPLE229091SUB6092"},"variable":[{"name":"GENOTYPE","value":"RPL11
+        mutation"}]},{"assay":{"name":"SAMPLE229092SUB6092"},"characteristic":[{"category":"Age","value":"48
+        hours"},{"category":"GeneticModification","value":null},{"category":"Organism","value":"Danio
+        rerio"},{"category":"BioSourceType","value":null},{"category":"Genotype","value":"control"},{"category":"DevelopmentalStage","value":null}],"extract":{"name":"SAMPLE229092SUB6092"},"file":[{"type":"data","name":"135353-135351_CtrlPt1.CEL","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2381\/E-MEXP-2381.raw.1.zip\/135353-135351_CtrlPt1.CEL","comment":{"name":"ArrayExpress
+        FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MEXP\/E-MEXP-2381\/E-MEXP-2381.raw.1.zip"}}],"labeled-extract":{"name":"SAMPLE229092SUB6092","label":"biotin"},"scan":{"name":"135353-135351_CtrlPt1.CEL"},"source":{"name":"SAMPLE229092SUB6092"},"variable":[{"name":"GENOTYPE","value":"control"}]}]}}'
+    headers:
+      Cache-Control:
+      - no-cache
+      - must-revalidate
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Thu, 16 Jan 2020 19:34:56 GMT
+      Expires:
+      - Fri, 16 May 2008 10:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - AeLoggedUser=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-6739/samples
+  response:
+    body:
+      string: '{"experiment":{"api-version":3,"api-revision":"091015","version":1.0,"revision":"091015","accession":"E-MTAB-6739","sample":[{"assay":{"name":"Sample
+        1","comment":{"name":"ENA_EXPERIMENT","value":"ERX2579724"}},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"individual","value":1},{"category":"age","value":39,"unit":"year"},{"category":"sex","value":"male"},{"category":"organism
+        part","value":"blood"},{"category":"cell type","value":"peripheral blood mononuclear
+        cells"},{"category":"disease","value":"colitis ulcerosa"},{"category":"clinical
+        history","value":"remission upon azathioprine treatment"}],"extract":{"name":"Sample
+        1","comment":[{"name":"LIBRARY_LAYOUT","value":"SINGLE"},{"name":"LIBRARY_SELECTION","value":"Oligo-dT"},{"name":"LIBRARY_SOURCE","value":"TRANSCRIPTOMIC"},{"name":"LIBRARY_STRATEGY","value":"RNA-Seq"},{"name":"LIBRARY_STRAND","value":"not
+        applicable"}]},"file":[{"type":"derived data","name":"patient.xlsx","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip\/patient.xlsx","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip"}}],"scan":{"name":"Patient_Nr_3.fastq.gz","comment":[{"name":"SUBMITTED_FILE_NAME","value":"Patient_Nr_3.fastq.gz"},{"name":"ENA_RUN","value":"ERR2561380"},{"name":"FASTQ_URI","value":"ftp:\/\/ftp.sra.ebi.ac.uk\/vol1\/fastq\/ERR256\/000\/ERR2561380\/ERR2561380.fastq.gz"}]},"source":{"name":"Sample
+        1","comment":[{"name":"ENA_SAMPLE","value":"ERS2465342"},{"name":"BioSD_SAMPLE","value":"SAMEA4644695"},{"name":"drug
+        name","value":"azathioprine"}]},"variable":[{"name":"clinical history","value":"remission
+        upon azathioprine treatment"},{"name":"compound","value":"azathioprine"},{"name":"dose","value":175,"unit":"milligram"}]},{"assay":{"name":"Sample
+        2","comment":{"name":"ENA_EXPERIMENT","value":"ERX2579725"}},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"individual","value":2},{"category":"age","value":41,"unit":"year"},{"category":"sex","value":"male"},{"category":"organism
+        part","value":"blood"},{"category":"cell type","value":"peripheral blood mononuclear
+        cells"},{"category":"disease","value":"colitis ulcerosa"},{"category":"clinical
+        history","value":"remission upon azathioprine treatment"}],"extract":{"name":"Sample
+        2","comment":[{"name":"LIBRARY_LAYOUT","value":"SINGLE"},{"name":"LIBRARY_SELECTION","value":"Oligo-dT"},{"name":"LIBRARY_SOURCE","value":"TRANSCRIPTOMIC"},{"name":"LIBRARY_STRATEGY","value":"RNA-Seq"},{"name":"LIBRARY_STRAND","value":"not
+        applicable"}]},"file":[{"type":"derived data","name":"patient.xlsx","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip\/patient.xlsx","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip"}}],"scan":{"name":"Patient_Nr_4.fastq.gz","comment":[{"name":"SUBMITTED_FILE_NAME","value":"Patient_Nr_4.fastq.gz"},{"name":"ENA_RUN","value":"ERR2561381"},{"name":"FASTQ_URI","value":"ftp:\/\/ftp.sra.ebi.ac.uk\/vol1\/fastq\/ERR256\/001\/ERR2561381\/ERR2561381.fastq.gz"}]},"source":{"name":"Sample
+        2","comment":[{"name":"ENA_SAMPLE","value":"ERS2465343"},{"name":"BioSD_SAMPLE","value":"SAMEA4644696"},{"name":"drug
+        name","value":"azathioprine"}]},"variable":[{"name":"clinical history","value":"remission
+        upon azathioprine treatment"},{"name":"compound","value":"azathioprine"},{"name":"dose","value":175,"unit":"milligram"}]},{"assay":{"name":"Sample
+        3","comment":{"name":"ENA_EXPERIMENT","value":"ERX2579726"}},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"individual","value":3},{"category":"age","value":31,"unit":"year"},{"category":"sex","value":"female"},{"category":"organism
+        part","value":"blood"},{"category":"cell type","value":"peripheral blood mononuclear
+        cells"},{"category":"disease","value":"colitis ulcerosa"},{"category":"clinical
+        history","value":"remission upon azathioprine treatment"}],"extract":{"name":"Sample
+        3","comment":[{"name":"LIBRARY_LAYOUT","value":"SINGLE"},{"name":"LIBRARY_SELECTION","value":"Oligo-dT"},{"name":"LIBRARY_SOURCE","value":"TRANSCRIPTOMIC"},{"name":"LIBRARY_STRATEGY","value":"RNA-Seq"},{"name":"LIBRARY_STRAND","value":"not
+        applicable"}]},"file":[{"type":"derived data","name":"patient.xlsx","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip\/patient.xlsx","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip"}}],"scan":{"name":"Patient_Nr_7.fastq.gz","comment":[{"name":"SUBMITTED_FILE_NAME","value":"Patient_Nr_7.fastq.gz"},{"name":"ENA_RUN","value":"ERR2561382"},{"name":"FASTQ_URI","value":"ftp:\/\/ftp.sra.ebi.ac.uk\/vol1\/fastq\/ERR256\/002\/ERR2561382\/ERR2561382.fastq.gz"}]},"source":{"name":"Sample
+        3","comment":[{"name":"ENA_SAMPLE","value":"ERS2465344"},{"name":"BioSD_SAMPLE","value":"SAMEA4644697"},{"name":"drug
+        name","value":"Puri-Nethol"}]},"variable":[{"name":"clinical history","value":"remission
+        upon azathioprine treatment"},{"name":"compound","value":"mercaptopurine"},{"name":"dose","value":50,"unit":"milligram"}]},{"assay":{"name":"Sample
+        4","comment":{"name":"ENA_EXPERIMENT","value":"ERX2579727"}},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"individual","value":4},{"category":"age","value":39,"unit":"year"},{"category":"sex","value":"female"},{"category":"organism
+        part","value":"blood"},{"category":"cell type","value":"peripheral blood mononuclear
+        cells"},{"category":"disease","value":"colitis ulcerosa"},{"category":"clinical
+        history","value":"refractory upon azathioprine treatment"}],"extract":{"name":"Sample
+        4","comment":[{"name":"LIBRARY_LAYOUT","value":"SINGLE"},{"name":"LIBRARY_SELECTION","value":"Oligo-dT"},{"name":"LIBRARY_SOURCE","value":"TRANSCRIPTOMIC"},{"name":"LIBRARY_STRATEGY","value":"RNA-Seq"},{"name":"LIBRARY_STRAND","value":"not
+        applicable"}]},"file":[{"type":"derived data","name":"patient.xlsx","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip\/patient.xlsx","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip"}}],"scan":{"name":"Patient_Nr_2.fastq.gz","comment":[{"name":"SUBMITTED_FILE_NAME","value":"Patient_Nr_2.fastq.gz"},{"name":"ENA_RUN","value":"ERR2561383"},{"name":"FASTQ_URI","value":"ftp:\/\/ftp.sra.ebi.ac.uk\/vol1\/fastq\/ERR256\/003\/ERR2561383\/ERR2561383.fastq.gz"}]},"source":{"name":"Sample
+        4","comment":[{"name":"ENA_SAMPLE","value":"ERS2465345"},{"name":"BioSD_SAMPLE","value":"SAMEA4644698"},{"name":"drug
+        name","value":"Imurek"}]},"variable":[{"name":"clinical history","value":"refractory
+        upon azathioprine treatment"},{"name":"compound","value":"azathioprine"},{"name":"dose","value":150,"unit":"milligram"}]},{"assay":{"name":"Sample
+        5","comment":{"name":"ENA_EXPERIMENT","value":"ERX2579728"}},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"individual","value":5},{"category":"age","value":28,"unit":"year"},{"category":"sex","value":"male"},{"category":"organism
+        part","value":"blood"},{"category":"cell type","value":"peripheral blood mononuclear
+        cells"},{"category":"disease","value":"colitis ulcerosa"},{"category":"clinical
+        history","value":"refractory upon azathioprine treatment"}],"extract":{"name":"Sample
+        5","comment":[{"name":"LIBRARY_LAYOUT","value":"SINGLE"},{"name":"LIBRARY_SELECTION","value":"Oligo-dT"},{"name":"LIBRARY_SOURCE","value":"TRANSCRIPTOMIC"},{"name":"LIBRARY_STRATEGY","value":"RNA-Seq"},{"name":"LIBRARY_STRAND","value":"not
+        applicable"}]},"file":[{"type":"derived data","name":"patient.xlsx","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip\/patient.xlsx","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip"}}],"scan":{"name":"Patient_Nr_12.fastq.gz","comment":[{"name":"SUBMITTED_FILE_NAME","value":"Patient_Nr_12.fastq.gz"},{"name":"ENA_RUN","value":"ERR2561384"},{"name":"FASTQ_URI","value":"ftp:\/\/ftp.sra.ebi.ac.uk\/vol1\/fastq\/ERR256\/004\/ERR2561384\/ERR2561384.fastq.gz"}]},"source":{"name":"Sample
+        5","comment":[{"name":"ENA_SAMPLE","value":"ERS2465346"},{"name":"BioSD_SAMPLE","value":"SAMEA4644699"},{"name":"drug
+        name","value":"Puri-Nethol"}]},"variable":[{"name":"clinical history","value":"refractory
+        upon azathioprine treatment"},{"name":"compound","value":"mercaptopurine"},{"name":"dose","value":50,"unit":"milligram"}]},{"assay":{"name":"Sample
+        6","comment":{"name":"ENA_EXPERIMENT","value":"ERX2579729"}},"characteristic":[{"category":"organism","value":"Homo
+        sapiens"},{"category":"individual","value":6},{"category":"age","value":45,"unit":"year"},{"category":"sex","value":"male"},{"category":"organism
+        part","value":"blood"},{"category":"cell type","value":"peripheral blood mononuclear
+        cells"},{"category":"disease","value":"colitis ulcerosa"},{"category":"clinical
+        history","value":"refractory upon azathioprine treatment"}],"extract":{"name":"Sample
+        6","comment":[{"name":"LIBRARY_LAYOUT","value":"SINGLE"},{"name":"LIBRARY_SELECTION","value":"Oligo-dT"},{"name":"LIBRARY_SOURCE","value":"TRANSCRIPTOMIC"},{"name":"LIBRARY_STRATEGY","value":"RNA-Seq"},{"name":"LIBRARY_STRAND","value":"not
+        applicable"}]},"file":[{"type":"derived data","name":"patient.xlsx","url":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip\/patient.xlsx","comment":{"name":"Derived
+        ArrayExpress FTP file","value":"ftp:\/\/ftp.ebi.ac.uk\/pub\/databases\/microarray\/data\/experiment\/MTAB\/E-MTAB-6739\/E-MTAB-6739.processed.1.zip"}}],"scan":{"name":"Patient_Nr_28.fastq.gz","comment":[{"name":"SUBMITTED_FILE_NAME","value":"Patient_Nr_28.fastq.gz"},{"name":"ENA_RUN","value":"ERR2561385"},{"name":"FASTQ_URI","value":"ftp:\/\/ftp.sra.ebi.ac.uk\/vol1\/fastq\/ERR256\/005\/ERR2561385\/ERR2561385.fastq.gz"}]},"source":{"name":"Sample
+        6","comment":[{"name":"ENA_SAMPLE","value":"ERS2465347"},{"name":"BioSD_SAMPLE","value":"SAMEA4644700"},{"name":"drug
+        name","value":"Imurek"}]},"variable":[{"name":"clinical history","value":"refractory
+        upon azathioprine treatment"},{"name":"compound","value":"azathioprine"},{"name":"dose","value":150,"unit":"milligram"}]}]}}'
+    headers:
+      Cache-Control:
+      - no-cache
+      - must-revalidate
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Thu, 16 Jan 2020 19:34:58 GMT
+      Expires:
+      - Fri, 16 May 2008 10:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - AeLoggedUser=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1
