@@ -330,8 +330,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
         "/home/user/data_store/cassettes/surveyor.test_end_to_end.geo_archive_redownloading.yaml",
         ignore_hosts=["nomad"],
     )
-    @patch("data_refinery_foreman.surveyor.surveyor.GeoSurveyor")
-    def test_geo_archive_redownloading(self, mock_surveyor):
+    def test_geo_archive_redownloading(self):
         """Survey, download, then process an experiment we know is NO_OP.
 
         All the data for the experiment are in the same archive, which
@@ -340,8 +339,6 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
         This is another test which uses Aspera so it unfortunately
         cannot be made to run without relying on NCBI's aspera server.
         """
-        mock_surveyor.side_effect = build_surveyor_init_mock("GEO")
-
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
