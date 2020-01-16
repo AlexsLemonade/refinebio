@@ -1115,10 +1115,6 @@ class ComputedFile(models.Model):
                 s3_key,
                 ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
             )
-
-            self.s3_bucket = s3_bucket
-            self.s3_key = s3_key
-            self.save()
         except Exception:
             logger.exception(
                 "Error uploading computed file to S3",
@@ -1127,6 +1123,10 @@ class ComputedFile(models.Model):
                 s3_bucket=self.s3_bucket,
             )
             return False
+
+        self.s3_bucket = s3_bucket
+        self.s3_key = s3_key
+        self.save()
 
         return True
 
