@@ -223,6 +223,8 @@ output "environment_variables" {
       value = "${var.raven_dsn_api}"},
     {name = "S3_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_bucket.id}"},
+    {name = "S3_COMPENDIA_BUCKET_NAME"
+      value = "${aws_s3_bucket.data_refinery_compendia_bucket.id}"},
     {name = "S3_RESULTS_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
