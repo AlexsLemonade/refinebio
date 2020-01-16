@@ -66,6 +66,21 @@ EXTERNAL_FILE_URL_MAPPING = {
     "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-3303/E-GEOD-3303.processed.1.zip": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/E-GEOD-3303.processed.1.zip",  # noqa
     # GEO:
     "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE102nnn/GSE102571/miniml/GSE102571_family.xml.tgz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSE102571_family.xml.tgz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680043/suppl/GSM2680043_C1_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680043_C1_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680044/suppl/GSM2680044_C2_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680044_C2_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680045/suppl/GSM2680045_C3_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680045_C3_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680046/suppl/GSM2680046_C4_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680046_C4_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680047/suppl/GSM2680047_C5_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680047_C5_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680048/suppl/GSM2680048_WD1_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680048_WD1_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680049/suppl/GSM2680049_WD2_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680049_WD2_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680050/suppl/GSM2680050_WD3_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680050_WD3_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680051/suppl/GSM2680051_WD4_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680051_WD4_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680052/suppl/GSM2680052_WD6_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680052_WD6_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680053/suppl/GSM2680053_WCu1_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680053_WCu1_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680054/suppl/GSM2680054_WCu2_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680054_WCu2_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680055/suppl/GSM2680055_WCu3_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680055_WCu3_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680056/suppl/GSM2680056_WCu7_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680056_WCu7_Cu.CEL.gz",  # noqa
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2680nnn/GSM2680057/suppl/GSM2680057_WCu8_Cu.CEL.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSM2680057_WCu8_Cu.CEL.gz",  # noqa
 }
 
 
@@ -315,7 +330,8 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
         "/home/user/data_store/cassettes/surveyor.test_end_to_end.geo_archive_redownloading.yaml",
         ignore_hosts=["nomad"],
     )
-    def test_geo_archive_redownloading(self):
+    @patch("data_refinery_foreman.surveyor.surveyor.GeoSurveyor")
+    def test_geo_archive_redownloading(self, mock_surveyor):
         """Survey, download, then process an experiment we know is NO_OP.
 
         All the data for the experiment are in the same archive, which
@@ -324,6 +340,8 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
         This is another test which uses Aspera so it unfortunately
         cannot be made to run without relying on NCBI's aspera server.
         """
+        mock_surveyor.side_effect = build_surveyor_init_mock("GEO")
+
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
@@ -432,7 +450,8 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
         "/home/user/data_store/cassettes/surveyor.test_end_to_end.geo_celgz_redownloading.yaml",
         ignore_hosts=["nomad"],
     )
-    def test_geo_celgz_redownloading(self):
+    @patch("data_refinery_foreman.surveyor.surveyor.GeoSurveyor")
+    def test_geo_celgz_redownloading(self, mock_surveyor):
         """Survey, download, then process an experiment we know is Affymetrix.
 
         Each of the experiment's samples are in their own .cel.gz
@@ -441,6 +460,8 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
         This is another test which uses Aspera so it unfortunately
         cannot be made to run without relying on NCBI's aspera server.
         """
+        mock_surveyor.side_effect = build_surveyor_init_mock("GEO")
+
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
