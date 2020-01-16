@@ -1102,14 +1102,11 @@ class ComputedFile(models.Model):
         self.last_modified = current_time
         return super(ComputedFile, self).save(*args, **kwargs)
 
-    def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
+    def sync_to_s3(self, s3_bucket, s3_key) -> bool:
         """ Syncs a file to AWS S3.
         """
         if not settings.RUNNING_IN_CLOUD:
             return True
-
-        self.s3_bucket = s3_bucket
-        self.s3_key = s3_key
 
         try:
             S3.upload_file(
@@ -1118,6 +1115,9 @@ class ComputedFile(models.Model):
                 s3_key,
                 ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
             )
+
+            self.s3_bucket = s3_bucket
+            self.s3_key = s3_key
             self.save()
         except Exception:
             logger.exception(
@@ -1126,8 +1126,6 @@ class ComputedFile(models.Model):
                 s3_key=self.s3_key,
                 s3_bucket=self.s3_bucket,
             )
-            self.s3_bucket = None
-            self.s3_key = None
             return False
 
         return True
