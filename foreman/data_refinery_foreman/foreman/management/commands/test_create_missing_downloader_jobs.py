@@ -1,6 +1,4 @@
-from django.test import TransactionTestCase
-from unittest.mock import Mock, patch, call
-from django.test import tag
+from django.test import TransactionTestCase, tag
 
 from data_refinery_common.models import (
     DownloaderJob,
@@ -16,7 +14,6 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
 )
 from data_refinery_foreman.foreman.management.commands.create_missing_downloader_jobs import Command
-from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
 
 class SurveyTestCase(TransactionTestCase):

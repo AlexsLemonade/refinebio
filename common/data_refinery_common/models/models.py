@@ -1,33 +1,26 @@
-import hashlib
-import io
 import os
 import shutil
-import pytz
 import uuid
-import boto3
+from typing import Set
 
-from botocore.client import Config
-
-from datetime import datetime
-from functools import partial
-from typing import Dict, Set
-
-from django.db.models import Count, Prefetch, DateTimeField
-from django.db.models.expressions import F, Q
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
-from django.db import transaction
 from django.db import models
+from django.db.models import Count
+from django.db.models.expressions import Q
 from django.utils import timezone
+
+import boto3
+from botocore.client import Config
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
 from data_refinery_common.utils import (
-    get_env_variable,
-    get_s3_url,
+    FileUtils,
     calculate_file_size,
     calculate_sha1,
-    FileUtils,
+    get_env_variable,
+    get_s3_url,
 )
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
@@ -609,6 +602,25 @@ class ComputationalResult(models.Model):
         for computed_file in self.computedfile_set.all():
             computed_file.delete_s3_file()
 
+    def get_index_length(self):
+        """ Pull the index_length from one of the result annotations """
+        annotations = ComputationalResultAnnotation.objects.filter(result=self)
+
+        for annotation_json in annotations:
+            if "index_length" in annotation_json.data:
+                return annotation_json.data["index_length"]
+
+        return None
+
+    def get_quant_sf_file(self):
+        return (
+            ComputedFile.objects.filter(
+                result=self, filename="quant.sf", s3_key__isnull=False, s3_bucket__isnull=False,
+            )
+            .order_by("-id")
+            .first()
+        )
+
 
 class ComputationalResultAnnotation(models.Model):
     """ Non-standard information associated with an ComputationalResult """
@@ -893,7 +905,7 @@ class OriginalFile(models.Model):
             pass
         except TypeError:
             pass
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path
             )
@@ -1090,14 +1102,11 @@ class ComputedFile(models.Model):
         self.last_modified = current_time
         return super(ComputedFile, self).save(*args, **kwargs)
 
-    def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
+    def sync_to_s3(self, s3_bucket, s3_key) -> bool:
         """ Syncs a file to AWS S3.
         """
         if not settings.RUNNING_IN_CLOUD:
             return True
-
-        self.s3_bucket = s3_bucket
-        self.s3_key = s3_key
 
         try:
             S3.upload_file(
@@ -1106,17 +1115,18 @@ class ComputedFile(models.Model):
                 s3_key,
                 ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
             )
-            self.save()
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Error uploading computed file to S3",
                 computed_file_id=self.pk,
                 s3_key=self.s3_key,
                 s3_bucket=self.s3_bucket,
             )
-            self.s3_bucket = None
-            self.s3_key = None
             return False
+
+        self.s3_bucket = s3_bucket
+        self.s3_key = s3_key
+        self.save()
 
         return True
 
@@ -1236,7 +1246,7 @@ class ComputedFile(models.Model):
             pass
         except TypeError:
             pass
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Unexpected delete file exception.", absolute_file_path=self.absolute_file_path
             )

@@ -1,13 +1,9 @@
-import requests
 from xml.etree import ElementTree
 
-from django.apps import apps
 from django.db import models
 from django.utils import timezone
 
-
-from data_refinery_common.models.base_models import TimeTrackedModel
-
+import requests
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
@@ -39,7 +35,7 @@ def get_scientific_name(taxonomy_id: int) -> str:
     try:
         root = ElementTree.fromstring(response.text)
         taxon_list = root.findall("Taxon")
-    except Exception as e:
+    except Exception:
         logger.error("Bad response from eUtils.", text=response.text)
         raise
 
@@ -60,7 +56,7 @@ def get_taxonomy_id(organism_name: str) -> int:
     try:
         root = ElementTree.fromstring(response.text)
         id_list = root.find("IdList").findall("Id")
-    except Exception as e:
+    except Exception:
         logger.error("Bad response from eUtils.", text=response.text)
         raise
 
@@ -90,7 +86,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     try:
         root = ElementTree.fromstring(response.text)
         id_list = root.find("IdList").findall("Id")
-    except Exception as e:
+    except Exception:
         logger.error("Bad response from eUtils.", text=response.text)
         raise
 

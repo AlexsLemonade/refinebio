@@ -1,19 +1,19 @@
 import os
 import shutil
-from contextlib import closing
-from django.test import TestCase, tag
 from pathlib import Path
-from unittest.mock import MagicMock
+
+from django.test import TestCase, tag
+
 from data_refinery_common.models import (
-    SurveyJob,
-    ProcessorJob,
-    OriginalFile,
-    Sample,
     Organism,
+    OriginalFile,
     OriginalFileSampleAssociation,
+    ProcessorJob,
     ProcessorJobOriginalFileAssociation,
+    Sample,
+    SurveyJob,
 )
-from data_refinery_workers.processors import no_op, utils
+from data_refinery_workers.processors import no_op
 
 
 class NOOPTestCase(TestCase):

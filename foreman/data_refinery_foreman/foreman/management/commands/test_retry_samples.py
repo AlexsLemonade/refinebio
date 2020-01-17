@@ -1,13 +1,8 @@
-import datetime
-import json
-import os
+from typing import Dict
 
 from django.test import TestCase
 from django.utils import timezone
-from typing import Dict, List
-from unittest.mock import MagicMock, Mock, patch, call
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -18,10 +13,10 @@ from data_refinery_common.models import (
     ExperimentOrganismAssociation,
     ExperimentResultAssociation,
     ExperimentSampleAssociation,
-    OriginalFile,
-    OriginalFileSampleAssociation,
     Organism,
     OrganismIndex,
+    OriginalFile,
+    OriginalFileSampleAssociation,
     Processor,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
@@ -37,8 +32,6 @@ def setup_experiment() -> Dict:
 
     # Create the experiment
     experiment_accession = "SRP095529"
-    data_dir = "/home/user/data_store/"
-    experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(
         accession_code=experiment_accession, technology="RNA-SEQ"
     )

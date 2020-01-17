@@ -17,16 +17,13 @@ import urllib
 from typing import Dict
 
 from django.core.management.base import BaseCommand
-from rpy2.rinterface import RRuntimeError
+
 import rpy2.robjects as ro
+from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import (
-    get_env_variable,
-    get_readable_affymetrix_names,
-)
 from data_refinery_common.models import *
-
+from data_refinery_common.utils import get_env_variable, get_readable_affymetrix_names
 
 logger = get_and_configure_logger(__name__)
 CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes

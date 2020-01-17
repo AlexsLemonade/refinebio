@@ -1,17 +1,14 @@
-import random
-import sys
 import time
-import re
-from typing import Dict, List
 
 from django.core.management.base import BaseCommand
-from django.db.models import OuterRef, Subquery, Count
-from dateutil.parser import parse as parse_date
-from data_refinery_common.models import ProcessorJob, Sample, ComputedFile
-from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.job_management import create_downloader_job
-from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
+from django.db.models import Count, OuterRef, Subquery
 
+from dateutil.parser import parse as parse_date
+
+from data_refinery_common.job_management import create_downloader_job
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import ComputedFile, ProcessorJob, Sample
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 
 logger = get_and_configure_logger(__name__)
 

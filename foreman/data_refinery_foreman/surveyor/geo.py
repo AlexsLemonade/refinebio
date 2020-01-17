@@ -1,13 +1,11 @@
-import GEOparse
-import dateutil.parser
-import logging
-import requests
 import shutil
+from re import sub
+from typing import Dict, List
 
-from re import sub, split, match
-from typing import List, Dict
+import dateutil.parser
+import GEOparse
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,
@@ -22,15 +20,14 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
 )
 from data_refinery_common.utils import (
+    FileUtils,
     get_normalized_platform,
     get_readable_affymetrix_names,
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,
-    FileUtils,
 )
-from data_refinery_foreman.surveyor import utils, harmony
+from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-
 
 logger = get_and_configure_logger(__name__)
 GEOparse.logger.set_verbosity("WARN")
@@ -112,16 +109,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object.platform_name = platform_title
 
             # Determine manufacturer
-
-            # Sometimes this field is a list, other times it's not.
-            # Example of it being a list: GSE113945
-            channel1_temp = sample_metadata.get("label_protocol_ch1", "")
-            if type(channel1_temp) != list:
-                channel1_protocol = channel1_temp.upper()
-            elif len(channel1_temp) > 0:
-                channel1_protocol = channel1_temp[0].upper()
-            else:
-                channel1_protocol = ""
 
             platform = sample_object.pretty_platform.upper()
             if "AGILENT" in platform:

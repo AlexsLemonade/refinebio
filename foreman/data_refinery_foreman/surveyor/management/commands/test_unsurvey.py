@@ -1,20 +1,20 @@
-import json
-import datetime
-from unittest.mock import Mock, patch, call
+from unittest.mock import patch
+
 from django.test import TransactionTestCase
+
 from data_refinery_common.models import (
     DownloaderJob,
-    SurveyJob,
-    SurveyJobKeyValue,
-    Organism,
     Experiment,
     ExperimentSampleAssociation,
-    Sample,
+    Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
+    Sample,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
-from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
+from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 
 
 class SurveyTestCase(TransactionTestCase):

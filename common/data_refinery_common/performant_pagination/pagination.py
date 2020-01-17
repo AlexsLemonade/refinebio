@@ -5,6 +5,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 from base64 import b64decode, b64encode
+
 from django.core.paginator import Page
 from django.db.models import DateTimeField
 

@@ -1,6 +1,7 @@
-from unittest.mock import Mock, patch, call
+from unittest.mock import patch
+
 from django.test import TestCase
-from data_refinery_foreman.surveyor.sra import SraSurveyor
+
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -11,6 +12,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
+from data_refinery_foreman.surveyor.sra import SraSurveyor
 
 
 class SraSurveyorTestCase(TestCase):

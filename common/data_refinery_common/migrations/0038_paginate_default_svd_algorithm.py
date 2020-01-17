@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 
 
 def batch_update(queryset, batch=1000, **changes):

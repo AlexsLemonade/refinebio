@@ -5,17 +5,16 @@ https://github.com/alexslemonade/refinebio/issues/1391
 without any luck.
 """
 
+
 from django.core.management.base import BaseCommand
 from django.db.models import Count
+
 from dateutil.parser import parse as parse_date
-import time
 
-from data_refinery_common.models import Sample
-from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.job_management import create_downloader_job
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import Sample
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
-
-from data_refinery_common import job_lookup
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,

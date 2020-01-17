@@ -3,22 +3,17 @@ in the experiment_list. experiment list should be a file containing
 one experiment accession code per line.
 """
 
-import boto3
-import botocore
-import nomad
 import time
 import uuid
 
 from django.core.management.base import BaseCommand
-from nomad.api.exceptions import URLNotFoundNomadException
+
+import boto3
+import botocore
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.job_lookup import SurveyJobTypes
-from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
-from data_refinery_common.utils import parse_s3_url, get_env_variable
-from data_refinery_foreman.surveyor import surveyor
-
+from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
 

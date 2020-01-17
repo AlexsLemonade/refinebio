@@ -1,28 +1,27 @@
 import os
-import shutil
-from contextlib import closing
-from django.test import TransactionTestCase, TestCase, tag
-from unittest.mock import MagicMock
+
+from django.test import TransactionTestCase, tag
+
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
-    SurveyJob,
-    ProcessorJob,
-    OriginalFile,
-    Sample,
-    Organism,
-    SampleComputedFileAssociation,
-    ProcessorJobOriginalFileAssociation,
-    Dataset,
-    ComputedFile,
     ComputationalResult,
     ComputationalResultAnnotation,
+    ComputedFile,
+    Dataset,
     Experiment,
     ExperimentSampleAssociation,
+    Organism,
+    OriginalFile,
+    ProcessorJob,
     ProcessorJobDatasetAssociation,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
     SampleAnnotation,
+    SampleComputedFileAssociation,
     SampleResultAssociation,
+    SurveyJob,
 )
-from data_refinery_workers.processors import create_compendia, smasher, utils
+from data_refinery_workers.processors import create_compendia
 
 
 class CompendiaTestCase(TransactionTestCase):
@@ -323,8 +322,8 @@ class CompendiaTestCase(TransactionTestCase):
         final_context = create_compendia.create_compendia(job.id)
 
         # Verify result
-        self.assertEqual(len(final_context["computed_files"]), 1)
-        for file in final_context["computed_files"]:
+        self.assertEqual(final_context["compendium_result"].result.computedfile_set.count(), 1)
+        for file in final_context["compendium_result"].result.computedfile_set.all():
             self.assertTrue(os.path.exists(file.absolute_file_path))
 
         # test compendium_result

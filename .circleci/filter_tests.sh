@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo $(git log --format=oneline -n 1 "$CIRCLE_SHA1");
 if [[ $(git log --format=oneline -n 1 "$CIRCLE_SHA1") = *"noslow"* ]];
 then

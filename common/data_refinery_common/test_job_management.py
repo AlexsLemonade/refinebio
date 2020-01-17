@@ -1,7 +1,4 @@
-from django.test import TestCase, tag
-from typing import List
-from unittest.mock import patch, call
-from urllib.error import URLError
+from django.test import TestCase
 
 from data_refinery_common.job_management import create_processor_job_for_original_files
 

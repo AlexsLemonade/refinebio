@@ -3,14 +3,16 @@ This command will remove experiments and all data that is uniquely associated wi
 (i.e. it's only associated with these experiment and not others.)
 This can be used so that a surveyor job that went wrong can be rerun.
 """
-import boto3
-import botocore
 import sys
 import uuid
 
 from django.core.management.base import BaseCommand
-from data_refinery_common.models import *
+
+import boto3
+import botocore
+
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import *
 from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
@@ -240,7 +242,7 @@ class Command(BaseCommand):
             logger.info("Purging Experiment with accession: %s", accession)
             try:
                 purge_experiment(accession)
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     "Exception caught while purging experiment with accession: %s", accession
                 )

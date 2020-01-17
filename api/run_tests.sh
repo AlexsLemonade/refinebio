@@ -23,7 +23,7 @@ fi
 ./scripts/prepare_image.sh -i api_local -s api
 
 . ./scripts/common.sh
-HOST_IP=$(get_ip_address)
+HOST_IP=$(get_ip_address || echo 127.0.0.1)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
 

@@ -1,11 +1,10 @@
 import random
-import requests
-from typing import List, Dict
+import xml.etree.ElementTree as ET
+from typing import Dict, List
 
 from django.utils.dateparse import parse_datetime
-import xml.etree.ElementTree as ET
 
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,
@@ -21,9 +20,8 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.rna_seq import _build_ena_file_url
 from data_refinery_common.utils import get_fasp_sra_download
-from data_refinery_foreman.surveyor import utils, harmony
+from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-
 
 logger = get_and_configure_logger(__name__)
 
@@ -194,7 +192,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         )
         try:
             run_xml = ET.fromstring(response.text)
-        except Exception as e:
+        except Exception:
             logger.exception("Unable to decode response", response=response.text)
             return {}
 

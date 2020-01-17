@@ -1,12 +1,11 @@
 import csv
 import multiprocessing
 import os
-import string
 import subprocess
-import warnings
+from typing import Dict
 
 from django.utils import timezone
-from typing import Dict
+
 import numpy as np
 import pandas as pd
 
@@ -29,7 +28,6 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
-
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
@@ -319,7 +317,6 @@ def _run_illumina(job_context: Dict) -> Dict:
     Expects a job_context which has been pre-populated with inputs, outputs
     and the column identifiers which the R script needs for processing.
     """
-    input_file_path = job_context["input_file_path"]
 
     try:
         job_context["time_start"] = timezone.now()

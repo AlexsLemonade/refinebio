@@ -1,46 +1,36 @@
 # -*- coding: utf-8 -*-
 
-import boto3
-import csv
-import os
-import rpy2
-import rpy2.robjects as ro
-import shutil
-import simplejson as json
-import string
-import warnings
-import requests
-import psutil
 import logging
+import os
+import shutil
 import time
-
-from botocore.exceptions import ClientError
 from datetime import timedelta
+from pathlib import Path
+from typing import Dict, List
+from urllib.parse import quote
+
 from django.conf import settings
 from django.utils import timezone
-from pathlib import Path
-from rpy2.robjects import pandas2ri
-from rpy2.robjects import r as rlang
-from rpy2.robjects.packages import importr
-from sklearn import preprocessing
-from typing import Dict, List, Tuple
-import numpy as np
+
+import boto3
 import pandas as pd
+import psutil
+import requests
+from botocore.exceptions import ClientError
+from sklearn import preprocessing
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
+    Dataset,
     OriginalFile,
     Pipeline,
     SampleResultAssociation,
-    Dataset,
 )
-from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
-from data_refinery_workers.processors import utils, smashing_utils
-from urllib.parse import quote
-
+from data_refinery_common.utils import calculate_file_size, calculate_sha1, get_env_variable
+from data_refinery_workers.processors import smashing_utils, utils
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
@@ -345,7 +335,7 @@ def _upload(job_context: Dict) -> Dict:
             output_filename,
             ExtraArgs={"ACL": "public-read"},
         )
-    except Exception as e:
+    except Exception:
         raise utils.ProcessorJobError(
             "Failed to upload smash result file.", success=False, file=job_context["output_file"]
         )
@@ -355,12 +345,6 @@ def _upload(job_context: Dict) -> Dict:
     job_context["result_url"] = result_url
 
     logger.debug("Result uploaded!", result_url=job_context["result_url"])
-
-    # File is uploaded, we can delete the local.
-    try:
-        os.remove(job_context["output_file"])
-    except OSError:
-        pass
 
     return job_context
 
@@ -391,7 +375,7 @@ def _notify(job_context: Dict) -> Dict:
                 exc_info=1,
                 client_error_message=e.response["Error"]["Message"],
             )
-        except Exception as e:
+        except Exception:
             raise utils.ProcessorJobError(
                 "General failure when trying to send email.",
                 success=False,
@@ -532,6 +516,13 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.is_available = True
     dataset.expires_on = timezone.now() + timedelta(days=7)
     dataset.save()
+
+    if settings.RUNNING_IN_CLOUD and job_context.get("upload", True):
+        # File is uploaded and the metadata is updated, can delete the local.
+        try:
+            os.remove(job_context["output_file"])
+        except OSError:
+            pass
 
     job_context["success"] = True
 

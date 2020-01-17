@@ -3,32 +3,30 @@
 import csv
 import json
 import os
-import shutil
 import sys
 import zipfile
 from io import StringIO
 
-import pandas as pd
-
 from django.core.management import call_command
-from django.test import TestCase, TransactionTestCase, tag
+from django.test import TransactionTestCase, tag
+
 from data_refinery_common.models import (
-    SurveyJob,
-    ProcessorJob,
-    OriginalFile,
-    ProcessorJobOriginalFileAssociation,
     ComputationalResult,
+    ComputationalResultAnnotation,
     ComputedFile,
+    Dataset,
     Experiment,
+    ExperimentSampleAssociation,
     Organism,
+    OriginalFile,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
-    SampleResultAssociation,
-    ExperimentSampleAssociation,
-    Dataset,
-    ProcessorJobDatasetAssociation,
     SampleComputedFileAssociation,
-    ComputationalResultAnnotation,
+    SampleResultAssociation,
+    SurveyJob,
 )
 from data_refinery_workers.processors import smasher, smashing_utils
 
@@ -559,8 +557,6 @@ class SmasherTestCase(TransactionTestCase):
         experiment.accession_code = "GSE51084"
         experiment.save()
 
-        mus_mus = Organism.get_object_for_name("MUS_MUSCULUS")
-
         sample = Sample()
         sample.accession_code = "GSM1238108"
         sample.title = "GSM1238108"
@@ -1086,12 +1082,12 @@ class SmasherTestCase(TransactionTestCase):
     def test_sanity_imports(self):
         """ Sci imports can be tricky, make sure this works. """
 
-        import numpy
-        import scipy
-        import matplotlib
-        import pandas
-        import sklearn
-        import sympy
+        import numpy  # noqa
+        import scipy  # noqa
+        import matplotlib  # noqa
+        import pandas  # noqa
+        import sklearn  # noqa
+        import sympy  # noqa
 
     @tag("smasher")
     def test_get_synced_files(self):

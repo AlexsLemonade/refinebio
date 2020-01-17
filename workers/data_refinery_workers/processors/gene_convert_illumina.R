@@ -19,11 +19,11 @@ library("rlang")
 suppressPackageStartupMessages(library(AnnotationDbi))
 
 option_list = list(
-  make_option(c("-p", "--platform"), type="character", default="", 
+  make_option(c("-p", "--platform"), type="character", default="",
               help="Platform", metavar="character"),
-  make_option(c("-i", "--inputFile"), type="character", default="", 
+  make_option(c("-i", "--inputFile"), type="character", default="",
               help="inputFile", metavar="character"),
-  make_option(c("-o", "--outputFile"), type="character", default="", 
+  make_option(c("-o", "--outputFile"), type="character", default="",
               help="outputFile", metavar="character")
 )
 
@@ -36,14 +36,14 @@ outFilePath <- opt$outputFile
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(exprs <- fread(filePath, 
-					stringsAsFactors=FALSE, 
-					sep="\t", header=TRUE, 
-					autostart=10, 
-					data.table=FALSE, 
-					check.names=FALSE, 
-					fill=TRUE, 
-					na.strings="", 
+suppressWarnings(exprs <- fread(filePath,
+					stringsAsFactors=FALSE,
+					sep="\t", header=TRUE,
+					autostart=10,
+					data.table=FALSE,
+					check.names=FALSE,
+					fill=TRUE,
+					na.strings="",
 					showProgress=FALSE)
 				)
 

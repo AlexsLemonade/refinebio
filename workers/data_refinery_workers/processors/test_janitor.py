@@ -1,34 +1,25 @@
-import csv
-import json
 import os
-import shutil
-import sys
-import zipfile
+from unittest.mock import MagicMock, patch
 
-from io import StringIO
-from unittest.mock import patch, call, MagicMock
-from nomad import Nomad
-from nomad.api.exceptions import URLNotFoundNomadException
-
-from django.core.management import call_command
 from django.test import TestCase, tag
+
 from data_refinery_common.models import (
-    SurveyJob,
-    ProcessorJob,
-    OriginalFile,
-    ProcessorJobOriginalFileAssociation,
     ComputationalResult,
+    ComputationalResultAnnotation,
     ComputedFile,
+    Dataset,
     Experiment,
+    ExperimentSampleAssociation,
     Organism,
+    OriginalFile,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
-    SampleResultAssociation,
-    ExperimentSampleAssociation,
-    Dataset,
-    ProcessorJobDatasetAssociation,
     SampleComputedFileAssociation,
-    ComputationalResultAnnotation,
+    SampleResultAssociation,
+    SurveyJob,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import janitor

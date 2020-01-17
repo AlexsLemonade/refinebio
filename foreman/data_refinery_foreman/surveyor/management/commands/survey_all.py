@@ -3,15 +3,17 @@ specified by an accession. The type of survey job to run will be
 determined by the pattern of the accession.
 """
 
-import boto3
-import botocore
 import uuid
 
 from django.core.management.base import BaseCommand
-from data_refinery_foreman.surveyor import surveyor
+
+import boto3
+import botocore
+
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
+from data_refinery_common.models import SurveyJob
 from data_refinery_common.utils import parse_s3_url
+from data_refinery_foreman.surveyor import surveyor
 
 logger = get_and_configure_logger(__name__)
 

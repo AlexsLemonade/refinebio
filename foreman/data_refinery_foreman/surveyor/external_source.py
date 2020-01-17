@@ -1,11 +1,7 @@
 import abc
-import os
+from typing import List
 
-from django.db import transaction
-from retrying import retry
-from typing import List, Dict
-
-from data_refinery_common import message_queue, job_lookup, logging
+from data_refinery_common import job_lookup, logging, message_queue
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -15,7 +11,6 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
-
 
 logger = logging.get_and_configure_logger(__name__)
 

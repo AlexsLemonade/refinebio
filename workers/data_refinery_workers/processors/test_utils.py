@@ -1,19 +1,18 @@
 import copy
-import os
-from io import StringIO
 from unittest.mock import MagicMock
-from django.core.management import call_command
+
 from django.test import TestCase
-from data_refinery_common.models import (
-    OriginalFile,
-    ProcessorJobOriginalFileAssociation,
-    SurveyJob,
-    ProcessorJob,
-    Sample,
-    OriginalFileSampleAssociation,
-    Organism,
-)
 from django.utils import timezone
+
+from data_refinery_common.models import (
+    Organism,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+    SurveyJob,
+)
 from data_refinery_workers.processors import utils
 
 

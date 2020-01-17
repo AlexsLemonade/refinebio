@@ -120,12 +120,13 @@ jobs:
     steps:
       - checkout
 
-      # Install flake8
-      - run: sudo pip install flake8
+      - run:
+          name: Install build & test dependencies
+          command: sudo pip3 install pre-commit==1.21.0
 
-      # Check for syntax errors in our project
-      # (--select=E9 only checks for SyntaxErrors)
-      - run: flake8 foreman workers common api --count --select=E9 --show-source --statistics
+      - run:
+          name: Run pre-commit hooks on all files
+          command: pre-commit run --all-files --show-diff-on-failure
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:

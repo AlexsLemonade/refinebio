@@ -101,8 +101,7 @@ named differently in your package manager than in Ubuntu's.
 The following services will need to be installed:
 - Python3 and Pip: `sudo apt-get -y install python3-pip`
 - [Docker](https://www.docker.com/community-edition): Be sure to follow the
-[post installation steps]
-(https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
+[post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./scripts/install_nomad.sh`.
@@ -337,11 +336,14 @@ Python Files in this repo follow
 [PEP 8](https://www.python.org/dev/peps/pep-0008/). All files (including
 Python and R) have a line length limit of 100 characters.
 
-A `setup.cfg` file has been included in the root of this repo which specifies
-the line length limit for the autopep8 and flake8 linters. If you run either
-linter within the project's directory tree, it will enforce a line length limit
-of 100 instead of 80. This will also be true for editors which rely on either
-linter.
+In addition to following pep8, python files must also conform to the formatting style enforced by [black](https://black.readthedocs.io/en/stable/).
+`black` is a highly opinionated auto-formatter.
+(`black`'s highly opinionated style is a strict sub-set of pep8.)
+The easiest way to conform to this style is to run `black . --line-length=100`.
+This will auto-format your code.
+Running the `./scripts/install_all.sh` script will install a pre-commit git hook that will run this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/) you can also install the git hook directly by running `pip3 install pre-commit & pre-commit install`.
+To install `black` see the [installation instructions](#installation).
+Any Pull Requests that do not conform to the style enforced by `black` will be flagged by our continous integration and will not be accepted until that check passes.
 
 All user-facing scripts have been linted with `shellcheck` for common
 warnings and POSIX-correctness. If a script is user-facing, it should ideally
@@ -349,6 +351,8 @@ be POSIX-compliant and have the extension `.sh`, but if bashisms are necessary
 it should have the extension `.bash`. To install `shellcheck`, you can run
 `apt-get install shellcheck` or `brew install shellcheck`. Then, you can lint
 scripts with `shellcheck FILE`.
+
+
 
 ### Gotchas
 

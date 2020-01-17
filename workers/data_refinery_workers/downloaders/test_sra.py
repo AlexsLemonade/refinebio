@@ -1,19 +1,18 @@
 import os
-from urllib.error import URLError
-from typing import List
-from unittest.mock import patch, call
+from unittest.mock import patch
+
 from django.test import TestCase, tag
+
 from data_refinery_common.models import (
-    SurveyJob,
     DownloaderJob,
-    OriginalFile,
     DownloaderJobOriginalFileAssociation,
+    OriginalFile,
+    OriginalFileSampleAssociation,
     ProcessorJob,
     Sample,
-    OriginalFileSampleAssociation,
+    SurveyJob,
 )
 from data_refinery_workers.downloaders import sra, utils
-from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 class DownloadSraTestCase(TestCase):
@@ -59,10 +58,7 @@ class DownloadSraTestCase(TestCase):
 
     @tag("downloaders")
     @tag("downloaders_sra")
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    def test_download_file_ncbi(self, mock_send_job):
-        mock_send_job.return_value = None
-
+    def test_download_file_ncbi(self):
         dlj = DownloaderJob()
         dlj.accession_code = "SRR9117853"
         dlj.save()
@@ -90,10 +86,7 @@ class DownloadSraTestCase(TestCase):
 
     @tag("downloaders")
     @tag("downloaders_sra")
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    def test_download_file_swapper(self, mock_send_job):
-        mock_send_job.return_value = None
-
+    def test_download_file_swapper(self):
         dlj = DownloaderJob()
         dlj.accession_code = "SRR9117853"
         dlj.save()

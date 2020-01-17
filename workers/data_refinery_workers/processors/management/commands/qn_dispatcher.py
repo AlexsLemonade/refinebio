@@ -1,18 +1,9 @@
-import boto3
-import botocore
-import nomad
-import uuid
-
 from django.core.management.base import BaseCommand
 from django.db.models import Count
-from nomad.api.exceptions import URLNotFoundNomadException
 
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.job_lookup import ProcessorPipeline, SurveyJobTypes
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
-from data_refinery_common.utils import parse_s3_url, get_env_variable
-
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
@@ -20,13 +11,14 @@ from data_refinery_common.models import (
     Experiment,
     ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
-    ExperimentSampleAssociation,
     Organism,
     OrganismIndex,
     ProcessorJob,
     ProcessorJobDatasetAssociation,
     Sample,
     SampleComputedFileAssociation,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
 
 logger = get_and_configure_logger(__name__)

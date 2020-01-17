@@ -1,10 +1,10 @@
 import subprocess
 import time
-
-import pandas as pd
+from typing import Dict
 
 from django.utils import timezone
-from typing import Dict
+
+import pandas as pd
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -12,12 +12,11 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    Pipeline,
     Experiment,
+    Pipeline,
 )
 from data_refinery_common.utils import queryset_iterator
-from data_refinery_workers.processors import utils, smashing_utils
-
+from data_refinery_workers.processors import smashing_utils, utils
 
 logger = get_and_configure_logger(__name__)
 
@@ -61,7 +60,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
         try:
             input_filepath = file.get_synced_file_path()
             input_frame = smashing_utils._load_and_sanitize_file(input_filepath)
-        except Exception as e:
+        except Exception:
             logger.warn(
                 "No file loaded for input file",
                 exc_info=1,

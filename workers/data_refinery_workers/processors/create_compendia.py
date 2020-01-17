@@ -1,24 +1,25 @@
+import itertools
 import logging
 import os
 import shutil
 import time
-import itertools
 from typing import Dict
 
+from django.conf import settings
 from django.utils import timezone
-from django.db.models import Q, Count
-from fancyimpute import IterativeSVD
+
 import numpy as np
 import pandas as pd
 import psutil
+from fancyimpute import IterativeSVD
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
     CompendiumResult,
     CompendiumResultOrganismAssociation,
+    ComputationalResult,
+    ComputationalResultAnnotation,
     ComputedFile,
     Organism,
     Pipeline,
@@ -30,7 +31,7 @@ from data_refinery_workers.processors import smashing_utils, utils
 pd.set_option("mode.chained_assignment", None)
 
 
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery")
 BYTES_IN_GB = 1024 * 1024 * 1024
 SMASHING_DIR = "/home/user/data_store/smashed/"
 logger = get_and_configure_logger(__name__)
@@ -102,7 +103,7 @@ def _prepare_frames(job_context: Dict) -> Dict:
             job_context = smashing_utils.process_frames_for_key(key, input_files, job_context)
             # if len(job_context['all_frames']) < 1:
             # TODO: Enable this check?
-    except Exception as e:
+    except Exception:
         raise utils.ProcessorJobError(
             "Could not prepare frames for compendia.",
             success=False,
@@ -300,7 +301,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             new_index_list = row_col_filtered_matrix_samples_index.tolist()
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
             row_col_filtered_matrix_samples[column].loc[new_zeroes] = 0.0
-        except Exception as e:
+        except Exception:
             logger.warn("Error when replacing zero")
             continue
 
@@ -485,10 +486,19 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Upload the result to S3
     timestamp = str(int(time.time()))
     key = job_context["organism_name"] + "_" + str(compendium_version) + "_" + timestamp + ".zip"
-    archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
+    uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, key)
+
+    if not uploaded_to_s3:
+        raise utils.ProcessorJobError(
+            "Failed to upload compendia to S3",
+            success=False,
+            computed_file_id=archive_computed_file.id,
+        )
+
+    if settings.RUNNING_IN_CLOUD:
+        archive_computed_file.delete_local_file()
 
     job_context["result"] = result
-    job_context["computed_files"] = [archive_computed_file]
     job_context["success"] = True
 
     log_state("end create result object", job_context["job"].id, result_start)

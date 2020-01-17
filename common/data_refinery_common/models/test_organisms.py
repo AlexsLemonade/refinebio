@@ -1,10 +1,12 @@
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
+
 from django.test import TestCase
+
 from data_refinery_common.models.organism import (
-    Organism,
-    ESEARCH_URL,
     EFETCH_URL,
+    ESEARCH_URL,
     InvalidNCBITaxonomyId,
+    Organism,
 )
 
 ESEARCH_RESPONSE_XML = """<?xml version="1.0" encoding="UTF-8"?>

@@ -1,42 +1,43 @@
-from django.conf.urls import url
 from django.conf import settings
+from django.conf.urls import url
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
 from django.views.generic import RedirectView
+from rest_framework import permissions
+
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
 
 from .views import (
-    ExperimentDocumentView,
-    ExperimentList,
-    ExperimentDetail,
-    SampleList,
-    SampleDetail,
-    OrganismList,
-    PlatformList,
-    InstitutionList,
-    SurveyJobList,
-    DownloaderJobList,
-    ProcessorJobList,
+    AboutStats,
+    APITokenView,
+    CompendiumResultDetails,
+    CompendiumResultList,
     ComputationalResultsList,
-    ProcessorList,
-    Stats,
+    ComputedFilesList,
+    CreateApiTokenView,
     CreateDatasetView,
     DatasetView,
-    CreateApiTokenView,
-    APITokenView,
-    TranscriptomeIndexList,
-    TranscriptomeIndexDetail,
-    QNTargetsDetail,
-    QNTargetsAvailable,
-    CompendiumResultList,
-    CompendiumResultDetails,
-    ComputedFilesList,
-    OriginalFileList,
-    AboutStats,
+    DownloaderJobList,
+    ExperimentDetail,
+    ExperimentDocumentView,
+    ExperimentList,
     FailedDownloaderJobStats,
     FailedProcessorJobStats,
+    InstitutionList,
+    OrganismList,
+    OriginalFileList,
+    PlatformList,
+    ProcessorJobList,
+    ProcessorList,
+    QNTargetsAvailable,
+    QNTargetsDetail,
+    SampleDetail,
+    SampleList,
+    Stats,
+    SurveyJobList,
+    TranscriptomeIndexDetail,
+    TranscriptomeIndexList,
     handle404error,
     handle500error,
 )

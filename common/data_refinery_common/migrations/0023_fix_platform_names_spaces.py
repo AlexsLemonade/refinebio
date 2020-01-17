@@ -1,6 +1,6 @@
 from django.db import migrations
+
 from data_refinery_common.utils import get_supported_rnaseq_platforms
-from django.core.paginator import Paginator
 
 
 def make_sample_platform_names_readable(apps, schema_editor):

@@ -22,7 +22,7 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"
 export AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY="$(~/bin/aws configure get default.aws_secret_access_key)"
-export AWS_SECRET_ACCESS_KEY 
+export AWS_SECRET_ACCESS_KEY
 
 docker run \
        -it \

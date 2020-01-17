@@ -1,23 +1,17 @@
-from django.test import TransactionTestCase
 from unittest.mock import patch
 
-from data_refinery_common.models import (
-    Experiment,
-    ExperimentSampleAssociation,
-    Sample,
-)
+from django.test import TransactionTestCase
+
+from data_refinery_common.models import Experiment, ExperimentSampleAssociation, Sample
 from data_refinery_foreman.foreman.management.commands.update_experiment_metadata import Command
-from data_refinery_foreman.surveyor.test_sra import mocked_requests_get
 
 
 class SurveyTestCase(TransactionTestCase):
     def tearDown(self):
         Experiment.objects.all().delete()
 
-    @patch("data_refinery_foreman.surveyor.sra.requests.get")
-    def test_sra_experiment_missing_metadata(self, mock_get):
+    def test_sra_experiment_missing_metadata(self):
         """Tests that an SRA experiment has its missing metadata added."""
-        mock_get.side_effect = mocked_requests_get
 
         # 1. Create an experiment with a bad title
         BAD_TITLE = "GEO accession GSE1337 is currently private\
