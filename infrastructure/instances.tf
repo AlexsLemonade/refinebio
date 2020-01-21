@@ -733,6 +733,8 @@ data "template_file" "foreman_server_script_smusher" {
     elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
     elasticsearch_port = "${var.elasticsearch_port}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+    aws_access_key_id_client = "${var.aws_access_key_id_client}"
+    aws_secret_access_key_client = "${var.aws_secret_access_key_client}"
   }
 }
 
