@@ -5,6 +5,16 @@
 # Annoyingly, TF can't have computed variables (${env.USER})
 # as default values for variables. So `TF_VAR_user=rjones tf plan`, etc.
 # Also, don't use any non-alphanumeric characters here or RDS will whinge.
+variable "aws_access_key_id_client" {
+  # This will be overwritten.
+  default = "aws-key"
+}
+
+variable "aws_secret_access_key_client" {
+  # This will be overwritten.
+  default = "aws-secret-access"
+}
+
 variable "user" {
   default = "myusername"
 }
