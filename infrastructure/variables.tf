@@ -162,6 +162,7 @@ variable "max_downloader_jobs_per_node" {
 }
 
 variable "elasticsearch_port" {
+  # AWS doesn't support the data transfer protocol on 9200
   default = "80"
 }
 

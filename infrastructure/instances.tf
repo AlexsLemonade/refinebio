@@ -215,7 +215,7 @@ data "template_file" "nomad_client_script_smusher" {
     database_port = "${var.database_hidden_port}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
-    database_name = "${aws_db_instance.postgres_db.name}"
+    database_name = "${var.database_name}"
   }
 }
 
@@ -242,7 +242,7 @@ data "template_file" "nomad_client_script_smasher_smusher" {
     database_port = "${var.database_hidden_port}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
-    database_name = "${aws_db_instance.postgres_db.name}"
+    database_name = "${var.database_name}"
   }
 }
 
@@ -548,7 +548,7 @@ data "template_file" "pg_bouncer_script_smusher" {
     database_user = "${var.database_user}"
     database_port = "${var.database_hidden_port}"
     database_password = "${var.database_password}"
-    database_name = "${aws_db_instance.postgres_db.name}"
+    database_name = "${var.database_name}"
     listen_port = "${var.database_port}"
     user = "${var.user}"
     stage = "${var.stage}"
@@ -624,7 +624,7 @@ resource "aws_elasticsearch_domain" "es" {
 }
 
 output "elasticsearch_endpoint" {
-  value = "${aws_elasticsearch_domain.es.endpoint}"
+  value = "${var.elasticsearch_host}"
 }
 
 ##
@@ -655,9 +655,9 @@ data "template_file" "api_server_script_smusher" {
     database_host = "${aws_instance.pg_bouncer.private_ip}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
-    database_name = "${aws_db_instance.postgres_db.name}"
-    elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
-    elasticsearch_port = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
+    database_name = "${var.database_name}"
+    elasticsearch_host = "${var.elasticsearch_host}"
+    elasticsearch_port = "${var.elasticsearch_port}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
     log_stream = "${aws_cloudwatch_log_stream.log_stream_api.name}"
   }
@@ -729,8 +729,8 @@ data "template_file" "foreman_server_script_smusher" {
     database_host = "${aws_instance.pg_bouncer.private_ip}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
-    database_name = "${aws_db_instance.postgres_db.name}"
-    elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
+    database_name = "${var.database_name}"
+    elasticsearch_host = "${var.elasticsearch_host}"
     elasticsearch_port = "${var.elasticsearch_port}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
   }
