@@ -65,8 +65,7 @@ class DownloadArrayExpressTestCase(TestCase):
 
     @tag("downloaders")
     @patch("data_refinery_workers.downloaders.array_express.urllib.request.urlopen")
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    def test_download_and_extract_file(self, mock_send_job, mock_urlopen):
+    def test_download_and_extract_file(self, mock_urlopen):
         mock_urlopen.side_effect = file_caching_urlopen
         dlj = DownloaderJob()
         dlj.save()
