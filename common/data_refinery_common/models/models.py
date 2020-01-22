@@ -708,6 +708,16 @@ class CompendiumResult(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(CompendiumResult, self).save(*args, **kwargs)
 
     # helper
     def get_computed_file(self):
