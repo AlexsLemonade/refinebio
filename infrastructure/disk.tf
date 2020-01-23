@@ -114,6 +114,10 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   }
 }
 
+resource "aws_s3_bucket_metric" "compendia_metrics" {
+  bucket = "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
+  name   = "data-refinery-compendia-metric-${var.user}-${var.stage}"
+}
 
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
   bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
