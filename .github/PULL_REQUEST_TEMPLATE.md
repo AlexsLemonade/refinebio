@@ -8,9 +8,9 @@ Describe the big picture of your changes.
 
 ## Methods
 
-If this pull request has any implications for data or metadata processing or addresses an issue labeled `sci review`, please include an overview of the methods used (e.g., briefly explain _how_ the data gets processed). 
+If this pull request has any implications for data or metadata processing or addresses an issue labeled `sci review`, please include an overview of the methods used (e.g., briefly explain _how_ the data gets processed).
 See [#267](https://github.com/AlexsLemonade/refinebio/pull/267) for rationale.
-Include sufficient detail for reviewers or users that are not expert developers to evaluate the validity of the approach. 
+Include sufficient detail for reviewers or users that are not expert developers to evaluate the validity of the approach.
 Please attach or link to example input and output data if applicable.
 It may also be appropriate to include a description of any functional or unit tests in this section depending on their content.
 Any pull request with a methods section requires scientific review in addition to code review.

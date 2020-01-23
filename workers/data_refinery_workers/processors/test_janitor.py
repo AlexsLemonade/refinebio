@@ -1,11 +1,7 @@
 import os
 from unittest.mock import MagicMock, patch
 
-from django.core.management import call_command
 from django.test import TestCase, tag
-
-from nomad import Nomad
-from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.models import (
     ComputationalResult,

@@ -3,11 +3,7 @@ import sys
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 
-import requests
-
-from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
@@ -22,7 +18,7 @@ from data_refinery_common.models import (
     Sample,
     SampleComputedFileAssociation,
 )
-from data_refinery_workers.processors import qn_reference, utils
+from data_refinery_workers.processors import qn_reference
 
 logger = get_and_configure_logger(__name__)
 

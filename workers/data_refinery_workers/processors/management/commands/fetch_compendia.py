@@ -4,9 +4,7 @@ from django.core.management.base import BaseCommand
 
 import requests
 
-from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     Dataset,
     Experiment,
@@ -27,7 +25,7 @@ class Command(BaseCommand):
         parser.add_argument("--dataset-ids", type=str, help=("Comma-separated Dataset IDs."))
 
     def handle(self, *args, **options):
-        """ Given a dataset ID, fetch the resulting smashed object. 
+        """ Given a dataset ID, fetch the resulting smashed object.
         """
 
         if options["dataset_ids"] is None:

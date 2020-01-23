@@ -16,7 +16,7 @@ import pandas as pd
 import untangle
 from botocore.client import Config
 
-from data_refinery_common.job_lookup import Downloaders, PipelineEnum
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -499,27 +499,23 @@ def _run_tximport_for_experiment(
     try:
         tximport_result = subprocess.run(cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except Exception as e:
-        error_template = "Encountered error in R code while running tximport.R: {}"
-        error_message = error_template.format(str(e))
-        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-        return job_context
+        raise utils.ProcessorJobError(
+            "Encountered error in R code while running tximport.R: {}".format(str(e)),
+            success=False,
+            experiment=experiment.id,
+        )
 
     if tximport_result.returncode != 0:
-        error_template = "Found non-zero exit code from R code while running tximport.R: {}"
-        error_message = error_template.format(tximport_result.stderr.decode().strip())
-        logger.error(
-            error_message,
-            processor_job=job_context["job_id"],
+        raise utils.ProcessorJobError(
+            "Found non-zero exit code from R code while running tximport.R: {}".format(
+                tximport_result.stderr.decode().strip()
+            ),
+            success=False,
             experiment=experiment.id,
             quant_files=quant_files,
             cmd_tokens=cmd_tokens,
             quant_file_paths=quant_file_paths,
         )
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-        return job_context
 
     result.time_end = timezone.now()
     result.commands.append(" ".join(cmd_tokens))
@@ -528,7 +524,9 @@ def _run_tximport_for_experiment(
         processor_key = "TXIMPORT"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        return utils.handle_processor_exception(job_context, processor_key, e)
+        raise utils.ProcessorJobError(
+            "Failed to set processor: {}".format(e), success=False, processor_key=processor_key
+        )
 
     result.save()
     job_context["pipeline"].steps.append(result.id)
@@ -556,7 +554,8 @@ def _run_tximport_for_experiment(
         frame.to_csv(frame_path, sep="\t", encoding="utf-8")
 
         # The frame column header is based off of the path, which includes _output.
-        sample = Sample.objects.get(accession_code=frame.columns.values[0].replace("_output", ""))
+        sample_accession_code = frame.columns.values[0].replace("_output", "")
+        sample = Sample.objects.get(accession_code=sample_accession_code)
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path
@@ -601,46 +600,33 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
     mapping to a list of paths to the quant.sf file for each sample in
     that experiment.
     """
-    experiments = Experiment.objects.filter(
-        samples=job_context["sample"]
-    )  # https://stackoverflow.com/a/18317340/763705
+    experiments = job_context["sample"].experiments.all()
 
     quantified_experiments = {}
     for experiment in experiments:
         # We only want to consider samples that we actually can run salmon on.
         eligible_samples = experiment.samples.filter(source_database="SRA", technology="RNA-SEQ")
-        num_eligible_samples = eligible_samples.count()
-        if num_eligible_samples == 0:
+        if not eligible_samples.exists():
             continue
 
         salmon_quant_results = get_quant_results_for_experiment(experiment)
         is_tximport_job = "is_tximport_only" in job_context and job_context["is_tximport_only"]
 
-        if is_tximport_job and salmon_quant_results.count() > 0:
+        first_salmon_quant_result = salmon_quant_results.first()
+        if is_tximport_job and first_salmon_quant_result:
             # If the job is only running tximport, then index_length
             # hasn't been set on the job context because we don't have
             # a raw file to run it on. Therefore pull it from one of
             # the result annotations.
-
-            annotations = ComputationalResultAnnotation.objects.filter(
-                result=salmon_quant_results[0]
-            )
-
-            for annotation_json in annotations:
-                if "index_length" in annotation_json.data:
-                    job_context["index_length"] = annotation_json.data["index_length"]
-                    break
-
-            if not "index_length" in job_context:
-                failure_reason = (
-                    "Found quant result without an annotation specifying its index length. "
-                    "Why did this happen?!?"
+            index_length = first_salmon_quant_result.get_index_length()
+            if index_length:
+                job_context["index_length"] = index_length
+            elif not "index_length" in job_context:
+                raise utils.ProcessorJobError(
+                    "Found quant result without an annotation specifying its index length. Why did this happen?!?",
+                    success=False,
+                    no_retry=True,
                 )
-                logger.error(failure_reason, processor_job=job_context["job_id"])
-                job_context["job"].failure_reason = failure_reason
-                job_context["job"].no_retry = True
-                job_context["success"] = False
-                return job_context
 
         if should_run_tximport(experiment, salmon_quant_results, is_tximport_job):
             quantified_experiments[experiment] = get_quant_files_for_results(salmon_quant_results)
@@ -655,13 +641,10 @@ def tximport(job_context: Dict) -> Dict:
     of genes_to_transcripts.txt.
     """
     tximport_inputs = job_context["tximport_inputs"]
+
     quantified_experiments = 0
     for experiment, quant_files in tximport_inputs.items():
         job_context = _run_tximport_for_experiment(job_context, experiment, quant_files)
-        # If `tximport` on any related experiment fails, exit immediately.
-        if not job_context["success"]:
-            return job_context
-
         quantified_experiments += 1
 
     if (
@@ -669,11 +652,9 @@ def tximport(job_context: Dict) -> Dict:
         and "is_tximport_job" in job_context
         and job_context["is_tximport_only"]
     ):
-        failure_reason = "Tximport job ran on no experiments... Why?!?!?"
-        logger.error(failure_reason, processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = failure_reason
-        job_context["job"].no_retry = True
-        job_context["success"] = False
+        raise utils.ProcessorJobError(
+            "Tximport job ran on no experiments... Why?!?!?", success=False, no_retry=True
+        )
 
     return job_context
 

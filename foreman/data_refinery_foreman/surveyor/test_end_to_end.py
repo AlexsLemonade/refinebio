@@ -10,8 +10,6 @@ from unittest import skip
 from django.test import TransactionTestCase, tag
 from django.utils import timezone
 
-import requests
-
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -35,7 +33,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_foreman.foreman.main import retry_lost_downloader_jobs
-from data_refinery_foreman.surveyor import surveyor, utils
+from data_refinery_foreman.surveyor import surveyor
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 
 logging.basicConfig(level=logging.INFO)

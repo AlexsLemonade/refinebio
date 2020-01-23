@@ -10,7 +10,7 @@ logger = get_and_configure_logger(__name__)
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        """ 
+        """
         Deletes local original files
         """
         if (

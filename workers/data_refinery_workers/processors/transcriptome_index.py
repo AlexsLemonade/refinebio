@@ -5,7 +5,6 @@ import subprocess
 import tarfile
 from typing import Dict
 
-from django.conf import settings
 from django.utils import timezone
 
 from data_refinery_common.job_lookup import PipelineEnum
