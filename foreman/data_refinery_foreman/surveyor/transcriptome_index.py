@@ -7,7 +7,7 @@ from typing import Dict, List
 
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, SurveyJobKeyValue
+from data_refinery_common.models import Organism, OriginalFile, SurveyJobKeyValue
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 
@@ -289,6 +289,9 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
 
+        # Gettiing the object will ensure it is created in the DB.
+        Organism.get_object_for_id(species["taxonomy_id"])
+
         all_new_files = []
 
         fasta_filename = url_builder.filename_species + ".fa.gz"
@@ -411,7 +414,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                         species["name"] = organism_name
 
                     all_new_species.append(self._generate_files(species))
-                    break
+                    # break
         else:
             for species in specieses:
                 all_new_species.append(self._generate_files(species))
