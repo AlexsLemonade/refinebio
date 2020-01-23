@@ -41,6 +41,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logging.getLogger("vcr").setLevel(logging.WARN)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
+CASSETTES_DIR = "/home/user/data_store/cassettes/"
 LOOP_TIME = 5  # seconds
 MAX_WAIT_TIME = timedelta(minutes=15)
 
@@ -101,9 +102,22 @@ def build_surveyor_init_mock(source_type):
             for sample in samples:
                 for original_file in sample.original_files.all():
                     if original_file.id not in original_file_ids:
-                        original_file.source_url = EXTERNAL_FILE_URL_MAPPING[
-                            original_file.source_url
-                        ]
+                        try:
+                            original_file.source_url = EXTERNAL_FILE_URL_MAPPING[
+                                original_file.source_url
+                            ]
+                        except KeyError as e:
+                            log_message = (
+                                "The tests attempted to access a URL that is not in"
+                                " EXTERNAL_FILE_URL_MAPPING. This is most likely because you've"
+                                " added a test that mocks the surveyor so that the DownloaderJobs"
+                                " download from S3 instead of the external service. To fix this"
+                                " you should download the file, upload it to S3, and then add a"
+                                " mapping from its original URL to its URL in S3."
+                            )
+                            logger.warn(log_message)
+                            raise e
+
                         original_file.save()
                         original_file_ids.add(original_file.id)
 
@@ -144,8 +158,7 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
 class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.test_end_to_end.no_op.yaml",
-        ignore_hosts=["nomad"],
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.no_op.yaml"), ignore_hosts=["nomad"],
     )
     @patch("data_refinery_foreman.surveyor.surveyor.ArrayExpressSurveyor")
     def test_no_op(self, mock_surveyor):
@@ -214,7 +227,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
 class ArrayexpressRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.test_end_to_end.array_express_redownloading.yaml",
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.array_express_redownloading.yaml"),
         ignore_hosts=["nomad"],
     )
     @patch("data_refinery_foreman.surveyor.surveyor.ArrayExpressSurveyor")
@@ -311,7 +324,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
 class GeoArchiveRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.test_end_to_end.geo_archive_redownloading.yaml",
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.geo_archive_redownloading.yaml"),
         ignore_hosts=["nomad"],
     )
     def test_geo_archive_redownloading(self):
@@ -428,7 +441,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("affymetrix")
     @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.test_end_to_end.geo_celgz_redownloading.yaml",
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.geo_celgz_redownloading.yaml"),
         ignore_hosts=["nomad"],
     )
     def test_geo_celgz_redownloading(self):
@@ -538,7 +551,7 @@ class TranscriptomeRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("transcriptome")
     @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.test_end_to_end.transcriptome_redownloading.yaml",
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.transcriptome_redownloading.yaml"),
         ignore_hosts=["nomad"],
     )
     @patch("data_refinery_foreman.surveyor.surveyor.TranscriptomeIndexSurveyor")
@@ -786,7 +799,7 @@ class EnaFallbackTestCase(TransactionTestCase):
     @tag("salmon")
     @skip("This code doesn't handle the FTP server being down, so skip until it does.")
     @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.test_end_to_end.unmated_reads.yaml",
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.unmated_reads.yaml"),
         ignore_hosts=["nomad"],
     )
     def test_unmated_reads(self):
