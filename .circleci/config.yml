@@ -92,6 +92,8 @@ jobs:
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
+      - run: bash <(curl -s https://codecov.io/bash)
+
       - run: ./scripts/prepare_image.sh -i smasher -s workers -d localhost:5000
 
       # Run Smasher tests.
