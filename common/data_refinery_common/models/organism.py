@@ -147,6 +147,8 @@ class Organism(models.Model):
             organism = Organism(name=name, taxonomy_id=taxonomy_id, is_scientific_name=True)
             organism.save()
 
+        return organism
+
     @classmethod
     def get_name_for_id(cls, taxonomy_id: int) -> str:
         organism = cls.get_object_for_id(taxonomy_id)
