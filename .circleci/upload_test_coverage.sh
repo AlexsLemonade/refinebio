@@ -9,8 +9,8 @@ then
     exit 1
 fi
 
-output="coverage_reports/${project}_coverage.xml"
+output="test_volume/${project}_coverage.xml"
 
-sed "s/filename=\"/filename=\"$project\//g" coverage_reports/coverage.xml > $output
+sed "s/filename=\"/filename=\"$project\//g" test_volume/coverage.xml > $output
 
 curl -s https://codecov.io/bash | bash -s -- -f "$output" -F unittests
