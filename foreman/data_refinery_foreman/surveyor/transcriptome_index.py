@@ -414,7 +414,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                         species["name"] = organism_name
 
                     all_new_species.append(self._generate_files(species))
-                    # break
+                    break
         else:
             for species in specieses:
                 all_new_species.append(self._generate_files(species))
