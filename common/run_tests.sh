@@ -20,7 +20,7 @@ if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     exit 1
 fi
 
-project_root=$(cd .. && pwd)
+project_root=$(pwd) # "cd .." called above
 volume_directory="$project_root/test_volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
