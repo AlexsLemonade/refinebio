@@ -55,6 +55,7 @@ jobs:
       # transcriptome and let those end-to-end tests get run in the
       # workflows that include building those images.
       - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
+      - run: .circleci/upload_test_coverage.sh foreman
 
       # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
@@ -156,6 +157,7 @@ jobs:
 
       # Run API Tests.
       - run: ./api/run_tests.sh
+      - run: .circleci/upload_test_coverage.sh api
 
       - run:
           command: .circleci/filter_tests.sh -t salmon
@@ -175,6 +177,7 @@ jobs:
       - run: docker push localhost:5000/dr_salmon
 
       - run: ./foreman/run_tests.sh --tag=salmon
+      - run: .circleci/upload_test_coverage.sh foreman
 
   tx_illumina_tests:
     working_directory: ~/refinebio
@@ -275,6 +278,7 @@ jobs:
           command: ./foreman/run_tests.sh --tag=affymetrix
           # This takes more than 10 minutes, but not much.
           no_output_timeout: 20m
+      - run: .circleci/upload_test_coverage.sh foreman
 
   deploy:
     machine: true
