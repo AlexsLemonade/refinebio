@@ -290,7 +290,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         gtf_download_url = url_builder.build_gtf_url()
 
         # Gettiing the object will ensure it is created in the DB.
-        Organism.get_object_for_id(species["taxonomy_id"])
+        Organism.get_object_for_id(url_builder.taxonomy_id)
 
         all_new_files = []
 
