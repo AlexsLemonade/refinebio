@@ -29,7 +29,6 @@ jobs:
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh
-
         # Start Nomad and register jobs.
       - run:
           command: sudo -E ./scripts/run_nomad.sh -e test
@@ -91,8 +90,7 @@ jobs:
 
       # Run Common Tests.
       - run: ./common/run_tests.sh
-
-      - run: bash <(curl -s https://codecov.io/bash)
+      - run: .circleci/upload_test_coverage.sh common
 
       - run: ./scripts/prepare_image.sh -i smasher -s workers -d localhost:5000
 
@@ -165,7 +163,6 @@ jobs:
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh
-
         # Start Nomad and register jobs.
       - run:
           command: sudo -E ./scripts/run_nomad.sh -e test
@@ -259,7 +256,6 @@ jobs:
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh
-
         # Start Nomad and register jobs.
       - run:
           command: sudo -E ./scripts/run_nomad.sh -e test
