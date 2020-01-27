@@ -159,6 +159,15 @@ resource "aws_security_group_rule" "data_refinery_db_outbound" {
   security_group_id = "${aws_security_group.data_refinery_db.id}"
 }
 
+resource "aws_security_group_rule" "data_refinery_db_pg_tcp" {
+  type = "ingress"
+  from_port = 0
+  to_port = 65535
+  protocol = "tcp"
+  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  security_group_id = "${aws_security_group.data_refinery_db.id}"
+}
+
 ##
 # PGBouncer
 ##
