@@ -9,20 +9,29 @@ then
     exit 1
 fi
 
-if [[ ! -f "test_volume/coverage.xml" ]]
+if [[ $project == "workers" ]]
 then
-    echo "Coverage file wasn't found, were the tests run before?"
-    exit 0 # exit this script but don't fail
+    # the workers project uses it's own test_volume directory
+    test_volume="workers/test_volume"
+else
+    test_volume="test_volume"
 fi
 
-output="test_volume/${project}_coverage.xml"
+coverage_file="${test_volume}/coverage.xml"
+
+if [[ ! -f $coverage_file ]]
+then
+    echo "Coverage file wasn't found, were the tests run before?"
+    exit 0 # exit this script but don't fail the tests for this.
+fi
+
+output_file="${test_volume}/${project}_coverage.xml"
 
 # In the test coverage report, all file paths are absolute to each project
 # folder. We need to be relative to refinebio/ that's why we append the project
 # folder name to each file path in coverage.xml
-sed "s/filename=\"/filename=\"$project\//g" test_volume/coverage.xml > $output
+sed "s/filename=\"/filename=\"$project\//g" test_volume/coverage.xml > $output_file
 
-curl -s https://codecov.io/bash | bash -s -- -f "$output" -Z -F $project
+curl -s https://codecov.io/bash | bash -s -- -f "$output_file" -Z -F $project
 
-rm -f test_volume/coverage.xml
-rm -f $output
+rm -f $coverage_file $output_file
