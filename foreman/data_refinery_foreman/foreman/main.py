@@ -722,8 +722,9 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             elif new_ram_amount == 32768:
                 new_ram_amount = 65536
         # The AFFY pipeline is somewhat RAM-sensitive.
+        # Also NO_OP can fail and be retried, so we want to attempt ramping up ram.
         # Try it again with an increased RAM amount, if possible.
-        elif last_job.pipeline_applied == "AFFY_TO_PCL":
+        elif last_job.pipeline_applied == "AFFY_TO_PCL" or last_job.pipeline_applied == "NO_OP":
             if new_ram_amount == 2048:
                 new_ram_amount = 4096
             elif new_ram_amount == 4096:
