@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Script to upload code coverage to circleci
 
