@@ -258,24 +258,33 @@ docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
 # Override database settings so we connect directly to the RDS instance.
 docker run \
        --env-file prod_env \
-       --env DATABASE_HOST=$RDS_HOST \
-       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
+       --env DATABASE_HOST=$DATABASE_HOST \
+       --env DATABASE_PORT=$DATABASE_PORT \
+       --env DATABASE_NAME=$DATABASE_NAME \
+       --env DATABASE_USER=$DATABASE_USER \
+       --env DATABASE_PASSWORD=$DATABASE_PASSWORD \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
-       --env DATABASE_HOST=$RDS_HOST \
-       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
+       --env DATABASE_HOST=$DATABASE_HOST \
+       --env DATABASE_PORT=$DATABASE_PORT \
+       --env DATABASE_NAME=$DATABASE_NAME \
+       --env DATABASE_USER=$DATABASE_USER \
+       --env DATABASE_PASSWORD=$DATABASE_PASSWORD \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Create the cache table if it does not already exist.
 docker run \
        --env-file prod_env \
-       --env DATABASE_HOST=$RDS_HOST \
-       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
+       --env DATABASE_HOST=$DATABASE_HOST \
+       --env DATABASE_PORT=$DATABASE_PORT \
+       --env DATABASE_NAME=$DATABASE_NAME \
+       --env DATABASE_USER=$DATABASE_USER \
+       --env DATABASE_PASSWORD=$DATABASE_PASSWORD \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py createcachetable
 
