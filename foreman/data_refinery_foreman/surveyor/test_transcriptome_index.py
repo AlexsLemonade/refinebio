@@ -53,7 +53,7 @@ class SurveyTestCase(TestCase):
 
         # Make sure the organism object got created by making sure
         # this doesn't raise an exception.
-        Organism.objects.filter(name="DANIO_RERIO")
+        Organism.objects.get(name="DANIO_RERIO").get()
 
         for file in files:
             urllib.request.urlopen(file.source_url)
@@ -84,7 +84,7 @@ class SurveyTestCase(TestCase):
 
         # Make sure the organism object got created by making sure
         # this doesn't raise an exception.
-        Organism.objects.filter(name="OCTOPUS_BIMACULOIDES")
+        Organism.objects.get(name="OCTOPUS_BIMACULOIDES")
 
     def test_single_plant(self):
         """ Tests that the files returned actually exist.
@@ -112,7 +112,7 @@ class SurveyTestCase(TestCase):
 
         # Make sure the organism object got created by making sure
         # this doesn't raise an exception.
-        Organism.objects.filter(name="ARABIDOPSIS_THALIANA")
+        Organism.objects.get(name="ARABIDOPSIS_THALIANA")
 
     def test_correct_index_location_protist(self):
         """ Tests that the files returned actually exist.
@@ -166,7 +166,7 @@ class SurveyTestCase(TestCase):
 
         # Make sure the organism object got created by making sure
         # this doesn't raise an exception.
-        Organism.objects.filter(name="CANDIDA_ALBICANS")
+        Organism.objects.get(name="CANDIDA_ALBICANS")
 
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey_bacteria(self, mock_send_job):
@@ -196,7 +196,7 @@ class SurveyTestCase(TestCase):
 
         # Make sure the organism object got created by making sure
         # this doesn't raise an exception.
-        Organism.objects.filter(name="PSEUDOMONAS_AERUGINOSA")
+        Organism.objects.get(name="PSEUDOMONAS_AERUGINOSA")
 
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey_bacteria_none(self, mock_send_job):
