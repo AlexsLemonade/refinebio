@@ -39,11 +39,11 @@ get_docker_es_ip_address () {
 # This is done a function so arguments to the tests can be passed through.
 run_tests_with_coverage () {
     COVERAGE="coverage run --source=\".\" manage.py test --no-input $*; exit_code=\$?;"
-    SAVE_REPORT="coverage xml -o data_store/coverage.xml; sleep 1;"
+    SAVE_REPORT="sleep 1; coverage xml -o data_store/coverage.xml;"
     PRINT_REPORT="coverage report -m;"
     RETURN="exit \$exit_code"
 
-    echo "$COVERAGE $SAVE_REPORT $PRINT_REPORT $RETURN"
+    echo "$COVERAGE $PRINT_REPORT $SAVE_REPORT $RETURN"
 }
 
 # This function checks whether a given docker image name ($1:$CIRCLE_TAG)

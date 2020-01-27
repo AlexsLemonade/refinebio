@@ -12,7 +12,7 @@ fi
 if [[ ! -f "test_volume/coverage.xml" ]]
 then
     echo "Coverage file wasn't found, were the tests run before?"
-    exit 1
+    exit 0 # exit this script but don't fail
 fi
 
 output="test_volume/${project}_coverage.xml"
