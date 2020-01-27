@@ -9,6 +9,12 @@ then
     exit 1
 fi
 
+if [[ ! -f "test_volume/coverage.xml" ]]
+then
+    echo "Coverage file wasn't found, were the tests run before?"
+    exit 1
+fi
+
 output="test_volume/${project}_coverage.xml"
 
 # In the test coverage report, all file paths are absolute to each project
