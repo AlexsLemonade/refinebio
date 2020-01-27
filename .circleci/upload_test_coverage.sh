@@ -19,6 +19,9 @@ fi
 
 coverage_file="${test_volume}/coverage.xml"
 
+echo $coverage_file
+cat $coverage_file
+
 if [[ ! -f $coverage_file ]]
 then
     echo "Coverage file wasn't found, were the tests run before?"
@@ -33,5 +36,7 @@ output_file="${test_volume}/${project}_coverage.xml"
 sed "s/filename=\"/filename=\"$project\//g" test_volume/coverage.xml > $output_file
 
 curl -s https://codecov.io/bash | bash -s -- -f "$output_file" -Z -F $project
+
+
 
 rm -f $coverage_file $output_file
