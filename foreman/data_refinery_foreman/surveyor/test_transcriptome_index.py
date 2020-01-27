@@ -51,7 +51,8 @@ class SurveyTestCase(TestCase):
         surveyor = TranscriptomeIndexSurveyor(survey_job)
         files = surveyor.discover_species()[0]
 
-        # Make sure the organism object got created.
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
         Organism.objects.filter(name="DANIO_RERIO")
 
         for file in files:
@@ -81,7 +82,8 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
-        # Make sure the organism object got created.
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
         Organism.objects.filter(name="OCTOPUS_BIMACULOIDES")
 
     def test_single_plant(self):
@@ -108,7 +110,8 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
-        # Make sure the organism object got created.
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
         Organism.objects.filter(name="ARABIDOPSIS_THALIANA")
 
     def test_correct_index_location_protist(self):
@@ -161,7 +164,8 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
-        # Make sure the organism object got created.
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
         Organism.objects.filter(name="CANDIDA_ALBICANS")
 
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
@@ -190,7 +194,8 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
-        # Make sure the organism object got created.
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
         Organism.objects.filter(name="PSEUDOMONAS_AERUGINOSA")
 
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")

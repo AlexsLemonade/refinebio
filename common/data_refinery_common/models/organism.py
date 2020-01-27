@@ -137,7 +137,7 @@ class Organism(models.Model):
         return self.name.split("_")[0]
 
     @classmethod
-    def get_object_for_id(cls, taxonomy_id: int):
+    def get_or_create_object_for_id(cls, taxonomy_id: int):
         try:
             organism = cls.objects.filter(taxonomy_id=taxonomy_id).order_by("-is_scientific_name")[
                 0
@@ -151,7 +151,7 @@ class Organism(models.Model):
 
     @classmethod
     def get_name_for_id(cls, taxonomy_id: int) -> str:
-        organism = cls.get_object_for_id(taxonomy_id)
+        organism = cls.get_or_create_object_for_id(taxonomy_id)
 
         return organism.name
 
