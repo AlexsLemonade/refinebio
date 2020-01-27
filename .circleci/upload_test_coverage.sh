@@ -18,5 +18,5 @@ sed "s/filename=\"/filename=\"$project\//g" test_volume/coverage.xml > $output
 
 curl -s https://codecov.io/bash | bash -s -- -f "$output" -Z -F $project
 
-rm test_volume/coverage.xml
-rm $output
+rm -f test_volume/coverage.xml
+rm -f $output
