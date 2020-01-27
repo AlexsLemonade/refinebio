@@ -53,7 +53,7 @@ class SurveyTestCase(TestCase):
 
         # Make sure the organism object got created by making sure
         # this doesn't raise an exception.
-        Organism.objects.get(name="DANIO_RERIO").get()
+        Organism.objects.get(name="DANIO_RERIO")
 
         for file in files:
             urllib.request.urlopen(file.source_url)
