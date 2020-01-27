@@ -16,4 +16,7 @@ output="test_volume/${project}_coverage.xml"
 # folder name to each file path in coverage.xml
 sed "s/filename=\"/filename=\"$project\//g" test_volume/coverage.xml > $output
 
-curl -s https://codecov.io/bash | bash -s -- -f "$output"
+curl -s https://codecov.io/bash | bash -s -- -f "$output" -Z -F $project
+
+rm test_volume/coverage.xml
+rm $output
