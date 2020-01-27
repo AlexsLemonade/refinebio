@@ -19,9 +19,6 @@ fi
 
 coverage_file="${test_volume}/coverage.xml"
 
-echo $coverage_file
-cat $coverage_file
-
 if [[ ! -f $coverage_file ]]
 then
     echo "Coverage file wasn't found, were the tests run before?"
