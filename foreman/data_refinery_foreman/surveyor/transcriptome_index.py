@@ -130,7 +130,14 @@ class EnsemblUrlBuilder(ABC):
         # These fields aren't needed for the URL, but they vary between
         # the two REST APIs.
         self.scientific_name = species["name"].upper()
-        self.taxonomy_id = species["taxonomy_id"]
+
+        # This field can be stored in multiple keys, but if
+        # `species_taxonomy_id` is there it's the one we want because
+        # it's not strain-specific.
+        if "species_taxonomy_id" in species:
+            self.taxonomy_id = species["species_taxonomy_id"]
+        else:
+            self.taxonomy_id = species["taxonomy_id"]
 
         # This field is only needed for EnsemblBacteria and EnsemblFungi.
         self.collection = ""
