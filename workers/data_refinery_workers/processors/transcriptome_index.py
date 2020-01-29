@@ -34,6 +34,15 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 IDS_CLEANUP_TABLE = str.maketrans({";": None, '"': None})
 
 
+def get_organism_name_from_path(directory_path: str) -> str:
+    """Sometimes these files have strain information appended to
+    them, so we want to make sure we only use the first two parts of
+    a name like Candida_albicans_sc5314_gca_000784635.
+    """
+    organism_directory = directory_path.split("/")[-1]
+    return "_".join(organism_directory.split("_")[:2]).upper()
+
+
 def _compute_paths(job_context: Dict) -> str:
     """Computes the paths for all the directories used/created by this processor.
 
@@ -68,11 +77,8 @@ def _compute_paths(job_context: Dict) -> str:
 
     # We don't actually associated the organism with the job, so we
     # have to determine the organism name from the file
-    # path. Sometimes these files have strain information appended to
-    # them, so we want to make sure we only use the first two parts of
-    # a name like Candida_albicans_sc5314_gca_000784635
-    organism_directory = job_context["base_file_path"].split("/")[-1]
-    job_context["organism_name"] = "_".join(organism_directory.split("_")[:2]).upper()
+    # path.
+    job_context["organism_name"] = get_organism_name_from_path(job_context["base_file_path"])
 
     stamp = str(timezone.now().timestamp()).split(".")[0]
     archive_file_name = (
