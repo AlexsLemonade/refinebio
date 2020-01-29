@@ -171,11 +171,16 @@ jobs:
       # For the salmon end-to-end tests.
       - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
+      - run: ./scripts/prepare_image.sh -i transcriptome -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_transcriptome
       # This docker image should have already been built, but with the wrong dockerhub repo.
       - run: ./scripts/prepare_image.sh -i salmon -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_salmon
 
-      - run: ./foreman/run_tests.sh --tag=salmon
+      # Containers run as a different user so we need to give them permission to the test directory.
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume
+
+      - run: ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
 
   tx_illumina_tests:
     working_directory: ~/refinebio
@@ -272,6 +277,9 @@ jobs:
       # gotta retag it so it can go into the local docker repo.
       - run: docker tag ccdlstaging/dr_affymetrix:latest localhost:5000/dr_affymetrix:latest
       - run: docker push localhost:5000/dr_affymetrix
+
+      # Containers run as a different user so we need to give them permission to the test directory.
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume
 
       - run:
           command: ./foreman/run_tests.sh --tag=affymetrix
