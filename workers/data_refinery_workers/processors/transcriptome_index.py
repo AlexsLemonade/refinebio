@@ -66,8 +66,13 @@ def _compute_paths(job_context: Dict) -> str:
     job_context["rsem_index_dir"] = job_context["work_dir"] + "rsem_index/"
     os.makedirs(job_context["rsem_index_dir"], exist_ok=True)
 
-    # I think this is a bit sketchy.
-    job_context["organism_name"] = job_context["base_file_path"].split("/")[-1]
+    # We don't actually associated the organism with the job, so we
+    # have to determine the organism name from the file
+    # path. Sometimes these files have strain information appended to
+    # them, so we want to make sure we only use the first two parts of
+    # a name like Candida_albicans_sc5314_gca_000784635
+    organism_directory = job_context["base_file_path"].split("/")[-1]
+    job_context["organism_name"] = "_".join(organism_directory.split("_")[:2]).upper()
 
     stamp = str(timezone.now().timestamp()).split(".")[0]
     archive_file_name = (
