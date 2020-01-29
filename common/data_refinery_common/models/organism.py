@@ -137,7 +137,7 @@ class Organism(models.Model):
         return self.name.split("_")[0]
 
     @classmethod
-    def get_name_for_id(cls, taxonomy_id: int) -> str:
+    def get_or_create_object_for_id(cls, taxonomy_id: int):
         try:
             organism = cls.objects.filter(taxonomy_id=taxonomy_id).order_by("-is_scientific_name")[
                 0
@@ -146,6 +146,12 @@ class Organism(models.Model):
             name = get_scientific_name(taxonomy_id).upper().replace(" ", "_")
             organism = Organism(name=name, taxonomy_id=taxonomy_id, is_scientific_name=True)
             organism.save()
+
+        return organism
+
+    @classmethod
+    def get_name_for_id(cls, taxonomy_id: int) -> str:
+        organism = cls.get_or_create_object_for_id(taxonomy_id)
 
         return organism.name
 

@@ -32,7 +32,7 @@ fi
 . ./scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
-HOST_IP=$(get_ip_address)
+HOST_IP=$(get_ip_address || echo 127.0.0.1)
 
 docker run \
        --add-host=database:"$DB_HOST_IP" \
