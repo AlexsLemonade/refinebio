@@ -6,7 +6,7 @@ from django.test import TestCase
 import vcr
 
 from data_refinery_common.job_lookup import Downloaders
-from data_refinery_common.models import DownloaderJob, SurveyJob, SurveyJobKeyValue
+from data_refinery_common.models import DownloaderJob, Organism, SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 
 
@@ -57,6 +57,10 @@ class SurveyTestCase(TestCase):
         surveyor = TranscriptomeIndexSurveyor(survey_job)
         files = surveyor.discover_species()[0]
 
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
+        Organism.objects.get(name="DANIO_RERIO")
+
         for file in files:
             urllib.request.urlopen(file.source_url)
 
@@ -87,6 +91,10 @@ class SurveyTestCase(TestCase):
         for file in files:
             urllib.request.urlopen(file.source_url)
 
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
+        Organism.objects.get(name="OCTOPUS_BIMACULOIDES")
+
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.single_plant.yaml")
     def test_single_plant(self):
         """ Tests that the files returned actually exist.
@@ -111,6 +119,10 @@ class SurveyTestCase(TestCase):
 
         for file in files:
             urllib.request.urlopen(file.source_url)
+
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
+        Organism.objects.get(name="ARABIDOPSIS_THALIANA")
 
     @vcr.use_cassette(
         "/home/user/data_store/cassettes/surveyor.transcriptome.correct_location_protist.yaml"
@@ -166,6 +178,10 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
+        Organism.objects.get(name="CANDIDA_ALBICANS")
+
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey_bacteria.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey_bacteria(self, mock_send_job):
@@ -192,6 +208,10 @@ class SurveyTestCase(TestCase):
             send_job_calls.append(call(Downloaders.TRANSCRIPTOME_INDEX, downloader_job))
 
         mock_send_job.assert_has_calls(send_job_calls)
+
+        # Make sure the organism object got created by making sure
+        # this doesn't raise an exception.
+        Organism.objects.get(name="PSEUDOMONAS_AERUGINOSA")
 
     @vcr.use_cassette(
         "/home/user/data_store/cassettes/surveyor.transcriptome.survey_bacteria_none.yaml"

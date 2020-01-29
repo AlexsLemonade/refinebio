@@ -11,11 +11,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentAnnotation,
-    ExperimentSampleAssociation,
     OriginalFile,
-    Sample,
 )
 from data_refinery_common.utils import (
     get_env_variable,

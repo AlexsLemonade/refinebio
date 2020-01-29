@@ -22,7 +22,7 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import FileUtils, get_env_variable
 from data_refinery_workers.processors import smashing_utils, utils
 
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery")
 SMASHING_DIR = "/home/user/data_store/smashed/"
 
 logger = get_and_configure_logger(__name__)
@@ -168,7 +168,17 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Upload the result to S3
     timestamp = str(int(time.time()))
     s3_key = compendia_organism.name + "_" + str(compendia_version) + "_" + timestamp + ".zip"
-    archive_computed_file.sync_to_s3(S3_BUCKET_NAME, s3_key)
+    uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, s3_key)
+
+    if not uploaded_to_s3:
+        raise utils.ProcessorJobError(
+            "Failed to upload compendia to S3",
+            success=False,
+            computed_file_id=archive_computed_file.id,
+        )
+
+    if settings.RUNNING_IN_CLOUD:
+        archive_computed_file.delete_local_file()
 
     job_context["result"] = result
     job_context["success"] = True

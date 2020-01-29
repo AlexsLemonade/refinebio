@@ -5,6 +5,7 @@ import shutil
 import time
 from typing import Dict
 
+from django.conf import settings
 from django.utils import timezone
 
 import numpy as np
@@ -30,7 +31,7 @@ from data_refinery_workers.processors import smashing_utils, utils
 pd.set_option("mode.chained_assignment", None)
 
 
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery")
 BYTES_IN_GB = 1024 * 1024 * 1024
 SMASHING_DIR = "/home/user/data_store/smashed/"
 logger = get_and_configure_logger(__name__)
@@ -485,10 +486,19 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Upload the result to S3
     timestamp = str(int(time.time()))
     key = job_context["organism_name"] + "_" + str(compendium_version) + "_" + timestamp + ".zip"
-    archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
+    uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, key)
+
+    if not uploaded_to_s3:
+        raise utils.ProcessorJobError(
+            "Failed to upload compendia to S3",
+            success=False,
+            computed_file_id=archive_computed_file.id,
+        )
+
+    if settings.RUNNING_IN_CLOUD:
+        archive_computed_file.delete_local_file()
 
     job_context["result"] = result
-    job_context["computed_files"] = [archive_computed_file]
     job_context["success"] = True
 
     log_state("end create result object", job_context["job"].id, result_start)

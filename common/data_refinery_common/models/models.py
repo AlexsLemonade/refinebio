@@ -20,7 +20,6 @@ from data_refinery_common.utils import (
     calculate_file_size,
     calculate_sha1,
     get_env_variable,
-    get_s3_url,
 )
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
@@ -34,6 +33,9 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # we need something with the pattern: 'salmon X.X.X'
 CURRENT_SALMON_VERSION = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
 CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
+# Let this fail if SYSTEM_VERSION is unset.
+SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
+
 
 """
 # First Order Classes
@@ -708,6 +710,16 @@ class CompendiumResult(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(CompendiumResult, self).save(*args, **kwargs)
 
     # helper
     def get_computed_file(self):
@@ -916,7 +928,9 @@ class OriginalFile(models.Model):
         # If the file has a processor job that should not have been
         # retried, then it still shouldn't be retried.
         # Exclude the ones that were aborted.
-        no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True).exclude(abort=True)
+        no_retry_processor_jobs = self.processor_jobs.filter(
+            no_retry=True, worker_version=SYSTEM_VERSION
+        ).exclude(abort=True)
 
         # If the file has a processor job that hasn't even started
         # yet, then it doesn't need another.
@@ -1102,14 +1116,11 @@ class ComputedFile(models.Model):
         self.last_modified = current_time
         return super(ComputedFile, self).save(*args, **kwargs)
 
-    def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
+    def sync_to_s3(self, s3_bucket, s3_key) -> bool:
         """ Syncs a file to AWS S3.
         """
         if not settings.RUNNING_IN_CLOUD:
             return True
-
-        self.s3_bucket = s3_bucket
-        self.s3_key = s3_key
 
         try:
             S3.upload_file(
@@ -1118,7 +1129,6 @@ class ComputedFile(models.Model):
                 s3_key,
                 ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
             )
-            self.save()
         except Exception:
             logger.exception(
                 "Error uploading computed file to S3",
@@ -1126,9 +1136,11 @@ class ComputedFile(models.Model):
                 s3_key=self.s3_key,
                 s3_bucket=self.s3_bucket,
             )
-            self.s3_bucket = None
-            self.s3_key = None
             return False
+
+        self.s3_bucket = s3_bucket
+        self.s3_key = s3_key
+        self.save()
 
         return True
 
