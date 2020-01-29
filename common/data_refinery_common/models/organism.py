@@ -65,6 +65,7 @@ def get_taxonomy_id(organism_name: str) -> int:
         raise
 
     if len(id_list) == 0:
+        # If we can't find the taxonomy id, it's likely a bad organism name.
         error_message = (
             "Unable to retrieve NCBI taxonomy ID number for organism "
             + "with name: {}".format(organism_name)
