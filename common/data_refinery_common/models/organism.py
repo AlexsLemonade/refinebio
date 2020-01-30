@@ -28,6 +28,10 @@ class InvalidNCBITaxonomyId(Exception):
     pass
 
 
+class UnknownOrganismId(Exception):
+    pass
+
+
 def get_scientific_name(taxonomy_id: int) -> str:
     parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id), "api_key": NCBI_API_KEY}
     response = requests.get(EFETCH_URL, parameters)
@@ -61,11 +65,13 @@ def get_taxonomy_id(organism_name: str) -> int:
         raise
 
     if len(id_list) == 0:
-        logger.error(
-            "Unable to retrieve NCBI taxonomy ID number for organism " + "with name: %s",
-            organism_name,
+        # If we can't find the taxonomy id, it's likely a bad organism name.
+        error_message = (
+            "Unable to retrieve NCBI taxonomy ID number for organism "
+            + "with name: {}".format(organism_name)
         )
-        return 0
+        logger.error(error_message)
+        raise UnknownOrganismId(error_message)
     elif len(id_list) > 1:
         logger.warn(
             "Organism with name %s returned multiple NCBI taxonomy ID " + "numbers.", organism_name
