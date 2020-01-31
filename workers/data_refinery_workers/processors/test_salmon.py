@@ -35,7 +35,7 @@ from data_refinery_workers.processors import salmon, tximport, utils
 
 
 def prepare_organism_indices():
-    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
 
     # This is a lie, but this image doesn't have the dependencies for TRANSCRIPTOME_INDEX
     computational_result_short = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
@@ -71,7 +71,7 @@ def prepare_job():
     pj.pipeline_applied = "SALMON"
     pj.save()
 
-    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
 
     samp = Sample()
     samp.accession_code = "SALMON"  # So the test files go to the right place
@@ -125,7 +125,7 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     pj.id = random.randint(111, 999999)
     pj.save()
 
-    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
 
     samp = Sample()
     samp.accession_code = "SALMON"  # So the test files go to the right place
@@ -308,7 +308,7 @@ class SalmonTestCase(TestCase):
         experiment_accession = "test_experiment"
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
-        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
 
         # test_sample record
         sample_accession = "test_sample"
@@ -379,7 +379,7 @@ class SalmonTestCase(TestCase):
         experiment_accession = "PRJNA242809"
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
-        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
 
         ## Sample 1
         sample1_accession = "SRR1206053"
@@ -503,7 +503,7 @@ class SalmonTestCase(TestCase):
         experiment_accession = "PRJNA242809"
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
-        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
 
         ## Sample 1
         sample1_accession = "SRR1206053"
@@ -582,7 +582,8 @@ class SalmonToolsTestCase(TestCase):
         }
         os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=9606)
+
         sample = Sample()
         sample.organism = homo_sapiens
         sample.save()
@@ -620,7 +621,8 @@ class SalmonToolsTestCase(TestCase):
         }
         os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=9606)
+
         sample = Sample()
         sample.organism = homo_sapiens
         sample.save()
@@ -785,7 +787,8 @@ class RuntimeProcessorTest(TestCase):
             "output_directory": test_dir + "double_output/",
         }
         os.makedirs(job_context["salmontools_directory"], exist_ok=True)
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=9606)
+
         sample = Sample()
         sample.organism = homo_sapiens
         sample.save()
@@ -819,7 +822,7 @@ def create_tximport_job_context(
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(accession_code=experiment_accession)
 
-    zebrafish = Organism.get_object_for_name("DANIO_RERIO")
+    zebrafish = Organism.get_object_for_name("DANIO_RERIO", taxonomy_id=9606)
 
     # This is a lie, but this image doesn't have the dependencies for TRANSCRIPTOME_INDEX
     computational_result_short = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
