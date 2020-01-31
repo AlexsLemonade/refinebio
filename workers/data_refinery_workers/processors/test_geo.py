@@ -15,8 +15,6 @@ from data_refinery_common.models import (
     SurveyJob,
 )
 
-CASSETTES_DIR = "/home/user/data_store/cassettes/"
-
 
 def prepare_illumina_job(organism):
     pj = ProcessorJob()
