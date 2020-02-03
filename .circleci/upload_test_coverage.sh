@@ -32,6 +32,8 @@ output_file="${test_volume}/${project}_coverage.xml"
 # append the project folder name to each file path in coverage.xml
 sed "s/filename=\"/filename=\"$project\//g" $coverage_file > $output_file
 
-curl -s https://codecov.io/bash | bash -s -- -f "$output_file" -Z -F $project
+pip3 install codecov
+
+codecov -f "$output_file" -Z -F $project
 
 rm -f $coverage_file $output_file
