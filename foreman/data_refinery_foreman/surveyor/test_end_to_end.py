@@ -61,8 +61,8 @@ ORIGINAL_GEO_SURVEYOR = surveyor.GeoSurveyor
 
 EXTERNAL_FILE_URL_MAPPING = {
     # Transcriptome:
-    "ftp://ftp.ensembl.org/pub/release-98/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.98.gtf.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.98.gtf.gz",  # noqa
-    "ftp://ftp.ensembl.org/pub/release-98/fasta/caenorhabditis_elegans/dna/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz",  # noqa
+    "ftp://ftp.ensembl.org/pub/release-99/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.99.gtf.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.99.gtf.gz",  # noqa
+    "ftp://ftp.ensembl.org/pub/release-99/fasta/caenorhabditis_elegans/dna/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz",  # noqa
     # No Op:
     "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-3303/E-GEOD-3303.processed.1.zip": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/E-GEOD-3303.processed.1.zip",  # noqa
     # GEO:
