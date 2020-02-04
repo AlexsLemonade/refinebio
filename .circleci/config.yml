@@ -91,6 +91,7 @@ jobs:
       - run: ./scripts/update_models.sh
 
       # Run Common Tests.
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
       - run: ./common/run_tests.sh
       - run: .circleci/upload_test_coverage.sh common
 
@@ -182,7 +183,6 @@ jobs:
 
       # Containers run as a different user so we need to give them permission to the test directory.
       - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
-
       - run: ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
       - run: .circleci/upload_test_coverage.sh foreman
 
@@ -283,7 +283,6 @@ jobs:
 
       # Containers run as a different user so we need to give them permission to the test directory.
       - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
-
       - run:
           command: ./foreman/run_tests.sh --tag=affymetrix
           # This takes more than 10 minutes, but not much.
