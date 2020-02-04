@@ -29,7 +29,6 @@ jobs:
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh
-
         # Start Nomad and register jobs.
       - run:
           command: sudo -E ./scripts/run_nomad.sh -e test
@@ -43,12 +42,13 @@ jobs:
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t downloaders
           no_output_timeout: 1h
 
       # Run Foreman Tests
-      - run: mkdir -p test_volume && chmod -R a+rw test_volume
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
 
       # The foreman includes the end-to-end tests, but some of these
       # require docker images which are not built in this
@@ -56,6 +56,7 @@ jobs:
       # transcriptome and let those end-to-end tests get run in the
       # workflows that include building those images.
       - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
+      - run: .circleci/upload_test_coverage.sh foreman
 
       # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
@@ -90,7 +91,9 @@ jobs:
       - run: ./scripts/update_models.sh
 
       # Run Common Tests.
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
       - run: ./common/run_tests.sh
+      - run: .circleci/upload_test_coverage.sh common
 
       - run: ./scripts/prepare_image.sh -i smasher -s workers -d localhost:5000
 
@@ -155,7 +158,9 @@ jobs:
       - run: ./scripts/rebuild_es_index.sh
 
       # Run API Tests.
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
       - run: ./api/run_tests.sh
+      - run: .circleci/upload_test_coverage.sh api
 
       - run:
           command: .circleci/filter_tests.sh -t salmon
@@ -163,7 +168,6 @@ jobs:
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh
-
         # Start Nomad and register jobs.
       - run:
           command: sudo -E ./scripts/run_nomad.sh -e test
@@ -178,9 +182,9 @@ jobs:
       - run: docker push localhost:5000/dr_salmon
 
       # Containers run as a different user so we need to give them permission to the test directory.
-      - run: mkdir -p test_volume && chmod -R a+rw test_volume
-
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
       - run: ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
+      - run: .circleci/upload_test_coverage.sh foreman
 
   tx_illumina_tests:
     working_directory: ~/refinebio
@@ -262,7 +266,6 @@ jobs:
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh
-
         # Start Nomad and register jobs.
       - run:
           command: sudo -E ./scripts/run_nomad.sh -e test
@@ -279,12 +282,12 @@ jobs:
       - run: docker push localhost:5000/dr_affymetrix
 
       # Containers run as a different user so we need to give them permission to the test directory.
-      - run: mkdir -p test_volume && chmod -R a+rw test_volume
-
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
       - run:
           command: ./foreman/run_tests.sh --tag=affymetrix
           # This takes more than 10 minutes, but not much.
           no_output_timeout: 20m
+      - run: .circleci/upload_test_coverage.sh foreman
 
   deploy:
     machine: true
