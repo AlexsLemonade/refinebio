@@ -16,10 +16,7 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
-    OriginalFile,
-    OriginalFileSampleAssociation,
     Pipeline,
-    Processor,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
