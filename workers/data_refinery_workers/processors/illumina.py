@@ -2,6 +2,7 @@ import csv
 import multiprocessing
 import os
 import subprocess
+import re
 from typing import Dict
 
 from django.utils import timezone
@@ -138,12 +139,10 @@ def _detect_columns(job_context: Dict) -> Dict:
 
         # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
         for header in headers:
-            if "DETECTION_PVAL" in header.upper().replace(" ", "_"):
-                # Could be <SAMPLE_ID>.Detection Pval, etc
-                if "." in header:
-                    job_context["detectionPval"] = header.split(".")[-1]
-                else:
-                    job_context["detectionPval"] = header
+            # check if header contains something like "detection pval"
+            pvalue_header = re.match(r"(detect\w*\b).(pval\w*\b)?", header, re.IGNORECASE)
+            if pvalue_header:
+                job_context["detectionPval"] = pvalue_header.string
                 break
         else:
             job_context["job"].failure_reason = "Could not detect PValue column!"
