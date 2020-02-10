@@ -1,8 +1,8 @@
 import csv
 import multiprocessing
 import os
-import subprocess
 import re
+import subprocess
 from typing import Dict
 
 from django.utils import timezone
