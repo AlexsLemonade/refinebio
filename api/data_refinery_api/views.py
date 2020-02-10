@@ -616,6 +616,16 @@ class CreateApiTokenView(generics.CreateAPIView):
 
 @method_decorator(name="patch", decorator=swagger_auto_schema(auto_schema=None))
 class APITokenView(generics.RetrieveUpdateAPIView):
+    """
+    Read and modify Api Tokens.
+
+    get:
+    Return details about a specific token.
+
+    put:
+    This can be used to activate a specific token by sending `is_activated: true`.
+    """
+
     model = APIToken
     lookup_field = "id"
     queryset = APIToken.objects.all()
