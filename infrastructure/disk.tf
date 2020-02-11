@@ -114,10 +114,53 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   }
 }
 
-resource "aws_s3_bucket_metric" "compendia_metrics" {
+
+resource "aws_s3_bucket_metric" "compendia_bucket_metrics" {
   bucket = "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
-  name   = "data-refinery-compendia-metric-${var.user}-${var.stage}"
+  name   = "data-refinery-compendia-bucket-metric-${var.user}-${var.stage}"
 }
+
+
+resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
+  name = "data-refinery-compendia-object-metric-${var.user}-${var.stage}"
+  description = "Download Compendia Events"
+
+  event_pattern = <<PATTERN
+{
+  "source": [
+    "aws.s3"
+  ],
+  "detail-type": [
+    "AWS API Call via CloudTrail"
+  ],
+  "detail": {
+    "eventSource": [
+      "s3.amazonaws.com"
+    ],
+    "eventName": [
+      "GetObject"
+    ],
+    "requestParameters": {
+      "bucketName": [
+        "data-refinery-s3-compendia-${var.user}-${var.stage}"
+      ]
+    }
+  }
+}
+PATTERN
+}
+
+
+resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
+  rule = "${aws_cloudwatch_event_rule.compendia_object_metrics.name}"
+  target_id = "compendia-object-logs-target-${var.user}-${var.stage}"
+  arn = "${aws_cloundwatch_log_group.compendia_object_metrics_log_group.arn}"
+}
+
+data "aws_cloudwatch_log_group" "compendia_object_metrics_log_group" {
+  name = "data-refinery-compendia-lop-group-${var.user}-${var.stage}"
+}
+
 
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
   bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
