@@ -1,4 +1,4 @@
-django==2.2.9
+django==2.2.10
 psycopg2-binary
 requests>=2.20.0
 retrying
