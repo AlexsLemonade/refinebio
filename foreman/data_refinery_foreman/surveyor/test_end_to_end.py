@@ -573,7 +573,9 @@ class TranscriptomeRedownloadingTestCase(TransactionTestCase):
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+            organism = Organism(
+                name="CAENORHABDITIS_ELEGANS", taxonomy_id=6239, is_scientific_name=True
+            )
             organism.save()
 
             survey_job = surveyor.survey_transcriptome_index("Caenorhabditis elegans", "Ensembl")
