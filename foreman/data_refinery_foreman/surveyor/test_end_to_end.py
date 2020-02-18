@@ -43,7 +43,7 @@ logging.getLogger("vcr").setLevel(logging.WARN)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CASSETTES_DIR = "/home/user/data_store/cassettes/"
 LOOP_TIME = 5  # seconds
-MAX_WAIT_TIME = timedelta(minutes=15)
+MAX_WAIT_TIME = timedelta(seconds=15)
 
 # We don't want our end-to-end tests to be dependent upon external
 # services, so we host the files we would download fromt hem on S3. We
@@ -799,7 +799,6 @@ class SraRedownloadingTestCase(TransactionTestCase):
 class EnaFallbackTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
-    @skip("This code doesn't handle the FTP server being down, so skip until it does.")
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.unmated_reads.yaml"),
         ignore_hosts=["nomad"],

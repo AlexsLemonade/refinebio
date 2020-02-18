@@ -34,7 +34,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:35:14 GMT
+      - Tue, 18 Feb 2020 18:55:48 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -114,7 +114,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Thu, 16 Jan 2020 19:35:15 GMT
+      - Tue, 18 Feb 2020 18:55:48 GMT
       ETag:
       - E-MEXP-2381.idf.txt_2790_1464780736000
       Last-Modified:
@@ -174,7 +174,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:35:15 GMT
+      - Tue, 18 Feb 2020 18:55:49 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -221,7 +221,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:35:16 GMT
+      - Tue, 18 Feb 2020 18:55:50 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -281,7 +281,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Thu, 16 Jan 2020 19:35:17 GMT
+      - Tue, 18 Feb 2020 18:55:50 GMT
       ETag:
       - E-MEXP-2381.sdrf.txt_1569_1324803913000
       Last-Modified:
@@ -328,18 +328,18 @@ interactions:
       Content-Type:
       - text/xml; charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:35:17 GMT
+      - Tue, 18 Feb 2020 18:55:51 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - 939B80321B5513C500003FFA726A0A3E.1.1.m_1
+      - 322C67DEB8AD64F500005BE7E2F7C03D.1.1.m_1
       NCBI-SID:
-      - 5729450568AFE40B_CD15SID
+      - 7EB9D4F40E1245F7_6481SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=5729450568AFE40B_CD15SID; domain=.nih.gov; path=/; expires=Sat, 16
-        Jan 2021 19:35:17 GMT
+      - ncbi_sid=7EB9D4F40E1245F7_6481SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 18:55:51 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -358,7 +358,7 @@ interactions:
       code: 200
       message: OK
 - request:
-    body: '{"Payload": null, "Meta": {"JOB_ID": "3", "JOB_NAME": "ARRAY_EXPRESS"}}'
+    body: '{"Payload": null, "Meta": {"JOB_NAME": "ARRAY_EXPRESS", "JOB_ID": "10305"}}'
     headers:
       Accept:
       - '*/*'
@@ -367,7 +367,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '71'
+      - '75'
       Content-Type:
       - application/json
       User-Agent:
@@ -377,22 +377,22 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/1zMwQqCQBDG8XeZs0uz6+iot2g9KJHQpaO4OyMFkVESQfTuQXWIrh/f//cAf7ie
-        hznuVdopNB4q8N1us+6Wvt722Ft0tJDvx9iMS4dpagujROVI0UIC9W04ri46zNqcRO9QMRWf9e1h
-        DJFYrHHlSAaDqElzyQ0x4sgU2cUMEvht2yn8gfx8BQAA///CCeiVqwAAAA==
+        H4sIAAAAAAAA/1zMwarCMBCF4XeZdcOdpElz7U5MFy1iwY3LMpMZURArWkQQ311QF+L2cP7vDml/
+        OdGUdyrdyG2CGlK/WS37eWrWAw4Wnf+Tz8fY8O8wOBus4dL7ytkMBTRXOizOSpO2R9Eb1N6F9/ry
+        iCtXid8aQZmZnEmMRkQTNZOWMTALQgHfbTfyD+gfzwAAAP//N2uVVqsAAAA=
     headers:
       Content-Encoding:
       - gzip
       Content-Length:
-      - '157'
+      - '158'
       Content-Type:
       - application/json
       Date:
-      - Thu, 16 Jan 2020 19:35:18 GMT
+      - Tue, 18 Feb 2020 18:55:51 GMT
       Vary:
       - Accept-Encoding
       X-Nomad-Index:
-      - '748'
+      - '425'
     status:
       code: 200
       message: OK

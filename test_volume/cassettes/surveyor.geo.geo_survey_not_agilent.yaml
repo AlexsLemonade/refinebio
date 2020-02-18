@@ -11,7 +11,7 @@ interactions:
       User-Agent:
       - python-requests/2.20.0
     method: GET
-    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?field=scin&api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&term=HOMO_SAPIENS&db=taxonomy
+    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&field=scin&db=taxonomy&term=HOMO_SAPIENS
   response:
     body:
       string: !!binary |
@@ -34,18 +34,18 @@ interactions:
       Content-Type:
       - text/xml; charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:45:10 GMT
+      - Tue, 18 Feb 2020 19:21:13 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - 322C3D773D0EAC85000021F54F73D5E4.1.1.m_1
+      - 939B97E76669C435000042FFE2042E31.1.1.m_1
       NCBI-SID:
-      - 195A4610EA46E3DA_94A5SID
+      - 0E93B2E85C5DFA4D_9230SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=195A4610EA46E3DA_94A5SID; domain=.nih.gov; path=/; expires=Sat, 16
-        Jan 2021 19:45:10 GMT
+      - ncbi_sid=0E93B2E85C5DFA4D_9230SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:21:14 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -99,7 +99,7 @@ interactions:
       Content-Type:
       - text/html; charset=iso-8859-1
       Date:
-      - Thu, 16 Jan 2020 19:45:10 GMT
+      - Tue, 18 Feb 2020 19:21:14 GMT
       Location:
       - https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?targ=self&acc=GPL6102&form=text&view=brief
       Referrer-Policy:
@@ -2121,18 +2121,18 @@ interactions:
       Content-Type:
       - geo/text
       Date:
-      - Thu, 16 Jan 2020 19:45:10 GMT
+      - Tue, 18 Feb 2020 19:21:14 GMT
       NCBI-PHID:
-      - 0751F109E20BD4610000000000000001.m_1
+      - 0751288FE4C392A10000000000000001.m_1
       NCBI-SID:
-      - 0751F109E20BD461_0000SID
+      - 0751288FE4C392A1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=0751F109E20BD461_0000SID; domain=.nih.gov; path=/; expires=Sat, 16
-        Jan 2021 19:45:10 GMT
+      - ncbi_sid=0751288FE4C392A1_0000SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:21:14 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:

@@ -55,11 +55,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:32:06 GMT
+      - Tue, 18 Feb 2020 19:01:54 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=80DFCF803B3413FF81501E7276A97438; Path=/ena/data/; HttpOnly
+      - JSESSIONID=9EEA0BE0EB0D3660D346578C3BEC1E7D; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -149,11 +149,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:32:06 GMT
+      - Tue, 18 Feb 2020 19:01:55 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=898F3672AD95BFF38D5512AF25DD5AE6; Path=/ena/data/; HttpOnly
+      - JSESSIONID=33849B4F44E5B994CDF2A2AD5021BEA4; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -224,11 +224,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:32:07 GMT
+      - Tue, 18 Feb 2020 19:01:55 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=B9F3AC04D7EFCF1F6C6CD53E16121673; Path=/ena/data/; HttpOnly
+      - JSESSIONID=D355E6D014934F18F8502312E22F7EA0; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -302,11 +302,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:32:07 GMT
+      - Tue, 18 Feb 2020 19:01:56 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=940F5EE7071EAD53E432B704E9B2F835; Path=/ena/data/; HttpOnly
+      - JSESSIONID=F06EDA65D56C905973A22D8CAD38A8B2; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -373,11 +373,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:32:08 GMT
+      - Tue, 18 Feb 2020 19:01:56 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=33E3A26281AB82D96043D54D79E75169; Path=/ena/data/; HttpOnly
+      - JSESSIONID=E6AA5325C2406B5784DDA54C0E3D0D5F; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -418,20 +418,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Thu, 16 Jan 2020 19:32:09 GMT
+      - Tue, 18 Feb 2020 19:01:56 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A433EDE20BA3910000000000000001.m_1
+      - CC953ECFE4C34A410000000000000001.m_1
       NCBI-SID:
-      - C7A433EDE20BA391_0000SID
+      - CC953ECFE4C34A41_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A433EDE20BA391_0000SID; domain=.nih.gov; path=/; expires=Sat, 16
-        Jan 2021 19:32:09 GMT
+      - ncbi_sid=CC953ECFE4C34A41_0000SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:01:56 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:

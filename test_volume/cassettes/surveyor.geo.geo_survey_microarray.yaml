@@ -45,18 +45,18 @@ interactions:
       Content-Type:
       - application/json; charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:44:06 GMT
+      - Tue, 18 Feb 2020 19:19:31 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - 322C3D773D0EAC8500004EF4D087C909.1.1.m_1
+      - 939B97E76669C435000043FF5D57A8FD.1.1.m_1
       NCBI-SID:
-      - B3485F3D6DADE993_868ASID
+      - 1E4F8B135BDE3BFA_30C9SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=B3485F3D6DADE993_868ASID; domain=.nih.gov; path=/; expires=Sat, 16
-        Jan 2021 19:44:07 GMT
+      - ncbi_sid=1E4F8B135BDE3BFA_30C9SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:19:31 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -86,7 +86,7 @@ interactions:
       User-Agent:
       - python-requests/2.20.0
     method: GET
-    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?field=scin&api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&term=HOMO_SAPIENS&db=taxonomy
+    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&field=scin&db=taxonomy&term=HOMO_SAPIENS
   response:
     body:
       string: !!binary |
@@ -109,18 +109,18 @@ interactions:
       Content-Type:
       - text/xml; charset=UTF-8
       Date:
-      - Thu, 16 Jan 2020 19:44:06 GMT
+      - Tue, 18 Feb 2020 19:19:31 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - 322C3D773D0EAC8500004CF4D0B8B481.1.1.m_1
+      - 322C67DEB8AD64F5000037EEDF3AD619.1.1.m_1
       NCBI-SID:
-      - 88FBDAE74642A498_AE50SID
+      - 02EC4F3D3A0BEB3D_2599SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=88FBDAE74642A498_AE50SID; domain=.nih.gov; path=/; expires=Sat, 16
-        Jan 2021 19:44:07 GMT
+      - ncbi_sid=02EC4F3D3A0BEB3D_2599SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:19:32 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -174,7 +174,7 @@ interactions:
       Content-Type:
       - text/html; charset=iso-8859-1
       Date:
-      - Thu, 16 Jan 2020 19:44:07 GMT
+      - Tue, 18 Feb 2020 19:19:32 GMT
       Location:
       - https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?targ=self&acc=GPL96&form=text&view=brief
       Referrer-Policy:
@@ -18878,18 +18878,18 @@ interactions:
       Content-Type:
       - geo/text
       Date:
-      - Thu, 16 Jan 2020 19:44:07 GMT
+      - Tue, 18 Feb 2020 19:19:32 GMT
       NCBI-PHID:
-      - 0C42DA9BE20BD0710000000000000001.m_1
+      - 0C42D254E4C38C410000000000000001.m_1
       NCBI-SID:
-      - 0C42DA9BE20BD071_0000SID
+      - 0C42D254E4C38C41_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=0C42DA9BE20BD071_0000SID; domain=.nih.gov; path=/; expires=Sat, 16
-        Jan 2021 19:44:07 GMT
+      - ncbi_sid=0C42D254E4C38C41_0000SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:19:32 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
