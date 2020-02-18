@@ -35,7 +35,7 @@ S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-re
 BYTES_IN_GB = 1024 * 1024 * 1024
 SMASHING_DIR = "/home/user/data_store/smashed/"
 logger = get_and_configure_logger(__name__)
-### DEBUG ###
+# DEBUG #
 logger.setLevel(logging.getLevelName("DEBUG"))
 
 
@@ -64,6 +64,14 @@ def _prepare_input(job_context: Dict) -> Dict:
     # We'll store here all sample accession codes that didn't make it into the compendia
     # with the reason why not.
     job_context["filtered_samples"] = {}
+
+    # submitter processed accession codes that will be filtered out
+    submitter_processed_samples = Sample.objects.filter(
+        organism__name__in=job_context["all_organisms"],
+        results__processor__name="Submitter-processed",
+    ).values_list("accession_code", flat=True)
+
+    job_context["submitter_processed_samples"] = set(submitter_processed_samples)
 
     job_context = smashing_utils.prepare_files(job_context)
 
@@ -276,7 +284,19 @@ def _perform_imputation(job_context: Dict) -> Dict:
                     sample.accession_code, job_context["dataset"].data
                 ),
             }
-
+        # submitter processed data has proven to be unreliable in the past
+        # so we will filter it all out until we can check it one at a time
+        # https://github.com/AlexsLemonade/refinebio/issues/2114
+        if sample_accession_code in job_context["submitter_processed_samples"]:
+            sample = Sample.objects.get(accession_code=sample_accession_code)
+            sample_metadata = sample.to_metadata_dict()
+            job_context["filtered_samples"][sample_accession_code] = {
+                **sample_metadata,
+                "reason": "Sample was dropped because it was submitter-processed.",
+                "experiment_accession_code": smashing_utils.get_experiment_accession(
+                    sample.accession_code, job_context["dataset"].data
+                ),
+            }
     del row_filtered_matrix
 
     # # Visualize Row and Column Filtered
