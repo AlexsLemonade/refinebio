@@ -9,7 +9,7 @@ chardet==3.0.4            # via requests
 coverage==4.5.1           # via coveralls
 coveralls==1.5.1
 django-elasticsearch-dsl==0.5.1
-django==2.2.9
+django==2.2.10
 docopt==0.6.2             # via coveralls
 elasticsearch-dsl==6.1.0
 elasticsearch==6.2.0      # via elasticsearch-dsl
