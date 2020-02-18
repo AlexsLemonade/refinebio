@@ -536,7 +536,6 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                         requests.post(
                             settings.ENGAGEMENTBOT_WEBHOOK,
                             json={
-                                "channel": "ccdl-general",  # Move to robots when we get sick of these
                                 "username": "EngagementBot",
                                 "icon_emoji": ":halal:",
                                 "attachments": [

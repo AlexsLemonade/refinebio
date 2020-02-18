@@ -9,3 +9,5 @@ else
 	echo "Running all tests..";
 	./workers/run_tests.sh "$@"
 fi
+
+./.circleci/upload_test_coverage.sh workers

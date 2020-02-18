@@ -6,9 +6,12 @@ import time
 from datetime import datetime, timedelta
 from test.support import EnvironmentVarGuard  # Python >=3
 from unittest import skip
+from unittest.mock import patch
 
 from django.test import TransactionTestCase, tag
 from django.utils import timezone
+
+import vcr
 
 from data_refinery_common.models import (
     ComputationalResult,
@@ -28,8 +31,6 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    SurveyJob,
-    SurveyJobKeyValue,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_foreman.foreman.main import retry_lost_downloader_jobs
@@ -38,15 +39,102 @@ from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_ex
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.getLogger("vcr").setLevel(logging.WARN)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
+CASSETTES_DIR = "/home/user/data_store/cassettes/"
 LOOP_TIME = 5  # seconds
 MAX_WAIT_TIME = timedelta(minutes=15)
+
+# We don't want our end-to-end tests to be dependent upon external
+# services, so we host the files we would download fromt hem on S3. We
+# then have to replace the source_urls of downloader jobs that are
+# generated for end-to-end tests to pull from S3 instead of the
+# original location. The following constants and function wait until
+# the original files have been created and then swap out their
+# source_urls based on the mapping below.
+# We have to save references to the actual surveyor classes before
+# they get overwritten with mocks.
+ORIGINAL_ARRAY_EXPRESS_SURVEYOR = surveyor.ArrayExpressSurveyor
+ORIGINAL_SRA_SURVEYOR = surveyor.SraSurveyor
+ORIGINAL_TRANSCRIPTOME_SURVEYOR = surveyor.TranscriptomeIndexSurveyor
+ORIGINAL_GEO_SURVEYOR = surveyor.GeoSurveyor
+
+EXTERNAL_FILE_URL_MAPPING = {
+    # Transcriptome:
+    "ftp://ftp.ensembl.org/pub/release-99/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.99.gtf.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.99.gtf.gz",  # noqa
+    "ftp://ftp.ensembl.org/pub/release-99/fasta/caenorhabditis_elegans/dna/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz",  # noqa
+    # No Op:
+    "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-3303/E-GEOD-3303.processed.1.zip": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/E-GEOD-3303.processed.1.zip",  # noqa
+    # GEO:
+    "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE102nnn/GSE102571/miniml/GSE102571_family.xml.tgz": "https://data-refinery-test-assets.s3.amazonaws.com/end_to_end_downloads/GSE102571_family.xml.tgz",  # noqa
+}
+
+
+def build_surveyor_init_mock(source_type):
+    if source_type == "ARRAY_EXPRESS":
+        original_surveyor = ORIGINAL_ARRAY_EXPRESS_SURVEYOR
+    if source_type == "SRA":
+        original_surveyor = ORIGINAL_SRA_SURVEYOR
+    if source_type == "TRANSCRIPTOME_INDEX":
+        original_surveyor = ORIGINAL_TRANSCRIPTOME_SURVEYOR
+    if source_type == "GEO":
+        original_surveyor = ORIGINAL_GEO_SURVEYOR
+
+    def mock_init_surveyor(survey_job):
+        ret_value = original_surveyor(survey_job)
+
+        def mock_queue_downloader_job_for_original_files(
+            original_files, experiment_accession_code: str = None, is_transcriptome: bool = False,
+        ):
+            for original_file in original_files:
+                original_file.source_url = EXTERNAL_FILE_URL_MAPPING[original_file.source_url]
+                original_file.save()
+
+            return original_surveyor.queue_downloader_job_for_original_files(
+                ret_value, original_files, experiment_accession_code, is_transcriptome
+            )
+
+        def mock_queue_downloader_jobs(experiment, samples):
+            # We don't want to change the same file's url more than
+            # once and sometimes multiple samples are associated with
+            # the same file.
+            original_file_ids = set()
+            for sample in samples:
+                for original_file in sample.original_files.all():
+                    if original_file.id not in original_file_ids:
+                        try:
+                            original_file.source_url = EXTERNAL_FILE_URL_MAPPING[
+                                original_file.source_url
+                            ]
+                        except KeyError as e:
+                            log_message = (
+                                "The tests attempted to access a URL that is not in"
+                                " EXTERNAL_FILE_URL_MAPPING. This is most likely because you've"
+                                " added a test that mocks the surveyor so that the DownloaderJobs"
+                                " download from S3 instead of the external service. To fix this"
+                                " you should download the file, upload it to S3, and then add a"
+                                " mapping from its original URL to its URL in S3."
+                            )
+                            logger.warn(log_message)
+                            raise e
+
+                        original_file.save()
+                        original_file_ids.add(original_file.id)
+
+            return original_surveyor.queue_downloader_jobs(ret_value, experiment, samples)
+
+        ret_value.queue_downloader_job_for_original_files = (
+            mock_queue_downloader_job_for_original_files
+        )
+        ret_value.queue_downloader_jobs = mock_queue_downloader_jobs
+        return ret_value
+
+    return mock_init_surveyor
 
 
 def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = None):
     """Monitors the `job_class` table for when `job` is done."""
     loop_time = loop_time if loop_time else LOOP_TIME
-    job = job_class.objects.filter(id=job.id).get()
     last_log_time = timezone.now()
     while job.success is None and timezone.now() - start_time < MAX_WAIT_TIME:
         time.sleep(loop_time)
@@ -56,7 +144,7 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
             logger.info("Still polling the %s with ID %s.", job_class.__name__, job.nomad_job_id)
             last_log_time = timezone.now()
 
-        job = job_class.objects.filter(id=job.id).get()
+        job.refresh_from_db()
 
     if timezone.now() - start_time > MAX_WAIT_TIME:
         logger.error("%s job timed out!", job_class.__name__)
@@ -69,10 +157,16 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
 # job in the database because it'd be stuck in a transaction.
 class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
-    def test_no_op(self):
+    @vcr.use_cassette(
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.no_op.yaml"), ignore_hosts=["nomad"],
+    )
+    @patch("data_refinery_foreman.surveyor.surveyor.ArrayExpressSurveyor")
+    def test_no_op(self, mock_surveyor):
         """Survey, download, then process an experiment we know is NO_OP."""
-        # Clear out pre-existing work dirs so there's no conflicts:
 
+        mock_surveyor.side_effect = build_surveyor_init_mock("ARRAY_EXPRESS")
+
+        # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
@@ -132,8 +226,15 @@ class NoOpEndToEndTestCase(TransactionTestCase):
 
 class ArrayexpressRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
-    def test_array_express_redownloading(self):
+    @vcr.use_cassette(
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.array_express_redownloading.yaml"),
+        ignore_hosts=["nomad"],
+    )
+    @patch("data_refinery_foreman.surveyor.surveyor.ArrayExpressSurveyor")
+    def test_array_express_redownloading(self, mock_surveyor):
         """Survey, download, then process an experiment we know is NO_OP."""
+
+        mock_surveyor.side_effect = build_surveyor_init_mock("ARRAY_EXPRESS")
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
@@ -222,11 +323,18 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
 
 class GeoArchiveRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
+    @vcr.use_cassette(
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.geo_archive_redownloading.yaml"),
+        ignore_hosts=["nomad"],
+    )
     def test_geo_archive_redownloading(self):
         """Survey, download, then process an experiment we know is NO_OP.
 
         All the data for the experiment are in the same archive, which
         is one of ways we expect GEO data to come.
+
+        This is another test which uses Aspera so it unfortunately
+        cannot be made to run without relying on NCBI's aspera server.
         """
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
@@ -332,16 +440,23 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
 class GeoCelgzRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("affymetrix")
+    @vcr.use_cassette(
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.geo_celgz_redownloading.yaml"),
+        ignore_hosts=["nomad"],
+    )
     def test_geo_celgz_redownloading(self):
         """Survey, download, then process an experiment we know is Affymetrix.
 
         Each of the experiment's samples are in their own .cel.gz
         file, which is another way we expect GEO data to come.
+
+        This is another test which uses Aspera so it unfortunately
+        cannot be made to run without relying on NCBI's aspera server.
         """
-        # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
+            # Clear out pre-existing work dirs so there's no conflicts:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
 
@@ -431,10 +546,20 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             self.assertEqual(processor_jobs.count(), SAMPLES_IN_EXPERIMENT)
 
+
+class TranscriptomeRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("transcriptome")
-    def test_transcriptome_redownloading(self):
-        """Survey, download, then process a transcriptome index."""
+    @vcr.use_cassette(
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.transcriptome_redownloading.yaml"),
+        ignore_hosts=["nomad"],
+    )
+    @patch("data_refinery_foreman.surveyor.surveyor.TranscriptomeIndexSurveyor")
+    def test_transcriptome_redownloading(self, mock_surveyor):
+        """Survey, download, then process a transcriptome index. """
+
+        mock_surveyor.side_effect = build_surveyor_init_mock("TRANSCRIPTOME_INDEX")
+
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
@@ -448,7 +573,9 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+            organism = Organism(
+                name="CAENORHABDITIS_ELEGANS", taxonomy_id=6239, is_scientific_name=True
+            )
             organism.save()
 
             survey_job = surveyor.survey_transcriptome_index("Caenorhabditis elegans", "Ensembl")
@@ -514,10 +641,10 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
-            # Once the Downloader job succeeds, it should create one
-            # and only one processor job, which the total goes back up to 2:
+            # Once the Downloader job succeeds, it should create two
+            # processor jobs, one for long and one for short indices.:
             processor_jobs = ProcessorJob.objects.all()
-            self.assertEqual(processor_jobs.count(), 3)
+            self.assertEqual(processor_jobs.count(), 4)
 
             # And finally we can make sure that both of the
             # processor jobs were successful, including the one that
@@ -672,8 +799,22 @@ class SraRedownloadingTestCase(TransactionTestCase):
 class EnaFallbackTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
+    @skip("This code doesn't handle the FTP server being down, so skip until it does.")
+    @vcr.use_cassette(
+        os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.unmated_reads.yaml"),
+        ignore_hosts=["nomad"],
+    )
     def test_unmated_reads(self):
-        """Survey, download, then process a sample we know is SRA and has unmated reads."""
+        """Survey, download, then process a sample we know is SRA and has unmated reads.
+
+        This test uses VCR to remove the dependence upon NCBI's
+        servers, but the downloader job hits ENA's FTP and aspera
+        servers. Unfortunately there's not much that can be done to
+        avoid that behavior from here because the downloader jobs
+        always check ENA's FTP server to see if the file has an
+        unmated read. For now we'll just have to be content with the
+        fact that NCBI going down won't affect this test.
+        """
         # Clear out pre-existing work dirs so there's no conflicts:
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")

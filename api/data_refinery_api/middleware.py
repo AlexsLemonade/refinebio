@@ -49,4 +49,7 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
 class RevisionMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         response["X-Source-Revision"] = get_env_variable_gracefully("SYSTEM_VERSION")
+        # allow browsers to use the api directly and access the version
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#Access-Control-Expose-Headers
+        response["Access-Control-Expose-Headers"] = "X-Source-Revision"
         return response
