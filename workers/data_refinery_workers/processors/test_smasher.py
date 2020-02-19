@@ -43,7 +43,7 @@ def prepare_job():
     result = ComputationalResult()
     result.save()
 
-    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
 
     sample = Sample()
     sample.accession_code = "GSM1237810"
@@ -151,7 +151,7 @@ def prepare_dual_tech_job():
     result = ComputationalResult()
     result.save()
 
-    gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+    gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS", taxonomy_id=1001)
 
     sample = Sample()
     sample.accession_code = "GSM1487313"
@@ -456,7 +456,7 @@ class SmasherTestCase(TransactionTestCase):
         sample = Sample()
         sample.accession_code = "XXX"
         sample.title = "XXX"
-        sample.organism = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample.organism = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
         sample.save()
 
         sra = SampleResultAssociation()
@@ -519,7 +519,7 @@ class SmasherTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
 
         sample = Sample()
         sample.accession_code = "GSM1237810"
@@ -622,7 +622,7 @@ class SmasherTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
 
         sample = Sample()
         sample.accession_code = "GSM1237818"
@@ -704,7 +704,7 @@ class SmasherTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
 
         sample = Sample()
         sample.accession_code = "GSM1237810"
@@ -799,7 +799,7 @@ class SmasherTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO", taxonomy_id=1001)
 
         sample = Sample()
         sample.accession_code = "SRR1731761"
@@ -945,7 +945,7 @@ class SmasherTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
 
         sample = Sample()
         sample.accession_code = "GSM1084806"

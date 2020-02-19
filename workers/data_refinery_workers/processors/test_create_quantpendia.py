@@ -33,7 +33,7 @@ class QuantpendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=9606)
 
         sample = Sample()
         sample.accession_code = "GSM1237818"
