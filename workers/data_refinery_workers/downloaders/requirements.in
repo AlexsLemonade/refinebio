@@ -7,3 +7,4 @@ coveralls
 psutil
 elasticsearch-dsl
 django-elasticsearch-dsl
+vcrpy
