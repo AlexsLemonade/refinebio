@@ -209,8 +209,8 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
-        # Make sure the organism object got created by making sure
-        # this doesn't raise an exception.
+        # Make sure the organism object got created with the correct
+        # taxonomy id by making sure this doesn't raise an exception.
         Organism.objects.get(name="PSEUDOMONAS_AERUGINOSA", taxonomy_id=287)
 
     @vcr.use_cassette(
