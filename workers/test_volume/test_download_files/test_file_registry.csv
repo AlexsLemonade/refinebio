@@ -1,0 +1,2 @@
+download_url,file_path
+ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip,/home/user/data_store/test_download_files/E-GEOD-59071.raw.3.zip
