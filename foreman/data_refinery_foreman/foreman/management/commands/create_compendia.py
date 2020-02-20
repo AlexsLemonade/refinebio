@@ -161,9 +161,11 @@ def get_dataset(organisms: List[Organism]):
     experiments = Experiment.objects.filter(filter_query).prefetch_related("samples")
 
     for experiment in queryset_iterator(experiments):
-        experiment_samples = experiment.samples.filter(
-            organism__in=organisms, is_processed=True
-        ).values_list("accession_code", flat=True)
+        experiment_samples = (
+            experiment.samples.filter(organism__in=organisms, is_processed=True)
+            .exclude(results__processor__name="Submitter-processed")
+            .values_list("accession_code", flat=True)
+        )
 
         dataset[experiment.accession_code] = list(experiment_samples)
 
