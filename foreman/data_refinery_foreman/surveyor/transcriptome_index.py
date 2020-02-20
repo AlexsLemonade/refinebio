@@ -404,13 +404,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         all_new_species = []
         if organism_name:
             for species in specieses:
-                # The key for species name varies based on whether the
-                # division is the main one or not, so handle the main
-                # specially.
-                if ensembl_division == "Ensembl" and organism_name == species["species"]:
-                    all_new_species.append(self._generate_files(species))
-                    break
-                elif ensembl_division == "EnsemblFungi" and organism_name in species["name"]:
+                if ensembl_division == "EnsemblFungi" and organism_name in species["name"]:
                     # Fungi have a strain identifier in their
                     # names. This is different than everything else,
                     # so we're going to handle this special case by
