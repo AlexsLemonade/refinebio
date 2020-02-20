@@ -158,7 +158,7 @@ resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
 }
 
 data "aws_cloudwatch_log_group" "compendia_object_metrics_log_group" {
-  name = "data-refinery-compendia-lop-group-${var.user}-${var.stage}"
+  name = "data-refinery-compendia-log-group-${var.user}-${var.stage}"
 }
 
 
