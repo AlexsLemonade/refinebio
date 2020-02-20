@@ -3,7 +3,6 @@ import shutil
 import time
 import urllib.request
 import zipfile
-from contextlib import closing
 from typing import List
 
 from data_refinery_common import microarray
@@ -35,7 +34,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
             "Downloading file from %s to %s.", download_url, file_path, downloader_job=job.id
         )
         target_file = open(file_path, "wb")
-        with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
+        with urllib.request.urlopen(download_url, timeout=60) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
         logger.exception("Exception caught while downloading file.", downloader_job=job.id)

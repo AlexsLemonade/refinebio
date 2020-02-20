@@ -28,6 +28,10 @@ class InvalidNCBITaxonomyId(Exception):
     pass
 
 
+class UnknownOrganismId(Exception):
+    pass
+
+
 def get_scientific_name(taxonomy_id: int) -> str:
     parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id), "api_key": NCBI_API_KEY}
     response = requests.get(EFETCH_URL, parameters)
@@ -61,11 +65,13 @@ def get_taxonomy_id(organism_name: str) -> int:
         raise
 
     if len(id_list) == 0:
-        logger.error(
-            "Unable to retrieve NCBI taxonomy ID number for organism " + "with name: %s",
-            organism_name,
+        # If we can't find the taxonomy id, it's likely a bad organism name.
+        error_message = (
+            "Unable to retrieve NCBI taxonomy ID number for organism "
+            + "with name: {}".format(organism_name)
         )
-        return 0
+        logger.error(error_message)
+        raise UnknownOrganismId(error_message)
     elif len(id_list) > 1:
         logger.warn(
             "Organism with name %s returned multiple NCBI taxonomy ID " + "numbers.", organism_name
@@ -138,11 +144,11 @@ class Organism(models.Model):
 
     @classmethod
     def get_or_create_object_for_id(cls, taxonomy_id: int):
-        try:
-            organism = cls.objects.filter(taxonomy_id=taxonomy_id).order_by("-is_scientific_name")[
-                0
-            ]
-        except IndexError:
+        organism = (
+            cls.objects.filter(taxonomy_id=taxonomy_id).order_by("-is_scientific_name").first()
+        )
+
+        if not organism:
             name = get_scientific_name(taxonomy_id).upper().replace(" ", "_")
             organism = Organism(name=name, taxonomy_id=taxonomy_id, is_scientific_name=True)
             organism.save()
@@ -176,18 +182,19 @@ class Organism(models.Model):
         return organism.taxonomy_id
 
     @classmethod
-    def get_object_for_name(cls, name: str):
+    def get_object_for_name(cls, name: str, taxonomy_id=None):
         name = name.upper()
         name = name.replace(" ", "_")
-        try:
-            organism = cls.objects.filter(name=name)[0]
-        except IndexError:
+        organism = cls.objects.filter(name=name).first()
+
+        if not organism:
             is_scientific_name = False
-            try:
-                taxonomy_id = get_taxonomy_id_scientific(name)
-                is_scientific_name = True
-            except UnscientificNameError:
-                taxonomy_id = get_taxonomy_id(name)
+            if not taxonomy_id:
+                try:
+                    taxonomy_id = get_taxonomy_id_scientific(name)
+                    is_scientific_name = True
+                except UnscientificNameError:
+                    taxonomy_id = get_taxonomy_id(name)
 
             organism = Organism(
                 name=name, taxonomy_id=taxonomy_id, is_scientific_name=is_scientific_name

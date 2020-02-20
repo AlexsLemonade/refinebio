@@ -20,6 +20,13 @@ if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     exit 1
 fi
 
+project_root=$(pwd) # "cd .." called above
+volume_directory="$project_root/test_volume"
+if [ ! -d "$volume_directory" ]; then
+    mkdir "$volume_directory"
+    chmod -R a+rwX "$volume_directory"
+fi
+
 ./scripts/prepare_image.sh -i common_tests -s common
 
 . ./scripts/common.sh
@@ -32,4 +39,5 @@ docker run \
        --add-host=nomad:"$HOST_IP" \
        --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file common/environments/test \
+       --volume "$volume_directory":/home/user/data_store \
        -it ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage "$@")" --parallel

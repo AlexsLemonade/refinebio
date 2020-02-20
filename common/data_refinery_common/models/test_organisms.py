@@ -7,6 +7,7 @@ from data_refinery_common.models.organism import (
     ESEARCH_URL,
     InvalidNCBITaxonomyId,
     Organism,
+    UnknownOrganismId,
 )
 
 ESEARCH_RESPONSE_XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -229,20 +230,15 @@ class OrganismModelTestCase(TestCase):
             Organism.get_name_for_id(0)
 
     @patch("data_refinery_common.models.organism.requests.get")
-    def test_unfound_names_return_0(self, mock_get):
-        """If we can't find an NCBI taxonomy ID for an organism name
-        we can keep things moving for a while without it.
-        get_taxonomy_id will log an error message which will prompt
-        a developer to investigate what the organism name that was
-        unable to be found is. Therefore setting the ID to 0 is the
-        right thing to do in this case despite not seeming like it.
+    def test_unfound_names_raise(self, mock_get):
+        """If we can't find the taxonomy id, it's likely a bad organism name.
         """
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = ESEARCH_NOT_FOUND_XML
 
-        taxonomy_id = Organism.get_id_for_name("blah")
+        with self.assertRaises(UnknownOrganismId):
+            Organism.get_id_for_name("blah")
 
-        self.assertEqual(taxonomy_id, 0)
         mock_get.assert_has_calls(
             [
                 call(
@@ -264,11 +260,3 @@ class OrganismModelTestCase(TestCase):
                 ),
             ]
         )
-
-        # The first call should have stored the organism record in the
-        # database so this call should not make a request.
-        mock_get.reset_mock()
-        new_id = Organism.get_id_for_name("BLAH")
-
-        self.assertEqual(new_id, 0)
-        mock_get.assert_not_called()

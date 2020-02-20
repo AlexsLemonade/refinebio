@@ -50,12 +50,10 @@ interactions:
       Cache-Control:
       - no-cache
       - must-revalidate
-      Connection:
-      - Keep-Alive
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Wed, 15 Jan 2020 21:33:01 GMT
+      - Tue, 18 Feb 2020 19:13:24 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -159,8 +157,6 @@ interactions:
     headers:
       Accept-Ranges:
       - bytes
-      Connection:
-      - Keep-Alive
       Content-Disposition:
       - inline;filename="E-GEOD-3303.idf.txt"
       Content-Length:
@@ -168,7 +164,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 15 Jan 2020 21:33:10 GMT
+      - Tue, 18 Feb 2020 19:13:24 GMT
       ETag:
       - E-GEOD-3303.idf.txt_4848_1355484978000
       Last-Modified:
@@ -214,12 +210,10 @@ interactions:
       Cache-Control:
       - no-cache
       - must-revalidate
-      Connection:
-      - Keep-Alive
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Wed, 15 Jan 2020 21:33:26 GMT
+      - Tue, 18 Feb 2020 19:13:26 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -278,18 +272,18 @@ interactions:
       Content-Type:
       - application/json; charset=UTF-8
       Date:
-      - Wed, 15 Jan 2020 21:33:25 GMT
+      - Tue, 18 Feb 2020 19:13:26 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - D0BD0605DFDD4B250000351A2310F3D9.1.1.m_1
+      - 939B97E76669C43500002FFD9640F9E4.1.1.m_1
       NCBI-SID:
-      - 65D145D4CE5D4FE4_A548SID
+      - D7FDFDE0A219787E_165CSID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=65D145D4CE5D4FE4_A548SID; domain=.nih.gov; path=/; expires=Fri, 15
-        Jan 2021 21:33:26 GMT
+      - ncbi_sid=D7FDFDE0A219787E_165CSID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:13:26 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -425,12 +419,10 @@ interactions:
       Cache-Control:
       - no-cache
       - must-revalidate
-      Connection:
-      - Keep-Alive
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Wed, 15 Jan 2020 21:33:55 GMT
+      - Tue, 18 Feb 2020 19:13:27 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -557,8 +549,6 @@ interactions:
     headers:
       Accept-Ranges:
       - bytes
-      Connection:
-      - Keep-Alive
       Content-Disposition:
       - inline;filename="E-GEOD-3303.sdrf.txt"
       Content-Length:
@@ -566,7 +556,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 15 Jan 2020 21:34:08 GMT
+      - Tue, 18 Feb 2020 19:13:27 GMT
       ETag:
       - E-GEOD-3303.sdrf.txt_8071_1355484978000
       Last-Modified:
@@ -590,7 +580,7 @@ interactions:
       User-Agent:
       - python-requests/2.20.0
     method: GET
-    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&field=scin&term=DANIO_RERIO&db=taxonomy
+    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&field=scin&db=taxonomy&term=DANIO_RERIO
   response:
     body:
       string: !!binary |
@@ -613,18 +603,18 @@ interactions:
       Content-Type:
       - text/xml; charset=UTF-8
       Date:
-      - Wed, 15 Jan 2020 21:34:09 GMT
+      - Tue, 18 Feb 2020 19:13:27 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - 322C7B7FCD2396E50000470D9F49052D.1.1.m_1
+      - D0BD79652B52872500002BF8D25CEAB1.1.1.m_1
       NCBI-SID:
-      - 82F8CAC5FF0D8BF4_8759SID
+      - B935C090A709A28D_5FE1SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=82F8CAC5FF0D8BF4_8759SID; domain=.nih.gov; path=/; expires=Fri, 15
-        Jan 2021 21:34:10 GMT
+      - ncbi_sid=B935C090A709A28D_5FE1SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:13:28 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
