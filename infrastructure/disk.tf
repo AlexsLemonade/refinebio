@@ -114,12 +114,10 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   }
 }
 
-
 resource "aws_s3_bucket_metric" "compendia_bucket_metrics" {
   bucket = "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
-  name   = "data-refinery-compendia-bucket-metric-${var.user}-${var.stage}"
+  name   = "EntireBucket"
 }
-
 
 resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
   name = "data-refinery-compendia-object-metric-${var.user}-${var.stage}"
@@ -150,17 +148,18 @@ resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
 PATTERN
 }
 
-
+# arn needs to be stripped of trailing `:*` 
+# aws appends this when creating the event_target
 resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
   rule = "${aws_cloudwatch_event_rule.compendia_object_metrics.name}"
   target_id = "compendia-object-logs-target-${var.user}-${var.stage}"
-  arn = "${aws_cloundwatch_log_group.compendia_object_metrics_log_group.arn}"
+  arn = "${substr(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,0,length(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn) - 2)}"
 }
 
-data "aws_cloudwatch_log_group" "compendia_object_metrics_log_group" {
-  name = "data-refinery-compendia-log-group-${var.user}-${var.stage}"
+# Must start with `/aws/events` in order to connect to a cloudwatch_event_target.
+resource "aws_cloudwatch_log_group" "compendia_object_metrics_log_group" {
+  name = "/aws/events/data-refinery-compendia-log-group-${var.user}-${var.stage}"
 }
-
 
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
   bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
