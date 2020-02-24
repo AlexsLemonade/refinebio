@@ -109,12 +109,10 @@ class Sample(models.Model):
         metadata["refinebio_compound"] = self.compound
         metadata["refinebio_time"] = self.time
         metadata["refinebio_platform"] = self.pretty_platform
+        metadata["refinebio_processed"] = self.has_raw
         metadata["refinebio_annotations"] = [
             data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
-        metadata["refinebio_processed"] = not self.results.filter(
-            processor__name="Submitter-processed"
-        ).exists()
 
         return metadata
 
