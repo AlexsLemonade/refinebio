@@ -16,7 +16,7 @@ from data_refinery_common.models import (
 )
 
 
-def prepare_illumina_job(species="Homo sapiens"):
+def prepare_illumina_job(organism):
     pj = ProcessorJob()
     pj.pipeline_applied = "ILLUMINA_TO_PCL"
     pj.save()
@@ -54,7 +54,7 @@ def prepare_illumina_job(species="Homo sapiens"):
         sample = Sample()
         sample.accession_code = name
         sample.title = name
-        sample.organism = Organism.get_object_for_name(species)
+        sample.organism = organism
         sample.save()
 
         sa = SampleAnnotation()
@@ -104,7 +104,10 @@ class IlluminaToPCLTestCase(TestCase):
         """ Most basic Illumina to PCL test """
         from data_refinery_workers.processors import illumina
 
-        job = prepare_illumina_job()
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        job = prepare_illumina_job(organism)
         final_context = illumina.illumina_to_pcl(job.pk)
 
         for sample in final_context["samples"]:
@@ -120,7 +123,10 @@ class IlluminaToPCLTestCase(TestCase):
         """ With the wrong species, this will fail the platform detection threshold. """
         from data_refinery_workers.processors import illumina
 
-        job = prepare_illumina_job("RATTUS_NORVEGICUS")
+        organism = Organism(name="RATTUS_NORVEGICUS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        job = prepare_illumina_job(organism)
         final_context = illumina.illumina_to_pcl(job.pk)
         self.assertTrue(final_context["abort"])
 
@@ -150,10 +156,13 @@ class IlluminaToPCLTestCase(TestCase):
         assoc1.processor_job = pj
         assoc1.save()
 
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
         sample = Sample()
         sample.accession_code = "ABCD-1234"
         sample.title = "hypoxia_Signal"
-        sample.organism = Organism.get_object_for_name("Homo sapiens")
+        sample.organism = organism
         sample.save()
 
         sample_assoc = OriginalFileSampleAssociation()

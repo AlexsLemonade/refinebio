@@ -21,7 +21,7 @@ datashape==0.5.2
 decorator==4.4.0          # via networkx
 distributed==1.26.0       # via dask
 django-elasticsearch-dsl==6.4.2
-django==2.2.9
+django==2.2.10
 docopt==0.6.2             # via coveralls
 docutils==0.14            # via botocore
 elasticsearch-dsl==6.4.0

@@ -1,0 +1,266 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/genomes/division/EnsemblPlants?content-type=application/json
+  response:
+    body:
+      string: '[{"has_synteny":0,"organism_id":51359,"assembly_id":47640,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Arabidopsis_halleri","scientific_name":"Arabidopsis
+        halleri subsp. gemmifera","display_name":"Arabidopsis halleri","assembly_default":"Ahal2.2","name":"arabidopsis_halleri","data_release_id":54,"taxonomy_id":63677,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2016-09-UZH","species_taxonomy_id":81970,"division":"EnsemblPlants","has_other_alignments":1,"serotype":null,"base_count":196243198,"is_reference":0,"assembly_name":"Ahal2.2","assembly_level":"supercontig","assembly_accession":"GCA_900078215.1","has_variations":0,"strain":"W302"},{"assembly_level":"chromosome","assembly_name":"TDr96_F1_Pseudo_Chromosome_v1.0","has_variations":0,"assembly_accession":"GCA_002240015.2","strain":"TDr96_F1","division":"EnsemblPlants","assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":55577,"genebuild":"2017-08-IBRC","species_taxonomy_id":55577,"serotype":null,"has_other_alignments":1,"base_count":456674974,"is_reference":0,"display_name":"Dioscorea
+        rotundata","assembly_default":"TDr96_F1_Pseudo_Chromosome_v1.0","scientific_name":"Dioscorea
+        rotundata","name":"dioscorea_rotundata","data_release_id":54,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Dioscorea_rotundata","assembly_id":380,"has_synteny":0,"organism_id":380},{"name":"cucumis_sativus","data_release_id":54,"scientific_name":"Cucumis
+        sativus","display_name":"Cucumis sativus","assembly_default":"ASM407v2","assembly_id":682,"organism_id":682,"has_synteny":0,"has_pan_compara":0,"url_name":"Cucumis_sativus","has_genome_alignments":1,"has_variations":0,"assembly_accession":"GCA_000004075.2","strain":"9930","assembly_level":"chromosome","assembly_name":"ASM407v2","has_other_alignments":1,"serotype":null,"is_reference":0,"base_count":193829320,"assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":3659,"genebuild":"2014-10-BGI","species_taxonomy_id":3659,"division":"EnsemblPlants"},{"display_name":"Actinidia
+        chinensis","assembly_default":"Red5_PS1_1.69.0","scientific_name":"Actinidia
+        chinensis var. chinensis","name":"actinidia_chinensis","data_release_id":54,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Actinidia_chinensis","organism_id":51397,"assembly_id":47647,"has_synteny":1,"assembly_name":"Red5_PS1_1.69.0","assembly_level":"chromosome","has_variations":0,"assembly_accession":"GCA_003024255.1","strain":"Red5","division":"EnsemblPlants","taxonomy_id":1590841,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2018-04ENA","species_taxonomy_id":3625,"serotype":null,"has_other_alignments":0,"is_reference":0,"base_count":553842477},{"strain":"10D","has_variations":0,"assembly_accession":"GCA_000091205.1","assembly_name":"ASM9120v1","assembly_level":"chromosome","base_count":16728945,"is_reference":0,"serotype":null,"has_other_alignments":0,"species_taxonomy_id":45157,"assembly_ucsc":null,"taxonomy_id":280699,"has_peptide_compara":1,"genebuild":"2008-11-NIG","division":"EnsemblPlants","data_release_id":54,"name":"cyanidioschyzon_merolae","scientific_name":"Cyanidioschyzon
+        merolae strain 10D","assembly_default":"ASM9120v1","display_name":"Cyanidioschyzon
+        merolae","assembly_id":353,"has_synteny":0,"organism_id":353,"has_genome_alignments":1,"url_name":"Cyanidioschyzon_merolae","has_pan_compara":1},{"has_pan_compara":1,"url_name":"Amborella_trichopoda","has_genome_alignments":1,"assembly_id":369,"has_synteny":0,"organism_id":369,"name":"amborella_trichopoda","data_release_id":54,"display_name":"Amborella
+        trichopoda","assembly_default":"AMTR1.0","scientific_name":"Amborella trichopoda","serotype":null,"has_other_alignments":1,"base_count":706332640,"is_reference":0,"division":"EnsemblPlants","assembly_ucsc":null,"genebuild":"2014-01-AGD","taxonomy_id":13333,"has_peptide_compara":1,"species_taxonomy_id":13333,"has_variations":0,"assembly_accession":"GCA_000471905.1","strain":null,"assembly_level":"supercontig","assembly_name":"AMTR1.0"},{"data_release_id":54,"name":"arabidopsis_lyrata","scientific_name":"Arabidopsis
+        lyrata subsp. lyrata","assembly_default":"v.1.0","display_name":"Arabidopsis
+        lyrata","has_synteny":1,"organism_id":370,"assembly_id":370,"url_name":"Arabidopsis_lyrata","has_genome_alignments":1,"has_pan_compara":0,"strain":"MN47","has_variations":0,"assembly_accession":"GCA_000004255.1","assembly_level":"chromosome","assembly_name":"v.1.0","is_reference":0,"base_count":206667935,"has_other_alignments":1,"serotype":null,"species_taxonomy_id":59689,"assembly_ucsc":null,"taxonomy_id":81972,"genebuild":"2008-12-JGI","has_peptide_compara":1,"division":"EnsemblPlants"},{"serotype":null,"has_other_alignments":0,"is_reference":0,"base_count":104980420,"genebuild":"2015-09-Genoscope","assembly_ucsc":null,"taxonomy_id":2769,"has_peptide_compara":1,"species_taxonomy_id":2769,"division":"EnsemblPlants","assembly_accession":"GCA_000350225.2","has_variations":0,"strain":"Stackhouse","assembly_level":"chromosome","assembly_name":"ASM35022v2","assembly_id":1945,"has_synteny":0,"organism_id":1945,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Chondrus_crispus","name":"chondrus_crispus","data_release_id":54,"scientific_name":"Chondrus
+        crispus","display_name":"Chondrus crispus","assembly_default":"ASM35022v2"},{"organism_id":1164,"assembly_id":1163,"has_synteny":0,"has_pan_compara":0,"url_name":"Corchorus_capsularis","has_genome_alignments":1,"scientific_name":"Corchorus
+        capsularis","display_name":"Corchorus capsularis","assembly_default":"CCACVL1_1.0","name":"corchorus_capsularis","data_release_id":54,"assembly_ucsc":null,"genebuild":"2017-02-BJRI","taxonomy_id":210143,"has_peptide_compara":1,"species_taxonomy_id":210143,"division":"EnsemblPlants","has_other_alignments":1,"serotype":null,"base_count":317178409,"is_reference":0,"assembly_name":"CCACVL1_1.0","assembly_level":"supercontig","has_variations":0,"assembly_accession":"GCA_001974805.1","strain":"CVL-1"},{"data_release_id":54,"name":"coffea_canephora","scientific_name":"Coffea
+        canephora str. DH200-94","assembly_default":"AUK_PRJEB4211_v1","display_name":"Coffea
+        canephora","assembly_id":47792,"has_synteny":1,"organism_id":51645,"has_genome_alignments":1,"url_name":"Coffea_canephora","has_pan_compara":0,"strain":"DH200-94","has_variations":0,"assembly_accession":"GCA_900059795.1","assembly_level":"chromosome","assembly_name":"AUK_PRJEB4211_v1","base_count":568611505,"is_reference":0,"serotype":null,"has_other_alignments":0,"species_taxonomy_id":49390,"taxonomy_id":49390,"assembly_ucsc":null,"genebuild":"2015-09-ENA","has_peptide_compara":1,"division":"EnsemblPlants"},{"has_other_alignments":1,"serotype":null,"base_count":566181630,"is_reference":0,"taxonomy_id":3555,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2015-07-BOKU","species_taxonomy_id":161934,"division":"EnsemblPlants","has_variations":0,"assembly_accession":"GCA_000511025.2","strain":"KWS2320
+        DH","assembly_name":"RefBeet-1.2.2","assembly_level":"chromosome","has_synteny":0,"organism_id":36244,"assembly_id":36243,"has_pan_compara":0,"url_name":"Beta_vulgaris","has_genome_alignments":1,"name":"beta_vulgaris","data_release_id":54,"scientific_name":"Beta
+        vulgaris subsp. vulgaris","display_name":"Beta vulgaris","assembly_default":"RefBeet-1.2.2"},{"assembly_level":"chromosome","assembly_name":"BOL","assembly_accession":"GCA_000695525.1","has_variations":0,"strain":"TO1000","has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":109376,"genebuild":"2014-05-CanSeq","species_taxonomy_id":3712,"division":"EnsemblPlants","serotype":null,"has_other_alignments":1,"is_reference":0,"base_count":488622507,"scientific_name":"Brassica
+        oleracea var. oleracea","display_name":"Brassica oleracea","assembly_default":"BOL","name":"brassica_oleracea","data_release_id":54,"assembly_id":674,"organism_id":674,"has_synteny":0,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Brassica_oleracea"},{"has_synteny":0,"assembly_id":47203,"organism_id":348,"has_genome_alignments":1,"url_name":"Chlamydomonas_reinhardtii","has_pan_compara":1,"scientific_name":"Chlamydomonas
+        reinhardtii","assembly_default":"Chlamydomonas_reinhardtii_v5.5","display_name":"Chlamydomonas
+        reinhardtii","data_release_id":54,"name":"chlamydomonas_reinhardtii","species_taxonomy_id":3055,"genebuild":"2018-01-JGI","assembly_ucsc":null,"taxonomy_id":3055,"has_peptide_compara":1,"division":"EnsemblPlants","base_count":111098438,"is_reference":0,"serotype":null,"has_other_alignments":1,"assembly_level":"chromosome","assembly_name":"Chlamydomonas_reinhardtii_v5.5","strain":"CC-503
+        cw92 mt+","assembly_accession":"GCA_000002595.3","has_variations":0},{"division":"EnsemblPlants","species_taxonomy_id":15368,"assembly_ucsc":null,"taxonomy_id":15368,"has_peptide_compara":1,"genebuild":"2018-01-JGI","base_count":271163419,"is_reference":0,"has_other_alignments":1,"serotype":null,"assembly_level":"chromosome","assembly_name":"Brachypodium_distachyon_v3.0","strain":"Bd21","has_variations":1,"assembly_accession":"GCA_000005505.4","has_genome_alignments":1,"url_name":"Brachypodium_distachyon","has_pan_compara":1,"has_synteny":1,"assembly_id":47205,"organism_id":376,"assembly_default":"Brachypodium_distachyon_v3.0","display_name":"Brachypodium
+        distachyon","scientific_name":"Brachypodium distachyon","data_release_id":54,"name":"brachypodium_distachyon"},{"data_release_id":54,"name":"eragrostis_tef","scientific_name":"Eragrostis
+        tef","assembly_default":"ASM97063v1","display_name":"Eragrostis tef","has_synteny":0,"assembly_id":47794,"organism_id":51647,"url_name":"Eragrostis_tef","has_genome_alignments":1,"has_pan_compara":0,"strain":"Tsedey","has_variations":0,"assembly_accession":"GCA_000970635.1","assembly_name":"ASM97063v1","assembly_level":"supercontig","base_count":607317615,"is_reference":0,"serotype":null,"has_other_alignments":0,"species_taxonomy_id":110835,"taxonomy_id":110835,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2019-05-TPI","division":"EnsemblPlants"},{"assembly_level":"chromosome","assembly_name":"ASM162521v1","assembly_accession":"GCA_001625215.1","has_variations":0,"strain":"DH1","taxonomy_id":79200,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2016-06-USDA","species_taxonomy_id":4039,"division":"EnsemblPlants","has_other_alignments":1,"serotype":null,"base_count":421502825,"is_reference":0,"scientific_name":"Daucus
+        carota subsp. sativus","display_name":"Daucus carota","assembly_default":"ASM162521v1","name":"daucus_carota","data_release_id":54,"assembly_id":47204,"has_synteny":0,"organism_id":50347,"has_pan_compara":0,"url_name":"Daucus_carota","has_genome_alignments":1},{"assembly_default":"CcrdV1","display_name":"Cynara
+        cardunculus","scientific_name":"Cynara cardunculus var. scolymus","data_release_id":54,"name":"cynara_cardunculus","url_name":"Cynara_cardunculus","has_genome_alignments":1,"has_pan_compara":0,"assembly_id":47793,"organism_id":51646,"has_synteny":0,"assembly_level":"supercontig","assembly_name":"CcrdV1","strain":null,"assembly_accession":"GCA_001531365.1","has_variations":0,"division":"EnsemblPlants","species_taxonomy_id":4265,"assembly_ucsc":null,"taxonomy_id":59895,"genebuild":"2018-04-ENA","has_peptide_compara":1,"base_count":724667265,"is_reference":0,"serotype":null,"has_other_alignments":0},{"scientific_name":"Galdieria
+        sulphuraria","display_name":"Galdieria sulphuraria","assembly_default":"ASM34128v1","name":"galdieria_sulphuraria","data_release_id":54,"assembly_id":378,"organism_id":378,"has_synteny":0,"has_pan_compara":0,"url_name":"Galdieria_sulphuraria","has_genome_alignments":1,"assembly_level":"supercontig","assembly_name":"ASM34128v1","assembly_accession":"GCA_000341285.1","has_variations":0,"strain":"074W","assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":130081,"genebuild":"2013-02-GsGP","species_taxonomy_id":130081,"division":"EnsemblPlants","serotype":null,"has_other_alignments":0,"is_reference":0,"base_count":13712004},{"assembly_default":"ASM51225v2","display_name":"Capsicum
+        annuum","scientific_name":"Capsicum annuum","data_release_id":54,"name":"capsicum_annuum","has_genome_alignments":1,"url_name":"Capsicum_annuum","has_pan_compara":0,"organism_id":51648,"has_synteny":1,"assembly_id":47795,"assembly_level":"chromosome","assembly_name":"ASM51225v2","strain":"Criollo
+        de Morelos 334","assembly_accession":"GCA_000512255.2","has_variations":0,"division":"EnsemblPlants","species_taxonomy_id":4072,"taxonomy_id":4072,"assembly_ucsc":null,"genebuild":"2017-11-ENA","has_peptide_compara":1,"is_reference":0,"base_count":3063864880,"serotype":null,"has_other_alignments":0},{"scientific_name":"Arabidopsis
+        thaliana","display_name":"Arabidopsis thaliana","assembly_default":"TAIR10","name":"arabidopsis_thaliana","data_release_id":54,"assembly_id":1053,"organism_id":1055,"has_synteny":1,"has_pan_compara":1,"url_name":"Arabidopsis_thaliana","has_genome_alignments":1,"assembly_name":"TAIR10","assembly_level":"chromosome","has_variations":1,"assembly_accession":"GCA_000001735.1","strain":"Columbia","taxonomy_id":3702,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2016-06-Araport11","species_taxonomy_id":3702,"division":"EnsemblPlants","serotype":null,"has_other_alignments":1,"is_reference":0,"base_count":119667750},{"organism_id":417,"assembly_id":416,"has_synteny":1,"url_name":"Brassica_rapa","has_genome_alignments":1,"has_pan_compara":0,"scientific_name":"Brassica
+        rapa","assembly_default":"Brapa_1.0","display_name":"Brassica rapa","data_release_id":54,"name":"brassica_rapa","species_taxonomy_id":3711,"assembly_ucsc":null,"genebuild":"2012-03-IVFCAAS","taxonomy_id":3711,"has_peptide_compara":1,"division":"EnsemblPlants","base_count":283822783,"is_reference":0,"serotype":null,"has_other_alignments":1,"assembly_name":"Brapa_1.0","assembly_level":"chromosome","strain":"Chiifu-401-42","assembly_accession":"GCA_000309985.1","has_variations":0},{"base_count":225760816,"is_reference":0,"has_other_alignments":0,"serotype":null,"division":"EnsemblPlants","species_taxonomy_id":3197,"taxonomy_id":3197,"assembly_ucsc":null,"genebuild":"2018-04-ENA","has_peptide_compara":1,"strain":"Tak-1","assembly_accession":"GCA_003032435.1","has_variations":0,"assembly_level":"supercontig","assembly_name":"Marchanta_polymorpha_v1","url_name":"Marchantia_polymorpha","has_genome_alignments":1,"has_pan_compara":1,"organism_id":51406,"has_synteny":0,"assembly_id":47703,"data_release_id":54,"name":"marchantia_polymorpha","assembly_default":"Marchanta_polymorpha_v1","display_name":"Marchantia
+        polymorpha","scientific_name":"Marchantia polymorpha str. Tak-1"},{"url_name":"Oryza_brachyantha","has_genome_alignments":1,"has_pan_compara":0,"organism_id":540,"has_synteny":1,"assembly_id":540,"data_release_id":54,"name":"oryza_brachyantha","assembly_default":"Oryza_brachyantha.v1.4b","display_name":"Oryza
+        brachyantha","scientific_name":"Oryza brachyantha","is_reference":0,"base_count":260838168,"has_other_alignments":1,"serotype":null,"division":"EnsemblPlants","species_taxonomy_id":4533,"genebuild":"2011-05-OGE","assembly_ucsc":null,"taxonomy_id":4533,"has_peptide_compara":1,"strain":"IRGC:101232","has_variations":0,"assembly_accession":"GCA_000231095.2","assembly_level":"chromosome","assembly_name":"Oryza_brachyantha.v1.4b"},{"assembly_id":1836,"has_synteny":1,"organism_id":1836,"has_pan_compara":0,"url_name":"Musa_acuminata","has_genome_alignments":1,"scientific_name":"Musa
+        acuminata subsp. malaccensis","display_name":"Musa acuminata","assembly_default":"ASM31385v1","name":"musa_acuminata","data_release_id":54,"assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":214687,"genebuild":"2012-08-Cirad","species_taxonomy_id":4641,"division":"EnsemblPlants","serotype":null,"has_other_alignments":1,"base_count":472960417,"is_reference":0,"assembly_name":"ASM31385v1","assembly_level":"chromosome","assembly_accession":"GCA_000313855.1","has_variations":0,"strain":"DH-Pahang"},{"display_name":"Manihot
+        esculenta","assembly_default":"Manihot_esculenta_v6","scientific_name":"Manihot
+        esculenta","name":"manihot_esculenta","data_release_id":54,"has_pan_compara":0,"url_name":"Manihot_esculenta","has_genome_alignments":1,"assembly_id":1379,"organism_id":1380,"has_synteny":0,"assembly_name":"Manihot
+        esculenta v6","assembly_level":"chromosome","has_variations":0,"assembly_accession":"GCA_001659605.1","strain":"AM560-2","division":"EnsemblPlants","genebuild":"2017-09-JGI","assembly_ucsc":null,"taxonomy_id":3983,"has_peptide_compara":1,"species_taxonomy_id":3983,"serotype":null,"has_other_alignments":1,"is_reference":0,"base_count":582117524},{"assembly_ucsc":null,"taxonomy_id":4538,"has_peptide_compara":1,"genebuild":"2011-05-OGE","species_taxonomy_id":4538,"division":"EnsemblPlants","serotype":null,"has_other_alignments":1,"is_reference":0,"base_count":316419574,"assembly_name":"Oryza_glaberrima_V1","assembly_level":"chromosome","assembly_accession":"GCA_000147395.1","has_variations":1,"strain":"CG14","has_synteny":1,"assembly_id":634,"organism_id":635,"has_pan_compara":0,"url_name":"Oryza_glaberrima","has_genome_alignments":1,"scientific_name":"Oryza
+        glaberrima","display_name":"Oryza glaberrima","assembly_default":"Oryza_glaberrima_V1","name":"oryza_glaberrima","data_release_id":54},{"base_count":308272304,"is_reference":0,"has_other_alignments":1,"serotype":null,"species_taxonomy_id":65489,"genebuild":"2014-05-OGE","assembly_ucsc":null,"taxonomy_id":65489,"has_peptide_compara":1,"division":"EnsemblPlants","strain":"IRGC:105608","assembly_accession":"GCA_000182155.2","has_variations":0,"assembly_name":"O.barthii_v1","assembly_level":"chromosome","has_synteny":1,"assembly_id":1152,"organism_id":1152,"has_genome_alignments":1,"url_name":"Oryza_barthii","has_pan_compara":0,"data_release_id":54,"name":"oryza_barthii","scientific_name":"Oryza
+        barthii","assembly_default":"O.barthii_v1","display_name":"Oryza barthii"},{"assembly_accession":"GCA_000573905.1","has_variations":0,"strain":"IRGC:105690","assembly_level":"chromosome","assembly_name":"Oryza_punctata_v1.2","has_other_alignments":1,"serotype":null,"is_reference":0,"base_count":393816603,"assembly_ucsc":null,"taxonomy_id":4537,"has_peptide_compara":1,"genebuild":"2013-09-OGE","species_taxonomy_id":4537,"division":"EnsemblPlants","name":"oryza_punctata","data_release_id":54,"scientific_name":"Oryza
+        punctata","display_name":"Oryza punctata","assembly_default":"Oryza_punctata_v1.2","assembly_id":690,"has_synteny":1,"organism_id":690,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Oryza_punctata"},{"name":"aegilops_tauschii","data_release_id":54,"scientific_name":"Aegilops
+        tauschii subsp. strangulata","display_name":"Aegilops tauschii","assembly_default":"Aet_v4.0","has_synteny":1,"organism_id":2654,"assembly_id":47631,"has_pan_compara":0,"url_name":"Aegilops_tauschii","has_genome_alignments":1,"assembly_accession":"GCA_002575655.1","has_variations":0,"strain":"AL8/78","assembly_level":"chromosome","assembly_name":"Aet
+        v4.0","has_other_alignments":1,"serotype":null,"is_reference":0,"base_count":4224915394,"assembly_ucsc":null,"taxonomy_id":200361,"has_peptide_compara":1,"genebuild":"2017-10-UCD","species_taxonomy_id":37682,"division":"EnsemblPlants"},{"assembly_level":"chromosome","assembly_name":"LupAngTanjil_v1.0","strain":"Tanjil","assembly_accession":"GCA_001865875.1","has_variations":0,"species_taxonomy_id":3871,"assembly_ucsc":null,"taxonomy_id":3871,"genebuild":"2017-07-CSIRO","has_peptide_compara":1,"division":"EnsemblPlants","base_count":609203021,"is_reference":0,"serotype":null,"has_other_alignments":1,"scientific_name":"Lupinus
+        angustifolius","assembly_default":"LupAngTanjil_v1.0","display_name":"Lupinus
+        angustifolius","data_release_id":54,"name":"lupinus_angustifolius","has_synteny":0,"organism_id":1328,"assembly_id":1327,"has_genome_alignments":1,"url_name":"Lupinus_angustifolius","has_pan_compara":0},{"data_release_id":54,"name":"brassica_napus","assembly_default":"AST_PRJEB5043_v1","display_name":"Brassica
+        napus","scientific_name":"Brassica napus","url_name":"Brassica_napus","has_genome_alignments":1,"has_pan_compara":0,"has_synteny":0,"assembly_id":2315,"organism_id":2315,"strain":"Darmor-bzh","assembly_accession":"GCA_000751015.1","has_variations":0,"assembly_name":"AST_PRJEB5043_v1","assembly_level":"supercontig","is_reference":0,"base_count":848200303,"has_other_alignments":1,"serotype":null,"division":"EnsemblPlants","species_taxonomy_id":3708,"genebuild":"2015-09-GSC","assembly_ucsc":null,"taxonomy_id":3708,"has_peptide_compara":1},{"data_release_id":54,"name":"oryza_longistaminata","scientific_name":"Oryza
+        longistaminata","assembly_default":"O_longistaminata_v1.0","display_name":"Oryza
+        longistaminata","organism_id":881,"assembly_id":879,"has_synteny":0,"has_genome_alignments":1,"url_name":"Oryza_longistaminata","has_pan_compara":0,"strain":null,"has_variations":0,"assembly_accession":"GCA_000789195.1","assembly_name":"O_longistaminata_v1.0","assembly_level":"scaffold","is_reference":0,"base_count":326442508,"serotype":null,"has_other_alignments":1,"species_taxonomy_id":4528,"taxonomy_id":4528,"assembly_ucsc":null,"genebuild":"2015-05-OGE","has_peptide_compara":1,"division":"EnsemblPlants"},{"assembly_accession":"GCA_002211085.2","has_variations":0,"strain":"FIL2","assembly_name":"PHallii_v3.1","assembly_level":"chromosome","serotype":null,"has_other_alignments":0,"is_reference":0,"base_count":535889049,"genebuild":"2018-05ENA","assembly_ucsc":null,"taxonomy_id":206008,"has_peptide_compara":1,"species_taxonomy_id":206008,"division":"EnsemblPlants","name":"panicum_hallii_fil2","data_release_id":54,"scientific_name":"Panicum
+        hallii str. FIL2","display_name":"Panicum hallii FIL2","assembly_default":"PHallii_v3.1","assembly_id":47646,"has_synteny":1,"organism_id":51395,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Panicum_hallii_fil2"},{"assembly_id":558,"has_synteny":0,"organism_id":558,"has_genome_alignments":1,"url_name":"Oryza_meridionalis","has_pan_compara":0,"data_release_id":54,"name":"oryza_meridionalis","scientific_name":"Oryza
+        meridionalis","assembly_default":"Oryza_meridionalis_v1.3","display_name":"Oryza
+        meridionalis","base_count":335668232,"is_reference":0,"serotype":null,"has_other_alignments":1,"species_taxonomy_id":40149,"taxonomy_id":40149,"assembly_ucsc":null,"genebuild":"2014-10-OGE","has_peptide_compara":1,"division":"EnsemblPlants","strain":"OR44
+        (W2112)","assembly_accession":"GCA_000338895.2","has_variations":0,"assembly_name":"Oryza_meridionalis_v1.3","assembly_level":"chromosome"},{"has_other_alignments":1,"serotype":null,"is_reference":0,"base_count":266687832,"division":"EnsemblPlants","assembly_ucsc":null,"genebuild":"2013-09-OGE","taxonomy_id":77586,"has_peptide_compara":1,"species_taxonomy_id":77586,"assembly_accession":"GCA_000325765.3","has_variations":0,"strain":"IRGC:105164","assembly_level":"chromosome","assembly_name":"Lperr_V1.4","has_pan_compara":0,"has_genome_alignments":1,"url_name":"Leersia_perrieri","assembly_id":1272,"organism_id":1272,"has_synteny":1,"name":"leersia_perrieri","data_release_id":54,"display_name":"Leersia
+        perrieri","assembly_default":"Lperr_V1.4","scientific_name":"Leersia perrieri"},{"has_variations":0,"assembly_accession":"GCA_000002425.2","strain":"Gransden
+        2004","assembly_level":"chromosome","assembly_name":"Phypa V3","serotype":null,"has_other_alignments":1,"base_count":471852792,"is_reference":0,"taxonomy_id":3218,"assembly_ucsc":null,"genebuild":"2018-04-JGI","has_peptide_compara":1,"species_taxonomy_id":3218,"division":"EnsemblPlants","name":"physcomitrella_patens","data_release_id":54,"scientific_name":"Physcomitrella
+        patens","display_name":"Physcomitrella patens","assembly_default":"Phypa_V3","organism_id":344,"has_synteny":0,"assembly_id":47208,"has_pan_compara":1,"url_name":"Physcomitrella_patens","has_genome_alignments":1},{"scientific_name":"Oryza
+        sativa f. spontanea","assembly_default":"Oryza_nivara_v1.0","display_name":"Oryza
+        nivara","data_release_id":54,"name":"oryza_nivara","assembly_id":1561,"has_synteny":1,"organism_id":1562,"url_name":"Oryza_nivara","has_genome_alignments":1,"has_pan_compara":0,"assembly_level":"chromosome","assembly_name":"Oryza_nivara_v1.0","strain":"IRGC:100897","assembly_accession":"GCA_000576065.1","has_variations":0,"species_taxonomy_id":4536,"has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":4536,"genebuild":"2013-09-OGE","division":"EnsemblPlants","base_count":337950324,"is_reference":0,"serotype":null,"has_other_alignments":1},{"serotype":null,"has_other_alignments":1,"base_count":427004890,"is_reference":0,"division":"EnsemblPlants","assembly_ucsc":null,"taxonomy_id":39946,"has_peptide_compara":1,"genebuild":"2010-07-BGI","species_taxonomy_id":4530,"has_variations":1,"assembly_accession":"GCA_000004655.2","strain":"93-11","assembly_level":"chromosome","assembly_name":"ASM465v1","has_pan_compara":0,"url_name":"Oryza_indica","has_genome_alignments":1,"organism_id":363,"assembly_id":363,"has_synteny":1,"name":"oryza_indica","data_release_id":54,"display_name":"Oryza
+        sativa Indica Group","assembly_default":"ASM465v1","scientific_name":"Oryza
+        sativa Indica Group"},{"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Helianthus_annuus","has_synteny":0,"assembly_id":2059,"organism_id":2059,"name":"helianthus_annuus","data_release_id":54,"display_name":"Helianthus
+        annuus","assembly_default":"HanXRQr1.0","scientific_name":"Helianthus annuus","serotype":null,"has_other_alignments":1,"is_reference":0,"base_count":3027844945,"division":"EnsemblPlants","has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":4232,"genebuild":"2017-09-ICSG","species_taxonomy_id":4232,"has_variations":0,"assembly_accession":"GCA_002127325.1","strain":"XRQ/B","assembly_level":"chromosome","assembly_name":"HanXRQr1.0"},{"is_reference":0,"base_count":338040714,"serotype":null,"has_other_alignments":1,"division":"EnsemblPlants","species_taxonomy_id":4529,"taxonomy_id":4529,"assembly_ucsc":null,"genebuild":"2013-09-OGE","has_peptide_compara":1,"strain":"W1943","assembly_accession":"GCA_000817225.1","has_variations":0,"assembly_level":"chromosome","assembly_name":"OR_W1943","url_name":"Oryza_rufipogon","has_genome_alignments":1,"has_pan_compara":0,"has_synteny":1,"assembly_id":1803,"organism_id":1803,"data_release_id":54,"name":"oryza_rufipogon","assembly_default":"OR_W1943","display_name":"Oryza
+        rufipogon","scientific_name":"Oryza rufipogon"},{"assembly_level":"chromosome","assembly_name":"PhalliiHAL_v2.1","strain":"HAL2","has_variations":0,"assembly_accession":"GCA_003061485.1","division":"EnsemblPlants","species_taxonomy_id":206008,"assembly_ucsc":null,"taxonomy_id":1504633,"has_peptide_compara":1,"genebuild":"2018-05ENA","is_reference":0,"base_count":487473734,"has_other_alignments":0,"serotype":null,"assembly_default":"PhalliiHAL_v2.1","display_name":"Panicum
+        hallii HAL2","scientific_name":"Panicum hallii var. hallii str. HAL2","data_release_id":54,"name":"panicum_hallii_hal2","url_name":"Panicum_hallii_hal2","has_genome_alignments":1,"has_pan_compara":0,"has_synteny":1,"assembly_id":47645,"organism_id":51396},{"assembly_level":"chromosome","assembly_name":"NIATTr2","strain":"UT","has_variations":0,"assembly_accession":"GCA_001879085.1","species_taxonomy_id":49451,"has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":49451,"genebuild":"2017-09-MPI-CE","division":"EnsemblPlants","base_count":2365682703,"is_reference":0,"has_other_alignments":1,"serotype":null,"scientific_name":"Nicotiana
+        attenuata","assembly_default":"NIATTr2","display_name":"Nicotiana attenuata","data_release_id":54,"name":"nicotiana_attenuata","has_synteny":0,"assembly_id":1209,"organism_id":1210,"url_name":"Nicotiana_attenuata","has_genome_alignments":1,"has_pan_compara":0},{"assembly_level":"chromosome","assembly_name":"ASM9206v1","strain":"CCE9901","assembly_accession":"GCA_000092065.1","has_variations":0,"species_taxonomy_id":242159,"assembly_ucsc":null,"taxonomy_id":436017,"has_peptide_compara":1,"genebuild":"2011-01-JGI","division":"EnsemblPlants","is_reference":0,"base_count":13204888,"has_other_alignments":1,"serotype":null,"scientific_name":"Ostreococcus
+        lucimarinus CCE9901","assembly_default":"ASM9206v1","display_name":"Ostreococcus
+        lucimarinus","data_release_id":54,"name":"ostreococcus_lucimarinus","assembly_id":377,"has_synteny":0,"organism_id":377,"has_genome_alignments":1,"url_name":"Ostreococcus_lucimarinus","has_pan_compara":0},{"strain":"CMD
+        10","assembly_accession":"GCA_000327365.1","has_variations":0,"assembly_level":"chromosome","assembly_name":"Graimondii2_0","is_reference":0,"base_count":761405269,"serotype":null,"has_other_alignments":1,"division":"EnsemblPlants","species_taxonomy_id":29730,"assembly_ucsc":null,"taxonomy_id":29730,"has_peptide_compara":1,"genebuild":"2017-09-JGI","data_release_id":54,"name":"gossypium_raimondii","assembly_default":"Graimondii2_0","display_name":"Gossypium
+        raimondii","scientific_name":"Gossypium raimondii","url_name":"Gossypium_raimondii","has_genome_alignments":1,"has_pan_compara":0,"assembly_id":36345,"organism_id":36345,"has_synteny":0},{"has_synteny":1,"assembly_id":1231,"organism_id":1232,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Phaseolus_vulgaris","scientific_name":"Phaseolus
+        vulgaris","display_name":"Phaseolus vulgaris","assembly_default":"PhaVulg1_0","name":"phaseolus_vulgaris","data_release_id":54,"assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":3885,"genebuild":"2017-09-JGI","species_taxonomy_id":3885,"division":"EnsemblPlants","serotype":null,"has_other_alignments":1,"base_count":521076696,"is_reference":0,"assembly_name":"PhaVulg1_0","assembly_level":"chromosome","has_variations":0,"assembly_accession":"GCA_000499845.1","strain":"G19833"},{"assembly_id":47704,"has_synteny":1,"organism_id":36242,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Theobroma_cacao","name":"theobroma_cacao","data_release_id":54,"scientific_name":"Theobroma
+        cacao","display_name":"Theobroma cacao","assembly_default":"Criollo_cocoa_genome_V2","serotype":null,"has_other_alignments":0,"base_count":324719311,"is_reference":0,"taxonomy_id":3641,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2019-03-CGH","species_taxonomy_id":3641,"division":"EnsemblPlants","has_variations":0,"assembly_accession":"GCA_000208745.2","strain":"Criollo
+        B97-61/B2","assembly_level":"chromosome","assembly_name":"Criollo_cocoa_genome_V2"},{"base_count":304842038,"is_reference":0,"has_other_alignments":1,"serotype":null,"species_taxonomy_id":57577,"has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":57577,"genebuild":"2016-04-TGAC","division":"EnsemblPlants","strain":"Milvus
+        B","has_variations":0,"assembly_accession":"GCA_900079335.1","assembly_level":"chromosome","assembly_name":"Trpr","assembly_id":441,"has_synteny":0,"organism_id":441,"url_name":"Trifolium_pratense","has_genome_alignments":1,"has_pan_compara":0,"data_release_id":54,"name":"trifolium_pratense","scientific_name":"Trifolium
+        pratense","assembly_default":"Trpr","display_name":"Trifolium pratense"},{"data_release_id":54,"name":"solanum_tuberosum","assembly_default":"SolTub_3.0","display_name":"Solanum
+        tuberosum","scientific_name":"Solanum tuberosum","url_name":"Solanum_tuberosum","has_genome_alignments":1,"has_pan_compara":0,"has_synteny":1,"assembly_id":1202,"organism_id":1207,"strain":"DM
+        1-3 516 R44","has_variations":0,"assembly_accession":"GCA_000226075.1","assembly_name":"SolTub_3.0","assembly_level":"chromosome","is_reference":0,"base_count":810654046,"has_other_alignments":1,"serotype":null,"division":"EnsemblPlants","species_taxonomy_id":4113,"assembly_ucsc":null,"taxonomy_id":4113,"genebuild":"2011-05-SolTub_3.0","has_peptide_compara":1},{"display_name":"Sorghum
+        bicolor","assembly_default":"Sorghum_bicolor_NCBIv3","scientific_name":"Sorghum
+        bicolor","name":"sorghum_bicolor","data_release_id":54,"has_pan_compara":0,"url_name":"Sorghum_bicolor","has_genome_alignments":1,"assembly_id":1515,"has_synteny":1,"organism_id":1515,"assembly_level":"chromosome","assembly_name":"Sorghum_bicolor_NCBIv3","assembly_accession":"GCA_000003195.3","has_variations":1,"strain":"BTx623","division":"EnsemblPlants","assembly_ucsc":null,"taxonomy_id":4558,"has_peptide_compara":1,"genebuild":"2017-06-JGI","species_taxonomy_id":4558,"has_other_alignments":1,"serotype":null,"base_count":708735318,"is_reference":0},{"assembly_name":"Prunus_persica_NCBIv2","assembly_level":"chromosome","has_variations":0,"assembly_accession":"GCA_000346465.2","strain":"Lovell","division":"EnsemblPlants","assembly_ucsc":null,"taxonomy_id":3760,"has_peptide_compara":1,"genebuild":"2017-09-JGI","species_taxonomy_id":3760,"has_other_alignments":1,"serotype":null,"is_reference":0,"base_count":227411381,"display_name":"Prunus
+        persica","assembly_default":"Prunus_persica_NCBIv2","scientific_name":"Prunus
+        persica","name":"prunus_persica","data_release_id":54,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Prunus_persica","has_synteny":1,"organism_id":610,"assembly_id":610},{"assembly_accession":"GCA_000004515.4","has_variations":0,"strain":"Williams
+        82","assembly_name":"Glycine_max_v2.1","assembly_level":"chromosome","has_other_alignments":1,"serotype":null,"base_count":978491270,"is_reference":0,"division":"EnsemblPlants","taxonomy_id":3847,"assembly_ucsc":null,"genebuild":"2018-08-JGI","has_peptide_compara":1,"species_taxonomy_id":3847,"name":"glycine_max","data_release_id":54,"display_name":"Glycine
+        max","assembly_default":"Glycine_max_v2.1","scientific_name":"Glycine max","has_pan_compara":0,"url_name":"Glycine_max","has_genome_alignments":1,"has_synteny":0,"organism_id":1067,"assembly_id":47639},{"assembly_accession":"GCA_000576495.1","has_variations":1,"strain":null,"assembly_name":"Oryza_glumaepatula_v1.5","assembly_level":"chromosome","serotype":null,"has_other_alignments":1,"base_count":372860283,"is_reference":0,"assembly_ucsc":null,"genebuild":"2013-09-OGE","taxonomy_id":40148,"has_peptide_compara":1,"species_taxonomy_id":40148,"division":"EnsemblPlants","name":"oryza_glumipatula","data_release_id":54,"scientific_name":"Oryza
+        glumipatula","display_name":"Oryza glumipatula","assembly_default":"Oryza_glumaepatula_v1.5","has_synteny":1,"assembly_id":1509,"organism_id":50414,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Oryza_glumipatula"},{"display_name":"Solanum
+        lycopersicum","assembly_default":"SL3.0","scientific_name":"Solanum lycopersicum","name":"solanum_lycopersicum","data_release_id":54,"has_pan_compara":1,"url_name":"Solanum_lycopersicum","has_genome_alignments":1,"organism_id":360,"assembly_id":47638,"has_synteny":1,"assembly_level":"chromosome","assembly_name":"SL3.0","has_variations":1,"assembly_accession":"GCA_000188115.3","strain":"Heinz
+        1706","division":"EnsemblPlants","has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":4081,"genebuild":"2017-02-SOL","species_taxonomy_id":4081,"serotype":null,"has_other_alignments":1,"is_reference":0,"base_count":827747456},{"assembly_name":"MedtrA17_4.0","assembly_level":"chromosome","assembly_accession":"GCA_000219495.2","has_variations":0,"strain":"A17","division":"EnsemblPlants","genebuild":"2014-06-ENA","assembly_ucsc":null,"taxonomy_id":3880,"has_peptide_compara":1,"species_taxonomy_id":3880,"serotype":null,"has_other_alignments":1,"base_count":412800391,"is_reference":0,"display_name":"Medicago
+        truncatula","assembly_default":"MedtrA17_4.0","scientific_name":"Medicago
+        truncatula","name":"medicago_truncatula","data_release_id":54,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Medicago_truncatula","has_synteny":1,"assembly_id":827,"organism_id":827},{"assembly_name":"Pop_tri_v3","assembly_level":"chromosome","assembly_accession":"GCA_000002775.3","has_variations":0,"strain":"Nisqually
+        1","taxonomy_id":3694,"assembly_ucsc":null,"genebuild":"2018-04-JGI","has_peptide_compara":1,"species_taxonomy_id":3694,"division":"EnsemblPlants","has_other_alignments":1,"serotype":null,"base_count":434132815,"is_reference":0,"scientific_name":"Populus
+        trichocarpa","display_name":"Populus trichocarpa","assembly_default":"Pop_tri_v3","name":"populus_trichocarpa","data_release_id":54,"assembly_id":47207,"has_synteny":0,"organism_id":439,"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Populus_trichocarpa"},{"assembly_default":"12X","display_name":"Vitis
+        vinifera","scientific_name":"Vitis vinifera","data_release_id":54,"name":"vitis_vinifera","has_genome_alignments":1,"url_name":"Vitis_vinifera","has_pan_compara":1,"organism_id":364,"assembly_id":364,"has_synteny":1,"assembly_name":"12X","assembly_level":"chromosome","strain":"PN40024","assembly_accession":"GCA_000003745.2","has_variations":1,"division":"EnsemblPlants","species_taxonomy_id":29760,"assembly_ucsc":null,"genebuild":"2012-07-CRIBI","taxonomy_id":29760,"has_peptide_compara":1,"base_count":486265422,"is_reference":0,"has_other_alignments":1,"serotype":null},{"scientific_name":"Selaginella
+        moellendorffii","assembly_default":"v1.0","display_name":"Selaginella moellendorffii","data_release_id":54,"name":"selaginella_moellendorffii","has_synteny":0,"assembly_id":366,"organism_id":366,"url_name":"Selaginella_moellendorffii","has_genome_alignments":1,"has_pan_compara":1,"assembly_level":"supercontig","assembly_name":"v1.0","strain":null,"assembly_accession":"GCA_000143415.1","has_variations":0,"species_taxonomy_id":88036,"taxonomy_id":88036,"assembly_ucsc":null,"genebuild":"2011-05-JGI","has_peptide_compara":1,"division":"EnsemblPlants","is_reference":0,"base_count":212645483,"serotype":null,"has_other_alignments":1},{"assembly_default":"Setaria_italica_v2.0","display_name":"Setaria
+        italica","scientific_name":"Setaria italica","data_release_id":54,"name":"setaria_italica","has_genome_alignments":1,"url_name":"Setaria_italica","has_pan_compara":0,"assembly_id":47206,"organism_id":1376,"has_synteny":1,"assembly_name":"Setaria_italica_v2.0","assembly_level":"chromosome","strain":"Yugu1","assembly_accession":"GCA_000263155.2","has_variations":0,"division":"EnsemblPlants","species_taxonomy_id":4555,"assembly_ucsc":null,"genebuild":"2015-11-JGI","taxonomy_id":4555,"has_peptide_compara":1,"base_count":405732883,"is_reference":0,"serotype":null,"has_other_alignments":1},{"data_release_id":54,"name":"oryza_sativa","scientific_name":"Oryza
+        sativa Japonica Group","assembly_default":"IRGSP-1.0","display_name":"Oryza
+        sativa Japonica Group","assembly_id":1560,"has_synteny":1,"organism_id":1560,"url_name":"Oryza_sativa","has_genome_alignments":1,"has_pan_compara":1,"strain":"Nipponbare","has_variations":1,"assembly_accession":"GCA_001433935.1","assembly_name":"IRGSP-1.0","assembly_level":"chromosome","is_reference":0,"base_count":375049285,"has_other_alignments":1,"serotype":null,"species_taxonomy_id":4530,"assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":39947,"genebuild":"2019-06-DDBJ","division":"EnsemblPlants"},{"division":"EnsemblPlants","species_taxonomy_id":4572,"assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":4572,"genebuild":"2013-04-BGI","base_count":3747163292,"is_reference":0,"has_other_alignments":1,"serotype":null,"assembly_level":"chromosome","assembly_name":"ASM34745v1","strain":"G1812
+        (PI428198)","has_variations":0,"assembly_accession":"GCA_000347455.1","has_genome_alignments":1,"url_name":"Triticum_urartu","has_pan_compara":0,"assembly_id":2520,"has_synteny":0,"organism_id":2612,"assembly_default":"ASM34745v1","display_name":"Triticum
+        urartu","scientific_name":"Triticum urartu","data_release_id":54,"name":"triticum_urartu"},{"has_pan_compara":0,"has_genome_alignments":1,"url_name":"Zea_mays","has_synteny":1,"organism_id":1874,"assembly_id":1874,"name":"zea_mays","data_release_id":54,"display_name":"Zea
+        mays","assembly_default":"B73_RefGen_v4","scientific_name":"Zea mays","has_other_alignments":1,"serotype":null,"is_reference":0,"base_count":2135083061,"division":"EnsemblPlants","taxonomy_id":4577,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2016-12-CSHL","species_taxonomy_id":4577,"assembly_accession":"GCA_000005005.6","has_variations":1,"strain":"B73","assembly_level":"chromosome","assembly_name":"B73
+        RefGen_v4"},{"assembly_default":"IWGSC","display_name":"Triticum aestivum","scientific_name":"Triticum
+        aestivum","data_release_id":54,"name":"triticum_aestivum","has_genome_alignments":1,"url_name":"Triticum_aestivum","has_pan_compara":0,"organism_id":36563,"has_synteny":1,"assembly_id":47295,"assembly_name":"IWGSC","assembly_level":"chromosome","strain":"Chinese
+        spring","assembly_accession":"GCA_900519105.1","has_variations":1,"division":"EnsemblPlants","species_taxonomy_id":4565,"taxonomy_id":4565,"assembly_ucsc":null,"genebuild":"2018-04-IWGSC","has_peptide_compara":1,"base_count":14547261565,"is_reference":0,"serotype":null,"has_other_alignments":1},{"has_genome_alignments":1,"url_name":"Triticum_dicoccoides","has_pan_compara":0,"has_synteny":1,"organism_id":50485,"assembly_id":47294,"assembly_default":"WEWSeq_v.1.0","display_name":"Triticum
+        dicoccoides","scientific_name":"Triticum dicoccoides","data_release_id":54,"name":"triticum_dicoccoides","division":"EnsemblPlants","species_taxonomy_id":85692,"taxonomy_id":85692,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2017-05-WEWSeq","base_count":10079039394,"is_reference":0,"has_other_alignments":1,"serotype":null,"assembly_level":"chromosome","assembly_name":"WEWSeq
+        v.1.0","strain":"Zavitan (Atlit2015)","assembly_accession":"GCA_002162155.1","has_variations":0},{"assembly_ucsc":null,"taxonomy_id":3914,"genebuild":"2015-08-BUA","has_peptide_compara":1,"species_taxonomy_id":3914,"division":"EnsemblPlants","has_other_alignments":1,"serotype":null,"base_count":466744453,"is_reference":0,"assembly_level":"chromosome","assembly_name":"Vigan1.1","assembly_accession":"GCA_001190045.1","has_variations":0,"strain":"Jingnong
+        6","has_synteny":1,"organism_id":50348,"assembly_id":47209,"has_pan_compara":0,"url_name":"Vigna_angularis","has_genome_alignments":1,"scientific_name":"Vigna
+        angularis","display_name":"Vigna angularis","assembly_default":"Vigan1.1","name":"vigna_angularis","data_release_id":54},{"data_release_id":54,"name":"vigna_radiata","scientific_name":"Vigna
+        radiata var. radiata","assembly_default":"Vradiata_ver6","display_name":"Vigna
+        radiata","assembly_id":47268,"has_synteny":1,"organism_id":50446,"has_genome_alignments":1,"url_name":"Vigna_radiata","has_pan_compara":0,"strain":"VC1973A","assembly_accession":"GCA_000741045.2","has_variations":0,"assembly_name":"Vradiata_ver6","assembly_level":"chromosome","base_count":463085359,"is_reference":0,"serotype":null,"has_other_alignments":1,"species_taxonomy_id":157791,"has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":3916,"genebuild":"2015-10-SNU","division":"EnsemblPlants"},{"data_release_id":54,"name":"prunus_avium","assembly_default":"PAV_r1.0","display_name":"Prunus
+        avium","scientific_name":"Prunus avium","has_genome_alignments":1,"url_name":"Prunus_avium","has_pan_compara":0,"assembly_id":47837,"organism_id":51674,"has_synteny":0,"strain":"Satonishiki","has_variations":0,"assembly_accession":"GCA_002207925.1","assembly_name":"PAV_r1.0","assembly_level":"supercontig","is_reference":0,"base_count":272361615,"serotype":null,"has_other_alignments":0,"division":"EnsemblPlants","species_taxonomy_id":42229,"taxonomy_id":42229,"assembly_ucsc":null,"has_peptide_compara":1,"genebuild":"2019-09-GDR"},{"display_name":"Ipomoea
+        triloba","assembly_default":"ASM357664v1","scientific_name":"Ipomoea triloba","name":"ipomoea_triloba","data_release_id":54,"has_pan_compara":0,"url_name":"Ipomoea_triloba","has_genome_alignments":1,"organism_id":51675,"has_synteny":0,"assembly_id":47838,"assembly_name":"ASM357664v1","assembly_level":"chromosome","has_variations":0,"assembly_accession":"GCA_003576645.1","strain":"NCNSP0323","division":"EnsemblPlants","assembly_ucsc":null,"taxonomy_id":35885,"has_peptide_compara":1,"genebuild":"2019-09-GT4SP","species_taxonomy_id":35885,"serotype":null,"has_other_alignments":0,"is_reference":0,"base_count":461827428},{"division":"EnsemblPlants","species_taxonomy_id":62335,"has_peptide_compara":1,"assembly_ucsc":null,"taxonomy_id":62335,"genebuild":"2019-08-UIL","base_count":2900240836,"is_reference":0,"serotype":null,"has_other_alignments":0,"assembly_level":"chromosome","assembly_name":"Sspon.HiC_chr_asm","strain":"AP85-441","assembly_accession":"GCA_003544955.1","has_variations":0,"has_genome_alignments":1,"url_name":"Saccharum_spontaneum","has_pan_compara":0,"assembly_id":47839,"has_synteny":0,"organism_id":51676,"assembly_default":"Sspon.HiC_chr_asm","display_name":"Saccharum
+        spontaneum","scientific_name":"Saccharum spontaneum","data_release_id":54,"name":"saccharum_spontaneum"},{"assembly_default":"Citrus_clementina_v1.0","display_name":"Citrus
+        clementina","scientific_name":"Citrus clementina","data_release_id":54,"name":"citrus_clementina","has_genome_alignments":1,"url_name":"Citrus_clementina","has_pan_compara":0,"has_synteny":0,"assembly_id":47844,"organism_id":51680,"assembly_name":"Citrus_clementina_v1.0","assembly_level":"supercontig","strain":"Clemenules","has_variations":0,"assembly_accession":"GCA_000493195.1","division":"EnsemblPlants","species_taxonomy_id":85681,"genebuild":"2013-11-ENA","assembly_ucsc":null,"taxonomy_id":85681,"has_peptide_compara":1,"is_reference":0,"base_count":301364702,"has_other_alignments":0,"serotype":null},{"assembly_default":"IBSC_v2","display_name":"Hordeum
+        vulgare","scientific_name":"Hordeum vulgare subsp. vulgare","data_release_id":54,"name":"hordeum_vulgare","has_genome_alignments":1,"url_name":"Hordeum_vulgare","has_pan_compara":0,"assembly_id":47928,"organism_id":2058,"has_synteny":0,"assembly_level":"chromosome","assembly_name":"IBSC
+        v2","strain":"Morex","assembly_accession":"GCA_901482405.1","has_variations":1,"division":"EnsemblPlants","species_taxonomy_id":4513,"assembly_ucsc":null,"has_peptide_compara":1,"taxonomy_id":112509,"genebuild":"2019-04-IBSC","base_count":4834432680,"is_reference":0,"serotype":null,"has_other_alignments":1},{"assembly_level":"chromosome","assembly_name":"svevo","strain":"svevo","assembly_accession":"GCA_900231445.1","has_variations":1,"division":"EnsemblPlants","species_taxonomy_id":4567,"genebuild":"2017-05-Svevo.v1","assembly_ucsc":null,"taxonomy_id":4567,"has_peptide_compara":1,"is_reference":0,"base_count":10463058104,"serotype":null,"has_other_alignments":0,"assembly_default":"Svevo.v1","display_name":"Triticum
+        turgidum","scientific_name":"Triticum turgidum","data_release_id":54,"name":"triticum_turgidum","has_genome_alignments":1,"url_name":"Triticum_turgidum","has_pan_compara":0,"assembly_id":47930,"organism_id":51650,"has_synteny":0}]'
+    headers:
+      Content-Length:
+      - '46856'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 18 Feb 2020 19:03:36 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54993'
+      X-RateLimit-Reset:
+      - '3384'
+      X-Runtime:
+      - '0.211679'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/eg_version?content-type=application/json
+  response:
+    body:
+      string: '{"version":46}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 18 Feb 2020 19:03:37 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54992'
+      X-RateLimit-Reset:
+      - '3383'
+      X-Runtime:
+      - '0.011272'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&id=3702&db=taxonomy
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAJSQX0/CMBTF3/kUdU+aSO9AExNTR3QjikEgAR98LNvVNm7tbDtgfnr3R0Q0auzT
+        7bnnd05TNthkKVmhsVKrC69HfY8Mgg47iKbh4mE2JAu+4XN0ZHZ/NR6FxOsCTMZ3ANEiqndaHZPe
+        qRPklquCm5L0fb8PMJx4xBPO5fYcYL1eUxUvJVVpRpUU9EmvAJUz+AovBZqyDgNXh9HEJV5V/94a
+        sKYi6JDq1PMoCU7O/D6Ddm71eSyrNPko4wnPMLg0fCkTnVtpiRM8lVxxBl9MLTl1Ak19t63QiNeo
+        llw9hzrLtGrMdQqS2KC1DL6vd+gnMdOFxS5ys+X+ApqS7m/m/WvLp9zaMBoGvHBCG+nKit1q+9ZI
+        2vzH/yGHY3pEbrBUgjL4sO664R9vyaS1OabpGwAAAP//xJZRb5swEMff9yl43VMCDgUUlIdGWV+G
+        FK3TXicHLGrF2MhAtX77nSGhB0krb6ncp3DY+H65+9+duSz/lwZF/Oun8fx+VY9bggNv5vJ1CTAE
+        /zgo8X3H6WJeQumeaii0sVb9dIHfDHt+QAFtAAhqElz01pcTwzM3nWizF1S2jUdl4X3rZMkNyGlp
+        2AllyFqeb1WB0R624ANc9r/4dY/82MJ5VBdmHf+Hi7PSjLfquofs7CKb+cgunGRTL1fPTL9zyWjJ
+        NjlkpxPQLpQuqeRN1ay9XXeElqpauvZ+cc0LXpuoULb2HqF51q2qn17MIrK4BHtXHeCz0+JPTfMn
+        drZ2HTwIMX5ZM13R8aCMllIJbsRXGJM1FGKvmn4XuGVdwXPVvghWKAmAD52UDMDM2h5yTGvWUmEs
+        reAI2FFR8dw/3GsQHc9BWcjImdm7hSAJEwZ4RuWXLs6xmURq9wcFHY0H/M5kiPjhXTQZFOOO2Sy4
+        DP31cTF+3wtWKk/DL5bvkOcZ0zuMQRQmVoSjEGzAmg7SdYRKL1R1Cx0hy2RphTcRpw3iR9CFq4RY
+        0eFasYEzBdLdxAbaCwL/X+H4W9eUeXoPtxMS3zJ4qJU4KoowXgZ2bLizOYKL4pDcWZYsarQOQ7ey
+        kx3u+47oCEliK7jJFLKBy82F5qaCXZHIj+1UNxuKroTnByu7Zjyd0Y7wEj8O7Ibt65XBEZrJbbC0
+        68b4DuMusVFoBTdcqT4Y6y8AAAD//8IToUQWdNAWHr0KETNL4ppMSO1NYpyWX5SSWkSRw8wNiMuf
+        yG1fYlyWlpibmVNJUVxaGBgQWbghmuLEOK2kKDMplcJAIy5jonQLCDssPTWvFH+FAO9cwLoTNgFF
+        +cASvSQTZSwIKliJZglIGGx3QXoysCsH7OLCBDDVhSXmlKZ65pXYGRpC1MEFkFyGag+cD3eMjXNR
+        amJJqgsQ2xlaWprqGxjpG5krGFhaGZlYgRIekjxEQ2hBCkwAWPpZ6Bsa6hsZKxgaW5maW5kCXYIk
+        D/V/aRLMeCOQakMDBQMDKzACugcqyQUPRC4AAAAA//8Cs8CDdAAAAAD//wMASkOWbUQUAAA=
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - private
+      Connection:
+      - Keep-Alive
+      Content-Security-Policy:
+      - upgrade-insecure-requests
+      Content-Type:
+      - text/xml; charset=UTF-8
+      Date:
+      - Tue, 18 Feb 2020 19:03:38 GMT
+      Keep-Alive:
+      - timeout=4, max=40
+      NCBI-PHID:
+      - 939B97E76669C435000057FAE4A0674C.1.1.m_3
+      NCBI-SID:
+      - 0028B1D209174EF2_5301SID
+      Server:
+      - Finatra
+      Set-Cookie:
+      - ncbi_sid=0028B1D209174EF2_5301SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:03:39 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-RateLimit-Limit:
+      - '10'
+      X-RateLimit-Remaining:
+      - '9'
+      X-UA-Compatible:
+      - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+      content-encoding:
+      - gzip
+    status:
+      code: 200
+      message: OK
+version: 1

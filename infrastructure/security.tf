@@ -149,30 +149,13 @@ resource "aws_security_group" "data_refinery_db" {
     Name = "data-refinery-db-${var.user}-${var.stage}"
   }
 }
-resource "aws_security_group_rule" "data_refinery_db_workers_tcp" {
-  type = "ingress"
-  from_port = 0
-  to_port = 65535
-  protocol = "tcp"
-  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
-}
 
-resource "aws_security_group_rule" "data_refinery_db_foreman_tcp" {
-  type = "ingress"
+resource "aws_security_group_rule" "data_refinery_db_outbound" {
+  type = "egress"
   from_port = 0
-  to_port = 65535
+  to_port = 0
   protocol = "tcp"
-  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
-}
-
-resource "aws_security_group_rule" "data_refinery_db_api_tcp" {
-  type = "ingress"
-  from_port = 0
-  to_port = 65535
-  protocol = "tcp"
-  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
+  cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.data_refinery_db.id}"
 }
 
@@ -182,33 +165,6 @@ resource "aws_security_group_rule" "data_refinery_db_pg_tcp" {
   to_port = 65535
   protocol = "tcp"
   source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
-}
-
-resource "aws_security_group_rule" "data_refinery_db_workers_icmp" {
-  type = "ingress"
-  from_port = -1
-  to_port = -1
-  protocol = "icmp"
-  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
-}
-
-resource "aws_security_group_rule" "data_refinery_db_api_icmp" {
-  type = "ingress"
-  from_port = -1
-  to_port = -1
-  protocol = "icmp"
-  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
-}
-
-resource "aws_security_group_rule" "data_refinery_db_outbound" {
-  type = "egress"
-  from_port = 0
-  to_port = 0
-  protocol = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.data_refinery_db.id}"
 }
 
