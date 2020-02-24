@@ -1,3 +1,29 @@
+# CloudTrail
+
+resource "aws_cloudtrail" "data_refinery_s3_cloudtrail" {
+  name                          = "data-refinery-s3-cloudtrail-${var.user}-${var.stage}"
+  depends_on                    = ["aws_s3_bucket.data_refinery_bucket"]
+  s3_bucket_name                = "${aws_s3_bucket.data_refinery_bucket.id}"
+  include_global_service_events = false
+  event_selector {
+    read_write_type           = "ReadOnly"
+    include_management_events = false
+
+    data_resource {
+      type = "AWS::S3::Object"
+
+      # Make sure to append a trailing '/' to your ARN if you want
+      # to monitor all objects in a bucket.
+      # ref https://www.terraform.io/docs/providers/aws/r/cloudtrail.html#logging-individual-s3-bucket-events
+      values = [
+        "${aws_s3_bucket.data_refinery_compendia_bucket.arn}/",
+        "${aws_s3_bucket.data_refinery_transcriptome_index_bucket.arn}/",
+        "${aws_s3_bucket.data_refinery_qn_target_bucket.arn}/",
+      ]
+    }
+  }
+}
+
 # CloudWatch Log Groups and Streams
 
 ##
