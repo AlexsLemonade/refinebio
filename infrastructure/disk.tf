@@ -148,7 +148,7 @@ resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
 PATTERN
 }
 
-# arn needs to be stripped of trailing `:*` 
+# arn needs to be stripped of trailing `:*`
 # aws appends this when creating the event_target
 resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
   rule = "${aws_cloudwatch_event_rule.compendia_object_metrics.name}"
