@@ -216,3 +216,32 @@ resource "aws_iam_role_policy_attachment" "cloudwatch" {
   role = "${aws_iam_role.data_refinery_instance.name}"
   policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }
+
+resource "aws_s3_bucket_policy" "cloudtrail_access_policy" {
+  bucket = "${aws_s3_bucket.data_refinery_bucket.id}"
+  policy = <<POLICY
+{
+  "Statement": [
+    {
+      "Action": "s3:GetBucketAcl",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "cloudtrail.amazonaws.com"
+      },
+      "Resource": "${aws_s3_bucket.data_refinery_bucket.arn}",
+      "Sid": "AWSCloudTrailAclCheck20150319"
+    },
+    {
+      "Action": "s3:PutObject",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "cloudtrail.amazonaws.com"
+      },
+      "Resource": "${aws_s3_bucket.data_refinery_bucket.arn}/*",
+      "Sid": "AWSCloudTrailWrite20150319"
+    }
+  ],
+  "Version": "2012-10-17"
+}
+POLICY
+}
