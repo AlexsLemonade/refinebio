@@ -117,11 +117,7 @@ def create_long_and_short_processor_jobs(files_to_process):
         assoc.processor_job = processor_job_long
         assoc.save()
 
-    try:
-        send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long)
-    except:
-        # This is fine, the foreman will requeue these later.
-        pass
+    send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long)
 
     processor_job_short = ProcessorJob()
     processor_job_short.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
@@ -135,8 +131,4 @@ def create_long_and_short_processor_jobs(files_to_process):
         assoc.processor_job = processor_job_short
         assoc.save()
 
-    try:
-        send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short)
-    except:
-        # This is fine, the foreman will requeue these later.
-        pass
+    send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short)

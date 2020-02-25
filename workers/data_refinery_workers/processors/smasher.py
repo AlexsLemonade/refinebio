@@ -400,6 +400,7 @@ def _notify_slack_failed_dataset(job_context: Dict):
     requests.post(
         settings.ENGAGEMENTBOT_WEBHOOK,
         json={
+            "channel": "ccdl-general",  # Move to robots when we get sick of these
             "username": "EngagementBot",
             "icon_emoji": ":halal:",
             "attachments": [

@@ -3,7 +3,6 @@ from unittest.mock import patch
 from django.test import TestCase
 
 import requests
-import vcr
 
 from data_refinery_common.models import (
     DownloaderJob,
@@ -38,7 +37,6 @@ class SurveyTestCase(TestCase):
 
         return survey_job
 
-    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.array_express.survey.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_survey(self, mock_send_task):
         """A Simple test of the ArrayExpress surveyor."""
@@ -73,9 +71,6 @@ class SurveyTestCase(TestCase):
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 2)
 
-    @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.array_express.survey_with_protocol_list.yaml"
-    )
     def test_survey_with_protocol_list(self):
         """Tests an edge case that came up after months:
         https://github.com/AlexsLemonade/refinebio/issues/761
@@ -93,9 +88,6 @@ class SurveyTestCase(TestCase):
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 1)
 
-    @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.array_express.determine_accession.yaml"
-    )
     def test_determine_accession(self):
         """Test of the `determine_sample_accession` function
         """
@@ -142,7 +134,7 @@ class SurveyTestCase(TestCase):
 
                     if (
                         sub_file_mod["type"] == "data"
-                        and sub_file_mod["comment"].get("value", None) is not None
+                        and sub_file_mod["comment"].get("value", None) != None
                     ):
                         has_raw = True
                     if "raw" in sub_file_mod["comment"].get("value", ""):

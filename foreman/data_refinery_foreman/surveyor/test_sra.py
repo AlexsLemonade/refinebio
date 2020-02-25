@@ -1,8 +1,4 @@
-from unittest.mock import patch
-
 from django.test import TestCase
-
-import vcr
 
 from data_refinery_common.models import (
     DownloaderJob,
@@ -64,9 +60,7 @@ class SraSurveyorTestCase(TestCase):
             samples.first().protocol_info[0]["Description"], experiment.protocol_description
         )
 
-    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.srp_survey.yaml")
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
-    def test_srp_survey(self, mock_send_task):
+    def test_srp_survey(self):
         """A slightly harder test of the SRA surveyor.
         """
         survey_job = SurveyJob(source_type="SRA")
@@ -107,9 +101,6 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.accession_code, "DRP003977")
         self.assertEqual(len(samples), 9)
 
-    @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.sra.metadata_is_gathered_correctly.yaml"
-    )
     def test_metadata_is_gathered_correctly(self):
 
         metadata = SraSurveyor.gather_all_metadata("DRR002116")

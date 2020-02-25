@@ -60,7 +60,12 @@ if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     exit 1
 fi
 
+# Set up the test data volume directory if it does not already exist
 volume_directory="$script_directory/test_volume"
+if [ ! -d "$volume_directory" ]; then
+    mkdir "$volume_directory"
+    chmod -R a+rwX "$volume_directory"
+fi
 
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
@@ -463,7 +468,7 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
 fi
 
 . scripts/common.sh
-HOST_IP=$(get_ip_address || echo 127.0.0.1)
+HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
 

@@ -29,7 +29,6 @@ infrastructure/.terraform/
 # We download a lot of files into the test_volume directory when
 # running tests, which we don't need to track.
 workers/test_volume/*
-!workers/test_volume/test_download_files
 # However for a couple tests we do store the data in the repo and need to track them.
 !workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.gtf.gz
 !workers/test_volume/raw/TEST/NO_OP/test.txt

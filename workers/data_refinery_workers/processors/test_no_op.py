@@ -114,8 +114,7 @@ class NOOPTestCase(TestCase):
         og_file.is_downloaded = True
         og_file.save()
 
-        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-        homo_sapiens.save()
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
         sample.accession_code = "GSM557500"
@@ -163,8 +162,7 @@ class NOOPTestCase(TestCase):
         og_file.is_downloaded = True
         og_file.save()
 
-        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-        homo_sapiens.save()
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
         sample.accession_code = "GSM557500"
@@ -217,8 +215,7 @@ class NOOPTestCase(TestCase):
         og_file.is_downloaded = True
         og_file.save()
 
-        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-        homo_sapiens.save()
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         sample = Sample()
         sample.accession_code = "GSM557500"
