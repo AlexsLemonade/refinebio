@@ -122,6 +122,15 @@ resource "aws_security_group_rule" "data_refinery_worker_ssh" {
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
 }
 
+resource "aws_security_group_rule" "data_refinery_worker_pg" {
+  type = "ingress"
+  from_port = "${var.database_port}"
+  to_port = "${var.database_port}"
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+}
+
 # Allow outbound requests from Nomad so they can actually do useful
 # things. Long term we will probably only want to allow these to come
 # from the Nomad Client instances, but we do not yet have separate
@@ -320,6 +329,15 @@ resource "aws_security_group_rule" "data_refinery_api_https" {
   security_group_id = "${aws_security_group.data_refinery_api.id}"
 }
 
+resource "aws_security_group_rule" "data_refinery_api_pg" {
+  type = "ingress"
+  from_port = "${var.database_port}"
+  to_port = "${var.database_port}"
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_api.id}"
+}
+
 resource "aws_security_group_rule" "data_refinery_api_outbound" {
   type = "egress"
   from_port = 0
@@ -360,6 +378,15 @@ resource "aws_security_group_rule" "data_refinery_foreman_ssh" {
   type = "ingress"
   from_port = 22
   to_port = 22
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_foreman_pg" {
+  type = "ingress"
+  from_port = "${var.database_port}"
+  to_port = "${var.database_port}"
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.data_refinery_foreman.id}"
