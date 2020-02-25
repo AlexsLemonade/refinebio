@@ -62,8 +62,7 @@ apt-get install -y \
         python3-pip \
         jq \
         docker-ce \
-        unzip \
-        postgresql-client
+        unzip
 
 usermod -aG docker ubuntu
 
