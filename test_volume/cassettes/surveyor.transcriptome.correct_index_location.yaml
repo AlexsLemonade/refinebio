@@ -1,0 +1,547 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/species?content-type=application/json
+  response:
+    body:
+      string: '{"species":[{"aliases":[],"name":"mus_musculus_dba2j","strain":"DBA/2J","groups":["funcgen","core"],"common_name":"house
+        mouse","display_name":"Mouse DBA/2J","taxon_id":"10090","assembly":"DBA_2J_v1","accession":"GCA_001624505.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"taxon_id":"8030","accession":"GCA_000233375.4","assembly":"ICSASG_v2","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"groups":["rnaseq","otherfeatures","core","variation"],"strain":null,"name":"salmo_salar","common_name":"Atlantic
+        salmon","display_name":"Atlantic salmon"},{"taxon_id":"9940","assembly":"Oar_v3.1","accession":"GCA_000298735.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"name":"ovis_aries","groups":["rnaseq","core","otherfeatures","variation"],"aliases":["oari","ovis
+        aries","oaries","oviari","sheep","domestic sheep","oar","ovisaries","9940"],"common_name":"Domestic
+        sheep","display_name":"Sheep"},{"aliases":[],"strain":null,"groups":["core","rnaseq"],"name":"salvator_merianae","common_name":"Argentine
+        black and white tegu","display_name":"Argentine black and white tegu","taxon_id":"96440","assembly":"HLtupMer3","accession":"GCA_003586115.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Denticle
+        herring","common_name":"denticle herring","name":"denticeps_clupeoides","strain":null,"groups":["rnaseq","otherfeatures","core"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"fDenClu1.1","accession":"GCA_900700375.1","taxon_id":"299321"},{"common_name":"chimpanzee","strain":null,"name":"pan_troglodytes","groups":["variation","funcgen","rnaseq","otherfeatures","core"],"aliases":["9598","ptro","pantro","chimpanzee","common
+        chimpanzee","pan troglodytes","ptroglodytes","chimp"],"display_name":"Chimpanzee","assembly":"Pan_tro_3.0","accession":"GCA_000001515.5","taxon_id":"9598","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"display_name":"Dog
+        - Basenji","strain":"basenji","groups":["funcgen","rnaseq","core"],"name":"canis_lupus_familiarisbasenji","aliases":[],"common_name":"dog","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9615","accession":"GCA_004886185.1","assembly":"Basenji_breed-1.1"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"9691","assembly":"PanPar1.0","accession":"GCA_001857705.1","display_name":"Leopard","aliases":["leopard"],"strain":null,"groups":["core","otherfeatures"],"name":"panthera_pardus","common_name":"leopard"},{"display_name":"Mouse
+        BALB/cJ","common_name":"house mouse","aliases":[],"strain":"BALB/cJ","name":"mus_musculus_balbcj","groups":["core","funcgen"],"strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"BALB_cJ_v1","accession":"GCA_001632525.1","taxon_id":"10090"},{"display_name":"Goat","common_name":"Goat","strain":null,"groups":["variation","funcgen","rnaseq","core","otherfeatures"],"name":"capra_hircus","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"ARS1","accession":"GCA_001704415.1","taxon_id":"9925"},{"taxon_id":"7950","assembly":"Ch_v2.0.2","accession":"GCA_900700415.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"name":"clupea_harengus","groups":["core","rnaseq"],"aliases":[],"common_name":"Atlantic
+        herring","display_name":"Atlantic herring"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"8175","accession":"GCA_900880675.1","assembly":"fSpaAur1.1","display_name":"Gilthead
+        seabream","aliases":[],"strain":null,"groups":["rnaseq","otherfeatures","core"],"name":"sparus_aurata","common_name":"gilthead
+        seabream"},{"common_name":"chicken","aliases":["galgal","ggallus","gallus
+        gallus","9031","chicken","ggal","g_gallus"],"groups":["variation","otherfeatures","core","funcgen","rnaseq"],"strain":null,"name":"gallus_gallus","display_name":"Chicken","accession":"GCA_000002315.5","assembly":"GRCg6a","taxon_id":"9031","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"210632","assembly":"fParRan2.1","accession":"GCA_900634625.1","display_name":"Indian
+        glassy fish","strain":null,"name":"parambassis_ranga","groups":["rnaseq","otherfeatures","core"],"aliases":[],"common_name":"Indian
+        glassy fish"},{"taxon_id":"336983","accession":"GCA_000951035.1","assembly":"Cang.pa_1.0","division":"EnsemblVertebrates","release":99,"strain_collection":null,"groups":["funcgen","otherfeatures","core"],"strain":null,"name":"colobus_angolensis_palliatus","aliases":[],"common_name":"Angola
+        colobus","display_name":"Angola colobus"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"132908","assembly":"pteVam1","accession":null,"display_name":"Megabat","aliases":["pvampyrus","large
+        flying fox","ptevam","pvam","megabat","132908","pteropusvampyrus","pteropus
+        vampyrus"],"strain":null,"groups":["core"],"name":"pteropus_vampyrus","common_name":"large
+        flying fox"},{"taxon_id":"223781","assembly":"bAquChr1.2","accession":"GCA_900496995.2","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"strain":null,"groups":["core","otherfeatures","rnaseq"],"name":"aquila_chrysaetos_chrysaetos","common_name":"golden
+        eagle","display_name":"Golden eagle"},{"display_name":"Chinese hamster CriGri","strain":null,"groups":["core","otherfeatures","funcgen","rnaseq"],"name":"cricetulus_griseus_crigri","aliases":["cgriseus_crigri","cricetulus
+        griseus crigri","chinese hamster crigri"],"common_name":"Chinese hamster","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"10029","accession":"GCA_000223135.1","assembly":"CriGri_1.0"},{"display_name":"Marmoset","common_name":"white-tufted-ear
+        marmoset","strain":null,"groups":["core","funcgen","rnaseq"],"name":"callithrix_jacchus","aliases":["callithrix
+        jacchus","caljac","cj321","9483","white-tufted-ear marmoset","cjacchus","cjacchus321","marmoset","cjac"],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"ASM275486v1","accession":"GCA_002754865.1","taxon_id":"9483"},{"display_name":"Panda","aliases":["amelanoleuca","ailmel","9646","giant
+        panda","ailmel1","amel","panda","ailuropoda melanoleuca"],"strain":null,"groups":["otherfeatures","core"],"name":"ailuropoda_melanoleuca","common_name":"giant
+        panda","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"9646","accession":"GCA_000004335.1","assembly":"ailMel1"},{"display_name":"Mouse
+        CAST/EiJ","common_name":"south eastern house mouse","strain":"CAST/EiJ","name":"mus_musculus_casteij","groups":["core","funcgen"],"aliases":["mus
+        musculus castaneus casteij","mmusculus_castaneus_casteij","10091","mus_musculus_castaneus_casteij","south
+        eastern house mouse","mouse casteij"],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_001624445.1","assembly":"CAST_EiJ_v1","taxon_id":"10091"},{"common_name":"rabbit","aliases":["9986","oryctolagus
+        cuniculus","rabbit","ocun","orycun","ocuniculus"],"strain":null,"groups":["core","otherfeatures","funcgen","rnaseq"],"name":"oryctolagus_cuniculus","display_name":"Rabbit","assembly":"OryCun2.0","accession":"GCA_000003625.1","taxon_id":"9986","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"accession":"GCA_004024745.2","assembly":"CatWag_v2_BIUU_UCD","taxon_id":"51154","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"Chacoan
+        peccary","aliases":[],"strain":null,"groups":["core","rnaseq"],"name":"catagonus_wagneri","display_name":"Chacoan
+        peccary"},{"taxon_id":"30521","assembly":"LU_Bosgru_v3.0","accession":"GCA_005887515.1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"strain":null,"name":"bos_grunniens","groups":["core","rnaseq"],"common_name":"domestic
+        yak","display_name":"Domestic yak"},{"taxon_id":"7918","accession":"GCA_000242695.1","assembly":"LepOcu1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"name":"lepisosteus_oculatus","strain":null,"groups":["rnaseq","core","otherfeatures"],"aliases":["spotted
+        gar","lepisosteus oculatus","lepocu","7918","locu","loculatus"],"common_name":"Spotted
+        gar","display_name":"Spotted gar"},{"aliases":["mus pahari","muspah","mpah","shrew
+        mouse","10093","mpahari"],"strain":"PAHARI_EIJ","name":"mus_pahari","groups":["core"],"common_name":"Shrew
+        mouse","display_name":"Shrew mouse","taxon_id":"10093","accession":"GCA_900095145.2","assembly":"PAHARI_EIJ_v1.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Chilean
+        tinamou","common_name":"birds","aliases":[],"groups":["core","otherfeatures"],"strain":null,"name":"nothoprocta_perdicaria","strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"notPer1","accession":"GCA_003342845.1","taxon_id":"30464"},{"display_name":"Bicolor
+        damselfish","groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"stegastes_partitus","aliases":[],"common_name":"bicolor
+        damselfish","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"144197","accession":"GCA_000690725.1","assembly":"Stegastes_partitus-1.0.2"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"4932","accession":"GCA_000146045.2","assembly":"R64-1-1","display_name":"Saccharomyces
+        cerevisiae","name":"saccharomyces_cerevisiae","strain":"S288C","groups":["variation","funcgen","otherfeatures","core"],"aliases":["saccharomyces
+        cerevisiae s288c","4932","s_cerevisiae","saccharomyces cerevisiae (baker''s
+        yeast)","saccharomyces cerevisiae","scer","baker''s yeast","scerevisiae"],"common_name":"baker''s
+        yeast"},{"taxon_id":"286419","assembly":"ASM325472v1","accession":"GCA_003254725.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"name":"canis_lupus_dingo","groups":["otherfeatures","core","rnaseq"],"aliases":[],"common_name":"dingo","display_name":"Dingo"},{"taxon_id":"94237","assembly":"ASM169857v1","accession":"GCA_001698575.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"groups":["core"],"name":"mola_mola","aliases":[],"common_name":"ocean
+        sunfish","display_name":"Ocean sunfish"},{"taxon_id":"8502","assembly":"CroPor_comp1","accession":"GCA_001723895.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"crocodylus_porosus","aliases":[],"common_name":"Australian
+        saltwater crocodile","display_name":"Australian saltwater crocodile"},{"taxon_id":"9089","assembly":"Chrysolophus_pictus_GenomeV1.0","accession":"GCA_003413605.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"groups":["core","rnaseq"],"strain":null,"name":"chrysolophus_pictus","aliases":[],"common_name":"golden
+        pheasant","display_name":"Golden pheasant"},{"assembly":"PodMur_1.0","accession":"GCA_004329235.1","taxon_id":"64176","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"common
+        wall lizard","aliases":[],"name":"podarcis_muralis","strain":null,"groups":["core","rnaseq"],"display_name":"Common
+        wall lizard"},{"taxon_id":"44394","assembly":"Zonotrichia_albicollis-1.0.1","accession":"GCA_000385455.1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"name":"zonotrichia_albicollis","strain":null,"groups":["otherfeatures","core","rnaseq"],"common_name":"white-throated
+        sparrow","display_name":"White-throated sparrow"},{"name":"phascolarctos_cinereus","strain":null,"groups":["core"],"aliases":[],"common_name":"koala","display_name":"Koala","taxon_id":"38626","assembly":"phaCin_unsw_v4.1","accession":"GCA_002099425.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"strain":null,"name":"procavia_capensis","groups":["core"],"aliases":["cape
+        rock hyrax","rock_hyrax","pcapensis","hyrax","procap","procaviacapensis","pcap","9813","procavia
+        capensis"],"common_name":"cape rock hyrax","display_name":"Hyrax","taxon_id":"9813","accession":null,"assembly":"proCap1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"display_name":"Mainland
+        tiger snake","common_name":"mainland tiger snake","aliases":[],"strain":null,"name":"notechis_scutatus","groups":["otherfeatures","core","rnaseq"],"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_900518725.1","assembly":"TS10Xv2-PRI","taxon_id":"8663"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"586833","accession":"GCA_902150065.1","assembly":"fMyrMur1.1","display_name":"Pinecone
+        soldierfish","aliases":[],"name":"myripristis_murdjan","strain":null,"groups":["otherfeatures","core","rnaseq"],"common_name":"pinecone
+        soldierfish"},{"common_name":"White-headed capuchin","groups":["core","otherfeatures","funcgen","rnaseq"],"strain":null,"name":"cebus_capucinus","aliases":[],"display_name":"Capuchin","accession":"GCA_001604975.1","assembly":"Cebus_imitator-1.0","taxon_id":"1737458","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"display_name":"Ring-necked
+        pheasant","aliases":[],"strain":null,"name":"phasianus_colchicus","groups":["rnaseq","core"],"common_name":"Ring-necked
+        pheasant","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"9054","accession":"GCA_004143745.1","assembly":"ASM414374v1"},{"assembly":"ASM309773v1","accession":"GCA_003097735.1","taxon_id":"33528","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"western
+        mosquitofish","strain":null,"groups":["core","rnaseq"],"name":"gambusia_affinis","aliases":[],"display_name":"Western
+        mosquitofish"},{"accession":"GCA_000787105.1","assembly":"PM.fa","taxon_id":"409849","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"Periophthalmus
+        magnuspinnatus","aliases":[],"groups":["core"],"strain":null,"name":"periophthalmus_magnuspinnatus","display_name":"Periophthalmus
+        magnuspinnatus"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"Prosim_1.0","accession":"GCA_003258685.1","taxon_id":"1328070","display_name":"Greater
+        bamboo lemur","common_name":"greater bamboo lemur","aliases":[],"strain":null,"groups":["core","funcgen"],"name":"prolemur_simus"},{"assembly":"AnoCar2.0","accession":"GCA_000090745.1","taxon_id":"28377","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"green
+        anole","aliases":["anoliscarolinensis","anole lizard","28377","acar","anolis","anolis
+        carolinensis","green anole","anocar","anolis_lizard","green anole lizard","acarolinensis"],"name":"anolis_carolinensis","strain":null,"groups":["otherfeatures","core","rnaseq"],"display_name":"Anole
+        lizard"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"74533","assembly":"PanTig1.0","accession":"GCA_000464555.1","display_name":"Tiger","name":"panthera_tigris_altaica","strain":null,"groups":["rnaseq","core","otherfeatures"],"aliases":["tiger"],"common_name":"Tiger"},{"strain":null,"groups":["funcgen","otherfeatures","core"],"name":"ciona_intestinalis","aliases":["ciona","cioint","cintestinalis","c.intestinalis","cint","sea
+        squirt ciona intestinalis","ciona intestinalis","7719"],"common_name":"Sea
+        squirt Ciona intestinalis","display_name":"C.intestinalis","taxon_id":"7719","accession":"GCA_000224145.1","assembly":"KH","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"common_name":"horned
+        golden-line barbel","aliases":[],"groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"sinocyclocheilus_rhinocerous","display_name":"Horned
+        golden-line barbel","accession":"GCA_001515625.1","assembly":"SAMN03320098_v1.1","taxon_id":"307959","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"aliases":[],"groups":["rnaseq","otherfeatures","core"],"strain":null,"name":"larimichthys_crocea","common_name":"large
+        yellow croaker","display_name":"Large yellow croaker","taxon_id":"215358","assembly":"L_crocea_2.0","accession":"GCA_000972845.2","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"common_name":"Arabian
+        camel","aliases":[],"groups":["core","rnaseq"],"strain":null,"name":"camelus_dromedarius","display_name":"Arabian
+        camel","assembly":"CamDro2","accession":"GCA_000803125.2","taxon_id":"9838","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"display_name":"Mangrove
+        rivulus","common_name":"mangrove rivulus","strain":null,"groups":["otherfeatures","core","rnaseq"],"name":"kryptolebias_marmoratus","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"ASM164957v1","accession":"GCA_001649575.1","taxon_id":"37003"},{"common_name":"ballan
+        wrasse","name":"labrus_bergylta","strain":null,"groups":["core","otherfeatures","rnaseq"],"aliases":[],"display_name":"Ballan
+        wrasse","assembly":"BallGen_V1","accession":"GCA_900080235.1","taxon_id":"56723","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"display_name":"Dog
+        - Great Dane","aliases":[],"strain":"great_dane","groups":["core","rnaseq","funcgen"],"name":"canis_lupus_familiarisgreatdane","common_name":"dog","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"9615","assembly":"UMICH_Zoey_3.1","accession":"GCA_005444595.1"},{"assembly":"JacJac1.0","accession":"GCA_000280705.1","taxon_id":"51337","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"Lesser
+        Egyptian jerboa","aliases":["jacjac","jjac","jjaculus","lesser egyptian jerboa","jaculus
+        jaculus","51337"],"strain":null,"groups":["core","otherfeatures"],"name":"jaculus_jaculus","display_name":"Lesser
+        Egyptian jerboa"},{"taxon_id":"9823","accession":"GCA_000472085.2","assembly":"Tibetan_Pig_v2","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"groups":["rnaseq","core","otherfeatures"],"strain":"tibetan","name":"sus_scrofa_tibetan","common_name":"pig","display_name":"Pig
+        - Tibetan"},{"groups":["rnaseq","otherfeatures","core"],"strain":null,"name":"electrophorus_electricus","aliases":[],"common_name":"electric
+        eel","display_name":"Electric eel","taxon_id":"8005","assembly":"Ee_SOAP_WITH_SSPACE","accession":"GCA_003665695.2","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"display_name":"Arctic
+        ground squirrel","strain":null,"groups":["rnaseq","core"],"name":"urocitellus_parryii","aliases":[],"common_name":"Arctic
+        ground squirrel","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9999","assembly":"ASM342692v1","accession":"GCA_003426925.1"},{"taxon_id":"308060","assembly":"aptRow1","accession":"GCA_003343035.1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"name":"apteryx_rowi","strain":null,"groups":["rnaseq","core","otherfeatures"],"common_name":"Okarito
+        brown kiwi","display_name":"Okarito brown kiwi"},{"common_name":"gray short-tailed
+        opossum","strain":null,"name":"monodelphis_domestica","groups":["variation","core","rnaseq"],"aliases":["mondom","broado5","mdom","gray
+        short-tailed opossum","13616","monodelphis domestica","mdomestica","opossum"],"display_name":"Opossum","accession":"GCA_000002295.1","assembly":"ASM229v1","taxon_id":"13616","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"common_name":"house
+        mouse","aliases":[],"groups":["core","funcgen"],"strain":"LP/J","name":"mus_musculus_lpj","display_name":"Mouse
+        LP/J","accession":"GCA_001632615.1","assembly":"LP_J_v1","taxon_id":"10090","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"accession":null,"assembly":"Pmarinus_7.0","taxon_id":"7757","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"sea
+        lamprey","strain":null,"groups":["otherfeatures","core"],"name":"petromyzon_marinus","aliases":["pmar","petromyzon
+        marinus","lamprey","pmarinus","7757","petmar","sea lamprey"],"display_name":"Lamprey"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_003186165.1","assembly":"ASM318616v1","taxon_id":"52904","display_name":"Turbot","common_name":"turbot","aliases":[],"name":"scophthalmus_maximus","strain":null,"groups":["core","rnaseq","funcgen"]},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"10090","accession":"GCA_001624475.1","assembly":"CBA_J_v1","display_name":"Mouse
+        CBA/J","aliases":[],"groups":["core","funcgen"],"strain":"CBA/J","name":"mus_musculus_cbaj","common_name":"house
+        mouse"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9258","accession":"GCA_000002275.2","assembly":"OANA5","display_name":"Platypus","strain":null,"groups":["funcgen","rnaseq","core","otherfeatures","variation"],"name":"ornithorhynchus_anatinus","aliases":["ornithorhynchus
+        anatinus","platypus","ornana","oana","9258","oanatinus"],"common_name":"platypus"},{"aliases":[],"name":"mus_musculus_c3hhej","strain":"C3H/HeJ","groups":["core","funcgen"],"common_name":"house
+        mouse","display_name":"Mouse C3H/HeJ","taxon_id":"10090","accession":"GCA_001632575.1","assembly":"C3H_HeJ_v1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Pika","common_name":"American
+        pika","aliases":["opri","ochotona princeps","american pika","9978","oprinceps","pika","ochpri"],"strain":null,"groups":["core"],"name":"ochotona_princeps","strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"OchPri2.0-Ens","accession":null,"taxon_id":"9978"},{"display_name":"Makobe
+        Island cichlid","common_name":"Makobe Island cichlid","strain":null,"name":"pundamilia_nyererei","groups":["otherfeatures","core","rnaseq"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_000239375.1","assembly":"PunNye1.0","taxon_id":"303518"},{"accession":"GCA_003317085.1","assembly":"ASM331708v1","taxon_id":"62062","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"huchen","aliases":[],"name":"hucho_hucho","strain":null,"groups":["core","rnaseq"],"display_name":"Huchen"},{"common_name":"ruff","aliases":[],"name":"calidris_pugnax","strain":null,"groups":["rnaseq","core","otherfeatures"],"display_name":"Ruff","assembly":"ASM143184v1","accession":"GCA_001431845.1","taxon_id":"198806","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_002775205.2","assembly":"X_maculatus-5.0-male","taxon_id":"8083","display_name":"Platyfish","common_name":"southern
+        platyfish","groups":["rnaseq","otherfeatures","core"],"strain":null,"name":"xiphophorus_maculatus","aliases":["xmac","southern
+        platyfish","xipmac","xmaculatus","platyfish","8083","xiphophorus maculatus"]},{"common_name":"Sooty
+        mangabey","name":"cercocebus_atys","strain":null,"groups":["rnaseq","funcgen","otherfeatures","core"],"aliases":[],"display_name":"Sooty
+        mangabey","accession":"GCA_000955945.1","assembly":"Caty_1.0","taxon_id":"9531","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"taxon_id":"441366","accession":"GCA_900634775.1","assembly":"fGouWil2.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"name":"gouania_willdenowi","strain":null,"groups":["rnaseq","core","otherfeatures"],"aliases":[],"common_name":"blunt-snouted
+        clingfish","display_name":"Blunt-snouted clingfish"},{"aliases":[],"strain":null,"groups":["core","funcgen","rnaseq"],"name":"theropithecus_gelada","common_name":"gelada","display_name":"Gelada","taxon_id":"9565","assembly":"Tgel_1.0","accession":"GCA_003255815.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Coquerel''s
+        sifaka","common_name":"Coquerel''s sifaka","aliases":[],"groups":["core","otherfeatures","funcgen"],"strain":null,"name":"propithecus_coquereli","strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_000956105.1","assembly":"Pcoq_1.0","taxon_id":"379532"},{"display_name":"American
+        beaver","common_name":"American beaver","aliases":[],"name":"castor_canadensis","strain":null,"groups":["rnaseq","otherfeatures","core"],"strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"C.can_genome_v1.0","accession":"GCA_001984765.1","taxon_id":"51338"},{"display_name":"Gibbon","common_name":"Northern
+        white-cheeked gibbon","aliases":["nleucogenys","nomleu","nleu","61853","northern
+        white-cheeked gibbon","gibbon","nomascus leucogenys"],"strain":null,"groups":["variation","funcgen","core","otherfeatures"],"name":"nomascus_leucogenys","strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"Nleu_3.0","accession":"GCA_000146795.3","taxon_id":"61853"},{"taxon_id":"8010","assembly":"Eluc_V3","accession":"GCA_000721915.3","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"name":"esox_lucius","groups":["rnaseq","core","otherfeatures"],"aliases":[],"common_name":"northern
+        pike","display_name":"Northern pike"},{"display_name":"Climbing perch","aliases":[],"strain":null,"name":"anabas_testudineus","groups":["core","rnaseq"],"common_name":"climbing
+        perch","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"64144","assembly":"fAnaTes1.1","accession":"GCA_900324465.1"},{"accession":null,"assembly":"vicPac1","taxon_id":"30538","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"alpaca","aliases":["vicugna
+        pacos","vpac","vpacos","vicugnapacos","vicpac","alpaca","30538"],"groups":["core"],"strain":null,"name":"vicugna_pacos","display_name":"Alpaca"},{"aliases":[],"name":"cottoperca_gobio","strain":null,"groups":["otherfeatures","core","rnaseq"],"common_name":"channel
+        bull blenny","display_name":"Channel bull blenny","taxon_id":"56716","accession":"GCA_900634415.1","assembly":"fCotGob3.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Bolivian
+        squirrel monkey","aliases":[],"groups":["rnaseq","funcgen","otherfeatures","core"],"strain":null,"name":"saimiri_boliviensis_boliviensis","common_name":"Bolivian
+        squirrel monkey","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"39432","assembly":"SaiBol1.0","accession":"GCA_000235385.1"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"CavAp1.0","accession":"GCA_000688575.1","taxon_id":"37548","display_name":"Brazilian
+        guinea pig","common_name":"Brazilian guinea pig","groups":["core"],"strain":null,"name":"cavia_aperea","aliases":["caperea","cavape","cavia
+        aperea","37548","brazilian guinea pig","cape"]},{"display_name":"Pink-footed
+        goose","strain":null,"name":"anser_brachyrhynchus","groups":["core"],"aliases":[],"common_name":"pink-footed
+        goose","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"132585","accession":"GCA_002592135.1","assembly":"ASM259213v1"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"7227","assembly":"BDGP6.28","accession":"GCA_000001215.4","display_name":"Drosophila
+        melanogaster","aliases":["dmel","d.mel","d. melanogaster"],"groups":["funcgen","core"],"strain":null,"name":"drosophila_melanogaster","common_name":"fruit
+        fly"},{"name":"salarias_fasciatus","strain":null,"groups":["rnaseq","otherfeatures","core"],"aliases":[],"common_name":"jewelled
+        blenny","display_name":"Jewelled blenny","taxon_id":"181472","assembly":"fSalaFa1.1","accession":"GCA_902148845.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"accession":"GCA_000298355.1","assembly":"BosGru_v2.0","taxon_id":"72004","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"wild
+        yak","strain":null,"groups":["rnaseq","otherfeatures","core"],"name":"bos_mutus","aliases":[],"display_name":"Wild
+        yak"},{"accession":"GCA_003047355.1","assembly":"Nemo_v1","taxon_id":"161767","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"orange
+        clownfish","name":"amphiprion_percula","strain":null,"groups":["rnaseq","core"],"aliases":[],"display_name":"Orange
+        clownfish"},{"strain":null,"name":"gadus_morhua","groups":["core"],"aliases":["gmor","gadmor","gmorhua","cod","atlantic_cod","8049","atlantic
+        cod","gadus morhua"],"common_name":"Atlantic cod","display_name":"Cod","taxon_id":"8049","accession":null,"assembly":"gadMor1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_001624185.1","assembly":"129S1_SvImJ_v1","taxon_id":"10090","display_name":"Mouse
+        129S1/SvImJ","common_name":"house mouse","groups":["core","funcgen"],"strain":"129S1/SvImJ","name":"mus_musculus_129s1svimj","aliases":[]},{"accession":"GCA_001700215.1","assembly":"Landrace_pig_v1","taxon_id":"9823","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"pig","aliases":[],"groups":["rnaseq","otherfeatures","core"],"strain":"landrace","name":"sus_scrofa_landrace","display_name":"Pig
+        - Landrace"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"99883","assembly":"TETRAODON8","accession":null,"display_name":"Tetraodon","aliases":["tetraodon
+        nigroviridis","spotted green pufferfish","tnigroviridis","tnig","tetraodon","tetnig","fresh
+        water pufferfish","99883"],"groups":["variation","core","otherfeatures"],"strain":null,"name":"tetraodon_nigroviridis","common_name":"spotted
+        green pufferfish"},{"display_name":"Common wombat","strain":null,"groups":["core","otherfeatures","rnaseq"],"name":"vombatus_ursinus","aliases":[],"common_name":"common
+        wombat","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"29139","assembly":"bare-nosed_wombat_genome_assembly","accession":"GCA_900497805.2"},{"taxon_id":"61622","accession":"GCA_000769185.1","assembly":"Rrox_v1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"strain":null,"groups":["core","otherfeatures","rnaseq","funcgen"],"name":"rhinopithecus_roxellana","common_name":"Golden
+        snub-nosed monkey","display_name":"Golden snub-nosed monkey"},{"common_name":"Olive
+        baboon","aliases":["papio anubis","papanu","kenya baboon","anubis baboon","olive
+        baboon","papio cynocephalus anubis","papio doguera","papio hamadryas doguera","panu","doguera
+        baboon","papio hamadryas anubis","panubis","9555"],"groups":["funcgen","rnaseq","core","otherfeatures"],"strain":null,"name":"papio_anubis","display_name":"Olive
+        baboon","accession":"GCA_000264685.2","assembly":"Panu_3.0","taxon_id":"9555","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"display_name":"Indian
+        medaka","common_name":"Indian medaka","groups":["rnaseq","core"],"strain":null,"name":"oryzias_melastigma","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_002922805.1","assembly":"Om_v0.7.RACA","taxon_id":"30732"},{"accession":"GCA_001715985.2","assembly":"ASM171598v2","taxon_id":"328815","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"golden-collared
+        manakin","groups":["rnaseq","core","otherfeatures"],"strain":null,"name":"manacus_vitellinus","aliases":[],"display_name":"Golden-collared
+        manakin"},{"name":"macaca_fascicularis","strain":null,"groups":["otherfeatures","core","rnaseq","funcgen"],"aliases":[],"common_name":"Crab-eating
+        macaque","display_name":"Crab-eating macaque","taxon_id":"9541","assembly":"Macaca_fascicularis_5.0","accession":"GCA_000364345.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"common_name":"common
+        canary","aliases":[],"name":"serinus_canaria","strain":null,"groups":["rnaseq","otherfeatures","core"],"display_name":"Common
+        canary","accession":"GCA_000534875.1","assembly":"SCA1","taxon_id":"9135","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"strain_collection":"mouse","release":99,"division":"EnsemblVertebrates","accession":"GCA_000001635.8","assembly":"GRCm38","taxon_id":"10090","display_name":"Mouse","common_name":"house
+        mouse","aliases":["mouse","mmusculus","mmus","10090","house mouse","musmus","ensmm","m_musculus","mus
+        musculus","mus"],"strain":"reference (CL57BL6)","name":"mus_musculus","groups":["cdna","variation","rnaseq","funcgen","core","otherfeatures"]},{"taxon_id":"9669","assembly":"MusPutFur1.0","accession":"GCA_000215625.1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":["musput","mputorius_furo","ferret","domestic
+        ferret","9669","mput","mustela putorius furo"],"strain":null,"name":"mustela_putorius_furo","groups":["rnaseq","core","otherfeatures"],"common_name":"Domestic
+        ferret","display_name":"Ferret"},{"common_name":"Budgie","strain":null,"name":"melopsittacus_undulatus","groups":["rnaseq","core","otherfeatures"],"aliases":[],"display_name":"Budgerigar","assembly":"Melopsittacus_undulatus_6.3","accession":"GCA_000238935.1","taxon_id":"13146","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"display_name":"Reedfish","aliases":[],"strain":null,"groups":["otherfeatures","core","rnaseq"],"name":"erpetoichthys_calabaricus","common_name":"reedfish","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"27687","accession":"GCA_900747795.2","assembly":"fErpCal1.1"},{"display_name":"Clown
+        anemonefish","aliases":[],"strain":null,"name":"amphiprion_ocellaris","groups":["core","otherfeatures","rnaseq"],"common_name":"clown
+        anemonefish","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"80972","assembly":"AmpOce1.0","accession":"GCA_002776465.1"},{"display_name":"Mummichog","common_name":"mummichog","name":"fundulus_heteroclitus","strain":null,"groups":["core","otherfeatures","rnaseq","funcgen"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_000826765.1","assembly":"Fundulus_heteroclitus-3.0.2","taxon_id":"8078"},{"common_name":"Japanese
+        quail","aliases":[],"strain":null,"groups":["rnaseq","core","otherfeatures"],"name":"coturnix_japonica","display_name":"Japanese
+        quail","accession":"GCA_001577835.1","assembly":"Coturnix_japonica_2.0","taxon_id":"93934","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"display_name":"Elephant
+        shark","strain":null,"name":"callorhinchus_milii","groups":["otherfeatures","core","rnaseq"],"aliases":[],"common_name":"elephant
+        shark","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"7868","assembly":"Callorhinchus_milii-6.1.3","accession":"GCA_000165045.2"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_003339765.3","assembly":"Mmul_10","taxon_id":"9544","display_name":"Macaque","common_name":"Macaque","name":"macaca_mulatta","strain":null,"groups":["rnaseq","funcgen","core","otherfeatures","variation"],"aliases":[]},{"assembly":"fEcheNa1.1","accession":"GCA_900963305.1","taxon_id":"173247","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"live
+        sharksucker","groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"echeneis_naucrates","aliases":[],"display_name":"Live
+        sharksucker"},{"taxon_id":"10089","accession":"GCA_900094665.2","assembly":"CAROLI_EIJ_v1.1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":["mus
+        caroli","muscar","mcar","mcaroli","10089","ryukyu mouse"],"groups":["core"],"strain":"CAROLI_EIJ","name":"mus_caroli","common_name":"Ryukyu
+        mouse","display_name":"Ryukyu mouse"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"38772","accession":"GCA_002896415.1","assembly":"ASM289641v1","display_name":"Agassiz''s
+        desert tortoise","strain":null,"groups":["rnaseq","core"],"name":"gopherus_agassizii","aliases":[],"common_name":"Agassiz''s
+        desert tortoise"},{"assembly":"MUSP714","accession":"GCA_003336285.1","taxon_id":"10103","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"steppe
+        mouse","strain":null,"name":"mus_spicilegus","groups":["rnaseq","core"],"aliases":[],"display_name":"Steppe
+        mouse"},{"display_name":"Vervet-AGM","common_name":"African green monkey","name":"chlorocebus_sabaeus","strain":null,"groups":["rnaseq","core","otherfeatures","variation"],"aliases":["vervet-agm","chlorocebus
+        sabaeus","african green monkey","agm","csab","chlsab","chlorocebus sabeus","60711","vervet
+        monkey","csabaeus","chlorocebus_sabeus"],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"ChlSab1.1","accession":"GCA_000409795.2","taxon_id":"60711"},{"taxon_id":"9755","assembly":"ASM283717v2","accession":"GCA_002837175.2","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"name":"physeter_catodon","strain":null,"groups":["rnaseq","core","otherfeatures"],"common_name":"sperm
+        whale","display_name":"Sperm whale"},{"display_name":"Sloth","groups":["core"],"strain":null,"name":"choloepus_hoffmanni","aliases":["two-toed
+        sloth","sloth","hoffmann''s two-fingered sloth","choloepushoffmanni","choloepus","9358","chohof","choloepus
+        hoffmanni","choffmanni","chof"],"common_name":"Hoffmann''s two-fingered sloth","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9358","assembly":"choHof1","accession":null},{"groups":["core","otherfeatures"],"strain":null,"name":"bison_bison_bison","aliases":[],"common_name":"American
+        bison","display_name":"American bison","taxon_id":"43346","assembly":"Bison_UMD1.0","accession":"GCA_000754665.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"aliases":[],"name":"betta_splendens","strain":null,"groups":["otherfeatures","core","rnaseq"],"common_name":"Siamese
+        fighting fish","display_name":"Siamese fighting fish","taxon_id":"158456","assembly":"fBetSpl5.2","accession":"GCA_900634795.2","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"common_name":"donkey","name":"equus_asinus_asinus","strain":null,"groups":["rnaseq","core"],"aliases":[],"display_name":"Donkey","assembly":"ASM303372v1","accession":"GCA_003033725.1","taxon_id":"83772","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"strain":"WSB/EiJ","groups":["funcgen","core"],"name":"mus_musculus_wsbeij","aliases":["mus
+        musculus domesticus wsbeij","mmusculus_domesticus_wsbeij","western european
+        house mouse","mouse wsbeij","mus_musculus_domesticus_wsbeij","10092"],"common_name":"western
+        european house mouse","display_name":"Mouse WSB/EiJ","taxon_id":"10092","accession":"GCA_001624835.1","assembly":"WSB_EiJ_v1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"groups":["core","rnaseq"],"strain":null,"name":"rhinolophus_ferrumequinum","aliases":[],"common_name":"greater
+        horseshoe bat","display_name":"Greater horseshoe bat","taxon_id":"59479","assembly":"mRhiFer1_v1.p","accession":"GCA_004115265.2","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"taxon_id":"61383","accession":"GCA_007474595.1","assembly":"mLynCan4_v1.p","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"lynx_canadensis","common_name":"Canada
+        lynx","display_name":"Canada lynx"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_001700155.1","assembly":"Rongchang_pig_v1","taxon_id":"9823","display_name":"Pig
+        - Rongchang","common_name":"pig","aliases":[],"strain":"rongchang","groups":["otherfeatures","core","rnaseq"],"name":"sus_scrofa_rongchang"},{"accession":"GCA_001624535.1","assembly":"FVB_NJ_v1","taxon_id":"10090","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"house
+        mouse","aliases":[],"name":"mus_musculus_fvbnj","strain":"FVB/NJ","groups":["funcgen","core"],"display_name":"Mouse
+        FVB/NJ"},{"display_name":"Northern American deer mouse","strain":null,"groups":["core"],"name":"peromyscus_maniculatus_bairdii","aliases":["pmaniculatus_bairdii","perman","pman","northern
+        american deer mouse","peromyscus maniculatus bairdii","230844"],"common_name":"Northern
+        American deer mouse","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"230844","accession":"GCA_003704035.1","assembly":"HU_Pman_2.1"},{"aliases":[],"strain":null,"groups":["core","otherfeatures","rnaseq"],"name":"suricata_suricatta","common_name":"meerkat","display_name":"Meerkat","taxon_id":"37032","assembly":"meerkat_22Aug2017_6uvM2_HiC","accession":"GCA_006229205.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Mexican
+        tetra","aliases":["astyanax mexicanus","amexicanus","astmex","amex","7994","cave
+        fish"],"strain":null,"groups":["rnaseq","core"],"name":"astyanax_mexicanus","common_name":"Mexican
+        tetra","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"7994","accession":"GCA_000372685.2","assembly":"Astyanax_mexicanus-2.0"},{"aliases":[],"strain":null,"name":"anser_cygnoides","groups":["core","rnaseq"],"common_name":"swan
+        goose","display_name":"Swan goose","taxon_id":"8845","assembly":"GooseV1.0","accession":"GCA_002166845.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Blue
+        tit","aliases":[],"name":"cyanistes_caeruleus","strain":null,"groups":["otherfeatures","core","rnaseq"],"common_name":"blue
+        tit","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"156563","assembly":"cyaCae2","accession":"GCA_002901205.1"},{"aliases":["psinensis","chinese
+        soft shell turtle","pelodiscus sinensis","13735","softshell turtle","chinese
+        softshell turtle","p_sinensis"],"strain":null,"groups":["rnaseq","core","otherfeatures"],"name":"pelodiscus_sinensis","common_name":"Chinese
+        softshell turtle","display_name":"Chinese softshell turtle","taxon_id":"13735","accession":"GCA_000230535.1","assembly":"PelSin_1.0","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"Myoluc2.0","accession":"GCA_000147115.1","taxon_id":"59463","display_name":"Microbat","common_name":"little
+        brown bat","name":"myotis_lucifugus","strain":null,"groups":["core","otherfeatures"],"aliases":["mlucifugus","little_brown_bat","myotis
+        lucifugus","little brown bat","mluc","microbat","59463","myoluc"]},{"assembly":"ASM223469v1","accession":"GCA_002234695.1","taxon_id":"8090","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"Japanese
+        medaka HSOK","aliases":[],"strain":null,"name":"oryzias_latipes_hsok","groups":["core","rnaseq"],"display_name":"Japanese
+        medaka HSOK"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9597","assembly":"panpan1.1","accession":"GCA_000258655.2","display_name":"Bonobo","groups":["funcgen","rnaseq","otherfeatures","core"],"strain":null,"name":"pan_paniscus","aliases":[],"common_name":"bonobo"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"106734","assembly":"ASM359739v1","accession":"GCA_003597395.1","display_name":"Abingdon
+        island giant tortoise","groups":["rnaseq","core"],"strain":null,"name":"chelonoidis_abingdonii","aliases":[],"common_name":"Abingdon
+        island giant tortoise"},{"display_name":"Bengalese finch","groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"lonchura_striata_domestica","aliases":[],"common_name":"Bengalese
+        finch","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"299123","assembly":"LonStrDom1","accession":"GCA_002197715.1"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"HetGla_female_1.0","accession":"GCA_000247695.1","taxon_id":"10181","display_name":"Naked
+        mole-rat female","common_name":"naked mole-rat","strain":null,"groups":["otherfeatures","core","rnaseq"],"name":"heterocephalus_glaber_female","aliases":["hglaber_female","naked
+        mole-rat female","heterocephalus glaber female"]},{"assembly":"droNov1","accession":"GCA_003342905.1","taxon_id":"8790","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"emu","strain":null,"groups":["core","otherfeatures","rnaseq"],"name":"dromaius_novaehollandiae","aliases":[],"display_name":"Emu"},{"display_name":"Armadillo","common_name":"nine-banded
+        armadillo","strain":null,"groups":["rnaseq","core","otherfeatures"],"name":"dasypus_novemcinctus","aliases":["nine-banded
+        armadillo","dasypus novemcinctus","dnov","arma","armadillo","dasypus novemcinctu","dnovemcinctus","dasnov","9361"],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"Dasnov3.0","accession":"GCA_000208655.2","taxon_id":"9361"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"103695","assembly":"pvi1.1","accession":"GCA_900067755.1","display_name":"Central
+        bearded dragon","name":"pogona_vitticeps","strain":null,"groups":["core","otherfeatures","rnaseq"],"aliases":[],"common_name":"central
+        bearded dragon"},{"common_name":"dark-eyed junco","aliases":[],"groups":["rnaseq","core"],"strain":null,"name":"junco_hyemalis","display_name":"Dark-eyed
+        junco","accession":"GCA_003829775.1","assembly":"ASM382977v1","taxon_id":"40217","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"display_name":"Hedgehog","strain":null,"groups":["core"],"name":"erinaceus_europaeus","aliases":["western
+        european hedgehog","9365","erieur","eeur","western_european_hedgehog","erinaceus
+        europaeus","eeuropaeus","hedgehog"],"common_name":"western European hedgehog","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9365","assembly":"HEDGEHOG","accession":null},{"common_name":"cattle","aliases":["cow","domestic
+        cow","bos taurus","domestic cattle","btaurus","bostau","9913","bovine","btau","cattle"],"groups":["variation","funcgen","rnaseq","core","otherfeatures"],"strain":null,"name":"bos_taurus","display_name":"Cow","assembly":"ARS-UCD1.2","accession":"GCA_002263795.2","taxon_id":"9913","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"taxon_id":"9627","assembly":"VulVul2.2","accession":"GCA_003160815.1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":["silver
+        fox","fox"],"name":"vulpes_vulpes","strain":null,"groups":["rnaseq","otherfeatures","core"],"common_name":"red
+        fox","display_name":"Red fox"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"8090","assembly":"ASM223467v1","accession":"GCA_002234675.1","display_name":"Japanese
+        medaka HdrR","aliases":["olatipes","olat","orylat","oryzias latipes","8090","japanese
+        medaka","medaka"],"groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"oryzias_latipes","common_name":"Japanese
+        medaka HdrR"},{"common_name":"Damara mole rat","aliases":["fukdam","fdam","fukomys_damarensi","fukomys
+        damarensi","damara mole rat","885580","fdamarensi"],"strain":null,"groups":["rnaseq","core","otherfeatures"],"name":"fukomys_damarensis","display_name":"Damara
+        mole rat","assembly":"DMR_v1.0","accession":"GCA_000743615.1","taxon_id":"885580","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"accession":"GCA_000151905.3","assembly":"gorGor4","taxon_id":"9595","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"Western
+        Lowland Gorilla","aliases":["9595","9593","gorilla gorilla","gorgor","gorilla","gorilla_gorilla_gorilla","ggorilla","ggor","western
+        gorilla","gorilla gorilla gorilla"],"groups":["rnaseq","funcgen","core","otherfeatures"],"strain":null,"name":"gorilla_gorilla","display_name":"Gorilla"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"ASM69896v1","accession":"GCA_000698965.1","taxon_id":"441894","display_name":"African
+        ostrich","common_name":"African ostrich","aliases":[],"groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"struthio_camelus_australis"},{"display_name":"Mouse
+        NZO/HlLtJ","aliases":[],"groups":["funcgen","core"],"strain":"NZO/HlLtJ","name":"mus_musculus_nzohlltj","common_name":"house
+        mouse","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"10090","accession":"GCA_001624745.1","assembly":"NZO_HlLtJ_v1"},{"display_name":"Zig-zag
+        eel","name":"mastacembelus_armatus","strain":null,"groups":["rnaseq","core"],"aliases":[],"common_name":"zig-zag
+        eel","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"205130","accession":"GCA_900324485.1","assembly":"fMasArm1.1"},{"taxon_id":"8090","accession":"GCA_002234715.1","assembly":"ASM223471v1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"name":"oryzias_latipes_hni","strain":null,"groups":["core","rnaseq"],"aliases":[],"common_name":"Japanese
+        medaka HNI","display_name":"Japanese medaka HNI"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"10029","assembly":"CriGri-PICR","accession":"GCA_003668045.1","display_name":"Chinese
+        hamster PICR","groups":["core","funcgen","rnaseq"],"strain":null,"name":"cricetulus_griseus_picr","aliases":[],"common_name":"Chinese
+        hamster"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_003369695.2","assembly":"UOA_Brahman_1","taxon_id":"30522","display_name":"Hybrid
+        - Bos Indicus","common_name":"hybrid cattle","strain":null,"groups":["rnaseq","otherfeatures","core"],"name":"bos_indicus_hybrid","aliases":[]},{"display_name":"Bushbaby","groups":["core","otherfeatures"],"strain":null,"name":"otolemur_garnettii","aliases":["otolemur
+        garnettii","otogar","small-eared galago","ogar","galago","ogarnettii","bushbaby","30611"],"common_name":"small-eared
+        galago","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"30611","assembly":"OtoGar3","accession":"GCA_000181295.3"},{"display_name":"Burrowing
+        owl","common_name":"burrowing owl","name":"athene_cunicularia","strain":null,"groups":["rnaseq","core","otherfeatures"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"athCun1","accession":"GCA_003259725.1","taxon_id":"194338"},{"taxon_id":"34839","assembly":"ChiLan1.0","accession":"GCA_000276665.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"groups":["core","otherfeatures","rnaseq"],"name":"chinchilla_lanigera","aliases":["chinchilla
+        lanigera","clanigera","clan","chilan","long-tailed chinchilla","34839"],"common_name":"Long-tailed
+        chinchilla","display_name":"Long-tailed chinchilla"},{"assembly":"Pietrain_pig_v1","accession":"GCA_001700255.1","taxon_id":"9823","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"pig","aliases":[],"strain":"pietrain","name":"sus_scrofa_pietrain","groups":["rnaseq","core","otherfeatures"],"display_name":"Pig
+        - Pietrain"},{"display_name":"Tiger tail seahorse","groups":["rnaseq","core","otherfeatures"],"strain":null,"name":"hippocampus_comes","aliases":[],"common_name":"tiger
+        tail seahorse","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"109280","assembly":"H_comes_QL1_v1","accession":"GCA_001891065.1"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"375764","assembly":"fSphaOr1.1","accession":"GCA_902148855.1","display_name":"Orbiculate
+        cardinalfish","groups":["rnaseq","otherfeatures","core"],"strain":null,"name":"sphaeramia_orbicularis","aliases":[],"common_name":"orbiculate
+        cardinalfish"},{"common_name":"Kakapo","groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"strigops_habroptila","aliases":[],"display_name":"Kakapo","assembly":"bStrHab1_v1.p","accession":"GCA_004027225.1","taxon_id":"2489341","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"groups":["rnaseq","core","otherfeatures"],"strain":null,"name":"xenopus_tropicalis","aliases":[],"common_name":"tropical
+        clawed frog","display_name":"Tropical clawed frog","taxon_id":"8364","accession":"GCA_000004195.3","assembly":"Xenopus_tropicalis_v9.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"display_name":"Mouse
+        A/J","name":"mus_musculus_aj","strain":"A/J","groups":["core","funcgen"],"aliases":[],"common_name":"house
+        mouse","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"10090","accession":"GCA_001624215.1","assembly":"A_J_v1"},{"strain":null,"groups":["otherfeatures","core","funcgen"],"name":"mesocricetus_auratus","aliases":["10036","mauratus","mesaur","maur","golden
+        hamster","mesocricetus auratus"],"common_name":"Golden Hamster","display_name":"Golden
+        Hamster","taxon_id":"10036","accession":"GCA_000349665.1","assembly":"MesAur1.0","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"display_name":"Asian
+        bonytongue","common_name":"Asian bonytongue","strain":null,"name":"scleropages_formosus","groups":["core","otherfeatures","rnaseq"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"fSclFor1.1","accession":"GCA_900964775.1","taxon_id":"113540"},{"taxon_id":"9103","assembly":"Turkey_2.01","accession":"GCA_000146605.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"groups":["variation","core","otherfeatures"],"strain":null,"name":"meleagris_gallopavo","aliases":["wild
+        turkey","turkey","mga","meleagris gallopavo","mgal","common turkey","9103","melgal","mgallopavo"],"common_name":"domestic
+        turkey","display_name":"Turkey"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_004024705.2","assembly":"MosMos_v2_BIUU_UCD","taxon_id":"68415","display_name":"Siberian
+        musk deer","common_name":"Siberian musk deer","aliases":[],"strain":null,"name":"moschus_moschiferus","groups":["core","rnaseq"]},{"display_name":"Eastern
+        brown snake","common_name":"eastern brown snake","strain":null,"name":"pseudonaja_textilis","groups":["core","otherfeatures","rnaseq"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"EBS10Xv2-PRI","accession":"GCA_900518735.1","taxon_id":"8673"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"79684","accession":"GCA_000317375.1","assembly":"MicOch1.0","display_name":"Prairie
+        vole","aliases":["vole","microtus ochrogaster","prairie vole","moch","m_ochrogaster","pvole","79684","micoch","mochrogaster"],"strain":null,"name":"microtus_ochrogaster","groups":["core","otherfeatures"],"common_name":"vole"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"PKINGS_0.1","accession":"GCA_002872115.1","taxon_id":"1676925","display_name":"Paramormyrops
+        kingsleyae","common_name":"Paramormyrops kingsleyae","strain":null,"groups":["core","rnaseq"],"name":"paramormyrops_kingsleyae","aliases":[]},{"display_name":"Great
+        spotted kiwi","common_name":"Great spotted kiwi","aliases":[],"groups":["core","rnaseq"],"strain":null,"name":"apteryx_haastii","strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_003342985.1","assembly":"aptHaa1","taxon_id":"8823"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"43179","assembly":"SpeTri2.0","accession":"GCA_000236235.1","display_name":"Squirrel","aliases":["stri","squirrel","thirteen-lined
+        ground squirrel","43179","ictidomys tridecemlineatus","stridecemlineatus","spetri","spermophilus_tridecemlineatus"],"name":"ictidomys_tridecemlineatus","strain":null,"groups":["core","otherfeatures","rnaseq"],"common_name":"thirteen-lined
+        ground squirrel"},{"common_name":"Drill","aliases":[],"name":"mandrillus_leucophaeus","strain":null,"groups":["otherfeatures","core","funcgen"],"display_name":"Drill","assembly":"Mleu.le_1.0","accession":"GCA_000951045.1","taxon_id":"9568","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"8154","accession":"GCA_900246225.3","assembly":"fAstCal1.2","display_name":"Eastern
+        happy","strain":null,"groups":["rnaseq","core"],"name":"astatotilapia_calliptera","aliases":[],"common_name":"eastern
+        happy"},{"common_name":"red-bellied piranha","groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"pygocentrus_nattereri","aliases":[],"display_name":"Red-bellied
+        piranha","assembly":"Pygocentrus_nattereri-1.0.2","accession":"GCA_001682695.1","taxon_id":"42514","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"aliases":[],"groups":["rnaseq","core","otherfeatures"],"strain":null,"name":"marmota_marmota_marmota","common_name":"Alpine
+        marmot","display_name":"Alpine marmot","taxon_id":"9994","accession":"GCA_001458135.1","assembly":"marMar2.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"common_name":"Indian
+        peafowl","aliases":[],"strain":null,"name":"pavo_cristatus","groups":["rnaseq","core"],"display_name":"Indian
+        peafowl","accession":"GCA_005519975.1","assembly":"AIIM_Pcri_1.0","taxon_id":"9049","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"common_name":"small
+        Madagascar hedgehog","strain":null,"name":"echinops_telfairi","groups":["core"],"aliases":["etel","tenrec","etelfairi","small
+        madagascar hedgehog","lesser hedgehog tenrec","9371","madagascar_hedgehog","lesser_hedgehog","echinops
+        telfairi","echtel"],"display_name":"Lesser hedgehog tenrec","assembly":"TENREC","accession":null,"taxon_id":"9371","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"display_name":"Nile
+        tilapia","aliases":[],"groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"oreochromis_niloticus","common_name":"Nile
+        tilapia","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"8128","accession":"GCA_001858045.3","assembly":"O_niloticus_UMD_NMBU"},{"taxon_id":"10090","assembly":"C57BL_6NJ_v1","accession":"GCA_001632555.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":"C57BL/6NJ","name":"mus_musculus_c57bl6nj","groups":["core","funcgen"],"aliases":[],"common_name":"house
+        mouse","display_name":"Mouse C57BL/6NJ"},{"display_name":"Tasmanian devil","aliases":["tasmanian_devil","sharrisii","sarhar","devil","tdevil","shar","9305","sarcophilus
+        harrisii","tasmanian devil"],"strain":null,"groups":["otherfeatures","core"],"name":"sarcophilus_harrisii","common_name":"Tasmanian
+        devil","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"9305","assembly":"DEVIL7.0","accession":"GCA_000189315.1"},{"display_name":"Algerian
+        mouse","name":"mus_spretus","strain":"SPRET/EiJ","groups":["funcgen","core"],"aliases":["mus_spretus_spret_eij","spreteij","mspretus","western
+        mediterranean mouse"],"common_name":"algerian mouse","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"10096","assembly":"SPRET_EiJ_v1","accession":"GCA_001624865.1"},{"groups":["funcgen","rnaseq","core","otherfeatures","variation"],"strain":null,"name":"equus_caballus","aliases":["equus
+        caballus","ecaballus","9796","equuscaballus","equcab","ecab","horse"],"common_name":"horse","display_name":"Horse","taxon_id":"9796","assembly":"EquCab3.0","accession":"GCA_002863925.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"groups":["variation","otherfeatures","core","rnaseq","funcgen"],"strain":null,"name":"rattus_norvegicus","aliases":["ratnor","rattus","rat","10116","r_norvegicus","rnorvegicus","rnor","rattus
+        norvegicus","norway rat"],"common_name":"Norway rat","display_name":"Rat","taxon_id":"10116","accession":"GCA_000001895.4","assembly":"Rnor_6.0","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"ASM240643v1","accession":"GCA_002406435.1","taxon_id":"99837","display_name":"Daurian
+        ground squirrel","common_name":"Daurian ground squirrel","name":"spermophilus_dauricus","strain":null,"groups":["core"],"aliases":[]},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"425635","accession":"GCA_003697955.1","assembly":"ASM369795v1","display_name":"Spoon-billed
+        sandpiper","strain":null,"groups":["core","rnaseq"],"name":"calidris_pygmaea","aliases":[],"common_name":"Spoon-billed
+        sandpiper"},{"common_name":"Pig-tailed macaque","aliases":[],"name":"macaca_nemestrina","strain":null,"groups":["rnaseq","funcgen","otherfeatures","core"],"display_name":"Pig-tailed
+        macaque","assembly":"Mnem_1.0","accession":"GCA_000956065.1","taxon_id":"9545","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"7962","accession":"GCA_004011595.1","assembly":"Hebao_red_carp_1.0","display_name":"Common
+        carp hebao red","aliases":[],"strain":null,"name":"cyprinus_carpio_hebaored","groups":["core","rnaseq"],"common_name":"common
+        carp hebao red"},{"groups":["rnaseq","core","otherfeatures","variation"],"strain":null,"name":"pongo_abelii","aliases":["ppyg","pabelii","bornean
+        orangutan","9601","ponabe","pabe","pongo pygmaeus","orangutan","ponpyg","pongo_pygmaeus","pongo
+        abelii","sumatran orangutan","ppygmaeus","orang_utan","orang"],"common_name":"Bornean
+        orangutan","display_name":"Orangutan","taxon_id":"9601","assembly":"PPYG2","accession":null,"division":"EnsemblVertebrates","release":99,"strain_collection":null},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"8996","accession":"GCA_002078875.2","assembly":"NumMel1.0","display_name":"Helmeted
+        guineafowl","aliases":[],"name":"numida_meleagris","strain":null,"groups":["core","otherfeatures","rnaseq"],"common_name":"helmeted
+        guineafowl"},{"display_name":"Sailfin molly","aliases":[],"strain":null,"groups":["core","otherfeatures","rnaseq"],"name":"poecilia_latipinna","common_name":"sailfin
+        molly","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"48699","assembly":"P_latipinna-1.0","accession":"GCA_001443285.1"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"2587831","assembly":"T_m_triunguis-2.0","accession":"GCA_002925995.2","display_name":"Three-toed
+        box turtle","aliases":[],"strain":null,"name":"terrapene_carolina_triunguis","groups":["rnaseq","otherfeatures","core"],"common_name":"Three-toed
+        box turtle"},{"display_name":"Pig - Bamei","common_name":"pig","name":"sus_scrofa_bamei","strain":"bamei","groups":["otherfeatures","core","rnaseq"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_001700235.1","assembly":"Bamei_pig_v1","taxon_id":"9823"},{"taxon_id":"7962","assembly":"German_Mirror_carp_1.0","accession":"GCA_004011555.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"groups":["core","rnaseq"],"name":"cyprinus_carpio_germanmirror","aliases":[],"common_name":"common
+        carp german mirror","display_name":"Common carp german mirror"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_000241765.2","assembly":"Chrysemys_picta_bellii-3.0.3","taxon_id":"8478","display_name":"Painted
+        turtle","common_name":"Western painted turtle","aliases":[],"strain":null,"groups":["core","otherfeatures","rnaseq"],"name":"chrysemys_picta_bellii"},{"common_name":"Mongolian
+        gerbil","aliases":[],"name":"meriones_unguiculatus","strain":null,"groups":["otherfeatures","core","rnaseq"],"display_name":"Mongolian
+        gerbil","assembly":"MunDraft-v1.0","accession":"GCA_002204375.1","taxon_id":"10047","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"Sedor1","accession":"GCA_002814215.1","taxon_id":"1841481","display_name":"Yellowtail
+        amberjack","common_name":"yellowtail amberjack","groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"seriola_lalandi_dorsalis","aliases":[]},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"47969","accession":"GCA_005870065.1","assembly":"ASM587006v1","display_name":"Blue
+        tilapia","aliases":[],"strain":null,"groups":["rnaseq","core"],"name":"oreochromis_aureus","common_name":"blue
+        tilapia"},{"display_name":"Shortfin molly","common_name":"shortfin molly","name":"poecilia_mexicana","strain":null,"groups":["rnaseq","otherfeatures","core"],"aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_001443325.1","assembly":"P_mexicana-1.0","taxon_id":"48701"},{"display_name":"Black
+        snub-nosed monkey","common_name":"Black snub-nosed monkey","strain":null,"groups":["funcgen","rnaseq","core","otherfeatures"],"name":"rhinopithecus_bieti","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_001698545.1","assembly":"ASM169854v1","taxon_id":"61621"},{"division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"51511","assembly":"CSAV2.0","accession":null,"display_name":"C.savignyi","aliases":["51511","csavignyi","ciona
+        savignyi","sea squirt ciona savignyi","c.savignyi","csav","ciosav"],"name":"ciona_savignyi","strain":null,"groups":["otherfeatures","core"],"common_name":"Sea
+        squirt Ciona savignyi"},{"taxon_id":"10141","accession":"GCA_000151735.1","assembly":"Cavpor3.0","division":"EnsemblVertebrates","release":99,"strain_collection":null,"groups":["rnaseq","funcgen","core","otherfeatures"],"strain":null,"name":"cavia_porcellus","aliases":["cporcellus","cpor","cavpor","guinea
+        pig","cavia porcellus","10141","domestic guinea pig","guinea_pig"],"common_name":"domestic
+        guinea pig","display_name":"Guinea Pig"},{"display_name":"Hybrid - Bos Taurus","common_name":"hybrid
+        cattle","groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"bos_taurus_hybrid","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"UOA_Angus_1","accession":"GCA_003369685.2","taxon_id":"30522"},{"accession":"GCA_001624295.1","assembly":"AKR_J_v1","taxon_id":"10090","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"house
+        mouse","aliases":[],"strain":"AKR/J","groups":["funcgen","core"],"name":"mus_musculus_akrj","display_name":"Mouse
+        AKR/J"},{"accession":"GCA_901001165.1","assembly":"fSalTru1.1","taxon_id":"8032","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"river
+        trout","aliases":[],"strain":null,"name":"salmo_trutta","groups":["otherfeatures","core","rnaseq"],"display_name":"River
+        trout"},{"display_name":"Great Tit","common_name":"Great Tit","aliases":[],"name":"parus_major","strain":null,"groups":["rnaseq","core","otherfeatures"],"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_001522545.2","assembly":"Parus_major1.1","taxon_id":"9157"},{"display_name":"Tree
+        Shrew","strain":null,"name":"tupaia_belangeri","groups":["core"],"aliases":["tupaia
+        belangeri","37347","tupbel","northern tree shrew","tbel","tbelangeri","tree
+        shrew","tree_shrew"],"common_name":"northern tree shrew","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"37347","accession":null,"assembly":"TREESHREW"},{"display_name":"Duck","common_name":"common
+        mallard","aliases":[],"strain":null,"name":"anas_platyrhynchos_platyrhynchos","groups":["funcgen","rnaseq","core"],"strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"CAU_duck1.0","accession":"GCA_002743455.1","taxon_id":"8840"},{"assembly":"Meishan_pig_v1","accession":"GCA_001700195.1","taxon_id":"9823","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"pig","name":"sus_scrofa_meishan","strain":"meishan","groups":["rnaseq","core","otherfeatures"],"aliases":[],"display_name":"Pig
+        - Meishan"},{"common_name":"pig","name":"sus_scrofa_usmarc","strain":"usmarc","groups":["otherfeatures","core","rnaseq"],"aliases":[],"display_name":"Pig
+        USMARC","assembly":"USMARCv1.0","accession":"GCA_002844635.1","taxon_id":"9823","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"aliases":["1026970","upper
+        galilee mountains blind mole rat","nangal","ngalili","nannospalax galili","ngal"],"name":"nannospalax_galili","strain":null,"groups":["otherfeatures","core","rnaseq","funcgen"],"common_name":"Upper
+        Galilee mountains blind mole rat","display_name":"Upper Galilee mountains
+        blind mole rat","taxon_id":"1026970","accession":"GCA_000622305.1","assembly":"S.galili_v1.0","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"assembly":"RGoby_Basel_V2","accession":"GCA_007210695.1","taxon_id":"47308","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"round
+        goby","strain":null,"name":"neogobius_melanostomus","groups":["core","rnaseq"],"aliases":[],"display_name":"Round
+        goby"},{"display_name":"Barramundi perch","common_name":"barramundi perch","strain":null,"groups":["rnaseq","core"],"name":"lates_calcarifer","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_900066035.1","assembly":"ASB_HGAPassembly_v1","taxon_id":"8187"},{"taxon_id":"32473","assembly":"Xiphophorus_couchianus-4.0.1","accession":"GCA_001444195.1","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"groups":["core"],"strain":null,"name":"xiphophorus_couchianus","common_name":"Monterrey
+        platyfish","display_name":"Monterrey platyfish"},{"taxon_id":"321398","assembly":"Lepidothrix_coronata-1.0","accession":"GCA_001604755.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"groups":["rnaseq","core","otherfeatures"],"name":"lepidothrix_coronata","aliases":[],"common_name":"blue-crowned
+        manakin","display_name":"Blue-crowned manakin"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","assembly":"IpCoco_1.2","accession":"GCA_001660625.1","taxon_id":"7998","display_name":"Channel
+        catfish","common_name":"channel catfish","groups":["funcgen","rnaseq","core","otherfeatures"],"strain":null,"name":"ictalurus_punctatus","aliases":[]},{"common_name":"Eurasian
+        sparrowhawk","aliases":[],"strain":null,"name":"accipiter_nisus","groups":["rnaseq","core"],"display_name":"Eurasian
+        sparrowhawk","accession":"GCA_004320145.1","assembly":"Accipiter_nisus_ver1.0","taxon_id":"211598","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"display_name":"Degu","common_name":"Degu","aliases":["odeg","10160","octodon
+        degus","degu","octdeg","odegus"],"groups":["core","otherfeatures"],"strain":null,"name":"octodon_degus","strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_000260255.1","assembly":"OctDeg1.0","taxon_id":"10160"},{"taxon_id":"9823","assembly":"Berkshire_pig_v1","accession":"GCA_001700575.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":"berkshire","groups":["otherfeatures","core","rnaseq"],"name":"sus_scrofa_berkshire","aliases":[],"common_name":"pig","display_name":"Pig
+        - Berkshire"},{"aliases":["sara","42254","shrew","sorara","saraneus","european
+        shrew","ground_shrew","sorex araneus","european_shrew"],"groups":["core"],"strain":null,"name":"sorex_araneus","common_name":"European
+        shrew","display_name":"Shrew","taxon_id":"42254","accession":null,"assembly":"COMMON_SHREW1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"taxon_id":"44316","accession":"GCA_003676055.1","assembly":"GouldianFinch","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":[],"groups":["rnaseq","core"],"strain":null,"name":"erythrura_gouldiae","common_name":"Gouldian
+        finch","display_name":"Gouldian finch"},{"aliases":[],"strain":null,"groups":["otherfeatures","core","rnaseq"],"name":"cynoglossus_semilaevis","common_name":"tongue
+        sole","display_name":"Tongue sole","taxon_id":"244447","assembly":"Cse_v1.0","accession":"GCA_000523025.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"assembly":"ASM394721v1","accession":"GCA_003947215.1","taxon_id":"241587","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"yellow-billed
+        parrot","strain":null,"name":"amazona_collaria","groups":["rnaseq","core"],"aliases":[],"display_name":"Yellow-billed
+        parrot"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9685","assembly":"Felis_catus_9.0","accession":"GCA_000181335.4","display_name":"Cat","groups":["variation","otherfeatures","core","funcgen","rnaseq"],"strain":null,"name":"felis_catus","aliases":["9685","cat","felis
+        catus","domestic cat","felcat","fcat","fcatus"],"common_name":"domestic cat"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"7994","assembly":"Astyanax_mexicanus-1.0.2","accession":"GCA_004802775.1","display_name":"Pachon
+        cavefish","strain":null,"groups":["core","rnaseq"],"name":"astyanax_mexicanus_pachon","aliases":[],"common_name":"Pachon
+        cavefish"},{"common_name":"Philippine tarsier","groups":["core","otherfeatures","funcgen"],"strain":null,"name":"carlito_syrichta","aliases":["carlito","tarsyr","tarsier","csyr","carlito
+        syrichta","tsyr","philippine tarsier","9478","carsyr","csyrichta","tarsius
+        syrichta","carlitosyrichta","tarsiussyrichta","tarsius_syrichta","tsyrichta"],"display_name":"Tarsier","assembly":"Tarsius_syrichta-2.0.1","accession":"GCA_000164805.2","taxon_id":"1868482","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"Hampshire_pig_v1","accession":"GCA_001700165.1","taxon_id":"9823","display_name":"Pig
+        - Hampshire","common_name":"pig","aliases":[],"strain":"hampshire","name":"sus_scrofa_hampshire","groups":["core","otherfeatures","rnaseq"]},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_004011575.1","assembly":"Hunaghe_carp_2.0","taxon_id":"7962","display_name":"Common
+        carp huanghe","common_name":"common carp huanghe","strain":null,"groups":["rnaseq","core"],"name":"cyprinus_carpio_huanghe","aliases":[]},{"taxon_id":"1608454","accession":"GCA_001515605.1","assembly":"SAMN03320099.WGS_v1.1","division":"EnsemblVertebrates","release":99,"strain_collection":null,"strain":null,"name":"sinocyclocheilus_anshuiensis","groups":["rnaseq","otherfeatures","core"],"aliases":[],"common_name":"blind
+        barbel","display_name":"Blind barbel"},{"display_name":"Zebrafish","aliases":["danio","danio
+        rerio","7955","drer","d_rerio","zebrafish","danrer","zfish","drerio"],"strain":null,"name":"danio_rerio","groups":["funcgen","rnaseq","otherfeatures","core","variation"],"common_name":"zebrafish","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"7955","assembly":"GRCz11","accession":"GCA_000002035.4"},{"aliases":["pformosa","pfor","48698","poefor","poecilia
+        formosa","amazon molly"],"name":"poecilia_formosa","strain":null,"groups":["core","otherfeatures","rnaseq"],"common_name":"Amazon
+        molly","display_name":"Amazon molly","taxon_id":"48698","assembly":"PoeFor_5.1.2","accession":"GCA_000485575.1","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"strain":null,"name":"varanus_komodoensis","groups":["rnaseq","core"],"aliases":[],"common_name":"Komodo
+        dragon","display_name":"Komodo dragon","taxon_id":"61221","assembly":"ASM479886v1","accession":"GCA_004798865.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"display_name":"Zebra
+        finch","aliases":[],"strain":null,"name":"taeniopygia_guttata","groups":["rnaseq","core","otherfeatures","variation"],"common_name":"zebra
+        finch","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"59729","accession":"GCA_003957565.2","assembly":"bTaeGut1_v1.p"},{"common_name":"little
+        spotted kiwi","aliases":[],"strain":null,"name":"apteryx_owenii","groups":["rnaseq","core"],"display_name":"Little
+        spotted kiwi","assembly":"aptOwe1","accession":"GCA_003342965.1","taxon_id":"8824","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_000633615.2","assembly":"Guppy_female_1.0_MT","taxon_id":"8081","display_name":"Guppy","common_name":"guppy","aliases":[],"name":"poecilia_reticulata","strain":null,"groups":["otherfeatures","core","rnaseq"]},{"display_name":"Swamp
+        eel","groups":["otherfeatures","core","rnaseq"],"strain":null,"name":"monopterus_albus","aliases":[],"common_name":"swamp
+        eel","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"43700","accession":"GCA_001952655.1","assembly":"M_albus_1.0"},{"common_name":"Ugandan
+        red Colobus","aliases":[],"groups":["rnaseq","funcgen","core"],"strain":null,"name":"piliocolobus_tephrosceles","display_name":"Ugandan
+        red Colobus","accession":"GCA_002776525.2","assembly":"ASM277652v2","taxon_id":"591936","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"display_name":"Polar
+        bear","common_name":"Polar bear","aliases":[],"strain":null,"name":"ursus_maritimus","groups":["otherfeatures","core","rnaseq"],"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_000687225.1","assembly":"UrsMar_1.0","taxon_id":"29073"},{"accession":"GCA_000003025.6","assembly":"Sscrofa11.1","taxon_id":"9823","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"pig","aliases":["pigs","sscrofa","sscr","9823","pig","sus
+        scrofa","swine","wild boar"],"strain":"reference","name":"sus_scrofa","groups":["otherfeatures","core","rnaseq","funcgen","variation"],"display_name":"Pig"},{"aliases":["caeele","celegans","c.elegans","6239","caenorhabditis
+        elegans","worm","cele","caenorhabditis_elegans_prjna13758","elegans"],"name":"caenorhabditis_elegans","strain":"N2","groups":["core","funcgen"],"common_name":"C.elegans","display_name":"Caenorhabditis
+        elegans","taxon_id":"6239","assembly":"WBcel235","accession":"GCA_000002985.3","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"name":"sinocyclocheilus_grahami","strain":null,"groups":["otherfeatures","core","rnaseq"],"aliases":[],"common_name":"golden-line
+        barbel","display_name":"Golden-line barbel","taxon_id":"75366","assembly":"SAMN03320097.WGS_v1.1","accession":"GCA_001515645.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"PWK_PhJ_v1","accession":"GCA_001624775.1","taxon_id":"39442","display_name":"Mouse
+        PWK/PhJ","common_name":"eastern european house mouse","aliases":["mus musculus
+        musculus pwkphj","39442","mus_musculus_musculus_pwkphj","mmusculus_musculus_pwkphj","eastern
+        european house mouse","mouse pwkphj"],"strain":"PWK/PhJ","name":"mus_musculus_pwkphj","groups":["core","funcgen"]},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_000230445.1","assembly":"HetGla_1.0","taxon_id":"10181","display_name":"Naked
+        mole-rat male","common_name":"naked mole-rat","groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"heterocephalus_glaber_male","aliases":["10181","hgla","hetgla","heterocephalus
+        glaber male","naked mole-rat male","hglaber_male","naked mole-rat"]},{"taxon_id":"59894","accession":"GCA_000247815.1","assembly":"FicAlb_1.4","division":"EnsemblVertebrates","release":99,"strain_collection":null,"name":"ficedula_albicollis","strain":null,"groups":["otherfeatures","core","rnaseq"],"aliases":["falb","59894","collared
+        flycatcher","ficedula albicollis","f_albicollis","ficalb","falbicollis","flycatcher"],"common_name":"Collared
+        flycatcher","display_name":"Flycatcher"},{"aliases":["human","homo sapiens","9606","homo","hsapiens","enshs","homsap","hsap","h_sapiens"],"groups":["cdna","variation","otherfeatures","core","rnaseq","funcgen"],"strain":null,"name":"homo_sapiens","common_name":"human","display_name":"Human","taxon_id":"9606","accession":"GCA_000001405.28","assembly":"GRCh38","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Hagfish","strain":null,"groups":["core","rnaseq"],"name":"eptatretus_burgeri","aliases":["hagfish"],"common_name":"Inshore
+        hagfish","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"7764","assembly":"Eburgeri_3.2","accession":"GCA_900186335.2"},{"common_name":"pig","aliases":[],"strain":"largewhite","groups":["otherfeatures","core","rnaseq"],"name":"sus_scrofa_largewhite","display_name":"Pig
+        - Largewhite","accession":"GCA_001700135.1","assembly":"Large_White_v1","taxon_id":"9823","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"display_name":"American
+        black bear","common_name":"American black bear","groups":["rnaseq","core"],"strain":null,"name":"ursus_americanus","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_003344425.1","assembly":"ASM334442v1","taxon_id":"9643"},{"accession":null,"assembly":"turTru1","taxon_id":"9739","release":99,"strain_collection":null,"division":"EnsemblVertebrates","common_name":"bottlenosed
+        dolphin","name":"tursiops_truncatus","strain":null,"groups":["core"],"aliases":["9739","tursiops
+        truncatus","turtru","dolphin","ttruncatus","tursiopstruncatus","ttru","bottlenosed
+        dolphin","bottlenose dolphin"],"display_name":"Dolphin"},{"display_name":"Fugu","aliases":[],"strain":null,"name":"takifugu_rubripes","groups":["otherfeatures","core","rnaseq"],"common_name":"fugu","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"31033","accession":"GCA_901000725.2","assembly":"fTakRub1.2"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_000732505.1","assembly":"C_variegatus-1.0","taxon_id":"28743","display_name":"Sheepshead
+        minnow","common_name":"sheepshead minnow","groups":["funcgen","rnaseq","otherfeatures","core"],"strain":null,"name":"cyprinodon_variegatus","aliases":[]},{"display_name":"Dog","common_name":"dog","aliases":["canis","9615","canfam","canis
+        lupus familiaris","cfam","cfamiliaris","canis familiaris","c_familiaris","canis_lupus_familiaris","dog"],"name":"canis_familiaris","strain":"reference","groups":["funcgen","rnaseq","core","otherfeatures","variation"],"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_000002285.2","assembly":"CanFam3.1","taxon_id":"9615"},{"display_name":"Stickleback","aliases":["gasacu","gacu","stickleback","three
+        spined stickleback","gaculeatus","gasterosteus aculeatus","69293","three-spined
+        stickleback"],"strain":null,"groups":["otherfeatures","core"],"name":"gasterosteus_aculeatus","common_name":"three-spined
+        stickleback","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"69293","assembly":"BROADS1","accession":null},{"common_name":"zebra
+        mbuna","groups":["core","otherfeatures","rnaseq"],"strain":null,"name":"maylandia_zebra","aliases":[],"display_name":"Zebra
+        mbuna","assembly":"M_zebra_UMD2a","accession":"GCA_000238955.5","taxon_id":"106582","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"display_name":"Burton''s
+        mouthbrooder","name":"haplochromis_burtoni","strain":null,"groups":["core","otherfeatures","rnaseq"],"aliases":[],"common_name":"Burton''s
+        mouthbrooder","division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"8153","accession":"GCA_000239415.1","assembly":"AstBur1.0"},{"strain_collection":null,"release":99,"division":"EnsemblVertebrates","accession":"GCA_900108605.1","assembly":"NNQGG.v01","taxon_id":"452646","display_name":"American
+        mink","common_name":"American mink","aliases":[],"strain":null,"name":"neovison_vison","groups":["rnaseq","core"]},{"common_name":"coelacanth","strain":null,"name":"latimeria_chalumnae","groups":["otherfeatures","core"],"aliases":["lamineria","lchalumnae","latcha","7897","latimeria
+        chalumnae","living fossil","coelacanth","lcha"],"display_name":"Coelacanth","accession":"GCA_000225785.1","assembly":"LatCha1","taxon_id":"7897","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"taxon_id":"30608","assembly":"Mmur_3.0","accession":"GCA_000165445.3","division":"EnsemblVertebrates","strain_collection":null,"release":99,"aliases":["30608","mouse
+        lemur","mmur","mmurinus","grey mouse lemur","gray mouse lemur","mouse_lemur","microcebus
+        murinus","micmur"],"strain":null,"groups":["otherfeatures","core","funcgen","rnaseq"],"name":"microcebus_murinus","common_name":"gray
+        mouse lemur","display_name":"Mouse Lemur"},{"accession":"GCA_000151885.2","assembly":"Dord_2.0","taxon_id":"10020","strain_collection":null,"release":99,"division":"EnsemblVertebrates","common_name":"Ord''s
+        kangaroo rat","aliases":["ord''s kangaroo rat","dipodomys ordii","dordii","dipodomysordii","kangaroo
+        rat","kangaroo_rat","ords kangaroo rat","10020","dipord","dord"],"strain":null,"name":"dipodomys_ordii","groups":["otherfeatures","core"],"display_name":"Kangaroo
+        rat"},{"display_name":"Pig - Jinhua","common_name":"pig","aliases":[],"strain":"jinhua","groups":["otherfeatures","core","rnaseq"],"name":"sus_scrofa_jinhua","strain_collection":null,"release":99,"division":"EnsemblVertebrates","assembly":"Jinhua_pig_v1","accession":"GCA_001700295.1","taxon_id":"9823"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"10029","accession":"GCA_900186095.1","assembly":"CHOK1GS_HDv1","display_name":"Chinese
+        hamster CHOK1GS","groups":["funcgen","rnaseq","core","otherfeatures"],"strain":null,"name":"cricetulus_griseus_chok1gshd","aliases":["chinese
+        hamster chok1gs","cgriseus_chok1gshd","crigri","cricetulus griseus chok1gshd","cgri"],"common_name":"Chinese
+        hamster"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"9785","assembly":"loxAfr3","accession":"GCA_000001905.1","display_name":"Elephant","strain":null,"name":"loxodonta_africana","groups":["core"],"aliases":["african_elephant","loxafr","lafricana","elephant","lafr","loxodonta
+        africana","9785","african savanna elephant"],"common_name":"African savanna
+        elephant"},{"strain":null,"groups":["rnaseq","otherfeatures","core"],"name":"neolamprologus_brichardi","aliases":[],"common_name":"lyretail
+        cichlid","display_name":"Lyretail cichlid","taxon_id":"32507","assembly":"NeoBri1.0","accession":"GCA_000239395.1","division":"EnsemblVertebrates","release":99,"strain_collection":null},{"display_name":"Greater
+        amberjack","common_name":"greater amberjack","groups":["rnaseq","core","otherfeatures"],"strain":null,"name":"seriola_dumerili","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_002260705.1","assembly":"Sdu_1.0","taxon_id":"41447"},{"division":"EnsemblVertebrates","release":99,"strain_collection":null,"taxon_id":"37293","accession":"GCA_000952055.2","assembly":"Anan_2.0","display_name":"Ma''s
+        night monkey","name":"aotus_nancymaae","strain":null,"groups":["rnaseq","funcgen","core","otherfeatures"],"aliases":[],"common_name":"Ma''s
+        night monkey"},{"aliases":[],"strain":"wuzhishan","name":"sus_scrofa_wuzhishan","groups":["rnaseq","otherfeatures","core"],"common_name":"pig","display_name":"Pig
+        - Wuzhishan","taxon_id":"9823","assembly":"minipig_v1.0","accession":"GCA_000325925.2","division":"EnsemblVertebrates","strain_collection":null,"release":99},{"display_name":"Mouse
+        NOD/ShiLtJ","aliases":[],"strain":"NOD/ShiLtJ","name":"mus_musculus_nodshiltj","groups":["funcgen","core"],"common_name":"house
+        mouse","division":"EnsemblVertebrates","strain_collection":null,"release":99,"taxon_id":"10090","accession":"GCA_001624675.1","assembly":"NOD_ShiLtJ_v1"},{"common_name":"Midas
+        cichlid","aliases":[],"strain":null,"groups":["core"],"name":"amphilophus_citrinellus","display_name":"Midas
+        cichlid","assembly":"Midas_v5","accession":"GCA_000751415.1","taxon_id":"61819","strain_collection":null,"release":99,"division":"EnsemblVertebrates"},{"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_000004035.1","assembly":"Meug_1.0","taxon_id":"9315","display_name":"Wallaby","common_name":"tammar
+        wallaby","name":"notamacropus_eugenii","strain":null,"groups":["core"],"aliases":["macropus
+        eugenii","neugenii","macropus","notamacropus eugenii","maceug","meug","noteug","meugenii","neug","9315","macropus_eugenii","notamacropus","tammar
+        wallaby","wallaby","macropuseugenii","notamacropuseugenii"]},{"common_name":"tuatara","name":"sphenodon_punctatus","strain":null,"groups":["rnaseq","otherfeatures","core"],"aliases":[],"display_name":"Tuatara","accession":"GCA_003113815.1","assembly":"ASM311381v1","taxon_id":"8508","release":99,"strain_collection":null,"division":"EnsemblVertebrates"},{"display_name":"Spiny
+        chromis","common_name":"spiny chromis","strain":null,"groups":["rnaseq","otherfeatures","core"],"name":"acanthochromis_polyacanthus","aliases":[],"release":99,"strain_collection":null,"division":"EnsemblVertebrates","accession":"GCA_002109545.1","assembly":"ASM210954v1","taxon_id":"80966"}]}'
+    headers:
+      Content-Length:
+      - '89881'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 18 Feb 2020 19:03:17 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54999'
+      X-RateLimit-Reset:
+      - '3403'
+      X-Runtime:
+      - '0.052727'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://rest.ensembl.org/info/software?content-type=application/json
+  response:
+    body:
+      string: '{"release":99}'
+    headers:
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 18 Feb 2020 19:03:18 GMT
+      Vary:
+      - Content-Type
+      - Origin
+      X-RateLimit-Limit:
+      - '55000'
+      X-RateLimit-Period:
+      - '3600'
+      X-RateLimit-Remaining:
+      - '54998'
+      X-RateLimit-Reset:
+      - '3402'
+      X-Runtime:
+      - '0.007526'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&id=7955&db=taxonomy
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAIxQTU/CQBC98yvGnrVTiMRI1pLQEoNBICkePC7tYje2s3W7pZRfbz9I/Ix2T7Pv
+        zXtvZtj0mCZwEDqXiu6soe1YMHUH7MJfe9vnzRy2/MgDYWDzNFsuPLCuEFfLR0R/6zecoksYXpsY
+        HjgVXFcwcpwR4nxlgRUbk+UTxLIsbQp30qYktUnG9os6oCCjxQnfCqGrxgxNY2ZHJrLq+HOqy9oI
+        dwD1a+pF5N7cjscMu7rDg1DWbnIvwxVPhetzkgq00FIx/MZ1grWJhW7+eQe04L2gHadXT6Wporb5
+        JHaa72UeM/xJfgiDihRVqTvTPIyr6Ev6merRDHtdBwj5l8irMi2pyP+3727Qw9LvN8GnxROhMq4j
+        aGdn+OtJzuA7AAAA//+CByJpiiFBjlUtKheiPSexuNjZxdUusbQkI78os6QSqBcmhqrUJbO4AGwC
+        akAqeCTmZuaUgJOyhZGRjT5cHcJifdo4BDn4NVCdoUmxO3Izi4sLUnNyMvPSCbsEnCAzUVIvfutt
+        9OHZCAAAAP//vFfbbqQwDH3fr+APOlwDGjTSllZ9WbZVd7XvKaQz0QBBEFbbfn2dcAvT0coSFU/E
+        wXGObB/bGWgUP9EGyDbR1ItvzJ1e5xly7ACwgJdtfKOlbwOSv1wVocMf1kiVB1IpTLu9EvCQSZ4l
+        IjdRPSRg3gaWJuM1w7ZG+0vSKoeMVf9N+J9sxSmX4voNqTYNqZFe3JEONmfQlrKSnUSVN5wW+oR5
+        69U74h+8YvTIDhmEqytoY4nmCKFoy3Zv3XdnKKxC0r31WPMWcussKiWlTNJ3QZVGOS5veQEY4Oa9
+        dcc6WIlWilKJCeRkTtW5BHjO9WpCDeuHioJppa3F3wyIrs8q+9KQvmeSV6IG229HvpBB+MmMP4MN
+        BstH+IhjIdpWZKw+0YLCZlJ0NRtl0AH7ogFBq1PIwfr01nL9Y1j1xOVKomwSX0UDSTiKgudsVs2V
+        3l1ffkYvL3x+/88Ip9FuzD2VXq7tB2TReCaNiybzOYjX+9B0XrOgAt7B1+REnzEXmP6D0SF+hEI4
+        pRQGWAtBas5QRHJRrkHnggc9FDwzzTdynes6uxAFbmAdBtcXOC3YEQcZ0hIP7GscZrsoZFNJ2gyZ
+        b9soZIsKuRE6QpDgxnqNwQX1sOhW5VkY+REunGP3wJWOl/XQCPFwFJi72WaxJAEK2aK3bgTOtolP
+        dih4c6/fEhuOBubssVVYwwjXCpaTELqXZmoUX+W+MAgcHFuN4QyDbzU0zw4CH4XMmBSRpWQ1ONfx
+        PJzbpskVA41X8HJeH1QvjFwPR4or0/RWzFWphwvwYrrfEJ6LHDLH1waKFwK6sVyXe76NG87Ntw+W
+        Gavh6bjimtn4GpuxfQAAAP//on2KI67jhdI7JLo4BjazUosoqi8sTYlroKB0V4lxH8VOMwZ2H0gJ
+        O3DfmchER41wI7LJCe/KE+O0NNAwWiWFDiOuDIGOKxB2U3pqXin+2gE+OgEbj7BxLkoF9ptcgNjO
+        0NLSVN/ASN/IXMHA0srIxMoA2LBDkodoCC1IgQkYGRha6Bsa6hsZKxiaWBmbWoFSAZI8RENAaRLM
+        eGN9AxN9IwsFA0Og2WDjYZJccGdyAQAAAP//ArPA4/IAAAAA//8DAGyhE/A3GAAA
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - private
+      Connection:
+      - Keep-Alive
+      Content-Security-Policy:
+      - upgrade-insecure-requests
+      Content-Type:
+      - text/xml; charset=UTF-8
+      Date:
+      - Tue, 18 Feb 2020 19:03:19 GMT
+      Keep-Alive:
+      - timeout=4, max=40
+      NCBI-PHID:
+      - 939B97E76669C435000060FACC196596.1.1.m_5
+      NCBI-SID:
+      - 9D3C76E86D1CBBC2_2D9BSID
+      Server:
+      - Finatra
+      Set-Cookie:
+      - ncbi_sid=9D3C76E86D1CBBC2_2D9BSID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:03:19 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-RateLimit-Limit:
+      - '10'
+      X-RateLimit-Remaining:
+      - '9'
+      X-UA-Compatible:
+      - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+      content-encoding:
+      - gzip
+    status:
+      code: 200
+      message: OK
+version: 1

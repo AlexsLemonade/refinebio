@@ -162,7 +162,7 @@ def get_dataset(organisms: List[Organism]):
 
     for experiment in queryset_iterator(experiments):
         experiment_samples = experiment.samples.filter(
-            organism__in=organisms, is_processed=True
+            organism__in=organisms, is_processed=True, has_raw=True
         ).values_list("accession_code", flat=True)
 
         dataset[experiment.accession_code] = list(experiment_samples)

@@ -2,9 +2,10 @@ from unittest.mock import patch
 
 from django.test import TransactionTestCase
 
+import vcr
+
 from data_refinery_common.models import (
     DownloaderJob,
-    Organism,
     OriginalFile,
     Sample,
     SurveyJob,
@@ -30,6 +31,7 @@ class SurveyTestCase(TransactionTestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_microarray.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_microarray(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
@@ -68,6 +70,7 @@ class SurveyTestCase(TransactionTestCase):
         original_files = OriginalFile.objects.all()
         self.assertEqual(45, original_files.count())
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_not_agilent.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_not_agilent(self, mock_send_task):
         """ Test to make sure we're setting MFG correctly
@@ -80,6 +83,7 @@ class SurveyTestCase(TransactionTestCase):
         sample_object = Sample.objects.first()
         self.assertEqual(sample_object.manufacturer, "ILLUMINA")
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_agilent.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_agilent(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
@@ -109,6 +113,7 @@ class SurveyTestCase(TransactionTestCase):
         # downloader jobs.
         self.assertEqual(0, downloader_jobs.count())
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_rnaseq.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_rnaseq(self, mock_send_task):
         """Run the GEO surveyor and make sure we discover the experiment/samples.
@@ -132,6 +137,7 @@ class SurveyTestCase(TransactionTestCase):
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(0, downloader_jobs.count())
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_superseries.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
     def test_geo_survey_superseries(self, mock_send_task):
         """Run the GEO surveyor and make sure we get some files to DL!
@@ -161,6 +167,7 @@ class SurveyTestCase(TransactionTestCase):
         original_files = OriginalFile.objects.all()
         self.assertEqual(10, original_files.count())
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.get_pubmet_id_title.yaml")
     def test_get_pubmed_id_title(self):
         """ We scrape PMIDs now. """
         resp = get_title_and_authors_for_pubmed_id("22367537")

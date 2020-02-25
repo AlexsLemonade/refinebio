@@ -43,7 +43,7 @@ class CompendiaTestCase(TransactionTestCase):
         result = ComputationalResult()
         result.save()
 
-        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS", taxonomy_id=1001)
 
         sample = Sample()
         sample.accession_code = "GSM1487313"
