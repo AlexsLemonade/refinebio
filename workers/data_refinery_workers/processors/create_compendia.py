@@ -35,7 +35,7 @@ S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-re
 BYTES_IN_GB = 1024 * 1024 * 1024
 SMASHING_DIR = "/home/user/data_store/smashed/"
 logger = get_and_configure_logger(__name__)
-### DEBUG ###
+# DEBUG #
 logger.setLevel(logging.getLevelName("DEBUG"))
 
 

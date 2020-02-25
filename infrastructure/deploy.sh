@@ -254,28 +254,36 @@ format_environment_variables
 # Get an image to run the migrations with.
 docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
 
+# Test that the pg_bouncer instance is up. 15 minutes should be more than enough.
+start_time=$(date +%s)
+diff=0
+until pg_isready -d $DATABASE_NAME -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER &> /dev/null || [ "$diff" -gt "900" ]
+do
+    echo "Waiting for the pg_bouncer instance to come online ..."
+    sleep 10
+    let "diff = $(date +%s) - $start_time"
+done
+
+if ! pg_isready -d $DATABASE_NAME -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER &> /dev/null; then
+    echo "pg_bouncer instance failed to come up after 15 minutes."
+    exit 1
+fi
+
 # Migrate auth.
-# Override database settings so we connect directly to the RDS instance.
 docker run \
        --env-file prod_env \
-       --env DATABASE_HOST=$RDS_HOST \
-       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
-       --env DATABASE_HOST=$RDS_HOST \
-       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Create the cache table if it does not already exist.
 docker run \
        --env-file prod_env \
-       --env DATABASE_HOST=$RDS_HOST \
-       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py createcachetable
 

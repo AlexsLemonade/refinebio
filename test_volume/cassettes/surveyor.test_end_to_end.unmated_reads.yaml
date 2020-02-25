@@ -71,11 +71,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Mon, 13 Jan 2020 18:50:29 GMT
+      - Tue, 18 Feb 2020 19:42:25 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=5D3CCD92154EDF0EA2A1037561B7A456; Path=/ena/data/; HttpOnly
+      - JSESSIONID=7719E01583115579CA65BB836A1EEFBB; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -166,11 +166,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Mon, 13 Jan 2020 18:50:30 GMT
+      - Tue, 18 Feb 2020 19:42:25 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=B44ECA9AC16EEBC329B393BA449527D7; Path=/ena/data/; HttpOnly
+      - JSESSIONID=C23C0C27ABF514008F4C820E63E7D31F; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -246,11 +246,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Mon, 13 Jan 2020 18:50:31 GMT
+      - Tue, 18 Feb 2020 19:42:26 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=E8D3D17C0144BF6CEF97DC8C76D5A61E; Path=/ena/data/; HttpOnly
+      - JSESSIONID=54F6E432676766A74917B58B69AEC727; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -328,11 +328,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Mon, 13 Jan 2020 18:50:31 GMT
+      - Tue, 18 Feb 2020 19:42:27 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=AC9023029770008B4363DF75EA5E87CA; Path=/ena/data/; HttpOnly
+      - JSESSIONID=3B44AEE866BB85D660407D18C011AA66; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -398,11 +398,11 @@ interactions:
       Content-Type:
       - text/plain;charset=UTF-8
       Date:
-      - Mon, 13 Jan 2020 18:50:32 GMT
+      - Tue, 18 Feb 2020 19:42:28 GMT
       Server:
       - Apache-Coyote/1.1
       Set-Cookie:
-      - JSESSIONID=7E095936AFE501051678139A30D863CE; Path=/ena/data/; HttpOnly
+      - JSESSIONID=33EF985BE2AB76AE85DC04F2107ACC8C; Path=/ena/data/; HttpOnly
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -428,11 +428,10 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA2zPu27DMAwF0D1fYaBDplikXpY09Q8KpJmy6ZXaqWoZtpKggD6+Std2I4kL3MMX
-        2sNuW+1yc/X9eEQJTEqsSEEyqZHpoVJAfkA4gDxRZoAb1OeqdIAgOdXCghSDUwhKU6ZQOjsMwtda
-        OUB9m9N3tx9LWbZ9t6y5ZJ9TN22dTSk/Yuguee3K2A7ZXaMvfyn9PThv/RibibU+oPhLGp4kyk6g
-        DQfD+blS7QVayofW7yQLSiBG5WIAxWmMutaL3RZDSHAlbuW1VR1Cfswp29DP3k39nL76eRr7j3w3
-        wRZLWsSnfAuktCFuz10w0nAEAIWU5D8nbX/nz90PAAAA//8DAE4BgpNaAQAA
+        H4sIAAAAAAAAA53OPW4CMRBA4T6nsJSCCjQztseevUQkoKLzX7SJVni164CQfHiWtOnSvuZ973SA
+        t3UJ80/sp+MRGTQzdiRgzYJaXCdAs0fYA59JD2AGlEv3kiGzIbEB2LroEbyQ9sgxOGdT790A9I/r
+        9FC7sbV53al5qa2mOqmvVYVpqveS1WddVBu3UON3Se0v5XDLMYU0ls2ktx8Q/pLci0T6DDIYGIy5
+        dJJkMZBx2z+yzt4iFh9LBm+oFPkv6QlM6dz2IwEAAA==
     headers:
       Cache-Control:
       - private
@@ -440,31 +439,31 @@ interactions:
       - Keep-Alive
       Content-Encoding:
       - gzip
+      Content-Length:
+      - '202'
       Content-Security-Policy:
       - upgrade-insecure-requests
       Content-Type:
       - text/plain
       Date:
-      - Mon, 13 Jan 2020 18:50:32 GMT
+      - Tue, 18 Feb 2020 19:42:28 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A45520E1CBBF810000000000000001.m_1
+      - CC953CAEE4C3E2410000000000000001.m_1
       NCBI-SID:
-      - C7A45520E1CBBF81_0000SID
+      - CC953CAEE4C3E241_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A45520E1CBBF81_0000SID; domain=.nih.gov; path=/; expires=Wed, 13
-        Jan 2021 18:50:32 GMT
+      - ncbi_sid=CC953CAEE4C3E241_0000SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:42:28 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       X-UA-Compatible:
@@ -521,18 +520,18 @@ interactions:
       Content-Type:
       - application/json; charset=UTF-8
       Date:
-      - Mon, 13 Jan 2020 18:50:32 GMT
+      - Tue, 18 Feb 2020 19:42:28 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - D0BD558C4348EB1500004D217D1D68CD.1.1.m_1
+      - D0BD79652B528725000047015DFDDB4B.1.1.m_1
       NCBI-SID:
-      - 74E4A7DCD234D8EE_5F5ASID
+      - 9BDBF5574DC83E13_2215SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=74E4A7DCD234D8EE_5F5ASID; domain=.nih.gov; path=/; expires=Wed, 13
-        Jan 2021 18:50:33 GMT
+      - ncbi_sid=9BDBF5574DC83E13_2215SID; domain=.nih.gov; path=/; expires=Thu, 18
+        Feb 2021 19:42:28 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -547,82 +546,6 @@ interactions:
       - 1; mode=block
       content-encoding:
       - gzip
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"Meta": {"JOB_ID": "1", "JOB_NAME": "SRA"}, "Payload": null}'
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '61'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - python-requests/2.20.0
-    method: POST
-    uri: http://nomad:5646/v1/job/DOWNLOADER_0_1024/dispatch
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAA/1zMPQvCMBDG8e9yc4PpJXd92cR0aBELLo4lTS4oiBUtIojfXVAHcX14/r8HuMP1
-        7Oewl9hNY+ugBtfvNut+6ZrtoIdco13E70flVJSVza0xigm90SKQQXPzx9VF/CztKcodauTis749
-        TJaYkJUNhhQmE1QREivyY6VThZK4hAx+224a/0B+vgIAAP//1RFv+KsAAAA=
-    headers:
-      Content-Encoding:
-      - gzip
-      Content-Length:
-      - '158'
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 13 Jan 2020 18:50:33 GMT
-      Vary:
-      - Accept-Encoding
-      X-Nomad-Index:
-      - '267'
-    status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '0'
-      User-Agent:
-      - python-requests/2.20.0
-    method: DELETE
-    uri: http://nomad:5646/v1/job/DOWNLOADER_0_1024/dispatch-1578941433-652a30ee
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAA/0zLvQrCMBgF0He5cwIlDZpmrQ7V+hBfkhsQSgJt8Afx3QUHcT1wXjjeZBlXSuNU
-        Eh/wZm/VV6cDPExwJjsmHWMwusuWemAcdMy9E7frhTZB4f+earjUdM3PH/YK51LvZaYkrvBZlo0K
-        s2xtrKVJbPDd+xMAAP//FDAMSowAAAA=
-    headers:
-      Content-Encoding:
-      - gzip
-      Content-Length:
-      - '137'
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 13 Jan 2020 18:51:03 GMT
-      Vary:
-      - Accept-Encoding
-      X-Nomad-Index:
-      - '274'
     status:
       code: 200
       message: OK

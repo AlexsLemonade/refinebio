@@ -1,6 +1,7 @@
 import csv
 import multiprocessing
 import os
+import re
 import subprocess
 from typing import Dict
 
@@ -15,10 +16,7 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
-    OriginalFile,
-    OriginalFileSampleAssociation,
     Pipeline,
-    Processor,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
@@ -138,12 +136,10 @@ def _detect_columns(job_context: Dict) -> Dict:
 
         # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
         for header in headers:
-            if "DETECTION_PVAL" in header.upper().replace(" ", "_"):
-                # Could be <SAMPLE_ID>.Detection Pval, etc
-                if "." in header:
-                    job_context["detectionPval"] = header.split(".")[-1]
-                else:
-                    job_context["detectionPval"] = header
+            # check if header contains something like "detection pval"
+            pvalue_header = re.match(r"(detection)(\W?)(pval\w*)", header, re.IGNORECASE)
+            if pvalue_header:
+                job_context["detectionPval"] = pvalue_header.string
                 break
         else:
             job_context["job"].failure_reason = "Could not detect PValue column!"

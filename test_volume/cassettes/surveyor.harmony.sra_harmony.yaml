@@ -1,0 +1,398 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/data/view/SRR1533126&display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRR1533126&amp;display=xml\"\
+        >\n<RUN accession=\"SRR1533126\" alias=\"PMT-2\" center_name=\"Academia Sinica\"\
+        \ broker_name=\"NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRR1533126</PRIMARY_ID>\n\
+        \          <SUBMITTER_ID namespace=\"Academia Sinica\">PMT-2</SUBMITTER_ID>\n\
+        \     </IDENTIFIERS>\n     <TITLE>Illumina HiSeq 2000 paired end sequencing;\
+        \ RNA-seq Identification of a Novel Fusion Gene in a Mesenchymal Tumor</TITLE>\n\
+        \     <EXPERIMENT_REF accession=\"SRX666716\" refcenter=\"Academia Sinica\"\
+        \ refname=\"PMT-2_NTUH\">\n          <IDENTIFIERS>\n               <PRIMARY_ID>SRX666716</PRIMARY_ID>\n\
+        \               <SUBMITTER_ID namespace=\"Academia Sinica\">PMT-2_NTUH</SUBMITTER_ID>\n\
+        \          </IDENTIFIERS>\n     </EXPERIMENT_REF>\n     <RUN_LINKS>\n    \
+        \      <RUN_LINK>\n               <XREF_LINK>\n                    <DB>ENA-STUDY</DB>\n\
+        \                    <ID>SRP045126</ID>\n               </XREF_LINK>\n   \
+        \       </RUN_LINK>\n          <RUN_LINK>\n               <XREF_LINK>\n  \
+        \                  <DB>ENA-SAMPLE</DB>\n                    <ID>SRS671406</ID>\n\
+        \               </XREF_LINK>\n          </RUN_LINK>\n          <RUN_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n\
+        \                    <ID>SRA177342</ID>\n               </XREF_LINK>\n   \
+        \       </RUN_LINK>\n          <RUN_LINK>\n               <XREF_LINK>\n  \
+        \                  <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRR1533126&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \               </XREF_LINK>\n          </RUN_LINK>\n          <RUN_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
+        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRR1533126&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \               </XREF_LINK>\n          </RUN_LINK>\n     </RUN_LINKS>\n \
+        \    <RUN_ATTRIBUTES>\n          <RUN_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n\
+        \               <VALUE>77934531</VALUE>\n          </RUN_ATTRIBUTE>\n    \
+        \      <RUN_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n       \
+        \        <VALUE>15586906200</VALUE>\n          </RUN_ATTRIBUTE>\n        \
+        \  <RUN_ATTRIBUTE>\n               <TAG>ENA-FIRST-PUBLIC</TAG>\n         \
+        \      <VALUE>2015-06-05</VALUE>\n          </RUN_ATTRIBUTE>\n          <RUN_ATTRIBUTE>\n\
+        \               <TAG>ENA-LAST-UPDATE</TAG>\n               <VALUE>2015-06-19</VALUE>\n\
+        \          </RUN_ATTRIBUTE>\n     </RUN_ATTRIBUTES>\n</RUN>\n</ROOT>"
+    headers:
+      Access-Control-Allow-Headers:
+      - Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - private, no-store, no-cache, must-revalidate
+      Content-Type:
+      - text/plain;charset=UTF-8
+      Date:
+      - Tue, 18 Feb 2020 19:01:08 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - JSESSIONID=DDD11BC869E63EBF700926F19BBDB63C; Path=/ena/data/; HttpOnly
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/data/view/SRX666716&display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRX666716&amp;display=xml\"\
+        >\n<EXPERIMENT accession=\"SRX666716\" alias=\"PMT-2_NTUH\" center_name=\"\
+        Academia Sinica\" broker_name=\"NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRX666716</PRIMARY_ID>\n\
+        \          <SUBMITTER_ID namespace=\"Academia Sinica\">PMT-2_NTUH</SUBMITTER_ID>\n\
+        \     </IDENTIFIERS>\n     <TITLE>Illumina HiSeq 2000 paired end sequencing;\
+        \ RNA-seq Identification of a Novel Fusion Gene in a Mesenchymal Tumor</TITLE>\n\
+        \     <STUDY_REF accession=\"SRP045126\">\n          <IDENTIFIERS>\n     \
+        \          <PRIMARY_ID>SRP045126</PRIMARY_ID>\n          </IDENTIFIERS>\n\
+        \     </STUDY_REF>\n     <DESIGN>\n          <DESIGN_DESCRIPTION/>\n     \
+        \     <SAMPLE_DESCRIPTOR accession=\"SRS671406\">\n               <IDENTIFIERS>\n\
+        \                    <PRIMARY_ID>SRS671406</PRIMARY_ID>\n               </IDENTIFIERS>\n\
+        \          </SAMPLE_DESCRIPTOR>\n          <LIBRARY_DESCRIPTOR>\n        \
+        \       <LIBRARY_NAME/>\n               <LIBRARY_STRATEGY>RNA-Seq</LIBRARY_STRATEGY>\n\
+        \               <LIBRARY_SOURCE>TRANSCRIPTOMIC</LIBRARY_SOURCE>\n        \
+        \       <LIBRARY_SELECTION>PolyA</LIBRARY_SELECTION>\n               <LIBRARY_LAYOUT>\n\
+        \                    <PAIRED NOMINAL_SDEV=\"0.0E0\"/>\n               </LIBRARY_LAYOUT>\n\
+        \          </LIBRARY_DESCRIPTOR>\n          <SPOT_DESCRIPTOR>\n          \
+        \     <SPOT_DECODE_SPEC>\n                    <SPOT_LENGTH>200</SPOT_LENGTH>\n\
+        \                    <READ_SPEC>\n                         <READ_INDEX>0</READ_INDEX>\n\
+        \                         <READ_CLASS>Application Read</READ_CLASS>\n    \
+        \                     <READ_TYPE>Forward</READ_TYPE>\n                   \
+        \      <BASE_COORD>1</BASE_COORD>\n                    </READ_SPEC>\n    \
+        \                <READ_SPEC>\n                         <READ_INDEX>1</READ_INDEX>\n\
+        \                         <READ_CLASS>Application Read</READ_CLASS>\n    \
+        \                     <READ_TYPE>Reverse</READ_TYPE>\n                   \
+        \      <BASE_COORD>101</BASE_COORD>\n                    </READ_SPEC>\n  \
+        \             </SPOT_DECODE_SPEC>\n          </SPOT_DESCRIPTOR>\n     </DESIGN>\n\
+        \     <PLATFORM>\n          <ILLUMINA>\n               <INSTRUMENT_MODEL>Illumina\
+        \ HiSeq 2000</INSTRUMENT_MODEL>\n          </ILLUMINA>\n     </PLATFORM>\n\
+        \     <PROCESSING/>\n     <EXPERIMENT_LINKS>\n          <EXPERIMENT_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n   \
+        \                 <ID>SRS671406</ID>\n               </XREF_LINK>\n      \
+        \    </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-RUN</DB>\n                    <ID>SRR1533126</ID>\n\
+        \               </XREF_LINK>\n          </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n\
+        \                    <ID>SRA177342</ID>\n               </XREF_LINK>\n   \
+        \       </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRX666716&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \               </XREF_LINK>\n          </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
+        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRX666716&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \               </XREF_LINK>\n          </EXPERIMENT_LINK>\n     </EXPERIMENT_LINKS>\n\
+        \     <EXPERIMENT_ATTRIBUTES>\n          <EXPERIMENT_ATTRIBUTE>\n        \
+        \       <TAG>ENA-SPOT-COUNT</TAG>\n               <VALUE>77934531</VALUE>\n\
+        \          </EXPERIMENT_ATTRIBUTE>\n          <EXPERIMENT_ATTRIBUTE>\n   \
+        \            <TAG>ENA-BASE-COUNT</TAG>\n               <VALUE>15586906200</VALUE>\n\
+        \          </EXPERIMENT_ATTRIBUTE>\n     </EXPERIMENT_ATTRIBUTES>\n</EXPERIMENT>\n\
+        </ROOT>"
+    headers:
+      Access-Control-Allow-Headers:
+      - Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - private, no-store, no-cache, must-revalidate
+      Content-Type:
+      - text/plain;charset=UTF-8
+      Date:
+      - Tue, 18 Feb 2020 19:01:09 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - JSESSIONID=5BB118397D1DE2AC2E286A83018AB93E; Path=/ena/data/; HttpOnly
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/data/view/SRS671406&display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRS671406&amp;display=xml\"\
+        >\n<SAMPLE accession=\"SRS671406\" alias=\"PMT-2_NTUH\" center_name=\"Academia\
+        \ Sinica\" broker_name=\"NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRS671406</PRIMARY_ID>\n\
+        \          <EXTERNAL_ID namespace=\"BioSample\">SAMN02947828</EXTERNAL_ID>\n\
+        \          <SUBMITTER_ID namespace=\"Academia Sinica\">PMT-2_NTUH</SUBMITTER_ID>\n\
+        \     </IDENTIFIERS>\n     <TITLE>Phosphaturic mesenchymal tumour (PMT) case\
+        \ 2 of NTUH</TITLE>\n     <SAMPLE_NAME>\n          <TAXON_ID>9606</TAXON_ID>\n\
+        \          <SCIENTIFIC_NAME>Homo sapiens</SCIENTIFIC_NAME>\n     </SAMPLE_NAME>\n\
+        \     <DESCRIPTION>Phosphaturic mesenchymal tumour (PMT) case 2 of NTUH</DESCRIPTION>\n\
+        \     <SAMPLE_LINKS>\n          <SAMPLE_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-STUDY</DB>\n                    <ID>SRP045126</ID>\n\
+        \               </XREF_LINK>\n          </SAMPLE_LINK>\n          <SAMPLE_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-EXPERIMENT</DB>\n\
+        \                    <ID>SRX666716</ID>\n               </XREF_LINK>\n   \
+        \       </SAMPLE_LINK>\n          <SAMPLE_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-RUN</DB>\n                    <ID>SRR1533126</ID>\n\
+        \               </XREF_LINK>\n          </SAMPLE_LINK>\n          <SAMPLE_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n\
+        \                    <ID>SRA177342</ID>\n               </XREF_LINK>\n   \
+        \       </SAMPLE_LINK>\n          <SAMPLE_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRS671406&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \               </XREF_LINK>\n          </SAMPLE_LINK>\n          <SAMPLE_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
+        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRS671406&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \               </XREF_LINK>\n          </SAMPLE_LINK>\n     </SAMPLE_LINKS>\n\
+        \     <SAMPLE_ATTRIBUTES>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>isolate</TAG>\n\
+        \               <VALUE>PMT samples were isolated from the pathology archive\
+        \ of National Taiwan University Hospital</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
+        \          <SAMPLE_ATTRIBUTE>\n               <TAG>age</TAG>\n           \
+        \    <VALUE>57</VALUE>\n          </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n\
+        \               <TAG>biomaterial_provider</TAG>\n               <VALUE>National\
+        \ Taiwan University Hospital</VALUE>\n          </SAMPLE_ATTRIBUTE>\n    \
+        \      <SAMPLE_ATTRIBUTE>\n               <TAG>sex</TAG>\n               <VALUE>female</VALUE>\n\
+        \          </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n           \
+        \    <TAG>tissue</TAG>\n               <VALUE>soft tissue</VALUE>\n      \
+        \    </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>cell_type</TAG>\n\
+        \               <VALUE>tumor cell</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
+        \          <SAMPLE_ATTRIBUTE>\n               <TAG>disease</TAG>\n       \
+        \        <VALUE>Phosphaturic mesenchymal tumours</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
+        \          <SAMPLE_ATTRIBUTE>\n               <TAG>sample_type</TAG>\n   \
+        \            <VALUE>fresh frosen</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
+        \          <SAMPLE_ATTRIBUTE>\n               <TAG>BioSampleModel</TAG>\n\
+        \               <VALUE>Human</VALUE>\n          </SAMPLE_ATTRIBUTE>\n    \
+        \      <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n    \
+        \           <VALUE>77934531</VALUE>\n          </SAMPLE_ATTRIBUTE>\n     \
+        \     <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n     \
+        \          <VALUE>15586906200</VALUE>\n          </SAMPLE_ATTRIBUTE>\n   \
+        \       <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-FIRST-PUBLIC</TAG>\n \
+        \              <VALUE>2015-03-28</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
+        \          <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n\
+        \               <VALUE>2015-06-23</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
+        \     </SAMPLE_ATTRIBUTES>\n</SAMPLE>\n</ROOT>"
+    headers:
+      Access-Control-Allow-Headers:
+      - Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - private, no-store, no-cache, must-revalidate
+      Content-Type:
+      - text/plain;charset=UTF-8
+      Date:
+      - Tue, 18 Feb 2020 19:01:09 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - JSESSIONID=A54B58C41CB5A0684A31190884960FAE; Path=/ena/data/; HttpOnly
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/data/view/SRP045126&display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRP045126&amp;display=xml\"\
+        >\n<STUDY accession=\"SRP045126\" alias=\"PRJNA257030\" center_name=\"BioProject\"\
+        \ broker_name=\"NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRP045126</PRIMARY_ID>\n\
+        \          <SECONDARY_ID>PRJNA257030</SECONDARY_ID>\n          <EXTERNAL_ID\
+        \ label=\"primary\" namespace=\"BioProject\">PRJNA257030</EXTERNAL_ID>\n \
+        \    </IDENTIFIERS>\n     <DESCRIPTOR>\n          <STUDY_TITLE>Homo sapiens\
+        \ Transcriptome or Gene expression</STUDY_TITLE>\n          <STUDY_TYPE existing_study_type=\"\
+        Transcriptome Analysis\"/>\n          <STUDY_ABSTRACT>RNA-seq Identification\
+        \ of a Novel Fusion Gene in a Mesenchymal Tumor</STUDY_ABSTRACT>\n       \
+        \   <CENTER_PROJECT_NAME>Homo sapiens</CENTER_PROJECT_NAME>\n     </DESCRIPTOR>\n\
+        \     <STUDY_LINKS>\n          <STUDY_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>pubmed</DB>\n                    <ID>25319834</ID>\n\
+        \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>pubmed</DB>\n       \
+        \             <ID>27443518</ID>\n               </XREF_LINK>\n          </STUDY_LINK>\n\
+        \          <STUDY_LINK>\n               <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n\
+        \                    <ID>SRS671404,SRS671406,SRS672133,SRS672135,SRS1275322-SRS1275323</ID>\n\
+        \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-EXPERIMENT</DB>\n\
+        \                    <ID>SRX666714,SRX666716,SRX667537,SRX667539,SRX1560738-SRX1560739</ID>\n\
+        \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-RUN</DB>\n      \
+        \              <ID>SRR1533126,SRR1533896,SRR1533917-SRR1533918,SRR3144598-SRR3144599</ID>\n\
+        \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n\
+        \                    <ID>SRA177339</ID>\n               </XREF_LINK>\n   \
+        \       </STUDY_LINK>\n          <STUDY_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRP045126&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
+        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRP045126&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \               </XREF_LINK>\n          </STUDY_LINK>\n     </STUDY_LINKS>\n\
+        \     <STUDY_ATTRIBUTES>\n          <STUDY_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n\
+        \               <VALUE>235179697</VALUE>\n          </STUDY_ATTRIBUTE>\n \
+        \         <STUDY_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n  \
+        \             <VALUE>51761638867</VALUE>\n          </STUDY_ATTRIBUTE>\n \
+        \         <STUDY_ATTRIBUTE>\n               <TAG>ENA-FIRST-PUBLIC</TAG>\n\
+        \               <VALUE>2014-08-07</VALUE>\n          </STUDY_ATTRIBUTE>\n\
+        \          <STUDY_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n\
+        \               <VALUE>2016-11-24</VALUE>\n          </STUDY_ATTRIBUTE>\n\
+        \     </STUDY_ATTRIBUTES>\n</STUDY>\n</ROOT>"
+    headers:
+      Access-Control-Allow-Headers:
+      - Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - private, no-store, no-cache, must-revalidate
+      Content-Type:
+      - text/plain;charset=UTF-8
+      Date:
+      - Tue, 18 Feb 2020 19:01:10 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - JSESSIONID=41E6891463E7EA04950A56A283938944; Path=/ena/data/; HttpOnly
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/data/view/SRA177342&display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRA177342&amp;display=xml\"\
+        >\n<SUBMISSION accession=\"SRA177342\" alias=\"PMT-2\" center_name=\"Academia\
+        \ Sinica\" lab_name=\"Institute of Information Science\" broker_name=\"NCBI\"\
+        >\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRA177342</PRIMARY_ID>\n    \
+        \      <SUBMITTER_ID namespace=\"Academia Sinica\">PMT-2</SUBMITTER_ID>\n\
+        \     </IDENTIFIERS>\n     <TITLE>Submitted by ACADEMIA SINICA on 27-MAR-2015</TITLE>\n\
+        \     <SUBMISSION_LINKS>\n          <SUBMISSION_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-STUDY</DB>\n                    <ID>SRP045126</ID>\n\
+        \               </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n   \
+        \                 <ID>SRS671406</ID>\n               </XREF_LINK>\n      \
+        \    </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-EXPERIMENT</DB>\n                    <ID>SRX666716</ID>\n\
+        \               </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-RUN</DB>\n      \
+        \              <ID>SRR1533126</ID>\n               </XREF_LINK>\n        \
+        \  </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRA177342&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \               </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
+        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRA177342&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \               </XREF_LINK>\n          </SUBMISSION_LINK>\n     </SUBMISSION_LINKS>\n\
+        \     <SUBMISSION_ATTRIBUTES>\n          <SUBMISSION_ATTRIBUTE>\n        \
+        \       <TAG>ENA-SPOT-COUNT</TAG>\n               <VALUE>77934531</VALUE>\n\
+        \          </SUBMISSION_ATTRIBUTE>\n          <SUBMISSION_ATTRIBUTE>\n   \
+        \            <TAG>ENA-BASE-COUNT</TAG>\n               <VALUE>15586906200</VALUE>\n\
+        \          </SUBMISSION_ATTRIBUTE>\n     </SUBMISSION_ATTRIBUTES>\n</SUBMISSION>\n\
+        </ROOT>"
+    headers:
+      Access-Control-Allow-Headers:
+      - Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - private, no-store, no-cache, must-revalidate
+      Content-Type:
+      - text/plain;charset=UTF-8
+      Date:
+      - Tue, 18 Feb 2020 19:01:10 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Set-Cookie:
+      - JSESSIONID=803268BBCD90FD3F60124D2D1A45016B; Path=/ena/data/; HttpOnly
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1
