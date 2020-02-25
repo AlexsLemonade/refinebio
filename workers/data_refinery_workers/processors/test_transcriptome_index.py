@@ -22,7 +22,7 @@ def prepare_job(length):
     pj.pipeline_applied = "TRANSCRIPTOME_INDEX_" + length.upper()
     pj.save()
 
-    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
+    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
     samp = Sample()
     samp.organism = homo_sapiens

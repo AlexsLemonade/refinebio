@@ -38,7 +38,7 @@ class SurveyTestCase(TransactionTestCase):
             tximport result and the second experiment.
         """
         # Get an organism to set on samples:
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=9606)
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
         # Create the tximport processor and result:
         processor = Processor()

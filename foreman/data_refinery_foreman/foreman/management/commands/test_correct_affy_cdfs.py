@@ -22,7 +22,7 @@ def setup_experiments() -> None:
     samples. One has a sample that has incorrect platform information
     so the experiment will need to be re-surveyed.
     """
-    organism = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=9606)
+    organism = Organism.get_object_for_name("HOMO_SAPIENS")
 
     # Experiment that needs to be re-surveyed
     experiment = Experiment.objects.create(

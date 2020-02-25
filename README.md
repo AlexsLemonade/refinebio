@@ -1,4 +1,4 @@
-# Refine.bio [![Build Status](https://circleci.com/gh/AlexsLemonade/refinebio/tree/dev.svg?&style=shield)](https://circleci.com/gh/AlexsLemonade/refinebio/) [![codecov](https://codecov.io/gh/AlexsLemonade/refinebio/branch/master/graph/badge.svg)](https://codecov.io/gh/AlexsLemonade/refinebio)
+# Refine.bio [![Build Status](https://circleci.com/gh/AlexsLemonade/refinebio/tree/dev.svg?&style=shield)](https://circleci.com/gh/AlexsLemonade/refinebio/)
 
 <!-- This section needs to be drastically improved -->
 Refine.bio harmonizes petabytes of publicly available biological data into

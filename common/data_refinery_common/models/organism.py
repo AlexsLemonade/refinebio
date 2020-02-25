@@ -144,11 +144,11 @@ class Organism(models.Model):
 
     @classmethod
     def get_or_create_object_for_id(cls, taxonomy_id: int):
-        organism = (
-            cls.objects.filter(taxonomy_id=taxonomy_id).order_by("-is_scientific_name").first()
-        )
-
-        if not organism:
+        try:
+            organism = cls.objects.filter(taxonomy_id=taxonomy_id).order_by("-is_scientific_name")[
+                0
+            ]
+        except IndexError:
             name = get_scientific_name(taxonomy_id).upper().replace(" ", "_")
             organism = Organism(name=name, taxonomy_id=taxonomy_id, is_scientific_name=True)
             organism.save()
@@ -182,19 +182,18 @@ class Organism(models.Model):
         return organism.taxonomy_id
 
     @classmethod
-    def get_object_for_name(cls, name: str, taxonomy_id=None):
+    def get_object_for_name(cls, name: str):
         name = name.upper()
         name = name.replace(" ", "_")
-        organism = cls.objects.filter(name=name).first()
-
-        if not organism:
+        try:
+            organism = cls.objects.filter(name=name)[0]
+        except IndexError:
             is_scientific_name = False
-            if not taxonomy_id:
-                try:
-                    taxonomy_id = get_taxonomy_id_scientific(name)
-                    is_scientific_name = True
-                except UnscientificNameError:
-                    taxonomy_id = get_taxonomy_id(name)
+            try:
+                taxonomy_id = get_taxonomy_id_scientific(name)
+                is_scientific_name = True
+            except UnscientificNameError:
+                taxonomy_id = get_taxonomy_id(name)
 
             organism = Organism(
                 name=name, taxonomy_id=taxonomy_id, is_scientific_name=is_scientific_name

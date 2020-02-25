@@ -94,9 +94,17 @@ class ExternalSourceSurveyor:
                         downloader_job=downloader_job.id,
                     )
                     message_queue.send_job(downloader_task, downloader_job)
-                except:
-                    # If we fail to queue the job, it will be requeued.
-                    pass
+                except Exception as e:
+                    # If the task doesn't get sent we don't want the
+                    # downloader_job to be left floating
+                    logger.exception(
+                        "Failed to enqueue downloader job for URL: " + original_file.source_url,
+                        survey_job=self.survey_job.id,
+                        downloader_job=downloader_job.id,
+                    )
+                    downloader_job.success = False
+                    downloader_job.failure_reason = str(e)
+                    downloader_job.save()
 
     def queue_downloader_job_for_original_files(
         self,
@@ -153,9 +161,18 @@ class ExternalSourceSurveyor:
                     downloaded_urls=downloaded_urls,
                 )
                 message_queue.send_job(downloader_task, downloader_job)
-            except:
-                # If we fail to queue the job, it will be requeued.
-                pass
+            except Exception as e:
+                # If the task doesn't get sent we don't want the
+                # downloader_job to be left floating
+                logger.exception(
+                    "Failed to enqueue downloader job.",
+                    survey_job=self.survey_job.id,
+                    downloader_job=downloader_job.id,
+                    error=str(e),
+                )
+                downloader_job.success = False
+                downloader_job.failure_reason = str(e)
+                downloader_job.save()
 
     def survey(self, source_type=None) -> bool:
         """Retrieves metadata from external source to queue jobs.
