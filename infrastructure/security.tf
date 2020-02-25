@@ -129,6 +129,7 @@ resource "aws_security_group_rule" "data_refinery_worker_pg" {
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
 }
 
 # Allow outbound requests from Nomad so they can actually do useful
@@ -336,6 +337,7 @@ resource "aws_security_group_rule" "data_refinery_api_pg" {
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.data_refinery_api.id}"
+  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
 }
 
 resource "aws_security_group_rule" "data_refinery_api_outbound" {
@@ -390,6 +392,7 @@ resource "aws_security_group_rule" "data_refinery_foreman_pg" {
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
 }
 
 # Necessary to retrieve
