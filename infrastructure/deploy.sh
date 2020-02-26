@@ -273,18 +273,21 @@ fi
 docker run \
        --env-file prod_env \
        --env RUNNING_IN_CLOUD=False \
+       --env DATABASE_HOST=$DATABASE_PUBLIC_HOST \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
        --env RUNNING_IN_CLOUD=False \
+       --env DATABASE_HOST=$DATABASE_PUBLIC_HOST \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Create the cache table if it does not already exist.
 docker run \
        --env-file prod_env \
        --env RUNNING_IN_CLOUD=False \
+       --env DATABASE_HOST=$DATABASE_PUBLIC_HOST \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py createcachetable
 
 # Make sure to clear out any old nomad job specifications since we

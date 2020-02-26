@@ -194,6 +194,10 @@ output "environment_variables" {
     {name = "DATABASE_NAME"
       value = "${aws_db_instance.postgres_db.name}"},
     {name = "DATABASE_HOST"
+      value = "${aws_instance.pg_bouncer.private_ip}"},
+    # We want to use the private IP from everywhere except wherever
+    # deployment is happening, so we also need to expose this IP.
+    {name = "DATABASE_PUBLIC_HOST"
       value = "${aws_instance.pg_bouncer.public_ip}"},
     {name = "RDS_HOST"
       value = "${aws_db_instance.postgres_db.address}"},
