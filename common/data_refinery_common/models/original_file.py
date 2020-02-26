@@ -230,6 +230,14 @@ class OriginalFile(models.Model):
         if unstarted_downloader_jobs.count() > 0:
             return False
 
+        # Do an extra check for blocking jobs for trancsriptome indices.
+        # This is necessary because needs_processing() won't check
+        # the blocking jobs for them because they're supposed to
+        # have multiple processor jobs. However if the file does need to
+        # be redownloaded, we only want one downloader job to be recreated.
+        if self.has_blocking_jobs(own_processor_id):
+            return False
+
         # If this file has been processed, then it doesn't need to be downloaded again.
         return self.needs_processing(own_processor_id)
 
