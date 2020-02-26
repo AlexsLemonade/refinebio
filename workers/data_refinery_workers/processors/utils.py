@@ -31,11 +31,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import (
-    get_env_variable,
-    get_env_variable_gracefully,
-    get_instance_id,
-)
+from data_refinery_common.utils import get_env_variable, get_instance_id
 
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
