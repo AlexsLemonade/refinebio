@@ -228,7 +228,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
     # Quantile Normalization
     if job_context["dataset"].quantile_normalize:
         job_context["merged_no_qn"] = merged
-        job_context["organism"] = job_context["dataset"].get_samples().first().organism
+        job_context["organism"] = job_context["dataset"].get_samples()[0].organism
         job_context = smashing_utils.quantile_normalize(job_context)
         merged = job_context.get("merged_qn", None)
 
