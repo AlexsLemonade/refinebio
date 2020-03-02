@@ -112,7 +112,7 @@ variable "local_root_dir" {
 
 # Instance types / ASG
 variable "nomad_server_instance_type" {
-  default = "m5.xlarge"
+  default = "t2.medium"
 }
 
 variable "smasher_instance_type" {
@@ -154,7 +154,7 @@ variable "foreman_instance_type" {
 }
 
 variable "volume_size_in_gb" {
-  default = "9000"
+  default = "2000"
 }
 
 variable "max_downloader_jobs_per_node" {

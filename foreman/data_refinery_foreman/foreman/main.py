@@ -49,7 +49,7 @@ logger = get_and_configure_logger(__name__)
 MAX_NUM_RETRIES = 2
 
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
-DEFAULT_MAX_JOBS = 20000
+DEFAULT_MAX_JOBS = 5000
 
 PAGE_SIZE = 2000
 
