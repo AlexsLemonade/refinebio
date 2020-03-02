@@ -89,35 +89,43 @@ resource "aws_instance" "nomad_server_1" {
   }
 }
 
-output "nomad_server_1_ip" {
-  value = "${aws_instance.nomad_server_1.public_ip}"
-}
-
-# The other Nomad Servers needs to be aware of the Lead Nomad Server's
-# IP address, so we template it into their configurations.
-data "template_file" "nomad_server_config" {
-  template = "${file("nomad-configuration/server.tpl.hcl")}"
+# The Nomad Client needs to be aware of the Nomad Server's IP address,
+# so we template it into its configuration.
+data "template_file" "nomad_client_config" {
+  template = "${file("nomad-configuration/client.tpl.hcl")}"
 
   vars {
     nomad_lead_server_ip = "${aws_instance.nomad_server_1.private_ip}"
   }
 }
 
+
+output "nomad_server_1_ip" {
+  value = "${aws_instance.nomad_server_1.public_ip}"
+}
+
+
 # This script smusher serves a similar purpose to
-# ${data.template_file.nomad_lead_server_script_smusher} but for the other
-# Nomad Servers. See that resource's definition for more information.
-data "template_file" "nomad_server_script_smusher" {
-  template = "${file("nomad-configuration/server-instance-user-data.tpl.sh")}"
+# ${data.template_file.nomad_lead_server_script_smusher} but for the Nomad
+# Client. See that resource's definition for more information.
+data "template_file" "nomad_client_script_smusher" {
+  template = "${file("nomad-configuration/client-instance-user-data.tpl.sh")}"
 
   vars {
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
-    nomad_server_config = "${data.template_file.nomad_server_config.rendered}"
-    server_number = 1
+    nomad_client_config = "${data.template_file.nomad_client_config.rendered}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
+    database_host = "${aws_instance.pg_bouncer.private_ip}"
+    database_port = "${var.database_port}"
+    database_user = "${var.database_user}"
+    database_password = "${var.database_password}"
+    database_name = "${aws_db_instance.postgres_db.name}"
   }
 }
+
+
 
 # The Smasher Instance needs to be aware of the Nomad Server's IP address,
 # so we template it into its configuration.
