@@ -112,7 +112,7 @@ variable "local_root_dir" {
 
 # Instance types / ASG
 variable "nomad_server_instance_type" {
-  default = "m5.xlarge"
+  default = "t2.medium"
 }
 
 variable "smasher_instance_type" {
@@ -154,7 +154,7 @@ variable "foreman_instance_type" {
 }
 
 variable "volume_size_in_gb" {
-  default = "9000"
+  default = "2000"
 }
 
 variable "max_downloader_jobs_per_node" {
@@ -195,6 +195,10 @@ output "environment_variables" {
       value = "${aws_db_instance.postgres_db.name}"},
     {name = "DATABASE_HOST"
       value = "${aws_instance.pg_bouncer.private_ip}"},
+    # We want to use the private IP from everywhere except wherever
+    # deployment is happening, so we also need to expose this IP.
+    {name = "DATABASE_PUBLIC_HOST"
+      value = "${aws_instance.pg_bouncer.public_ip}"},
     {name = "RDS_HOST"
       value = "${aws_db_instance.postgres_db.address}"},
     {name = "DATABASE_USER"

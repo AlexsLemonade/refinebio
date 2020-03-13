@@ -1,14 +1,9 @@
 from django.test import TestCase, tag
 
 import GEOparse
+import vcr
 
-from data_refinery_common.models import (
-    DownloaderJob,
-    Organism,
-    Sample,
-    SurveyJob,
-    SurveyJobKeyValue,
-)
+from data_refinery_common.models import Sample
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.array_express import SAMPLES_URL
 from data_refinery_foreman.surveyor.harmony import (
@@ -29,6 +24,7 @@ class HarmonyTestCase(TestCase):
 
         self.samples = [self.sample]
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sdrf_harmony.yaml")
     def test_sdrf_harmony(self):
         """ Harmonize SDRF test"""
 
@@ -47,6 +43,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue("subject" in harmonized[title].keys())
         self.assertTrue("developmental_stage" in harmonized[title].keys())
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sdrf_big.yaml")
     @tag("slow")
     def test_sdrf_big(self):
         """ Tests lots of different cases for harmonization"""
@@ -210,6 +207,7 @@ class HarmonyTestCase(TestCase):
             harmonized = harmonize(metadata)
             self.assertIsNotNone(harmonized)
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sra_harmony.yaml")
     def test_sra_harmony(self):
         """
         Tests a specific harmonization from SRA
@@ -229,6 +227,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue("specimen_part" in harmonized[title].keys())
         self.assertTrue("disease" in harmonized[title].keys())
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sra_lots.yaml")
     @tag("slow")
     def test_sra_lots(self):
         """
@@ -315,6 +314,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue("squamous cell carcinoma" == harmonized[title]["disease"])
         self.assertTrue("azathioprine + prednison" == harmonized[title]["compound"])
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.ordering_mismatch.yaml")
     def test_ordering_mismatch(self):
         """Makes sure that the order samples' keys are in does not affect the title chosen.
 
