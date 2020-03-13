@@ -218,7 +218,7 @@ resource "aws_iam_role_policy_attachment" "cloudwatch" {
 }
 
 resource "aws_s3_bucket_policy" "cloudtrail_access_policy" {
-  bucket = "${aws_s3_bucket.data_refinery_bucket.id}"
+  bucket = "${aws_s3_bucket.data_refinery_cloudtrail_logs_bucket.id}"
   policy = <<POLICY
 {
   "Statement": [
@@ -228,7 +228,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_access_policy" {
       "Principal": {
         "Service": "cloudtrail.amazonaws.com"
       },
-      "Resource": "${aws_s3_bucket.data_refinery_bucket.arn}",
+      "Resource": "${aws_s3_bucket.data_refinery_cloudtrail_logs_bucket.arn}",
       "Sid": "AWSCloudTrailAclCheck20150319"
     },
     {
@@ -237,7 +237,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_access_policy" {
       "Principal": {
         "Service": "cloudtrail.amazonaws.com"
       },
-      "Resource": "${aws_s3_bucket.data_refinery_bucket.arn}/*",
+      "Resource": "${aws_s3_bucket.data_refinery_cloudtrail_logs_bucket.arn}/*",
       "Sid": "AWSCloudTrailWrite20150319"
     }
   ],
