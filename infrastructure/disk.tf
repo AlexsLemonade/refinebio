@@ -142,7 +142,7 @@ resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
     ],
     "requestParameters": {
       "bucketName": [
-        "data-refinery-s3-compendia-${var.user}-${var.stage}"
+        "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
       ]
     }
   }
