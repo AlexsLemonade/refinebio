@@ -114,6 +114,17 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   }
 }
 
+resource "aws_s3_bucket" "data_refinery_logs_bucket" {
+  bucket = "data-refinery-s3-logs-${var.user}-${var.stage}"
+  acl = "private"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+
+  tags {
+    Name        = "data-refinery-s3-logs-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+  }
+}
+
 # Passing the name attribute as `EntireBucket` enables request metrics for the bucket.
 # ref: https://www.terraform.io/docs/providers/aws/r/s3_bucket_metric.html
 resource "aws_s3_bucket_metric" "compendia_bucket_metrics" {
