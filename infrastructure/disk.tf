@@ -114,13 +114,13 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   }
 }
 
-resource "aws_s3_bucket" "data_refinery_logs_bucket" {
+resource "aws_s3_bucket" "data_refinery_cloudtrail_logs_bucket" {
   bucket = "data-refinery-s3-logs-${var.user}-${var.stage}"
   acl = "private"
   force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
-    Name        = "data-refinery-s3-logs-${var.user}-${var.stage}"
+    Name        = "data-refinery-s3-cloudtrail-logs-${var.user}-${var.stage}"
     Environment = "${var.stage}"
   }
 }
