@@ -114,6 +114,8 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   }
 }
 
+# Passing the name attribute as `EntireBucket` enables request metrics for the bucket.
+# ref: https://www.terraform.io/docs/providers/aws/r/s3_bucket_metric.html
 resource "aws_s3_bucket_metric" "compendia_bucket_metrics" {
   bucket = "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
   name   = "EntireBucket"
