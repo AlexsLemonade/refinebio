@@ -169,11 +169,6 @@ resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
   arn = "${substr(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,0,length(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn) - 2)}"
 }
 
-# Must start with `/aws/events` in order to connect to a cloudwatch_event_target.
-resource "aws_cloudwatch_log_group" "compendia_object_metrics_log_group" {
-  name = "/aws/events/data-refinery-compendia-log-group-${var.user}-${var.stage}"
-}
-
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
   bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
 
