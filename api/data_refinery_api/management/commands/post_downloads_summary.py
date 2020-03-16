@@ -19,6 +19,12 @@ class Command(BaseCommand):
             default=7,  # default to a week
             help=("Number of days in the past for which to build the stats"),
         )
+        parser.add_argument(
+            "--channel",
+            type=str,
+            default="ccdl-general",
+            help=("Optional parameter to choose the channel where the message will be posted."),
+        )
 
     def handle(self, *args, **options):
         """
@@ -88,7 +94,7 @@ class Command(BaseCommand):
             json={
                 "username": "EngagementBot",
                 "icon_emoji": ":halal:",
-                "channel": "#robots",  # "#ccdl-general",
+                "channel": "#" + options["channel"],
                 "text": fallback_text,
                 "blocks": blocks,
             },
