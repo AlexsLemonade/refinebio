@@ -90,7 +90,7 @@ class Command(BaseCommand):
 
         # Post to slack
         requests.post(
-            "https://hooks.slack.com/services/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",  # settings.ENGAGEMENTBOT_WEBHOOK,
+            settings.ENGAGEMENTBOT_WEBHOOK,
             json={
                 "username": "EngagementBot",
                 "icon_emoji": ":halal:",
