@@ -105,18 +105,20 @@ class Command(BaseCommand):
 
 def should_display_email(email: str) -> bool:
     """ Returns true if the given email is not associated with the CCDL suers """
-    return (
-        email is not None
-        and email.startswith("cansav09")
-        and email.startswith("arielsvn")
-        and email.startswith("jaclyn.n.taroni")
-        and email.startswith("kurt.wheeler")
-        and email.startswith("greenescientist")
-        and "@alexslemonade.org" not in email
-        and email.startswith("miserlou")
-        and email.startswith("d.prasad")
-        and email.startswith("daniel.himmelstein@gmail.com")
-        and email.startswith("dv.prasad991@gmail.com")
+    if not email:
+        return False
+
+    return not (
+        email.startswith("cansav09")
+        or email.startswith("arielsvn")
+        or email.startswith("jaclyn.n.taroni")
+        or email.startswith("kurt.wheeler")
+        or email.startswith("greenescientist")
+        or "@alexslemonade.org" in email
+        or email.startswith("miserlou")
+        or email.startswith("d.prasad")
+        or email is ("daniel.himmelstein@gmail.com")
+        or email is ("dv.prasad991@gmail.com")
     )
 
 
