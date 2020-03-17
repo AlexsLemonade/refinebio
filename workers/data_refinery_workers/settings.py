@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
-    "django_elasticsearch_dsl",
     "data_refinery_common",
     "data_refinery_workers.downloaders",
     "data_refinery_workers.processors",
@@ -146,15 +145,6 @@ else:
     raven_logger.setLevel(logging.CRITICAL)
 
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
-
-# Elastic Search
-ELASTICSEARCH_DSL = {
-    "default": {
-        "hosts": get_env_variable("ELASTICSEARCH_HOST")
-        + ":"
-        + get_env_variable("ELASTICSEARCH_PORT")
-    }
-}
 
 if "test" in sys.argv:
     ELASTICSEARCH_INDEX_NAMES = {
