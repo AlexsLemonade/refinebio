@@ -1,8 +1,9 @@
 coverage
 django==2.2.10
 psycopg2-binary
-boto3
-requests>=2.20.0
+boto3>=1.12.21
+requests>=2.23.0
+urllib3>=1.24.2
 retrying
 daiquiri
 python-nomad>=1.0.2
