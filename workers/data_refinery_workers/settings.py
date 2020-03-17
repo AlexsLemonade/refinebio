@@ -146,15 +146,5 @@ else:
 
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
-if "test" in sys.argv:
-    ELASTICSEARCH_INDEX_NAMES = {
-        "data_refinery_common.models.documents": "experiments_test",
-    }
-else:
-    ELASTICSEARCH_INDEX_NAMES = {
-        "data_refinery_common.models.documents": "experiments",
-    }
-    ELASTICSEARCH_DSL_AUTOSYNC = False
-
 # EngagementBot
 ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
