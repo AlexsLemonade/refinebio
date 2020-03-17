@@ -107,17 +107,16 @@ def should_display_email(email: str) -> bool:
     """ Returns true if the given email is not associated with the CCDL suers """
     return (
         email is not None
-        and email.find("cansav09") != 0
-        and email.find("arielsvn") != 0
-        and email.find("jaclyn.n.taroni") != 0
-        and email.find("kurt.wheeler") != 0
-        and email.find("greenescientist") != 0
-        and email.find("@alexslemonade.org") == -1
-        and email.find("miserlou") != 0
-        and email.find("michael.zietz@gmail.com") != 0
-        and email.find("d.prasad") != 0
-        and email.find("daniel.himmelstein@gmail.com") != 0
-        and email.find("dv.prasad991@gmail.com") != 0
+        and email.startswith("cansav09")
+        and email.startswith("arielsvn")
+        and email.startswith("jaclyn.n.taroni")
+        and email.startswith("kurt.wheeler")
+        and email.startswith("greenescientist")
+        and "@alexslemonade.org" not in email
+        and email.startswith("miserlou")
+        and email.startswith("d.prasad")
+        and email.startswith("daniel.himmelstein@gmail.com")
+        and email.startswith("dv.prasad991@gmail.com")
     )
 
 
