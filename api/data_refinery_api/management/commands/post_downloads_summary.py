@@ -27,8 +27,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """
-        """
         days = options["days"]
         start_time = timezone.now() - datetime.timedelta(days=-days)
 
@@ -114,7 +112,7 @@ def should_display_email(email: str) -> bool:
         or email.startswith("jaclyn.n.taroni")
         or email.startswith("kurt.wheeler")
         or email.startswith("greenescientist")
-        or "@alexslemonade.org" in email
+        or "@alexslemonade.org" not in email
         or email.startswith("miserlou")
         or email.startswith("d.prasad")
         or email is ("daniel.himmelstein@gmail.com")
