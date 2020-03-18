@@ -124,5 +124,5 @@ def get_ip_location(remote_ip):
     try:
         city = requests.get("https://ipapi.co/" + remote_ip + "/json/", timeout=10).json()["city"]
     except Exception:
-        city = "COULD_NOT_DETERMINE"
+        city = remote_ip
     return city
