@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from re import match
 
-from django.conf import settings
 from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
@@ -17,7 +16,6 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-import requests
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE,
     LOOKUP_QUERY_GT,
@@ -48,6 +46,7 @@ from data_refinery_common.models import (
     ComputationalResultAnnotation,
     ComputedFile,
     Dataset,
+    DatasetAnnotation,
     DownloaderJob,
     Experiment,
     Organism,
@@ -399,23 +398,6 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = "id"
 
-    @staticmethod
-    def _should_display_on_engagement_bot(email: str) -> bool:
-        return (
-            email is not None
-            and email.find("cansav09") != 0
-            and email.find("arielsvn") != 0
-            and email.find("jaclyn.n.taroni") != 0
-            and email.find("kurt.wheeler") != 0
-            and email.find("greenescientist") != 0
-            and email.find("@alexslemonade.org") == -1
-            and email.find("miserlou") != 0
-            and email.find("michael.zietz@gmail.com") != 0
-            and email.find("d.prasad") != 0
-            and email.find("daniel.himmelstein@gmail.com") != 0
-            and email.find("dv.prasad991@gmail.com") != 0
-        )
-
     def get_serializer_context(self):
         """
         Extra context provided to the serializer class.
@@ -515,66 +497,15 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 serializer.validated_data["is_processing"] = True
                 obj = serializer.save()
 
-                if (
-                    settings.RUNNING_IN_CLOUD
-                    and settings.ENGAGEMENTBOT_WEBHOOK is not None
-                    and DatasetView._should_display_on_engagement_bot(supplied_email_address)
-                ):
-                    try:
-                        try:
-                            remote_ip = get_client_ip(self.request)
-                            city = requests.get(
-                                "https://ipapi.co/" + remote_ip + "/json/", timeout=10
-                            ).json()["city"]
-                        except Exception:
-                            city = "COULD_NOT_DETERMINE"
-
-                        user_agent = self.request.META.get("HTTP_USER_AGENT", None)
-                        total_downloads = Dataset.objects.filter(
-                            email_address=supplied_email_address
-                        ).count()
-                        requests.post(
-                            settings.ENGAGEMENTBOT_WEBHOOK,
-                            json={
-                                "username": "EngagementBot",
-                                "icon_emoji": ":halal:",
-                                "attachments": [
-                                    {
-                                        "color": "good",
-                                        "title": "New dataset download",
-                                        "fallback": "New dataset download",
-                                        "title_link": "http://www.refine.bio/dataset/{0}".format(
-                                            obj.id
-                                        ),
-                                        "text": "New user {0} from {1} downloaded a dataset!".format(
-                                            supplied_email_address, city
-                                        ),
-                                        "footer": "Refine.bio | {0} | {1}".format(
-                                            remote_ip, user_agent
-                                        ),
-                                        "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
-                                        "fields": [
-                                            {"title": "Dataset id", "value": str(obj.id),},
-                                            {
-                                                "title": "Total downloads",
-                                                "value": total_downloads,
-                                                "short": True,
-                                            },
-                                            {
-                                                "title": "Samples",
-                                                "value": obj.get_total_samples(),
-                                                "short": True,
-                                            },
-                                        ],
-                                    }
-                                ],
-                            },
-                            headers={"Content-Type": "application/json"},
-                            timeout=10,
-                        )
-                    except Exception as e:
-                        # It doens't really matter if this didn't work
-                        logger.error(e)
+                # create a new dataset annotation with the information of this request
+                annotation = DatasetAnnotation()
+                annotation.dataset = old_object
+                annotation.data = {
+                    "start": True,
+                    "ip": get_client_ip(self.request),
+                    "user_agent": self.request.META.get("HTTP_USER_AGENT", None),
+                }
+                annotation.save()
 
                 return obj
 
