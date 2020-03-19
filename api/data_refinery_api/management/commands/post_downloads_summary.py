@@ -6,7 +6,7 @@ from django.utils import timezone
 
 import requests
 
-from data_refinery_common.models import Dataset, DatasetAnnotation
+from data_refinery_common.models import DatasetAnnotation
 
 
 class Command(BaseCommand):

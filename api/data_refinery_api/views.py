@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from re import match
 
-from django.conf import settings
 from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
@@ -17,7 +16,6 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-import requests
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE,
     LOOKUP_QUERY_GT,
