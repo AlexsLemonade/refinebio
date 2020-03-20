@@ -120,7 +120,7 @@ resource "aws_s3_bucket" "data_refinery_cloudtrail_logs_bucket" {
   force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
-    Name        = "data-refinery-s3-cloudtrail-logs-${var.user}-${var.stage}"
+    Name = "data-refinery-s3-cloudtrail-logs-${var.user}-${var.stage}"
     Environment = "${var.stage}"
   }
 }
