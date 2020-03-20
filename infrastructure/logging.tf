@@ -1,12 +1,12 @@
 # CloudTrail
 
 resource "aws_cloudtrail" "data_refinery_s3_cloudtrail" {
-  name                          = "data-refinery-s3-cloudtrail-${var.user}-${var.stage}"
-  depends_on                    = ["aws_s3_bucket.data_refinery_cloudtrail_logs_bucket"]
-  s3_bucket_name                = "${aws_s3_bucket.data_refinery_cloudtrail_logs_bucket.id}"
+  name = "data-refinery-s3-cloudtrail-${var.user}-${var.stage}"
+  depends_on = ["aws_s3_bucket.data_refinery_cloudtrail_logs_bucket"]
+  s3_bucket_name = "${aws_s3_bucket.data_refinery_cloudtrail_logs_bucket.id}"
   include_global_service_events = false
   event_selector {
-    read_write_type           = "ReadOnly"
+    read_write_type = "ReadOnly"
     include_management_events = false
 
     data_resource {
