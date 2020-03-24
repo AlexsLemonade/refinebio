@@ -114,9 +114,59 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   }
 }
 
-resource "aws_s3_bucket_metric" "compendia_metrics" {
+resource "aws_s3_bucket" "data_refinery_cloudtrail_logs_bucket" {
+  bucket = "data-refinery-s3-cloudtrail-logs-${var.user}-${var.stage}"
+  acl = "private"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+
+  tags {
+    Name = "data-refinery-s3-cloudtrail-logs-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+  }
+}
+
+# Passing the name attribute as `EntireBucket` enables request metrics for the bucket.
+# ref: https://www.terraform.io/docs/providers/aws/r/s3_bucket_metric.html
+resource "aws_s3_bucket_metric" "compendia_bucket_metrics" {
   bucket = "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
-  name   = "data-refinery-compendia-metric-${var.user}-${var.stage}"
+  name   = "EntireBucket"
+}
+
+resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
+  name = "data-refinery-compendia-object-metric-${var.user}-${var.stage}"
+  description = "Download Compendia Events"
+
+  event_pattern = <<PATTERN
+{
+  "source": [
+    "aws.s3"
+  ],
+  "detail-type": [
+    "AWS API Call via CloudTrail"
+  ],
+  "detail": {
+    "eventSource": [
+      "s3.amazonaws.com"
+    ],
+    "eventName": [
+      "GetObject"
+    ],
+    "requestParameters": {
+      "bucketName": [
+        "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
+      ]
+    }
+  }
+}
+PATTERN
+}
+
+# arn needs to be stripped of trailing `:*`
+# aws appends this when creating the event_target
+resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
+  rule = "${aws_cloudwatch_event_rule.compendia_object_metrics.name}"
+  target_id = "compendia-object-logs-target-${var.user}-${var.stage}"
+  arn = "${substr(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,0,length(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn) - 2)}"
 }
 
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
