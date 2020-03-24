@@ -89,106 +89,6 @@ resource "aws_instance" "nomad_server_1" {
   }
 }
 
-output "nomad_server_1_ip" {
-  value = "${aws_instance.nomad_server_1.public_ip}"
-}
-
-# The other Nomad Servers needs to be aware of the Lead Nomad Server's
-# IP address, so we template it into their configurations.
-data "template_file" "nomad_server_config" {
-  template = "${file("nomad-configuration/server.tpl.hcl")}"
-
-  vars {
-    nomad_lead_server_ip = "${aws_instance.nomad_server_1.private_ip}"
-  }
-}
-
-# This script smusher serves a similar purpose to
-# ${data.template_file.nomad_lead_server_script_smusher} but for the other
-# Nomad Servers. See that resource's definition for more information.
-data "template_file" "nomad_server_script_smusher" {
-  template = "${file("nomad-configuration/server-instance-user-data.tpl.sh")}"
-
-  vars {
-    install_nomad_script = "${data.local_file.install_nomad_script.content}"
-    nomad_server_config = "${data.template_file.nomad_server_config.rendered}"
-    server_number = 1
-    user = "${var.user}"
-    stage = "${var.stage}"
-    region = "${var.region}"
-  }
-}
-
-# This is another Nomad Server instance since it's recommended to have
-# at least three to avoid data loss.
-resource "aws_instance" "nomad_server_2" {
-  ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "${var.nomad_server_instance_type}"
-  availability_zone = "${var.region}a"
-  vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_internet_gateway.data_refinery"]
-  key_name = "${aws_key_pair.data_refinery.key_name}"
-  disable_api_termination = "false"
-
-  # Our instance-user-data.sh script is built by Terraform at
-  # apply-time so that it can put additional files onto the
-  # instance. For more information see the definition of this resource.
-  user_data = "${data.template_file.nomad_server_script_smusher.rendered}"
-
-  tags = {
-    Name = "nomad-server-2-${var.user}-${var.stage}"
-  }
-
-  # Nomad server requirements can be found here:
-  # https://www.nomadproject.io/guides/cluster/requirements.html
-  # "40-80 GB+ of fast disk and significant network bandwidth"
-  root_block_device = {
-    volume_type = "gp2"
-    volume_size = 80
-  }
-}
-
-output "nomad_server_2_ip" {
-  value = "${aws_instance.nomad_server_2.public_ip}"
-}
-
-# This is another Nomad Server instance since it's recommended to have
-# at least three to avoid data loss.
-resource "aws_instance" "nomad_server_3" {
-  ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "${var.nomad_server_instance_type}"
-  availability_zone = "${var.region}a"
-  vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_internet_gateway.data_refinery"]
-  key_name = "${aws_key_pair.data_refinery.key_name}"
-  disable_api_termination = "false"
-
-  # Our instance-user-data.sh script is built by Terraform at
-  # apply-time so that it can put additional files onto the
-  # instance. For more information see the definition of this resource.
-  user_data = "${data.template_file.nomad_server_script_smusher.rendered}"
-
-  tags = {
-    Name = "nomad-server-3-${var.user}-${var.stage}"
-  }
-
-  # Nomad server requirements can be found here:
-  # https://www.nomadproject.io/guides/cluster/requirements.html
-  # "40-80 GB+ of fast disk and significant network bandwidth"
-  root_block_device = {
-    volume_type = "gp2"
-    volume_size = 80
-  }
-}
-
-output "nomad_server_3_ip" {
-  value = "${aws_instance.nomad_server_3.public_ip}"
-}
-
 # The Nomad Client needs to be aware of the Nomad Server's IP address,
 # so we template it into its configuration.
 data "template_file" "nomad_client_config" {
@@ -198,6 +98,12 @@ data "template_file" "nomad_client_config" {
     nomad_lead_server_ip = "${aws_instance.nomad_server_1.private_ip}"
   }
 }
+
+
+output "nomad_server_1_ip" {
+  value = "${aws_instance.nomad_server_1.public_ip}"
+}
+
 
 # This script smusher serves a similar purpose to
 # ${data.template_file.nomad_lead_server_script_smusher} but for the Nomad
@@ -218,6 +124,8 @@ data "template_file" "nomad_client_script_smusher" {
     database_name = "${aws_db_instance.postgres_db.name}"
   }
 }
+
+
 
 # The Smasher Instance needs to be aware of the Nomad Server's IP address,
 # so we template it into its configuration.

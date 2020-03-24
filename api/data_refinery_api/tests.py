@@ -712,24 +712,6 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.json()["count"], 2)
 
-    def test_engagement_bot_email_filtering(self):
-        self.assertTrue(DatasetView._should_display_on_engagement_bot("test@gmail.com"))
-
-        self.assertFalse(DatasetView._should_display_on_engagement_bot(None))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("cansav09@gmail.com"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("arielsvn@gmail.com"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("jaclyn.n.taroni@gmail.com"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("kurt.wheeler@gmail.com"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("greenescientist@gmail.com"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("test@alexslemonade.org"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("miserlou@gmail.com"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("michael.zietz@gmail.com"))
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("d.prasad@gmail.com"))
-        self.assertFalse(
-            DatasetView._should_display_on_engagement_bot("daniel.himmelstein@gmail.com")
-        )
-        self.assertFalse(DatasetView._should_display_on_engagement_bot("dv.prasad991@gmail.com"))
-
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_ok(self, mock_client):
         # We don't even import raven if it's a good response.

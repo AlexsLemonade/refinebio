@@ -112,12 +112,12 @@ variable "local_root_dir" {
 
 # Instance types / ASG
 variable "nomad_server_instance_type" {
-  default = "m5.xlarge"
+  default = "t2.medium"
 }
 
 variable "smasher_instance_type" {
-  # 32GiB Memory, smasher and compendia jobs need 28.
-  default = "m5.2xlarge"
+  # 976GiB Memory, smasher and compendia jobs need 900.
+  default = "x1.16xlarge"
 }
 
 variable "spot_price" {
@@ -154,7 +154,7 @@ variable "foreman_instance_type" {
 }
 
 variable "volume_size_in_gb" {
-  default = "9000"
+  default = "2000"
 }
 
 variable "max_downloader_jobs_per_node" {

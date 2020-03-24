@@ -77,6 +77,11 @@ RUN pip3 install --upgrade pip
 RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2===2.9.5 tzlocal
 # End smasher-specific
 
+# Some combination of pip and setuptools versions makes this bug appear:
+# https://github.com/pypa/setuptools/issues/1694
+# Upgrading setuptools fixes it though!
+RUN pip3 install --upgrade setuptools
+
 # Impute-specific requirements
 RUN pip3 install fancyimpute
 # End smasher-specific

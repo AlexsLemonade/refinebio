@@ -60,9 +60,6 @@ job "CREATE_COMPENDIA" {
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         MAX_DOWNLOADER_JOBS_PER_NODE = "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"
 
-        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
-        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
-
         LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
@@ -70,8 +67,8 @@ job "CREATE_COMPENDIA" {
       resources {
         # CPU is in AWS's CPU units.
         cpu =   4000
-        # Memory is in MB of RAM. Instance has 32GiB of RAM.
-        memory = 28000
+        # Memory is in MB of RAM. Instance has 976GiB of RAM.
+        memory = 900000
       }
 
       logs {

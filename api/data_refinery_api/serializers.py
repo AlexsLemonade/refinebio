@@ -330,6 +330,7 @@ class DetailedSamplesComputationalResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComputationalResult
         fields = (
+            "id",
             "processor",
             "organism_index",
         )

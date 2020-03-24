@@ -50,9 +50,6 @@ job "JANITOR_${{INDEX}}_${{RAM}}" {
 
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
-        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
-        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
-
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"

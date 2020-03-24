@@ -40,6 +40,7 @@ from data_refinery_common.models.computational_result_annotation import (  # noq
 )
 from data_refinery_common.models.computed_file import ComputedFile  # noqa
 from data_refinery_common.models.dataset import Dataset  # noqa
+from data_refinery_common.models.dataset_annotation import DatasetAnnotation  # noqa
 from data_refinery_common.models.experiment import Experiment  # noqa
 from data_refinery_common.models.experiment_annotation import ExperimentAnnotation  # noqa
 from data_refinery_common.models.jobs.downloader_job import DownloaderJob  # noqa
