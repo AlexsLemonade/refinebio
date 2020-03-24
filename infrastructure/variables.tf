@@ -116,8 +116,8 @@ variable "nomad_server_instance_type" {
 }
 
 variable "smasher_instance_type" {
-  # 32GiB Memory, smasher and compendia jobs need 28.
-  default = "m5.2xlarge"
+  # 976GiB Memory, smasher and compendia jobs need 900.
+  default = "x1.16xlarge"
 }
 
 variable "spot_price" {
