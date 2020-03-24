@@ -1,10 +1,9 @@
 django==2.2.10
-requests>=2.20.0
+requests>=2.23.0
+urllib3>=1.24.2
 psycopg2-binary
 retrying
 python-nomad>=1.0.2
 coveralls
-psutil
-elasticsearch-dsl
-django-elasticsearch-dsl
+psutil>=5.6.6
 vcrpy

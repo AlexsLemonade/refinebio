@@ -55,9 +55,6 @@ job "ILLUMINA_TO_PCL_${{INDEX}}_${{RAM}}" {
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
 
-        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
-        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
-
         LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 

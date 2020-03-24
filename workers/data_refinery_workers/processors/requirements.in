@@ -1,8 +1,6 @@
 boto3>=1.9.199
 coveralls
-django-elasticsearch-dsl
 django==2.2.10
-elasticsearch-dsl
 matplotlib
 numpy
 pandas
@@ -11,6 +9,8 @@ python-nomad>=1.0.2
 pyyaml>=4.2b1
 requests>=2.22.0
 retrying
+psutil>=5.6.6
+Jinja2>=2.10.1
 # Fancyimpute needs this version.
 scikit-learn>=0.21.2
 scipy
