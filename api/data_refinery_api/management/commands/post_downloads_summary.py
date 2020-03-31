@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         days = options["days"]
-        start_time = timezone.now() - datetime.timedelta(days=-days)
+        start_time = timezone.now() - datetime.timedelta(days=days)
 
         annotation_queryset = DatasetAnnotation.objects.filter(
             created_at__gt=start_time
@@ -105,14 +105,13 @@ def should_display_email(email: str) -> bool:
     """ Returns true if the given email is not associated with the CCDL suers """
     if not email:
         return False
-
     return not (
         email.startswith("cansav09")
         or email.startswith("arielsvn")
         or email.startswith("jaclyn.n.taroni")
         or email.startswith("kurt.wheeler")
         or email.startswith("greenescientist")
-        or "@alexslemonade.org" not in email
+        or "@alexslemonade.org" in email
         or email.startswith("miserlou")
         or email.startswith("d.prasad")
         or email is ("daniel.himmelstein@gmail.com")
@@ -122,7 +121,7 @@ def should_display_email(email: str) -> bool:
 
 def get_ip_location(remote_ip):
     try:
-        city = requests.get("https://ipapi.co/" + remote_ip + "/json/", timeout=10).json()["city"]
+        data = requests.get("https://ipapi.co/" + remote_ip + "/json/", timeout=10).json()
+        return "{0}, {1}".format(data["city"], data["country_name"])
     except Exception:
-        city = remote_ip
-    return city
+        return remote_ip
