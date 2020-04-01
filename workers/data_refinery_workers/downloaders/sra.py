@@ -311,6 +311,7 @@ def download_sra(job_id: int) -> None:
                 "File already downloaded!", original_file=original_file.id, downloader_job=job_id
             )
             success = True
+            downloaded_files.append(original_file)
             continue
 
         exp_path = LOCAL_ROOT_DIR + "/" + job.accession_code
