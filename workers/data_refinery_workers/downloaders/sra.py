@@ -296,26 +296,19 @@ def download_sra(job_id: int) -> None:
     Fairly straightforward, just downloads the file from SRA.
     """
     job = utils.start_job(job_id)
-    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
     original_files = job.original_files.all()
 
-    original_file = original_files[0]
+    original_file = original_files.first()
     sample = original_file.samples.first()
     if _has_unmated_reads(sample.accession_code):
         original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
-    else:
-        # _replace_dotsra_with_fastq_files returns a list of
-        # OriginalFiles so turn the queryset of
-        # DownloaderJobOriginalFileAssociations into a list of
-        # OriginalFiles to be consistent.
-        original_files = [assoc.original_file for assoc in file_assocs]
 
     downloaded_files = []
     success = None
     for original_file in original_files:
         if original_file.is_downloaded:
             logger.info(
-                "File already downloaded!", original_file_id=original_file.id, downloader_job=job_id
+                "File already downloaded!", original_file=original_file.id, downloader_job=job_id
             )
             success = True
             continue
@@ -328,14 +321,7 @@ def download_sra(job_id: int) -> None:
         success = _download_file(original_file.source_url, job, dl_file_path)
 
         if success:
-            original_file.is_downloaded = True
-            original_file.absolute_file_path = dl_file_path
-            original_file.filename = original_file.source_filename
-            original_file.is_archive = False
-            original_file.calculate_size()
-            original_file.calculate_sha1()
-            original_file.save()
-
+            original_file.set_downloaded(dl_file_path)
             downloaded_files.append(original_file)
         else:
             break
