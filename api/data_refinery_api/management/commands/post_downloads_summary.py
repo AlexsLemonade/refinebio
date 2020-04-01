@@ -111,7 +111,7 @@ def should_display_email(email: str) -> bool:
         or email.startswith("jaclyn.n.taroni")
         or email.startswith("kurt.wheeler")
         or email.startswith("greenescientist")
-        or "@alexslemonade.org" in email
+        or email.endswith("@alexslemonade.org")
         or email.startswith("miserlou")
         or email.startswith("d.prasad")
         or email is ("daniel.himmelstein@gmail.com")
