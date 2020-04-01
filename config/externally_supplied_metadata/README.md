@@ -2,7 +2,7 @@
 #### E Flynn
 #### Last updated 3/25/2020
 
-All code to produce this update is included in the [sl_label repository](https://github.com/erflynn/sl_label repository)
+All code to produce this update is included in the [`erflynn/sl_label` repository](https://github.com/erflynn/sl_label repository).
 
 This update includes imputed sex labels for microarray data (mouse, rat, and human).
 
@@ -29,4 +29,4 @@ Table 1. Metadata missingness for sex labels.
 Table 2. Concordance of sex labels. Numbers in parentheses indicate the total number of samples, percentages the number of samples that agree divided by the total number of samples. High confidence labels have matching metadata and clustering based expression labels.
 
 
-The cleaned metadata sex labels are also included in the `cleaned_metadata/` directory for microarray and RNA-seq. This process mapped all harmonized sex labels to "male", "female", "mixed", or "unknown". Code for this is included in the `sl_label` repository under `code/01_metadata/`. 
+The cleaned metadata sex labels are also included in the `cleaned_metadata/` directory for microarray and RNA-seq. This process mapped all harmonized sex labels to "male", "female", "mixed", or "unknown". Code for this is included in the [`erflynn/sl_label`](https://github.com/erflynn/sl_label) repository under [`code/01_metadata/`](https://github.com/erflynn/sl_label/tree/bbc7f060a84598f48482f590c09b1df723d4d366/code/01_metadata). 
