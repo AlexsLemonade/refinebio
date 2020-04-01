@@ -2,7 +2,7 @@
 #### E Flynn
 #### Last updated 3/25/2020
 
-All code to produce this update is included in the [sl_label repository](https://github.com/erflynn/sl_label repository)
+All code to produce this update is included in the [`erflynn/sl_label` repository](https://github.com/erflynn/sl_label repository).
 
 This update includes imputed sex labels for microarray data (mouse, rat, and human).
 
