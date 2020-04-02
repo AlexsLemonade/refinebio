@@ -219,6 +219,11 @@ class OriginalFile(models.Model):
         # If the file is downloaded and the file actually exists on disk,
         # then it doens't need to be downloaded.
         if self.absolute_file_path and os.path.exists(self.absolute_file_path):
+            # ok a file exists, if this file has an SHA1 ensure that it's the same
+            existing_file_sha1 = calculate_sha1(self.absolute_file_path)
+            if self.sha1 and self.sha1 != existing_file_sha1:
+                return True
+            # otherwise, sha1 matches and the file doesn't need to be downloaded
             return False
 
         unstarted_downloader_jobs = self.downloader_jobs.filter(
