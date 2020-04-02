@@ -306,14 +306,6 @@ def download_sra(job_id: int) -> None:
     downloaded_files = []
     success = None
     for original_file in original_files:
-        if original_file.is_downloaded:
-            logger.info(
-                "File already downloaded!", original_file=original_file.id, downloader_job=job_id
-            )
-            success = True
-            downloaded_files.append(original_file)
-            continue
-
         exp_path = LOCAL_ROOT_DIR + "/" + job.accession_code
         samp_path = exp_path + "/" + sample.accession_code
         os.makedirs(exp_path, exist_ok=True)
