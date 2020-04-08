@@ -9,6 +9,8 @@ from typing import List
 
 from django.utils import timezone
 
+import requests
+
 from data_refinery_common.job_management import create_processor_job_for_original_files
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -94,16 +96,16 @@ def _download_file_http(
     download_url: str, downloader_job: DownloaderJob, target_file_path: str
 ) -> bool:
     try:
-        target_file = open(target_file_path, "wb")
         logger.debug(
             "Downloading file from %s to %s using HTTP.",
             download_url,
             target_file_path,
             downloader_job=downloader_job.id,
         )
-
-        with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
-            shutil.copyfileobj(request, target_file, CHUNK_SIZE)
+        # thanks to https://stackoverflow.com/a/39217788/763705
+        with requests.get(download_url, stream=True) as r:
+            with open(target_file_path, "wb") as f:
+                shutil.copyfileobj(r.raw, f)
     except Exception as e:
         logger.exception(
             "Exception caught while downloading file.", downloader_job=downloader_job.id
@@ -112,8 +114,6 @@ def _download_file_http(
             e
         ).replace("\n", "\\n")
         return False
-    finally:
-        target_file.close()
 
     return True
 
