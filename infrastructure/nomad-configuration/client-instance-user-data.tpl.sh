@@ -57,8 +57,7 @@ while [  $COUNTER -lt 99 ]; do
 done
 
 sleep 15
-ATTACHED_AS=`lsblk -n | grep 8.8T | cut -d' ' -f1`
-FILE_RESULT=`file -s /dev/$ATTACHED_AS`
+ATTACHED_AS=`lsblk -n | grep 2T | cut -d' ' -f1`
 
 # grep -v ext4: make sure the disk is not already formatted.
 if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
