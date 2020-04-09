@@ -57,7 +57,10 @@ while [  $COUNTER -lt 99 ]; do
 done
 
 sleep 15
-ATTACHED_AS=`lsblk -n | grep 2T | cut -d' ' -f1`
+# We want to mount the biggest volume that its attached to the instance
+# The size of this volume can be controlled with the varialbe
+# `volume_size_in_gb` from the file `variables.tf`
+ATTACHED_AS=`lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1`
 
 # grep -v ext4: make sure the disk is not already formatted.
 if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
