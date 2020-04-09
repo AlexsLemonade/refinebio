@@ -56,7 +56,7 @@ while [  $COUNTER -lt 99 ]; do
         let COUNTER=COUNTER+1
 done
 
-sleep 25
+sleep 15
 # We want to mount the biggest volume that its attached to the instance
 # The size of this volume can be controlled with the varialbe
 # `volume_size_in_gb` from the file `variables.tf`
