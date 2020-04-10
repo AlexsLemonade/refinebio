@@ -3,6 +3,8 @@ import hashlib
 import io
 import os
 import re
+import shutil
+import time
 from functools import partial
 from itertools import groupby
 from multiprocessing import current_process
@@ -534,6 +536,27 @@ def queryset_iterator(queryset, page_size=2000):
     for page in queryset_page_iterator(queryset, page_size):
         for item in page:
             yield item
+
+
+def download_file(download_url, target_file_path, retry=2, sleep=15):
+    """
+    Downloads the given url into `target_file_path`.
+
+    The download will be retried `retry` times if it fails for any reason.
+    """
+    try:
+        # thanks to https://stackoverflow.com/a/39217788/763705
+        with requests.get(download_url, stream=True) as r:
+            with open(target_file_path, "wb") as f:
+                shutil.copyfileobj(r.raw, f)
+    except Exception as e:
+        if retry > 0:
+            # wait for a bit
+            time.sleep(sleep)
+            # and retry downloading again
+            download_file(download_url, target_file_path, retry - 1, sleep)
+        else:
+            raise e
 
 
 class FileUtils:

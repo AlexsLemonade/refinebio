@@ -21,7 +21,7 @@ from data_refinery_common.models import (
     Sample,
 )
 from data_refinery_common.rna_seq import _build_ena_file_url
-from data_refinery_common.utils import get_env_variable, get_https_sra_download
+from data_refinery_common.utils import download_file, get_env_variable, get_https_sra_download
 from data_refinery_workers.downloaders import utils
 
 logger = get_and_configure_logger(__name__)
@@ -102,10 +102,8 @@ def _download_file_http(
             target_file_path,
             downloader_job=downloader_job.id,
         )
-        # thanks to https://stackoverflow.com/a/39217788/763705
-        with requests.get(download_url, stream=True) as r:
-            with open(target_file_path, "wb") as f:
-                shutil.copyfileobj(r.raw, f)
+        # This function will try to recover if the download fails
+        download_file(download_url, target_file_path)
     except Exception as e:
         logger.exception(
             "Exception caught while downloading file.", downloader_job=downloader_job.id
