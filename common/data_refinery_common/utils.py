@@ -545,7 +545,7 @@ def download_file(
     retry=1,
     *,
     backoff_factor=8,
-    max_retries=5,
+    max_retries=10,
     max_sleep_timeout=120  # 2 mins
 ):
     """
