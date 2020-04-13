@@ -2,7 +2,10 @@ import csv
 import hashlib
 import io
 import os
+import random
 import re
+import shutil
+import time
 from functools import partial
 from itertools import groupby
 from multiprocessing import current_process
@@ -534,6 +537,41 @@ def queryset_iterator(queryset, page_size=2000):
     for page in queryset_page_iterator(queryset, page_size):
         for item in page:
             yield item
+
+
+def download_file(
+    download_url,
+    target_file_path,
+    retry=1,
+    *,
+    backoff_factor=8,
+    max_retries=10,
+    max_sleep_timeout=120  # 2 mins
+):
+    """
+    Downloads the given url into `target_file_path`.
+
+    The download will be retried `max_retries` times if it fails for any reason.
+    We use the exponential backoff https://en.wikipedia.org/wiki/Exponential_backoff
+    algorithm to add some randomness between retries.
+    """
+    try:
+        # thanks to https://stackoverflow.com/a/39217788/763705
+        with requests.get(download_url, stream=True) as r:
+            with open(target_file_path, "wb") as f:
+                shutil.copyfileobj(r.raw, f)
+    except Exception as e:
+        if retry < max_retries:
+            # After the retry-th failed attempt, retry downloading after
+            # k*backoff_factor, where k is a random integer between 0 and 2^retry − 1.
+            k = random.randint(0, 2 ** retry - 1)
+            sleep_timeout = min(k * backoff_factor, max_sleep_timeout)
+            time.sleep(sleep_timeout)
+
+            # and retry downloading again
+            download_file(download_url, target_file_path, retry + 1)
+        else:
+            raise e
 
 
 class FileUtils:
