@@ -136,7 +136,7 @@ crontab -l > tempcron
 # hasn't been working.
 echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec dr_api python3 manage.py update_es_index >> /var/log/api_cron.log 2>&1" >> tempcron
 # Post a summary of downloads every Monday at 12:00 UTC
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/0 12 * * MON docker exec dr_api python3 manage.py post_downloads_summary >> /var/log/api_cron.log 2>&1" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n0 12 * * MON docker exec dr_api python3 manage.py post_downloads_summary >> /var/log/api_cron.log 2>&1" >> tempcron
 # install new cron file
 crontab tempcron
 rm tempcron
