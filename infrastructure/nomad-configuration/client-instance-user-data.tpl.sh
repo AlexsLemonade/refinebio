@@ -56,17 +56,17 @@ while [  $COUNTER -lt 99 ]; do
         let COUNTER=COUNTER+1
 done
 
-sleep 25
-# We want to mount the biggest volume that its attached to the instance
-# The size of this volume can be controlled with the varialbe
-# `volume_size_in_gb` from the file `variables.tf`
-ATTACHED_AS=`lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1`
+# sleep 25
+# # We want to mount the biggest volume that its attached to the instance
+# # The size of this volume can be controlled with the varialbe
+# # `volume_size_in_gb` from the file `variables.tf`
+# ATTACHED_AS=`lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1`
 
-# grep -v ext4: make sure the disk is not already formatted.
-if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
-	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
-fi
-mount /dev/$ATTACHED_AS /var/ebs/
+# # grep -v ext4: make sure the disk is not already formatted.
+# if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
+# 	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
+# fi
+# mount /dev/$ATTACHED_AS /var/ebs/
 
 chown ubuntu:ubuntu /var/ebs/
 echo $EBS_VOLUME_INDEX >  /var/ebs/VOLUME_INDEX
