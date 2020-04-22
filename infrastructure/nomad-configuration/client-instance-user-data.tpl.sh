@@ -57,7 +57,7 @@ COUNTER=0
 # done
 
 # Only a single volume for now
-export EBS_VOLUME_INDEX=1
+export EBS_VOLUME_INDEX=0
 
 sleep 25
 # # We want to mount the biggest volume that its attached to the instance
