@@ -559,7 +559,7 @@ def download_file(
         # thanks to https://stackoverflow.com/a/39217788/763705
         with requests.get(download_url, stream=True) as r:
             with open(target_file_path, "wb") as f:
-                shutil.copyfileobj(r.raw, f)
+                shutil.copyfileobj(r.raw, f, 4 * 1024 * 1024)  # 4MiB buffer size
     except Exception as e:
         if retry < max_retries:
             # After the retry-th failed attempt, retry downloading after
