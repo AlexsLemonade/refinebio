@@ -250,6 +250,7 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
             "sha1",
             "s3_bucket",
             "s3_key",
+            "s3_url",
             "download_url",
             "created_at",
             "last_modified",

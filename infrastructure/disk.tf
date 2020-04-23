@@ -106,12 +106,6 @@ resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "data_refinery_transcriptome_index_bucket" {
-  bucket = "${aws_s3_bucket.data_refinery_transcriptome_index_bucket.id}"
-
-  block_public_acls   = true
-  block_public_policy = true
-}
 
 resource "aws_s3_bucket" "data_refinery_qn_target_bucket" {
   bucket = "data-refinery-s3-qn-target-${var.user}-${var.stage}"
@@ -124,12 +118,6 @@ resource "aws_s3_bucket" "data_refinery_qn_target_bucket" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "data_refinery_qn_target_bucket" {
-  bucket = "${aws_s3_bucket.data_refinery_qn_target_bucket.id}"
-
-  block_public_acls   = true
-  block_public_policy = true
-}
 
 resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   bucket = "data-refinery-s3-compendia-${var.user}-${var.stage}"
