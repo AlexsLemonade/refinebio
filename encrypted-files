@@ -1,4 +1,0 @@
-    encrypted: infrastructure/data-refinery-key.pem
-    encrypted: infrastructure/environments/dev.tfvars
-    encrypted: infrastructure/environments/prod.tfvars
-    encrypted: infrastructure/environments/staging.tfvars
