@@ -449,6 +449,16 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
+        # Bad (Empty Experiment)
+        jdata = json.dumps({"data": {"A": []}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
         # Update, just an experiment accession
         jdata = json.dumps({"data": {"GSE123": ["ALL"]}})
         response = self.client.put(
