@@ -605,7 +605,9 @@ def validate_dataset(data):
 
             if len(value) < 1:
                 raise serializers.ValidationError(
-                    "`data` must be a dict of lists, each with one or more elements. Problem with `" + str(key) + "`"
+                    "`data` must be a dict of lists, each with one or more elements. Problem with `"
+                    + str(key)
+                    + "`"
                 )
 
             try:
