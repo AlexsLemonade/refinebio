@@ -137,7 +137,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
         for header in headers:
             # check if header contains something like "detection pval"
-            pvalue_header = re.match(r"(detection)(\W?)(pval\w*)", header, re.IGNORECASE)
+            pvalue_header = re.search(r"(detection)(\W?)(pval\w*)", header, re.IGNORECASE)
             if pvalue_header:
                 job_context["detectionPval"] = pvalue_header.string
                 break
