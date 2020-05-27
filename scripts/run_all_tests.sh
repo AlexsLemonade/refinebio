@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Don't keep going if some of the tests fail
+set -e
+
 # Runs all common and app specific tests.
 # End to end tests require Nomad to be running for the test environment.
 # This can be done with:

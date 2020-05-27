@@ -752,27 +752,22 @@ It can instead be built with `./scripts/prepare_image.sh -i affymetrix -d <YOUR_
 WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
 It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
 
+### Git Crypt
 
-### Autoscaling and Setting Spot Prices
+Secrets are stored using [git-crypt](https://www.agwa.name/projects/git-crypt/).
+Team members can access secret files in the repo by running `git-crypt unlock`.
 
-`refinebio` uses AWS Auto Scaling Groups to provide elastic capacity for large
-work loads. To do this, we use "Spot Requests". To find a good bid price for
-your instance type, use the [spot request
-page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and
-then click on the **view pricing history** chart. Choose your instance type and
-then choose a bid price that is slightly higher than the current price for your
-availability zone (AZ). [This graph](https://cdn-images-1.medium.com/max/1600/0*gk64fOrhSFBoFGXK.) is useful for understanding instance types.
+An existing team member can add a new team member who provides a GPG key `user.armor` with the following:
+    1. `gpg --import user.armor`
+    2. `git-crypt add-gpg-user --trusted KEYID`
 
-Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
-`TF_VAR_max_clients` to configure your scaling instance types, cost and size.
-`TF_VAR_scale_up_threshold` and `TF_VAR_scale_down_threshold` define the queue
-lengths which trigger the scaling alarms, though you probably won't need to
-tweak these as much.
+Note that `git-crypt lock && git-crypt unlock` will reset permission secret files.
+For the ssh key, this will require running `chmod 600 infrastructure/data-refinery-key.pem` before sshing onto AWS instances.
 
 
 ### Terraform
 
-Once you have Terraform installed and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
+Once you have Terraform installed, `git-crypt` unlocked, and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
 configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
 
 ```bash
