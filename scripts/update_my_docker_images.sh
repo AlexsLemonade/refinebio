@@ -22,24 +22,29 @@ print_description() {
 }
 
 print_options() {
-    echo 'There is are two arguments for this script: -d and -v, and they are not optional.'
-    # shellcheck disable=SC2039
-    # https://github.com/koalaman/shellcheck/issues/1011
-    echo '-d specifies the Dockerhub repo you would like to deploy to.'
-    # shellcheck disable=SC2039
-    # https://github.com/koalaman/shellcheck/issues/1011
-    echo '-v specifies the version you would like to build. This version will passed into'
-    echo '  the Docker image as the environment variable SYSTEM_VERSION.'
-    echo '  It also will be used as the tag for the Docker images built.'
+    cat << EOF
+There are two required arguments for this script:
+-d specifies the Dockerhub repo you would like to deploy to.
+-v specifies the version you would like to build. This version will passed into
+    the Docker image as the environment variable SYSTEM_VERSION.
+    It also will be used as the tag for the Docker images built.
+
+There is also one optional argument:
+-a also build the affymetrix image
+    (we normally don't because it is so intense to build)
+EOF
 }
 
-while getopts ":d:v:h" opt; do
+while getopts ":d:v:ah" opt; do
     case $opt in
     d)
         export DOCKERHUB_REPO=$OPTARG
         ;;
     v)
         export SYSTEM_VERSION=$OPTARG
+        ;;
+    a)
+        AFFYMETRIX=true
         ;;
     h)
         print_description
@@ -70,8 +75,11 @@ if [ -z "$SYSTEM_VERSION" ]; then
     exit 1
 fi
 
-# Intentionally omit affymetrix since it is so intense to build.
+# Intentionally omit affymetrix unless specifically requested since it is so intense to build.
 CCDL_WORKER_IMGS="salmon transcriptome no_op downloaders illumina smasher"
+if [ "$AFFYMETRIX" ]; then
+    CCDL_WORKER_IMGS="$CCDL_WORKER_IMGS affymetrix"
+fi
 
 # Set the version for the common project.
 echo "$SYSTEM_VERSION" > common/version

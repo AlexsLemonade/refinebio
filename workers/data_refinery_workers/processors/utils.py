@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 import random
@@ -533,20 +534,23 @@ def get_pip_pkgs(pkg_list):
     """Returns a dictionary in which each key is the name of a pip-installed
     package and the corresponding value is the package's version.
     Instead of using: `pip show pkg | grep Version | awk '{print $2}'` to get
-    each package's version, we save the output of `pip freeze` first, then
-    check the version of each input package in pkg_list.  This approach
-    launches the subprocess only once and (hopefully) saves some computational
-    resource.
+    each package's version, we save the output of `pip list --format=json`
+    first, then check the version of each input package in the json list.
+    This approach launches the subprocess only once and (hopefully) saves
+    some computational resource.
     """
 
-    process_done = subprocess.run(["pip", "freeze"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process_done = subprocess.run(
+        ["pip", "list", "--format=json"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     if process_done.returncode:
-        raise Exception("'pip freeze' failed: %s" % process_done.stderr.decode().strip())
+        raise Exception(
+            "'pip list --format=json' failed: %s" % process_done.stderr.decode().strip()
+        )
 
     frozen_pkgs = dict()
-    for item in process_done.stdout.decode().split():
-        name, version = item.split("==")
-        frozen_pkgs[name] = version
+    for package in json.loads(process_done.stdout.decode()):
+        frozen_pkgs[package["name"]] = package["version"]
 
     pkg_info = dict()
     for pkg in pkg_list:
