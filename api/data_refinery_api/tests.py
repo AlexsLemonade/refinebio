@@ -430,6 +430,16 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
+        # Good, except for invalid email.
+        jdata = json.dumps({"email_address": "bad format!", "data": {"A": ["B"]}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
     @patch("data_refinery_common.message_queue.send_job")
     def test_create_update_dataset(self, mock_send_job):
 
