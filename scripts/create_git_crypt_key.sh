@@ -9,7 +9,8 @@
 
 openssl genrsa -out private.pem 4096
 
-key=$(openssl rsa -in private.pem -outform PEM -pubout)
+# Remove newlines from the key.
+key=$(openssl rsa -in private.pem -outform PEM -pubout | tr -d '\n')
 
 rm private.pem
 
