@@ -15,7 +15,7 @@ rm private.pem
 
 git-crypt export-key git_crypt.key
 
-openssl aes-256-cbc -md md5 -pbkdf2 -iter 100000 -e -in git_crypt.key -out git_crypt.key.enc -k "$key"
+openssl aes-256-cbc -md md5 -e -in git_crypt.key -out git_crypt.key.enc -k "$key"
 
 rm git_crypt.key
 
