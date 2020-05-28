@@ -36,7 +36,6 @@ rm -f env_vars
 echo "export CIRCLE_TAG=$CIRCLE_TAG" >> env_vars
 echo "export DOCKER_ID=$DOCKER_ID" >> env_vars
 echo "export DOCKER_PASSWD=$DOCKER_PASSWD" >> env_vars
-echo "export KEY_FILENAME=$KEY_FILENAME" >> env_vars
 echo "export OPENSSL_KEY=$OPENSSL_KEY" >> env_vars
 echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> env_vars
 echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> env_vars
