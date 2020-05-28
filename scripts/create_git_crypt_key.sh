@@ -26,4 +26,4 @@ echo ""
 echo "It can be unlocked with:"
 echo ""
 echo "OPENSSL_KEY=\"$key\""
-echo 'openssl aes-256-cbc -md md5 -pbkdf2 -iter 100000 -d -in git_crypt.key.enc -out git_crypt.key -k "$OPENSSL_KEY"'
+echo 'openssl aes-256-cbc -md md5 -d -in git_crypt.key.enc -out git_crypt.key -k "$OPENSSL_KEY"'
