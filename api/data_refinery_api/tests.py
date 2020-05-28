@@ -401,7 +401,7 @@ class APITestCases(APITestCase):
         self.assertIsNone(response_json[0]["download_url"])
 
     @patch("data_refinery_common.message_queue.send_job")
-    def test_create_update_dataset(self, mock_send_job):
+    def test_create_dataset_fails_without_email(self, mock_send_job):
 
         # Get a token first
         response = self.client.post(
@@ -420,8 +420,37 @@ class APITestCases(APITestCase):
         self.assertEqual(activated_token["id"], token_id)
         self.assertEqual(activated_token["is_activated"], True)
 
-        # Good
+        # Good, except for missing email.
         jdata = json.dumps({"data": {"A": ["B"]}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    @patch("data_refinery_common.message_queue.send_job")
+    def test_create_update_dataset(self, mock_send_job):
+
+        # Get a token first
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
+        )
+        token = response.json()
+        token["is_activated"] = True
+        token_id = token["id"]
+        response = self.client.put(
+            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
+            json.dumps(token),
+            content_type="application/json",
+        )
+
+        activated_token = response.json()
+        self.assertEqual(activated_token["id"], token_id)
+        self.assertEqual(activated_token["is_activated"], True)
+        # Good
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["B"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -440,7 +469,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()["data"]["A"], ["B"])
 
         # Bad (Duplicates)
-        jdata = json.dumps({"data": {"A": ["B", "B", "B"]}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["B", "B", "B"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -450,7 +479,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 400)
 
         # Bad (Empty Experiment)
-        jdata = json.dumps({"data": {"A": []}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": []}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -460,7 +489,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 400)
 
         # Update, just an experiment accession
-        jdata = json.dumps({"data": {"GSE123": ["ALL"]}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["ALL"]}})
         response = self.client.put(
             reverse("dataset", kwargs={"id": good_id, "version": API_VERSION}),
             jdata,
@@ -473,7 +502,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()["data"]["GSE123"], ["789"])
 
         # Update
-        jdata = json.dumps({"data": {"A": ["C"]}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["C"]}})
         response = self.client.put(
             reverse("dataset", kwargs={"id": good_id, "version": API_VERSION}),
             jdata,
@@ -488,7 +517,7 @@ class APITestCases(APITestCase):
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = True
         dataset.save()
-        jdata = json.dumps({"data": {"A": ["D"]}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["D"]}})
         response = self.client.put(
             reverse("dataset", kwargs={"id": good_id, "version": API_VERSION}),
             jdata,
@@ -497,7 +526,7 @@ class APITestCases(APITestCase):
         self.assertNotEqual(response.json()["data"]["A"], ["D"])
 
         # Bad
-        jdata = json.dumps({"data": 123})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": 123})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -512,7 +541,13 @@ class APITestCases(APITestCase):
 
         # With bad token first
         jdata = json.dumps(
-            {"data": {"A": ["D"]}, "start": True, "no_send_job": True, "token_id": "HEYO"}
+            {
+                "email_address": "baz@gmail.com",
+                "data": {"A": ["D"]},
+                "start": True,
+                "no_send_job": True,
+                "token_id": "HEYO",
+            }
         )
         response = self.client.put(
             reverse("dataset", kwargs={"id": good_id, "version": API_VERSION}),
@@ -546,7 +581,7 @@ class APITestCases(APITestCase):
         # HTTP Header.
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
-        dataset.email_address = None
+        dataset.email_address = "baz@gmail.com"
         dataset.email_ccdl_ok = False
         dataset.save()
 
@@ -705,7 +740,9 @@ class APITestCases(APITestCase):
         experiment_sample_association.experiment = ex2
         experiment_sample_association.save()
 
-        jdata = json.dumps({"data": {"XYZ123": ["1"], "ABC789": ["2"]}})
+        jdata = json.dumps(
+            {"email_address": "baz@gmail.com", "data": {"XYZ123": ["1"], "ABC789": ["2"]}}
+        )
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
