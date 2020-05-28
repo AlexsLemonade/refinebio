@@ -6,19 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0054_datasetannotation'),
+        ("data_refinery_common", "0054_datasetannotation"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dataset',
-            name='email_address',
-            field=models.EmailField(default='null@ccdatalab.org', max_length=255),
+            model_name="dataset",
+            name="email_address",
+            field=models.EmailField(default="null@ccdatalab.org", max_length=255),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='datasetannotation',
-            name='is_public',
+            model_name="datasetannotation",
+            name="is_public",
             field=models.BooleanField(default=False),
         ),
     ]
