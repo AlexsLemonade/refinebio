@@ -39,8 +39,19 @@ class Command(BaseCommand):
             if annotation.data["start"] and should_display_email(annotation.dataset.email_address)
         ]
 
+        # Save the locations permanently, since IP addresses can cycle over time
+        location_cache = dict()
+        for annotation in annotation_queryset:
+            if not "location" in annotation.data:
+                ip = annotation.data["ip"]
+                print(ip)
+                if not ip in location_cache:
+                    location_cache[ip] = get_ip_location(ip)
+                annotation.data["location"] = location_cache[ip]
+                annotation.save()
+
         unique_users = list(set(annotation.dataset.email_address for annotation in annotations))
-        unique_ips = list(set(annotation.data["ip"] for annotation in annotations))
+        unique_locations = list(set(annotation.data["location"] for annotation in annotations))
 
         new_users = ""
         returning_users = ""
@@ -49,8 +60,9 @@ class Command(BaseCommand):
             user_annotations = annotation_queryset.filter(dataset__email_address=email)
             downloads = user_annotations.count()
             total_downloads += downloads
-            unique_locations = list(set(annotation.data["ip"] for annotation in user_annotations))
-            locations = ", ".join(get_ip_location(ip) for ip in unique_locations)
+            locations = ", ".join(
+                list(set(annotation.data["location"] for annotation in user_annotations))
+            )
             is_returning_user = DatasetAnnotation.objects.filter(
                 created_at__lt=start_time, dataset__email_address=email
             )
@@ -62,7 +74,7 @@ class Command(BaseCommand):
 
         if total_downloads > 0:
             fallback_text = "In the last {0} days, {1} users downloaded {2} datasets from {3} locations.".format(
-                days, len(unique_users), total_downloads, len(unique_ips)
+                days, len(unique_users), total_downloads, len(unique_locations)
             )
         else:
             fallback_text = "There were no downloads in the last {0} days.".format(days)
