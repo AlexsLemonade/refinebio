@@ -5,6 +5,7 @@ jobs:
   main_tests:
     working_directory: ~/refinebio
     machine:
+      image: ubuntu-1604:202004-01
       docker_layer_caching: true
     steps:
       - checkout
@@ -71,6 +72,7 @@ jobs:
   common_smasher_tests:
     working_directory: ~/refinebio
     machine:
+      image: ubuntu-1604:202004-01
       docker_layer_caching: true
     steps:
       - checkout
@@ -135,6 +137,7 @@ jobs:
   salmon_and_api_tests:
     working_directory: ~/refinebio
     machine:
+      image: ubuntu-1604:202004-01
       docker_layer_caching: true
     steps:
       - checkout
@@ -189,6 +192,7 @@ jobs:
   tx_illumina_tests:
     working_directory: ~/refinebio
     machine:
+      image: ubuntu-1604:202004-01
       docker_layer_caching: true
     steps:
       - checkout
@@ -229,7 +233,8 @@ jobs:
       # - run: docker image rm ccdlstaging/dr_illumina
 
   affy_agilent_tests:
-    machine: true
+    machine:
+      image: ubuntu-1604:202004-01
     working_directory: ~/refinebio
     steps:
       - checkout
