@@ -14,7 +14,6 @@
 #         Will be used as the version for the system and the tag for Docker images.
 #     - DOCKER_ID -- The username that will be used to log into Dockerhub.
 #     - DOCKER_PASSWD -- The password that will be used to log into Dockerhub.
-#     - KEY_FILENNAME -- The name to use for the decrypted SSH key file.
 #     - OPENSSL_KEY -- The OpenSSl key which will be used to decrypt the SSH key.
 #     - AWS_ACCESS_KEY_ID -- The AWS key id to use when interacting with AWS.
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
@@ -36,8 +35,7 @@ rm -f env_vars
 echo "export CIRCLE_TAG=$CIRCLE_TAG" >> env_vars
 echo "export DOCKER_ID=$DOCKER_ID" >> env_vars
 echo "export DOCKER_PASSWD=$DOCKER_PASSWD" >> env_vars
-echo "export KEY_FILENAME=$KEY_FILENAME" >> env_vars
-echo "export OPENSSL_KEY=$OPENSSL_KEY" >> env_vars
+echo "export OPENSSL_KEY=\"$OPENSSL_KEY\"" >> env_vars
 echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> env_vars
 echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> env_vars
 

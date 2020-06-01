@@ -290,7 +290,8 @@ jobs:
       - run: .circleci/upload_test_coverage.sh foreman
 
   deploy:
-    machine: true
+    machine:
+      image: ubuntu-1604:202004-01
     working_directory: ~/refinebio
     steps:
       - checkout

@@ -3,6 +3,6 @@
 # Unlock encrypted files
 cd ~/refinebio/.circleci
 git clean -f
-openssl aes-256-cbc -md md5 -d -in exported.key.enc -out "$KEY_FILENAME" -k "$OPENSSL_KEY"
-git-crypt unlock "$KEY_FILENAME"
-rm -f "$KEY_FILENAME"
+openssl aes-256-cbc -md md5 -d -in git_crypt.key.enc -out git_crypt.key -k "$OPENSSL_KEY"
+git-crypt unlock git_crypt.key
+rm -f git_crypt.key
