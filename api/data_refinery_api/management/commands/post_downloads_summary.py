@@ -44,7 +44,6 @@ class Command(BaseCommand):
         for annotation in annotation_queryset:
             if not "location" in annotation.data:
                 ip = annotation.data["ip"]
-                print(ip)
                 if not ip in location_cache:
                     location_cache[ip] = get_ip_location(ip)
                 annotation.data["location"] = location_cache[ip]
