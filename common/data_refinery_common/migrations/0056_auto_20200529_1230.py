@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("data_refinery_common", "0054_datasetannotation"),
+        ("data_refinery_common", "0055_auto_20200528_1946"),
     ]
 
     operations = [
