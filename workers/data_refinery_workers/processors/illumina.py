@@ -134,12 +134,12 @@ def _detect_columns(job_context: Dict) -> Dict:
         else:
             job_context["probeId"] = headers[predicted_header]
 
-        # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
+        # Then check to make sure a detection pvalue exists, which is always(?) some form of
+        # 'Detection Pval'
         for header in headers:
             # check if header contains something like "detection pval"
-            pvalue_header = re.match(r"(detection)(\W?)(pval\w*)", header, re.IGNORECASE)
+            pvalue_header = re.search(r"(detection)(\W?)(pval\w*)", header, re.IGNORECASE)
             if pvalue_header:
-                job_context["detectionPval"] = pvalue_header.string
                 break
         else:
             job_context["job"].failure_reason = "Could not detect PValue column!"
@@ -325,8 +325,6 @@ def _run_illumina(job_context: Dict) -> Dict:
             job_context["probeId"],
             "--expression",
             job_context["columnIds"],
-            "--detection",
-            job_context["detectionPval"],
             "--platform",
             job_context["platform"],
             "--inputFile",
@@ -354,6 +352,38 @@ def _run_illumina(job_context: Dict) -> Dict:
         job_context["success"] = False
 
     return job_context
+
+
+def _get_sample_for_column(column: str, job_context: Dict) -> Sample:
+    # First of all check if the title is the column name
+    try:
+        return job_context["samples"].get(title=column)
+    except Sample.DoesNotExist:
+        pass
+
+    # If the column name is not the title, maybe they used the convention
+    # <SAMPLE_TITLE>(.AVG)?_Signal
+    title_match = re.match(r"(?P<title>.*?)(\.AVG)?_Signal", column)
+    if title_match is not None:
+        try:
+            return job_context["samples"].get(title=title_match.group("title"))
+        except Sample.DoesNotExist:
+            pass
+
+    # Or maybe they also have a named detection pvalue column using the same
+    # naming scheme
+    name_match = re.match(r"(?P<name>.*)\.AVG_Signal", column)
+    if name_match is not None:
+        try:
+            return job_context["samples"].get(
+                sampleannotation__data__geo_columns__contains="{}.Detection Pval".format(
+                    name_match.group("name")
+                )
+            )
+        except Sample.DoesNotExist:
+            pass
+
+    return None
 
 
 def _create_result_objects(job_context: Dict) -> Dict:
@@ -387,16 +417,17 @@ def _create_result_objects(job_context: Dict) -> Dict:
         frame.to_csv(frame_path, sep="\t", encoding="utf-8")
 
         # This needs to be the same as the ones in the job context!
-        try:
-            sample = job_context["samples"].get(title=frame.columns.values[0])
-        except Sample.DoesNotExist:
-            logger.error(
-                "Could not find sample for column while splitting Illumina file.",
-                title=frame.columns.values[0],
-                processor_job=job_context["job_id"],
-                file_path=big_tsv,
+        sample = _get_sample_for_column(frame.columns.values[0], job_context)
+        if sample is None:
+            job_context["job"].failure_reason = (
+                "Could not find sample for column "
+                + frame.columns.values[0]
+                + " while splitting Illumina file "
+                + big_tsv
             )
-            continue
+            job_context["success"] = False
+            job_context["job"].no_retry = True
+            return job_context
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path
