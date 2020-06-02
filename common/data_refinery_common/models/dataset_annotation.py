@@ -11,7 +11,7 @@ class DatasetAnnotation(models.Model):
 
     class Meta:
         db_table = "dataset_annotations"
-        base_manager_name = "public_objects"
+        base_manager_name = "objects"
 
     # Managers
     objects = models.Manager()
