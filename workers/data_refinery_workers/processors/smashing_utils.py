@@ -660,7 +660,6 @@ def compile_metadata(job_context: Dict) -> Dict:
     """
     metadata = {}
 
-    metadata["num_samples"] = job_context["num_samples"]
     metadata["num_experiments"] = job_context["experiments"].count()
     metadata["quant_sf_only"] = job_context["dataset"].quant_sf_only
 
@@ -685,6 +684,7 @@ def compile_metadata(job_context: Dict) -> Dict:
         samples[sample.accession_code] = sample.to_metadata_dict()
 
     metadata["samples"] = samples
+    metadata["num_samples"] = len(metadata["samples"])
 
     experiments = {}
     for experiment in job_context["dataset"].get_experiments():

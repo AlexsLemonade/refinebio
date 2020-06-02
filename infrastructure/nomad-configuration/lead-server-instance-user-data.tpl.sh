@@ -93,14 +93,14 @@ chmod +x install_nomad.sh
 apt-get -y install monit htop
 
 echo "
-#!/bin/sh
+#!/bin/bash
 nomad status
 exit \$?
 " >> /home/ubuntu/nomad_status.sh
 chmod +x /home/ubuntu/nomad_status.sh
 
 echo "
-#!/bin/sh
+#!/bin/bash
 killall nomad
 sleep 120
 nomad agent -config /home/ubuntu/server.hcl > /var/log/nomad_server.log &
@@ -110,7 +110,7 @@ chmod +x /home/ubuntu/kill_restart_nomad.sh
 
 echo '
 check program nomad with path "/bin/bash /home/ubuntu/nomad_status.sh" as uid 0 and with gid 0
-    start program = "/home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0 with timeout 240 seconds
+    start program = "/bin/bash /home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0 with timeout 240 seconds
     if status != 0
         then restart
 set daemon 300
