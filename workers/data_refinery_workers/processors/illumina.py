@@ -150,12 +150,12 @@ def _detect_columns(job_context: Dict) -> Dict:
         # Then, finally, create an absolutely bonkers regular expression
         # which will explicitly hit on any sample which contains a sample
         # ID _and_ ignores the magical word 'BEAD', etc. Great!
-        column_ids = ""
+        column_ids = set()
         for sample in job_context["samples"]:
             for offset, header in enumerate(headers, start=1):
 
                 if sample.title == header:
-                    column_ids = column_ids + str(offset) + ","
+                    column_ids.add(offset)
                     continue
 
                 # Sometimes the title might actually be in the description field.
@@ -166,7 +166,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                 for annotation in sample.sampleannotation_set.filter(is_ccdl=False):
                     try:
                         if annotation.data.get("description", "")[0] == header:
-                            column_ids = column_ids + str(offset) + ","
+                            column_ids.add(offset)
                             continue_me = True
                             break
                     except Exception:
@@ -178,7 +178,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                     continue
 
                 if header.upper().replace(" ", "_") == "RAW_VALUE":
-                    column_ids = column_ids + str(offset) + ","
+                    columns_ids.add(offset)
                     continue
 
                 if (
@@ -188,17 +188,15 @@ def _detect_columns(job_context: Dict) -> Dict:
                     and "ARRAY_STDEV" not in header.upper()
                     and "PVAL" not in header.upper().replace(" ", "").replace("_", "")
                 ):
-                    column_ids = column_ids + str(offset) + ","
+                    column_ids.add(offset)
                     continue
 
         for offset, header in enumerate(headers, start=1):
             if "AVG_Signal" in header:
-                column_ids = column_ids + str(offset) + ","
+                column_ids.add(offset)
                 continue
 
-        # Remove the trailing comma
-        column_ids = column_ids[:-1]
-        job_context["columnIds"] = column_ids
+        job_context["columnIds"] = ",".join(map(lambda id: str(id), column_ids))
     except Exception as e:
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
