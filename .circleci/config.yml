@@ -28,6 +28,7 @@ jobs:
       - run: ./scripts/rebuild_es_index.sh
 
       # Install Nomad
+      - run: sudo ./.circleci/fix_ca_certs.sh
       - run: sudo ./scripts/install_nomad.sh
         # Start Nomad and register jobs.
       - run:
@@ -167,6 +168,7 @@ jobs:
           no_output_timeout: 1h
 
       # Install Nomad
+      - run: sudo ./.circleci/fix_ca_certs.sh
       - run: sudo ./scripts/install_nomad.sh
         # Start Nomad and register jobs.
       - run:
@@ -265,6 +267,7 @@ jobs:
       - run: ./scripts/rebuild_es_index.sh
 
       # Install Nomad
+      - run: sudo ./.circleci/fix_ca_certs.sh
       - run: sudo ./scripts/install_nomad.sh
         # Start Nomad and register jobs.
       - run:
