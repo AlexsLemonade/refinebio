@@ -20,7 +20,7 @@ def remove_spaces_from_platform_accessions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("data_refinery_common", "0054_datasetannotation"),
+        ("data_refinery_common", "0056_auto_20200529_1230"),
     ]
 
     operations = [migrations.RunPython(remove_spaces_from_platform_accessions)]
