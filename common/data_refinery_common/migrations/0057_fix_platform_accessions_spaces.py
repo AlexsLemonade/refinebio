@@ -1,4 +1,5 @@
 from django.db import migrations
+from django.utils import timezone
 
 from data_refinery_common.utils import get_supported_rnaseq_platforms
 
@@ -13,7 +14,7 @@ def remove_spaces_from_platform_accessions(apps, schema_editor):
         if not bad_samples:
             continue
 
-        bad_samples.update(platform_accession_code=platform_accession)
+        bad_samples.update(platform_accession_code=platform_accession, last_modified=timezone.now())
         print("Updating platform accession from '%s' to '%s'" % (bad_accession, platform_accession))
 
 
