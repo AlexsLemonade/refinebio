@@ -496,6 +496,9 @@ for image in $worker_images; do
 	# shellcheck disable=2086
         test_command="$(run_tests_with_coverage --tag="$image" $args_without_tag)"
 
+        # Only run interactively if we are on a TTY
+        INTERACTIVE="$(test -t 1 && echo "-it" || echo "-t")"
+
         echo "Running tests with the following command:"
         echo "$test_command"
         docker run -i -t \
@@ -506,6 +509,6 @@ for image in $worker_images; do
                --env AWS_SECRET_ACCESS_KEY \
                --volume "$volume_directory":/home/user/data_store \
                --memory=5G \
-               -it "$image_name" bash -c "$test_command"
+               "$INTERACTIVE" "$image_name" bash -c "$test_command"
     fi
 done

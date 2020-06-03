@@ -87,7 +87,10 @@ HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
 
-docker run -it \
+# Only run interactively if we are on a TTY
+INTERACTIVE="$(test -t 1 && echo "-it" || echo "-t")"
+
+docker run "$INTERACTIVE" \
        --add-host=database:"$DB_HOST_IP" \
        --add-host=nomad:"$HOST_IP" \
        --add-host=elasticsearch:"$ES_HOST_IP" \
@@ -96,4 +99,4 @@ docker run -it \
        --env-file "$service/environments/local" \
        --volume /tmp:/tmp \
        --volume "$volume_directory":/home/user/data_store \
-       --interactive dr_shell python3 manage.py "$@"
+       dr_shell python3 manage.py "$@"
