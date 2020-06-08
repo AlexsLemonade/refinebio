@@ -1,6 +1,6 @@
 boto3>=1.9.199
 coveralls
-django==2.2.10
+django==2.2.13
 matplotlib
 numpy
 pandas
