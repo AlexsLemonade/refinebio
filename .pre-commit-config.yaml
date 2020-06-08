@@ -1,5 +1,5 @@
 ---
-exclude: '^(.*\.pem|infrasatructure/environments/*)$'
+exclude: '^(.*\.pem|.*\.tfvars)$'
 
 
 repos:
