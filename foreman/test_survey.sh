@@ -1,6 +1,50 @@
 #!/bin/sh
 
-# Script for executing Django PyUnit tests within a Docker container.
+# Script for testing the surveying of an accession manually (e.g. from a dataset request)
+print_options() {
+    cat << EOF
+There are two required arguments for this script that come from survey_experiment():
+-s specifies which surveyor to use.
+-a specifies which experiment accession should be surveyed.
+EOF
+}
+
+while getopts ":s:a:h" opt; do
+    case $opt in
+    s)
+        export SURVEYOR=$OPTARG
+        ;;
+    a)
+        export ACCESSION=$OPTARG
+        ;;
+    h)
+        print_description
+        echo
+        print_options
+        exit 0
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        print_options >&2
+        exit 1
+        ;;
+    :)
+        echo "Option -$OPTARG requires an argument." >&2
+        print_options >&2
+        exit 1
+        ;;
+    esac
+done
+
+if [ -z "$SURVEYOR" ]; then
+    echo 'Error: must specify which surveyor to use with -s' >&2
+    exit 1
+fi
+
+if [ -z "$ACCESSION" ]; then
+    echo 'Error: must specify which accession to survey with -a' >&2
+    exit 1
+fi
 
 # This script should always run as if it were being called from
 # the directory it lives in.
@@ -55,4 +99,6 @@ docker run \
        --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file foreman/environments/test \
        --volume "$volume_directory":/home/user/data_store \
-       -it ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage --exclude-tag=manual "$@")"
+       -e SURVEYOR="$SURVEYOR" \
+       -e ACCESSION="$ACCESSION" \
+       -it ccdlstaging/dr_foreman bash -c "python3 manage.py test --tag=manual ."

@@ -847,3 +847,45 @@ class EnaFallbackTestCase(TransactionTestCase):
 
             # The downloader job will take a while to complete. Let's not wait.
             print(downloader_job.kill_nomad_job())
+
+
+# This test uses the special tag "manual" because it should only be run from the "test_survey.sh" script
+class SurveyTestCase(TransactionTestCase):
+    @tag("manual")
+    def test_survey(self):
+        """Survey the given sample"""
+
+        # Clear out pre-existing work dirs so there's no conflicts:
+        self.env = EnvironmentVarGuard()
+        self.env.set("RUNING_IN_CLOUD", "False")
+        with self.env:
+            for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
+                shutil.rmtree(work_dir)
+
+            survey_job = surveyor.survey_experiment(
+                get_env_variable("ACCESSION"), get_env_variable("SURVEYOR")
+            )
+
+            self.assertTrue(survey_job.success)
+
+            downloader_jobs = DownloaderJob.objects.all()
+            self.assertGreater(downloader_jobs.count(), 0)
+
+            logger.info("Survey Job finished, waiting for Downloader Jobs to complete.")
+            start_time = timezone.now()
+            for downloader_job in downloader_jobs:
+                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time)
+                self.assertTrue(downloader_job.success)
+
+            processor_jobs = ProcessorJob.objects.all().exclude(
+                abort=True
+            )  # exclude aborted processor jobs
+            self.assertGreater(processor_jobs.count(), 0)
+
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
+            start_time = timezone.now()
+            for processor_job in processor_jobs:
+                processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                if not processor_job.success:
+                    logger.error(processor_job.failure_reason)
+                self.assertTrue(processor_job.success)
