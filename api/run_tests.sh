@@ -36,12 +36,14 @@ ES_HOST_IP=$(get_docker_es_ip_address)
 
 
 # Only run interactively if we are on a TTY
-INTERACTIVE="$(test -t 1 && echo "-it" || echo "-t")"
+if [ -t 1 ]; then
+    INTERACTIVE="-i"
+fi
 
-docker run \
+docker run -t $INTERACTIVE \
        --add-host=database:"$DB_HOST_IP" \
        --add-host=nomad:"$HOST_IP" \
        --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file api/environments/test \
        --volume "$volume_directory":/home/user/data_store \
-       "$INTERACTIVE" ccdlstaging/dr_api_local bash -c "$(run_tests_with_coverage "$@")"
+       ccdlstaging/dr_api_local bash -c "$(run_tests_with_coverage "$@")"

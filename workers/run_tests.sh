@@ -497,11 +497,13 @@ for image in $worker_images; do
         test_command="$(run_tests_with_coverage --tag="$image" $args_without_tag)"
 
         # Only run interactively if we are on a TTY
-        INTERACTIVE="$(test -t 1 && echo "-it" || echo "-t")"
+        if [ -t 1 ]; then
+            INTERACTIVE="-i"
+        fi
 
         echo "Running tests with the following command:"
         echo "$test_command"
-        docker run -i -t \
+        docker run -t $INTERACTIVE \
                --add-host=database:"$DB_HOST_IP" \
                --add-host=nomad:"$HOST_IP" \
                --env-file workers/environments/test \
@@ -509,6 +511,6 @@ for image in $worker_images; do
                --env AWS_SECRET_ACCESS_KEY \
                --volume "$volume_directory":/home/user/data_store \
                --memory=5G \
-               "$INTERACTIVE" "$image_name" bash -c "$test_command"
+               "$image_name" bash -c "$test_command"
     fi
 done

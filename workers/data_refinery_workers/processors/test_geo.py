@@ -109,6 +109,7 @@ class IlluminaToPCLTestCase(TestCase):
 
         job = prepare_illumina_job(organism)
         final_context = illumina.illumina_to_pcl(job.pk)
+        self.assertTrue(final_context["success"])
 
         for sample in final_context["samples"]:
             smashme = sample.get_most_recent_smashable_result_file()
@@ -161,7 +162,7 @@ class IlluminaToPCLTestCase(TestCase):
 
         sample = Sample()
         sample.accession_code = "ABCD-1234"
-        sample.title = "hypoxia_Signal"
+        sample.title = "CB CD34+ hypoxia"
         sample.organism = organism
         sample.save()
 
@@ -170,7 +171,19 @@ class IlluminaToPCLTestCase(TestCase):
         sample_assoc.sample = sample
         sample_assoc.save()
 
+        sample2 = Sample()
+        sample2.accession_code = "ABCD-1235"
+        sample2.title = "CB CD34+ normoxia"
+        sample2.organism = organism
+        sample2.save()
+
+        sample_assoc2 = OriginalFileSampleAssociation()
+        sample_assoc2.original_file = og_file
+        sample_assoc2.sample = sample2
+        sample_assoc2.save()
+
         final_context = illumina.illumina_to_pcl(pj.pk)
+        self.assertTrue(final_context["success"])
         self.assertEqual(final_context["platform"], "illuminaHumanv3")
 
         for key in final_context["samples"][0].sampleannotation_set.all()[0].data.keys():

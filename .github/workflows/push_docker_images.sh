@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 REPO="docker.pkg.github.com/$GITHUB_REPOSITORY"
 if [ -z "$IMAGES" ]; then
     echo "Error: must put images to pull in \$IMAGES" >&2

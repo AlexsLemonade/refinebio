@@ -328,9 +328,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object.save()
                 logger.debug("Created Sample: " + str(sample_object))
 
+                metadata = sample.metadata
+                metadata["geo_columns"] = list(sample.columns.index)
+
                 sample_annotation = SampleAnnotation()
                 sample_annotation.sample = sample_object
-                sample_annotation.data = sample.metadata
+                sample_annotation.data = metadata
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
 

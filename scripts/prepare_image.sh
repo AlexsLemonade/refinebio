@@ -103,10 +103,18 @@ else
             echo "Failed to build $image_name, trying again."
         fi
 
+
+        if $GITHUB_ACTIONS; then
+            CACHE_REPO="docker.pkg.github.com/$GITHUB_REPOSITORY"
+            CACHED_PACKAGE="$CACHE_REPO/dr_$image"
+            CACHE="--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $CACHED_PACKAGE"
+        fi
+
         docker build \
                -t "$image_name" \
                -f "$service/dockerfiles/Dockerfile.$image" \
-               --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
+               --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
+               $CACHE .
         finished=$?
         attempts=$((attempts+1))
     done

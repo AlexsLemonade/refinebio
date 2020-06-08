@@ -12,6 +12,7 @@ jobs:
     #   DRDB: ${{github.run_id}}_${{github.job}}_drdb
     env:
       IMAGES: migrations api_local downloaders no_op foreman smasher
+      DOCKER_BUILDKIT: 1
     steps:
       - uses: actions/checkout@v2
       - name: Login to docker.pkg.github.com for cached docker images
