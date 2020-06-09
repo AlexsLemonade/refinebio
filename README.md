@@ -210,6 +210,8 @@ And then the ES Indexes (akin to Postgres 'databases') can be created with:
 ./scripts/rebuild_es_index.sh
 ```
 
+Note: If the image pull request for `dr_shell` is denied, then you may need to prepare the distribution directory with the script in the next step first.
+
 #### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
