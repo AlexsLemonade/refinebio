@@ -299,6 +299,8 @@ jobs:
       DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
+      - name: Free up space
+        run: ./.circleci/cleanup_instance.sh
       - uses: actions/checkout@v2
 
       - name: Login to docker.pkg.github.com for cached docker images
