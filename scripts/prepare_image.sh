@@ -104,7 +104,7 @@ else
         fi
 
 
-        if $GITHUB_ACTIONS; then
+        if test "$GITHUB_ACTIONS"; then
             CACHE_REPO="docker.pkg.github.com/$GITHUB_REPOSITORY"
             CACHED_PACKAGE="$CACHE_REPO/dr_$image"
             CACHE="--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $CACHED_PACKAGE"
