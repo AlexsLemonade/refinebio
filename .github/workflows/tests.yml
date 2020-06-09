@@ -128,7 +128,6 @@ jobs:
         run: |
           mkdir -p test_volume
           chmod -R a+rw test_volume
-          sudo chown -R circleci:circleci test_volume
           ./common/run_tests.sh
           .circleci/upload_test_coverage.sh common
 
@@ -140,18 +139,21 @@ jobs:
 
       - name: Run smasher tests
         run: |
-          sudo chown -R circleci:circleci workers/test_volume/
+          mkdir -p workers/test_volume
+          chmod -R a+rw workers/test_volume
           .github/workflows/filter_tests.sh -t smasher
 
       - name: Run janitor tests
         run: |
-          sudo chown -R circleci:circleci workers/test_volume/
+          mkdir -p workers/test_volume
+          chmod -R a+rw workers/test_volume
           .github/workflows/filter_tests.sh -t janitor
 
       # Run Compendia tests.
       - name: Run compendia tests
         run: |
-          sudo chown -R circleci:circleci workers/test_volume/
+          mkdir -p workers/test_volume
+          chmod -R a+rw workers/test_volume
           .github/workflows/filter_tests.sh -t compendia
 
       - name: Push built docker images
@@ -208,7 +210,8 @@ jobs:
 
       - name: Run API tests
         run: |
-          mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
+          mkdir -p test_volume
+          chmod -R a+rw test_volume
           ./api/run_tests.sh
           .circleci/upload_test_coverage.sh api
 
@@ -239,7 +242,6 @@ jobs:
         run: |
           mkdir -p test_volume
           chmod -R a+rw test_volume
-          sudo chown -R circleci:circleci test_volume
           ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
           .circleci/upload_test_coverage.sh foreman
 
@@ -283,7 +285,8 @@ jobs:
 
       - name: Run Illumina tests
         run: |
-          sudo chown -R circleci:circleci workers/test_volume/
+          mkdir -p workers/test_volume
+          chmod -R a+rw workers/test_volume
           .github/workflows/filter_tests.sh -t illumina
 
       - name: Push built docker images
@@ -326,12 +329,14 @@ jobs:
 
       - name: Run affymetrix tests
         run: |
-          sudo chown -R circleci:circleci workers/test_volume/
+          mkdir -p workers/test_volume
+          chmod -R a+rw workers/test_volume
           .github/workflows/filter_tests.sh -t affymetrix
 
       - name: Run agilent tests
         run: |
-          sudo chown -R circleci:circleci workers/test_volume/
+          mkdir -p workers/test_volume
+          chmod -R a+rw workers/test_volume
           .circleci/filter_tests.sh -t agilent
 
       - name: Install Nomad
@@ -358,7 +363,8 @@ jobs:
 
       - name: Run affymetrix end-to-end test
         run: |
-          mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
+          mkdir -p test_volume
+          chmod -R a+rw test_volume
           ./foreman/run_tests.sh --tag=affymetrix
           .circleci/upload_test_coverage.sh foreman
 
