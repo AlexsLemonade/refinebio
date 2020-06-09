@@ -90,7 +90,7 @@ jobs:
         run: ./.github/workflows/push_docker_images.sh
 
   common_smasher_tests:
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     env:
       IMAGES: migrations common_tests smasher compendia
       DOCKER_BUILDKIT: 1
@@ -158,7 +158,7 @@ jobs:
         run: ./.github/workflows/push_docker_images.sh
 
   syntax_test:
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
@@ -170,7 +170,7 @@ jobs:
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     env:
       IMAGES: migrations salmon api_local downloaders transcriptome foreman
       DOCKER_BUILDKIT: 1
@@ -245,7 +245,7 @@ jobs:
         run: ./.github/workflows/push_docker_images.sh
 
   tx_illumina_tests:
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     env:
       IMAGES: migrations illumina
       DOCKER_BUILDKIT: 1
@@ -288,7 +288,7 @@ jobs:
         run: ./.github/workflows/push_docker_images.sh
 
   affy_agilent_tests:
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     env:
       IMAGES: migrations affymetrix foreman
       DOCKER_BUILDKIT: 1
