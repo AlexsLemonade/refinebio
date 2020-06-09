@@ -229,8 +229,8 @@ jobs:
           docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
           docker push localhost:5000/dr_downloaders
           ./scripts/prepare_image.sh -i transcriptome -s workers
-          docker tag ccdlstaging/dr_no_op localhost:5000/dr_no_op
-          docker push localhost:5000/dr_no_op
+          docker tag ccdlstaging/dr_transcriptome localhost:5000/dr_transcriptome
+          docker push localhost:5000/dr_transcriptome
           ./scripts/prepare_image.sh -i salmon -s workers
           docker tag ccdlstaging/dr_salmon localhost:5000/dr_salmon
           docker push localhost:5000/dr_salmon
