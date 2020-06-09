@@ -13,6 +13,7 @@ jobs:
     env:
       IMAGES: migrations api_local downloaders no_op foreman smasher
       DOCKER_BUILDKIT: 1
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
       - name: Login to docker.pkg.github.com for cached docker images
@@ -68,7 +69,7 @@ jobs:
       # build time is saved by only building those layers once.
       - name: Run downloader tests
         run: |
-          .circleci/filter_tests.sh -t downloaders
+          .github/workflows/filter_tests.sh -t downloaders
 
       - name: Run foreman tests
         run: |
@@ -85,12 +86,12 @@ jobs:
 
       - name: Run NO_OP tests
         run: |
-          .circleci/filter_tests.sh -t no_op
+          .github/workflows/filter_tests.sh -t no_op
 
       # Run QN tests.
       - name: Run QN tests
         run: |
-          .circleci/filter_tests.sh -t qn
+          .github/workflows/filter_tests.sh -t qn
 
       - name: Push built docker images
         run: ./.github/workflows/push_docker_images.sh
