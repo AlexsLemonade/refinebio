@@ -168,7 +168,7 @@ jobs:
           pip install pre-commit
 
       - name: Run pre-commit hooks on all files
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: python -m pre-commit run --all-files --show-diff-on-failure
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
