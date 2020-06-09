@@ -7,25 +7,18 @@ jobs:
   # These are grouped together because in total they take less time than our other tests individually.
   main_tests:
     runs-on: ubuntu-latest
-    # container: docker:dind
-    # env:
-    #   DRDB: ${{github.run_id}}_${{github.job}}_drdb
     env:
       IMAGES: migrations api_local downloaders no_op foreman smasher
       DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+
       - name: Pull cached docker images
         run: ./.github/workflows/pull_docker_images.sh
-
-      # - name: Install dependencies
-      #   run: apk add perl curl jq
-
-      # - name: Clean up the VM
-      #   run: sudo ./.circleci/cleanup_instance.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
@@ -95,247 +88,277 @@ jobs:
 
       - name: Push built docker images
         run: ./.github/workflows/push_docker_images.sh
-#   common_smasher_tests:
-#     working_directory: ~/refinebio
-#     machine:
-#       docker_layer_caching: true
-#     steps:
-#       - checkout
 
-#       # Clean up stuff circle provides that we don't need.
-#       - run: sudo ./.circleci/cleanup_instance.sh
+  common_smasher_tests:
+    runs_on: ubuntu-latest
+    env:
+      IMAGES: migrations common_tests smasher compendia
+      DOCKER_BUILDKIT: 1
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
 
-#       # Setup Postgres in a Container
-#       - run: ./scripts/run_postgres.sh
-#       - run: ./scripts/run_es.sh
-#       # Let Postgres start up.
-#       - run: sleep 30
-#       # Finish setting up Postgres now that it's running.
-#       - run: ./scripts/install_db_docker.sh
+      - name: Login to docker.pkg.github.com for cached docker images
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
 
-#       # Install our application. Provides the data_refinery_common package for the other images.
-#       - run: chmod -R a+wr common
-#       - run: ./scripts/update_models.sh
+      - name: Pull cached docker images
+        run: ./.github/workflows/pull_docker_images.sh
 
-#       # Run Common Tests.
-#       - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
-#       - run: ./common/run_tests.sh
-#       - run: .circleci/upload_test_coverage.sh common
+      - name: Start Postgres
+        run: ./scripts/run_postgres.sh
 
-#       - run: ./scripts/prepare_image.sh -i smasher -s workers -d localhost:5000
+      - name: Start Elasticsearch
+        run: ./scripts/run_es.sh
 
-#       # Run Smasher tests.
-#       - run: sudo chown -R circleci:circleci workers/test_volume/
-#       - run:
-#           command: .circleci/filter_tests.sh -t smasher
-#           # Smashing can apparently take a long time on CI
-#           no_output_timeout: 1h
+      - name: Pause for initialization
+        run: sleep 30
 
-#       # Run Janitor tests.
-#       - run: sudo chown -R circleci:circleci workers/test_volume/
-#       - run:
-#           command: .circleci/filter_tests.sh -t janitor
-#           no_output_timeout: 1h
+      - name: Install the database
+        run: ./scripts/install_db_docker.sh
 
-#       # Run Compendia tests.
-#       - run: sudo chown -R circleci:circleci workers/test_volume/
-#       - run:
-#           command: .circleci/filter_tests.sh -t compendia
-#           no_output_timeout: 1h
+      - name: Update the models
+        run: |
+          chmod -R a+wr common
+          ./scripts/update_models.sh
 
-#   syntax_test:
-#     working_directory: ~/refinebio
-#     docker:
-#       - image: circleci/python:3.6.4
-#     steps:
-#       - checkout
+      - name: Rebuild the Elasticsearch index
+        run: ./scripts/rebuild_es_index.sh
 
-#       - run:
-#           name: Install build & test dependencies
-#           command: sudo pip3 install pre-commit==1.21.0
+      - name: Run common tests
+        run: |
+          mkdir -p test_volume
+          chmod -R a+rw test_volume
+          sudo chown -R circleci:circleci test_volume
+          ./common/run_tests.sh
+          .circleci/upload_test_coverage.sh common
 
-#       - run:
-#           name: Run pre-commit hooks on all files
-#           command: pre-commit run --all-files --show-diff-on-failure
+      - name: Prepare smasher image
+      - run: |
+          ./scripts/prepare_image.sh -i smasher -s workers
+          docker tag ccdlstaging/dr_smasher localhost:5000/dr_smasher
+          docker push localhost:5000/dr_smasher
 
-#   # This tests workers tests tagged as 'salmon'
-#   salmon_and_api_tests:
-#     working_directory: ~/refinebio
-#     machine:
-#       docker_layer_caching: true
-#     steps:
-#       - checkout
+      - name: Run smasher tests
+        run: |
+          sudo chown -R circleci:circleci workers/test_volume/
+          .github/workflows/filter_tests.sh -t smasher
 
-#       # Clean up stuff circle provides that we don't need.
-#       - run: sudo ./.circleci/cleanup_instance.sh
+      - name: Run janitor tests
+        run: |
+          sudo chown -R circleci:circleci workers/test_volume/
+          .github/workflows/filter_tests.sh -t janitor
 
-#       # Setup Postgres in a Container
-#       - run: ./scripts/run_postgres.sh
-#       - run: ./scripts/run_es.sh
-#       # Let Postgres start up.
-#       - run: sleep 30
-#       # Finish setting up Postgres now that it's running.
-#       - run: ./scripts/install_db_docker.sh
+      # Run Compendia tests.
+      - name: Run compendia tests
+        run: |
+          sudo chown -R circleci:circleci workers/test_volume/
+          .github/workflows/filter_tests.sh -t compendia
 
-#       # Install our application. Provides the data_refinery_common package for the other images.
-#       - run: chmod -R a+wr common
-#       - run: ./scripts/update_models.sh
+      - name: Push built docker images
+        run: ./.github/workflows/push_docker_images.sh
 
-#       # Update ES models
-#       - run: ./scripts/rebuild_es_index.sh
+  syntax_test:
+    runs_on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
-#       # Run API Tests.
-#       - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
-#       - run: ./api/run_tests.sh
-#       - run: .circleci/upload_test_coverage.sh api
+      - name: Install build & test dependencies
+        run: sudo pip3 install pre-commit==1.21.0
 
-#       - run:
-#           command: .circleci/filter_tests.sh -t salmon
-#           no_output_timeout: 1h
+      - name: Run pre-commit hooks on all files
+        run: pre-commit run --all-files --show-diff-on-failure
 
-#       # Install Nomad
-#       - run: sudo ./.circleci/fix_ca_certs.sh
-#       - run: sudo ./scripts/install_nomad.sh
-#         # Start Nomad and register jobs.
-#       - run:
-#           command: sudo -E ./scripts/run_nomad.sh -e test
+  # This tests workers tests tagged as 'salmon'
+  salmon_and_api_tests:
+    runs_on: ubuntu-latest
+    env:
+      IMAGES: migrations salmon api_local downloaders transcriptome foreman
+      DOCKER_BUILDKIT: 1
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
 
-#       # For the salmon end-to-end tests.
-#       - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
-#       - run: docker push localhost:5000/dr_downloaders
-#       - run: ./scripts/prepare_image.sh -i transcriptome -s workers -d localhost:5000
-#       - run: docker push localhost:5000/dr_transcriptome
-#       # This docker image should have already been built, but with the wrong dockerhub repo.
-#       - run: ./scripts/prepare_image.sh -i salmon -s workers -d localhost:5000
-#       - run: docker push localhost:5000/dr_salmon
+      - name: Login to docker.pkg.github.com for cached docker images
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
 
-#       # Containers run as a different user so we need to give them permission to the test directory.
-#       - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
-#       - run: ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
-#       - run: .circleci/upload_test_coverage.sh foreman
+      - name: Pull cached docker images
+        run: ./.github/workflows/pull_docker_images.sh
 
-#   tx_illumina_tests:
-#     working_directory: ~/refinebio
-#     machine:
-#       docker_layer_caching: true
-#     steps:
-#       - checkout
+      - name: Start Postgres
+        run: ./scripts/run_postgres.sh
 
-#       # Clean up stuff circle provides that we don't need.
-#       - run: sudo ./.circleci/cleanup_instance.sh
+      - name: Start Elasticsearch
+        run: ./scripts/run_es.sh
 
-#       # Setup Postgres in a Container
-#       - run: ./scripts/run_postgres.sh
-#       - run: ./scripts/run_es.sh
-#       # Let Postgres start up.
-#       - run: sleep 30
-#       # Finish setting up Postgres now that it's running.
-#       - run: ./scripts/install_db_docker.sh
+      - name: Pause for initialization
+        run: sleep 30
 
-#       # Install our application. Provides the data_refinery_common package for the other images.
-#       - run: chmod -R a+wr common
-#       - run: ./scripts/update_models.sh
+      - name: Install the database
+        run: ./scripts/install_db_docker.sh
 
-#       - run: ./scripts/prepare_image.sh -i transcriptome -s workers
-#       - run: .circleci/filter_tests.sh -t transcriptome
+      - name: Update the models
+        run: |
+          chmod -R a+wr common
+          ./scripts/update_models.sh
 
-#       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
-#       # from making sure all the files in workers/test_volume have read/write permissions.
-#       - run: sudo chown -R circleci:circleci workers/test_volume/
+      - name: Rebuild the Elasticsearch index
+        run: ./scripts/rebuild_es_index.sh
 
-#       # Run Illumina tests.
-#       # - run: .circleci/filter_tests.sh -t illumina
+      - name: Run API tests
+        run: |
+          mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
+          ./api/run_tests.sh
+          .circleci/upload_test_coverage.sh api
 
-#       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
-#       # from making sure all the files in workers/test_volume have read/write permissions.
-#       - run: sudo chown -R circleci:circleci workers/test_volume/
+      - name: Run salmon tests
+        run: .github/workflows/filter_tests.sh -t salmon
 
-#       # We've been running out of space while downloading the Affy
-#       # image, so clear out other images to ensure enough space for it.
-#       - run: docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true
-#       - run: docker image rm ccdlstaging/dr_transcriptome
-#       # - run: docker image rm ccdlstaging/dr_illumina
+      - name: Install Nomad
+        run: |
+          sudo ./.circleci/fix_ca_certs.sh
+          sudo ./scripts/install_nomad.sh
 
-#   affy_agilent_tests:
-#     machine: true
-#     working_directory: ~/refinebio
-#     steps:
-#       - checkout
+      - name: Start Nomad
+        run: sudo -E ./scripts/run_nomad.sh -e test
 
-#       # Clean up stuff circle provides that we don't need.
-#       - run: sudo ./.circleci/cleanup_instance.sh
+      - name: Prepare docker images for end-to-end tests
+        run: |
+          ./scripts/prepare_image.sh -i downloaders -s workers
+          docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
+          docker push localhost:5000/dr_downloaders
+          ./scripts/prepare_image.sh -i transcriptome -s workers
+          docker tag ccdlstaging/dr_no_op localhost:5000/dr_no_op
+          docker push localhost:5000/dr_no_op
+          ./scripts/prepare_image.sh -i salmon -s workers
+          docker tag ccdlstaging/dr_salmon localhost:5000/dr_salmon
+          docker push localhost:5000/dr_salmon
 
-#       # Setup Postgres in a Container
-#       - run: ./scripts/run_postgres.sh
-#       - run: ./scripts/run_es.sh
-#       # Let Postgres start up.
-#       - run: sleep 30
-#       # Finish setting up Postgres now that it's running.
-#       - run: ./scripts/install_db_docker.sh
+      - name: Run salmon end-to-end tests
+        run: |
+          mkdir -p test_volume
+          chmod -R a+rw test_volume
+          sudo chown -R circleci:circleci test_volume
+          ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
+          .circleci/upload_test_coverage.sh foreman
 
-#       # Install our application. Provides the data_refinery_common package for the other images.
-#       - run: chmod -R a+wr common
-#       - run: ./scripts/update_models.sh
+      - name: Push built docker images
+        run: ./.github/workflows/push_docker_images.sh
 
-#       - run:
-#           command: .circleci/filter_tests.sh -t affymetrix
-#           # This takes a while because the affymetrix image is huge
-#           no_output_timeout: 1h
+  tx_illumina_tests:
+    runs_on: ubuntu-latest
+    env:
+      IMAGES: migrations illumina
+      DOCKER_BUILDKIT: 1
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
 
-#       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
-#       # from making sure all the files in workers/test_volume have read/write permissions.
-#       - run: sudo chown -R circleci:circleci workers/test_volume/
+      - name: Login to docker.pkg.github.com for cached docker images
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
 
-#       # This doesn't take as long because the image has already been pulled.
-#       - run: .circleci/filter_tests.sh -t agilent
+      - name: Pull cached docker images
+        run: ./.github/workflows/pull_docker_images.sh
 
-#       # Update ES models
-#       - run: ./scripts/rebuild_es_index.sh
+      - name: Start Postgres
+        run: ./scripts/run_postgres.sh
 
-#       # Install Nomad
-#       - run: sudo ./.circleci/fix_ca_certs.sh
-#       - run: sudo ./scripts/install_nomad.sh
-#         # Start Nomad and register jobs.
-#       - run:
-#           command: sudo -E ./scripts/run_nomad.sh -e test
+      - name: Start Elasticsearch
+        run: ./scripts/run_es.sh
 
-#       # The foreman includes the end-to-end tests. One of these
-#       # end-to-end tests is specific to affymetrix, so we run it here
-#       # since we have the image for it, but we also need the downloaders image.
-#       - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
-#       - run: docker push localhost:5000/dr_downloaders
+      - name: Pause for initialization
+        run: sleep 30
 
-#       # This image was built by the affymetrix workers tests, just
-#       # gotta retag it so it can go into the local docker repo.
-#       - run: docker tag ccdlstaging/dr_affymetrix:latest localhost:5000/dr_affymetrix:latest
-#       - run: docker push localhost:5000/dr_affymetrix
+      - name: Install the database
+        run: ./scripts/install_db_docker.sh
 
-#       # Containers run as a different user so we need to give them permission to the test directory.
-#       - run: mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
-#       - run:
-#           command: ./foreman/run_tests.sh --tag=affymetrix
-#           # This takes more than 10 minutes, but not much.
-#           no_output_timeout: 20m
-#       - run: .circleci/upload_test_coverage.sh foreman
+      - name: Update the models
+        run: |
+          chmod -R a+wr common
+          ./scripts/update_models.sh
 
-# # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-# jobs:
-#   # This workflow contains a single job called "build"
-#   build:
-#     # The type of runner that the job will run on
-#     runs-on: ubuntu-latest
+      - name: Rebuild the Elasticsearch index
+        run: ./scripts/rebuild_es_index.sh
 
-#     # Steps represent a sequence of tasks that will be executed as part of the job
-#     steps:
-#     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-#     - uses: actions/checkout@v2
+      - name: Run Illumina tests
+        run: |
+          sudo chown -R circleci:circleci workers/test_volume/
+          .github/workflows/filter_tests.sh -t illumina
 
-#     # Runs a single command using the runners shell
-#     - name: Run a one-line script
-#       run: echo Hello, world!
+      - name: Push built docker images
+        run: ./.github/workflows/push_docker_images.sh
 
-#     # Runs a set of commands using the runners shell
-#     - name: Run a multi-line script
-#       run: |
-#         echo Add other actions to build,
-#         echo test, and deploy your project.
+  affy_agilent_tests:
+    runs_on: ubuntu-latest
+    env:
+      IMAGES: migrations affymetrix foreman
+      DOCKER_BUILDKIT: 1
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login to docker.pkg.github.com for cached docker images
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+
+      - name: Pull cached docker images
+        run: ./.github/workflows/pull_docker_images.sh
+
+      - name: Start Postgres
+        run: ./scripts/run_postgres.sh
+
+      - name: Start Elasticsearch
+        run: ./scripts/run_es.sh
+
+      - name: Pause for initialization
+        run: sleep 30
+
+      - name: Install the database
+        run: ./scripts/install_db_docker.sh
+
+      - name: Update the models
+        run: |
+          chmod -R a+wr common
+          ./scripts/update_models.sh
+
+      - name: Rebuild the Elasticsearch index
+        run: ./scripts/rebuild_es_index.sh
+
+      - name: Run affymetrix tests
+        run: |
+          sudo chown -R circleci:circleci workers/test_volume/
+          .github/workflows/filter_tests.sh -t affymetrix
+
+      - name: Run agilent tests
+        run: |
+          sudo chown -R circleci:circleci workers/test_volume/
+          .circleci/filter_tests.sh -t agilent
+
+      - name: Install Nomad
+        run: |
+          sudo ./.circleci/fix_ca_certs.sh
+          sudo ./scripts/install_nomad.sh
+
+      - name: Start Nomad
+        run: sudo -E ./scripts/run_nomad.sh -e test
+
+      # The foreman includes the end-to-end tests. One of these
+      # end-to-end tests is specific to affymetrix, so we run it here
+      # since we have the image for it, but we also need the downloaders image.
+      - name: Prepare images for the affymetrix end-to-end test
+        run: |
+          ./scripts/prepare_image.sh -i downloaders -s workers
+          docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
+          docker push localhost:5000/dr_downloaders
+
+          # This image was built by the affymetrix workers tests, just
+          # gotta retag it so it can go into the local docker repo.
+          docker tag ccdlstaging/dr_affymetrix:latest localhost:5000/dr_affymetrix:latest
+          docker push localhost:5000/dr_affymetrix
+
+      - name: Run affymetrix end-to-end test
+        run: |
+          mkdir -p test_volume && chmod -R a+rw test_volume && sudo chown -R circleci:circleci test_volume
+          ./foreman/run_tests.sh --tag=affymetrix
+          .circleci/upload_test_coverage.sh foreman
+
+      - name: Push built docker images
+        run: ./.github/workflows/push_docker_images.sh
