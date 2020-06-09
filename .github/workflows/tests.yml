@@ -163,7 +163,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install build & test dependencies
-        run: sudo -H pip3 install pre-commit==1.21.0
+        run: sudo -H pip3 install setuptools==47.1.1 pre-commit==1.21.0
 
       - name: Run pre-commit hooks on all files
         run: pre-commit run --all-files --show-diff-on-failure
