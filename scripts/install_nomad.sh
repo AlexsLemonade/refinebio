@@ -6,6 +6,12 @@
 # These assumptions/installations were based on what is installed by default in
 # the AWS Ubuntu AMI.
 
+# First, update the local CA certificates
+# adapted from: https://stackoverflow.com/questions/62107565/wget-and-curl-stopped-working-with-https-wrongly-complain-about-an-expired-cert
+apt update && apt install ca-certificates
+sed -i '/mozilla\/AddTrust_External/d' /etc/ca-certificates.conf
+update-ca-certificates -f -v
+
 # Import Hashicorps' Key.
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 

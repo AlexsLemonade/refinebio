@@ -98,6 +98,7 @@ echo "Finished building new images, running run_terraform.sh."
 run_on_deploy_box "sudo touch /var/log/deploy_$CIRCLE_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/deploy_$CIRCLE_TAG.log"
 run_on_deploy_box "source env_vars && echo -e '######\nStarting new deploy for $CIRCLE_TAG\n######' >> /var/log/deploy_$CIRCLE_TAG.log 2>&1"
+run_on_deploy_box "sudo ./.circleci/fix_ca_certs.sh >> /var/log/deploy_$CIRCLE_TAG.log 2>&1"
 run_on_deploy_box "source env_vars && ./.circleci/run_terraform.sh >> /var/log/deploy_$CIRCLE_TAG.log 2>&1"
 run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CIRCLE_TAG finished!\n######' >> /var/log/deploy_$CIRCLE_TAG.log 2>&1"
 
