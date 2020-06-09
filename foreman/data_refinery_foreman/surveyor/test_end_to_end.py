@@ -201,6 +201,8 @@ class NoOpEndToEndTestCase(TransactionTestCase):
             start_time = timezone.now()
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                if not processor_job.success:
+                    logger.error(processor_job.failure_reason)
                 self.assertTrue(processor_job.success)
 
             # Test that the unsurveyor deletes all objects related to the experiment
@@ -310,6 +312,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             processor_jobs = ProcessorJob.objects.all().exclude(
                 abort=True
             )  # exclude aborted processor jobs
+            logger.error(processor_jobs)
             self.assertEqual(processor_jobs.count(), NUM_SAMPLES_IN_EXPERIMENT)
 
             # And finally we can make sure that all of the
@@ -424,6 +427,8 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             )  # exclude aborted processor jobs
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                if not processor_job.success:
+                    logger.error(processor_job.failure_reason)
                 self.assertTrue(processor_job.success)
 
             # Apparently this experiment has a variable number of
