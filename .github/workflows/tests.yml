@@ -133,7 +133,7 @@ jobs:
           .circleci/upload_test_coverage.sh common
 
       - name: Prepare smasher image
-      - run: |
+        run: |
           ./scripts/prepare_image.sh -i smasher -s workers
           docker tag ccdlstaging/dr_smasher localhost:5000/dr_smasher
           docker push localhost:5000/dr_smasher
