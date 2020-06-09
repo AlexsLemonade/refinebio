@@ -364,12 +364,6 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
         wget -q -O "$quant_test_data_1" \
              "$test_data_repo/$quant_name"
     fi
-    if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-        AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"
-	export AWS_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY="$(~/bin/aws configure get default.aws_secret_access_key)"
-	export AWS_SECRET_ACCESS_KEY
-    fi
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "qn" ]; then
@@ -507,8 +501,6 @@ for image in $worker_images; do
                --add-host=database:"$DB_HOST_IP" \
                --add-host=nomad:"$HOST_IP" \
                --env-file workers/environments/test \
-               --env AWS_ACCESS_KEY_ID \
-               --env AWS_SECRET_ACCESS_KEY \
                --volume "$volume_directory":/home/user/data_store \
                --memory=5G \
                "$image_name" bash -c "$test_command"
