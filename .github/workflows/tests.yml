@@ -340,7 +340,7 @@ jobs:
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
-          sudo chown -R runner-user:runner-group workers/test_volume
+          sudo -E chown -R $USER:$USER workers/test_volume
           .github/workflows/filter_tests.sh -t agilent
 
       - name: Install Nomad
