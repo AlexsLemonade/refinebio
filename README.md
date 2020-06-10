@@ -29,8 +29,8 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Services](#services)
       - [Postgres](#postgres)
       - [Nomad](#nomad)
-      - [ElasticSearch](#elasticsearch)
     - [Common Dependecies](#common-dependecies)
+    - [ElasticSearch](#elasticsearch)
   - [Testing](#testing)
     - [API](#api)
     - [Common](#common)
@@ -52,7 +52,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
   - [Docker Images](#docker-images)
-  - [Autoscaling and Setting Spot Prices](#autoscaling-and-setting-spot-prices)
+  - [Git Crypt](#git-crypt)
   - [Terraform](#terraform)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
@@ -196,22 +196,6 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
-##### ElasticSearch
-
-One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
-
-```bash
-./scripts/run_es.sh
-```
-
-And then the ES Indexes (akin to Postgres 'databases') can be created with:
-
-```bash
-./scripts/rebuild_es_index.sh
-```
-
-Note: If the image pull request for `dr_shell` is denied, then you may need to prepare the distribution directory with the script in the next step first.
-
 #### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
@@ -228,6 +212,20 @@ script:
 Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
 to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
 then re-run the migrations.
+
+#### ElasticSearch
+
+One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
+
+```bash
+./scripts/run_es.sh
+```
+
+And then the ES Indexes (akin to Postgres 'databases') can be created with:
+
+```bash
+./scripts/rebuild_es_index.sh
+```
 
 ### Testing
 
