@@ -593,9 +593,12 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
 
 def validate_dataset(data):
     """ Basic dataset validation. Currently only checks formatting, not values. """
-    if data["data"] is not None:
+    if data.get("data") is not None:
         if type(data["data"]) != dict:
             raise serializers.ValidationError("`data` must be a dict of lists.")
+
+        if data.get("start") and len(data["data"]) == 0:
+            raise serializers.ValidationError("`data` must contain at least one experiment..")
 
         for key, value in data["data"].items():
             if type(value) != list:
