@@ -588,6 +588,9 @@ class TranscriptomeRedownloadingTestCase(TransactionTestCase):
             self.assertTrue(survey_job.success)
 
             downloader_jobs = DownloaderJob.objects.all()
+            for job in downloader_jobs:
+                print(job)
+                print(job.accession_code)
             self.assertEqual(downloader_jobs.count(), 1)
 
             logger.info(
