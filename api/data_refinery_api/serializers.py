@@ -597,6 +597,10 @@ def validate_dataset(data):
         if type(data["data"]) != dict:
             raise serializers.ValidationError("`data` must be a dict of lists.")
 
+        # Don't allow empty datasaets.
+        if not data["data"]:
+            raise serializers.ValidationError("`data` must contain at least one experiment..")
+
         for key, value in data["data"].items():
             if type(value) != list:
                 raise serializers.ValidationError(
