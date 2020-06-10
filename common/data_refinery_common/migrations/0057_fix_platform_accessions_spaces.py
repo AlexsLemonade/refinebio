@@ -7,6 +7,8 @@ from data_refinery_common.utils import get_supported_rnaseq_platforms
 def remove_spaces_from_platform_accessions(apps, schema_editor):
     Sample = apps.get_model("data_refinery_common", "Sample")
 
+    # get_supported_rnaseq_platforms() returns the platform names with
+    # spaces, but our platform accessions should have no spaces
     for bad_accession in get_supported_rnaseq_platforms():
         platform_accession = bad_accession.replace(" ", "")
         bad_samples = Sample.objects.all().filter(platform_accession_code=bad_accession)
