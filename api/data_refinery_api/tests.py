@@ -441,6 +441,62 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 400)
 
     @patch("data_refinery_common.message_queue.send_job")
+    def test_starting_dataset_fails_without_experiments(self, mock_send_job):
+
+        # Get a token first
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
+        )
+        token = response.json()
+        token["is_activated"] = True
+        token_id = token["id"]
+        response = self.client.put(
+            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
+            json.dumps(token),
+            content_type="application/json",
+        )
+
+        activated_token = response.json()
+        self.assertEqual(activated_token["id"], token_id)
+        self.assertEqual(activated_token["is_activated"], True)
+
+        # Good, except for having zero experiments
+        data = {"email_address": "baz@gmail.com", "data": {}}
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+        data["start"] = True
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps({"start": True}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+        # On the other hand, if we add experiments before we start processing, this should be okay
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+        data["start"] = True
+        data["data"] = {"A": ["B"]}
+        data["token_id"] = token_id
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+    @patch("data_refinery_common.message_queue.send_job")
     def test_create_update_dataset(self, mock_send_job):
 
         # Get a token first
