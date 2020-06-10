@@ -489,6 +489,13 @@ class APITestCases(APITestCase):
         data["start"] = True
         data["data"] = {"A": ["B"]}
         data["token_id"] = token_id
+        data = {
+            **data,
+            "start": True,
+            "data": {"A": ["B"]},
+            "token_id": token_id,
+            "no_send_job": True,
+        }
         response = self.client.put(
             reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
             json.dumps(data),
