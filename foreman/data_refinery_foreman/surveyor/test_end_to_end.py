@@ -157,9 +157,10 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
 # job in the database because it'd be stuck in a transaction.
 #
 # Unfortunately, it's more unreliable and tends to leave things in the
-# database, so let's manually clear it after every test
+# database, so let's manually clear it before every test
 class EndToEndTestCase(TransactionTestCase):
-    def tearDown(self):
+    def setUp(self):
+        print("setting up...")
         Experiment.objects.all().delete()
         ExperimentAnnotation.objects.all().delete()
         ExperimentSampleAssociation.objects.all().delete()
