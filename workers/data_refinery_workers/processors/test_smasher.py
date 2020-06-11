@@ -10,6 +10,8 @@ from io import StringIO
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
 
+import vcr
+
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -1090,6 +1092,7 @@ class SmasherTestCase(TransactionTestCase):
         import sympy  # noqa
 
     @tag("smasher")
+    @vcr.use_cassette("/home/user/data_store/cassettes/smasher.get_synced_files.yaml")
     def test_get_synced_files(self):
         """ """
         result = ComputationalResult()

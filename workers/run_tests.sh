@@ -364,12 +364,10 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
         wget -q -O "$quant_test_data_1" \
              "$test_data_repo/$quant_name"
     fi
-    if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-        AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"
-	export AWS_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY="$(~/bin/aws configure get default.aws_secret_access_key)"
-	export AWS_SECRET_ACCESS_KEY
-    fi
+    # Mock out the AWS keys since we use VCR to mock out the request with these
+    # as the AWS credentials
+    export AWS_ACCESS_KEY_ID=XXX
+    export AWS_SECRET_ACCESS_KEY=XXX
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "qn" ]; then
