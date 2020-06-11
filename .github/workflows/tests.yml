@@ -64,7 +64,7 @@ jobs:
           .circleci/upload_test_coverage.sh foreman
       - name: Run NO_OP tests
         run: |
-          sudo chmod -R a+rw workers/test_volume
+          sudo -E chown -R $USER:$USER workers/test_volume
           .github/workflows/filter_tests.sh -t no_op
       # Run QN tests.
       - name: Push built docker images
@@ -75,8 +75,6 @@ jobs:
       IMAGES: migrations common_tests smasher compendia
       DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v2
       - name: Login to docker.pkg.github.com for cached docker images
@@ -107,13 +105,11 @@ jobs:
         run: ./scripts/prepare_image.sh -i smasher -s workers
       - name: Run smasher tests
         run: |
-          mkdir -p workers/test_volume
-          sudo chmod -R a+rw workers/test_volume
+          sudo -E chown -R $USER:$USER workers/test_volume
           .github/workflows/filter_tests.sh -t smasher
       - name: Run janitor tests
         run: |
-          mkdir -p workers/test_volume
-          sudo chmod -R a+rw workers/test_volume
+          sudo -E chown -R $USER:$USER workers/test_volume
           .github/workflows/filter_tests.sh -t janitor
       - name: Run compendia tests
         run: |
@@ -258,13 +254,10 @@ jobs:
         run: ./scripts/rebuild_es_index.sh
       - name: Run affymetrix tests
         run: |
-          mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/workflows/filter_tests.sh -t affymetrix
       - name: Run agilent tests
         run: |
-          mkdir -p workers/test_volume
-          sudo chmod -R a+rw workers/test_volume
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/workflows/filter_tests.sh -t agilent
       - name: Install Nomad
