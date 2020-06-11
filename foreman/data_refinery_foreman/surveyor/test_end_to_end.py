@@ -155,7 +155,30 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
 # TransactionTestCase makes database calls complete before the test
 # ends.  Otherwise the workers wouldn't actually be able to find the
 # job in the database because it'd be stuck in a transaction.
-class NoOpEndToEndTestCase(TransactionTestCase):
+#
+# Unfortunately, it's more unreliable and tends to leave things in the
+# database, so let's manually clear it after every test
+class EndToEndTestCase(TransactionTestCase):
+    def tearDown(self):
+        Experiment.objects.all().delete()
+        ExperimentAnnotation.objects.all().delete()
+        ExperimentSampleAssociation.objects.all().delete()
+        Sample.objects.all().delete()
+        SampleAnnotation.objects.all().delete()
+        OriginalFile.objects.all().delete()
+        OriginalFileSampleAssociation.objects.all().delete()
+        SampleResultAssociation.objects.all().delete()
+        ComputationalResult.objects.all().delete()
+        ComputationalResultAnnotation.objects.all().delete()
+        SampleComputedFileAssociation.objects.all().delete()
+        ComputedFile.objects.all().delete()
+        DownloaderJob.objects.all().delete()
+        DownloaderJobOriginalFileAssociation.objects.all().delete()
+        ProcessorJob.objects.all().delete()
+        ProcessorJobOriginalFileAssociation.objects.all().delete()
+
+
+class NoOpEndToEndTestCase(EndToEndTestCase):
     @tag("slow")
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.no_op.yaml"), ignore_hosts=["nomad"],
@@ -226,7 +249,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
             self.assertEqual(ProcessorJobOriginalFileAssociation.objects.all().count(), 0)
 
 
-class ArrayexpressRedownloadingTestCase(TransactionTestCase):
+class ArrayexpressRedownloadingTestCase(EndToEndTestCase):
     @tag("slow")
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.array_express_redownloading.yaml"),
@@ -324,7 +347,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
                 self.assertTrue(processor_job.success)
 
 
-class GeoArchiveRedownloadingTestCase(TransactionTestCase):
+class GeoArchiveRedownloadingTestCase(EndToEndTestCase):
     @tag("slow")
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "surveyor.test_end_to_end.geo_archive_redownloading.yaml"),
@@ -442,7 +465,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             self.assertEqual(processor_jobs.count(), Sample.objects.all().count())
 
 
-class GeoCelgzRedownloadingTestCase(TransactionTestCase):
+class GeoCelgzRedownloadingTestCase(EndToEndTestCase):
     @tag("slow")
     @tag("affymetrix")
     @vcr.use_cassette(
@@ -552,7 +575,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             self.assertEqual(processor_jobs.count(), SAMPLES_IN_EXPERIMENT)
 
 
-class TranscriptomeRedownloadingTestCase(TransactionTestCase):
+class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
     @tag("slow")
     @tag("transcriptome")
     @vcr.use_cassette(
@@ -569,6 +592,12 @@ class TranscriptomeRedownloadingTestCase(TransactionTestCase):
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
+            downloader_jobs = DownloaderJob.objects.all()
+            for job in downloader_jobs:
+                print(job)
+                print(job.accession_code)
+            # self.assertEqual(downloader_jobs.count(), 0)
+
             for length in ["LONG", "SHORT"]:
                 work_dir_glob = (
                     LOCAL_ROOT_DIR + "/Caenorhabditis_elegans/" + length + "/processor_job_*"
@@ -687,7 +716,7 @@ class TranscriptomeRedownloadingTestCase(TransactionTestCase):
             self.assertTrue(has_short)
 
 
-class SraRedownloadingTestCase(TransactionTestCase):
+class SraRedownloadingTestCase(EndToEndTestCase):
     @tag("slow")
     @tag("salmon")
     @skip("This test is timing out I think.")
@@ -804,7 +833,7 @@ class SraRedownloadingTestCase(TransactionTestCase):
             self.assertEqual(len(successful_processor_jobs), 4)
 
 
-class EnaFallbackTestCase(TransactionTestCase):
+class EnaFallbackTestCase(EndToEndTestCase):
     @tag("slow")
     @tag("salmon")
     @vcr.use_cassette(
@@ -858,7 +887,7 @@ class EnaFallbackTestCase(TransactionTestCase):
 
 
 # This test uses the special tag "manual" because it should only be run from the "test_survey.sh" script
-class SurveyTestCase(TransactionTestCase):
+class SurveyTestCase(EndToEndTestCase):
     @tag("manual")
     def test_survey(self):
         """Survey the given sample"""
