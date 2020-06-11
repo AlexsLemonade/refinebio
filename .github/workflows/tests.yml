@@ -113,11 +113,11 @@ jobs:
           .github/workflows/filter_tests.sh -t janitor
       - name: Run compendia tests
         run: |
-          mkdir -p workers/test_volume
-          sudo chmod -R a+rw workers/test_volume
+          sudo -E chown -R $USER:$USER workers/test_volume
           .github/workflows/filter_tests.sh -t compendia
       - name: Run QN tests
         run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
           .github/workflows/filter_tests.sh -t qn
       - name: Push built docker images
         run: ./.github/workflows/push_docker_images.sh
