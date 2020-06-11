@@ -68,8 +68,8 @@ class APITestCases(APITestCase):
 
         # Create 26 test organisms numbered 0-25 for pagination test
         for i in range(26):
-            Organism(name=("TEST_ORGANISM_{}".format(i)), taxonomy_id=(1234+i)).save()
-        
+            Organism(name=("TEST_ORGANISM_{}".format(i)), taxonomy_id=(1234 + i)).save()
+
         ailuropoda = Organism(
             name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
         )
@@ -289,15 +289,13 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 25)
-        
+
         # First organism on second page should be TEST_ORGANISM_25
         response = self.client.get(
             reverse("organisms", kwargs={"version": API_VERSION}), {"offset": 25}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["name"], "TEST_ORGANISM_25")
-        
-
 
     def test_fetching_experiment_samples(self):
         response = self.client.get(

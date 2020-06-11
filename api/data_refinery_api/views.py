@@ -805,7 +805,6 @@ class OrganismList(generics.ListAPIView):
 
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer
-    
 
 
 class PlatformList(generics.ListAPIView):
