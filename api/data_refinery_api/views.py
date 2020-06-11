@@ -800,12 +800,12 @@ class ComputationalResultsList(generics.ListAPIView):
 
 class OrganismList(generics.ListAPIView):
     """
-	Unpaginated list of all the available organisms.
+	Paginated list of all the available organisms.
 	"""
 
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer
-    paginator = None
+    
 
 
 class PlatformList(generics.ListAPIView):
