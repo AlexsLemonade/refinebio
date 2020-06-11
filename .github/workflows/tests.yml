@@ -64,6 +64,7 @@ jobs:
           .circleci/upload_test_coverage.sh foreman
       - name: Run NO_OP tests
         run: |
+          sudo chmod -R a+rw workers/test_volume
           .github/workflows/filter_tests.sh -t no_op
       # Run QN tests.
       - name: Push built docker images
