@@ -172,23 +172,23 @@ jobs:
           sudo ./scripts/install_nomad.sh
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
-      # - name: Prepare docker images for end-to-end tests
-      #   run: |
-      #     ./scripts/prepare_image.sh -i downloaders -s workers
-      #     docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
-      #     docker push localhost:5000/dr_downloaders
-      #     ./scripts/prepare_image.sh -i transcriptome -s workers
-      #     docker tag ccdlstaging/dr_transcriptome localhost:5000/dr_transcriptome
-      #     docker push localhost:5000/dr_transcriptome
-      #     ./scripts/prepare_image.sh -i salmon -s workers
-      #     docker tag ccdlstaging/dr_salmon localhost:5000/dr_salmon
-      #     docker push localhost:5000/dr_salmon
-      # - name: Run salmon end-to-end tests
-      #   run: |
-      #     mkdir -p test_volume
-      #     sudo chmod -R a+rw test_volume
-      #     ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
-      #     .circleci/upload_test_coverage.sh foreman
+      - name: Prepare docker images for end-to-end tests
+        run: |
+          ./scripts/prepare_image.sh -i downloaders -s workers
+          docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
+          docker push localhost:5000/dr_downloaders
+          ./scripts/prepare_image.sh -i transcriptome -s workers
+          docker tag ccdlstaging/dr_transcriptome localhost:5000/dr_transcriptome
+          docker push localhost:5000/dr_transcriptome
+          ./scripts/prepare_image.sh -i salmon -s workers
+          docker tag ccdlstaging/dr_salmon localhost:5000/dr_salmon
+          docker push localhost:5000/dr_salmon
+      - name: Run salmon end-to-end tests
+        run: |
+          mkdir -p test_volume
+          sudo chmod -R a+rw test_volume
+          ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
+          .circleci/upload_test_coverage.sh foreman
       - name: Push built docker images
         run: ./.github/workflows/push_docker_images.sh
   tx_illumina_tests:
