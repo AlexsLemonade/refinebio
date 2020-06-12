@@ -160,7 +160,6 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
 # database, so let's manually clear it before every test
 class EndToEndTestCase(TransactionTestCase):
     def setUp(self):
-        print("setting up...")
         Experiment.objects.all().delete()
         ExperimentAnnotation.objects.all().delete()
         ExperimentSampleAssociation.objects.all().delete()
@@ -593,11 +592,15 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
         self.env = EnvironmentVarGuard()
         self.env.set("RUNING_IN_CLOUD", "False")
         with self.env:
+            # I'm not sure why, but sometimes there are already downloader jobs
+            # in the database from previous tests even though they should be
+            # removed, so pause a bit
+            time.sleep(10)
             downloader_jobs = DownloaderJob.objects.all()
             for job in downloader_jobs:
                 print(job)
                 print(job.accession_code)
-            # self.assertEqual(downloader_jobs.count(), 0)
+            self.assertEqual(downloader_jobs.count(), 0)
 
             for length in ["LONG", "SHORT"]:
                 work_dir_glob = (
@@ -618,9 +621,6 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
             self.assertTrue(survey_job.success)
 
             downloader_jobs = DownloaderJob.objects.all()
-            for job in downloader_jobs:
-                print(job)
-                print(job.accession_code)
             self.assertEqual(downloader_jobs.count(), 1)
 
             logger.info(
@@ -635,11 +635,12 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
             # the processor job starts.
             while timezone.now() - start_time < MAX_WAIT_TIME:
                 og_file_to_delete.refresh_from_db()
-                if og_file_to_delete.absolute_file_path and os.path.exists(
-                    og_file_to_delete.absolute_file_path
-                ):
-                    os.remove(og_file_to_delete.absolute_file_path)
-                    break
+                if og_file_to_delete.absolute_file_path:
+                    try:
+                        os.remove(og_file_to_delete.absolute_file_path)
+                        break
+                    except:
+                        pass
 
             # We want to try and delete the file as quickly as
             # possible, so pass a short loop time and let the waiting
@@ -872,7 +873,7 @@ class EnaFallbackTestCase(EndToEndTestCase):
 
             # Let's give the downloader a little bit to get started
             # and to update the OriginalFiles' source_urls.
-            time.sleep(30)
+            time.sleep(60)
 
             downloader_jobs = DownloaderJob.objects.all()
             self.assertEqual(downloader_jobs.count(), 1)
