@@ -290,11 +290,12 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 25)
 
-        # First organism on second page should be TEST_ORGANISM_25
+        # First organism on second page should be TEST_ORGANISM_25, and there should be 4 on that page
         response = self.client.get(
             reverse("organisms", kwargs={"version": API_VERSION}), {"offset": 25}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 4)
         self.assertEqual(response.json()["results"][0]["name"], "TEST_ORGANISM_25")
 
     def test_fetching_experiment_samples(self):
