@@ -15,7 +15,7 @@
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get upgrade -y
+apt-get upgrade -y linux-aws
 apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop monit
 
 ulimit -n 65536
@@ -204,3 +204,6 @@ if [[ $STAGE = *"prod"* ]]; then
     rm /var/log/cloud-init-output.log
     rm /var/log/syslog
 fi
+
+# Since we upgraded the kernel we have to restart
+reboot now
