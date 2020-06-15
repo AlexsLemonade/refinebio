@@ -13,6 +13,8 @@ from django.utils import timezone
 
 import vcr
 
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -616,7 +618,15 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
             )
             organism.save()
 
-            survey_job = surveyor.survey_transcriptome_index("Caenorhabditis elegans", "Ensembl")
+            # Make sure that we can delete the file before the processors begin
+            # by preventing the downloaders from sending the processors
+            # automatically. We send the jobs manually later
+            no_dispatch = EnvironmentVarGuard()
+            no_dispatch.set("DO_NOT_AUTO_DISPATCH", "True")
+            with no_dispatch:
+                survey_job = surveyor.survey_transcriptome_index(
+                    "Caenorhabditis elegans", "Ensembl"
+                )
 
             self.assertTrue(survey_job.success)
 
@@ -627,39 +637,24 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
                 "Survey Job finished, waiting for Downloader Job with Nomad ID %s to complete.",
                 downloader_jobs[0].nomad_job_id,
             )
-            og_file_to_delete = OriginalFile.objects.all()[0]
-            start_time = timezone.now()
 
-            # We're going to spin as fast as we can so we can delete
-            # the file in between when the downloader job finishes and
-            # the processor job starts.
-            while timezone.now() - start_time < MAX_WAIT_TIME:
-                og_file_to_delete.refresh_from_db()
-                if og_file_to_delete.absolute_file_path:
-                    try:
-                        os.remove(og_file_to_delete.absolute_file_path)
-                        break
-                    except:
-                        pass
-
-            # We want to try and delete the file as quickly as
-            # possible, so pass a short loop time and let the waiting
-            # loop spin really fast so we lose as little time as
-            # possible.
-            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time)
+            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, timezone.now())
             self.assertTrue(downloader_job.success)
 
-            start_time = timezone.now()
+            og_file_to_delete = OriginalFile.objects.all()[0]
+            os.remove(og_file_to_delete.absolute_file_path)
+
             processor_jobs = ProcessorJob.objects.all()
             for processor_job in processor_jobs:
-                # It's hard to guarantee that we'll be able to delete
-                # the files before the first job starts, but since
-                # they both don't start at the same time we'll
-                # definitely get it before the second one. This is
-                # actually kinda desirable for testing though because
-                # we should be able to handle it either way.
+                # FIXME: we run these in serial because of
+                # https://github.com/AlexsLemonade/refinebio/issues/2321
+                send_job(
+                    ProcessorPipeline[processor_job.pipeline_applied],
+                    job=processor_job,
+                    is_dispatch=True,
+                )
                 try:
-                    wait_for_job(processor_job, ProcessorJob, start_time)
+                    wait_for_job(processor_job, ProcessorJob, timezone.now())
                 except:
                     pass
 
@@ -677,7 +672,7 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
             recreated_job = downloader_jobs[0]
             recreated_job.refresh_from_db()
             logger.info("Waiting on downloader Nomad job %s", recreated_job.nomad_job_id)
-            recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
+            recreated_job = wait_for_job(recreated_job, DownloaderJob, timezone.now())
             self.assertTrue(recreated_job.success)
 
             # Once the Downloader job succeeds, it should create two
@@ -685,16 +680,20 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
             processor_jobs = ProcessorJob.objects.all()
             self.assertEqual(processor_jobs.count(), 4)
 
+            # Wait for the processor jobs to be dispatched
+            time.sleep(15)
+
             # And finally we can make sure that both of the
             # processor jobs were successful, including the one that
             # got recreated.
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             successful_processor_jobs = []
             for processor_job in processor_jobs:
+                processor_job.refresh_from_db()
                 # One of the calls to wait_for_job will fail if the
                 # job aborts before it we selected all the
                 # processor jobs.
-                processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                processor_job = wait_for_job(processor_job, ProcessorJob, timezone.now())
                 if processor_job.success:
                     successful_processor_jobs.append(processor_job)
 
