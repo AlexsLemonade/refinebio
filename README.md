@@ -341,7 +341,7 @@ In addition to following pep8, python files must also conform to the formatting 
 (`black`'s highly opinionated style is a strict sub-set of pep8.)
 The easiest way to conform to this style is to run `black . --line-length=100`.
 This will auto-format your code.
-Running the `./scripts/install_all.sh` script will install a pre-commit git hook that will run this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/) you can also install the git hook directly by running `pip3 install pre-commit & pre-commit install`.
+Running the `./scripts/install_all.sh` script will install a pre-commit git hook that will run this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/), which you can also install directly by running `pip3 install pre-commit & pre-commit install`. Then, if you want to run `pre-commit` without making a git commit, you can use `pre-commit run --all-files`.
 To install `black` see the [installation instructions](#installation).
 Any Pull Requests that do not conform to the style enforced by `black` will be flagged by our continous integration and will not be accepted until that check passes.
 
@@ -373,7 +373,7 @@ We have created some utilities to help us keep R stable, reliable, and from peri
 The primary goal of these is to pin the version for every R package that we have.
 The R package `devtools` is useful for this, but in order to be able to install a specific version of it, we've created the R script `common/install_devtools.R`.
 
-There is annother gotcha to be aware of should you ever need to modify versions of R or its packages.
+There is another gotcha to be aware of should you ever need to modify versions of R or its packages.
 In Dockerfiles for images that need the R language, we install apt packages that look like `r-base-core=3.4.2-1xenial1`.
 It's unclear why the version for these is so weird, but it was determined by visiting the package list here: https://cran.revolutionanalytics.com/bin/linux/ubuntu/xenial/
 If it needs to be updated then a version should be selected from that list.
