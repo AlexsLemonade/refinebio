@@ -258,6 +258,25 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("create_dataset", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    def test_experiment_multiple_accessions(self):
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION})
+            + "?accession_code=GSE000&accession_code=GSE123",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 2)
+
+    def test_sample_multiple_accessions(self):
+        response = self.client.get(
+            reverse("samples", kwargs={"version": API_VERSION}) + "?accession_codes=123,789",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 2)
+
     def test_sample_pagination(self):
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
