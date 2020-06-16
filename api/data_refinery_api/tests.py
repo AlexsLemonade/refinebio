@@ -558,6 +558,9 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["non_field_errors"][0], "Non-downloadable sample(s) '456' in dataset"
+        )
 
         # Good, 789 is processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})

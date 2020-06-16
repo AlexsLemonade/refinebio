@@ -636,9 +636,15 @@ def validate_dataset(data):
             accessions.extend(value)
 
     if len(accessions) > 0:
-        processed_samples = Sample.processed_objects.filter(accession_code__in=accessions)
-        if len(accessions) != processed_samples.count():
-            raise serializers.ValidationError("Non-downloadable samples in " + str(accessions))
+        unprocessed_samples = Sample.public_objects.filter(
+            accession_code__in=accessions, is_processed=False
+        )
+        if unprocessed_samples.count() > 0:
+            raise serializers.ValidationError(
+                "Non-downloadable sample(s) '"
+                + ", ".join([s.accession_code for s in unprocessed_samples])
+                + "' in dataset"
+            )
 
 
 class CreateDatasetSerializer(serializers.ModelSerializer):
