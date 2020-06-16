@@ -592,35 +592,59 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
 
 
 def validate_dataset(data):
-    """ Basic dataset validation. Currently only checks formatting, not values. """
-    if data.get("data") is not None:
-        if type(data["data"]) != dict:
-            raise serializers.ValidationError("`data` must be a dict of lists.")
-
-        if data.get("start") and len(data["data"]) == 0:
-            raise serializers.ValidationError("`data` must contain at least one experiment..")
-
-        for key, value in data["data"].items():
-            if type(value) != list:
-                raise serializers.ValidationError(
-                    "`data` must be a dict of lists. Problem with `" + str(key) + "`"
-                )
-
-            if len(value) < 1:
-                raise serializers.ValidationError(
-                    "`data` must be a dict of lists, each with one or more elements. Problem with `"
-                    + str(key)
-                    + "`"
-                )
-
-            try:
-                if len(value) != len(set(value)):
-                    raise serializers.ValidationError("Duplicate values detected in " + str(value))
-            except Exception as e:
-                raise serializers.ValidationError("Received bad dataset data: " + str(e))
-
-    else:
+    """
+    Dataset validation. Each experiment should always have at least one
+    sample, all samples should be downloadable, and when starting the smasher
+    there should be at least one experiment.
+    """
+    if data.get("data") is None or type(data["data"]) != dict:
         raise serializers.ValidationError("`data` must be a dict of lists.")
+
+    if data.get("start") and len(data["data"]) == 0:
+        raise serializers.ValidationError("`data` must contain at least one experiment..")
+
+    accessions = []
+    for key, value in data["data"].items():
+        if type(value) != list:
+            raise serializers.ValidationError(
+                "`data` must be a dict of lists. Problem with `" + str(key) + "`"
+            )
+
+        if len(value) < 1:
+            raise serializers.ValidationError(
+                "`data` must be a dict of lists, each with one or more elements. Problem with `"
+                + str(key)
+                + "`"
+            )
+
+        try:
+            if len(value) != len(set(value)):
+                raise serializers.ValidationError("Duplicate values detected in " + str(value))
+        except Exception as e:
+            raise serializers.ValidationError("Received bad dataset data: " + str(e))
+
+        # If they want "ALL", just make sure that the experiment has at least one downloadable sample
+        if value == ["ALL"]:
+            try:
+                experiment = Experiment.processed_public_objects.get(accession_code=key)
+            except Exception as e:
+                raise serializers.ValidationError(
+                    "Experiment " + key + " does not have at least one downloadable sample"
+                )
+        # Otherwise, we will check that all the samples they requested are downloadable
+        else:
+            accessions.extend(value)
+
+    if len(accessions) > 0:
+        unprocessed_samples = Sample.public_objects.filter(
+            accession_code__in=accessions, is_processed=False
+        )
+        if unprocessed_samples.count() > 0:
+            raise serializers.ValidationError(
+                "Non-downloadable sample(s) '"
+                + ", ".join([s.accession_code for s in unprocessed_samples])
+                + "' in dataset"
+            )
 
 
 class CreateDatasetSerializer(serializers.ModelSerializer):
