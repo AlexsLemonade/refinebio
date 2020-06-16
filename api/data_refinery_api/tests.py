@@ -46,6 +46,7 @@ class APITestCases(APITestCase):
 
         experiment = Experiment()
         experiment.accession_code = "GSE000"
+        experiment.alternate_accession_code = "E-GEOD-000"
         experiment.title = "NONONONO"
         experiment.description = "Boooooourns. Wasabi."
         experiment.technology = "RNA-SEQ"
@@ -267,6 +268,20 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 2)
+
+    # Test the query the front-end uses to find the experiment with a given
+    # accession or alternate accession
+    def test_experiment_alternate_accession(self):
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION})
+            + "?search=alternate_accession_code:E-GEOD-000"
+            + "?search=accession_code:E-GEOD-000",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 1)
+        self.assertEqual(response.json()["results"][0]["alternate_accession_code"], "E-GEOD-000")
 
     def test_sample_multiple_accessions(self):
         response = self.client.get(
