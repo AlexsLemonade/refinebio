@@ -33,7 +33,7 @@ jobs:
         run: ./scripts/rebuild_es_index.sh
       - name: Install Nomad
         run: |
-          sudo ./.circleci/fix_ca_certs.sh
+          sudo ./.github/workflows/fix_ca_certs.sh
           sudo ./scripts/install_nomad.sh
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
@@ -61,7 +61,7 @@ jobs:
           # transcriptome and let those end-to-end tests get run in the
           # workflows that include building those images.
           ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
-          .circleci/upload_test_coverage.sh foreman
+          .github/workflows/upload_test_coverage.sh foreman
       # - name: Run NO_OP tests
       #   run: |
       #     sudo -E chown -R $USER:$USER workers/test_volume
@@ -99,7 +99,7 @@ jobs:
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./common/run_tests.sh
-          .circleci/upload_test_coverage.sh common
+          .github/workflows/upload_test_coverage.sh common
       - name: Prepare smasher image
         run: ./scripts/prepare_image.sh -i smasher -s workers
       - name: Run smasher tests
@@ -162,12 +162,12 @@ jobs:
       #     mkdir -p test_volume
       #     sudo chmod -R a+rw test_volume
       #     ./api/run_tests.sh
-      #     .circleci/upload_test_coverage.sh api
+      #     .github/workflows/upload_test_coverage.sh api
       # - name: Run salmon tests
       #   run: .github/workflows/filter_tests.sh -t salmon
       - name: Install Nomad
         run: |
-          sudo ./.circleci/fix_ca_certs.sh
+          sudo ./.github/workflows/fix_ca_certs.sh
           sudo ./scripts/install_nomad.sh
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
@@ -187,7 +187,7 @@ jobs:
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
-          .circleci/upload_test_coverage.sh foreman
+          .github/workflows/upload_test_coverage.sh foreman
       - name: Push built docker images
         run: ./.github/workflows/push_docker_images.sh
   tx_illumina_tests:
@@ -261,7 +261,7 @@ jobs:
       #     .github/workflows/filter_tests.sh -t agilent
       - name: Install Nomad
         run: |
-          sudo ./.circleci/fix_ca_certs.sh
+          sudo ./.github/workflows/fix_ca_certs.sh
           sudo ./scripts/install_nomad.sh
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
@@ -282,6 +282,6 @@ jobs:
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./foreman/run_tests.sh --tag=affymetrix
-          .circleci/upload_test_coverage.sh foreman
+          .github/workflows/upload_test_coverage.sh foreman
       - name: Push built docker images
         run: ./.github/workflows/push_docker_images.sh

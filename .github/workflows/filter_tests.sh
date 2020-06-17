@@ -11,4 +11,4 @@ else
 	./workers/run_tests.sh "$@"
 fi
 
-./.circleci/upload_test_coverage.sh workers
+./.github/workflows/upload_test_coverage.sh workers
