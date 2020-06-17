@@ -258,6 +258,25 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("create_dataset", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    def test_experiment_multiple_accessions(self):
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION})
+            + "?accession_code=GSE000&accession_code=GSE123",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 2)
+
+    def test_sample_multiple_accessions(self):
+        response = self.client.get(
+            reverse("samples", kwargs={"version": API_VERSION}) + "?accession_codes=123,789",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 2)
+
     def test_sample_pagination(self):
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -421,7 +440,7 @@ class APITestCases(APITestCase):
         self.assertEqual(activated_token["is_activated"], True)
 
         # Good, except for missing email.
-        jdata = json.dumps({"data": {"A": ["B"]}})
+        jdata = json.dumps({"data": {"GSE123": ["789"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -486,13 +505,10 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, 201)
 
-        data["start"] = True
-        data["data"] = {"A": ["B"]}
-        data["token_id"] = token_id
         data = {
             **data,
             "start": True,
-            "data": {"A": ["B"]},
+            "data": {"GSE123": ["789"]},
             "token_id": token_id,
             "no_send_job": True,
         }
@@ -502,6 +518,58 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_dataset_adding_non_downloadable_samples_fails(self):
+        sample1 = Sample()
+        sample1.title = "456"
+        sample1.accession_code = "456"
+        sample1.platform_name = "AFFY"
+        sample1.is_processed = False
+        sample1.organism = self.homo_sapiens
+        sample1.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample1
+        experiment_sample_association.experiment = self.experiment
+        experiment_sample_association.save()
+
+        # Get a token first
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
+        )
+        token = response.json()
+        token["is_activated"] = True
+        token_id = token["id"]
+        response = self.client.put(
+            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
+            json.dumps(token),
+            content_type="application/json",
+        )
+
+        activated_token = response.json()
+        self.assertEqual(activated_token["id"], token_id)
+        self.assertEqual(activated_token["is_activated"], True)
+
+        # Bad, 456 is not processed
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["456"]}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["non_field_errors"][0], "Non-downloadable sample(s) '456' in dataset"
+        )
+
+        # Good, 789 is processed
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
 
     @patch("data_refinery_common.message_queue.send_job")
     def test_create_update_dataset(self, mock_send_job):
@@ -523,7 +591,7 @@ class APITestCases(APITestCase):
         self.assertEqual(activated_token["id"], token_id)
         self.assertEqual(activated_token["is_activated"], True)
         # Good
-        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["B"]}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -539,10 +607,12 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.json()["id"], good_id)
         self.assertEqual(response.json()["data"], json.loads(jdata)["data"])
-        self.assertEqual(response.json()["data"]["A"], ["B"])
+        self.assertEqual(response.json()["data"]["GSE123"], ["789"])
 
         # Bad (Duplicates)
-        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["B", "B", "B"]}})
+        jdata = json.dumps(
+            {"email_address": "baz@gmail.com", "data": {"GSE123": ["789", "789", "789"]}}
+        )
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -552,7 +622,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 400)
 
         # Bad (Empty Experiment)
-        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": []}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": []}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -575,7 +645,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()["data"]["GSE123"], ["789"])
 
         # Update
-        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["C"]}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
         response = self.client.put(
             reverse("dataset", kwargs={"id": good_id, "version": API_VERSION}),
             jdata,
@@ -584,19 +654,21 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["id"], good_id)
         self.assertEqual(response.json()["data"], json.loads(jdata)["data"])
-        self.assertEqual(response.json()["data"]["A"], ["C"])
+        self.assertEqual(response.json()["data"]["GSE123"], ["789"])
 
         # Can't update if started
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = True
         dataset.save()
-        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"A": ["D"]}})
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["123"]}})
         response = self.client.put(
             reverse("dataset", kwargs={"id": good_id, "version": API_VERSION}),
             jdata,
             content_type="application/json",
         )
-        self.assertNotEqual(response.json()["data"]["A"], ["D"])
+        # The request should succeed, but the dataset should not be modified
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.json()["data"]["GSE123"], ["123"])
 
         # Bad
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": 123})
@@ -616,7 +688,7 @@ class APITestCases(APITestCase):
         jdata = json.dumps(
             {
                 "email_address": "baz@gmail.com",
-                "data": {"A": ["D"]},
+                "data": {"GSE123": ["789"]},
                 "start": True,
                 "no_send_job": True,
                 "token_id": "HEYO",
@@ -631,7 +703,7 @@ class APITestCases(APITestCase):
 
         jdata = json.dumps(
             {
-                "data": {"A": ["D"]},
+                "data": {"GSE123": ["789"]},
                 "start": True,
                 "no_send_job": True,
                 "token_id": token_id,
@@ -660,7 +732,7 @@ class APITestCases(APITestCase):
 
         jdata = json.dumps(
             {
-                "data": {"A": ["D"]},
+                "data": {"GSE123": ["789"]},
                 "start": True,
                 "no_send_job": True,
                 "email_address": "trust@verify.com",
@@ -766,6 +838,7 @@ class APITestCases(APITestCase):
         sample1.title = "1"
         sample1.accession_code = "1"
         sample1.platform_name = "AFFY"
+        sample1.is_processed = True
         sample1.organism = self.homo_sapiens
         sample1.save()
 
@@ -773,6 +846,7 @@ class APITestCases(APITestCase):
         sample2.title = "2"
         sample2.accession_code = "2"
         sample2.platform_name = "ILLUMINA"
+        sample2.is_processed = True
         sample2.organism = gallus_gallus
         sample2.save()
 
@@ -780,6 +854,7 @@ class APITestCases(APITestCase):
         sample3.title = "3"
         sample3.accession_code = "3"
         sample3.platform_name = "ILLUMINA"
+        sample3.is_processed = True
         sample3.organism = gallus_gallus
         sample3.save()
 
