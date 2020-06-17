@@ -15,7 +15,7 @@
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get upgrade -y linux-aws
+apt-get upgrade -y
 apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop monit
 
 ulimit -n 65536
@@ -151,7 +151,7 @@ chmod +x /home/ubuntu/kill_restart_nomad.sh
 
 echo '
 check program nomad with path "/bin/bash /home/ubuntu/nomad_status.sh" as uid 0 and with gid 0
-    start program = "/home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0 with timeout 240 seconds
+    start program = "/bin/bash /home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0 with timeout 240 seconds
     if status != 0
         then restart
 set daemon 300
@@ -204,6 +204,3 @@ if [[ $STAGE = *"prod"* ]]; then
     rm /var/log/cloud-init-output.log
     rm /var/log/syslog
 fi
-
-# Since we upgraded the kernel we have to restart
-reboot now
