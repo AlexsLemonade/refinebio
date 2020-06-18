@@ -66,7 +66,7 @@ class APITestCases(APITestCase):
         experiment_annotation.experiment = experiment
         experiment_annotation.save()
 
-        # Create 26 test organisms numbered 0-25 for pagination test
+        # Create 26 test organisms numbered 0-25 for pagination test, so there should be 29 organisms total (with the 3 others below)
         for i in range(26):
             Organism(name=("TEST_ORGANISM_{}".format(i)), taxonomy_id=(1234 + i)).save()
 
@@ -290,7 +290,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 25)
 
-        # First organism on second page should be TEST_ORGANISM_25, and there should be 4 on that page
+        # First organism on second page should be TEST_ORGANISM_25, and since 29 organisms have been created, there should be 4 on the 2nd page
         response = self.client.get(
             reverse("organisms", kwargs={"version": API_VERSION}), {"offset": 25}
         )
