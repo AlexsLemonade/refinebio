@@ -1285,6 +1285,37 @@ class ESTestCases(APITestCase):
         )
         self.assertEqual(response.json()["count"], 0)
 
+    def test_es_endpoint_post(self):
+        # Basic filter
+        search = {"accession_code": "GSE123"}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # __in filter
+        search = {"accession_code__in": ["GSE123"]}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # Numeric filter
+        search = {"num_downloadable_samples__gt": 0}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):
