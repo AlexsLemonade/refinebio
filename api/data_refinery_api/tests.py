@@ -316,6 +316,13 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_sample_detail_experiment_accessions(self):
+        response = self.client.get(
+            reverse("samples_detail", kwargs={"version": API_VERSION, "accession_code": "789"})
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["experiment_accession_codes"], ["GSE123"])
+
     def test_fetching_organism_index(self):
         organism_index_id = OrganismIndex.objects.all().first().id
         response = self.client.get(
