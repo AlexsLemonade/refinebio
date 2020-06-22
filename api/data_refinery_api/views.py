@@ -128,6 +128,12 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
     decorator=swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
+                name="accession_code",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Allows filtering the results by accession code, can have multiple values. Eg: `?accession_code=microarray&accession_code=rna-seq`",
+            ),
+            openapi.Parameter(
                 name="technology",
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
@@ -800,8 +806,8 @@ class ComputationalResultsList(generics.ListAPIView):
 
 class OrganismList(generics.ListAPIView):
     """
-	Paginated list of all the available organisms.
-	"""
+	  Paginated list of all the available organisms.
+	  """
 
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer
@@ -809,8 +815,8 @@ class OrganismList(generics.ListAPIView):
 
 class PlatformList(generics.ListAPIView):
     """
-	Unpaginated list of all the available "platform" information
-	"""
+    Unpaginated list of all the available "platform" information
+    """
 
     serializer_class = PlatformSerializer
     paginator = None
@@ -825,8 +831,8 @@ class PlatformList(generics.ListAPIView):
 
 class InstitutionList(generics.ListAPIView):
     """
-	Unpaginated list of all the available "institution" information
-	"""
+    Unpaginated list of all the available "institution" information
+    """
 
     serializer_class = InstitutionSerializer
     paginator = None
