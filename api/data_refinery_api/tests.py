@@ -1134,6 +1134,9 @@ class StatsTestCases(APITestCase):
         self.assertEqual(response.json()["nomad_running_jobs_by_volume"]["2"], 1)
 
 
+ECOLI_STRAIN_NAME = "Escherichia coli str. k-12 substr. mg1655"
+
+
 class ESTestCases(APITestCase):
     @classmethod
     def setUpClass(cls):
@@ -1169,9 +1172,7 @@ class ESTestCases(APITestCase):
         sample.accession_code = "123"
         sample.save()
 
-        organism = Organism(
-            name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
-        )
+        organism = Organism(name=ECOLI_STRAIN_NAME, taxonomy_id=879462, is_scientific_name=True,)
         organism.save()
 
         sample = Sample()
@@ -1264,6 +1265,10 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()["facets"]["has_publication"]["false"], 1)
         self.assertEqual(response.json()["facets"]["technology"]["microarray"], 1)
         self.assertEqual(response.json()["facets"]["technology"]["rna-seq"], 0)
+        self.assertEqual(
+            list(response.json()["facets"]["organism_names"].keys()), [ECOLI_STRAIN_NAME]
+        )
+        self.assertEqual(response.json()["facets"]["organism_names"][ECOLI_STRAIN_NAME], 1)
 
         # Basic Search
         response = self.client.get(
