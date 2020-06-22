@@ -463,6 +463,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
             "samples",
             "protocol_description",
             "accession_code",
+            "alternate_accession_code",
             "source_database",
             "source_url",
             "has_publication",
