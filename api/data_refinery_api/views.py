@@ -265,7 +265,7 @@ class ExperimentDocumentView(DocumentViewSet):
             "enabled": True,  # These are enabled by default, which is more expensive but more simple.
         },
         "organism_names": {
-            "field": "organism_names",
+            "field": "organism_names.raw",
             "facet": TermsFacet,
             "enabled": True,
             "options": {"size": 999999},
