@@ -5,7 +5,7 @@ from django.db.models import Count, DateTimeField, OuterRef, Prefetch, Subquery
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.db.models.functions import Left, Trunc
-from django.http import JsonResponse
+from django.http import JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -13,6 +13,7 @@ from django.views.decorators.cache import cache_page
 from rest_framework import filters, generics, status
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -120,6 +121,69 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
         return queryset
 
 
+class POSTFilteringFilterBackend(FilteringFilterBackend):
+    """Adapts FilteringFilterBackend to take queries from POST requests"""
+
+    class MockRequest:
+        """A mock request object to give to FilteringFilterBackend that
+        only has a query_params field.
+
+        The purpose of this class is to convert the request data to a form
+        that can be understood by FilteringFilterBackend
+        """
+
+        def add_to_params(self, key, value):
+            """Add to query params, converting to string if necessary"""
+            if type(value) == str:
+                self.query_params.appendlist(key, value)
+            elif type(value) == int or type(value) == bool:
+                self.query_params.appendlist(key, str(value))
+            else:
+                # We shouldn't be filtering on Null, lists, or dicts
+                raise serializers.ValidationError(
+                    "Invalid type {} for filter value {}".format(type(value), str(value))
+                )
+
+        def __init__(self, request):
+            self.query_params = QueryDict(mutable=True)
+
+            for key, value in request.data.items():
+                if type(value) == list:
+                    for item in value:
+                        self.add_to_params(key, item)
+                else:
+                    self.add_to_params(key, value)
+
+    def get_filter_query_params(self, request, view):
+        """Override get_filter_query_params to insert our own in POST requests."""
+        if request.method != "POST":
+            return {}
+
+        return super(POSTFilteringFilterBackend, self).get_filter_query_params(
+            POSTFilteringFilterBackend.MockRequest(request), view
+        )
+
+    def get_schema_fields(self, view):
+        """Return no schema fields since we don't use any query parameters.
+
+        This has to be defined, otherwise we get FilteringFilterBackend's
+        schema fields instead, which causes an error if both of them are used
+        in the same view."""
+        return []
+
+
+class FormlessBrowsableAPIRenderer(BrowsableAPIRenderer):
+    """A BrowsableAPIRenderer that never tries to display a form for any
+    method.
+
+    We use this in ExperimentDocumentView because otherwise we get an error
+    when trying to generate the form for POST requests.
+    """
+
+    def show_form_for_method(self, view, method, request, instance):
+        return False
+
+
 ##
 # ElasticSearch powered Search and Filter
 ##
@@ -179,6 +243,32 @@ Example Requests:
 ?search=medulloblastoma&technology=microarray&has_publication=true
 ?ordering=source_first_published
 ```
+
+This endpoint also accepts POST requests for larger queries. Any of the filters
+accepted as query parameters are also accepted in a JSON object in the request
+body.
+
+Example Requests (from our tests):
+```python
+import requests
+import json
+
+headers = {
+    'Content-Type': 'application/json',
+}
+
+# Basic filter
+search = {"accession_code": "GSE123"}
+requests.post(host + '/v1/search/', json.dumps(search), headers=headers)
+
+# __in filter
+search = {"accession_code__in": ["GSE123"]}
+requests.post(host + '/v1/search/', json.dumps(search), headers=headers)
+
+# numeric filter
+search = {"num_downloadable_samples__gt": 0}
+requests.post(host + '/v1/search/', json.dumps(search), headers=headers)
+```
 """,
     ),
 )
@@ -188,10 +278,12 @@ class ExperimentDocumentView(DocumentViewSet):
     document = ExperimentDocument
     serializer_class = ExperimentDocumentSerializer
     pagination_class = ESLimitOffsetPagination
+    renderer_classes = [JSONRenderer, FormlessBrowsableAPIRenderer]
 
     # Filter backends provide different functionality we want
     filter_backends = [
         FilteringFilterBackend,
+        POSTFilteringFilterBackend,
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
         CompoundSearchFilterBackend,
@@ -314,6 +406,13 @@ class ExperimentDocumentView(DocumentViewSet):
         },
     }
     faceted_search_param = "facet"
+
+    # Define a separate post method so that we can hide it in the
+    # documentation. Otherwise, the auto-generated documentation for the post
+    # method is incorrect
+    @swagger_auto_schema(auto_schema=None)
+    def post(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
         response = super(ExperimentDocumentView, self).list(request, args, kwargs)
