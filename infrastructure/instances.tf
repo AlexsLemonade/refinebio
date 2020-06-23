@@ -483,6 +483,10 @@ resource "aws_elasticsearch_domain" "es" {
   domain_name = "es-${var.user}-${var.stage}"
   elasticsearch_version = "6.3"
 
+  advanced_options = {
+    indices.query.bool.max_clause_count = 16384
+  }
+
   # TODO: Figure out the power/cost balance of this type.
   # Prices are here: https://aws.amazon.com/elasticsearch-service/pricing/
   cluster_config {
