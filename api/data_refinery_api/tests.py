@@ -2,6 +2,7 @@ import json
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
+from django.core.exceptions import TooManyFieldsSent
 from django.core.management import call_command
 from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
@@ -1309,7 +1310,7 @@ class ESTestCases(APITestCase):
 
     def test_es_endpoint_post(self):
         # Basic filter
-        search = {"accession_code": "GSE123"}
+        search = {"accession_code": "GSE123-X"}
         response = self.client.post(
             reverse("search", kwargs={"version": API_VERSION}),
             json.dumps(search),
@@ -1319,7 +1320,7 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()["count"], 1)
 
         # __in filter
-        search = {"accession_code__in": ["GSE123"]}
+        search = {"accession_code__in": ["GSE123-X"]}
         response = self.client.post(
             reverse("search", kwargs={"version": API_VERSION}),
             json.dumps(search),
@@ -1330,6 +1331,20 @@ class ESTestCases(APITestCase):
 
         # Numeric filter
         search = {"num_downloadable_samples__gt": 0}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # Large query
+        search = {"accession_code__in": ["GSE123-X" for _ in range(10000)]}
+        with self.assertRaises(TooManyFieldsSent):
+            # This should fail for GET requests because the generated URL is too large
+            response = self.client.get(reverse("search", kwargs={"version": API_VERSION}), search)
+
         response = self.client.post(
             reverse("search", kwargs={"version": API_VERSION}),
             json.dumps(search),
