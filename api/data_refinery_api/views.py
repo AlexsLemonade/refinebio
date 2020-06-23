@@ -314,6 +314,8 @@ class ExperimentDocumentView(DocumentViewSet):
         "id": {"field": "_id", "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN],},
         "technology": "technology",
         "has_publication": "has_publication",
+        "accession_code": "accession_code",
+        "alternate_accession_code": "alternate_accession_code",
         "platform": "platform_accession_codes",
         "organism": "organism_names",
         "num_processed_samples": {
