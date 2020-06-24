@@ -384,7 +384,7 @@ jobs:
       CI_USERNAME: ${{ github.actor }}
     needs:
       - main_tests
-      - commom_smasher_tests
+      - common_smasher_tests
       - syntax_test
       - salmon_and_api_tests
       - tx_illumina_tests
