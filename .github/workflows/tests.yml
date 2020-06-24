@@ -15,8 +15,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-      # - name: Pull cached docker images
-      #   run: ./.github/workflows/pull_docker_images.sh
+      - name: Pull cached docker images
+        run: ./.github/workflows/pull_docker_images.sh
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
       - name: Start Elasticsearch
@@ -48,9 +48,9 @@ jobs:
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
-      # - name: Run downloader tests
-      #   run: |
-      #     .github/workflows/filter_tests.sh -t downloaders
+      - name: Run downloader tests
+        run: |
+          .github/workflows/filter_tests.sh -t downloaders
       - name: Run foreman tests
         run: |
           mkdir -p test_volume
@@ -62,10 +62,10 @@ jobs:
           # workflows that include building those images.
           ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
           .github/workflows/upload_test_coverage.sh foreman
-      # - name: Run NO_OP tests
-      #   run: |
-      #     sudo -E chown -R $USER:$USER workers/test_volume
-      #     .github/workflows/filter_tests.sh -t no_op
+      - name: Run NO_OP tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/workflows/filter_tests.sh -t no_op
       - name: Push built docker images
         run: ./.github/workflows/push_docker_images.sh
   common_smasher_tests:
@@ -76,6 +76,8 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+      - name: Free up space
+        run: ./.github/workflows/cleanup_instance.sh
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
       - name: Pull cached docker images
@@ -139,6 +141,8 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+      - name: Free up space
+        run: ./.github/workflows/cleanup_instance.sh
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
       - name: Pull cached docker images
@@ -157,14 +161,14 @@ jobs:
           ./scripts/update_models.sh
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
-      # - name: Run API tests
-      #   run: |
-      #     mkdir -p test_volume
-      #     sudo chmod -R a+rw test_volume
-      #     ./api/run_tests.sh
-      #     .github/workflows/upload_test_coverage.sh api
-      # - name: Run salmon tests
-      #   run: .github/workflows/filter_tests.sh -t salmon
+      - name: Run API tests
+        run: |
+          mkdir -p test_volume
+          sudo chmod -R a+rw test_volume
+          ./api/run_tests.sh
+          .github/workflows/upload_test_coverage.sh api
+      - name: Run salmon tests
+        run: .github/workflows/filter_tests.sh -t salmon
       - name: Install Nomad
         run: |
           sudo ./.github/workflows/fix_ca_certs.sh
@@ -251,14 +255,14 @@ jobs:
           ./scripts/update_models.sh
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
-      # - name: Run affymetrix tests
-      #   run: |
-      #     sudo chmod -R a+rw workers/test_volume
-      #     .github/workflows/filter_tests.sh -t affymetrix
-      # - name: Run agilent tests
-      #   run: |
-      #     sudo -E chown -R $USER:$USER workers/test_volume
-      #     .github/workflows/filter_tests.sh -t agilent
+      - name: Run affymetrix tests
+        run: |
+          sudo chmod -R a+rw workers/test_volume
+          .github/workflows/filter_tests.sh -t affymetrix
+      - name: Run agilent tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/workflows/filter_tests.sh -t agilent
       - name: Install Nomad
         run: |
           sudo ./.github/workflows/fix_ca_certs.sh
