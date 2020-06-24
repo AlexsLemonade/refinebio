@@ -61,13 +61,11 @@ class ProcessorSerializer(serializers.ModelSerializer):
 
 
 class OrganismIndexSerializer(serializers.ModelSerializer):
-
     organism_name = serializers.StringRelatedField(source="organism", read_only=True)
     download_url = serializers.SerializerMethodField()
 
     class Meta:
         model = OrganismIndex
-
         fields = (
             "id",
             "assembly_name",
