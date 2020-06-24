@@ -34,6 +34,6 @@ sed "s/filename=\"/filename=\"$project\//g" $coverage_file > $output_file
 
 # codecov.sh is located at https://codecov.io/bash
 # we downloaded it for convenience
-./.circleci/codecov.sh -f "$output_file" -Z -X s3 -F $project
+./.github/scripts/codecov.sh -f "$output_file" -Z -X s3 -F $project
 
 rm -f $coverage_file $output_file

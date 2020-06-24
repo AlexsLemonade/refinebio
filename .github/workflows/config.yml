@@ -1,4 +1,4 @@
-name: tests
+name: test-and-deploy
 
 on: push
 
@@ -13,30 +13,41 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+
       - name: Pull cached docker images
-        run: ./.github/workflows/pull_docker_images.sh
+        run: ./.github/scripts/pull_docker_images.sh
+
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
+
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
+
       - name: Pause for initialization
         run: sleep 30
+
       - name: Install the database
         run: ./scripts/install_db_docker.sh
+
       - name: Update the models
         run: |
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
+
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
+
       - name: Install Nomad
         run: |
-          sudo ./.github/workflows/fix_ca_certs.sh
+          sudo ./.github/scripts/fix_ca_certs.sh
           sudo ./scripts/install_nomad.sh
+
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
+
       - name: Prepare docker images for end-to-end tests
         run: |
           ./scripts/prepare_image.sh -i no_op -s workers
@@ -48,9 +59,11 @@ jobs:
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
+
       - name: Run downloader tests
         run: |
-          .github/workflows/filter_tests.sh -t downloaders
+          .github/scripts/filter_tests.sh -t downloaders
+
       - name: Run foreman tests
         run: |
           mkdir -p test_volume
@@ -61,13 +74,16 @@ jobs:
           # transcriptome and let those end-to-end tests get run in the
           # workflows that include building those images.
           ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
-          .github/workflows/upload_test_coverage.sh foreman
+          .github/scripts/upload_test_coverage.sh foreman
+
       - name: Run NO_OP tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
-          .github/workflows/filter_tests.sh -t no_op
+          .github/scripts/filter_tests.sh -t no_op
+
       - name: Push built docker images
-        run: ./.github/workflows/push_docker_images.sh
+        run: ./.github/scripts/push_docker_images.sh
+
   common_smasher_tests:
     runs-on: ubuntu-latest
     env:
@@ -76,62 +92,82 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+
       - name: Free up space
-        run: ./.github/workflows/cleanup_instance.sh
+        run: ./.github/scripts/cleanup_instance.sh
+
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+
       - name: Pull cached docker images
-        run: ./.github/workflows/pull_docker_images.sh
+        run: ./.github/scripts/pull_docker_images.sh
+
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
+
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
+
       - name: Pause for initialization
         run: sleep 30
+
       - name: Install the database
         run: ./scripts/install_db_docker.sh
+
       - name: Update the models
         run: |
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
+
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
+
       - name: Run common tests
         run: |
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./common/run_tests.sh
-          .github/workflows/upload_test_coverage.sh common
+          .github/scripts/upload_test_coverage.sh common
+
       - name: Prepare smasher image
         run: ./scripts/prepare_image.sh -i smasher -s workers
+
       - name: Run smasher tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
-          .github/workflows/filter_tests.sh -t smasher
+          .github/scripts/filter_tests.sh -t smasher
+
       - name: Run janitor tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
-          .github/workflows/filter_tests.sh -t janitor
+          .github/scripts/filter_tests.sh -t janitor
+
       - name: Run compendia tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
-          .github/workflows/filter_tests.sh -t compendia
+          .github/scripts/filter_tests.sh -t compendia
+
       - name: Run QN tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
-          .github/workflows/filter_tests.sh -t qn
+          .github/scripts/filter_tests.sh -t qn
+
       - name: Push built docker images
-        run: ./.github/workflows/push_docker_images.sh
+        run: ./.github/scripts/push_docker_images.sh
+
   syntax_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Install build & test dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pre-commit
+
       - name: Run pre-commit hooks on all files
         run: PATH="$PATH:$HOME/.local/bin" pre-commit run --all-files --show-diff-on-failure
+
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     runs-on: ubuntu-latest
@@ -141,40 +177,54 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+
       - name: Free up space
-        run: ./.github/workflows/cleanup_instance.sh
+        run: ./.github/scripts/cleanup_instance.sh
+
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+
       - name: Pull cached docker images
-        run: ./.github/workflows/pull_docker_images.sh
+        run: ./.github/scripts/pull_docker_images.sh
+
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
+
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
+
       - name: Pause for initialization
         run: sleep 30
+
       - name: Install the database
         run: ./scripts/install_db_docker.sh
+
       - name: Update the models
         run: |
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
+
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
+
       - name: Run API tests
         run: |
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./api/run_tests.sh
-          .github/workflows/upload_test_coverage.sh api
+          .github/scripts/upload_test_coverage.sh api
+
       - name: Run salmon tests
-        run: .github/workflows/filter_tests.sh -t salmon
+        run: .github/scripts/filter_tests.sh -t salmon
+
       - name: Install Nomad
         run: |
-          sudo ./.github/workflows/fix_ca_certs.sh
+          sudo ./.github/scripts/fix_ca_certs.sh
           sudo ./scripts/install_nomad.sh
+
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
+
       - name: Prepare docker images for end-to-end tests
         run: |
           ./scripts/prepare_image.sh -i downloaders -s workers
@@ -186,14 +236,17 @@ jobs:
           ./scripts/prepare_image.sh -i salmon -s workers
           docker tag ccdlstaging/dr_salmon localhost:5000/dr_salmon
           docker push localhost:5000/dr_salmon
+
       - name: Run salmon end-to-end tests
         run: |
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./foreman/run_tests.sh --tag=salmon --tag=transcriptome
-          .github/workflows/upload_test_coverage.sh foreman
+          .github/scripts/upload_test_coverage.sh foreman
+
       - name: Push built docker images
-        run: ./.github/workflows/push_docker_images.sh
+        run: ./.github/scripts/push_docker_images.sh
+
   tx_illumina_tests:
     runs-on: ubuntu-latest
     env:
@@ -202,31 +255,42 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+
       - name: Pull cached docker images
-        run: ./.github/workflows/pull_docker_images.sh
+        run: ./.github/scripts/pull_docker_images.sh
+
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
+
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
+
       - name: Pause for initialization
         run: sleep 30
+
       - name: Install the database
         run: ./scripts/install_db_docker.sh
+
       - name: Update the models
         run: |
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
+
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
+
       - name: Run Illumina tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
-          .github/workflows/filter_tests.sh -t illumina
+          .github/scripts/filter_tests.sh -t illumina
+
       - name: Push built docker images
-        run: ./.github/workflows/push_docker_images.sh
+        run: ./.github/scripts/push_docker_images.sh
+
   affy_agilent_tests:
     runs-on: ubuntu-latest
     env:
@@ -235,40 +299,54 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+
       - name: Free up space
-        run: ./.github/workflows/cleanup_instance.sh
+        run: ./.github/scripts/cleanup_instance.sh
+
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+
       - name: Pull cached docker images
-        run: ./.github/workflows/pull_docker_images.sh
+        run: ./.github/scripts/pull_docker_images.sh
+
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
+
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
+
       - name: Pause for initialization
         run: sleep 30
+
       - name: Install the database
         run: ./scripts/install_db_docker.sh
+
       - name: Update the models
         run: |
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
+
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
+
       - name: Run affymetrix tests
         run: |
           sudo chmod -R a+rw workers/test_volume
-          .github/workflows/filter_tests.sh -t affymetrix
+          .github/scripts/filter_tests.sh -t affymetrix
+
       - name: Run agilent tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
-          .github/workflows/filter_tests.sh -t agilent
+          .github/scripts/filter_tests.sh -t agilent
+
       - name: Install Nomad
         run: |
-          sudo ./.github/workflows/fix_ca_certs.sh
+          sudo ./.github/scripts/fix_ca_certs.sh
           sudo ./scripts/install_nomad.sh
+
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
+
       # The foreman includes the end-to-end tests. One of these
       # end-to-end tests is specific to affymetrix, so we run it here
       # since we have the image for it, but we also need the downloaders image.
@@ -281,11 +359,84 @@ jobs:
           # gotta retag it so it can go into the local docker repo.
           docker tag ccdlstaging/dr_affymetrix:latest localhost:5000/dr_affymetrix:latest
           docker push localhost:5000/dr_affymetrix
+
       - name: Run affymetrix end-to-end test
         run: |
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./foreman/run_tests.sh --tag=affymetrix
-          .github/workflows/upload_test_coverage.sh foreman
+          .github/scripts/upload_test_coverage.sh foreman
+
       - name: Push built docker images
-        run: ./.github/workflows/push_docker_images.sh
+        run: ./.github/scripts/push_docker_images.sh
+
+  deploy:
+    if: ${{ startsWith(github.ref, "refs/tags/v") && ! endsWith(github.ref, "-hotfix") }}
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
+      DOCKER_ID: ${{ secrets.DOCKER_ID }}
+      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
+      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
+      CI_USERNAME: ${{ github.actor }}
+    needs:
+      - main_tests
+      - commom_smasher_tests
+      - syntax_test
+      - salmon_and_api_tests
+      - tx_illumina_tests
+      - affy_agilent_tests
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set the $CI_TAG environment variable
+        run: |
+          # Remove /ref/tags/ from the beginning of the tag name
+          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/}
+
+      - name: Install git crypt
+        run: ./.github/scripts/install_git_decrypt.sh
+
+      - name: Git decrypt
+        run: ./.github/scripts/git_decrypt.sh
+
+      - name: Deploy
+        run: ./.github/scripts/remote_deploy.sh
+
+      - name: Notify the slack channel
+        run: ./.github/scripts/slackpost.sh robots deploybot
+
+  hotfix_deploy:
+    if: ${{ startsWith(github.ref, "refs/tags/v") && endsWith(github.ref, "-hotfix") }}
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
+      DOCKER_ID: ${{ secrets.DOCKER_ID }}
+      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
+      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
+      CI_USERNAME: ${{ github.actor }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set the $CI_TAG environment variable
+        run: |
+          # Remove /ref/tags/ from the beginning of the tag name
+          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/}
+
+      - name: Install git crypt
+        run: ./.github/scripts/install_git_decrypt.sh
+
+      - name: Git decrypt
+        run: ./.github/scripts/git_decrypt.sh
+
+      - name: Deploy
+        run: ./.github/scripts/remote_deploy.sh
+
+      - name: Notify the slack channel
+        run: ./.github/scripts/slackpost.sh robots deploybot
