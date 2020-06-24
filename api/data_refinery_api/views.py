@@ -814,11 +814,10 @@ class ComputationalResultsDetail(generics.RetrieveAPIView):
     """
     Retrieves a computational result by its ID
     """
+
     lookup_field = "id"
     queryset = ComputationalResult.public_objects.all()
     serializer_class = ComputationalResultSerializer
-
-
 
 
 ##
@@ -840,6 +839,7 @@ class OrganismDetail(generics.RetrieveAPIView):
     """
     Retrieves an organism by its taxonomy ID
     """
+
     lookup_field = "taxonomy_id"
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer
@@ -871,8 +871,6 @@ class InstitutionList(generics.ListAPIView):
 
     def get_queryset(self):
         return Experiment.public_objects.all().values("submitter_institution").distinct()
-
-
 
 
 ##
@@ -1530,7 +1528,12 @@ class CompendiumResultList(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = ["primary_organism__name", "compendium_version", "quant_sf_only", "result__id"]
+    filterset_fields = [
+        "primary_organism__name",
+        "compendium_version",
+        "quant_sf_only",
+        "result__id",
+    ]
     ordering_fields = ("primary_organism__name", "compendium_version", "id")
     ordering = ("primary_organism__name",)
 
@@ -1701,6 +1704,7 @@ class ComputedFilesDetail(generics.RetrieveAPIView):
     """
     Retrieves a computed file by its ID
     """
+
     lookup_field = "id"
     queryset = ComputedFile.objects.all()
     serializer_class = ComputedFileListSerializer
@@ -1737,8 +1741,6 @@ class OriginalFileDetail(generics.RetrieveAPIView):
     lookup_field = "id"
     queryset = OriginalFile.objects.all()
     serializer_class = OriginalFileListSerializer
-
-
 
 
 # error handlers
