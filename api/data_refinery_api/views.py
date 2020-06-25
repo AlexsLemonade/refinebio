@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from rest_framework import filters, generics, status
+from rest_framework import filters, generics, serializers, status
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
@@ -518,7 +518,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             return serializer_context
 
     def perform_update(self, serializer):
-        """ If `start` is set, fire off the job. Disables dataset data updates after that. """
+        """ If `start` is set, fire off the job. Disables dataset data updates after that.
+        """
         old_object = self.get_object()
         old_data = old_object.data
         old_aggregate = old_object.aggregate_by
@@ -541,8 +542,9 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 new_data["data"][key] = sample_codes
 
         if old_object.is_processed:
-            raise APIException("You may not update Datasets which have already been processed")
-
+            raise serializers.ValidationError(
+                "You may not update Datasets which have already been processed"
+            )
         if new_data.get("start"):
 
             # Make sure we have a valid activated token.
@@ -552,11 +554,16 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 token_id = self.request.META.get("HTTP_API_KEY", None)
 
             try:
-                token = APIToken.objects.get(id=token_id, is_activated=True)
-            except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-                raise APIException("You must provide an active API token ID")
+                APIToken.objects.get(id=token_id, is_activated=True)
+            # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            except Exception:
+                raise serializers.ValidationError("You must provide an active API token ID")
 
             supplied_email_address = self.request.data.get("email_address", None)
+
+            if supplied_email_address is None:
+                raise serializers.ValidationError("You must provide an email address.")
+
             email_ccdl_ok = self.request.data.get("email_ccdl_ok", False)
 
             if not already_processing:
@@ -574,10 +581,9 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 job_sent = False
 
                 obj = serializer.save()
-                if supplied_email_address is not None:
-                    if obj.email_address != supplied_email_address:
-                        obj.email_address = supplied_email_address
-                        obj.save()
+                if obj.email_address != supplied_email_address:
+                    obj.email_address = supplied_email_address
+                    obj.save()
                 if email_ccdl_ok:
                     obj.email_ccdl_ok = email_ccdl_ok
                     obj.save()
@@ -635,7 +641,7 @@ class CreateApiTokenView(generics.CreateAPIView):
     ```py
     import requests
     import json
-    ​
+
     response = requests.post('https://api.refine.bio/v1/token/')
     token_id = response.json()['id']
     response = requests.put('https://api.refine.bio/v1/token/' + token_id + '/', json.dumps({'is_activated': True}), headers={'Content-Type': 'application/json'})
@@ -906,9 +912,8 @@ class ComputationalResultsList(generics.ListAPIView):
 
 
 class OrganismList(generics.ListAPIView):
+    """Paginated list of all the available organisms.
     """
-	  Paginated list of all the available organisms.
-	  """
 
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer
