@@ -764,6 +764,9 @@ An existing team member can add a new team member who provides a GPG key `user.a
 Note that `git-crypt lock && git-crypt unlock` will reset permission secret files.
 For the ssh key, this will require running `chmod 600 infrastructure/data-refinery-key.pem` before sshing onto AWS instances.
 
+If you are adding a member to git-crypt, you should also consider adding thier GPG key to the `keys/` directory.
+This directory is used to validate signed tags so that we know only trusted members are pushing deploys.
+
 
 ### Terraform
 
