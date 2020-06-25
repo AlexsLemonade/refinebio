@@ -73,7 +73,10 @@ from data_refinery_api.serializers import (  # Job; Dataset
     ComputedFileListSerializer,
     CreateDatasetSerializer,
     DatasetSerializer,
+    DetailedComputationalResultSerializer,
+    DetailedComputedFileSerializer,
     DetailedExperimentSerializer,
+    DetailedOriginalFileSerializer,
     DetailedSampleSerializer,
     DownloaderJobSerializer,
     ExperimentSerializer,
@@ -879,7 +882,7 @@ class ProcessorDetail(generics.RetrieveAPIView):
 
     lookup_field = "id"
     queryset = Processor.objects.all()
-    serializer_class = ProcessorSerializer
+    serializer_class = DetailedProcessorSerializer
 
 
 ##
@@ -923,7 +926,7 @@ class ComputationalResultsDetail(generics.RetrieveAPIView):
 
     lookup_field = "id"
     queryset = ComputationalResult.public_objects.all()
-    serializer_class = ComputationalResultSerializer
+    serializer_class = DetailedComputationalResultSerializer
 
 
 ##
@@ -946,7 +949,7 @@ class OrganismDetail(generics.RetrieveAPIView):
 
     lookup_field = "name"
     queryset = Organism.objects.all()
-    serializer_class = OrganismSerializer
+    serializer_class = DetailedOrganismSerializer
 
 
 class PlatformList(generics.ListAPIView):
@@ -1005,7 +1008,7 @@ class SurveyJobDetail(generics.RetrieveAPIView):
     lookup_field = "id"
     model = SurveyJob
     queryset = SurveyJob.objects.all()
-    serializer_class = SurveyJobSerializer
+    serializer_class = DetailedSurveyJobSerializer
 
 
 @method_decorator(
@@ -1067,7 +1070,7 @@ class DownloaderJobDetail(generics.RetrieveAPIView):
     lookup_field = "id"
     model = DownloaderJob
     queryset = DownloaderJob.objects.all()
-    serializer_class = DownloaderJobSerializer
+    serializer_class = DetailedDownloaderJobSerializer
 
 
 @method_decorator(
@@ -1129,7 +1132,7 @@ class ProcessorJobDetail(generics.RetrieveAPIView):
     lookup_field = "id"
     model = ProcessorJob
     queryset = ProcessorJob.objects.all()
-    serializer_class = ProcessorJobSerializer
+    serializer_class = DetailedProcessorJobSerializer
 
 
 ###
@@ -1807,10 +1810,10 @@ class ComputedFilesDetail(generics.RetrieveAPIView):
     """
     Retrieves a computed file by its ID
     """
-
+    
     lookup_field = "id"
     queryset = ComputedFile.objects.all()
-    serializer_class = ComputedFileListSerializer
+    serializer_class = DetailedComputedFileSerializer
 
 
 class OriginalFileList(generics.ListAPIView):
@@ -1843,7 +1846,7 @@ class OriginalFileDetail(generics.RetrieveAPIView):
 
     lookup_field = "id"
     queryset = OriginalFile.objects.all()
-    serializer_class = OriginalFileListSerializer
+    serializer_class = DetailedOriginalFileSerializer
 
 
 # error handlers

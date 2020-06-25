@@ -107,7 +107,7 @@ urlpatterns = [
                 ),
                 url(r"^organisms/$", OrganismList.as_view(), name="organisms"),
                 url(
-                    r"^organisms/(?P<taxonomy_id>[0-9a-f-]+)/$",
+                    r"^organisms/(?P<name>.+)/$",
                     OrganismDetail.as_view(),
                     name="organisms_detail",
                 ),

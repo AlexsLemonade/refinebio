@@ -44,6 +44,7 @@ class OrganismSerializer(serializers.ModelSerializer):
         )
 
 
+
 ##
 # Processor
 ##
@@ -53,6 +54,7 @@ class ProcessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Processor
         fields = ("id", "name", "version", "docker_image", "environment")
+
 
 
 ##
@@ -86,6 +88,74 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
         return None
 
 
+
+##
+# Jobs
+##
+
+
+class SurveyJobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SurveyJob
+        fields = (
+            "id",
+            "source_type",
+            "success",
+            "start_time",
+            "end_time",
+            "created_at",
+            "last_modified",
+        )
+
+
+class DownloaderJobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DownloaderJob
+        fields = (
+            "id",
+            "downloader_task",
+            "num_retries",
+            "retried",
+            "was_recreated",
+            "worker_id",
+            "worker_version",
+            "nomad_job_id",
+            "failure_reason",
+            "success",
+            "original_files",
+            "start_time",
+            "end_time",
+            "created_at",
+            "last_modified",
+        )
+
+
+class ProcessorJobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcessorJob
+        fields = (
+            "id",
+            "pipeline_applied",
+            "num_retries",
+            "retried",
+            "worker_id",
+            "ram_amount",
+            "volume_index",
+            "worker_version",
+            "failure_reason",
+            "nomad_job_id",
+            "success",
+            "original_files",
+            "datasets",
+            "start_time",
+            "end_time",
+            "created_at",
+            "last_modified",
+        )
+
+
+
+
 ##
 # Results
 ##
@@ -101,12 +171,6 @@ class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
             "technology",
             "is_processed",
         )
-
-
-class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComputationalResultAnnotation
-        fields = ("id", "data", "is_ccdl", "created_at", "last_modified")
 
 
 class ComputedFileSerializer(serializers.ModelSerializer):
@@ -126,22 +190,10 @@ class ComputedFileSerializer(serializers.ModelSerializer):
         )
 
 
-class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
+class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ComputedFile
-        fields = (
-            "id",
-            "filename",
-            "size_in_bytes",
-            "is_smashable",
-            "is_qc",
-            "sha1",
-            "s3_bucket",
-            "s3_key",
-            "download_url",
-            "created_at",
-            "last_modified",
-        )
+        model = ComputationalResultAnnotation
+        fields = ("id", "data", "is_ccdl", "created_at", "last_modified")
 
 
 class ComputationalResultSerializer(serializers.ModelSerializer):
@@ -167,6 +219,61 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+
+
+class DetailedComputedFileSerializer(ComputedFileSerializer):
+    result = ComputationalResultSerializer(many=False, read_only=False)
+    samples = DetailedExperimentSampleSerializer(many=True)
+    compendia_organism_name = serializers.CharField(
+        source="compendia_organism__name", read_only=True
+    )
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+            "id",
+            "filename",
+            "samples",
+            "size_in_bytes",
+            "is_qn_target",
+            "is_smashable",
+            "is_qc",
+            "is_compendia",
+            "quant_sf_only",
+            "compendia_version",
+            "compendia_organism_name",
+            "sha1",
+            "s3_bucket",
+            "s3_key",
+            "s3_url",
+            "download_url",
+            "created_at",
+            "last_modified",
+            "result",
+        )
+
+
+class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComputedFile
+        fields = (
+            "id",
+            "filename",
+            "size_in_bytes",
+            "is_smashable",
+            "is_qc",
+            "sha1",
+            "s3_bucket",
+            "s3_key",
+            "download_url",
+            "created_at",
+            "last_modified",
+        )
+
+
+class DetailedComputationalResultSerializer(ComputationalResultSerializer):
+    processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
 
 
 class ComputationalResultWithUrlSerializer(ComputationalResultSerializer):
@@ -261,7 +368,7 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
         }
 
 
-class OriginalFileListSerializer(serializers.ModelSerializer):
+class OriginalFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginalFile
         fields = (
@@ -270,7 +377,6 @@ class OriginalFileListSerializer(serializers.ModelSerializer):
             "samples",
             "size_in_bytes",
             "sha1",
-            "samples",
             "processor_jobs",
             "downloader_jobs",
             "source_url",
@@ -280,6 +386,18 @@ class OriginalFileListSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+
+
+class OriginalFileListSerializer(OriginalFileSerializer):
+    pass
+
+
+class DetailedOriginalFileSerializer(OriginalFileSerializer):
+    samples = DetailedExperimentSampleSerializer(many=True)
+    processor_jobs = ProcessorJobSerializer(many=True)
+    downloader_jobs = DownloaderJobSerializer(many=True)
+
+
 
 
 ##
@@ -520,70 +638,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
             "last_modified",
         )
 
-
-##
-# Jobs
-##
-
-
-class SurveyJobSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SurveyJob
-        fields = (
-            "id",
-            "source_type",
-            "success",
-            "start_time",
-            "end_time",
-            "created_at",
-            "last_modified",
-        )
-
-
-class DownloaderJobSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DownloaderJob
-        fields = (
-            "id",
-            "downloader_task",
-            "num_retries",
-            "retried",
-            "was_recreated",
-            "worker_id",
-            "worker_version",
-            "nomad_job_id",
-            "failure_reason",
-            "success",
-            "original_files",
-            "start_time",
-            "end_time",
-            "created_at",
-            "last_modified",
-        )
-
-
-class ProcessorJobSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProcessorJob
-        fields = (
-            "id",
-            "pipeline_applied",
-            "num_retries",
-            "retried",
-            "worker_id",
-            "ram_amount",
-            "volume_index",
-            "worker_version",
-            "failure_reason",
-            "nomad_job_id",
-            "success",
-            "original_files",
-            "datasets",
-            "start_time",
-            "end_time",
-            "created_at",
-            "last_modified",
-        )
 
 
 ##
