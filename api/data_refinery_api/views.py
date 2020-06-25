@@ -74,6 +74,7 @@ from data_refinery_api.serializers import (  # Job; Dataset
     CreateDatasetSerializer,
     DatasetSerializer,
     DetailedComputationalResultSerializer,
+    DetailedComputationalResultWithUrlSerializer,
     DetailedComputedFileSerializer,
     DetailedExperimentSerializer,
     DetailedOriginalFileSerializer,
@@ -882,7 +883,7 @@ class ProcessorDetail(generics.RetrieveAPIView):
 
     lookup_field = "id"
     queryset = Processor.objects.all()
-    serializer_class = DetailedProcessorSerializer
+    serializer_class = ProcessorSerializer
 
 
 ##
@@ -926,7 +927,15 @@ class ComputationalResultsDetail(generics.RetrieveAPIView):
 
     lookup_field = "id"
     queryset = ComputationalResult.public_objects.all()
-    serializer_class = DetailedComputationalResultSerializer
+
+    def get_serializer_class(self):
+        token_id = self.request.META.get("HTTP_API_KEY", None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            return DetailedComputationalResultWithUrlSerializer
+        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return DetailedComputationalResultSerializer
 
 
 ##
@@ -949,7 +958,7 @@ class OrganismDetail(generics.RetrieveAPIView):
 
     lookup_field = "name"
     queryset = Organism.objects.all()
-    serializer_class = DetailedOrganismSerializer
+    serializer_class = OrganismSerializer
 
 
 class PlatformList(generics.ListAPIView):
@@ -1008,7 +1017,7 @@ class SurveyJobDetail(generics.RetrieveAPIView):
     lookup_field = "id"
     model = SurveyJob
     queryset = SurveyJob.objects.all()
-    serializer_class = DetailedSurveyJobSerializer
+    serializer_class = SurveyJobSerializer
 
 
 @method_decorator(
@@ -1070,7 +1079,7 @@ class DownloaderJobDetail(generics.RetrieveAPIView):
     lookup_field = "id"
     model = DownloaderJob
     queryset = DownloaderJob.objects.all()
-    serializer_class = DetailedDownloaderJobSerializer
+    serializer_class = DownloaderJobSerializer
 
 
 @method_decorator(
@@ -1132,7 +1141,7 @@ class ProcessorJobDetail(generics.RetrieveAPIView):
     lookup_field = "id"
     model = ProcessorJob
     queryset = ProcessorJob.objects.all()
-    serializer_class = DetailedProcessorJobSerializer
+    serializer_class = ProcessorJobSerializer
 
 
 ###
@@ -1810,7 +1819,7 @@ class ComputedFilesDetail(generics.RetrieveAPIView):
     """
     Retrieves a computed file by its ID
     """
-
+    
     lookup_field = "id"
     queryset = ComputedFile.objects.all()
     serializer_class = DetailedComputedFileSerializer

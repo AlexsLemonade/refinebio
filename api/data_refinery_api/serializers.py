@@ -275,6 +275,11 @@ class ComputationalResultWithUrlSerializer(ComputationalResultSerializer):
     files = ComputedFileWithUrlSerializer(many=True, source="computedfile_set")
 
 
+class DetailedComputationalResultWithUrlSerializer(ComputationalResultWithUrlSerializer):
+    processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
+
+
 class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(
         many=True, source="computationalresultannotation_set"
