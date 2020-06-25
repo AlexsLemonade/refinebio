@@ -487,6 +487,18 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
 
+        self.assertEqual(response.status_code, 201)
+
+        # Good, except for missing email.
+        jdata = json.dumps(
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
+        )
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
         self.assertEqual(response.status_code, 400)
 
         # Good, except for invalid email.
@@ -739,7 +751,7 @@ class APITestCases(APITestCase):
             jdata,
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
 
         jdata = json.dumps(
             {
