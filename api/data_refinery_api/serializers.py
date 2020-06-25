@@ -376,6 +376,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             "last_modified",
             "original_files",
             "computed_files",
+            "experiment_accession_codes",
         )
 
 
@@ -463,6 +464,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
             "samples",
             "protocol_description",
             "accession_code",
+            "alternate_accession_code",
             "source_database",
             "source_url",
             "has_publication",
