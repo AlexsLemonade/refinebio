@@ -945,7 +945,7 @@ class OrganismDetail(generics.RetrieveAPIView):
     Retrieves an organism by its taxonomy ID
     """
 
-    lookup_field = "taxonomy_id"
+    lookup_field = "name"
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer
 
