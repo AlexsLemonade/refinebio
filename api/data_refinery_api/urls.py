@@ -107,9 +107,7 @@ urlpatterns = [
                 ),
                 url(r"^organisms/$", OrganismList.as_view(), name="organisms"),
                 url(
-                    r"^organisms/(?P<name>.+)/$",
-                    OrganismDetail.as_view(),
-                    name="organisms_detail",
+                    r"^organisms/(?P<name>.+)/$", OrganismDetail.as_view(), name="organisms_detail",
                 ),
                 url(r"^platforms/$", PlatformList.as_view(), name="platforms"),
                 # platform detail

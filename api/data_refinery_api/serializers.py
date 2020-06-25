@@ -44,7 +44,6 @@ class OrganismSerializer(serializers.ModelSerializer):
         )
 
 
-
 ##
 # Processor
 ##
@@ -54,7 +53,6 @@ class ProcessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Processor
         fields = ("id", "name", "version", "docker_image", "environment")
-
 
 
 ##
@@ -86,7 +84,6 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
         if computed_file is not None:
             return computed_file.s3_url
         return None
-
 
 
 ##
@@ -152,8 +149,6 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
-
-
 
 
 ##
@@ -398,8 +393,6 @@ class DetailedOriginalFileSerializer(OriginalFileSerializer):
     downloader_jobs = DownloaderJobSerializer(many=True)
 
 
-
-
 ##
 # Samples
 ##
@@ -637,7 +630,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
-
 
 
 ##
