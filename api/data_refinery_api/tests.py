@@ -2,6 +2,7 @@ import json
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
+from django.core.exceptions import TooManyFieldsSent
 from django.core.management import call_command
 from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
@@ -46,6 +47,7 @@ class APITestCases(APITestCase):
 
         experiment = Experiment()
         experiment.accession_code = "GSE000"
+        experiment.alternate_accession_code = "E-GEOD-000"
         experiment.title = "NONONONO"
         experiment.description = "Boooooourns. Wasabi."
         experiment.technology = "RNA-SEQ"
@@ -65,6 +67,10 @@ class APITestCases(APITestCase):
         experiment_annotation.data = {"hello": "world", "123": 456}
         experiment_annotation.experiment = experiment
         experiment_annotation.save()
+
+        # Create 26 test organisms numbered 0-25 for pagination test, so there should be 29 organisms total (with the 3 others below)
+        for i in range(26):
+            Organism(name=("TEST_ORGANISM_{}".format(i)), taxonomy_id=(1234 + i)).save()
 
         ailuropoda = Organism(
             name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
@@ -268,6 +274,20 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 2)
 
+    # Test the query the front-end uses to find the experiment with a given
+    # accession or alternate accession
+    def test_experiment_alternate_accession(self):
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION})
+            + "?search=alternate_accession_code:E-GEOD-000"
+            + "?search=accession_code:E-GEOD-000",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 1)
+        self.assertEqual(response.json()["results"][0]["alternate_accession_code"], "E-GEOD-000")
+
     def test_sample_multiple_accessions(self):
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}) + "?accession_codes=123,789",
@@ -300,6 +320,19 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["title"], "123")
 
+    def test_organism_pagination(self):
+        response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 25)
+
+        # First organism on second page should be TEST_ORGANISM_25, and since 29 organisms have been created, there should be 4 on the 2nd page
+        response = self.client.get(
+            reverse("organisms", kwargs={"version": API_VERSION}), {"offset": 25}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 4)
+        self.assertEqual(response.json()["results"][0]["name"], "TEST_ORGANISM_25")
+
     def test_fetching_experiment_samples(self):
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}),
@@ -315,6 +348,13 @@ class APITestCases(APITestCase):
             {"experiment_accession_code": "wrong-accession-code"},
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_sample_detail_experiment_accessions(self):
+        response = self.client.get(
+            reverse("samples_detail", kwargs={"version": API_VERSION, "accession_code": "789"})
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["experiment_accession_codes"], ["GSE123"])
 
     def test_fetching_organism_index(self):
         organism_index_id = OrganismIndex.objects.all().first().id
@@ -443,6 +483,18 @@ class APITestCases(APITestCase):
         jdata = json.dumps({"data": {"GSE123": ["789"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+        # Good, except for missing email.
+        jdata = json.dumps(
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
+        )
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
             jdata,
             content_type="application/json",
         )
@@ -699,7 +751,7 @@ class APITestCases(APITestCase):
             jdata,
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
 
         jdata = json.dumps(
             {
@@ -1134,6 +1186,9 @@ class StatsTestCases(APITestCase):
         self.assertEqual(response.json()["nomad_running_jobs_by_volume"]["2"], 1)
 
 
+ECOLI_STRAIN_NAME = "Escherichia coli str. k-12 substr. mg1655"
+
+
 class ESTestCases(APITestCase):
     @classmethod
     def setUpClass(cls):
@@ -1169,9 +1224,7 @@ class ESTestCases(APITestCase):
         sample.accession_code = "123"
         sample.save()
 
-        organism = Organism(
-            name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
-        )
+        organism = Organism(name=ECOLI_STRAIN_NAME, taxonomy_id=879462, is_scientific_name=True,)
         organism.save()
 
         sample = Sample()
@@ -1264,6 +1317,10 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()["facets"]["has_publication"]["false"], 1)
         self.assertEqual(response.json()["facets"]["technology"]["microarray"], 1)
         self.assertEqual(response.json()["facets"]["technology"]["rna-seq"], 0)
+        self.assertEqual(
+            list(response.json()["facets"]["organism_names"].keys()), [ECOLI_STRAIN_NAME]
+        )
+        self.assertEqual(response.json()["facets"]["organism_names"][ECOLI_STRAIN_NAME], 1)
 
         # Basic Search
         response = self.client.get(
@@ -1284,6 +1341,51 @@ class ESTestCases(APITestCase):
             {"search": "soda", "technology": "rna"},
         )
         self.assertEqual(response.json()["count"], 0)
+
+    def test_es_endpoint_post(self):
+        # Basic filter
+        search = {"accession_code": "GSE123-X"}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # __in filter
+        search = {"accession_code__in": ["GSE123-X"]}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # Numeric filter
+        search = {"num_downloadable_samples__gt": 0}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # Large query
+        search = {"accession_code__in": ["GSE123-X" for _ in range(10000)]}
+        with self.assertRaises(TooManyFieldsSent):
+            # This should fail for GET requests because the generated URL is too large
+            response = self.client.get(reverse("search", kwargs={"version": API_VERSION}), search)
+
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
 
 
 class ProcessorTestCases(APITestCase):

@@ -65,8 +65,8 @@ class ExperimentDocument(Document):
     )
 
     # Basic Fields
-    accession_code = fields.TextField()
-    alternate_accession_code = fields.TextField()
+    accession_code = fields.KeywordField()
+    alternate_accession_code = fields.KeywordField()
     submitter_institution = fields.TextField()
     publication_doi = fields.TextField()
     has_publication = fields.BooleanField()

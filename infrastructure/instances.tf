@@ -218,6 +218,36 @@ resource "aws_spot_fleet_request" "cheap_ram" {
   ]
 
   ##
+  # x1e.4xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "x1e.4xlarge"
+    weighted_capacity         = 5 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 900
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification x1e.4xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
+  ##
   # x1e.8xlarge
   ##
   launch_specification {
@@ -482,6 +512,10 @@ data "aws_caller_identity" "current" {}
 resource "aws_elasticsearch_domain" "es" {
   domain_name = "es-${var.user}-${var.stage}"
   elasticsearch_version = "6.3"
+
+  advanced_options = {
+    indices.query.bool.max_clause_count = 16384
+  }
 
   # TODO: Figure out the power/cost balance of this type.
   # Prices are here: https://aws.amazon.com/elasticsearch-service/pricing/
