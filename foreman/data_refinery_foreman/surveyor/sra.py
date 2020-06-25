@@ -1,4 +1,5 @@
 import random
+import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List
 
@@ -276,6 +277,13 @@ class SraSurveyor(ExternalSourceSurveyor):
                         if ggc.getchildren()[0].text == "pubmed":
                             metadata["pubmed_id"] = ggc.getchildren()[1].text
                             break
+            elif child.tag == "IDENTIFIERS":
+                for grandchild in child:
+                    if (
+                        grandchild.tag == "EXTERNAL_ID"
+                        and grandchild.attrib.get("namespace", "") == "GEO"
+                    ):
+                        metadata["external_id"] = grandchild.text
 
     @staticmethod
     def gather_all_metadata(run_accession):
@@ -347,6 +355,10 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment.source_first_published = parse_datetime(metadata["study_ena_first_public"])
         if "study_ena_last_update" in metadata:
             experiment.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
+
+        # We only want GEO alternate accessions for SRA samples
+        if re.match(r"^GSE\d{2,6}", metadata.get("external_id", "")) is not None:
+            experiment.alternate_accession_code = metadata["external_id"]
 
         # Rare, but it happens.
         if not experiment.protocol_description:

@@ -79,6 +79,7 @@ class SraSurveyorTestCase(TestCase):
         sra_surveyor = SraSurveyor(survey_job)
         experiment, samples = sra_surveyor.discover_experiment_and_samples()
         self.assertEqual(experiment.accession_code, "SRP068364")
+        self.assertEqual(experiment.alternate_accession_code, "GSE76780")
         self.assertEqual(len(samples), 4)
 
         survey_job = SurveyJob(source_type="SRA")
@@ -92,6 +93,7 @@ class SraSurveyorTestCase(TestCase):
         experiment, samples = sra_surveyor.discover_experiment_and_samples()
 
         self.assertEqual(experiment.accession_code, "SRP111553")
+        self.assertEqual(experiment.alternate_accession_code, "GSE101204")
         self.assertEqual(len(samples), 16)  # 8 samples with 2 runs each
 
         survey_job = SurveyJob(source_type="SRA")
@@ -105,6 +107,7 @@ class SraSurveyorTestCase(TestCase):
         experiment, samples = sra_surveyor.discover_experiment_and_samples()
 
         self.assertEqual(experiment.accession_code, "DRP003977")
+        self.assertEqual(experiment.alternate_accession_code, None)
         self.assertEqual(len(samples), 9)
 
     @vcr.use_cassette(
