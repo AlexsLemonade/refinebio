@@ -1779,7 +1779,6 @@ class ComputedFilesList(generics.ListAPIView):
         "quant_sf_only",
         "svd_algorithm",
         "compendia_version",
-        "compendia_organism_name",
         "created_at",
         "last_modified",
         "result__id",
