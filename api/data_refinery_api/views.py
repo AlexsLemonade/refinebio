@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from rest_framework import filters, generics, status, serializers
+from rest_framework import filters, generics, serializers, status
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
