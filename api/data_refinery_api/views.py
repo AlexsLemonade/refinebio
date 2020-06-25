@@ -1819,7 +1819,7 @@ class ComputedFilesDetail(generics.RetrieveAPIView):
     """
     Retrieves a computed file by its ID
     """
-    
+
     lookup_field = "id"
     queryset = ComputedFile.objects.all()
     serializer_class = DetailedComputedFileSerializer
