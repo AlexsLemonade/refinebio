@@ -557,6 +557,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 raise APIException("You must provide an active API token ID")
 
             supplied_email_address = self.request.data.get("email_address", None)
+
+            if supplied_email_address is None:
+                raise APIException("You must provide an email address.")
+
             email_ccdl_ok = self.request.data.get("email_ccdl_ok", False)
 
             if not already_processing:
@@ -574,10 +578,9 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 job_sent = False
 
                 obj = serializer.save()
-                if supplied_email_address is not None:
-                    if obj.email_address != supplied_email_address:
-                        obj.email_address = supplied_email_address
-                        obj.save()
+                if obj.email_address != supplied_email_address:
+                    obj.email_address = supplied_email_address
+                    obj.save()
                 if email_ccdl_ok:
                     obj.email_ccdl_ok = email_ccdl_ok
                     obj.save()
@@ -635,7 +638,7 @@ class CreateApiTokenView(generics.CreateAPIView):
     ```py
     import requests
     import json
-    ​
+
     response = requests.post('https://api.refine.bio/v1/token/')
     token_id = response.json()['id']
     response = requests.put('https://api.refine.bio/v1/token/' + token_id + '/', json.dumps({'is_activated': True}), headers={'Content-Type': 'application/json'})
@@ -906,9 +909,8 @@ class ComputationalResultsList(generics.ListAPIView):
 
 
 class OrganismList(generics.ListAPIView):
+    """Paginated list of all the available organisms.
     """
-	  Paginated list of all the available organisms.
-	  """
 
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer

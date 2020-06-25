@@ -99,7 +99,7 @@ class Dataset(models.Model):
     failure_reason = models.TextField()
 
     # Delivery properties
-    email_address = models.EmailField(max_length=255, blank=False, null=False)
+    email_address = models.EmailField(max_length=255, blank=True, null=True)
     email_ccdl_ok = models.BooleanField(default=False)
     expires_on = models.DateTimeField(blank=True, null=True)
 
