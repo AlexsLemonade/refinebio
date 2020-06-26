@@ -48,6 +48,37 @@ class SurveyTestCase(TransactionTestCase):
         command = Command()
         command.handle()
 
+    def test_sra_experiment_missing_alternate_accession(self):
+        """Tests that an SRA experiment has its missing alternate_accession_code added."""
+
+        # 1. Create an experiment without an alternate_accession_code
+        experiment = Experiment()
+        experiment.accession_code = "SRP094947"
+        experiment.source_database = "SRA"
+        experiment.title = "Not important"
+        experiment.save()
+
+        # 2. We need to add a sample because the way that the SRA surveyor finds metadata is
+        # through run accessions
+        sample = Sample()
+        sample.accession_code = "SRR5099111"
+        sample.technology = "RNA-SEQ"
+        sample.source_database = "SRA"
+        sample.title = "Not important"
+        sample.save()
+
+        ExperimentSampleAssociation.objects.get_or_create(experiment=experiment, sample=sample)
+
+        # 3. Setup is done, actually run the command.
+        command = Command()
+        command.handle()
+
+        # 4. Refresh the experiment
+        experiment.refresh_from_db()
+
+        # Test that the correct alternate_accession_code was added
+        self.assertEquals(experiment.alternate_accession_code, "GSE92260")
+
     def test_geo_experiment_missing_metadata(self):
         """Tests that a GEO experiment has its missing metadata added."""
 
