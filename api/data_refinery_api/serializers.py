@@ -388,10 +388,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
         )
 
 
-class OriginalFileListSerializer(OriginalFileSerializer):
-    pass
-
-
 class DetailedOriginalFileSerializer(OriginalFileSerializer):
     samples = DetailedExperimentSampleSerializer(many=True)
     processor_jobs = ProcessorJobSerializer(many=True)

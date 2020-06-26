@@ -84,7 +84,7 @@ from data_refinery_api.serializers import (  # Job; Dataset
     InstitutionSerializer,
     OrganismIndexSerializer,
     OrganismSerializer,
-    OriginalFileListSerializer,
+    OriginalFileSerializer,
     PlatformSerializer,
     ProcessorJobSerializer,
     ProcessorSerializer,
@@ -1834,12 +1834,12 @@ class OriginalFileList(generics.ListAPIView):
     """
 
     queryset = OriginalFile.objects.all()
-    serializer_class = OriginalFileListSerializer
+    serializer_class = OriginalFileSerializer
     filter_backends = (
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = OriginalFileListSerializer.Meta.fields
+    filterset_fields = OriginalFileSerializer.Meta.fields
     ordering_fields = (
         "id",
         "created_at",
