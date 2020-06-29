@@ -28,3 +28,60 @@ DELETE FROM processorjob_originalfile_associations WHERE processor_job_id NOT IN
          FROM processorjob_originalfile_associations
          GROUP BY original_file_id) AS pjs);
 ```
+
+### Emptying the queue
+
+If you ever need to empty the queue of processor and downloader jobs, you can run this in the foreman:
+
+```python
+from data_refinery_common.models.jobs.processor_job import ProcessorJob
+from data_refinery_common.models.jobs.downloader_job import DownloaderJob
+from django.utils import timezone
+from datetime import datetime
+
+JOB_CREATED_AT_CUTOFF = datetime(2019, 9, 19, tzinfo=timezone.utc)
+
+ProcessorJob.failed_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).exclude(
+    pipeline_applied="JANITOR"
+).update(no_retry=True)
+ProcessorJob.lost_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).exclude(
+    pipeline_applied="JANITOR"
+).update(no_retry=True)
+ProcessorJob.hung_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).exclude(
+    pipeline_applied="JANITOR"
+).update(no_retry=True)
+
+DownloaderJob.failed_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).update(no_retry=True)
+DownloaderJob.lost_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).update(no_retry=True)
+DownloaderJob.hung_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).update(no_retry=True)
+```
+
+This sets all lost, hung, and failed processor jobs to not retry.
+
+### Summarizing failure reasons
+
+If you want to figure out why processor jobs are failing, you can use this
+command to summarize the failure reason for recent jobs (you can tweak what
+"recent" means, here it means the last 10 hours).
+
+```python
+from data_refinery_common.models.jobs.processor_job import ProcessorJob
+from django.utils import timezone
+from datetime import timedelta
+from collections import Counter
+t = timezone.now() - timedelta(hours=10)
+
+Counter([j.failure_reason for j in ProcessorJob.objects.filter(created_at__gt=t, success=False)])
+```
+
+You can also do the same for downloader jobs:
+
+```python
+from data_refinery_common.models.jobs.downloader_job import DownloaderJob
+from django.utils import timezone
+from datetime import timedelta
+from collections import Counter
+t = timezone.now() - timedelta(hours=10)
+
+Counter([j.failure_reason for j in DownloaderJob.objects.filter(created_at__gt=t, success=False)])
+```
