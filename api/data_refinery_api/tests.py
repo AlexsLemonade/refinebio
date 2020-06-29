@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.views import DatasetView, ExperimentList
+from data_refinery_api.views_2 import DatasetView, ExperimentListView
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -456,6 +456,10 @@ class APITestCases(APITestCase):
             HTTP_API_KEY=token_id,
         )
         response_json = response.json()["results"]
+        
+        #
+        print(response_json)
+
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]["download_url"])
 
@@ -1002,7 +1006,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_403(self, mock_client, mock_get_method):
         mock_get_method.side_effect = Mock(return_value=HttpResponseForbidden())
@@ -1012,7 +1016,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 403)
         mock_client.captureMessage.assert_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_500(self, mock_client, mock_get_method):
         def raise_error(_):
