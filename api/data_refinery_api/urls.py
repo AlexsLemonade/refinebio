@@ -16,7 +16,6 @@ from .views import (
     ComputationalResultsList,
     ComputedFilesList,
     CreateApiTokenView,
-    CreateDatasetView,
     DatasetView,
     DownloaderJobList,
     ExperimentDetail,
@@ -102,8 +101,12 @@ urlpatterns = [
                 url(r"^institutions/$", InstitutionList.as_view(), name="institutions"),
                 url(r"^processors/$", ProcessorList.as_view(), name="processors"),
                 # Deliverables
-                url(r"^dataset/$", CreateDatasetView.as_view(), name="create_dataset"),
-                url(r"^dataset/(?P<id>[0-9a-f-]+)/$", DatasetView.as_view(), name="dataset"),
+                url(r"^dataset/$", DatasetView.as_view({"post": "create"}), name="create_dataset"),
+                url(
+                    r"^dataset/(?P<id>[0-9a-f-]+)/$",
+                    DatasetView.as_view({"get": "retrieve", "put": "update"}),
+                    name="dataset",
+                ),
                 url(r"^token/$", CreateApiTokenView.as_view(), name="token"),
                 url(r"^token/(?P<id>[0-9a-f-]+)/$", APITokenView.as_view(), name="token_id"),
                 # Jobs

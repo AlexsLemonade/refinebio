@@ -703,6 +703,13 @@ class DatasetSerializer(serializers.ModelSerializer):
             if "token" not in kwargs["context"]:
                 self.fields.pop("download_url")
 
+    def create(self, validated_data):
+        # "start" isn't actually a field on the Dataset model, we just use it
+        # on the frontend to control when the dataset gets dispatched
+        if "start" in validated_data:
+            validated_data.pop("start")
+        return super(DatasetSerializer, self).create(validated_data)
+
     class Meta:
         model = Dataset
         fields = (
@@ -714,6 +721,8 @@ class DatasetSerializer(serializers.ModelSerializer):
             "is_processed",
             "is_available",
             "has_email",
+            "email_address",
+            "email_ccdl_ok",
             "expires_on",
             "s3_bucket",
             "s3_key",
@@ -738,6 +747,8 @@ class DatasetSerializer(serializers.ModelSerializer):
             "is_processing": {"read_only": True,},
             "is_processed": {"read_only": True,},
             "is_available": {"read_only": True,},
+            "email_address": {"required": False, "write_only": True},
+            "email_ccdl_ok": {"required": False, "write_only": True},
             "expires_on": {"read_only": True,},
             "s3_bucket": {"read_only": True,},
             "s3_key": {"read_only": True,},
