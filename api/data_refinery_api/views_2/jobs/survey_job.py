@@ -1,5 +1,5 @@
 ##
-# Contains SurveyJobListView and its serializer
+# Contains SurveyJobListView, SurveyJobDetailView, and the needed serializer
 ##
 
 from rest_framework import filters, generics, serializers
@@ -38,3 +38,12 @@ class SurveyJobListView(generics.ListAPIView):
     filterset_fields = SurveyJobSerializer.Meta.fields
     ordering_fields = ("id", "created_at")
     ordering = ("-id",)
+
+
+class SurveyJobDetailView(generics.RetrieveAPIView):
+    """ Retrieves a SurveyJob by ID """
+
+    lookup_field = "id"
+    model = SurveyJob
+    queryset = SurveyJob.objects.all()
+    serializer_class = SurveyJobSerializer

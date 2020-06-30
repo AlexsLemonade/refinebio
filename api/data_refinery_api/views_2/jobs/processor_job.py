@@ -1,5 +1,5 @@
 ##
-# Contains ProcessorJobListView and its serializer
+# Contains ProcessorJobListView, ProcessorJobDetailView, and the needed serializer
 ##
 
 from django.utils.decorators import method_decorator
@@ -10,6 +10,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from data_refinery_common.models import ProcessorJob
+from data_refinery_common.utils import get_nomad_jobs
 
 
 class ProcessorJobSerializer(serializers.ModelSerializer):
@@ -87,3 +88,12 @@ class ProcessorJobListView(generics.ListAPIView):
             queryset = queryset.filter(nomad_job_id__in=running_nomad_jobs_ids)
 
         return queryset
+
+
+class ProcessorJobDetailView(generics.RetrieveAPIView):
+    """ Retrieves a ProcessorJob by ID """
+
+    lookup_field = "id"
+    model = ProcessorJob
+    queryset = ProcessorJob.objects.all()
+    serializer_class = ProcessorJobSerializer

@@ -30,7 +30,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
-from data_refinery_common.utils import get_active_volumes, get_nomad_jobs, get_nomad_jobs_breakdown
+from data_refinery_common.utils import get_active_volumes, get_nomad_jobs_breakdown
 
 
 JOB_CREATED_AT_CUTOFF = datetime(2019, 6, 5, tzinfo=timezone.utc)

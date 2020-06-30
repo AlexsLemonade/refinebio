@@ -1,3 +1,7 @@
+##
+# Contains ComputedFileListView, ComputedFileDetailView, and needed serializers
+##
+
 from rest_framework import serializers, generics, filters
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -5,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from data_refinery_common.models import APIToken, ComputedFile
 
 from data_refinery_api.views_2.relation_serializers import (
+    ComputationalResultRelationSerializer,
     ComputationalResultNoFilesRelationSerializer,
     DetailedExperimentSampleSerializer,
 )
@@ -55,6 +60,38 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
         }
 
 
+class DetailedComputedFileSerializer(serializers.ModelSerializer):
+    result = ComputationalResultRelationSerializer(many=False, read_only=False)
+    samples = DetailedExperimentSampleSerializer(many=True)
+    compendia_organism_name = serializers.CharField(
+        source="compendia_organism__name", read_only=True
+    )
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+            "id",
+            "filename",
+            "samples",
+            "size_in_bytes",
+            "is_qn_target",
+            "is_smashable",
+            "is_qc",
+            "is_compendia",
+            "quant_sf_only",
+            "compendia_version",
+            "compendia_organism_name",
+            "sha1",
+            "s3_bucket",
+            "s3_key",
+            "s3_url",
+            "download_url",
+            "created_at",
+            "last_modified",
+            "result",
+        )
+
+
 class ComputedFileListView(generics.ListAPIView):
     """
     computed_files_list
@@ -85,6 +122,7 @@ class ComputedFileListView(generics.ListAPIView):
         "compendia_version",
         "created_at",
         "last_modified",
+        "result__id",
     )
     ordering_fields = (
         "id",
@@ -105,3 +143,13 @@ class ComputedFileListView(generics.ListAPIView):
             return {**serializer_context, "token": token}
         except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             return serializer_context
+
+
+class ComputedFileDetailView(generics.RetrieveAPIView):
+    """
+    Retrieves a computed file by its ID
+    """
+
+    lookup_field = "id"
+    queryset = ComputedFile.objects.all()
+    serializer_class = DetailedComputedFileSerializer

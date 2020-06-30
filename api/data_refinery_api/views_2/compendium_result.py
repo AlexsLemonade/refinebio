@@ -98,7 +98,12 @@ class CompendiumResultListView(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = ["primary_organism__name", "compendium_version", "quant_sf_only"]
+    filterset_fields = (
+        "primary_organism__name",
+        "compendium_version",
+        "quant_sf_only",
+        "result__id",
+    )
     ordering_fields = ("primary_organism__name", "compendium_version", "id")
     ordering = ("primary_organism__name",)
 

@@ -3,21 +3,27 @@ from data_refinery_api.views_2.compendium_result import (
     CompendiumResultDetailView,
     CompendiumResultListView,
 )
-from data_refinery_api.views_2.computational_result import ComputationalResultListView
-from data_refinery_api.views_2.computed_file import ComputedFileListView
+from data_refinery_api.views_2.computational_result import (
+    ComputationalResultDetailView,
+    ComputationalResultListView,
+)
+from data_refinery_api.views_2.computed_file import ComputedFileDetailView, ComputedFileListView
 from data_refinery_api.views_2.dataset import CreateDatasetView, DatasetView
-from data_refinery_api.views_2.experiment import ExperimentListView, ExperimentDetailView
+from data_refinery_api.views_2.experiment import ExperimentDetailView, ExperimentListView
 from data_refinery_api.views_2.experiment_document import ExperimentDocumentView
 from data_refinery_api.views_2.institution import InstitutionListView
 from data_refinery_api.views_2.jobs import (
+    DownloaderJobDetailView,
     DownloaderJobListView,
+    ProcessorJobDetailView,
     ProcessorJobListView,
+    SurveyJobDetailView,
     SurveyJobListView,
 )
-from data_refinery_api.views_2.organism import OrganismListView
-from data_refinery_api.views_2.original_file import OriginalFileListView
+from data_refinery_api.views_2.organism import OrganismDetailView, OrganismListView
+from data_refinery_api.views_2.original_file import OriginalFileListView, OriginalFileDetailView
 from data_refinery_api.views_2.platform import PlatformListView
-from data_refinery_api.views_2.processor import ProcessorListView
+from data_refinery_api.views_2.processor import ProcessorDetailView, ProcessorListView
 from data_refinery_api.views_2.sample import SampleListView, SampleDetailView
 from data_refinery_api.views_2.stats import (
     AboutStats,

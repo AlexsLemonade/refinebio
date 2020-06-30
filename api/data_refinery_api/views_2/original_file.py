@@ -1,10 +1,20 @@
+##
+# Contains OriginalFileListView, OriginalFileDetailView, and needed serializers
+##
+
 from rest_framework import filters, serializers, generics
 
 from django_filters.rest_framework import DjangoFilterBackend
 
 from data_refinery_common.models import OriginalFile
 
-# This seems to be unused?
+from data_refinery_api.views_2.relation_serializers import (
+    DetailedExperimentSampleSerializer,
+    DownloaderJobRelationSerializer,
+    ProcessorJobRelationSerializer,
+)
+
+
 class OriginalFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginalFile
@@ -13,6 +23,9 @@ class OriginalFileSerializer(serializers.ModelSerializer):
             "filename",
             "size_in_bytes",
             "sha1",
+            "samples",
+            "processor_jobs",
+            "downloader_jobs",
             "source_url",
             "source_filename",
             "is_downloaded",
@@ -21,6 +34,12 @@ class OriginalFileSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+
+
+class DetailedOriginalFileSerializer(OriginalFileSerializer):
+    samples = DetailedExperimentSampleSerializer(many=True)
+    processor_jobs = ProcessorJobRelationSerializer(many=True)
+    downloader_jobs = DownloaderJobRelationSerializer(many=True)
 
 
 class OriginalFileListSerializer(serializers.ModelSerializer):
@@ -65,3 +84,13 @@ class OriginalFileListView(generics.ListAPIView):
         "last_modified",
     )
     ordering = ("-id",)
+
+
+class OriginalFileDetailView(generics.RetrieveAPIView):
+    """
+    Retrieves an Original File by its ID
+    """
+
+    lookup_field = "id"
+    queryset = OriginalFile.objects.all()
+    serializer_class = DetailedOriginalFileSerializer

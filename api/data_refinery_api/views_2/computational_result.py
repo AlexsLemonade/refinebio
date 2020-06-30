@@ -1,8 +1,10 @@
 ##
-# Contains ComputationalResultListView and needed serializers
+# Contains ComputationalResultListView, ComputationalResultDetailView, and needed serializers
 ##
 
 from rest_framework import serializers, generics
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from data_refinery_common.models import APIToken, ComputationalResult
 
@@ -13,6 +15,10 @@ from data_refinery_api.views_2.relation_serializers import (
     ComputedFileWithUrlRelationSerializer,
     ComputationalResultAnnotationRelationSerializer,
 )
+
+##
+# Serializers
+##
 
 
 class ComputationalResultSerializer(serializers.ModelSerializer):
@@ -44,9 +50,24 @@ class ComputationalResultWithUrlSerializer(ComputationalResultSerializer):
     files = ComputedFileWithUrlRelationSerializer(many=True, source="computedfile_set")
 
 
+class DetailedComputationalResultSerializer(ComputationalResultSerializer):
+    processor = ProcessorRelationSerializer(many=False)
+    organism_index = OrganismIndexRelationSerializer(many=False)
+
+
+class DetailedComputationalResultWithUrlSerializer(ComputationalResultWithUrlSerializer):
+    processor = ProcessorRelationSerializer(many=False)
+    organism_index = OrganismIndexRelationSerializer(many=False)
+
+
+##
+# Views
+##
+
+
 class ComputationalResultListView(generics.ListAPIView):
     """
-    computational_result_list_view
+    computational_result_list
 
     This lists all `ComputationalResult`. Each one contains meta-information about the output of a computer process. (Ex Salmon).
 
@@ -54,6 +75,8 @@ class ComputationalResultListView(generics.ListAPIView):
     """
 
     queryset = ComputationalResult.public_objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ["processor__id"]
 
     def get_serializer_class(self):
         token_id = self.request.META.get("HTTP_API_KEY", None)
@@ -69,3 +92,21 @@ class ComputationalResultListView(generics.ListAPIView):
         filter_dict.pop("limit", None)
         filter_dict.pop("offset", None)
         return queryset.filter(**filter_dict)
+
+
+class ComputationalResultDetailView(generics.RetrieveAPIView):
+    """
+    Retrieves a computational result by its ID
+    """
+
+    lookup_field = "id"
+    queryset = ComputationalResult.public_objects.all()
+
+    def get_serializer_class(self):
+        token_id = self.request.META.get("HTTP_API_KEY", None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            return DetailedComputationalResultWithUrlSerializer
+        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return DetailedComputationalResultSerializer

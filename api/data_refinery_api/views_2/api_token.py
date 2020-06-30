@@ -1,11 +1,10 @@
 ##
-# Contains CreateAPITokenView and APITokenView
+# Contains CreateAPITokenView, APITokenView, and needed serializer
 ##
 
 from django.utils.decorators import method_decorator
-from rest_framework import filters, serializers, generics
+from rest_framework import serializers, generics
 
-from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from data_refinery_common.models import APIToken

@@ -1,5 +1,5 @@
 ##
-# Contains DownloaderJobListView and its serializer
+# Contains DownloaderJobListView, DownloaderJobDetailView and the needed serializer
 ##
 
 from django.utils.decorators import method_decorator
@@ -10,6 +10,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from data_refinery_common.models import DownloaderJob
+from data_refinery_common.utils import get_nomad_jobs
 
 
 class DownloaderJobSerializer(serializers.ModelSerializer):
@@ -85,3 +86,12 @@ class DownloaderJobListView(generics.ListAPIView):
             queryset = queryset.filter(nomad_job_id__in=running_nomad_jobs_ids)
 
         return queryset
+
+
+class DownloaderJobDetailView(generics.RetrieveAPIView):
+    """ Retrieves a DownloaderJob by ID """
+
+    lookup_field = "id"
+    model = DownloaderJob
+    queryset = DownloaderJob.objects.all()
+    serializer_class = DownloaderJobSerializer

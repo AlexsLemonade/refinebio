@@ -1,4 +1,9 @@
+##
+# Contains SampleListView, SampleDetailView, and needed serializers
+##
+
 from django.db.models import Prefetch
+from django.db.models.expressions import Q
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from rest_framework import filters, serializers, generics

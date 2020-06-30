@@ -1,3 +1,7 @@
+##
+# Contains TranscriptomeIndexListView, TranscriptomeIndexDetailView, and needed serializer
+##
+
 from django.utils.decorators import method_decorator
 from rest_framework import filters, serializers, generics
 
@@ -78,7 +82,7 @@ class TranscriptomeIndexListView(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = ["salmon_version", "index_type"]
+    filterset_fields = ["salmon_version", "index_type", "result_id", "organism__name"]
     ordering_fields = ("created_at", "salmon_version")
     ordering = ("-created_at",)
 

@@ -1,14 +1,23 @@
+##
+# Contains helper serializers needed by other serializers
+# * These are the same as the old serializers from serializers.py used by other serializers except with "Relation" added in the name
+# * Some of these relation serializers are dependent on each other
+##
+
 from rest_framework import serializers
 
 from data_refinery_common.models import (
-    Sample,
-    ComputedFile,
     ComputationalResult,
     ComputationalResultAnnotation,
-    Processor,
+    ComputedFile,
+    DownloaderJob,
     Organism,
     OrganismIndex,
+    Processor,
+    ProcessorJob,
+    Sample,
 )
+
 
 ##
 # Organisms
@@ -105,6 +114,57 @@ class SampleRelationSerializer(serializers.ModelSerializer):
 
 
 ##
+# Jobs
+##
+
+
+class DownloaderJobRelationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DownloaderJob
+        fields = (
+            "id",
+            "downloader_task",
+            "num_retries",
+            "retried",
+            "was_recreated",
+            "worker_id",
+            "worker_version",
+            "nomad_job_id",
+            "failure_reason",
+            "success",
+            "original_files",
+            "start_time",
+            "end_time",
+            "created_at",
+            "last_modified",
+        )
+
+
+class ProcessorJobRelationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcessorJob
+        fields = (
+            "id",
+            "pipeline_applied",
+            "num_retries",
+            "retried",
+            "worker_id",
+            "ram_amount",
+            "volume_index",
+            "worker_version",
+            "failure_reason",
+            "nomad_job_id",
+            "success",
+            "original_files",
+            "datasets",
+            "start_time",
+            "end_time",
+            "created_at",
+            "last_modified",
+        )
+
+
+##
 # Transcriptome Index
 ##
 
@@ -157,6 +217,31 @@ class ComputationalResultAnnotationRelationSerializer(serializers.ModelSerialize
     class Meta:
         model = ComputationalResultAnnotation
         fields = ("id", "data", "is_ccdl", "created_at", "last_modified")
+
+
+class ComputationalResultRelationSerializer(serializers.ModelSerializer):
+    annotations = ComputationalResultAnnotationRelationSerializer(
+        many=True, source="computationalresultannotation_set"
+    )
+    processor = ProcessorRelationSerializer(many=False)
+    organism_index = OrganismIndexRelationSerializer(many=False)
+    files = ComputedFileRelationSerializer(many=True, source="computedfile_set")
+
+    class Meta:
+        model = ComputationalResult
+        fields = (
+            "id",
+            "commands",
+            "processor",
+            "is_ccdl",
+            "annotations",
+            "files",
+            "organism_index",
+            "time_start",
+            "time_end",
+            "created_at",
+            "last_modified",
+        )
 
 
 class ComputationalResultNoFilesRelationSerializer(serializers.ModelSerializer):
