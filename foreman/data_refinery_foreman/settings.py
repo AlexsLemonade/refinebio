@@ -178,4 +178,4 @@ else:
     ELASTICSEARCH_DSL_AUTOSYNC = False
 
 # For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
-DO_NOT_AUTO_DISPATCH = get_env_variable_gracefully("DO_NOT_AUTO_DISPATCH") == "True"
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

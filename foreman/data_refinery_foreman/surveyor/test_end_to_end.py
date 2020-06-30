@@ -622,7 +622,7 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
             # by preventing the downloaders from sending the processors
             # automatically. We send the jobs manually later
             no_dispatch = EnvironmentVarGuard()
-            no_dispatch.set("DO_NOT_AUTO_DISPATCH", "True")
+            no_dispatch.set("AUTO_DISPATCH_NOMAD_JOBS", "False")
             with no_dispatch:
                 survey_job = surveyor.survey_transcriptome_index(
                     "Caenorhabditis elegans", "Ensembl"
