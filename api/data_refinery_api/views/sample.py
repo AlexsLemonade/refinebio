@@ -6,24 +6,23 @@ from django.db.models import Prefetch
 from django.db.models.expressions import Q
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from rest_framework import filters, serializers, generics
+from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_api.views.relation_serializers import (
+    OrganismIndexRelationSerializer,
+    OrganismRelationSerializer,
+    ProcessorRelationSerializer,
+)
 from data_refinery_common.models import (
     ComputationalResult,
     Dataset,
     Experiment,
     Sample,
     SampleAnnotation,
-)
-
-from data_refinery_api.views.relation_serializers import (
-    OrganismRelationSerializer,
-    ProcessorRelationSerializer,
-    OrganismIndexRelationSerializer,
 )
 
 

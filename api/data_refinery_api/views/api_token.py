@@ -3,7 +3,7 @@
 ##
 
 from django.utils.decorators import method_decorator
-from rest_framework import serializers, generics
+from rest_framework import generics, serializers
 
 from drf_yasg.utils import swagger_auto_schema
 

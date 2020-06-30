@@ -18,7 +18,6 @@ from data_refinery_common.models import (
     Sample,
 )
 
-
 ##
 # Organisms
 ##

@@ -2,17 +2,16 @@
 # Contains ComputedFileListView, ComputedFileDetailView, and needed serializers
 ##
 
-from rest_framework import serializers, generics, filters
+from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from data_refinery_common.models import APIToken, ComputedFile
-
 from data_refinery_api.views.relation_serializers import (
-    ComputationalResultRelationSerializer,
     ComputationalResultNoFilesRelationSerializer,
+    ComputationalResultRelationSerializer,
     DetailedExperimentSampleSerializer,
 )
+from data_refinery_common.models import APIToken, ComputedFile
 
 
 class ComputedFileListSerializer(serializers.ModelSerializer):

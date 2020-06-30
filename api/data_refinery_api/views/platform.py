@@ -1,4 +1,4 @@
-from rest_framework import serializers, generics
+from rest_framework import generics, serializers
 
 from data_refinery_common.models import Sample
 

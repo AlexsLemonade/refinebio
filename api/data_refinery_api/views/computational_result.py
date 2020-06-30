@@ -2,19 +2,18 @@
 # Contains ComputationalResultListView, ComputationalResultDetailView, and needed serializers
 ##
 
-from rest_framework import serializers, generics
+from rest_framework import generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from data_refinery_common.models import APIToken, ComputationalResult
-
 from data_refinery_api.views.relation_serializers import (
-    ProcessorRelationSerializer,
-    OrganismIndexRelationSerializer,
+    ComputationalResultAnnotationRelationSerializer,
     ComputedFileRelationSerializer,
     ComputedFileWithUrlRelationSerializer,
-    ComputationalResultAnnotationRelationSerializer,
+    OrganismIndexRelationSerializer,
+    ProcessorRelationSerializer,
 )
+from data_refinery_common.models import APIToken, ComputationalResult
 
 ##
 # Serializers

@@ -21,10 +21,11 @@ from data_refinery_api.views.jobs import (
     SurveyJobListView,
 )
 from data_refinery_api.views.organism import OrganismDetailView, OrganismListView
-from data_refinery_api.views.original_file import OriginalFileListView, OriginalFileDetailView
+from data_refinery_api.views.original_file import OriginalFileDetailView, OriginalFileListView
 from data_refinery_api.views.platform import PlatformListView
 from data_refinery_api.views.processor import ProcessorDetailView, ProcessorListView
-from data_refinery_api.views.sample import SampleListView, SampleDetailView
+from data_refinery_api.views.qn_targets import QNTargetsAvailable, QNTargetsDetailView
+from data_refinery_api.views.sample import SampleDetailView, SampleListView
 from data_refinery_api.views.stats import (
     AboutStats,
     FailedDownloaderJobStats,
@@ -32,7 +33,6 @@ from data_refinery_api.views.stats import (
     Stats,
 )
 from data_refinery_api.views.transcriptome_index import (
-    TranscriptomeIndexListView,
     TranscriptomeIndexDetailView,
+    TranscriptomeIndexListView,
 )
-from data_refinery_api.views.qn_targets import QNTargetsAvailable, QNTargetsDetailView

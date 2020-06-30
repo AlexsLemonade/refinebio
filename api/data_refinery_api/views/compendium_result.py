@@ -2,8 +2,8 @@
 # Contains List and Detail views for compendium results along with needed serializers
 ##
 
-from django.db.models.expressions import F, Q
 from django.db.models import OuterRef, Subquery
+from django.db.models.expressions import F, Q
 from django.utils.decorators import method_decorator
 from rest_framework import filters, generics, serializers
 
@@ -14,14 +14,10 @@ from drf_yasg.utils import swagger_auto_schema
 from data_refinery_api.views.organism import OrganismSerializer
 from data_refinery_api.views.relation_serializers import (
     ComputationalResultNoFilesRelationSerializer,
-)
-
-from data_refinery_common.models import APIToken, CompendiumResult, ComputedFile
-
-from data_refinery_api.views.relation_serializers import (
     ComputedFileRelationSerializer,
     ComputedFileWithUrlRelationSerializer,
 )
+from data_refinery_common.models import APIToken, CompendiumResult, ComputedFile
 
 
 class CompendiumResultSerializer(serializers.ModelSerializer):

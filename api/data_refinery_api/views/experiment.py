@@ -3,13 +3,12 @@
 ##
 
 from django.db.models import Count, Q
-from rest_framework import serializers, generics
+from rest_framework import generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from data_refinery_common.models import Experiment, ExperimentAnnotation
-
 from data_refinery_api.views.relation_serializers import DetailedExperimentSampleSerializer
+from data_refinery_common.models import Experiment, ExperimentAnnotation
 
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):

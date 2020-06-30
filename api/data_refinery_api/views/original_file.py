@@ -2,17 +2,16 @@
 # Contains OriginalFileListView, OriginalFileDetailView, and needed serializers
 ##
 
-from rest_framework import filters, serializers, generics
+from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
-
-from data_refinery_common.models import OriginalFile
 
 from data_refinery_api.views.relation_serializers import (
     DetailedExperimentSampleSerializer,
     DownloaderJobRelationSerializer,
     ProcessorJobRelationSerializer,
 )
+from data_refinery_common.models import OriginalFile
 
 
 class OriginalFileSerializer(serializers.ModelSerializer):

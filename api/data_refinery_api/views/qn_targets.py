@@ -10,10 +10,9 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from data_refinery_api.views.relation_serializers import (
-    OrganismRelationSerializer,
     ComputationalResultNoFilesRelationSerializer,
+    OrganismRelationSerializer,
 )
-
 from data_refinery_common.models import ComputationalResultAnnotation, ComputedFile, Organism
 
 

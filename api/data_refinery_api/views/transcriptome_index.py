@@ -3,7 +3,7 @@
 ##
 
 from django.utils.decorators import method_decorator
-from rest_framework import filters, serializers, generics
+from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi

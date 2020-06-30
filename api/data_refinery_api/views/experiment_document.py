@@ -7,13 +7,11 @@ from django.utils.decorators import method_decorator
 from rest_framework import generics, serializers
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 
-from elasticsearch_dsl import TermsFacet
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE,
     LOOKUP_QUERY_GT,
     LOOKUP_QUERY_IN,
 )
-from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 from django_elasticsearch_dsl_drf.filter_backends import (
     CompoundSearchFilterBackend,
     DefaultOrderingFilterBackend,
@@ -22,11 +20,12 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     OrderingFilterBackend,
 )
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
+from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
-
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from elasticsearch_dsl import TermsFacet
 from six import iteritems
 
 from data_refinery_common.models.documents import ExperimentDocument
