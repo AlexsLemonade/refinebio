@@ -8,11 +8,6 @@ from rest_framework import permissions
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
-from .views import (
-    handle404error,
-    handle500error,
-)
-
 from data_refinery_api.views_2 import (
     DownloaderJobListView,
     ProcessorJobListView,
@@ -44,6 +39,25 @@ from data_refinery_api.views_2 import (
     TranscriptomeIndexDetailView,
     TranscriptomeIndexListView,
 )
+
+
+# error handlers
+def handle404error(request, exception):
+    message = "The requested resource was not found on this server."
+    url = "https://api.refine.bio/"
+
+    # check to see if the 404ed request contained a version
+    if not match(r"^/v[1-9]/.*", request.path):
+        message = "refine.bio API resources are only available through versioned requests."
+
+    return JsonResponse({"message": message, "docs": url, "status_code": 404,}, status=404)
+
+
+def handle500error(request):
+    return JsonResponse(
+        {"message": "A server error occured. This has been reported.", "status_code": 500,},
+        status=500,
+    )
 
 
 # This provides _public_ access to the /admin interface!

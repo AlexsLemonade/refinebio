@@ -14,7 +14,7 @@ from data_refinery_api.views_2.relation_serializers import (
     ComputationalResultNoFilesRelationSerializer,
 )
 
-from data_refinery_common.models import ComputedFile, Organism
+from data_refinery_common.models import ComputationalResultAnnotation, ComputedFile, Organism
 
 
 class QNTargetSerializer(serializers.ModelSerializer):

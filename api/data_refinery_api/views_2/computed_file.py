@@ -1,6 +1,8 @@
 from rest_framework import serializers, generics, filters
-from data_refinery_common.models import ComputedFile
+
 from django_filters.rest_framework import DjangoFilterBackend
+
+from data_refinery_common.models import APIToken, ComputedFile
 
 from data_refinery_api.views_2.relation_serializers import (
     ComputationalResultNoFilesRelationSerializer,

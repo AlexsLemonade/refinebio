@@ -1,3 +1,9 @@
+##
+# Contains CreateDatasetView and DatasetView
+##
+
+from collections import defaultdict
+
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from rest_framework import filters, serializers, generics
@@ -5,7 +11,25 @@ from rest_framework import filters, serializers, generics
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from data_refinery_common.models import Dataset, Experiment, Organism, Sample
+from data_refinery_common.models import (
+    APIToken,
+    Dataset,
+    DatasetAnnotation,
+    Experiment,
+    Organism,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    Sample,
+)
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0]
+    else:
+        ip = request.META.get("REMOTE_ADDR", "")
+    return ip
 
 
 def validate_dataset(data):

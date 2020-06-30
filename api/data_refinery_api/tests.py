@@ -456,10 +456,6 @@ class APITestCases(APITestCase):
             HTTP_API_KEY=token_id,
         )
         response_json = response.json()["results"]
-        
-        #
-        print(response_json)
-
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]["download_url"])
 

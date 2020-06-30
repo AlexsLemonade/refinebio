@@ -2,6 +2,7 @@
 # Contains List and Detail views for compendium results along with needed serializers
 ##
 
+from django.db.models.expressions import F, Q
 from django.db.models import OuterRef, Subquery
 from django.utils.decorators import method_decorator
 from rest_framework import filters, generics, serializers
@@ -17,26 +18,10 @@ from data_refinery_api.views_2.relation_serializers import (
 
 from data_refinery_common.models import APIToken, CompendiumResult, ComputedFile
 
-from data_refinery_api.views_2.relation_serializers import ComputedFileRelationSerializer
-
-
-# Move to relation serializers?
-class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComputedFile
-        fields = (
-            "id",
-            "filename",
-            "size_in_bytes",
-            "is_smashable",
-            "is_qc",
-            "sha1",
-            "s3_bucket",
-            "s3_key",
-            "download_url",
-            "created_at",
-            "last_modified",
-        )
+from data_refinery_api.views_2.relation_serializers import (
+    ComputedFileRelationSerializer,
+    ComputedFileWithUrlRelationSerializer,
+)
 
 
 class CompendiumResultSerializer(serializers.ModelSerializer):
@@ -65,7 +50,9 @@ class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
         read_only=True, source="primary_organism"
     )
     organism_names = serializers.StringRelatedField(many=True, source="organisms", read_only=True)
-    computed_file = ComputedFileWithUrlSerializer(source="get_computed_file", read_only=True)
+    computed_file = ComputedFileWithUrlRelationSerializer(
+        source="get_computed_file", read_only=True
+    )
 
     class Meta:
         model = CompendiumResult

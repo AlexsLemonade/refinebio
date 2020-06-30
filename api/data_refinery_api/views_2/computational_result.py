@@ -1,5 +1,10 @@
+##
+# Contains ComputationalResultListView and needed serializers
+##
+
 from rest_framework import serializers, generics
-from data_refinery_common.models import ComputationalResult
+
+from data_refinery_common.models import APIToken, ComputationalResult
 
 from data_refinery_api.views_2.relation_serializers import (
     ProcessorRelationSerializer,
