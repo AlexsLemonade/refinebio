@@ -9,8 +9,8 @@ from rest_framework.exceptions import NotFound
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from data_refinery_api.views_2.organism import OrganismSerializer
-from data_refinery_api.views_2.relation_serializers import (
+from data_refinery_api.views.relation_serializers import (
+    OrganismRelationSerializer,
     ComputationalResultNoFilesRelationSerializer,
 )
 
@@ -42,7 +42,7 @@ class QNTargetsAvailable(generics.ListAPIView):
     This is a list of all of the organisms which have available QN Targets
     """
 
-    serializer_class = OrganismSerializer
+    serializer_class = OrganismRelationSerializer
     paginator = None
 
     def get_queryset(self):

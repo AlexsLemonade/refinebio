@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.views_2 import DatasetView, ExperimentListView
+from data_refinery_api.views import DatasetView, ExperimentListView
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,

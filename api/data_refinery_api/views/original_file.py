@@ -8,7 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from data_refinery_common.models import OriginalFile
 
-from data_refinery_api.views_2.relation_serializers import (
+from data_refinery_api.views.relation_serializers import (
     DetailedExperimentSampleSerializer,
     DownloaderJobRelationSerializer,
     ProcessorJobRelationSerializer,

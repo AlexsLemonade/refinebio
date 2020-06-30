@@ -20,7 +20,7 @@ from data_refinery_common.models import (
     SampleAnnotation,
 )
 
-from data_refinery_api.views_2.relation_serializers import (
+from data_refinery_api.views.relation_serializers import (
     OrganismRelationSerializer,
     ProcessorRelationSerializer,
     OrganismIndexRelationSerializer,

@@ -8,7 +8,7 @@ from rest_framework import permissions
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
-from data_refinery_api.views_2 import (
+from data_refinery_api.views import (
     AboutStats,
     APITokenView,
     CompendiumResultDetailView,
