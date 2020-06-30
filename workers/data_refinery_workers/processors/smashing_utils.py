@@ -1044,9 +1044,7 @@ def sync_quant_files(output_path, samples: List[Sample]):
         # for each sample we need it's latest quant.sf file we don't want to query the db
         # for all of them, so we do it in groups of 100, and then download all of the computed_files
         # in parallel
-        for sample_page in (
-            samples[i * page_size : i + page_size] for i in range(0, len(samples), page_size)
-        ):
+        for sample_page in (samples[i : i + page_size] for i in range(0, len(samples), page_size)):
             sample_and_computed_files = []
             for sample in sample_page:
                 latest_computed_file = sample.get_most_recent_quant_sf_file()
