@@ -213,7 +213,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
   depends_on = [
             "aws_internet_gateway.data_refinery",
             "aws_instance.nomad_server_1",
-            "aws_ebs_volume.data_refinery_ebs",
+#           "aws_ebs_volume.data_refinery_ebs",
             "aws_instance.pg_bouncer"
   ]
 
