@@ -73,14 +73,18 @@ from data_refinery_api.serializers import (  # Job; Dataset
     ComputedFileListSerializer,
     CreateDatasetSerializer,
     DatasetSerializer,
+    DetailedComputationalResultSerializer,
+    DetailedComputationalResultWithUrlSerializer,
+    DetailedComputedFileSerializer,
     DetailedExperimentSerializer,
+    DetailedOriginalFileSerializer,
     DetailedSampleSerializer,
     DownloaderJobSerializer,
     ExperimentSerializer,
     InstitutionSerializer,
     OrganismIndexSerializer,
     OrganismSerializer,
-    OriginalFileListSerializer,
+    OriginalFileSerializer,
     PlatformSerializer,
     ProcessorJobSerializer,
     ProcessorSerializer,
@@ -874,6 +878,14 @@ class ProcessorList(generics.ListAPIView):
     serializer_class = ProcessorSerializer
 
 
+class ProcessorDetail(generics.RetrieveAPIView):
+    """ Retrieves a processor by its ID """
+
+    lookup_field = "id"
+    queryset = Processor.objects.all()
+    serializer_class = ProcessorSerializer
+
+
 ##
 # Results
 ##
@@ -889,6 +901,8 @@ class ComputationalResultsList(generics.ListAPIView):
     """
 
     queryset = ComputationalResult.public_objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ["processor__id"]
 
     def get_serializer_class(self):
         token_id = self.request.META.get("HTTP_API_KEY", None)
@@ -906,6 +920,24 @@ class ComputationalResultsList(generics.ListAPIView):
         return queryset.filter(**filter_dict)
 
 
+class ComputationalResultsDetail(generics.RetrieveAPIView):
+    """
+    Retrieves a computational result by its ID
+    """
+
+    lookup_field = "id"
+    queryset = ComputationalResult.public_objects.all()
+
+    def get_serializer_class(self):
+        token_id = self.request.META.get("HTTP_API_KEY", None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            return DetailedComputationalResultWithUrlSerializer
+        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return DetailedComputationalResultSerializer
+
+
 ##
 # Search Filter Models
 ##
@@ -915,6 +947,16 @@ class OrganismList(generics.ListAPIView):
     """Paginated list of all the available organisms.
     """
 
+    queryset = Organism.objects.all()
+    serializer_class = OrganismSerializer
+
+
+class OrganismDetail(generics.RetrieveAPIView):
+    """
+    Retrieves an organism by its taxonomy ID
+    """
+
+    lookup_field = "name"
     queryset = Organism.objects.all()
     serializer_class = OrganismSerializer
 
@@ -967,6 +1009,15 @@ class SurveyJobList(generics.ListAPIView):
     filterset_fields = SurveyJobSerializer.Meta.fields
     ordering_fields = ("id", "created_at")
     ordering = ("-id",)
+
+
+class SurveyJobDetail(generics.RetrieveAPIView):
+    """ Retrieves a SurveyJob by ID """
+
+    lookup_field = "id"
+    model = SurveyJob
+    queryset = SurveyJob.objects.all()
+    serializer_class = SurveyJobSerializer
 
 
 @method_decorator(
@@ -1022,6 +1073,15 @@ class DownloaderJobList(generics.ListAPIView):
         return queryset
 
 
+class DownloaderJobDetail(generics.RetrieveAPIView):
+    """ Retrieves a DownloaderJob by ID """
+
+    lookup_field = "id"
+    model = DownloaderJob
+    queryset = DownloaderJob.objects.all()
+    serializer_class = DownloaderJobSerializer
+
+
 @method_decorator(
     name="get",
     decorator=swagger_auto_schema(
@@ -1073,6 +1133,15 @@ class ProcessorJobList(generics.ListAPIView):
             queryset = queryset.filter(nomad_job_id__in=running_nomad_jobs_ids)
 
         return queryset
+
+
+class ProcessorJobDetail(generics.RetrieveAPIView):
+    """ Retrieves a ProcessorJob by ID """
+
+    lookup_field = "id"
+    model = ProcessorJob
+    queryset = ProcessorJob.objects.all()
+    serializer_class = ProcessorJobSerializer
 
 
 ###
@@ -1455,6 +1524,8 @@ class Stats(APIView):
 ###
 # Transcriptome Indices
 ###
+
+
 @method_decorator(
     name="get",
     decorator=swagger_auto_schema(
@@ -1497,7 +1568,7 @@ class TranscriptomeIndexList(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = ["salmon_version", "index_type"]
+    filterset_fields = ["salmon_version", "index_type", "result_id", "organism__name"]
     ordering_fields = ("created_at", "salmon_version")
     ordering = ("-created_at",)
 
@@ -1573,7 +1644,12 @@ class CompendiumResultList(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = ["primary_organism__name", "compendium_version", "quant_sf_only"]
+    filterset_fields = [
+        "primary_organism__name",
+        "compendium_version",
+        "quant_sf_only",
+        "result__id",
+    ]
     ordering_fields = ("primary_organism__name", "compendium_version", "id")
     ordering = ("primary_organism__name",)
 
@@ -1704,7 +1780,7 @@ class ComputedFilesList(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = (
+    filterset_fields = {
         "id",
         "samples",
         "is_qn_target",
@@ -1716,7 +1792,8 @@ class ComputedFilesList(generics.ListAPIView):
         "compendia_version",
         "created_at",
         "last_modified",
-    )
+        "result__id",
+    }
     ordering_fields = (
         "id",
         "created_at",
@@ -1738,6 +1815,16 @@ class ComputedFilesList(generics.ListAPIView):
             return serializer_context
 
 
+class ComputedFilesDetail(generics.RetrieveAPIView):
+    """
+    Retrieves a computed file by its ID
+    """
+
+    lookup_field = "id"
+    queryset = ComputedFile.objects.all()
+    serializer_class = DetailedComputedFileSerializer
+
+
 class OriginalFileList(generics.ListAPIView):
     """
     original_files_list
@@ -1747,18 +1834,28 @@ class OriginalFileList(generics.ListAPIView):
     """
 
     queryset = OriginalFile.objects.all()
-    serializer_class = OriginalFileListSerializer
+    serializer_class = OriginalFileSerializer
     filter_backends = (
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = OriginalFileListSerializer.Meta.fields
+    filterset_fields = OriginalFileSerializer.Meta.fields
     ordering_fields = (
         "id",
         "created_at",
         "last_modified",
     )
     ordering = ("-id",)
+
+
+class OriginalFileDetail(generics.RetrieveAPIView):
+    """
+    Retrieves an Original File by its ID
+    """
+
+    lookup_field = "id"
+    queryset = OriginalFile.objects.all()
+    serializer_class = DetailedOriginalFileSerializer
 
 
 # error handlers

@@ -13,11 +13,14 @@ from .views import (
     APITokenView,
     CompendiumResultDetails,
     CompendiumResultList,
+    ComputationalResultsDetail,
     ComputationalResultsList,
+    ComputedFilesDetail,
     ComputedFilesList,
     CreateApiTokenView,
     CreateDatasetView,
     DatasetView,
+    DownloaderJobDetail,
     DownloaderJobList,
     ExperimentDetail,
     ExperimentDocumentView,
@@ -25,9 +28,13 @@ from .views import (
     FailedDownloaderJobStats,
     FailedProcessorJobStats,
     InstitutionList,
+    OrganismDetail,
     OrganismList,
+    OriginalFileDetail,
     OriginalFileList,
     PlatformList,
+    ProcessorDetail,
+    ProcessorJobDetail,
     ProcessorJobList,
     ProcessorList,
     QNTargetsAvailable,
@@ -35,6 +42,7 @@ from .views import (
     SampleDetail,
     SampleList,
     Stats,
+    SurveyJobDetail,
     SurveyJobList,
     TranscriptomeIndexDetail,
     TranscriptomeIndexList,
@@ -98,9 +106,18 @@ urlpatterns = [
                     name="samples_detail",
                 ),
                 url(r"^organisms/$", OrganismList.as_view(), name="organisms"),
+                url(
+                    r"^organisms/(?P<name>.+)/$", OrganismDetail.as_view(), name="organisms_detail",
+                ),
                 url(r"^platforms/$", PlatformList.as_view(), name="platforms"),
+                # platform detail
                 url(r"^institutions/$", InstitutionList.as_view(), name="institutions"),
                 url(r"^processors/$", ProcessorList.as_view(), name="processors"),
+                url(
+                    r"^processors/(?P<id>[0-9a-f-]+)/$",
+                    ProcessorDetail.as_view(),
+                    name="processors_details",
+                ),
                 # Deliverables
                 url(r"^dataset/$", CreateDatasetView.as_view(), name="create_dataset"),
                 url(r"^dataset/(?P<id>[0-9a-f-]+)/$", DatasetView.as_view(), name="dataset"),
@@ -108,8 +125,23 @@ urlpatterns = [
                 url(r"^token/(?P<id>[0-9a-f-]+)/$", APITokenView.as_view(), name="token_id"),
                 # Jobs
                 url(r"^jobs/survey/$", SurveyJobList.as_view(), name="survey_jobs"),
+                url(
+                    r"^jobs/survey/(?P<id>[0-9a-f-]+)/$",
+                    SurveyJobDetail.as_view(),
+                    name="survey_jobs",
+                ),
                 url(r"^jobs/downloader/$", DownloaderJobList.as_view(), name="downloader_jobs"),
+                url(
+                    r"^jobs/downloader/(?P<id>[0-9a-f-]+)/$",
+                    DownloaderJobDetail.as_view(),
+                    name="downloader_jobs",
+                ),
                 url(r"^jobs/processor/$", ProcessorJobList.as_view(), name="processor_jobs"),
+                url(
+                    r"^jobs/processor/(?P<id>[0-9a-f-]+)/$",
+                    ProcessorJobDetail.as_view(),
+                    name="processor_jobs",
+                ),
                 # Dashboard Driver
                 url(r"^stats/$", Stats.as_view(), name="stats"),
                 url(
@@ -148,9 +180,24 @@ urlpatterns = [
                 ),
                 # Computed Files
                 url(r"^computed_files/$", ComputedFilesList.as_view(), name="computed_files"),
+                url(
+                    r"^computed_files/(?P<id>[0-9a-f-]+)/$",
+                    ComputedFilesDetail.as_view(),
+                    name="computed_files_detail",
+                ),
                 url(r"^original_files/$", OriginalFileList.as_view(), name="original_files"),
                 url(
+                    r"^original_files/(?P<id>[0-9a-f-]+)/$",
+                    OriginalFileDetail.as_view(),
+                    name="original_files_detail",
+                ),
+                url(
                     r"^computational_results/$", ComputationalResultsList.as_view(), name="results"
+                ),
+                url(
+                    r"^computational_results/(?P<id>[0-9a-f-]+)/$",
+                    ComputationalResultsDetail.as_view(),
+                    name="results_detail",
                 ),
                 # Compendia
                 url(r"^compendia/$", CompendiumResultList.as_view(), name="compendium_results"),
