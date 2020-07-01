@@ -203,7 +203,9 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
         outfile_dir = job_context["output_dir"] + key + "/"
         os.makedirs(outfile_dir, exist_ok=True)
         samples = [sample for (_, sample) in input_files]
-        job_context["num_samples"] += smashing_utils.sync_quant_files(outfile_dir, samples)
+        job_context["num_samples"] += smashing_utils.sync_quant_files(
+            outfile_dir, samples, job_context["filtered_samples"]
+        )
         # we ONLY want to give quant sf files to the user if that's what they requested
         return job_context
 

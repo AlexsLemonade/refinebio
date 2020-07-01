@@ -67,7 +67,9 @@ def _download_files(job_context: Dict) -> Dict:
         )
 
         # download quant.sf files directly into the dataset folder
-        num_samples += smashing_utils.sync_quant_files(outfile_dir, samples)
+        num_samples += smashing_utils.sync_quant_files(
+            outfile_dir, samples, job_context["filtered_samples"]
+        )
 
     job_context["num_samples"] = num_samples
     job_context["time_end"] = timezone.now()
