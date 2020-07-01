@@ -70,7 +70,12 @@ def prepare_files(job_context: Dict) -> Dict:
         smashable_files = []
         seen_files = set()
         for sample in samples:
-            smashable_file = sample.get_most_recent_smashable_result_file()
+            if job_context["dataset"].quant_sf_only:
+                # For quant.sf only jobs, just check that they have a quant.sf file
+                smashable_file = sample.get_most_recent_quant_sf_file()
+            else:
+                smashable_file = sample.get_most_recent_smashable_result_file()
+
             if smashable_file is not None and smashable_file not in seen_files:
                 smashable_files = smashable_files + [(smashable_file, sample)]
                 seen_files.add(smashable_file)
