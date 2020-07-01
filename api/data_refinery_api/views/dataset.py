@@ -66,12 +66,32 @@ def validate_dataset(data):
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
-            try:
-                experiment = Experiment.processed_public_objects.get(accession_code=key)
-            except Exception as e:
-                raise serializers.ValidationError(
-                    "Experiment " + key + " does not have at least one downloadable sample"
+            if data.get("quant_sf_only", False):
+                try:
+                    experiment = Experiment.public_objects.get(accession_code=key)
+                except Exception as e:
+                    raise serializers.ValidationError("Experiment " + key + " does not exist")
+
+                samples = experiment.sample_set.filter(
+                    # We only want samples with a quant.sf file associated with them
+                    results__computedfile__filename="quant.sf",
+                    results__computedfile__s3_key__isnull=False,
+                    results__computedfile__s3_bucket__isnull=False,
                 )
+                if samples.count() == 0:
+                    raise serializers.ValidationError(
+                        "Experiment "
+                        + key
+                        + " does not have at least one sample with a quant.sf file"
+                    )
+
+            else:
+                try:
+                    experiment = Experiment.processed_public_objects.get(accession_code=key)
+                except Exception as e:
+                    raise serializers.ValidationError(
+                        "Experiment " + key + " does not have at least one downloadable sample"
+                    )
         # Otherwise, we will check that all the samples they requested are downloadable
         else:
             accessions.extend(value)

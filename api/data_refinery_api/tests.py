@@ -665,6 +665,24 @@ class APITestCases(APITestCase):
             "Sample(s) '456' in dataset are missing quant.sf files",
         )
 
+        # Bad, none of the samples in GSE123 have a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps({**put_data, "data": {"GSE123": ["ALL"]}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["non_field_errors"][0],
+            "Experiment GSE123 does not have at least one sample with a quant.sf file",
+        )
+
         # Make 456 have a quant.sf file
         result = ComputationalResult()
         result.save()
@@ -693,6 +711,20 @@ class APITestCases(APITestCase):
         response = self.client.put(
             reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
             json.dumps(put_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Good, a sample in GSE123 has a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps({**put_data, "data": {"GSE123": ["ALL"]}}),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
