@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.views import DatasetView, ExperimentList
+from data_refinery_api.views import DatasetView, ExperimentListView
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -262,14 +262,6 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("schema_redoc", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        response = self.client.get(
-            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION})
             + "?organism__name=DANIO_RERIO"
@@ -278,6 +270,14 @@ class APITestCases(APITestCase):
 
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=1"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1076,7 +1076,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_403(self, mock_client, mock_get_method):
         mock_get_method.side_effect = Mock(return_value=HttpResponseForbidden())
@@ -1086,7 +1086,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 403)
         mock_client.captureMessage.assert_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_500(self, mock_client, mock_get_method):
         def raise_error(_):
