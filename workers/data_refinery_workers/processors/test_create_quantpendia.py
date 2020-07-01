@@ -52,6 +52,20 @@ class QuantpendiaTestCase(TransactionTestCase):
         esa.sample = sample
         esa.save()
 
+        # Add a second non-downloadable sample. This one should not be included
+        # in the count of samples available in the metadata
+        sample2 = Sample()
+        sample2.accession_code = "GSM1237819"
+        sample2.title = "GSM1237819"
+        sample2.organism = homo_sapiens
+        sample2.technology = "RNA-SEQ"
+        sample2.save()
+
+        esa2 = ExperimentSampleAssociation()
+        esa2.experiment = experiment
+        esa2.sample = sample2
+        esa2.save()
+
         computed_file = ComputedFile()
         computed_file.s3_key = "smasher-test-quant.sf"
         computed_file.s3_bucket = "data-refinery-test-assets"
@@ -78,7 +92,7 @@ class QuantpendiaTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {"GSE51088": ["GSM1237818"]}
+        ds.data = {"GSE51088": ["GSM1237818", "GSM1237819"]}
         ds.aggregate_by = "EXPERIMENT"
         ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
