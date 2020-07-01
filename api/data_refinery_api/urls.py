@@ -11,6 +11,7 @@ from drf_yasg.views import get_schema_view
 from data_refinery_api.views import (
     AboutStats,
     APITokenView,
+<<<<<<< HEAD
     CompendiumResultDetailView,
     CompendiumResultListView,
     ComputationalResultDetailView,
@@ -23,10 +24,25 @@ from data_refinery_api.views import (
     DownloaderJobDetailView,
     DownloaderJobListView,
     ExperimentDetailView,
+=======
+    CompendiumResultDetails,
+    CompendiumResultList,
+    ComputationalResultsDetail,
+    ComputationalResultsList,
+    ComputedFilesDetail,
+    ComputedFilesList,
+    CreateApiTokenView,
+    CreateDatasetView,
+    DatasetView,
+    DownloaderJobDetail,
+    DownloaderJobList,
+    ExperimentDetail,
+>>>>>>> 9cb87361ee4130fc4f780893cd6171068a732a8d
     ExperimentDocumentView,
     ExperimentListView,
     FailedDownloaderJobStats,
     FailedProcessorJobStats,
+<<<<<<< HEAD
     InstitutionListView,
     OrganismDetailView,
     OrganismListView,
@@ -37,15 +53,36 @@ from data_refinery_api.views import (
     ProcessorJobDetailView,
     ProcessorJobListView,
     ProcessorListView,
+=======
+    InstitutionList,
+    OrganismDetail,
+    OrganismList,
+    OriginalFileDetail,
+    OriginalFileList,
+    PlatformList,
+    ProcessorDetail,
+    ProcessorJobDetail,
+    ProcessorJobList,
+    ProcessorList,
+>>>>>>> 9cb87361ee4130fc4f780893cd6171068a732a8d
     QNTargetsAvailable,
     QNTargetsDetailView,
     SampleDetailView,
     SampleListView,
     Stats,
+<<<<<<< HEAD
     SurveyJobDetailView,
     SurveyJobListView,
     TranscriptomeIndexDetailView,
     TranscriptomeIndexListView,
+=======
+    SurveyJobDetail,
+    SurveyJobList,
+    TranscriptomeIndexDetail,
+    TranscriptomeIndexList,
+    handle404error,
+    handle500error,
+>>>>>>> 9cb87361ee4130fc4f780893cd6171068a732a8d
 )
 
 
@@ -122,6 +159,7 @@ urlpatterns = [
                     SampleDetailView.as_view(),
                     name="samples_detail",
                 ),
+<<<<<<< HEAD
                 url(r"^organisms/$", OrganismListView.as_view(), name="organisms"),
                 url(
                     r"^organisms/(?P<name>.+)/$",
@@ -135,6 +173,20 @@ urlpatterns = [
                     r"^processors/(?P<id>[0-9a-f-]+)/$",
                     ProcessorDetailView.as_view(),
                     name="processors_detail",
+=======
+                url(r"^organisms/$", OrganismList.as_view(), name="organisms"),
+                url(
+                    r"^organisms/(?P<name>.+)/$", OrganismDetail.as_view(), name="organisms_detail",
+                ),
+                url(r"^platforms/$", PlatformList.as_view(), name="platforms"),
+                # platform detail
+                url(r"^institutions/$", InstitutionList.as_view(), name="institutions"),
+                url(r"^processors/$", ProcessorList.as_view(), name="processors"),
+                url(
+                    r"^processors/(?P<id>[0-9a-f-]+)/$",
+                    ProcessorDetail.as_view(),
+                    name="processors_details",
+>>>>>>> 9cb87361ee4130fc4f780893cd6171068a732a8d
                 ),
                 # Deliverables
                 url(r"^dataset/$", CreateDatasetView.as_view(), name="create_dataset"),
@@ -142,6 +194,7 @@ urlpatterns = [
                 url(r"^token/$", CreateAPITokenView.as_view(), name="token"),
                 url(r"^token/(?P<id>[0-9a-f-]+)/$", APITokenView.as_view(), name="token_id"),
                 # Jobs
+<<<<<<< HEAD
                 url(r"^jobs/survey/$", SurveyJobListView.as_view(), name="survey_jobs"),
                 url(
                     r"^jobs/survey/(?P<id>[0-9a-f-]+)/$",
@@ -159,6 +212,25 @@ urlpatterns = [
                     r"^jobs/processor/(?P<id>[0-9a-f-]+)/$",
                     ProcessorJobDetailView.as_view(),
                     name="processor_jobs_detail",
+=======
+                url(r"^jobs/survey/$", SurveyJobList.as_view(), name="survey_jobs"),
+                url(
+                    r"^jobs/survey/(?P<id>[0-9a-f-]+)/$",
+                    SurveyJobDetail.as_view(),
+                    name="survey_jobs",
+                ),
+                url(r"^jobs/downloader/$", DownloaderJobList.as_view(), name="downloader_jobs"),
+                url(
+                    r"^jobs/downloader/(?P<id>[0-9a-f-]+)/$",
+                    DownloaderJobDetail.as_view(),
+                    name="downloader_jobs",
+                ),
+                url(r"^jobs/processor/$", ProcessorJobList.as_view(), name="processor_jobs"),
+                url(
+                    r"^jobs/processor/(?P<id>[0-9a-f-]+)/$",
+                    ProcessorJobDetail.as_view(),
+                    name="processor_jobs",
+>>>>>>> 9cb87361ee4130fc4f780893cd6171068a732a8d
                 ),
                 # Dashboard Driver
                 url(r"^stats/$", Stats.as_view(), name="stats"),
@@ -199,6 +271,7 @@ urlpatterns = [
                     name="qn_targets",
                 ),
                 # Computed Files
+<<<<<<< HEAD
                 url(r"^computed_files/$", ComputedFileListView.as_view(), name="computed_files"),
                 url(
                     r"^computed_files/(?P<id>[0-9a-f-]+)/$",
@@ -220,6 +293,27 @@ urlpatterns = [
                     r"^computational_results/(?P<id>[0-9a-f-]+)/$",
                     ComputationalResultDetailView.as_view(),
                     name="results_detail",
+                ),
+                url(
+                    r"^computational_results/(?P<id>[0-9a-f-]+)/$",
+                    ComputationalResultsDetail.as_view(),
+                    name="results_detail",
+=======
+                url(r"^computed_files/$", ComputedFilesList.as_view(), name="computed_files"),
+                url(
+                    r"^computed_files/(?P<id>[0-9a-f-]+)/$",
+                    ComputedFilesDetail.as_view(),
+                    name="computed_files_detail",
+                ),
+                url(r"^original_files/$", OriginalFileList.as_view(), name="original_files"),
+                url(
+                    r"^original_files/(?P<id>[0-9a-f-]+)/$",
+                    OriginalFileDetail.as_view(),
+                    name="original_files_detail",
+                ),
+                url(
+                    r"^computational_results/$", ComputationalResultsList.as_view(), name="results"
+>>>>>>> 9cb87361ee4130fc4f780893cd6171068a732a8d
                 ),
                 url(
                     r"^computational_results/(?P<id>[0-9a-f-]+)/$",

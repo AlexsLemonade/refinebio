@@ -202,9 +202,6 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response["X-Source-Revision"], get_env_variable("SYSTEM_VERSION"))
 
-        response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -220,10 +217,12 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
+        response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
+        response = self.client.get(
+            reverse("organisms", kwargs={"version": API_VERSION}) + "HOMO_SAPIENS/"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(
@@ -262,7 +261,7 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
+        response = self.client.get(reverse("results", kwargs={"version": API_VERSION}) + "1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("schema_redoc", kwargs={"version": API_VERSION}))
@@ -284,6 +283,17 @@ class APITestCases(APITestCase):
 
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION})
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
+            + "?organism__name=DANIO_RERIO"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=1"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
