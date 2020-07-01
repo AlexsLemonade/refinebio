@@ -221,6 +221,11 @@ urlpatterns = [
                     ComputationalResultDetailView.as_view(),
                     name="results_detail",
                 ),
+                url(
+                    r"^computational_results/(?P<id>[0-9a-f-]+)/$",
+                    ComputationalResultsDetail.as_view(),
+                    name="results_detail",
+                ),
                 # Compendia
                 url(r"^compendia/$", CompendiumResultListView.as_view(), name="compendium_results"),
                 url(
