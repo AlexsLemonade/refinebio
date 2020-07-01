@@ -1034,8 +1034,9 @@ def download_computed_file(download_tuple: Tuple[ComputedFile, str]):
 
 
 def sync_quant_files(output_path, samples: List[Sample], filtered_samples: Dict):
-    """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
-        Returns the total number of samples that were included """
+    """ Takes a list of ComputedFiles and copies the ones that are quant files
+    to the provided directory.  Returns the total number of samples that were
+    included, and adds those that were not included to `filtered_samples` """
     num_samples = 0
 
     page_size = 100
