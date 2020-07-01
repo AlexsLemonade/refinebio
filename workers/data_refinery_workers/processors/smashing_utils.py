@@ -1033,7 +1033,7 @@ def download_computed_file(download_tuple: Tuple[ComputedFile, str]):
         logger.exception("Failed to sync computed file", computed_file_id=latest_computed_file.pk)
 
 
-def sync_quant_files(output_path, samples: List[Sample]):
+def sync_quant_files(output_path, samples: List[Sample], filtered_samples: Dict):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
         Returns the total number of samples that were included """
     num_samples = 0
@@ -1051,6 +1051,11 @@ def sync_quant_files(output_path, samples: List[Sample]):
             for sample in sample_page:
                 latest_computed_file = sample.get_most_recent_quant_sf_file()
                 if not latest_computed_file:
+                    sample_metadata = sample.to_metadata_dict()
+                    filtered_samples[sample.accession_code] = {
+                        **sample_metadata,
+                        "reason": "This sample did not have a quant file associated with it in our database.",
+                    }
                     continue
                 output_file_path = output_path + sample.accession_code + "_quant.sf"
                 sample_and_computed_files.append((latest_computed_file, output_file_path))
