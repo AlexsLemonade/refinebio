@@ -92,7 +92,7 @@ class QuantpendiaTestCase(TransactionTestCase):
         assoc.save()
 
         ds = Dataset()
-        ds.data = {"GSE51088": ["GSM1237818"]}
+        ds.data = {"GSE51088": ["GSM1237818", "GSM1237819"]}
         ds.aggregate_by = "EXPERIMENT"
         ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
