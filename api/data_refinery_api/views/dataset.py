@@ -66,17 +66,56 @@ def validate_dataset(data):
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
-            try:
-                experiment = Experiment.processed_public_objects.get(accession_code=key)
-            except Exception as e:
-                raise serializers.ValidationError(
-                    "Experiment " + key + " does not have at least one downloadable sample"
+            if data.get("quant_sf_only", False):
+                try:
+                    experiment = Experiment.public_objects.get(accession_code=key)
+                except Exception as e:
+                    raise serializers.ValidationError("Experiment " + key + " does not exist")
+
+                samples = experiment.sample_set.filter(
+                    # We only want samples with a quant.sf file associated with them
+                    results__computedfile__filename="quant.sf",
+                    results__computedfile__s3_key__isnull=False,
+                    results__computedfile__s3_bucket__isnull=False,
                 )
+                if samples.count() == 0:
+                    raise serializers.ValidationError(
+                        "Experiment "
+                        + key
+                        + " does not have at least one sample with a quant.sf file"
+                    )
+
+            else:
+                try:
+                    experiment = Experiment.processed_public_objects.get(accession_code=key)
+                except Exception as e:
+                    raise serializers.ValidationError(
+                        "Experiment " + key + " does not have at least one downloadable sample"
+                    )
         # Otherwise, we will check that all the samples they requested are downloadable
         else:
             accessions.extend(value)
 
-    if len(accessions) > 0:
+    if len(accessions) == 0:
+        return
+
+    if data.get("quant_sf_only", False):
+        samples_without_quant_sf = Sample.public_objects.filter(
+            accession_code__in=accessions
+        ).exclude(
+            # Exclude samples that have at least one uploaded quant.sf file associated with them
+            results__computedfile__filename="quant.sf",
+            results__computedfile__s3_key__isnull=False,
+            results__computedfile__s3_bucket__isnull=False,
+        )
+        if samples_without_quant_sf.count() > 0:
+            raise serializers.ValidationError(
+                "Sample(s) '"
+                + ", ".join([s.accession_code for s in samples_without_quant_sf])
+                + "' in dataset are missing quant.sf files"
+            )
+
+    else:
         unprocessed_samples = Sample.public_objects.filter(
             accession_code__in=accessions, is_processed=False
         )
