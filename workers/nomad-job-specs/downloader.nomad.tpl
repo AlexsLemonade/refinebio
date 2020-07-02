@@ -86,8 +86,7 @@ job "DOWNLOADER_${{INDEX}}_${{RAM}}" {
       constraint {
         attribute = "${attr.unique.storage.bytesfree}"
         operator  = ">"
-        # 250 GB
-        value     = "250000000000"
+        value     = "${{DOWNLOADER_SPACE_CONSTRAINT}}"
       }
 
       config {
