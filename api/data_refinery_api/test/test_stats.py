@@ -5,7 +5,6 @@ from rest_framework.test import APITestCase
 
 from data_refinery_api.test.test_api_general import API_VERSION
 
-
 MOCK_NOMAD_RESPONSE = [
     {
         "CreateIndex": 5145,

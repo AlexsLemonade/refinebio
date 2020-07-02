@@ -26,7 +26,6 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.models.documents import ExperimentDocument
 
-
 ECOLI_STRAIN_NAME = "Escherichia coli str. k-12 substr. mg1655"
 
 
@@ -144,13 +143,13 @@ class ESTestCases(APITestCase):
         call_command("search_index", "--rebuild", "-f")
 
     def test_es_endpoint(self):
-        """ 
-        #Test basic ES functionality  
+        """
+        #Test basic ES functionality
         """
         response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
 
-        """ 
-        #Test basic ES functionality 
+        """
+        #Test basic ES functionality
         """
         es_search_result = ExperimentDocument.search().filter("term", description="soda")
         es_search_result_qs = es_search_result.to_queryset()
