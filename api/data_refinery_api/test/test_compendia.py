@@ -17,7 +17,7 @@ class APITestCases(APITestCase):
         self.homo_sapiens.save()
         self.danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
         self.danio_rerio.save()
-    
+
     def test_compendia(self):
         result = ComputationalResult()
         result.save()
@@ -102,5 +102,3 @@ class APITestCases(APITestCase):
         response_json = response.json()["results"]
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]["download_url"])
-    
-

@@ -240,7 +240,7 @@ class APITestCases(APITestCase):
         # IDs. In this case, since this file is ran first, the IDs are 1, but this may be a problem
         # in the future.
         response = self.client.get(
-            reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/" # change back
+            reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -257,7 +257,7 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}) + "1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

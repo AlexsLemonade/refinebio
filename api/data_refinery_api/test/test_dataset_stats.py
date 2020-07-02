@@ -115,4 +115,3 @@ class APITestCases(APITestCase):
             reverse("samples", kwargs={"version": API_VERSION}), {"dataset_id": good_id}
         )
         self.assertEqual(response.json()["count"], 2)
-
