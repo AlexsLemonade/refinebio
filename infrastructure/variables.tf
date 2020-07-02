@@ -177,8 +177,8 @@ variable "full_stack" {
 
 # Configuration
 variable "downloader_space_constraint" {
-  # 250 GB
-  default = "250000000000"
+  # 600 GB
+  default = "600000000000"
 }
 
 # Output our production environment variables.
