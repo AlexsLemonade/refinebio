@@ -74,6 +74,12 @@ t = timezone.now() - timedelta(hours=10)
 Counter([j.failure_reason for j in ProcessorJob.objects.filter(created_at__gt=t, success=False)])
 ```
 
+or for the 5 most common failure reasons:
+
+```python
+Counter([j.failure_reason for j in ProcessorJob.objects.filter(created_at__gt=t, success=False)]).most_common(5)
+```
+
 You can also do the same for downloader jobs:
 
 ```python
