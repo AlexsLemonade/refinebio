@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.tests import API_VERSION
+from data_refinery_api.test.test_api_general import API_VERSION
 from data_refinery_common.models import (
     ComputationalResult,
     Organism,

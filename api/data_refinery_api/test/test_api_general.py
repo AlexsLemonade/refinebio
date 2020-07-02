@@ -237,19 +237,18 @@ class APITestCases(APITestCase):
 
         # Don't know the best way to deal with this, but since the other tests in different files
         # create objects which are then deleted, the new objects from these tests will have different
-        # IDs which means that trying to get results/1/ will not work (since it was deleted).
-        # 1 downloader is created by test_search.py, 4 created by test_dataset.py, so the next ID is 6
+        # IDs. In this case, since this file is ran first, the IDs are 1, but this may be a problem
+        # in the future.
         response = self.client.get(
-            reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "6/" # change back
+            reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/" # change back
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("processor_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # 1 processor job created by test_search.py, 7 created by test_dataset.py
         response = self.client.get(
-            reverse("processor_jobs", kwargs={"version": API_VERSION}) + "9/"
+            reverse("processor_jobs", kwargs={"version": API_VERSION}) + "1/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -259,8 +258,7 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # 2 created by test_processor.py, 2 created by test_search.py, 2 by test_qn_target.py, and 16 by test_dataset.py
-        response = self.client.get(reverse("results", kwargs={"version": API_VERSION}) + "23/")
+        response = self.client.get(reverse("results", kwargs={"version": API_VERSION}) + "1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("schema_redoc", kwargs={"version": API_VERSION}))
@@ -272,9 +270,8 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Must use ComputationalResult with ID 23 for same reason as getting a specific result above
         response = self.client.get(
-            reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=23"
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=1"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
