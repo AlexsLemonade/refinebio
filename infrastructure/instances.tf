@@ -122,6 +122,8 @@ data "template_file" "nomad_client_script_smusher" {
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
+    dockerhub_repo = "${var.dockerhub_repo}"
+    downloaders_docker_image = "${var.downloaders_docker_image}"
   }
 }
 

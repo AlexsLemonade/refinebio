@@ -112,6 +112,15 @@ nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file -
 # (Note that the lines starting with "$" are where
 #  Terraform will template in the contents of those files.)
 
+export EBS_VOLUME_INDEX=$(docker run \\
+       --env-file /home/ubuntu/environment \\
+       -e DATABASE_HOST=${database_host} \\
+       -e DATABASE_NAME=${database_name} \\
+       -e DATABASE_USER=${database_user} \\
+       -e DATABASE_PASSWORD=${database_password} \\
+       -it ${dockerhub_repo}/${downloaders_docker_image} python3 manage.py get_inactive_volume_index \\
+       | sed -n "/^INSTANCE_ID=/s///p")
+
 # Create the script to install Nomad.
 cat <<"EOF" > install_nomad.sh
 ${install_nomad_script}
@@ -121,7 +130,7 @@ EOF
 cat <<"EOF" > client.hcl
 ${nomad_client_config}
 EOF
-# Make the client.meta.volume_id is set to waht we just mounted
+# Make sure the client.meta.volume_id is set to what we just mounted
 sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
 
 # Create a directory for docker to use as a volume.
