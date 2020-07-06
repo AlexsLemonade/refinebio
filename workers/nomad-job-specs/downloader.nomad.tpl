@@ -83,6 +83,12 @@ job "DOWNLOADER_${{INDEX}}_${{RAM}}" {
         value     = "${{INDEX}}"
       }
 
+      constraint {
+        attribute = "${attr.unique.storage.bytesfree}"
+        operator  = ">"
+        value     = "${{DOWNLOADER_SPACE_CONSTRAINT}}"
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{DOWNLOADERS_DOCKER_IMAGE}}"
         force_pull = false
