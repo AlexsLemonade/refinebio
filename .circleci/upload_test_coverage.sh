@@ -30,10 +30,10 @@ output_file="${test_volume}/${project}_coverage.xml"
 # In the test coverage report, all file paths are relative to each project
 # folder. We need to be relative to the repo's root directory. That's why we
 # append the project folder name to each file path in coverage.xml
-sed "s/filename=\"/filename=\"$project\//g" $coverage_file > $output_file
+sed "s/filename=\"/filename=\"$project\//g" "$coverage_file" > "$output_file"
 
 # codecov.sh is located at https://codecov.io/bash
 # we downloaded it for convenience
-./.circleci/codecov.sh -f "$output_file" -Z -F $project
+./.circleci/codecov.sh -f "$output_file" -Z -F "$project"
 
-rm -f $coverage_file $output_file
+rm -f "$coverage_file" "$output_file"
