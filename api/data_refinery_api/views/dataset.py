@@ -32,6 +32,32 @@ def get_client_ip(request):
     return ip
 
 
+def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
+    if quant_sf_only:
+        try:
+            experiment = Experiment.public_objects.get(accession_code=experiment)
+        except Exception as e:
+            return False
+
+        samples = experiment.sample_set.filter(
+            # We only want samples with a quant.sf file associated with them
+            results__computedfile__filename="quant.sf",
+            results__computedfile__s3_key__isnull=False,
+            results__computedfile__s3_bucket__isnull=False,
+        )
+
+        if samples.count() == 0:
+            return False
+
+    else:
+        try:
+            experiment = Experiment.processed_public_objects.get(accession_code=experiment)
+        except Exception as e:
+            return False
+
+    return True
+
+
 def validate_dataset(data):
     """
     Dataset validation. Each experiment should always have at least one
@@ -45,6 +71,7 @@ def validate_dataset(data):
         raise serializers.ValidationError("`data` must contain at least one experiment..")
 
     accessions = []
+    non_downloadable_experiments = []
     for key, value in data["data"].items():
         if type(value) != list:
             raise serializers.ValidationError(
@@ -66,35 +93,22 @@ def validate_dataset(data):
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
-            if data.get("quant_sf_only", False):
-                try:
-                    experiment = Experiment.public_objects.get(accession_code=key)
-                except Exception as e:
-                    raise serializers.ValidationError("Experiment " + key + " does not exist")
+            if not experiment_has_downloadable_samples(
+                key, quant_sf_only=data.get("quant_sf_only", False)
+            ):
+                non_downloadable_experiments.append(key)
 
-                samples = experiment.sample_set.filter(
-                    # We only want samples with a quant.sf file associated with them
-                    results__computedfile__filename="quant.sf",
-                    results__computedfile__s3_key__isnull=False,
-                    results__computedfile__s3_bucket__isnull=False,
-                )
-                if samples.count() == 0:
-                    raise serializers.ValidationError(
-                        "Experiment "
-                        + key
-                        + " does not have at least one sample with a quant.sf file"
-                    )
-
-            else:
-                try:
-                    experiment = Experiment.processed_public_objects.get(accession_code=key)
-                except Exception as e:
-                    raise serializers.ValidationError(
-                        "Experiment " + key + " does not have at least one downloadable sample"
-                    )
         # Otherwise, we will check that all the samples they requested are downloadable
         else:
             accessions.extend(value)
+
+    if len(non_downloadable_experiments) != 0:
+        raise serializers.ValidationError(
+            {
+                "message": "Experiment(s) in dataset have zero downloadable samples. See `non_downloadable_experiments` for a full list",
+                "non_downloadable_experiments": non_downloadable_experiments,
+            }
+        )
 
     if len(accessions) == 0:
         return
@@ -110,9 +124,12 @@ def validate_dataset(data):
         )
         if samples_without_quant_sf.count() > 0:
             raise serializers.ValidationError(
-                "Sample(s) '"
-                + ", ".join([s.accession_code for s in samples_without_quant_sf])
-                + "' in dataset are missing quant.sf files"
+                {
+                    "message": "Sample(s) in dataset are missing quant.sf files. See `non_downloadable_samples` for a full list",
+                    "non_downloadable_samples": [
+                        s.accession_code for s in samples_without_quant_sf
+                    ],
+                },
             )
 
     else:
@@ -121,9 +138,10 @@ def validate_dataset(data):
         )
         if unprocessed_samples.count() > 0:
             raise serializers.ValidationError(
-                "Non-downloadable sample(s) '"
-                + ", ".join([s.accession_code for s in unprocessed_samples])
-                + "' in dataset"
+                {
+                    "message": "Non-downloadable sample(s) in dataset. See `non_downloadable_samples` for a full list",
+                    "non_downloadable_samples": [s.accession_code for s in unprocessed_samples],
+                }
             )
 
 

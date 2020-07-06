@@ -631,9 +631,10 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.json()["non_field_errors"][0], "Non-downloadable sample(s) '456' in dataset"
+        self.assertIn(
+            "Non-downloadable sample(s) in dataset", response.json()["message"][0],
         )
+        self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
 
         # Good, 789 is processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
@@ -660,10 +661,10 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.json()["non_field_errors"][0],
-            "Sample(s) '456' in dataset are missing quant.sf files",
+        self.assertIn(
+            "Sample(s) in dataset are missing quant.sf files", response.json()["message"][0],
         )
+        self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
 
         # Bad, none of the samples in GSE123 have a quant.sf file
         response = self.client.post(
@@ -678,10 +679,11 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.json()["non_field_errors"][0],
-            "Experiment GSE123 does not have at least one sample with a quant.sf file",
+        self.assertIn(
+            "Experiment(s) in dataset have zero downloadable samples",
+            response.json()["message"][0],
         )
+        self.assertEqual(response.json()["non_downloadable_experiments"], ["GSE123"])
 
         # Make 456 have a quant.sf file
         result = ComputationalResult()
