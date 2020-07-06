@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.views import DatasetView, ExperimentList
+from data_refinery_api.views import DatasetView, ExperimentListView
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -262,14 +262,6 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("schema_redoc", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        response = self.client.get(
-            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION})
             + "?organism__name=DANIO_RERIO"
@@ -278,6 +270,14 @@ class APITestCases(APITestCase):
 
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=1"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -592,6 +592,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_dataset_adding_non_downloadable_samples_fails(self):
+        # Make a sample that is not downloadable
         sample1 = Sample()
         sample1.title = "456"
         sample1.accession_code = "456"
@@ -642,6 +643,91 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+
+        # Bad, 456 does not have a quant.sf file
+        post_data = {"email_address": "baz@gmail.com", "data": {}}
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+        put_data = {**post_data, "data": {"GSE123": ["456"]}, "quant_sf_only": True}
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps(put_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["non_field_errors"][0],
+            "Sample(s) '456' in dataset are missing quant.sf files",
+        )
+
+        # Bad, none of the samples in GSE123 have a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps({**put_data, "data": {"GSE123": ["ALL"]}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["non_field_errors"][0],
+            "Experiment GSE123 does not have at least one sample with a quant.sf file",
+        )
+
+        # Make 456 have a quant.sf file
+        result = ComputationalResult()
+        result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample1
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.s3_key = "smasher-test-quant.sf"
+        computed_file.s3_bucket = "data-refinery-test-assets"
+        computed_file.filename = "quant.sf"
+        computed_file.result = result
+        computed_file.size_in_bytes = 42
+        computed_file.save()
+
+        # Good, 456 does have a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps(put_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Good, a sample in GSE123 has a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps({**put_data, "data": {"GSE123": ["ALL"]}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
 
     @patch("data_refinery_common.message_queue.send_job")
     def test_create_update_dataset(self, mock_send_job):
@@ -1022,7 +1108,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_403(self, mock_client, mock_get_method):
         mock_get_method.side_effect = Mock(return_value=HttpResponseForbidden())
@@ -1032,7 +1118,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 403)
         mock_client.captureMessage.assert_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_500(self, mock_client, mock_get_method):
         def raise_error(_):

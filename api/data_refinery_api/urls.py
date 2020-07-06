@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from django.views.generic import RedirectView
 from rest_framework import permissions
@@ -8,47 +9,64 @@ from rest_framework import permissions
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
-from .views import (
+from data_refinery_api.views import (
     AboutStats,
     APITokenView,
-    CompendiumResultDetails,
-    CompendiumResultList,
-    ComputationalResultsDetail,
-    ComputationalResultsList,
-    ComputedFilesDetail,
-    ComputedFilesList,
-    CreateApiTokenView,
+    CompendiumResultDetailView,
+    CompendiumResultListView,
+    ComputationalResultDetailView,
+    ComputationalResultListView,
+    ComputedFileDetailView,
+    ComputedFileListView,
+    CreateAPITokenView,
     CreateDatasetView,
     DatasetView,
-    DownloaderJobDetail,
-    DownloaderJobList,
-    ExperimentDetail,
+    DownloaderJobDetailView,
+    DownloaderJobListView,
+    ExperimentDetailView,
     ExperimentDocumentView,
-    ExperimentList,
+    ExperimentListView,
     FailedDownloaderJobStats,
     FailedProcessorJobStats,
-    InstitutionList,
-    OrganismDetail,
-    OrganismList,
-    OriginalFileDetail,
-    OriginalFileList,
-    PlatformList,
-    ProcessorDetail,
-    ProcessorJobDetail,
-    ProcessorJobList,
-    ProcessorList,
+    InstitutionListView,
+    OrganismDetailView,
+    OrganismListView,
+    OriginalFileDetailView,
+    OriginalFileListView,
+    PlatformListView,
+    ProcessorDetailView,
+    ProcessorJobDetailView,
+    ProcessorJobListView,
+    ProcessorListView,
     QNTargetsAvailable,
-    QNTargetsDetail,
-    SampleDetail,
-    SampleList,
+    QNTargetsDetailView,
+    SampleDetailView,
+    SampleListView,
     Stats,
-    SurveyJobDetail,
-    SurveyJobList,
-    TranscriptomeIndexDetail,
-    TranscriptomeIndexList,
-    handle404error,
-    handle500error,
+    SurveyJobDetailView,
+    SurveyJobListView,
+    TranscriptomeIndexDetailView,
+    TranscriptomeIndexListView,
 )
+
+
+# error handlers
+def handle404error(request, exception):
+    message = "The requested resource was not found on this server."
+    url = "https://api.refine.bio/"
+
+    # check to see if the 404ed request contained a version
+    if not match(r"^/v[1-9]/.*", request.path):
+        message = "refine.bio API resources are only available through versioned requests."
+
+    return JsonResponse({"message": message, "docs": url, "status_code": 404,}, status=404)
+
+
+def handle500error(request):
+    return JsonResponse(
+        {"message": "A server error occured. This has been reported.", "status_code": 500,},
+        status=500,
+    )
 
 
 # This provides _public_ access to the /admin interface!
@@ -93,54 +111,55 @@ urlpatterns = [
             [
                 # Primary search and filter interface
                 url(r"^search/$", ExperimentDocumentView.as_view({"get": "list"}), name="search"),
-                url(r"^experiments/$", ExperimentList.as_view(), name="experiments"),
+                url(r"^experiments/$", ExperimentListView.as_view(), name="experiments"),
                 url(
                     r"^experiments/(?P<accession_code>.+)/$",
-                    ExperimentDetail.as_view(),
+                    ExperimentDetailView.as_view(),
                     name="experiments_detail",
                 ),
-                url(r"^samples/$", SampleList.as_view(), name="samples"),
+                url(r"^samples/$", SampleListView.as_view(), name="samples"),
                 url(
                     r"^samples/(?P<accession_code>.+)/$",
-                    SampleDetail.as_view(),
+                    SampleDetailView.as_view(),
                     name="samples_detail",
                 ),
-                url(r"^organisms/$", OrganismList.as_view(), name="organisms"),
+                url(r"^organisms/$", OrganismListView.as_view(), name="organisms"),
                 url(
-                    r"^organisms/(?P<name>.+)/$", OrganismDetail.as_view(), name="organisms_detail",
+                    r"^organisms/(?P<name>.+)/$",
+                    OrganismDetailView.as_view(),
+                    name="organisms_detail",
                 ),
-                url(r"^platforms/$", PlatformList.as_view(), name="platforms"),
-                # platform detail
-                url(r"^institutions/$", InstitutionList.as_view(), name="institutions"),
-                url(r"^processors/$", ProcessorList.as_view(), name="processors"),
+                url(r"^platforms/$", PlatformListView.as_view(), name="platforms"),
+                url(r"^institutions/$", InstitutionListView.as_view(), name="institutions"),
+                url(r"^processors/$", ProcessorListView.as_view(), name="processors"),
                 url(
                     r"^processors/(?P<id>[0-9a-f-]+)/$",
-                    ProcessorDetail.as_view(),
-                    name="processors_details",
+                    ProcessorDetailView.as_view(),
+                    name="processors_detail",
                 ),
                 # Deliverables
                 url(r"^dataset/$", CreateDatasetView.as_view(), name="create_dataset"),
                 url(r"^dataset/(?P<id>[0-9a-f-]+)/$", DatasetView.as_view(), name="dataset"),
-                url(r"^token/$", CreateApiTokenView.as_view(), name="token"),
+                url(r"^token/$", CreateAPITokenView.as_view(), name="token"),
                 url(r"^token/(?P<id>[0-9a-f-]+)/$", APITokenView.as_view(), name="token_id"),
                 # Jobs
-                url(r"^jobs/survey/$", SurveyJobList.as_view(), name="survey_jobs"),
+                url(r"^jobs/survey/$", SurveyJobListView.as_view(), name="survey_jobs"),
                 url(
                     r"^jobs/survey/(?P<id>[0-9a-f-]+)/$",
-                    SurveyJobDetail.as_view(),
-                    name="survey_jobs",
+                    SurveyJobDetailView.as_view(),
+                    name="survey_jobs_detail",
                 ),
-                url(r"^jobs/downloader/$", DownloaderJobList.as_view(), name="downloader_jobs"),
+                url(r"^jobs/downloader/$", DownloaderJobListView.as_view(), name="downloader_jobs"),
                 url(
                     r"^jobs/downloader/(?P<id>[0-9a-f-]+)/$",
-                    DownloaderJobDetail.as_view(),
-                    name="downloader_jobs",
+                    DownloaderJobDetailView.as_view(),
+                    name="downloader_jobs_detail",
                 ),
-                url(r"^jobs/processor/$", ProcessorJobList.as_view(), name="processor_jobs"),
+                url(r"^jobs/processor/$", ProcessorJobListView.as_view(), name="processor_jobs"),
                 url(
                     r"^jobs/processor/(?P<id>[0-9a-f-]+)/$",
-                    ProcessorJobDetail.as_view(),
-                    name="processor_jobs",
+                    ProcessorJobDetailView.as_view(),
+                    name="processor_jobs_detail",
                 ),
                 # Dashboard Driver
                 url(r"^stats/$", Stats.as_view(), name="stats"),
@@ -161,11 +180,13 @@ urlpatterns = [
                     include(
                         [
                             path(
-                                "", TranscriptomeIndexList.as_view(), name="transcriptome_indices"
+                                "",
+                                TranscriptomeIndexListView.as_view(),
+                                name="transcriptome_indices",
                             ),
                             path(
                                 "<int:id>",
-                                TranscriptomeIndexDetail.as_view(),
+                                TranscriptomeIndexDetailView.as_view(),
                                 name="transcriptome_indices_read",
                             ),
                         ]
@@ -175,35 +196,37 @@ urlpatterns = [
                 url(r"^qn_targets/$", QNTargetsAvailable.as_view(), name="qn_targets_available"),
                 url(
                     r"^qn_targets/(?P<organism_name>.+)$",
-                    QNTargetsDetail.as_view(),
+                    QNTargetsDetailView.as_view(),
                     name="qn_targets",
                 ),
                 # Computed Files
-                url(r"^computed_files/$", ComputedFilesList.as_view(), name="computed_files"),
+                url(r"^computed_files/$", ComputedFileListView.as_view(), name="computed_files"),
                 url(
                     r"^computed_files/(?P<id>[0-9a-f-]+)/$",
-                    ComputedFilesDetail.as_view(),
+                    ComputedFileDetailView.as_view(),
                     name="computed_files_detail",
                 ),
-                url(r"^original_files/$", OriginalFileList.as_view(), name="original_files"),
+                url(r"^original_files/$", OriginalFileListView.as_view(), name="original_files"),
                 url(
                     r"^original_files/(?P<id>[0-9a-f-]+)/$",
-                    OriginalFileDetail.as_view(),
+                    OriginalFileDetailView.as_view(),
                     name="original_files_detail",
                 ),
                 url(
-                    r"^computational_results/$", ComputationalResultsList.as_view(), name="results"
+                    r"^computational_results/$",
+                    ComputationalResultListView.as_view(),
+                    name="results",
                 ),
                 url(
                     r"^computational_results/(?P<id>[0-9a-f-]+)/$",
-                    ComputationalResultsDetail.as_view(),
+                    ComputationalResultDetailView.as_view(),
                     name="results_detail",
                 ),
                 # Compendia
-                url(r"^compendia/$", CompendiumResultList.as_view(), name="compendium_results"),
+                url(r"^compendia/$", CompendiumResultListView.as_view(), name="compendium_results"),
                 url(
                     r"^compendia/(?P<id>[0-9]+)/$",
-                    CompendiumResultDetails.as_view(),
+                    CompendiumResultDetailView.as_view(),
                     name="compendium_result",
                 ),
                 # v1 api docs
