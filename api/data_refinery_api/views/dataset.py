@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from rest_framework import filters, generics, serializers
+from rest_framework import filters, generics, mixins, serializers, viewsets
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
