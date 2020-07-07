@@ -1,5 +1,5 @@
 ##
-# Contains CreateDatasetView and DatasetView
+# Contains DatasetView
 ##
 
 from collections import defaultdict
