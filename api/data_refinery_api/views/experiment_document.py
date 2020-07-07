@@ -280,7 +280,7 @@ class ExperimentDocumentView(DocumentViewSet):
         "accession_code": "accession_code",
         "alternate_accession_code": "alternate_accession_code",
         "platform": "platform_accession_codes",
-        "organism": "organism_names",
+        "organism": "organism_names.raw",
         "num_processed_samples": {
             "field": "num_processed_samples",
             "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN, LOOKUP_QUERY_GT],
