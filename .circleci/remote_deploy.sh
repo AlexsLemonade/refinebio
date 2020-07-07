@@ -24,6 +24,7 @@ cd ~/refinebio
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box () {
+    # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
         -i infrastructure/data-refinery-key.pem \
