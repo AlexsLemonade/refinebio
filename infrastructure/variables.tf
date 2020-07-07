@@ -275,7 +275,7 @@ output "environment_variables" {
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
       value = "${var.max_downloader_jobs_per_node}"},
     {name = "ENGAGEMENTBOT_WEBHOOK"
-      value = "${var.engagementbot_webhook}"}
+      value = "${var.engagementbot_webhook}"},
     {name = "DOWNLOADER_SPACE_CONSTRAINT"
       value = "${var.downloader_space_constraint}"}
   ]
