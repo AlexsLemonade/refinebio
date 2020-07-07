@@ -1450,6 +1450,13 @@ class ESTestCases(APITestCase):
         )
         self.assertEqual(response.json()["count"], 0)
 
+        # Filter based on organism name
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION}),
+            {"search": "soda", "organism": ECOLI_STRAIN_NAME},
+        )
+        self.assertEqual(response.json()["count"], 1)
+
     def test_es_endpoint_post(self):
         # Basic filter
         search = {"accession_code": "GSE123-X"}
