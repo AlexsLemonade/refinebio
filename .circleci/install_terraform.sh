@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 cd || exit
 TERRAFORM_VERSION=0.11.8
