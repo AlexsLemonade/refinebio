@@ -126,7 +126,7 @@ jobs:
 
       - run:
           name: Install build & test dependencies
-          command: sudo pip3 install pre-commit==1.21.0
+          command: sudo pip3 install pre-commit==1.21.0 && sudo apt-get install shellcheck && ./.circleci/install_terraform.sh
 
       - run:
           name: Run pre-commit hooks on all files

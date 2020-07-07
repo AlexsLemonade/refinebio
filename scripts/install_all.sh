@@ -156,7 +156,7 @@ if ! command -v pre-commit > /dev/null; then
     message="Would you like to automatically install pre-commit? \
 Note: This will install all the required dependencies (black, isort, etc) \
 using an additional ~185MB of disk space."
-    if [ $APT ] || confirm $message; then
+    if [ $APT ] || confirm "$message"; then
         echo "Installing pre-commit..."
         pip3 install pre-commit
         pre-commit install
@@ -179,16 +179,6 @@ if ! command -v ip > /dev/null; then
         $INSTALL_CMD iproute2mac > $OUTPUT
     else
         $INSTALL_CMD iproute2 > $OUTPUT || (echo "You must manually install iproute2" && exit 1)
-    fi
-fi
-
-if ! test -e ../.git/hooks/pre-commit > /dev/null; then
-    if confirm "Would you like to configure a pre-commit hook for this project to run black (code formatter) prior to each commit?"; then
-        echo "Installing pre-commit hook to auto-format code."
-        cp hooks/autoformat.sh ../.git/hooks/pre-commit
-        chmod +x ../.git/hooks/pre-commit
-    else
-        echo "Not installing pre-commit hook to auto-format code."
     fi
 fi
 

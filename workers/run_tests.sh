@@ -69,9 +69,9 @@ if [ -z "$tag" ] || [ "$tag" = "salmon" ]; then
     # signify that we using updated data. However the data has been
     # updated again so now we need to go back to checking to make sure
     # that it's not there so we know we have even NEWER data.
-    if [ ! -e $volume_directory/salmon_tests ] || [ -e $volume_directory/salmon_tests/newer ]; then
+    if [ ! -e "$volume_directory/salmon_tests" ] || [ -e "$volume_directory/salmon_tests/newer" ]; then
         # Remove the data that comes from S3 so anything old is blown away.
-        rm -rf $volume_directory/salmon_tests
+        rm -rf "$volume_directory/salmon_tests"
 
         echo "Downloading 'salmon quant' test data..."
         wget -q -O "$volume_directory"/salmon_tests.tar.gz "$test_data_repo"/salmon_tests_newer.tar.gz
