@@ -357,6 +357,7 @@ container_running=$(ssh -o StrictHostKeyChecking=no \
 if [[ -n $container_running ]]; then
     echo "Restarting API with latest image."
 
+    # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
         -o ConnectTimeout=5 \
@@ -375,6 +376,7 @@ if [[ -n $container_running ]]; then
         -i data-refinery-key.pem \
         api-configuration/environment "ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment"
 
+    # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
         -o ConnectTimeout=5 \
@@ -396,6 +398,7 @@ if [[ -n $container_running ]]; then
        --name=dr_api \
        -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
+    # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
         -o ConnectTimeout=5 \

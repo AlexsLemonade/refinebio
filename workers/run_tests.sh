@@ -436,7 +436,7 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     if [ ! -e "$micro_list_dir/$micro_list_file" ]; then
         mkdir -p "$micro_list_dir"
         cp "$micro_list_file" "$micro_list_dir/$micro_list_file"
-        cd "$micro_list_dir"
+        cd "$micro_list_dir" || exit
         echo "Downloading Microarray Files!"
         wget -q -i "$micro_list_file"
         cd -
@@ -446,7 +446,7 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     if [ ! -e "$rnaseq_list_dir/$rnaseq_list_file" ]; then
         mkdir -p "$rnaseq_list_dir"
         cp "$rnaseq_list_file" "$rnaseq_list_dir/$rnaseq_list_file"
-        cd "$rnaseq_list_dir"
+        cd "$rnaseq_list_dir" || exit
         echo "Downloading RNASEQ Files!"
         wget -q -i "$rnaseq_list_file"
         cd -
