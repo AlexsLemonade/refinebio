@@ -158,6 +158,7 @@ Note: This will install all the required dependencies (black, isort, etc) \
 using an additional ~185MB of disk space."
     if [ $APT ] || confirm "$message"; then
         echo "Installing pre-commit..."
+        $INSTALL_CMD shellcheck > $OUTPUT
         pip3 install pre-commit
         pre-commit install
     else
