@@ -10,7 +10,7 @@
 # so that they can be used locally.
 
 # Change to home directory of the default user
-cd /home/ubuntu
+cd /home/ubuntu || exit
 
 # Install and configure Nginx.
 cat <<"EOF" > nginx.conf
@@ -21,7 +21,7 @@ apt-get install nginx -y
 cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
-if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
+if [[ "$stage" == "staging" || "$stage" == "prod" ]]; then
     # Create and install SSL Certificate for the API.
     # Only necessary on staging and prod.
     # We cannot use ACM for this because *.bio is not a Top Level Domain that Route53 supports.
@@ -69,7 +69,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
+python ./awslogs-agent-setup.py --region "$region" --non-interactive --configfile awslogs.conf
 # Rotate the logs, delete after 3 days.
 echo "
 /tmp/error.log {
@@ -102,26 +102,26 @@ mkdir -p /tmp/volumes_static
 chmod a+rwx /tmp/volumes_static
 
 # Pull the API image.
-docker pull ${dockerhub_repo}/${api_docker_image}
+docker pull "${dockerhub_repo}/${api_docker_image}"
 
 # These database values are created after TF
 # is run, so we have to pass them in programatically
 docker run \
        --env-file environment \
-       -e DATABASE_HOST=${database_host} \
-       -e DATABASE_NAME=${database_name} \
-       -e DATABASE_USER=${database_user} \
-       -e DATABASE_PASSWORD=${database_password} \
-       -e ELASTICSEARCH_HOST=${elasticsearch_host} \
-       -e ELASTICSEARCH_PORT=${elasticsearch_port} \
+       -e DATABASE_HOST="$database_host" \
+       -e DATABASE_NAME="$database_name" \
+       -e DATABASE_USER="$database_user" \
+       -e DATABASE_PASSWORD="$database_password" \
+       -e ELASTICSEARCH_HOST="$elasticsearch_host" \
+       -e ELASTICSEARCH_PORT="$elasticsearch_port" \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        --log-driver=awslogs \
-       --log-opt awslogs-region=${region} \
-       --log-opt awslogs-group=${log_group} \
-       --log-opt awslogs-stream=${log_stream} \
+       --log-opt awslogs-region="$region" \
+       --log-opt awslogs-group="$log_group" \
+       --log-opt awslogs-stream="$log_stream" \
        -p 8081:8081 \
        --name=dr_api \
-       -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+       -it -d "${dockerhub_repo}/${api_docker_image}" /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
 # Nuke and rebuild the search index. It shouldn't take too long.
 sleep 30

@@ -10,7 +10,7 @@
 # so that they can be used locally.
 
 # Change to home directory of the default user
-cd /home/ubuntu
+cd /home/ubuntu || exit
 
 # Install our environment variables
 cat <<"EOF" > environment
@@ -19,28 +19,28 @@ EOF
 
 # These database values are created after TF
 # is run, so we have to pass them in programatically
-echo "
+cat >> ~/run_foreman.sh <<EOF
 #!/bin/sh
 docker rm -f \$(docker ps --quiet --all) || true
 docker run \\
        --env-file /home/ubuntu/environment \\
-       -e DATABASE_HOST=${database_host} \\
-       -e DATABASE_NAME=${database_name} \\
-       -e DATABASE_USER=${database_user} \\
-       -e DATABASE_PASSWORD=${database_password} \\
-       -e ELASTICSEARCH_HOST=${elasticsearch_host} \\
-       -e ELASTICSEARCH_PORT=${elasticsearch_port} \\
-       -e AWS_ACCESS_KEY_ID=${aws_access_key_id} \\
-       -e AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \\
+       -e DATABASE_HOST="${database_host}" \\
+       -e DATABASE_NAME="${database_name}" \\
+       -e DATABASE_USER="${database_user}" \\
+       -e DATABASE_PASSWORD="${database_password}" \\
+       -e ELASTICSEARCH_HOST="${elasticsearch_host}" \\
+       -e ELASTICSEARCH_PORT="${elasticsearch_port}" \\
+       -e AWS_ACCESS_KEY_ID="${aws_access_key_id}" \\
+       -e AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}" \\
        -v /tmp:/tmp \\
-       --add-host=nomad:${nomad_lead_server_ip} \\
+       --add-host="nomad:${nomad_lead_server_ip}" \\
        --log-driver=awslogs \\
-       --log-opt awslogs-region=${region} \\
-       --log-opt awslogs-group=${log_group} \\
-       --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \\
+       --log-opt awslogs-region="${region}" \\
+       --log-opt awslogs-group="${log_group}" \\
+       --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \\
        --name=dr_foreman \\
-       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py retry_jobs
-" >> /home/ubuntu/run_foreman.sh
+       -it -d "${dockerhub_repo}/${foreman_docker_image}" python3 manage.py retry_jobs
+EOF
 chmod +x /home/ubuntu/run_foreman.sh
 /home/ubuntu/run_foreman.sh
 
@@ -75,6 +75,7 @@ apt-get -y install monit htop
 
 date +%s > /tmp/foreman_last_time
 chown ubuntu:ubuntu /tmp/foreman_last_time
+# shellcheck disable=2016
 echo '
 #!/bin/sh
 lasttime=$(</tmp/foreman_last_time);
@@ -99,18 +100,18 @@ service monit restart
 
 docker run \
        --env-file /home/ubuntu/environment \
-       -e DATABASE_HOST=${database_host} \
-       -e DATABASE_NAME=${database_name} \
-       -e DATABASE_USER=${database_user} \
-       -e DATABASE_PASSWORD=${database_password} \
+       -e DATABASE_HOST="${database_host}" \
+       -e DATABASE_NAME="${database_name}" \
+       -e DATABASE_USER="${database_user}" \
+       -e DATABASE_PASSWORD="${database_password}" \
        -v /tmp:/tmp \
-       --add-host=nomad:${nomad_lead_server_ip} \
+       --add-host=nomad:"${nomad_lead_server_ip}" \
        --log-driver=awslogs \
-       --log-opt awslogs-region=${region} \
-       --log-opt awslogs-group=${log_group} \
-       --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \
+       --log-opt awslogs-region="${region}" \
+       --log-opt awslogs-group="${log_group}" \
+       --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \
        --name=job_filler \
-       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py create_missing_processor_jobs
+       -it -d "${dockerhub_repo}/${foreman_docker_image}" python3 manage.py create_missing_processor_jobs
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}

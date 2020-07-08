@@ -26,3 +26,20 @@ repos:
     hooks:
       - id: black
         args: [--line-length=100]
+
+  - repo: https://github.com/detailyang/pre-commit-shell
+    rev: 1.0.5
+    hooks:
+      - id: shell-lint
+        exclude: "codecov.sh" # We didn't write codecov.sh, we just get it from their servers
+        args:
+            # SC2154: Exclude warnings about variables being used without being
+            #         assigned, because we sometimes use lowercase environment
+            #         variables which shellcheck does not recognize.
+            # SC1090,SC1091: Don't try to follow sourced files
+          - --exclude=SC2154,SC1090,SC1091
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.31.0
+    hooks:
+      - id: terraform_validate

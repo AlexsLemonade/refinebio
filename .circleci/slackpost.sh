@@ -29,9 +29,9 @@ fi
 master_check=$(git branch --contains "tags/$CIRCLE_TAG" | grep '^  master$' || true)
 dev_check=$(git branch --contains "tags/$CIRCLE_TAG" | grep '^  dev$' || true)
 
-if [[ ! -z $master_check ]]; then
+if [[ -n $master_check ]]; then
     CIRCLE_BRANCH=master
-elif [[ ! -z $dev_check ]]; then
+elif [[ -n $dev_check ]]; then
     CIRCLE_BRANCH=dev
 fi
 
