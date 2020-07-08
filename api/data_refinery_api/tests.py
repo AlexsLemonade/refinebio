@@ -500,6 +500,18 @@ class APITestCases(APITestCase):
         self.assertEqual(activated_token["is_activated"], True)
 
         # Good, except for missing email.
+        jdata = json.dumps(
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        # You should not have to provide an email until you set start=True
         jdata = json.dumps({"data": {"GSE123": ["789"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
@@ -509,7 +521,6 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 201)
 
-        # Good, except for missing email.
         jdata = json.dumps(
             {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
         )
@@ -906,6 +917,28 @@ class APITestCases(APITestCase):
             HTTP_API_KEY=token_id,
         )
 
+        self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()["id"])
+        self.assertEqual(ds.email_address, "trust@verify.com")
+        self.assertTrue(ds.email_ccdl_ok)
+
+        # Test creating and starting a dataset in the same action
+        jdata = json.dumps(
+            {
+                "data": {"GSE123": ["789"]},
+                "start": True,
+                "no_send_job": True,
+                "email_address": "trust@verify.com",
+                "email_ccdl_ok": True,
+            }
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+            HTTP_API_KEY=token_id,
+        )
         self.assertEqual(response.json()["is_processing"], True)
 
         ds = Dataset.objects.get(id=response.json()["id"])
