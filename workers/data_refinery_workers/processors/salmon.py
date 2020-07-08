@@ -217,6 +217,10 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     else:
         job_context["index_length"] = "short"
 
+    # We are trying to determine if the SRA file has single or paired reads. We learned in
+    # https://github.com/AlexsLemonade/refinebio/pull/2394 that sometimes sra-stat thinks that a
+    # file has paired reads when it really has single reads (like the samples in SRP253951),
+    # so we are checking the annotations first then falling back to sra-stat.
     try:
         sample = job_context["sample"]
         for exp in sample.experiments.all():
