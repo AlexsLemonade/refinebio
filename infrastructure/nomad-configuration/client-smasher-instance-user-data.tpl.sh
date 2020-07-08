@@ -27,10 +27,10 @@ chown ubuntu:ubuntu /var/ebs/
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
 apt-get install --yes postgresql-client-common postgresql-client
-PGPASSWORD="${database_password}" psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h "${database_host}" -p 5432 -U "${database_user}" -d "${database_name}"
+PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 
 # Change to home directory of the default user
-cd /home/ubuntu || exit
+cd /home/ubuntu
 
 # Install, configure and launch our CloudWatch Logs agent
 cat <<EOF >awslogs.conf
@@ -40,7 +40,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
+python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
 echo "
 /var/log/nomad_client.log {
     missingok
