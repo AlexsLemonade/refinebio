@@ -23,7 +23,7 @@
 
 
 # Change to home directory of the default user
-cd /home/ubuntu || exit
+cd /home/ubuntu
 
 # Install, configure and launch our CloudWatch Logs agent
 cat <<EOF >awslogs.conf
@@ -33,7 +33,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
+python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
 # Rotate the logs, delete after 3 days.
 echo "
 /var/log/nomad_server.log {
@@ -121,7 +121,6 @@ service monit restart
 # Create the CW metric job in a crontab
 # write out current crontab
 crontab -l > tempcron
-# shellcheck disable=2016
 echo -e '#!/bin/bash\naws cloudwatch put-metric-data --metric-name NomadQueueLength --namespace ${user}-${stage} --value `nomad status | grep dispatch | grep -e pending -e running | wc -l` --region ${region}' >> update_metric.sh
 chmod +x update_metric.sh
 

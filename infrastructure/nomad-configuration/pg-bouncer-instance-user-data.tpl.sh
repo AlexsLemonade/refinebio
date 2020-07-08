@@ -15,7 +15,7 @@
 
 
 # Change to home directory of the default user
-cd /home/ubuntu || exit
+cd /home/ubuntu
 
 service postgresql stop
 
