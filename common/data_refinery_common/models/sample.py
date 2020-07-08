@@ -182,3 +182,7 @@ class Sample(models.Model):
         else:
             platform_base = self.platform_name
         return platform_base + " (" + self.platform_accession_code + ")"
+
+    @property
+    def experiment_accession_codes(self):
+        return [e.accession_code for e in self.experiments.all()]

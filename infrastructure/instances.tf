@@ -213,7 +213,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
   depends_on = [
             "aws_internet_gateway.data_refinery",
             "aws_instance.nomad_server_1",
-            "aws_ebs_volume.data_refinery_ebs",
+#           "aws_ebs_volume.data_refinery_ebs",
             "aws_instance.pg_bouncer"
   ]
 
@@ -482,6 +482,10 @@ data "aws_caller_identity" "current" {}
 resource "aws_elasticsearch_domain" "es" {
   domain_name = "es-${var.user}-${var.stage}"
   elasticsearch_version = "6.3"
+
+  advanced_options = {
+    indices.query.bool.max_clause_count = 16384
+  }
 
   # TODO: Figure out the power/cost balance of this type.
   # Prices are here: https://aws.amazon.com/elasticsearch-service/pricing/

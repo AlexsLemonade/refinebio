@@ -334,12 +334,12 @@ elif [ "$project" = "foreman" ]; then
     export_log_conf "foreman"
     perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
          < environment.tpl \
-         > "$output_dir"/environment"$TEST_POSTFIX" \
+         > "$output_dir/environment$TEST_POSTFIX" \
          2> /dev/null
 elif [ "$project" = "api" ]; then
     export_log_conf "api"
     perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
          < environment.tpl \
-         > "$output_dir"/environment"$TEST_POSTFIX" \
+         > "$output_dir/environment$TEST_POSTFIX" \
          2> /dev/null
 fi

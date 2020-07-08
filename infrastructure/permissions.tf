@@ -125,39 +125,6 @@ resource "aws_iam_policy" "ec2_access_policy" {
           ]
       },
       {
-         "Effect":"Allow",
-         "Action": [
-            "ec2:AttachVolume",
-            "ec2:CreateTags"
-          ],
-          "Resource": [
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 0)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 1)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 2)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 3)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 4)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 5)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 6)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 7)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 8)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 9)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 10)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 12)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 13)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 14)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 15)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 16)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 17)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 18)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 19)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 20)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 21)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 22)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/*"
-          ]
-      },
-      {
         "Effect": "Allow",
         "Action": [
           "sts:DecodeAuthorizationMessage"

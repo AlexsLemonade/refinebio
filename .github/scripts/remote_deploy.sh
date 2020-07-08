@@ -24,6 +24,7 @@ cd ~/refinebio
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box () {
+    # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
         -i infrastructure/data-refinery-key.pem \
@@ -32,12 +33,14 @@ run_on_deploy_box () {
 
 # Create file containing local env vars that are needed for deploy.
 rm -f env_vars
-echo "export CI_TAG=$CI_TAG" >> env_vars
-echo "export DOCKER_ID=$DOCKER_ID" >> env_vars
-echo "export DOCKER_PASSWD=$DOCKER_PASSWD" >> env_vars
-echo "export OPENSSL_KEY=\"$OPENSSL_KEY\"" >> env_vars
-echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> env_vars
-echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> env_vars
+cat >> env_vars <<EOF
+export CI_TAG='$CI_TAG'
+export DOCKER_ID='$DOCKER_ID'
+export DOCKER_PASSWD='$DOCKER_PASSWD'
+export OPENSSL_KEY='$OPENSSL_KEY'
+export AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'
+export AWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY'
+EOF
 
 # And checkout the correct tag.
 run_on_deploy_box "git fetch --all"
@@ -67,7 +70,7 @@ run_on_deploy_box "source env_vars && echo -e '######\nFinished building new ima
 source ~/refinebio/scripts/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
-branch=$(get_master_or_dev $CI_TAG)
+branch=$(get_master_or_dev "$CI_TAG")
 
 if [[ "$branch" == "master" ]]; then
     DOCKERHUB_REPO=ccdl

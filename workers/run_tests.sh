@@ -69,9 +69,9 @@ if [ -z "$tag" ] || [ "$tag" = "salmon" ]; then
     # signify that we using updated data. However the data has been
     # updated again so now we need to go back to checking to make sure
     # that it's not there so we know we have even NEWER data.
-    if [ ! -e $volume_directory/salmon_tests ] || [ -e $volume_directory/salmon_tests/newer ]; then
+    if [ ! -e "$volume_directory/salmon_tests" ] || [ -e "$volume_directory/salmon_tests/newer" ]; then
         # Remove the data that comes from S3 so anything old is blown away.
-        rm -rf $volume_directory/salmon_tests
+        rm -rf "$volume_directory/salmon_tests"
 
         echo "Downloading 'salmon quant' test data..."
         wget -q -O "$volume_directory"/salmon_tests.tar.gz "$test_data_repo"/salmon_tests_newer.tar.gz
@@ -434,7 +434,7 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     if [ ! -e "$micro_list_dir/$micro_list_file" ]; then
         mkdir -p "$micro_list_dir"
         cp "$micro_list_file" "$micro_list_dir/$micro_list_file"
-        cd "$micro_list_dir"
+        cd "$micro_list_dir" || exit
         echo "Downloading Microarray Files!"
         wget -q -i "$micro_list_file"
         cd -
@@ -444,7 +444,7 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     if [ ! -e "$rnaseq_list_dir/$rnaseq_list_file" ]; then
         mkdir -p "$rnaseq_list_dir"
         cp "$rnaseq_list_file" "$rnaseq_list_dir/$rnaseq_list_file"
-        cd "$rnaseq_list_dir"
+        cd "$rnaseq_list_dir" || exit
         echo "Downloading RNASEQ Files!"
         wget -q -i "$rnaseq_list_file"
         cd -

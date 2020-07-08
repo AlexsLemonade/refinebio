@@ -110,10 +110,11 @@ so Docker does not need sudo permissions.
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
+- [shellcheck](https://github.com/koalaman/shellcheck/)
 
 Instructions for installing Docker, Terraform, and Nomad can be found by
 following the link for each service. git-crypt, jq, and iproute2 can be installed via
-`sudo apt-get install git-crypt jq iproute2`.
+`sudo apt-get install git-crypt jq iproute2 shellcheck`.
 
 #### Mac (Manual)
 
@@ -126,11 +127,12 @@ The following services will need to be installed:
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
 - [black](https://black.readthedocs.io/en/stable/)
+- [shellcheck](https://github.com/koalaman/shellcheck/)
 
 Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
 on their respective homepages.
 
-Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq black`.
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq black shellcheck`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -763,6 +765,9 @@ An existing team member can add a new team member who provides a GPG key `user.a
 
 Note that `git-crypt lock && git-crypt unlock` will reset permission secret files.
 For the ssh key, this will require running `chmod 600 infrastructure/data-refinery-key.pem` before sshing onto AWS instances.
+
+If you are adding a member to git-crypt, you should also consider adding thier GPG key to the `keys/` directory.
+This directory is used to validate signed tags so that we know only trusted members are pushing deploys.
 
 
 ### Terraform

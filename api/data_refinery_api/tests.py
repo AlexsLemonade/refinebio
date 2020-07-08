@@ -2,13 +2,14 @@ import json
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
+from django.core.exceptions import TooManyFieldsSent
 from django.core.management import call_command
 from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.views import DatasetView, ExperimentList
+from data_refinery_api.views import DatasetView, ExperimentListView
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -46,6 +47,7 @@ class APITestCases(APITestCase):
 
         experiment = Experiment()
         experiment.accession_code = "GSE000"
+        experiment.alternate_accession_code = "E-GEOD-000"
         experiment.title = "NONONONO"
         experiment.description = "Boooooourns. Wasabi."
         experiment.technology = "RNA-SEQ"
@@ -65,6 +67,10 @@ class APITestCases(APITestCase):
         experiment_annotation.data = {"hello": "world", "123": 456}
         experiment_annotation.experiment = experiment
         experiment_annotation.save()
+
+        # Create 26 test organisms numbered 0-25 for pagination test, so there should be 29 organisms total (with the 3 others below)
+        for i in range(26):
+            Organism(name=("TEST_ORGANISM_{}".format(i)), taxonomy_id=(1234 + i)).save()
 
         ailuropoda = Organism(
             name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
@@ -196,9 +202,6 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response["X-Source-Revision"], get_env_variable("SYSTEM_VERSION"))
 
-        response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -214,10 +217,12 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
+        response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
+        response = self.client.get(
+            reverse("organisms", kwargs={"version": API_VERSION}) + "HOMO_SAPIENS/"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("platforms", kwargs={"version": API_VERSION}))
@@ -232,7 +237,17 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("downloader_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(
+            reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         response = self.client.get(reverse("processor_jobs", kwargs={"version": API_VERSION}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse("processor_jobs", kwargs={"version": API_VERSION}) + "1/"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("stats", kwargs={"version": API_VERSION}))
@@ -241,10 +256,21 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
+        response = self.client.get(reverse("results", kwargs={"version": API_VERSION}) + "1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("schema_redoc", kwargs={"version": API_VERSION}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
+            + "?organism__name=DANIO_RERIO"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=1"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
@@ -267,6 +293,20 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 2)
+
+    # Test the query the front-end uses to find the experiment with a given
+    # accession or alternate accession
+    def test_experiment_alternate_accession(self):
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION})
+            + "?search=alternate_accession_code:E-GEOD-000"
+            + "?search=accession_code:E-GEOD-000",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 1)
+        self.assertEqual(response.json()["results"][0]["alternate_accession_code"], "E-GEOD-000")
 
     def test_sample_multiple_accessions(self):
         response = self.client.get(
@@ -300,6 +340,19 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["title"], "123")
 
+    def test_organism_pagination(self):
+        response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 25)
+
+        # First organism on second page should be TEST_ORGANISM_25, and since 29 organisms have been created, there should be 4 on the 2nd page
+        response = self.client.get(
+            reverse("organisms", kwargs={"version": API_VERSION}), {"offset": 25}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 4)
+        self.assertEqual(response.json()["results"][0]["name"], "TEST_ORGANISM_25")
+
     def test_fetching_experiment_samples(self):
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}),
@@ -315,6 +368,13 @@ class APITestCases(APITestCase):
             {"experiment_accession_code": "wrong-accession-code"},
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_sample_detail_experiment_accessions(self):
+        response = self.client.get(
+            reverse("samples_detail", kwargs={"version": API_VERSION, "accession_code": "789"})
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["experiment_accession_codes"], ["GSE123"])
 
     def test_fetching_organism_index(self):
         organism_index_id = OrganismIndex.objects.all().first().id
@@ -440,9 +500,32 @@ class APITestCases(APITestCase):
         self.assertEqual(activated_token["is_activated"], True)
 
         # Good, except for missing email.
+        jdata = json.dumps(
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        # You should not have to provide an email until you set start=True
         jdata = json.dumps({"data": {"GSE123": ["789"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+        jdata = json.dumps(
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
+        )
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
             jdata,
             content_type="application/json",
         )
@@ -520,6 +603,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_dataset_adding_non_downloadable_samples_fails(self):
+        # Make a sample that is not downloadable
         sample1 = Sample()
         sample1.title = "456"
         sample1.accession_code = "456"
@@ -558,9 +642,10 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.json()["non_field_errors"][0], "Non-downloadable sample(s) '456' in dataset"
+        self.assertIn(
+            "Non-downloadable sample(s) in dataset", response.json()["message"][0],
         )
+        self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
 
         # Good, 789 is processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
@@ -570,6 +655,92 @@ class APITestCases(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+
+        # Bad, 456 does not have a quant.sf file
+        post_data = {"email_address": "baz@gmail.com", "data": {}}
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+        put_data = {**post_data, "data": {"GSE123": ["456"]}, "quant_sf_only": True}
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps(put_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            "Sample(s) in dataset are missing quant.sf files", response.json()["message"][0],
+        )
+        self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
+
+        # Bad, none of the samples in GSE123 have a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps({**put_data, "data": {"GSE123": ["ALL"]}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            "Experiment(s) in dataset have zero downloadable samples",
+            response.json()["message"][0],
+        )
+        self.assertEqual(response.json()["non_downloadable_experiments"], ["GSE123"])
+
+        # Make 456 have a quant.sf file
+        result = ComputationalResult()
+        result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample1
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.s3_key = "smasher-test-quant.sf"
+        computed_file.s3_bucket = "data-refinery-test-assets"
+        computed_file.filename = "quant.sf"
+        computed_file.result = result
+        computed_file.size_in_bytes = 42
+        computed_file.save()
+
+        # Good, 456 does have a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps(put_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Good, a sample in GSE123 has a quant.sf file
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(post_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
+            json.dumps({**put_data, "data": {"GSE123": ["ALL"]}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
 
     @patch("data_refinery_common.message_queue.send_job")
     def test_create_update_dataset(self, mock_send_job):
@@ -699,7 +870,7 @@ class APITestCases(APITestCase):
             jdata,
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
 
         jdata = json.dumps(
             {
@@ -746,6 +917,28 @@ class APITestCases(APITestCase):
             HTTP_API_KEY=token_id,
         )
 
+        self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()["id"])
+        self.assertEqual(ds.email_address, "trust@verify.com")
+        self.assertTrue(ds.email_ccdl_ok)
+
+        # Test creating and starting a dataset in the same action
+        jdata = json.dumps(
+            {
+                "data": {"GSE123": ["789"]},
+                "start": True,
+                "no_send_job": True,
+                "email_address": "trust@verify.com",
+                "email_ccdl_ok": True,
+            }
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+            HTTP_API_KEY=token_id,
+        )
         self.assertEqual(response.json()["is_processing"], True)
 
         ds = Dataset.objects.get(id=response.json()["id"])
@@ -950,7 +1143,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_403(self, mock_client, mock_get_method):
         mock_get_method.side_effect = Mock(return_value=HttpResponseForbidden())
@@ -960,7 +1153,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 403)
         mock_client.captureMessage.assert_called()
 
-    @patch.object(ExperimentList, "get")
+    @patch.object(ExperimentListView, "get")
     @patch("raven.contrib.django.models.client")
     def test_sentry_middleware_500(self, mock_client, mock_get_method):
         def raise_error(_):
@@ -1134,6 +1327,9 @@ class StatsTestCases(APITestCase):
         self.assertEqual(response.json()["nomad_running_jobs_by_volume"]["2"], 1)
 
 
+ECOLI_STRAIN_NAME = "Escherichia coli str. k-12 substr. mg1655"
+
+
 class ESTestCases(APITestCase):
     @classmethod
     def setUpClass(cls):
@@ -1169,9 +1365,7 @@ class ESTestCases(APITestCase):
         sample.accession_code = "123"
         sample.save()
 
-        organism = Organism(
-            name="AILUROPODA_MELANOLEUCA", taxonomy_id=9646, is_scientific_name=True
-        )
+        organism = Organism(name=ECOLI_STRAIN_NAME, taxonomy_id=879462, is_scientific_name=True,)
         organism.save()
 
         sample = Sample()
@@ -1264,6 +1458,10 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()["facets"]["has_publication"]["false"], 1)
         self.assertEqual(response.json()["facets"]["technology"]["microarray"], 1)
         self.assertEqual(response.json()["facets"]["technology"]["rna-seq"], 0)
+        self.assertEqual(
+            list(response.json()["facets"]["organism_names"].keys()), [ECOLI_STRAIN_NAME]
+        )
+        self.assertEqual(response.json()["facets"]["organism_names"][ECOLI_STRAIN_NAME], 1)
 
         # Basic Search
         response = self.client.get(
@@ -1284,6 +1482,58 @@ class ESTestCases(APITestCase):
             {"search": "soda", "technology": "rna"},
         )
         self.assertEqual(response.json()["count"], 0)
+
+        # Filter based on organism name
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION}),
+            {"search": "soda", "organism": ECOLI_STRAIN_NAME},
+        )
+        self.assertEqual(response.json()["count"], 1)
+
+    def test_es_endpoint_post(self):
+        # Basic filter
+        search = {"accession_code": "GSE123-X"}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # __in filter
+        search = {"accession_code__in": ["GSE123-X"]}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # Numeric filter
+        search = {"num_downloadable_samples__gt": 0}
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+
+        # Large query
+        search = {"accession_code__in": ["GSE123-X" for _ in range(10000)]}
+        with self.assertRaises(TooManyFieldsSent):
+            # This should fail for GET requests because the generated URL is too large
+            response = self.client.get(reverse("search", kwargs={"version": API_VERSION}), search)
+
+        response = self.client.post(
+            reverse("search", kwargs={"version": API_VERSION}),
+            json.dumps(search),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
 
 
 class ProcessorTestCases(APITestCase):
