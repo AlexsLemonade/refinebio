@@ -217,7 +217,8 @@ fi
 
 # Wait to make sure that all base jobs are killed so no new jobs can
 # be queued while we kill the parameterized Nomad jobs.
-wait "$(jobs -p)"
+# shellcheck disable=SC2046
+wait $(jobs -p)
 
 # Kill parameterized Nomad Jobs so no jobs will be running when we
 # apply migrations.
@@ -237,14 +238,16 @@ if [[ "$(nomad status)" != "No running jobs" ]]; then
         # Wait for all the jobs to stop every 100 so we don't knock
         # over the deploy box if there are 1000's.
         if [[ "$counter" -gt 100 ]]; then
-            wait "$(jobs -p)"
+            # shellcheck disable=SC2046
+            wait $(jobs -p)
             counter=0
         fi
     done
 fi
 
 # Wait for any remaining jobs to all die.
-wait "$(jobs -p)"
+# shellcheck disable=SC2046
+wait $(jobs -p)
 
 # Make sure that prod_env is empty since we are only appending to it.
 # prod_env is a temporary file we use to pass environment variables to
