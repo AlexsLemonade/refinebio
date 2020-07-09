@@ -4,14 +4,17 @@
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-# This script will be formatted by Nomad, which will read files from
-# the project into terraform variables, and then template them into
-# the following Here Documents. These will then be written out to files
-# so that they can be used. A more ideal solution than this would be if
-# we could just give AWS a list of files to put onto the instance for us,
-# but they only give us this one script to do it with. Nomad has file
-# provisioners which will put files onto the instance after it starts up,
-# but those run after this script runs.
+# This script will be formatted by Terraform, which will read files from the
+# project into terraform variables, and then template them into the following
+# script. These will then be written out to files so that they can be used
+# locally. This means that any variable referenced as `${name}` is NOT a shell
+# variable, it is a template variable for Terraform to fill in. DO NOT treat
+# them as normal shell variables.
+
+# A more ideal solution than this would be if we could just give AWS a list of
+# files to put onto the instance for us, but they only give us this one script
+# to do it with. Nomad has file provisioners which will put files onto the
+# instance after it starts up, but those run after this script runs.
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
@@ -27,10 +30,10 @@ chown ubuntu:ubuntu /var/ebs/
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
 apt-get install --yes postgresql-client-common postgresql-client
-PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h "${database_host}" -p 5432 -U "${database_user}" -d "${database_name}"
 
 # Change to home directory of the default user
-cd /home/ubuntu
+cd /home/ubuntu || exit
 
 # Install, configure and launch our CloudWatch Logs agent
 cat <<EOF >awslogs.conf
@@ -40,7 +43,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
+python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
 echo "
 /var/log/nomad_client.log {
     missingok
