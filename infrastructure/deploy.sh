@@ -188,6 +188,9 @@ export NOMAD_ADDR=http://$NOMAD_LEAD_SERVER_IP:4646
 
 # Wait for Nomad to get started in case the server just went up for
 # the first time.
+
+set +e # curl fails if the nomad server isn't up
+
 echo "Confirming Nomad cluster.."
 start_time=$(date +%s)
 diff=0
@@ -203,6 +206,8 @@ if [[ $nomad_status != "200" ]]; then
     echo "Either the timeout needs to be raised or there's something else broken."
     exit 1
 fi
+
+set -e # Turn errors back on after we confirm that the nomad server is up
 
 # Kill Base Nomad Jobs so no new jobs can be queued.
 echo "Killing base jobs.. (this takes a while..)"
