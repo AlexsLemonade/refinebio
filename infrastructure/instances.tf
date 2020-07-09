@@ -6,9 +6,9 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    # This is a HVM, EBS backed SSD Ubuntu LTS AMI with Docker version 17.12.0 on it in the US,
-    # the stock Ubuntu cloud image in the EU.
-    values = ["${var.region == "us-east-1" ? "ubuntu-18.04-docker" : "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*" }"]
+    # FIXME: we might run into issues trying to run on regions that are not us-east-1. See
+    # https://github.com/AlexsLemonade/refinebio/issues/2240#issuecomment-656190757
+    values = ["ubuntu-18.04-docker"]
   }
 
   filter {
