@@ -7,7 +7,7 @@
 # This script will be formatted by Terraform, which will read files from the
 # project into terraform variables, and then template them into the following
 # script. These will then be written out to files so that they can be used
-# locally. This means that any variable referenced as `${name}` is NOT a shell
+# locally. This means that any variable referenced using `{}` is NOT a shell
 # variable, it is a template variable for Terraform to fill in. DO NOT treat
 # them as normal shell variables.
 
