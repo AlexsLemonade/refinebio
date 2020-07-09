@@ -8,7 +8,7 @@ data "aws_ami" "ubuntu" {
     name   = "name"
     # FIXME: we might run into issues trying to run on regions that are not us-east-1. See
     # https://github.com/AlexsLemonade/refinebio/issues/2240#issuecomment-656190757
-    values = ["ubuntu-18.04-docker"]
+    values = ["ubuntu-18-04-docker"]
   }
 
   filter {
