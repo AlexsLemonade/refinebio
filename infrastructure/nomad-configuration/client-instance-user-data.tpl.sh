@@ -4,14 +4,17 @@
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-# This script will be formatted by Nomad, which will read files from
-# the project into terraform variables, and then template them into
-# the following Here Documents. These will then be written out to files
-# so that they can be used. A more ideal solution than this would be if
-# we could just give AWS a list of files to put onto the instance for us,
-# but they only give us this one script to do it with. Nomad has file
-# provisioners which will put files onto the instance after it starts up,
-# but those run after this script runs.
+# This script will be formatted by Terraform, which will read files from the
+# project into terraform variables, and then template them into the following
+# script. These will then be written out to files so that they can be used
+# locally. This means that any variable referenced as `${name}` is NOT a shell
+# variable, it is a template variable for Terraform to fill in. DO NOT treat
+# them as normal shell variables.
+
+# A more ideal solution than this would be if we could just give AWS a list of
+# files to put onto the instance for us, but they only give us this one script
+# to do it with. Nomad has file provisioners which will put files onto the
+# instance after it starts up, but those run after this script runs.
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
@@ -24,27 +27,27 @@ ulimit -n 65536
 mkdir -p /var/ebs/
 
 # Takes USER, STAGE
-fetch_and_mount_volume () {
-    INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+# fetch_and_mount_volume () {
+#     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 
-    # Try to mount volume 0 first, so we have one volume we know is always mounted!
-    if aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
-        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
-    else
-        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
-    fi
+#     # Try to mount volume 0 first, so we have one volume we know is always mounted!
+#     if aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
+#         EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+#     else
+#         EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+#     fi
 
-    aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
-}
+#     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
+# }
 
-export STAGE=${stage}
-export USER=${user}
+export STAGE="${stage}"
+export USER="${user}"
 
 # until fetch_and_mount_volume "$USER" "$STAGE"; do
 #     sleep 10
 # done
 
-COUNTER=0
+# COUNTER=0
 # while [  $COUNTER -lt 99 ]; do
 #         EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
 #         if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
@@ -78,10 +81,10 @@ chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
 apt-get install --yes postgresql-client-common postgresql-client
-PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h "${database_host}" -p 5432 -U "${database_user}" -d "${database_name}"
 
 # Change to home directory of the default user
-cd /home/ubuntu
+cd /home/ubuntu || exit
 
 # Install, configure and launch our CloudWatch Logs agent
 cat <<EOF >awslogs.conf
@@ -91,7 +94,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
+python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
 echo "
 /var/log/nomad_client.log {
     missingok

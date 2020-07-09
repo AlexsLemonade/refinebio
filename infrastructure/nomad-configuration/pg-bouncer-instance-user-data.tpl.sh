@@ -4,18 +4,20 @@
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-# This script will be formatted by Nomad, which will read files from
-# the project into terraform variables, and then template them into
-# the following Here Documents. These will then be written out to files
-# so that they can be used. A more ideal solution than this would be if
-# we could just give AWS a list of files to put onto the instance for us,
-# but they only give us this one script to do it with. Nomad has file
-# provisioners which will put files onto the instance after it starts up,
-# but those run after this script runs.
+# This script will be formatted by Terraform, which will read files from the
+# project into terraform variables, and then template them into the following
+# script. These will then be written out to files so that they can be used
+# locally. This means that any variable referenced as `${name}` is NOT a shell
+# variable, it is a template variable for Terraform to fill in. DO NOT treat
+# them as normal shell variables.
 
+# A more ideal solution than this would be if we could just give AWS a list of
+# files to put onto the instance for us, but they only give us this one script
+# to do it with. Nomad has file provisioners which will put files onto the
+# instance after it starts up, but those run after this script runs.
 
 # Change to home directory of the default user
-cd /home/ubuntu
+cd /home/ubuntu || exit
 
 service postgresql stop
 
