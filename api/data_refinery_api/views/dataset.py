@@ -7,10 +7,14 @@ from collections import defaultdict
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from rest_framework import filters, generics, mixins, serializers, viewsets
+from rest_framework.exceptions import APIException
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     APIToken,
     Dataset,
@@ -21,6 +25,8 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation,
     Sample,
 )
+
+logger = get_and_configure_logger(__name__)
 
 
 def get_client_ip(request):
@@ -405,11 +411,8 @@ class DatasetView(
             else:
                 # We didn't actually send it, but we also didn't want to.
                 job_sent = True
-        except Exception:
-            # job_sent is already false and the exception has
-            # already been logged by send_job, so nothing to
-            # do other than catch the exception.
-            pass
+        except Exception as e:
+            logger.error(e)
 
         if not job_sent:
             raise APIException(
