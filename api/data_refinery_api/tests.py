@@ -479,8 +479,8 @@ class APITestCases(APITestCase):
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]["download_url"])
 
-    @patch("data_refinery_common.message_queue.send_job")
-    def test_create_dataset_fails_without_email(self, mock_send_job):
+    @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
+    def test_create_dataset_fails_without_email(self):
 
         # Get a token first
         response = self.client.post(
@@ -542,8 +542,8 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    @patch("data_refinery_common.message_queue.send_job")
-    def test_starting_dataset_fails_without_experiments(self, mock_send_job):
+    @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
+    def test_starting_dataset_fails_without_experiments(self):
 
         # Get a token first
         response = self.client.post(
@@ -742,8 +742,8 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @patch("data_refinery_common.message_queue.send_job")
-    def test_create_update_dataset(self, mock_send_job):
+    @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
+    def test_create_update_dataset(self):
 
         # Get a token first
         response = self.client.post(
