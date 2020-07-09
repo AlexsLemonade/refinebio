@@ -861,7 +861,6 @@ class APITestCases(APITestCase):
                 "email_address": "baz@gmail.com",
                 "data": {"GSE123": ["789"]},
                 "start": True,
-                "no_send_job": True,
                 "token_id": "HEYO",
             }
         )
@@ -876,7 +875,6 @@ class APITestCases(APITestCase):
             {
                 "data": {"GSE123": ["789"]},
                 "start": True,
-                "no_send_job": True,
                 "token_id": token_id,
                 "email_address": "trust@verify.com",
                 "email_ccdl_ok": True,
@@ -905,7 +903,6 @@ class APITestCases(APITestCase):
             {
                 "data": {"GSE123": ["789"]},
                 "start": True,
-                "no_send_job": True,
                 "email_address": "trust@verify.com",
                 "email_ccdl_ok": True,
             }
@@ -928,7 +925,6 @@ class APITestCases(APITestCase):
             {
                 "data": {"GSE123": ["789"]},
                 "start": True,
-                "no_send_job": True,
                 "email_address": "trust@verify.com",
                 "email_ccdl_ok": True,
             }
