@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-# This is a template for the instance-user-data.sh script for the nomad client.
+# This is a template for the instance-user-data.sh script for the AMI template.
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
