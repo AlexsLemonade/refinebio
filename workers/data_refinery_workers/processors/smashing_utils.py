@@ -1043,6 +1043,9 @@ def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> str
         with open(output_file_path, "r") as f:
             header = f.readline()
             # Filter out files that have been truncated and are missing their header
+            # so that we can avoid https://github.com/AlexsLemonade/refinebio/issues/2191
+            #
+            # From the salmon docs, the header is always the same:
             # https://salmon.readthedocs.io/en/latest/file_formats.html#quantification-file
             if header.rstrip("\n") != "Name\tLength\tEffectiveLength\tTPM\tNumReads":
                 logger.warn(
