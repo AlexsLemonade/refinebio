@@ -1034,11 +1034,9 @@ def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> str
     (sample, latest_computed_file, output_file_path) = download_tuple
     try:
         latest_computed_file.get_synced_file_path(path=output_file_path)
-    except Exception as e:
+    except:
         # Let's not fail if there's an error syncing one of the quant.sf files
-        logger.exception(
-            "Failed to sync computed file", computed_file_id=latest_computed_file.pk, exception=e
-        )
+        logger.exception("Failed to sync computed file", computed_file_id=latest_computed_file.pk)
         return "This sample's quant.sf file failed to download"
 
     try:
@@ -1054,8 +1052,8 @@ def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> str
                     header=header.rstrip("\n"),  # Don't leave newlines in our logs
                 )
                 return "This sample's quant.sf file was truncated and missing its header"
-    except OSError as e:
-        logger.exception("Failed to read file", file_path=output_path, exception=e)
+    except OSError:
+        logger.exception("Failed to read file", file_path=output_path)
         return "Failed to read this sample's quant.sf file"
 
     return None
