@@ -1026,7 +1026,7 @@ def write_tsv_json(job_context):
         return [tsv_path]
 
 
-def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> str:
+def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> Tuple[Sample, str]:
     """ this function downloads the latest computed file and then returns the
     failure reason as a string, if there was one. Receives a tuple with the
     computed file and the path where it needs to be downloaded This is used to
@@ -1037,7 +1037,7 @@ def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> str
     except:
         # Let's not fail if there's an error syncing one of the quant.sf files
         logger.exception("Failed to sync computed file", computed_file_id=latest_computed_file.pk)
-        return "This sample's quant.sf file failed to download"
+        return (sample, "This sample's quant.sf file failed to download")
 
     try:
         with open(output_file_path, "r") as f:
@@ -1054,12 +1054,12 @@ def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> str
                     output_path=output_file_path,
                     header=header.rstrip("\n"),  # Don't leave newlines in our logs
                 )
-                return "This sample's quant.sf file was truncated and missing its header"
+                return (sample, "This sample's quant.sf file was truncated and missing its header")
     except OSError:
         logger.exception("Failed to read file", file_path=output_path)
-        return "Failed to read this sample's quant.sf file"
+        return (sample, "Failed to read this sample's quant.sf file")
 
-    return None
+    return (sample, None)
 
 
 def sync_quant_files(output_path, samples: List[Sample], filtered_samples: Dict):
@@ -1091,7 +1091,9 @@ def sync_quant_files(output_path, samples: List[Sample], filtered_samples: Dict)
                 sample_and_computed_files.append((sample, latest_computed_file, output_file_path))
 
             # download this set of files, this will take a few seconds that should also help the db recover
-            for error_reason in executor.map(download_quant_file, sample_and_computed_files):
+            for sample, error_reason in executor.map(
+                download_quant_file, sample_and_computed_files
+            ):
                 if error_reason is not None:
                     filtered_samples[sample.accession_code] = {
                         **sample.to_metadata_dict(),
