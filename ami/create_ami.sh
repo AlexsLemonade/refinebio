@@ -7,6 +7,6 @@ if [ -z "$instance_id" ]; then
 fi
 
 echo "Creating an ami for instance $instance_id..."
-ami_name="ccdl-ubuntu-18.04-$(date "+%Y-%m-%dT%H:%M:%S")"
+ami_name="ccdl-ubuntu-18.04-$(date "+%Y-%m-%dT%H.%M.%S")"
 aws ec2 create-image --instance-id "$instance_id" --name "$ami_name"
 echo "Created an ami with name $ami_name"
