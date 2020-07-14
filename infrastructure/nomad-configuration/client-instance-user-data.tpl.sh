@@ -136,9 +136,8 @@ chmod +x /home/ubuntu/nomad_status.sh
 
 echo "
 #!/bin/sh
-killall nomad
-sleep 120
-nomad agent -config /home/ubuntu/client.hcl > /var/log/nomad_client.log &
+killall nomad && sleep 120
+nomad agent -config /home/ubuntu/client.hcl >> /var/log/nomad_client.log 2>&1 &
 " >> /home/ubuntu/kill_restart_nomad.sh
 chmod +x /home/ubuntu/kill_restart_nomad.sh
 /home/ubuntu/kill_restart_nomad.sh
