@@ -153,38 +153,38 @@ set daemon 300
 service monit restart
 
 # Set up the Docker hung process killer
-cat <<EOF >/home/ubuntu/killer.py
-# Call like:
-# docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python killer.py
+# cat <<EOF >/home/ubuntu/killer.py
+# # Call like:
+# # docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python killer.py
 
-import os
-import sys
+# import os
+# import sys
 
-dockerps = sys.stdin.read()
+# dockerps = sys.stdin.read()
 
-for item in dockerps.split('\n'):
-    # skip the first
-    if 'NAMES' in item:
-        continue
-    if item == '':
-        continue
+# for item in dockerps.split('\n'):
+#     # skip the first
+#     if 'NAMES' in item:
+#         continue
+#     if item == '':
+#         continue
 
-    cid, time = item.split('|')
-    if 'hours' not in time:
-        continue
+#     cid, time = item.split('|')
+#     if 'hours' not in time:
+#         continue
 
-    num_hours = int(time.split(' ')[0])
-    if num_hours > 1:
-        print("Killing " + cid)
-        os.system('docker kill ' + cid)
-EOF
-# Create the CW metric job in a crontab
-# write out current crontab
-crontab -l > tempcron
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python /home/ubuntu/killer.py" >> tempcron
-# install new cron file
-crontab tempcron
-rm tempcron
+#     num_hours = int(time.split(' ')[0])
+#     if num_hours > 1:
+#         print("Killing " + cid)
+#         os.system('docker kill ' + cid)
+# EOF
+# # Create the CW metric job in a crontab
+# # write out current crontab
+# crontab -l > tempcron
+# echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python /home/ubuntu/killer.py" >> tempcron
+# # install new cron file
+# crontab tempcron
+# rm tempcron
 
 # Set up the AWS NTP
 # via https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-time.html#configure_ntp
