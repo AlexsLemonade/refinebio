@@ -52,19 +52,10 @@ echo "
 # Note that the lines starting with "$" are where
 # Terraform will template in the contents of those files.
 
-# Create the script to install Nomad.
-cat <<"EOF" > install_nomad.sh
-${install_nomad_script}
-EOF
-
 # Create the Nomad Server configuration.
 cat <<"EOF" > server.hcl
 ${nomad_server_config}
 EOF
-
-# Install Nomad.
-chmod +x install_nomad.sh
-./install_nomad.sh
 
 # Don't install our graphite/statsd container because it bogs down the
 # instance a lot.  After killing graphite on a long-running Nomad

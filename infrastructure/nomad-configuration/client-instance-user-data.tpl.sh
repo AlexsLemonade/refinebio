@@ -115,11 +115,6 @@ nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file -
 # (Note that the lines starting with "$" are where
 #  Terraform will template in the contents of those files.)
 
-# Create the script to install Nomad.
-cat <<"EOF" > install_nomad.sh
-${install_nomad_script}
-EOF
-
 # Create the Nomad Client configuration.
 cat <<"EOF" > client.hcl
 ${nomad_client_config}
@@ -130,10 +125,6 @@ sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume
 chmod a+rwx /home/ubuntu/docker_volume
-
-# Install Nomad
-chmod +x install_nomad.sh
-./install_nomad.sh
 
 # Start the Nomad agent in client mode via Monit
 echo "
