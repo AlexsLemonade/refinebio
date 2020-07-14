@@ -6,11 +6,10 @@ from django.db import transaction
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # with transaction.atomic():
-        #     volume = Volume.inactive_objects.order_by("-last_modified").first()
-        #     volume_id = volume.id
-        #     volume.is_active = True
-        #     volume.save()
-        volume_id = 0
+        with transaction.atomic():
+            volume = Volume.inactive_objects.order_by("-last_modified").first()
+            volume_id = volume.id
+            volume.is_active = True
+            volume.save()
 
         print("INSTANCE_ID={}".format(volume_id))
