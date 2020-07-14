@@ -3,9 +3,9 @@
 # This script verifies that the tag triggering this deploy was signed
 # by a trusted member of the CCDL.
 
-cd ~/refinebio
+cd ~/refinebio || exit
 
-for key in $(ls -1 keys/); do
+for key in keys/*; do
     gpg --import "keys/$key"
 done
 

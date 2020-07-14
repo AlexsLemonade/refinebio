@@ -479,8 +479,8 @@ class APITestCases(APITestCase):
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]["download_url"])
 
-    @patch("data_refinery_common.message_queue.send_job")
-    def test_create_dataset_fails_without_email(self, mock_send_job):
+    @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
+    def test_create_dataset_fails_without_email(self):
 
         # Get a token first
         response = self.client.post(
@@ -500,6 +500,18 @@ class APITestCases(APITestCase):
         self.assertEqual(activated_token["is_activated"], True)
 
         # Good, except for missing email.
+        jdata = json.dumps(
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        # You should not have to provide an email until you set start=True
         jdata = json.dumps({"data": {"GSE123": ["789"]}})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
@@ -509,7 +521,6 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 201)
 
-        # Good, except for missing email.
         jdata = json.dumps(
             {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
         )
@@ -531,8 +542,8 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    @patch("data_refinery_common.message_queue.send_job")
-    def test_starting_dataset_fails_without_experiments(self, mock_send_job):
+    @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
+    def test_starting_dataset_fails_without_experiments(self):
 
         # Get a token first
         response = self.client.post(
@@ -731,8 +742,8 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @patch("data_refinery_common.message_queue.send_job")
-    def test_create_update_dataset(self, mock_send_job):
+    @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
+    def test_create_update_dataset(self):
 
         # Get a token first
         response = self.client.post(
@@ -850,7 +861,6 @@ class APITestCases(APITestCase):
                 "email_address": "baz@gmail.com",
                 "data": {"GSE123": ["789"]},
                 "start": True,
-                "no_send_job": True,
                 "token_id": "HEYO",
             }
         )
@@ -865,7 +875,6 @@ class APITestCases(APITestCase):
             {
                 "data": {"GSE123": ["789"]},
                 "start": True,
-                "no_send_job": True,
                 "token_id": token_id,
                 "email_address": "trust@verify.com",
                 "email_ccdl_ok": True,
@@ -894,7 +903,6 @@ class APITestCases(APITestCase):
             {
                 "data": {"GSE123": ["789"]},
                 "start": True,
-                "no_send_job": True,
                 "email_address": "trust@verify.com",
                 "email_ccdl_ok": True,
             }
@@ -906,6 +914,27 @@ class APITestCases(APITestCase):
             HTTP_API_KEY=token_id,
         )
 
+        self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()["id"])
+        self.assertEqual(ds.email_address, "trust@verify.com")
+        self.assertTrue(ds.email_ccdl_ok)
+
+        # Test creating and starting a dataset in the same action
+        jdata = json.dumps(
+            {
+                "data": {"GSE123": ["789"]},
+                "start": True,
+                "email_address": "trust@verify.com",
+                "email_ccdl_ok": True,
+            }
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+            HTTP_API_KEY=token_id,
+        )
         self.assertEqual(response.json()["is_processing"], True)
 
         ds = Dataset.objects.get(id=response.json()["id"])
@@ -1449,6 +1478,13 @@ class ESTestCases(APITestCase):
             {"search": "soda", "technology": "rna"},
         )
         self.assertEqual(response.json()["count"], 0)
+
+        # Filter based on organism name
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION}),
+            {"search": "soda", "organism": ECOLI_STRAIN_NAME},
+        )
+        self.assertEqual(response.json()["count"], 1)
 
     def test_es_endpoint_post(self):
         # Basic filter

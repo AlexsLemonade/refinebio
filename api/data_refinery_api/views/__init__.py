@@ -8,7 +8,7 @@ from data_refinery_api.views.computational_result import (
     ComputationalResultListView,
 )
 from data_refinery_api.views.computed_file import ComputedFileDetailView, ComputedFileListView
-from data_refinery_api.views.dataset import CreateDatasetView, DatasetView
+from data_refinery_api.views.dataset import DatasetView
 from data_refinery_api.views.experiment import ExperimentDetailView, ExperimentListView
 from data_refinery_api.views.experiment_document import ExperimentDocumentView
 from data_refinery_api.views.institution import InstitutionListView

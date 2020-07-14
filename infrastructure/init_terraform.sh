@@ -1,11 +1,12 @@
 #!/bin/bash -e
 
-if [ -z $TF_VAR_user ]; then
+if [ -z "$TF_VAR_user" ]; then
+    # shellcheck disable=SC2016
     echo 'You must set the $TF_VAR_user environment variable!' >&2
     exit 1
 fi
 
-if [ -z $TF_VAR_stage ]; then
+if [ -z "$TF_VAR_stage" ]; then
     STAGE=dev
 else
     STAGE=$TF_VAR_stage

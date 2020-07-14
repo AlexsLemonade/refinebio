@@ -32,7 +32,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_active_volumes, get_nomad_jobs_breakdown
 
-JOB_CREATED_AT_CUTOFF = datetime(2019, 6, 5, tzinfo=timezone.utc)
+JOB_CREATED_AT_CUTOFF = datetime(2019, 9, 19, tzinfo=timezone.utc)
 
 
 def get_start_date(range_param):
@@ -76,11 +76,18 @@ class Stats(APIView):
     @method_decorator(cache_page(10 * 60))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop("range", None)
-        cached_stats = Stats.calculate_stats(range_param)
+        is_dashboard = request.query_params.dict().pop("dashboard", False)
+        if is_dashboard:
+            cached_stats = Stats.calculate_dashboard_stats(range_param)
+        else:
+            cached_stats = Stats.calculate_stats(range_param)
         return Response(cached_stats)
 
     @classmethod
-    def calculate_stats(cls, range_param):
+    def calculate_dashboard_stats(cls, range_param):
+        """ The dashboard doesn't need all of the stats, and we can
+        significantly reduce the request time by only crunching the stats the
+        dashboard cares about"""
         data = {}
         data["generated_on"] = timezone.now()
         data["survey_jobs"] = cls._get_job_stats(SurveyJob.objects, range_param)
@@ -95,6 +102,17 @@ class Stats(APIView):
         data["processed_samples"] = cls._get_object_stats(
             Sample.processed_objects, range_param, "last_modified"
         )
+
+        data["active_volumes"] = list(get_active_volumes())
+        data["dataset"] = cls._get_dataset_stats(range_param)
+
+        data.update(get_nomad_jobs_breakdown())
+        return data
+
+    @classmethod
+    def calculate_stats(cls, range_param):
+        data = cls.calculate_dashboard_stats(range_param)
+
         data["processed_samples"]["last_hour"] = cls._samples_processed_last_hour()
 
         data["processed_samples"]["technology"] = {}
@@ -114,14 +132,10 @@ class Stats(APIView):
             data["processed_samples"]["organism"][organism["organism__name"]] = organism["count"]
 
         data["processed_experiments"] = cls._get_object_stats(Experiment.processed_public_objects)
-        data["active_volumes"] = list(get_active_volumes())
-        data["dataset"] = cls._get_dataset_stats(range_param)
 
         if range_param:
             data["input_data_size"] = cls._get_input_data_size()
             data["output_data_size"] = cls._get_output_data_size()
-
-        data.update(get_nomad_jobs_breakdown())
 
         return data
 
