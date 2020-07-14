@@ -4,10 +4,12 @@
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-# This script will be formatted by Terraform, which will read files from
-# the project into terraform variables, and then template them into
-# the following script. These will then be written out to files
-# so that they can be used locally.
+# This script will be formatted by Terraform, which will read files from the
+# project into terraform variables, and then template them into the following
+# script. These will then be written out to files so that they can be used
+# locally. This means that any variable referenced using `{}` is NOT a shell
+# variable, it is a template variable for Terraform to fill in. DO NOT treat
+# them as normal shell variables.
 
 # Change to home directory of the default user
 cd /home/ubuntu || exit
@@ -19,7 +21,7 @@ EOF
 
 # These database values are created after TF
 # is run, so we have to pass them in programatically
-cat >> ~/run_foreman.sh <<EOF
+cat >> /home/ubuntu/run_foreman.sh <<EOF
 #!/bin/sh
 docker rm -f \$(docker ps --quiet --all) || true
 docker run \\
@@ -33,7 +35,7 @@ docker run \\
        -e AWS_ACCESS_KEY_ID="${aws_access_key_id}" \\
        -e AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}" \\
        -v /tmp:/tmp \\
-       --add-host="nomad:${nomad_lead_server_ip}" \\
+       --add-host=nomad:"${nomad_lead_server_ip}" \\
        --log-driver=awslogs \\
        --log-opt awslogs-region="${region}" \\
        --log-opt awslogs-group="${log_group}" \\

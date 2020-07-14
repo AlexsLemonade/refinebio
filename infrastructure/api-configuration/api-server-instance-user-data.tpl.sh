@@ -4,10 +4,12 @@
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-# This script will be formatted by Terraform, which will read files from
-# the project into terraform variables, and then template them into
-# the following script. These will then be written out to files
-# so that they can be used locally.
+# This script will be formatted by Terraform, which will read files from the
+# project into terraform variables, and then template them into the following
+# script. These will then be written out to files so that they can be used
+# locally. This means that any variable referenced using `{}` is NOT a shell
+# variable, it is a template variable for Terraform to fill in. DO NOT treat
+# them as normal shell variables.
 
 # Change to home directory of the default user
 cd /home/ubuntu || exit
@@ -21,7 +23,7 @@ apt-get install nginx -y
 cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
-if [[ "$stage" == "staging" || "$stage" == "prod" ]]; then
+if [[ "${stage}" == "staging" || "${stage}" == "prod" ]]; then
     # Create and install SSL Certificate for the API.
     # Only necessary on staging and prod.
     # We cannot use ACM for this because *.bio is not a Top Level Domain that Route53 supports.
@@ -38,11 +40,11 @@ if [[ "$stage" == "staging" || "$stage" == "prod" ]]; then
     # certbot --nginx -d api.staging.refine.bio -d api2.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     # will circumvent certbot's limit because the 5-a-week limit only applies to the
     # "same set of domains", so by changing that set we get to use the 20-a-week limit.
-    if [[ ${stage} == "staging" ]]; then
+    if [[ "${stage}" == "staging" ]]; then
         # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
         sleep 180
         certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
-    elif [[ ${stage} == "prod" ]]; then
+    elif [[ "${stage}" == "prod" ]]; then
         # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
         sleep 180
         RANDOM_API=$(( ( RANDOM % 8 ) + 2 )) # 2 to 9
@@ -69,7 +71,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region "$region" --non-interactive --configfile awslogs.conf
+python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
 # Rotate the logs, delete after 3 days.
 echo "
 /tmp/error.log {
@@ -108,17 +110,17 @@ docker pull "${dockerhub_repo}/${api_docker_image}"
 # is run, so we have to pass them in programatically
 docker run \
        --env-file environment \
-       -e DATABASE_HOST="$database_host" \
-       -e DATABASE_NAME="$database_name" \
-       -e DATABASE_USER="$database_user" \
-       -e DATABASE_PASSWORD="$database_password" \
-       -e ELASTICSEARCH_HOST="$elasticsearch_host" \
-       -e ELASTICSEARCH_PORT="$elasticsearch_port" \
+       -e DATABASE_HOST="${database_host}" \
+       -e DATABASE_NAME="${database_name}" \
+       -e DATABASE_USER="${database_user}" \
+       -e DATABASE_PASSWORD="${database_password}" \
+       -e ELASTICSEARCH_HOST="${elasticsearch_host}" \
+       -e ELASTICSEARCH_PORT="${elasticsearch_port}" \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        --log-driver=awslogs \
-       --log-opt awslogs-region="$region" \
-       --log-opt awslogs-group="$log_group" \
-       --log-opt awslogs-stream="$log_stream" \
+       --log-opt awslogs-region="${region}" \
+       --log-opt awslogs-group="${log_group}" \
+       --log-opt awslogs-stream="${log_stream}" \
        -p 8081:8081 \
        --name=dr_api \
        -it -d "${dockerhub_repo}/${api_docker_image}" /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"

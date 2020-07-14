@@ -24,6 +24,7 @@ foreman/nomad-job-specs/*
 
 # Terraform
 infrastructure/.terraform/
+ami/.terraform/
 .circleci/s3_tfstate/.terraform
 
 # We download a lot of files into the test_volume directory when
