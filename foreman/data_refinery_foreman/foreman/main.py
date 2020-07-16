@@ -62,18 +62,13 @@ PAGE_SIZE = 2000
 VOLUME_WORK_DEPTH = dict()
 TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now() - datetime.timedelta(minutes=10)
 
-# The number of processor jobs in the entire database queue
-# TODO: make this by volume
-PROCESSOR_JOBS_IN_QUEUE = 0
-TIME_OF_LAST_PROCESSOR_JOB_CHECK = timezone.now() - datetime.timedelta(minutes=10)
-
 # The number of downloader jobs currently in the nomad queue
 DOWNLOADER_JOBS_IN_QUEUE = 0
 TIME_OF_LAST_DOWNLOADER_JOB_CHECK = timezone.now() - datetime.timedelta(minutes=10)
 
 # The desired number of active + pending jobs on a volume. Downloader jobs
 # will be assigned to instances until this limit is reached.
-DESIRED_WORK_DEPTH = 25
+DESIRED_WORK_DEPTH = 200
 
 # This is the absolute max number of downloader jobs that should ever
 # be queued across the whole cluster no matter how many nodes we
@@ -147,8 +142,9 @@ def handle_repeated_failure(job) -> None:
 
 
 def update_volume_work_depth(window=datetime.timedelta(minutes=2)):
-    """When a new job is created our local idea of the work depth is updated, but every so often
-    we refresh from Nomad how many jobs were stopped or killed"""
+    """When a new downloader job is created our local idea of the work depth is
+    updated, but every so often we refresh from Nomad how many downloader and
+    processor jobs are active on each volume"""
     global VOLUME_WORK_DEPTH
     global TIME_OF_LAST_WORK_DEPTH_CHECK
 
@@ -161,6 +157,7 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=2)):
         # Loop through all active volumes, which are the keys to the
         # fields aggregated by volume
         for volume_index in get_active_volumes():
+            # First calculate the number of downloader jobs in the nomad queue
             if volume_index in breakdown["nomad_pending_jobs_by_volume"]:
                 VOLUME_WORK_DEPTH[volume_index] = (
                     breakdown["nomad_pending_jobs_by_volume"][volume_index]
@@ -170,6 +167,24 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=2)):
                 # There are no nomad jobs currently queued for the
                 # volume index, so set its work depth is 0.
                 VOLUME_WORK_DEPTH[volume_index] = 0
+
+            # Then add the number of processor jobs in the nomad queue and waiting to be queued
+            VOLUME_WORK_DEPTH[volume_index] += (
+                ProcessorJob.lost_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+                .filter(volume_index=volume_index)
+                .exclude(pipeline_applied="JANITOR")
+                .count()
+                + ProcessorJob.hung_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+                .filter(volume_index=volume_index)
+                .exclude(pipeline_applied="JANITOR")
+                .count()
+                # NOTE: ProcessorJob.failed_objects includes only failed jobs
+                # that haven't been retried and should be, which is what we want
+                + ProcessorJob.failed_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+                .filter(volume_index=volume_index)
+                .exclude(pipeline_applied="JANITOR")
+                .count()
+            )
 
         TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now()
 
@@ -429,38 +444,6 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
     return True, new_job.volume_index
 
 
-def count_processor_jobs_in_queue(window=datetime.timedelta(minutes=2)) -> int:
-    """Counts how many processor jobs there are in the database that are active
-    or will be requeued"""
-
-    global TIME_OF_LAST_PROCESSOR_JOB_CHECK
-    global PROCESSOR_JOBS_IN_QUEUE
-
-    if timezone.now() - TIME_OF_LAST_PROCESSOR_JOB_CHECK > window:
-        active_volumes = get_active_volumes()
-
-        PROCESSOR_JOBS_IN_QUEUE = (
-            ProcessorJob.lost_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
-            .filter(Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
-            .exclude(pipeline_applied="JANITOR")
-            .count()
-            + ProcessorJob.hung_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
-            .filter(Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
-            .exclude(pipeline_applied="JANITOR")
-            .count()
-            # NOTE: ProcessorJob.failed_objects includes only failed jobs
-            # that haven't been retried and should be, which is what we want
-            + ProcessorJob.failed_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
-            .filter(Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
-            .exclude(pipeline_applied="JANITOR")
-            .count()
-        )
-
-        TIME_OF_LAST_PROCESSOR_JOB_CHECK = timezone.now()
-
-    return PROCESSOR_JOBS_IN_QUEUE
-
-
 def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=2)) -> int:
     """Counts how many downloader jobs in the Nomad queue do not have status of 'dead'."""
 
@@ -496,14 +479,6 @@ def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=2)) -> int:
 def get_capacity_for_downloader_jobs() -> int:
     """Returns how many downloader jobs the queue has capacity for.
     """
-    # TODO: rework this logic when there is more than one volume
-    # but the idea is if there are more than DESIRED_WORK_DEPTH processor jobs
-    # between the nomad queue and the database, stop queuing new downloader
-    # jobs so that we can stop the disks from filling up
-    count_processor_jobs_in_queue()
-    if PROCESSOR_JOBS_IN_QUEUE > DESIRED_WORK_DEPTH:
-        return 0
-
     update_volume_work_depth()
 
     total_capacity = 0
