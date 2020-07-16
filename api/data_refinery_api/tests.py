@@ -486,9 +486,7 @@ class APITestCases(APITestCase):
         token_id = response.json()["id"]
 
         # Good, except for missing email.
-        jdata = json.dumps(
-            {"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id}
-        )
+        jdata = json.dumps({"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id})
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
             jdata,
@@ -507,9 +505,7 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 201)
 
-        jdata = json.dumps(
-            {"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id}
-        )
+        jdata = json.dumps({"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id})
         response = self.client.put(
             reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
             jdata,

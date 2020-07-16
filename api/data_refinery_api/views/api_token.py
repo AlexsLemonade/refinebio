@@ -20,6 +20,7 @@ class APITokenSerializer(serializers.ModelSerializer):
             "terms_and_conditions": {"read_only": True},
         }
 
+
 @method_decorator(
     name="create",
     decorator=swagger_auto_schema(
