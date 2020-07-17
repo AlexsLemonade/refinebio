@@ -3,23 +3,8 @@ import sys
 
 from django.utils import timezone
 
-from data_refinery_common.job_lookup import (
-    ProcessorPipeline,
-    determine_processor_pipeline,
-    determine_ram_amount,
-)
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentAnnotation,
-    ExperimentSampleAssociation,
-    OriginalFile,
-    ProcessorJob,
-    ProcessorJobOriginalFileAssociation,
-    Sample,
-)
+from data_refinery_common.models import DownloaderJob, DownloaderJobOriginalFileAssociation
 from data_refinery_common.utils import get_env_variable, get_instance_id
 
 logger = get_and_configure_logger(__name__)

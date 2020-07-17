@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from rest_framework import filters, generics, mixins, serializers, viewsets
+from rest_framework import mixins, serializers, viewsets
 from rest_framework.exceptions import APIException
 
 from drf_yasg import openapi
@@ -57,8 +57,8 @@ def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
 
     else:
         try:
-            experiment = Experiment.processed_public_objects.get(accession_code=experiment)
-        except Exception as e:
+            _ = Experiment.processed_public_objects.get(accession_code=experiment)
+        except Experiment.NotFound as e:
             return False
 
     return True

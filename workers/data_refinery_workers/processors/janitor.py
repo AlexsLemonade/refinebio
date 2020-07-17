@@ -6,17 +6,7 @@ from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    ComputedFile,
-    Pipeline,
-    Processor,
-    ProcessorJob,
-    Sample,
-    SampleComputedFileAssociation,
-    SampleResultAssociation,
-)
+from data_refinery_common.models import Processor, ProcessorJob, Sample
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 

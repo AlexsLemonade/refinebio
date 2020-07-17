@@ -11,13 +11,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from data_refinery_api.views.organism import OrganismSerializer
 from data_refinery_api.views.relation_serializers import (
-    ComputationalResultNoFilesRelationSerializer,
     ComputedFileRelationSerializer,
     ComputedFileWithUrlRelationSerializer,
 )
-from data_refinery_common.models import APIToken, CompendiumResult, ComputedFile
+from data_refinery_common.models import APIToken, CompendiumResult
 
 
 class CompendiumResultSerializer(serializers.ModelSerializer):
@@ -125,7 +123,8 @@ class CompendiumResultListView(generics.ListAPIView):
     def get_serializer_class(self):
         try:
             token_id = self.request.META.get("HTTP_API_KEY", None)
-            token = APIToken.objects.get(id=token_id, is_activated=True)
+            # Verify that a token with that id exists
+            _ = APIToken.objects.get(id=token_id, is_activated=True)
             return CompendiumResultWithUrlSerializer
         except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             return CompendiumResultSerializer
@@ -143,7 +142,8 @@ class CompendiumResultDetailView(generics.RetrieveAPIView):
     def get_serializer_class(self):
         try:
             token_id = self.request.META.get("HTTP_API_KEY", None)
-            token = APIToken.objects.get(id=token_id, is_activated=True)
+            # Verify that a token with that id exists
+            _ = APIToken.objects.get(id=token_id, is_activated=True)
             return CompendiumResultWithUrlSerializer
         except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             return CompendiumResultSerializer
