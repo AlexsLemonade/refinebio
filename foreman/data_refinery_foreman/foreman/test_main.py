@@ -162,7 +162,7 @@ class ForemanTestCase(TestCase):
         # Make sure that we set sensible values for EXPECTED_WORK_DEPTH.
         # Otherwise the rest of the test fails mysteriously
         for num in EXPECTED_WORK_DEPTH.values():
-            self.assertTrue(num < main.DESIRED_WORK_DEPTH)
+            self.assertLess(num, main.DESIRED_WORK_DEPTH)
 
         main.update_volume_work_depth(datetime.timedelta(0))
         self.assertEqual(main.VOLUME_WORK_DEPTH, EXPECTED_WORK_DEPTH)
