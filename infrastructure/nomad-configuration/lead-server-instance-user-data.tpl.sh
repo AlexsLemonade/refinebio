@@ -83,33 +83,13 @@ EOF
 #  -p 8126:8126\
 #  graphiteapp/graphite-statsd
 
-# Start the Nomad agent in server mode via Monit
-apt-get -y install monit htop
+# Start the Nomad agent in client mode via systemd
+cat <<"EOF" > /etc/systemd/system/nomad-server.service
+${nomad_server_service}
+EOF
 
-echo "
-#!/bin/bash
-nomad status
-exit \$?
-" >> /home/ubuntu/nomad_status.sh
-chmod +x /home/ubuntu/nomad_status.sh
-
-echo "
-#!/bin/bash
-killall nomad && sleep 120
-nomad agent -config /home/ubuntu/server.hcl > /var/log/nomad_server.log &
-" >> /home/ubuntu/kill_restart_nomad.sh
-chmod +x /home/ubuntu/kill_restart_nomad.sh
-/home/ubuntu/kill_restart_nomad.sh
-
-echo '
-check program nomad with path "/bin/bash /home/ubuntu/nomad_status.sh" as uid 0 and with gid 0
-    start program = "/bin/bash /home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0 with timeout 240 seconds
-    if status != 0
-        then restart
-set daemon 300
-' >> /etc/monit/monitrc
-
-service monit restart
+systemctl enable nomad-server.service
+systemctl start nomad-server.service
 
 # Create the CW metric job in a crontab
 # write out current crontab

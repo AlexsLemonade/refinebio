@@ -19,7 +19,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes jq iotop dstat speedometer awscli docker.io monit
+apt-get install --yes jq iotop dstat speedometer awscli docker.io
 
 ulimit -n 65536
 
@@ -78,31 +78,13 @@ EOF
 chmod +x install_nomad.sh
 ./install_nomad.sh
 
-# Start the Nomad agent in client mode via Monit
-echo "
-#!/bin/sh
-nomad status
-exit \$?
-" >> /home/ubuntu/nomad_status.sh
-chmod +x /home/ubuntu/nomad_status.sh
+# Start the Nomad agent in client mode via systemd
+cat <<"EOF" > /etc/systemd/system/nomad-client.service
+${nomad_client_service}
+EOF
 
-echo "
-#!/bin/sh
-killall nomad && sleep 120
-nomad agent -config /home/ubuntu/client.hcl > /var/log/nomad_client.log &
-" >> /home/ubuntu/kill_restart_nomad.sh
-chmod +x /home/ubuntu/kill_restart_nomad.sh
-/home/ubuntu/kill_restart_nomad.sh
-
-echo '
-check program nomad with path "/bin/bash /home/ubuntu/nomad_status.sh" as uid 0 and with gid 0
-    start program = "/bin/bash /home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0 with timeout 240 seconds
-    if status != 0
-        then restart
-set daemon 300
-' >> /etc/monit/monitrc
-
-service monit restart
+systemctl enable nomad-client.service
+systemctl start nomad-client.service
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}
