@@ -74,7 +74,7 @@ def create_downloader_job(
                 )
                 # Found the job so we don't need to keep going.
                 break
-            except:
+            except Exception:
                 pass
 
     if not original_downloader_job:
@@ -232,7 +232,7 @@ def create_processor_job_for_original_files(
 
         try:
             send_job(pipeline_to_apply, processor_job)
-        except:
+        except Exception:
             # If we cannot queue the job now the Foreman will do
             # it later.
             pass

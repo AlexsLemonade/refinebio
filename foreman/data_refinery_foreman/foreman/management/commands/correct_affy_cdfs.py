@@ -103,7 +103,7 @@ class Command(BaseCommand):
                     # It's not a directory, but ignore_errors is useful.
                     try:
                         os.remove(download_path)
-                    except:
+                    except Exception:
                         # Don't anything interrupt this, like say,
                         # GEOParse downloading a directory instead of
                         # a file...

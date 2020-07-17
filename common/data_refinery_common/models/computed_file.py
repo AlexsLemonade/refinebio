@@ -175,7 +175,7 @@ class ComputedFile(models.Model):
         copy_source = {"Bucket": old_bucket, "Key": old_key}
         try:
             response = S3.copy_object(Bucket=new_bucket, CopySource=copy_source, Key=new_key)
-        except:
+        except Exception:
             logger.exception(
                 "Could not copy computed file within S3",
                 computed_file_id=self.id,
@@ -190,7 +190,7 @@ class ComputedFile(models.Model):
             self.s3_bucket = new_bucket
             self.s3_key = new_key
             self.save()
-        except:
+        except Exception:
             logger.exception(
                 "Could not save computed file after it was copied!!!",
                 computed_file_id=self.id,
@@ -203,7 +203,7 @@ class ComputedFile(models.Model):
 
         try:
             response = S3.delete_object(Bucket=old_bucket, Key=old_key)
-        except:
+        except Exception:
             logger.exception(
                 "Could not delete computed file after it was copied and saved!!!",
                 computed_file_id=self.id,
@@ -252,7 +252,7 @@ class ComputedFile(models.Model):
 
         try:
             S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
-        except:
+        except Exception:
             logger.exception(
                 "Failed to delete S3 object for Computed File.",
                 computed_file=self.id,

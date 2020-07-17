@@ -1033,7 +1033,7 @@ def download_computed_file(download_tuple: Tuple[ComputedFile, str]):
     (latest_computed_file, output_file_path) = download_tuple
     try:
         latest_computed_file.get_synced_file_path(path=output_file_path)
-    except:
+    except Exception:
         # Let's not fail if there's an error syncing one of the quant.sf files
         logger.exception("Failed to sync computed file", computed_file_id=latest_computed_file.pk)
 

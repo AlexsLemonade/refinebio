@@ -245,7 +245,7 @@ def _has_unmated_reads(accession_code: str) -> bool:
             return True
         else:
             return False
-    except:
+    except ftplib.all_errors:
         # If we can't find the sample on ENA's FTP server, then we
         # shouldn't try to download it from there.
         return False
