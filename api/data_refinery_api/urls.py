@@ -1,6 +1,9 @@
+from re import match
+
 from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from django.views.generic import RedirectView
 from rest_framework import permissions
@@ -18,7 +21,6 @@ from data_refinery_api.views import (
     ComputedFileDetailView,
     ComputedFileListView,
     CreateAPITokenView,
-    CreateDatasetView,
     DatasetView,
     DownloaderJobDetailView,
     DownloaderJobListView,
@@ -137,8 +139,12 @@ urlpatterns = [
                     name="processors_detail",
                 ),
                 # Deliverables
-                url(r"^dataset/$", CreateDatasetView.as_view(), name="create_dataset"),
-                url(r"^dataset/(?P<id>[0-9a-f-]+)/$", DatasetView.as_view(), name="dataset"),
+                url(r"^dataset/$", DatasetView.as_view({"post": "create"}), name="create_dataset"),
+                url(
+                    r"^dataset/(?P<id>[0-9a-f-]+)/$",
+                    DatasetView.as_view({"get": "retrieve", "put": "update"}),
+                    name="dataset",
+                ),
                 url(r"^token/$", CreateAPITokenView.as_view(), name="token"),
                 url(r"^token/(?P<id>[0-9a-f-]+)/$", APITokenView.as_view(), name="token_id"),
                 # Jobs

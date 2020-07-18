@@ -1,16 +1,20 @@
 ##
-# Contains CreateDatasetView and DatasetView
+# Contains DatasetView
 ##
 
 from collections import defaultdict
 
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from rest_framework import filters, generics, serializers
+from rest_framework import filters, generics, mixins, serializers, viewsets
+from rest_framework.exceptions import APIException
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     APIToken,
     Dataset,
@@ -22,6 +26,8 @@ from data_refinery_common.models import (
     Sample,
 )
 
+logger = get_and_configure_logger(__name__)
+
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
@@ -30,6 +36,32 @@ def get_client_ip(request):
     else:
         ip = request.META.get("REMOTE_ADDR", "")
     return ip
+
+
+def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
+    if quant_sf_only:
+        try:
+            experiment = Experiment.public_objects.get(accession_code=experiment)
+        except Exception as e:
+            return False
+
+        samples = experiment.sample_set.filter(
+            # We only want samples with a quant.sf file associated with them
+            results__computedfile__filename="quant.sf",
+            results__computedfile__s3_key__isnull=False,
+            results__computedfile__s3_bucket__isnull=False,
+        )
+
+        if samples.count() == 0:
+            return False
+
+    else:
+        try:
+            experiment = Experiment.processed_public_objects.get(accession_code=experiment)
+        except Exception as e:
+            return False
+
+    return True
 
 
 def validate_dataset(data):
@@ -45,6 +77,7 @@ def validate_dataset(data):
         raise serializers.ValidationError("`data` must contain at least one experiment..")
 
     accessions = []
+    non_downloadable_experiments = []
     for key, value in data["data"].items():
         if type(value) != list:
             raise serializers.ValidationError(
@@ -66,35 +99,22 @@ def validate_dataset(data):
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
-            if data.get("quant_sf_only", False):
-                try:
-                    experiment = Experiment.public_objects.get(accession_code=key)
-                except Exception as e:
-                    raise serializers.ValidationError("Experiment " + key + " does not exist")
+            if not experiment_has_downloadable_samples(
+                key, quant_sf_only=data.get("quant_sf_only", False)
+            ):
+                non_downloadable_experiments.append(key)
 
-                samples = experiment.sample_set.filter(
-                    # We only want samples with a quant.sf file associated with them
-                    results__computedfile__filename="quant.sf",
-                    results__computedfile__s3_key__isnull=False,
-                    results__computedfile__s3_bucket__isnull=False,
-                )
-                if samples.count() == 0:
-                    raise serializers.ValidationError(
-                        "Experiment "
-                        + key
-                        + " does not have at least one sample with a quant.sf file"
-                    )
-
-            else:
-                try:
-                    experiment = Experiment.processed_public_objects.get(accession_code=key)
-                except Exception as e:
-                    raise serializers.ValidationError(
-                        "Experiment " + key + " does not have at least one downloadable sample"
-                    )
         # Otherwise, we will check that all the samples they requested are downloadable
         else:
             accessions.extend(value)
+
+    if len(non_downloadable_experiments) != 0:
+        raise serializers.ValidationError(
+            {
+                "message": "Experiment(s) in dataset have zero downloadable samples. See `non_downloadable_experiments` for a full list",
+                "non_downloadable_experiments": non_downloadable_experiments,
+            }
+        )
 
     if len(accessions) == 0:
         return
@@ -110,9 +130,12 @@ def validate_dataset(data):
         )
         if samples_without_quant_sf.count() > 0:
             raise serializers.ValidationError(
-                "Sample(s) '"
-                + ", ".join([s.accession_code for s in samples_without_quant_sf])
-                + "' in dataset are missing quant.sf files"
+                {
+                    "message": "Sample(s) in dataset are missing quant.sf files. See `non_downloadable_samples` for a full list",
+                    "non_downloadable_samples": [
+                        s.accession_code for s in samples_without_quant_sf
+                    ],
+                },
             )
 
     else:
@@ -121,26 +144,11 @@ def validate_dataset(data):
         )
         if unprocessed_samples.count() > 0:
             raise serializers.ValidationError(
-                "Non-downloadable sample(s) '"
-                + ", ".join([s.accession_code for s in unprocessed_samples])
-                + "' in dataset"
+                {
+                    "message": "Non-downloadable sample(s) in dataset. See `non_downloadable_samples` for a full list",
+                    "non_downloadable_samples": [s.accession_code for s in unprocessed_samples],
+                }
             )
-
-
-class CreateDatasetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dataset
-        fields = ("id", "data", "email_address", "email_ccdl_ok")
-
-    def validate(self, data):
-        """
-        Ensure this is something we want in our dataset.
-        """
-        try:
-            validate_dataset(data)
-        except Exception:
-            raise
-        return data
 
 
 class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
@@ -181,6 +189,13 @@ class DatasetSerializer(serializers.ModelSerializer):
             if "token" not in kwargs["context"]:
                 self.fields.pop("download_url")
 
+    def create(self, validated_data):
+        # "start" isn't actually a field on the Dataset model, we just use it
+        # on the frontend to control when the dataset gets dispatched
+        if "start" in validated_data:
+            validated_data.pop("start")
+        return super(DatasetSerializer, self).create(validated_data)
+
     class Meta:
         model = Dataset
         fields = (
@@ -192,6 +207,8 @@ class DatasetSerializer(serializers.ModelSerializer):
             "is_processed",
             "is_available",
             "has_email",
+            "email_address",
+            "email_ccdl_ok",
             "expires_on",
             "s3_bucket",
             "s3_key",
@@ -216,6 +233,8 @@ class DatasetSerializer(serializers.ModelSerializer):
             "is_processing": {"read_only": True,},
             "is_processed": {"read_only": True,},
             "is_available": {"read_only": True,},
+            "email_address": {"required": False, "write_only": True},
+            "email_ccdl_ok": {"required": False, "write_only": True},
             "expires_on": {"read_only": True,},
             "s3_bucket": {"read_only": True,},
             "s3_key": {"read_only": True,},
@@ -271,15 +290,8 @@ class DatasetSerializer(serializers.ModelSerializer):
             return None
 
 
-class CreateDatasetView(generics.CreateAPIView):
-    """ Creates and returns new Datasets. """
-
-    queryset = Dataset.objects.all()
-    serializer_class = CreateDatasetSerializer
-
-
 @method_decorator(
-    name="get",
+    name="retrieve",
     decorator=swagger_auto_schema(
         operation_description="View a single Dataset.",
         manual_parameters=[
@@ -293,10 +305,7 @@ class CreateDatasetView(generics.CreateAPIView):
     ),
 )
 @method_decorator(
-    name="patch", decorator=swagger_auto_schema(auto_schema=None)
-)  # partial updates not supported
-@method_decorator(
-    name="put",
+    name="update",
     decorator=swagger_auto_schema(
         operation_description="""
 Modify an existing Dataset.
@@ -324,7 +333,12 @@ requests.put(host + '/v1/dataset/38879729-93c8-436d-9293-b95d3f274741/', params,
 """
     ),
 )
-class DatasetView(generics.RetrieveUpdateAPIView):
+class DatasetView(
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """ View and modify a single Dataset. """
 
     queryset = Dataset.objects.all()
@@ -343,20 +357,24 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             return serializer_context
 
-    def perform_update(self, serializer):
-        """ If `start` is set, fire off the job. Disables dataset data updates after that.
-        """
-        old_object = self.get_object()
-        old_data = old_object.data
-        old_aggregate = old_object.aggregate_by
-        already_processing = old_object.is_processing
-        new_data = serializer.validated_data
+    def validate_token(self):
+        # Make sure we have a valid activated token.
+        token_id = self.request.data.get("token_id", None)
 
+        if not token_id:
+            token_id = self.request.META.get("HTTP_API_KEY", None)
+
+        try:
+            APIToken.objects.get(id=token_id, is_activated=True)
+        # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except Exception:
+            raise serializers.ValidationError("You must provide an active API token ID")
+
+    @staticmethod
+    def convert_ALL_to_accessions(data):
         qn_organisms = Organism.get_objects_with_qn_targets()
-
-        # We convert 'ALL' into the actual accession codes given
-        for key in new_data["data"].keys():
-            accessions = new_data["data"][key]
+        for key in data["data"].keys():
+            accessions = data["data"][key]
             if accessions == ["ALL"]:
                 experiment = get_object_or_404(Experiment, accession_code=key)
 
@@ -365,92 +383,89 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                         is_processed=True, organism__in=qn_organisms
                     ).values_list("accession_code", flat=True)
                 )
-                new_data["data"][key] = sample_codes
+                data["data"][key] = sample_codes
 
+    def validate_email_address_is_nonempty(self):
+        """Check to make sure the email exists. We call this when getting ready to dispatch a dataset"""
+        supplied_email_address = self.request.data.get("email_address", None)
+        if supplied_email_address is None:
+            raise serializers.ValidationError("You must provide an email address.")
+
+    def dispatch_job(self, serializer, obj):
+        processor_job = ProcessorJob()
+        processor_job.pipeline_applied = "SMASHER"
+        processor_job.ram_amount = 4096
+        processor_job.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = processor_job
+        pjda.dataset = obj
+        pjda.save()
+
+        job_sent = False
+
+        try:
+            # Hidden method of non-dispatching for testing purposes.
+            if not self.request.data.get("no_send_job", False):
+                job_sent = send_job(ProcessorPipeline.SMASHER, processor_job)
+            else:
+                # We didn't actually send it, but we also didn't want to.
+                job_sent = True
+        except Exception as e:
+            logger.error(e)
+
+        if not job_sent:
+            raise APIException(
+                "Unable to queue download job. Something has gone"
+                " wrong and we have been notified about it."
+            )
+
+        serializer.validated_data["is_processing"] = True
+        obj = serializer.save()
+
+        # create a new dataset annotation with the information of this request
+        annotation = DatasetAnnotation()
+        annotation.dataset = obj
+        annotation.data = {
+            "start": True,
+            "ip": get_client_ip(self.request),
+            "user_agent": self.request.META.get("HTTP_USER_AGENT", None),
+        }
+        annotation.save()
+
+    def create_or_update(self, serializer):
+        """ If `start` is set, fire off the job. Otherwise just create/update the dataset"""
+        data = serializer.validated_data
+        DatasetView.convert_ALL_to_accessions(data)
+
+        if data.get("start"):
+            self.validate_token()
+            self.validate_email_address_is_nonempty()
+
+            obj = serializer.save()
+
+            self.dispatch_job(serializer, obj)
+        else:
+            serializer.save()
+
+    def perform_create(self, serializer):
+        # Since we are creating a new dataset, there is no way it is already processed
+        self.create_or_update(serializer)
+
+    def perform_update(self, serializer):
+        # Check to make sure we have not already processed the dataset
+        old_object = self.get_object()
         if old_object.is_processed:
             raise serializers.ValidationError(
                 "You may not update Datasets which have already been processed"
             )
-        if new_data.get("start"):
-
-            # Make sure we have a valid activated token.
-            token_id = self.request.data.get("token_id", None)
-
-            if not token_id:
-                token_id = self.request.META.get("HTTP_API_KEY", None)
-
-            try:
-                APIToken.objects.get(id=token_id, is_activated=True)
-            # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            except Exception:
-                raise serializers.ValidationError("You must provide an active API token ID")
-
-            supplied_email_address = self.request.data.get("email_address", None)
-
-            if supplied_email_address is None:
-                raise serializers.ValidationError("You must provide an email address.")
-
-            email_ccdl_ok = self.request.data.get("email_ccdl_ok", False)
-
-            if not already_processing:
-                # Create and dispatch the new job.
-                processor_job = ProcessorJob()
-                processor_job.pipeline_applied = "SMASHER"
-                processor_job.ram_amount = 4096
-                processor_job.save()
-
-                pjda = ProcessorJobDatasetAssociation()
-                pjda.processor_job = processor_job
-                pjda.dataset = old_object
-                pjda.save()
-
-                job_sent = False
-
-                obj = serializer.save()
-                if obj.email_address != supplied_email_address:
-                    obj.email_address = supplied_email_address
-                    obj.save()
-                if email_ccdl_ok:
-                    obj.email_ccdl_ok = email_ccdl_ok
-                    obj.save()
-
-                try:
-                    # Hidden method of non-dispatching for testing purposes.
-                    if not self.request.data.get("no_send_job", False):
-                        job_sent = send_job(ProcessorPipeline.SMASHER, processor_job)
-                    else:
-                        # We didn't actually send it, but we also didn't want to.
-                        job_sent = True
-                except Exception:
-                    # job_sent is already false and the exception has
-                    # already been logged by send_job, so nothing to
-                    # do other than catch the exception.
-                    pass
-
-                if not job_sent:
-                    raise APIException(
-                        "Unable to queue download job. Something has gone"
-                        " wrong and we have been notified about it."
-                    )
-
-                serializer.validated_data["is_processing"] = True
-                obj = serializer.save()
-
-                # create a new dataset annotation with the information of this request
-                annotation = DatasetAnnotation()
-                annotation.dataset = old_object
-                annotation.data = {
-                    "start": True,
-                    "ip": get_client_ip(self.request),
-                    "user_agent": self.request.META.get("HTTP_USER_AGENT", None),
-                }
-                annotation.save()
-
-                return obj
-
         # Don't allow critical data updates to jobs that have already been submitted,
         # but do allow email address updating.
-        if already_processing:
-            serializer.validated_data["data"] = old_data
-            serializer.validated_data["aggregate_by"] = old_aggregate
-        serializer.save()
+        elif old_object.is_processing:
+            self.validate_email_address_is_nonempty()
+
+            serializer.validated_data["data"] = old_object.data
+            serializer.validated_data["aggregate_by"] = old_object.aggregate_by
+            serializer.save()
+        else:
+            self.create_or_update(serializer)

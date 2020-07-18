@@ -191,11 +191,11 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     try:
         bases_count = int(stats.Run.Bases["count"])
         reads_count = int(stats.Run.Statistics["nspots"]) * int(stats.Run.Statistics["nreads"])
-        job_context["sra_num_reads"] = int(stats.Run.Statistics["nreads"])
+        num_reads = int(stats.Run.Statistics["nreads"])
         job_context["index_length_raw"] = int(bases_count / reads_count)
     except Exception:
         try:
-            job_context["sra_num_reads"] = int(stats.Run.Statistics["nreads"])
+            num_reads = int(stats.Run.Statistics["nreads"])
             spot_count_mates = int(stats.Run["spot_count_mates"])
             base_count_bio_mates = int(stats.Run["base_count_bio_mates"])
             reads_count = spot_count_mates * int(stats.Run.Statistics["nreads"])
@@ -217,27 +217,32 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     else:
         job_context["index_length"] = "short"
 
-    if not job_context.get("sra_num_reads", None):
-        try:
-            sample = job_context["sample"]
-            for exp in sample.experiments.all():
-                for annotation in exp.experimentannotation_set.all():
-                    if annotation.data.get("library_layout", "").upper() == "PAIRED":
-                        job_context["sra_num_reads"] = 2
-                        return job_context
-                    if annotation.data.get("library_layout", "").upper() == "SINGLE":
-                        job_context["sra_num_reads"] = 1
-                        return job_context
-        except Exception as e:
-            logger.exception(
-                "Problem trying to determine library strategy (single/paired)!",
-                file=job_context["sra_input_file_path"],
-            )
-            job_context[
-                "job"
-            ].failure_reason = "Unable to determine library strategy (single/paired): " + str(e)
-            job_context["success"] = False
-            return job_context
+    # We are trying to determine if the SRA file has single or paired reads. We learned in
+    # https://github.com/AlexsLemonade/refinebio/pull/2394 that sometimes sra-stat thinks that a
+    # file has paired reads when it really has single reads (like the samples in SRP253951),
+    # so we are checking the annotations first then falling back to sra-stat.
+    try:
+        sample = job_context["sample"]
+        for exp in sample.experiments.all():
+            for annotation in exp.experimentannotation_set.all():
+                if annotation.data.get("library_layout", "").upper() == "PAIRED":
+                    job_context["sra_num_reads"] = 2
+                    return job_context
+                if annotation.data.get("library_layout", "").upper() == "SINGLE":
+                    job_context["sra_num_reads"] = 1
+                    return job_context
+
+        job_context["sra_num_reads"] = num_reads
+    except Exception as e:
+        logger.exception(
+            "Problem trying to determine library strategy (single/paired)!",
+            file=job_context["sra_input_file_path"],
+        )
+        job_context[
+            "job"
+        ].failure_reason = "Unable to determine library strategy (single/paired): " + str(e)
+        job_context["success"] = False
+        return job_context
 
     if not job_context.get("sra_num_reads", None):
         logger.error(

@@ -175,6 +175,12 @@ variable "full_stack" {
   default = "False"
 }
 
+# Configuration
+variable "downloader_space_constraint" {
+  # 600 GB
+  default = "600000000000"
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -269,6 +275,8 @@ output "environment_variables" {
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
       value = "${var.max_downloader_jobs_per_node}"},
     {name = "ENGAGEMENTBOT_WEBHOOK"
-      value = "${var.engagementbot_webhook}"}
+      value = "${var.engagementbot_webhook}"},
+    {name = "DOWNLOADER_SPACE_CONSTRAINT"
+      value = "${var.downloader_space_constraint}"}
   ]
 }

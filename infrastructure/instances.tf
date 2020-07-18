@@ -6,16 +6,8 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    # This is a HVM, EBS backed SSD Ubuntu LTS AMI with Docker version 17.12.0 on it in the US,
-    # the stock Ubuntu cloud image in the EU.
-    values = ["${var.region == "us-east-1" ? "ubuntu-16.04-docker-5-19.03.2-*" : "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*" }"]
+    values = ["ccdl-ubuntu-18.04-*"]
   }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
 }
 
 ##
@@ -89,6 +81,11 @@ resource "aws_instance" "nomad_server_1" {
   }
 }
 
+# This service takes care of restarting the nomad client if it goes down
+data "local_file" "nomad_client_service" {
+  filename = "nomad-configuration/nomad-client.service"
+}
+
 # The Nomad Client needs to be aware of the Nomad Server's IP address,
 # so we template it into its configuration.
 data "template_file" "nomad_client_config" {
@@ -114,6 +111,7 @@ data "template_file" "nomad_client_script_smusher" {
   vars {
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
     nomad_client_config = "${data.template_file.nomad_client_config.rendered}"
+    nomad_client_service = "${data.local_file.nomad_client_service.content}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"

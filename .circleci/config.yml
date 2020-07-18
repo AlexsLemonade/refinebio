@@ -126,7 +126,15 @@ jobs:
 
       - run:
           name: Install build & test dependencies
-          command: sudo pip3 install pre-commit==1.21.0
+          command: sudo pip3 install pre-commit==1.21.0 && sudo apt-get install shellcheck && ./.circleci/install_terraform.sh
+
+      - run:
+          name: Init terraform in the infrastructure folder for validation
+          command: cd infrastructure && TF_VAR_user=ci TF_VAR_stage=dev ./init_terraform.sh
+
+      - run:
+          name: Init terraform in the AMI folder for validation
+          command: cd ami && terraform init
 
       - run:
           name: Run pre-commit hooks on all files

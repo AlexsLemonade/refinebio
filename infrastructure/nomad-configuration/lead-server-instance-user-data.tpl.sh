@@ -4,14 +4,17 @@
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-# This script will be formatted by Nomad, which will read files from
-# the project into terraform variables, and then template them into
-# the following Here Documents. These will then be written out to files
-# so that they can be used. A more ideal solution than this would be if
-# we could just give AWS a list of files to put onto the instance for us,
-# but they only give us this one script to do it with. Nomad has file
-# provisioners which will put files onto the instance after it starts up,
-# but those run after this script runs.
+# This script will be formatted by Terraform, which will read files from the
+# project into terraform variables, and then template them into the following
+# script. These will then be written out to files so that they can be used
+# locally. This means that any variable referenced using `{}` is NOT a shell
+# variable, it is a template variable for Terraform to fill in. DO NOT treat
+# them as normal shell variables.
+
+# A more ideal solution than this would be if we could just give AWS a list of
+# files to put onto the instance for us, but they only give us this one script
+# to do it with. Nomad has file provisioners which will put files onto the
+# instance after it starts up, but those run after this script runs.
 
 # This template varies from nomad-server-instance-user-data.tpl.sh in
 # only a few ways.  Because this will be run first, it does not need
@@ -23,7 +26,7 @@
 
 
 # Change to home directory of the default user
-cd /home/ubuntu
+cd /home/ubuntu || exit
 
 # Install, configure and launch our CloudWatch Logs agent
 cat <<EOF >awslogs.conf
@@ -33,7 +36,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
+python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
 # Rotate the logs, delete after 3 days.
 echo "
 /var/log/nomad_server.log {
@@ -49,19 +52,10 @@ echo "
 # Note that the lines starting with "$" are where
 # Terraform will template in the contents of those files.
 
-# Create the script to install Nomad.
-cat <<"EOF" > install_nomad.sh
-${install_nomad_script}
-EOF
-
 # Create the Nomad Server configuration.
 cat <<"EOF" > server.hcl
 ${nomad_server_config}
 EOF
-
-# Install Nomad.
-chmod +x install_nomad.sh
-./install_nomad.sh
 
 # Don't install our graphite/statsd container because it bogs down the
 # instance a lot.  After killing graphite on a long-running Nomad
@@ -101,8 +95,7 @@ chmod +x /home/ubuntu/nomad_status.sh
 
 echo "
 #!/bin/bash
-killall nomad
-sleep 120
+killall nomad && sleep 120
 nomad agent -config /home/ubuntu/server.hcl > /var/log/nomad_server.log &
 " >> /home/ubuntu/kill_restart_nomad.sh
 chmod +x /home/ubuntu/kill_restart_nomad.sh
@@ -121,6 +114,7 @@ service monit restart
 # Create the CW metric job in a crontab
 # write out current crontab
 crontab -l > tempcron
+# shellcheck disable=2016
 echo -e '#!/bin/bash\naws cloudwatch put-metric-data --metric-name NomadQueueLength --namespace ${user}-${stage} --value `nomad status | grep dispatch | grep -e pending -e running | wc -l` --region ${region}' >> update_metric.sh
 chmod +x update_metric.sh
 
