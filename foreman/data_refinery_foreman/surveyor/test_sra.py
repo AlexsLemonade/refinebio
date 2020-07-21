@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.test import TestCase
+import datetime
 
 import vcr
 
@@ -169,6 +170,8 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["sample_sample_name"], "DRS001521")
         self.assertEqual(metadata["sample_title"], "Gg_HH16_1_embryo_mRNAseq")
         self.assertEqual(metadata["spot_length"], "100")
+        self.assertEqual(metadata["study_ena_first_public"], "2013-07-20")
+        self.assertEqual(metadata["study_ena_last_update"], "2015-08-24")
         self.assertEqual(metadata["study_accession"], "DRP000595")
         self.assertEqual(metadata["submission_accession"], "DRA000567")
         self.assertEqual(
@@ -200,3 +203,13 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(sample.treatment, "biliatresone")
         self.assertEqual(sample.subject, "liver")
         self.assertEqual(sample.specimen_part, "liver")
+
+        experiment = Experiment()
+        SraSurveyor._apply_metadata_to_experiment(experiment, metadata)
+        self.assertEqual(
+            experiment.title,
+            "Transcriptional profiling through RNA-seq of zebrafish larval"
+            " liver after exposure to biliatresone, a biliary toxin.",
+        )
+        self.assertEqual(experiment.source_first_published, datetime.date(2017, 9, 25))
+        self.assertEqual(experiment.source_last_modified, datetime.date(2017, 9, 25))
