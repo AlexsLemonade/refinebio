@@ -511,6 +511,23 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
+        # Good, except for empty email.
+        jdata = json.dumps(
+            {
+                "start": True,
+                "data": {"GSE123": ["789"]},
+                "token_id": activated_token["id"],
+                "email_address": "",
+            }
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
         # You should not have to provide an email until you set start=True
         jdata = json.dumps({"data": {"GSE123": ["789"]}})
         response = self.client.post(

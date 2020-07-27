@@ -382,7 +382,7 @@ class DatasetView(
     def validate_email_address_is_nonempty(self):
         """Check to make sure the email exists. We call this when getting ready to dispatch a dataset"""
         supplied_email_address = self.request.data.get("email_address", None)
-        if supplied_email_address is None:
+        if supplied_email_address is None or supplied_email_address == "":
             raise serializers.ValidationError("You must provide an email address.")
 
     def dispatch_job(self, serializer, obj):
