@@ -26,6 +26,8 @@ foreman/nomad-job-specs/*
 infrastructure/.terraform/
 ami/.terraform/
 .circleci/s3_tfstate/.terraform
+infrastructure/api-configuration/environment
+infrastructure/foreman-configuration/environment
 
 # We download a lot of files into the test_volume directory when
 # running tests, which we don't need to track.
