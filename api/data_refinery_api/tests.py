@@ -664,6 +664,18 @@ class APITestCases(APITestCase):
         )
         self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
 
+        # Bad, 567 does not exist
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["567"]}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+        self.assertIn(
+            "Sample(s) in dataset do not exist on refine", response.json()["message"][0],
+        )
+        self.assertEqual(response.status_code, 400)
+
         # Good, 789 is processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
         response = self.client.post(
