@@ -306,7 +306,7 @@ def _smash_all(job_context: Dict) -> Dict:
     final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
     try:
         shutil.make_archive(final_zip_base, "zip", job_context["output_dir"])
-    except:
+    except OSError:
         raise utils.ProcessorJobError("Smash Error while generating zip file", success=False)
 
     job_context["output_file"] = final_zip_base + ".zip"

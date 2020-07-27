@@ -9,7 +9,7 @@ VERSION_FILE = "version"
 try:
     with open(VERSION_FILE, "rt") as version_file:
         version_string = version_file.read().strip()
-except:
+except OSError:
     print(
         "Cannot read version to determine System Version."
         " Please create a file workers/version containing an up to date System Version."

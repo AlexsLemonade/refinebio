@@ -82,7 +82,7 @@ class QNTargetsDetailView(generics.RetrieveAPIView):
                 .first()
             )
             qn_target = annotation.result.computedfile_set.first()
-        except Exception:
+        except IndexError:
             raise NotFound("Don't have a target for that organism!")
         if not qn_target:
             raise NotFound("Don't have a target for that organism!!")

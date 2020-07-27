@@ -70,7 +70,7 @@ class Command(BaseCommand):
                         create_processor_job_for_original_files(
                             original_files, dl_job, volume_index
                         )
-                    except:
+                    except Exception:
                         # Already logged.
                         pass
                 else:
@@ -106,6 +106,6 @@ class Command(BaseCommand):
                                 create_processor_jobs_for_original_files(
                                     files_for_sample, dl_job, volume_index
                                 )
-                            except:
+                            except Exception:
                                 # Already logged.
                                 pass

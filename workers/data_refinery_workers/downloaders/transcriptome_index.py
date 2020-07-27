@@ -119,7 +119,7 @@ def create_long_and_short_processor_jobs(files_to_process):
 
     try:
         send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long)
-    except:
+    except Exception:
         # This is fine, the foreman will requeue these later.
         pass
 
@@ -137,6 +137,6 @@ def create_long_and_short_processor_jobs(files_to_process):
 
     try:
         send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short)
-    except:
+    except Exception:
         # This is fine, the foreman will requeue these later.
         pass

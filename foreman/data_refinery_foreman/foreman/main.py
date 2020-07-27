@@ -243,7 +243,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
 
             experiment_completion_percent = processed_samples / len(related_samples)
             prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
-        except:
+        except Exception:
             logger.debug("Exception caught while prioritizing salmon jobs!", job=job)
 
     sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
@@ -271,7 +271,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
                 if sample.organism.name == "DANIO_RERIO":
                     zebrafish_jobs.append(job)
                     break
-        except:
+        except Exception:
             logger.debug("Exception caught while prioritizing zebrafish jobs!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
@@ -305,7 +305,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
                         prioritized_jobs.append(job)
                         is_prioritized_job = True
                         break
-        except:
+        except Exception:
             logger.exception("Exception caught while prioritizing jobs by accession!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
@@ -411,7 +411,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
             return False, ""
-    except:
+    except Exception:
         logger.error(
             "Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
             last_job.id,
@@ -446,7 +446,7 @@ def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=2)) -> int:
 
             DOWNLOADER_JOBS_IN_QUEUE = total
 
-        except:
+        except Exception:
             # Nomad is down, return an impossibly high number to prevent
             # additonal queuing from happening:
             DOWNLOADER_JOBS_IN_QUEUE = sys.maxsize
@@ -795,7 +795,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         else:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
-    except:
+    except Exception:
         logger.warn(
             "Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
             last_job.id,
@@ -860,7 +860,7 @@ def retry_failed_processor_jobs() -> None:
     Ignores Janitor jobs since they are queued every half hour anyway."""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -900,7 +900,7 @@ def retry_hung_processor_jobs() -> None:
     Ignores Janitor jobs since they are queued every half hour anyway."""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -969,7 +969,7 @@ def retry_lost_processor_jobs() -> None:
     Ignores Janitor jobs since they are queued every half hour anyway."""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -1092,7 +1092,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
         else:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
-    except:
+    except Exception:
         logger.error(
             "Failed to requeue Survey Job which had ID %d with a new Surevey Job with ID %d.",
             last_job.id,
@@ -1296,7 +1296,7 @@ def send_janitor_jobs():
     """Dispatch a Janitor job for each instance in the cluster"""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -1351,7 +1351,7 @@ def cleanup_the_queue():
     try:
         active_volumes = get_active_volumes()
         jobs = nomad_client.jobs.get_jobs()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         logger.warn("Couldn't query Nomad about current jobs.", exc_info=1)
         return
@@ -1404,7 +1404,7 @@ def cleanup_the_queue():
                     job_type=job_type,
                 )
                 num_jobs_killed += 1
-            except:
+            except Exception:
                 logger.exception(
                     "Could not remove Nomad job from the Nomad queue.",
                     nomad_job_id=job["ID"],

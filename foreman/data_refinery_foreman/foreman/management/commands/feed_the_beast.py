@@ -69,7 +69,7 @@ class Command(BaseCommand):
                             num_surveyor_jobs = (
                                 num_surveyor_jobs + job["JobSummary"]["Children"]["Running"]
                             )
-                except:
+                except Exception:
                     logger.exception("Exception caught counting surveyor jobs!")
                     # Probably having trouble communicating with Nomad, let's try again next loop.
                     continue
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                         queue_surveyor_for_accession(accession_code)
                         fed_accessions.append(accession_code)
                         time.sleep(30)
-                    except:
+                    except Exception:
                         # We don't want to stop, gotta keep feeding the beast!!!!
                         logger.exception(
                             "Exception caught while looping through all accessions!",
