@@ -728,7 +728,7 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                 try:
                     values = pickle.load(open(cache_path, "rb"))
                     return {**job_context, **values}
-                except:
+                except (OSError, pickle.PickleError):
                     # don't fail if we can't load the cache
                     logger.warning(
                         "Failed to load cached data for pipeline function.",
@@ -743,7 +743,7 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                 # save cached data for the next run
                 values = {key: job_context[key] for key in keys}
                 pickle.dump(values, open(cache_path, "wb"))
-            except:
+            except Exception:
                 # don't fail if we can't save the cache
                 logger.warning(
                     "Failed to cache data for pipeline function.",

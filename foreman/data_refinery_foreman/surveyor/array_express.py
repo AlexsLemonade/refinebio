@@ -668,7 +668,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 survey_job=self.survey_job.id,
             )
             return None, []
-        except:
+        except Exception:
             logger.exception(
                 "Error occurred while surveying experiment!",
                 experiment_accession_code=experiment_accession_code,

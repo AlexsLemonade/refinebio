@@ -136,5 +136,5 @@ def get_ip_location(remote_ip):
     try:
         data = requests.get("https://ipapi.co/" + remote_ip + "/json/", timeout=10).json()
         return "{0}, {1}".format(data["city"], data["country_name"])
-    except Exception:
+    except (requests.exceptions.RequestException, ValueError, KeyError):
         return remote_ip

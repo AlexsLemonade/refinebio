@@ -26,8 +26,9 @@ class APITokenSerializer(serializers.ModelSerializer):
     decorator=swagger_auto_schema(
         operation_description="""
     This endpoint can be used to create and activate tokens. These tokens can be used
-    in requests that provide urls to download computed files. They are a way to accept
-    our terms of service.
+    in requests that provide urls to download computed files. Setting `is_activated` to
+    true indicates agreement with refine.bio's [Terms of Use](https://www.refine.bio/terms)
+    and [Privacy Policy](https://www.refine.bio/privacy).
 
     ```py
     import requests
@@ -53,7 +54,12 @@ class APITokenSerializer(serializers.ModelSerializer):
 @method_decorator(
     name="update",
     decorator=swagger_auto_schema(
-        operation_description="This can be used to activate a specific token by sending `is_activated: true`."
+        operation_description="""
+    This can be used to activate a specific token by sending `is_activated: true`.
+    Setting `is_activated` to true indicates agreement with refine.bio's
+    [Terms of Use](https://www.refine.bio/terms) and
+    [Privacy Policy](https://www.refine.bio/privacy).
+    """
     ),
 )
 class APITokenView(
