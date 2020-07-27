@@ -511,6 +511,23 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
+        # Good, except for empty email.
+        jdata = json.dumps(
+            {
+                "start": True,
+                "data": {"GSE123": ["789"]},
+                "token_id": activated_token["id"],
+                "email_address": "",
+            }
+        )
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
         # You should not have to provide an email until you set start=True
         jdata = json.dumps({"data": {"GSE123": ["789"]}})
         response = self.client.post(
@@ -646,6 +663,18 @@ class APITestCases(APITestCase):
             "Non-downloadable sample(s) in dataset", response.json()["message"][0],
         )
         self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
+
+        # Bad, 567 does not exist
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["567"]}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+        self.assertIn(
+            "Sample(s) in dataset do not exist on refine", response.json()["message"][0],
+        )
+        self.assertEqual(response.status_code, 400)
 
         # Good, 789 is processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})

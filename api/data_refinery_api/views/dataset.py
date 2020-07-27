@@ -117,10 +117,19 @@ def validate_dataset(data):
     if len(accessions) == 0:
         return
 
+    samples = Sample.public_objects.filter(accession_code__in=accessions)
+    if samples.count() != len(accessions):
+        raise serializers.ValidationError(
+            {
+                "message": "Sample(s) in dataset do not exist on refine.bio. See `non_downloadable_samples` for a full list",
+                "non_downloadable_samples": list(
+                    set(accessions) - set(s.accession_code for s in samples)
+                ),
+            },
+        )
+
     if data.get("quant_sf_only", False):
-        samples_without_quant_sf = Sample.public_objects.filter(
-            accession_code__in=accessions
-        ).exclude(
+        samples_without_quant_sf = samples.exclude(
             # Exclude samples that have at least one uploaded quant.sf file associated with them
             results__computedfile__filename="quant.sf",
             results__computedfile__s3_key__isnull=False,
@@ -137,9 +146,7 @@ def validate_dataset(data):
             )
 
     else:
-        unprocessed_samples = Sample.public_objects.filter(
-            accession_code__in=accessions, is_processed=False
-        )
+        unprocessed_samples = samples.exclude(is_processed=True)
         if unprocessed_samples.count() > 0:
             raise serializers.ValidationError(
                 {
@@ -382,7 +389,7 @@ class DatasetView(
     def validate_email_address_is_nonempty(self):
         """Check to make sure the email exists. We call this when getting ready to dispatch a dataset"""
         supplied_email_address = self.request.data.get("email_address", None)
-        if supplied_email_address is None:
+        if supplied_email_address is None or supplied_email_address == "":
             raise serializers.ValidationError("You must provide an email address.")
 
     def dispatch_job(self, serializer, obj):
