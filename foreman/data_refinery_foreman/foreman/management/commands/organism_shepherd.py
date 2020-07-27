@@ -19,14 +19,9 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
     Organism,
-    OriginalFile,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
-    Sample,
 )
 from data_refinery_common.utils import get_active_volumes, get_env_variable
 

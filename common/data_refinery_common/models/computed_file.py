@@ -202,7 +202,7 @@ class ComputedFile(models.Model):
             return False
 
         try:
-            response = S3.delete_object(Bucket=old_bucket, Key=old_key)
+            S3.delete_object(Bucket=old_bucket, Key=old_key)
         except Exception:
             logger.exception(
                 "Could not delete computed file after it was copied and saved!!!",

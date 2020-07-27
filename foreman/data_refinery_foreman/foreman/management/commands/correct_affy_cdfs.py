@@ -46,9 +46,6 @@ class Command(BaseCommand):
         """
         # Check against CDF corrected accessions table to prevent recorrection of the same samples.
         corrected_experiments = CdfCorrectedAccession.objects.all().values("accession_code")
-        corrected_accessions = [
-            experiment["accession_code"] for experiment in corrected_experiments
-        ]
 
         gse_experiments = Experiment.objects.filter(source_database="GEO").exclude(
             accession_code__in=corrected_experiments

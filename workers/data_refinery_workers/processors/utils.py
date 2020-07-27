@@ -17,21 +17,7 @@ import yaml
 from data_refinery_common.job_lookup import SMASHER_JOB_TYPES, ProcessorEnum, ProcessorPipeline
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    Dataset,
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
-    OriginalFile,
-    OriginalFileSampleAssociation,
-    Pipeline,
-    Processor,
-    ProcessorJob,
-    ProcessorJobDatasetAssociation,
-    ProcessorJobOriginalFileAssociation,
-    Sample,
-)
+from data_refinery_common.models import Processor, ProcessorJob, Sample
 from data_refinery_common.utils import get_env_variable, get_instance_id
 
 logger = get_and_configure_logger(__name__)

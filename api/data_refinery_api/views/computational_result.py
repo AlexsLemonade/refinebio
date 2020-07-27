@@ -82,7 +82,8 @@ class ComputationalResultListView(generics.ListAPIView):
         token_id = self.request.META.get("HTTP_API_KEY", None)
 
         try:
-            token = APIToken.objects.get(id=token_id, is_activated=True)
+            # Verify that a token with that id exists
+            APIToken.objects.get(id=token_id, is_activated=True)
             return ComputationalResultWithUrlSerializer
         except (APIToken.DoesNotExist, ValidationError):
             return ComputationalResultSerializer
@@ -106,7 +107,8 @@ class ComputationalResultDetailView(generics.RetrieveAPIView):
         token_id = self.request.META.get("HTTP_API_KEY", None)
 
         try:
-            token = APIToken.objects.get(id=token_id, is_activated=True)
+            # Verify that a token with that id exists
+            APIToken.objects.get(id=token_id, is_activated=True)
             return DetailedComputationalResultWithUrlSerializer
         except (APIToken.DoesNotExist, ValidationError):
             return DetailedComputationalResultSerializer

@@ -532,9 +532,6 @@ def retry_failed_downloader_jobs() -> None:
         .prefetch_related("original_files__samples")
     )
 
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs()
 
     paginator = Paginator(failed_jobs, PAGE_SIZE, "created_at")

@@ -14,10 +14,7 @@ from data_refinery_common.models import (
     ComputedFile,
     Organism,
     OrganismIndex,
-    OriginalFile,
     Pipeline,
-    Processor,
-    ProcessorJob,
 )
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 from data_refinery_workers.processors import utils

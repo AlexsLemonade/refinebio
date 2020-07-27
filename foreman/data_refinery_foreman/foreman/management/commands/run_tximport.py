@@ -15,16 +15,9 @@ from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
     Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
-    Organism,
-    OriginalFile,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
-    Sample,
 )
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.rna_seq import get_quant_results_for_experiment, should_run_tximport

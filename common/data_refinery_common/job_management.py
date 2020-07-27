@@ -2,8 +2,6 @@ from typing import List
 
 from data_refinery_common import job_lookup
 from data_refinery_common.job_lookup import (
-    Downloaders,
-    ProcessorEnum,
     ProcessorPipeline,
     determine_processor_pipeline,
     determine_ram_amount,
@@ -17,12 +15,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
 )
-from data_refinery_common.utils import (
-    get_env_variable,
-    get_env_variable_gracefully,
-    get_instance_id,
-    get_volume_index,
-)
+from data_refinery_common.utils import get_volume_index
 
 logger = get_and_configure_logger(__name__)
 
@@ -116,8 +109,6 @@ def create_downloader_job(
         downloader_task = original_downloader_job.downloader_task
         accession_code = original_downloader_job.accession_code
         original_files = original_downloader_job.original_files.all()
-
-        sample_object = original_files[0].samples.first()
 
     new_job = DownloaderJob()
     new_job.downloader_task = downloader_task
