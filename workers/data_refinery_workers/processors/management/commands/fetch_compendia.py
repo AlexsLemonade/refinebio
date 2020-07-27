@@ -28,7 +28,7 @@ class Command(BaseCommand):
         for dataset in datasets:
             try:
                 organism_name = dataset.email_address.split("@")[0].split("compendia_")[1]
-            except:
+            except (IndexError, AttributeError):
                 organism_name = str(dataset.pk)
 
             if dataset.is_available:

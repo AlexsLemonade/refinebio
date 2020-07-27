@@ -2,6 +2,7 @@
 # Contains List and Detail views for compendium results along with needed serializers
 ##
 
+from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
 from django.db.models.expressions import F, Q
 from django.utils.decorators import method_decorator
@@ -126,7 +127,7 @@ class CompendiumResultListView(generics.ListAPIView):
             # Verify that a token with that id exists
             _ = APIToken.objects.get(id=token_id, is_activated=True)
             return CompendiumResultWithUrlSerializer
-        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except (APIToken.DoesNotExist, ValidationError):
             return CompendiumResultSerializer
 
 
@@ -145,5 +146,5 @@ class CompendiumResultDetailView(generics.RetrieveAPIView):
             # Verify that a token with that id exists
             _ = APIToken.objects.get(id=token_id, is_activated=True)
             return CompendiumResultWithUrlSerializer
-        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except (APIToken.DoesNotExist, ValidationError):
             return CompendiumResultSerializer

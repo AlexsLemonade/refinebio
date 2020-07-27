@@ -4,6 +4,7 @@
 
 from collections import defaultdict
 
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from rest_framework import mixins, serializers, viewsets
@@ -42,7 +43,7 @@ def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
     if quant_sf_only:
         try:
             experiment = Experiment.public_objects.get(accession_code=experiment)
-        except Exception as e:
+        except Experiment.DoesNotExist:
             return False
 
         samples = experiment.sample_set.filter(
@@ -57,8 +58,8 @@ def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
 
     else:
         try:
-            _ = Experiment.processed_public_objects.get(accession_code=experiment)
-        except Experiment.NotFound as e:
+            Experiment.processed_public_objects.get(accession_code=experiment)
+        except Experiment.DoesNotExist:
             return False
 
     return True
@@ -91,11 +92,8 @@ def validate_dataset(data):
                 + "`"
             )
 
-        try:
-            if len(value) != len(set(value)):
-                raise serializers.ValidationError("Duplicate values detected in " + str(value))
-        except Exception as e:
-            raise serializers.ValidationError("Received bad dataset data: " + str(e))
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Duplicate values detected in " + str(value))
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
@@ -255,10 +253,7 @@ class DatasetSerializer(serializers.ModelSerializer):
         """
         Ensure this is something we want in our dataset.
         """
-        try:
-            validate_dataset(data)
-        except Exception:
-            raise
+        validate_dataset(data)
         return data
 
     def get_organism_samples(self, obj):
@@ -354,7 +349,7 @@ class DatasetView(
         try:
             token = APIToken.objects.get(id=token_id, is_activated=True)
             return {**serializer_context, "token": token}
-        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except (APIToken.DoesNotExist, ValidationError):
             return serializer_context
 
     def validate_token(self):
@@ -366,8 +361,7 @@ class DatasetView(
 
         try:
             APIToken.objects.get(id=token_id, is_activated=True)
-        # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-        except Exception:
+        except (APIToken.DoesNotExist, ValidationError):
             raise serializers.ValidationError("You must provide an active API token ID")
 
     @staticmethod
@@ -412,6 +406,7 @@ class DatasetView(
                 # We didn't actually send it, but we also didn't want to.
                 job_sent = True
         except Exception as e:
+            # Just log whatever exception happens, because the foreman wil requeue the job anyway
             logger.error(e)
 
         if not job_sent:

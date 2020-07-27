@@ -2,6 +2,7 @@
 # Contains ComputationalResultListView, ComputationalResultDetailView, and needed serializers
 ##
 
+from django.core.exceptions import ValidationError
 from rest_framework import generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -84,7 +85,7 @@ class ComputationalResultListView(generics.ListAPIView):
             # Verify that a token with that id exists
             _ = APIToken.objects.get(id=token_id, is_activated=True)
             return ComputationalResultWithUrlSerializer
-        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except (APIToken.DoesNotExist, ValidationError):
             return ComputationalResultSerializer
 
     def filter_queryset(self, queryset):
@@ -109,5 +110,5 @@ class ComputationalResultDetailView(generics.RetrieveAPIView):
             # Verify that a token with that id exists
             _ = APIToken.objects.get(id=token_id, is_activated=True)
             return DetailedComputationalResultWithUrlSerializer
-        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except (APIToken.DoesNotExist, ValidationError):
             return DetailedComputationalResultSerializer

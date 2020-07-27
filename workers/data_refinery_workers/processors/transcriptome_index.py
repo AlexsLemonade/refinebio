@@ -325,7 +325,7 @@ def _zip_index(job_context: Dict) -> Dict:
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
             tar.add(job_context["output_dir"], arcname=os.path.basename(job_context["output_dir"]))
-    except:
+    except Exception:
         logger.exception(
             "Exception caught while zipping index directory %s",
             job_context["output_dir"],

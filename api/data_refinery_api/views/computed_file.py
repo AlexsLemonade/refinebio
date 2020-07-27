@@ -2,6 +2,7 @@
 # Contains ComputedFileListView, ComputedFileDetailView, and needed serializers
 ##
 
+from django.core.exceptions import ValidationError
 from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -140,7 +141,7 @@ class ComputedFileListView(generics.ListAPIView):
         try:
             token = APIToken.objects.get(id=token_id, is_activated=True)
             return {**serializer_context, "token": token}
-        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except (APIToken.DoesNotExist, ValidationError):
             return serializer_context
 
 

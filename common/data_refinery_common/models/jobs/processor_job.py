@@ -3,6 +3,7 @@ from typing import Set
 from django.db import models
 from django.utils import timezone
 
+import nomad
 from nomad import Nomad
 
 from data_refinery_common.models.jobs.job_managers import (
@@ -103,7 +104,7 @@ class ProcessorJob(models.Model):
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
             nomad_client.job.deregister_job(self.nomad_job_id)
-        except:
+        except nomad.api.exceptions.BaseNomadException:
             return False
 
         return True

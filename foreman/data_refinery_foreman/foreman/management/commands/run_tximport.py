@@ -73,7 +73,7 @@ def run_tximport():
 
                 try:
                     send_job(tximport_pipeline, processor_job)
-                except:
+                except Exception:
                     # If we cannot queue the job now the Foreman will do
                     # it later.
                     pass
