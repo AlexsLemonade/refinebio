@@ -21,14 +21,7 @@ from sklearn import preprocessing
 
 from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputedFile,
-    Dataset,
-    OriginalFile,
-    Pipeline,
-    SampleResultAssociation,
-)
+from data_refinery_common.models import ComputedFile, Pipeline
 from data_refinery_common.utils import calculate_file_size, calculate_sha1, get_env_variable
 from data_refinery_workers.processors import smashing_utils, utils
 
@@ -306,7 +299,7 @@ def _smash_all(job_context: Dict) -> Dict:
     final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
     try:
         shutil.make_archive(final_zip_base, "zip", job_context["output_dir"])
-    except:
+    except OSError:
         raise utils.ProcessorJobError("Smash Error while generating zip file", success=False)
 
     job_context["output_file"] = final_zip_base + ".zip"
@@ -491,7 +484,7 @@ def _notify_send_email(job_context):
     client = boto3.client("ses", region_name=AWS_REGION)
 
     # Provide the contents of the email.
-    response = client.send_email(
+    client.send_email(
         Destination={"ToAddresses": [RECIPIENT,],},
         Message={
             "Body": {

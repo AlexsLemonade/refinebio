@@ -1,5 +1,12 @@
 #!/bin/bash -e
 
+# This script should always run as if it were being called from
+# the directory it lives in.
+script_directory="$(perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
+
 print_description() {
     # shellcheck disable=SC2016
     echo 'This script can be used to deploy and update a `refine.bio` instance stack.'
@@ -7,7 +14,6 @@ print_description() {
     echo 'open an ingress, kill all running Nomad jobs, perform a database migration,'
     echo 're-define and re-register Nomad job specifications, and finally close the'
     echo 'ingress. This can be run from a CI/CD machine or a local dev box.'
-    echo 'This script must be run from /infrastructure!'
 }
 
 print_options() {
@@ -303,7 +309,9 @@ docker run \
 
 # Make sure to clear out any old nomad job specifications since we
 # will register everything in this directory.
-rm -r nomad-job-specs
+if [ -e nomad-job-specs ]; then
+  rm -r nomad-job-specs
+fi
 
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.

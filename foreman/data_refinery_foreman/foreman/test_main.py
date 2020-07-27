@@ -144,12 +144,28 @@ class ForemanTestCase(TestCase):
         mock_send_job.return_value = True
         mock_breakdown.return_value = {
             "nomad_pending_jobs_by_volume": {"0": 7, "1": 9},
-            "nomad_running_jobs_by_volume": {"0": 300, "1": 400},
+            "nomad_running_jobs_by_volume": {"0": 100, "1": 150},
         }
         mock_active_volumes.return_value = ["0", "1"]
 
+        # Create 30 processor jobs to add to the volume work depth.
+        # This helper function adds them all to volume 1, which we have to keep
+        # in mind later
+        for x in range(0, 30):
+            self.create_processor_job()
+
+        EXPECTED_WORK_DEPTH = {
+            "0": 107,  # 7 pending + 100 running
+            "1": 189,  # 9 pending + 150 running + 30 processor jobs
+        }
+
+        # Make sure that we set sensible values for EXPECTED_WORK_DEPTH.
+        # Otherwise the rest of the test fails mysteriously
+        for num in EXPECTED_WORK_DEPTH.values():
+            self.assertLess(num, main.DESIRED_WORK_DEPTH)
+
         main.update_volume_work_depth(datetime.timedelta(0))
-        self.assertEqual(main.VOLUME_WORK_DEPTH, {"0": 307, "1": 409})
+        self.assertEqual(main.VOLUME_WORK_DEPTH, EXPECTED_WORK_DEPTH)
 
         # Ensure that there are at least enough jobs to saturate the desired work depth
         # for both mocked volumes
@@ -163,8 +179,11 @@ class ForemanTestCase(TestCase):
         # No jobs actually make it in Nomad queue, but we keep a tally of the last reported work
         # depth plus any new queued jobs, so this should only queue up enough jobs to fill the
         # DESIRED_WORK_DEPTH for every node
-        # ((DESIRED_WORK_DEPTH - 67) + (DESIRED_WORK_DEPTH - 99) jobs in total)
-        self.assertEqual(len(mock_send_job.mock_calls), 2 * main.DESIRED_WORK_DEPTH - 307 - 409)
+        self.assertEqual(
+            len(mock_send_job.mock_calls),
+            (main.DESIRED_WORK_DEPTH - EXPECTED_WORK_DEPTH["0"])
+            + (main.DESIRED_WORK_DEPTH - EXPECTED_WORK_DEPTH["1"]),
+        )
         self.assertEqual(
             main.VOLUME_WORK_DEPTH, {"0": main.DESIRED_WORK_DEPTH, "1": main.DESIRED_WORK_DEPTH}
         )

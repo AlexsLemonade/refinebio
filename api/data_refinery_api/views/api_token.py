@@ -26,8 +26,9 @@ class CreateAPITokenView(generics.CreateAPIView):
     token_create
 
     This endpoint can be used to create and activate tokens. These tokens can be used
-    in requests that provide urls to download computed files. They are a way to accept
-    our terms of service.
+    in requests that provide urls to download computed files. Setting `is_activated` to
+    true indicates agreement with refine.bio's [Terms of Use](https://www.refine.bio/terms)
+    and [Privacy Policy](https://www.refine.bio/privacy).
 
     ```py
     import requests
@@ -59,6 +60,9 @@ class APITokenView(generics.RetrieveUpdateAPIView):
 
     put:
     This can be used to activate a specific token by sending `is_activated: true`.
+    Setting `is_activated` to true indicates agreement with refine.bio's
+    [Terms of Use](https://www.refine.bio/terms) and
+    [Privacy Policy](https://www.refine.bio/privacy).
     """
 
     model = APIToken

@@ -6,7 +6,6 @@ from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     Experiment,
-    ExperimentSampleAssociation,
     OriginalFile,
     Sample,
     SurveyJob,
@@ -94,7 +93,7 @@ class ExternalSourceSurveyor:
                         downloader_job=downloader_job.id,
                     )
                     message_queue.send_job(downloader_task, downloader_job)
-                except:
+                except Exception:
                     # If we fail to queue the job, it will be requeued.
                     pass
 
@@ -153,7 +152,7 @@ class ExternalSourceSurveyor:
                     downloaded_urls=downloaded_urls,
                 )
                 message_queue.send_job(downloader_task, downloader_job)
-            except:
+            except Exception:
                 # If we fail to queue the job, it will be requeued.
                 pass
 

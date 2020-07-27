@@ -23,10 +23,8 @@ from data_refinery_common.models import (
     ComputationalResultAnnotation,
     ComputedFile,
     Experiment,
-    ExperimentSampleAssociation,
     OrganismIndex,
     Pipeline,
-    Processor,
     Sample,
     SampleComputedFileAssociation,
     SampleResultAssociation,
@@ -683,7 +681,7 @@ def _run_salmon(job_context: Dict) -> Dict:
             formatted_dump_command = dump_str.format(
                 input_sra_file=job_context["sra_input_file_path"], fifo=fifo
             )
-            dump_po = subprocess.Popen(
+            subprocess.Popen(
                 formatted_dump_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
 
@@ -712,7 +710,7 @@ def _run_salmon(job_context: Dict) -> Dict:
             formatted_dump_command = dump_str.format(
                 input_sra_file=job_context["sra_input_file_path"], fifo_alpha=alpha, fifo_beta=beta
             )
-            dump_po = subprocess.Popen(
+            subprocess.Popen(
                 formatted_dump_command,
                 shell=True,
                 executable="/bin/bash",
