@@ -125,7 +125,7 @@ class CompendiumResultListView(generics.ListAPIView):
         try:
             token_id = self.request.META.get("HTTP_API_KEY", None)
             # Verify that a token with that id exists
-            _ = APIToken.objects.get(id=token_id, is_activated=True)
+            APIToken.objects.get(id=token_id, is_activated=True)
             return CompendiumResultWithUrlSerializer
         except (APIToken.DoesNotExist, ValidationError):
             return CompendiumResultSerializer
@@ -144,7 +144,7 @@ class CompendiumResultDetailView(generics.RetrieveAPIView):
         try:
             token_id = self.request.META.get("HTTP_API_KEY", None)
             # Verify that a token with that id exists
-            _ = APIToken.objects.get(id=token_id, is_activated=True)
+            APIToken.objects.get(id=token_id, is_activated=True)
             return CompendiumResultWithUrlSerializer
         except (APIToken.DoesNotExist, ValidationError):
             return CompendiumResultSerializer

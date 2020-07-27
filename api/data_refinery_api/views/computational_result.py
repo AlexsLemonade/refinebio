@@ -83,7 +83,7 @@ class ComputationalResultListView(generics.ListAPIView):
 
         try:
             # Verify that a token with that id exists
-            _ = APIToken.objects.get(id=token_id, is_activated=True)
+            APIToken.objects.get(id=token_id, is_activated=True)
             return ComputationalResultWithUrlSerializer
         except (APIToken.DoesNotExist, ValidationError):
             return ComputationalResultSerializer
@@ -108,7 +108,7 @@ class ComputationalResultDetailView(generics.RetrieveAPIView):
 
         try:
             # Verify that a token with that id exists
-            _ = APIToken.objects.get(id=token_id, is_activated=True)
+            APIToken.objects.get(id=token_id, is_activated=True)
             return DetailedComputationalResultWithUrlSerializer
         except (APIToken.DoesNotExist, ValidationError):
             return DetailedComputationalResultSerializer
