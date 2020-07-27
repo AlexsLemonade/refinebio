@@ -1,5 +1,5 @@
 [Unit]
-Description=CCDL nomad client runtime
+Description=CCDL nomad server runtime
 Documentation=https://github.com/AlexsLemonade/refinebio
 After=network.target local-fs.target
 
