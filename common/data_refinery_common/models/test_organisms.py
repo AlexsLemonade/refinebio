@@ -105,7 +105,7 @@ def mocked_requests_get(url, parameters):
         mock.text = "This is wrong."
     else:
         try:
-            if parameters["field"] is "scin":
+            if parameters["field"] == "scin":
                 mock.text = ESEARCH_NOT_FOUND_XML
             else:
                 mock.text = "This is also wrong."

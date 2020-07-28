@@ -10,7 +10,7 @@ def svd_algorithm_fix(apps, schema_editor):
     ).prefetch_related("result__compendium_result")
 
     for computed_file in compendium_computed_files:
-        if computed_file.svd_algorithm is not "None":
+        if computed_file.svd_algorithm != "None":
             compendium_result = computed_file.result.compendium_result.first()
             compendium_result.svd_algorithm = computed_file.svd_algorithm
             compendium_result.save()
