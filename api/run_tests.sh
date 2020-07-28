@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 # Script for executing Django PyUnit tests within a Docker container.
 

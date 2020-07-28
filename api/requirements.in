@@ -5,6 +5,8 @@ boto3>=1.12.21
 requests>=2.23.0
 urllib3>=1.24.2
 Jinja2>=2.10.1
+# We need at least 1.1 because of https://github.com/pallets/markupsafe/issues/57
+markupsafe>=1.1
 python-nomad>=1.0.2
 djangorestframework>=3.9.1
 djangorestframework-hstore
