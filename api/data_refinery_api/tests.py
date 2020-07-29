@@ -497,12 +497,7 @@ class APITestCases(APITestCase):
 
         # Good, except for empty email.
         jdata = json.dumps(
-            {
-                "start": True,
-                "data": {"GSE123": ["789"]},
-                "token_id": activated_token["id"],
-                "email_address": "",
-            }
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id, "email_address": "",}
         )
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
