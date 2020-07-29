@@ -3,7 +3,7 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List
 
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date
 
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -351,9 +351,9 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment.pubmed_id = metadata["pubmed_id"]
             experiment.has_publication = True
         if "study_ena_first_public" in metadata:
-            experiment.source_first_published = parse_datetime(metadata["study_ena_first_public"])
+            experiment.source_first_published = parse_date(metadata["study_ena_first_public"])
         if "study_ena_last_update" in metadata:
-            experiment.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
+            experiment.source_last_modified = parse_date(metadata["study_ena_last_update"])
 
         # We only want GEO alternate accessions for SRA samples
         if re.match(r"^GSE\d{2,6}", metadata.get("external_id", "")) is not None:

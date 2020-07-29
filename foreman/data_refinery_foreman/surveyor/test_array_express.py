@@ -1,12 +1,15 @@
+import datetime
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.utils import timezone
 
 import requests
 import vcr
 
 from data_refinery_common.models import (
     DownloaderJob,
+    Experiment,
     Organism,
     Sample,
     SurveyJob,
@@ -54,6 +57,15 @@ class SurveyTestCase(TestCase):
 
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 1)
+
+        experiment = Experiment.objects.first()
+        self.assertEqual(experiment.accession_code, "E-MTAB-3050")
+        self.assertEqual(
+            experiment.source_first_published, datetime.datetime(2014, 10, 31, tzinfo=timezone.utc)
+        )
+        self.assertEqual(
+            experiment.source_last_modified, datetime.datetime(2014, 10, 30, tzinfo=timezone.utc)
+        )
 
         sample = Sample.objects.first()
         self.assertTrue(" (hgu95av2)" in sample.pretty_platform)
