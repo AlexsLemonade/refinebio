@@ -1,9 +1,9 @@
+import datetime
 from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
 
-import datetime
 import requests
 import vcr
 

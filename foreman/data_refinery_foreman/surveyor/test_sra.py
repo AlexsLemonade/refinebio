@@ -1,7 +1,7 @@
+import datetime
 from unittest.mock import patch
 
 from django.test import TestCase
-import datetime
 
 import vcr
 
@@ -170,8 +170,8 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["sample_sample_name"], "DRS001521")
         self.assertEqual(metadata["sample_title"], "Gg_HH16_1_embryo_mRNAseq")
         self.assertEqual(metadata["spot_length"], "100")
-        self.assertEqual(metadata["study_ena_first_public"], "2013-07-20")
-        self.assertEqual(metadata["study_ena_last_update"], "2015-08-24")
+        self.assertEqual(metadata["study_ena_first_public"], "2013-07-19")
+        self.assertEqual(metadata["study_ena_last_update"], "2015-06-22")
         self.assertEqual(metadata["study_accession"], "DRP000595")
         self.assertEqual(metadata["submission_accession"], "DRA000567")
         self.assertEqual(
