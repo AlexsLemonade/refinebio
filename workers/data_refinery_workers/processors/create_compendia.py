@@ -341,7 +341,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             transposed_matrix
         )
 
-        svd_start = log_state("end SVD", job_context["job"].id, svd_start)
+        log_state("end SVD", job_context["job"].id, svd_start)
     else:
         imputed_matrix = transposed_matrix
         logger.info("Skipping IterativeSVD")

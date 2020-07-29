@@ -506,7 +506,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                 original_file = OriginalFile.objects.get_or_create(
                     source_url=file_url, source_filename=file_url.split("/")[-1], has_raw=True
                 )[0]
-                original_file_sample_association = OriginalFileSampleAssociation.objects.get_or_create(
+                OriginalFileSampleAssociation.objects.get_or_create(
                     original_file=original_file, sample=sample_object
                 )
 

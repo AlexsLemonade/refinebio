@@ -118,7 +118,7 @@ class Command(BaseCommand):
 
                                 sample.platform_accession_code = brainarray_package
                                 sample.platform_name = platform_name
-                        except:
+                        except Exception:
                             logger.exception(
                                 "Failed to detect platform from downloaded file %s.",
                                 input_file_path,

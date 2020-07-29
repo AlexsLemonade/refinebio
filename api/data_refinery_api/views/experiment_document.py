@@ -4,7 +4,7 @@
 
 from django.http import QueryDict
 from django.utils.decorators import method_decorator
-from rest_framework import generics, serializers
+from rest_framework import serializers
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 
 from django_elasticsearch_dsl_drf.constants import (
@@ -22,7 +22,6 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
 from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
-from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from elasticsearch_dsl import TermsFacet

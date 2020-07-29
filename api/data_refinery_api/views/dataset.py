@@ -4,9 +4,10 @@
 
 from collections import defaultdict
 
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from rest_framework import filters, generics, mixins, serializers, viewsets
+from rest_framework import mixins, serializers, viewsets
 from rest_framework.exceptions import APIException
 
 from drf_yasg import openapi
@@ -42,7 +43,7 @@ def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
     if quant_sf_only:
         try:
             experiment = Experiment.public_objects.get(accession_code=experiment)
-        except Exception as e:
+        except Experiment.DoesNotExist:
             return False
 
         samples = experiment.sample_set.filter(
@@ -57,8 +58,8 @@ def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
 
     else:
         try:
-            experiment = Experiment.processed_public_objects.get(accession_code=experiment)
-        except Exception as e:
+            Experiment.processed_public_objects.get(accession_code=experiment)
+        except Experiment.DoesNotExist:
             return False
 
     return True
@@ -91,11 +92,8 @@ def validate_dataset(data):
                 + "`"
             )
 
-        try:
-            if len(value) != len(set(value)):
-                raise serializers.ValidationError("Duplicate values detected in " + str(value))
-        except Exception as e:
-            raise serializers.ValidationError("Received bad dataset data: " + str(e))
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Duplicate values detected in " + str(value))
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
@@ -119,10 +117,19 @@ def validate_dataset(data):
     if len(accessions) == 0:
         return
 
+    samples = Sample.public_objects.filter(accession_code__in=accessions)
+    if samples.count() != len(accessions):
+        raise serializers.ValidationError(
+            {
+                "message": "Sample(s) in dataset do not exist on refine.bio. See `non_downloadable_samples` for a full list",
+                "non_downloadable_samples": list(
+                    set(accessions) - set(s.accession_code for s in samples)
+                ),
+            },
+        )
+
     if data.get("quant_sf_only", False):
-        samples_without_quant_sf = Sample.public_objects.filter(
-            accession_code__in=accessions
-        ).exclude(
+        samples_without_quant_sf = samples.exclude(
             # Exclude samples that have at least one uploaded quant.sf file associated with them
             results__computedfile__filename="quant.sf",
             results__computedfile__s3_key__isnull=False,
@@ -139,9 +146,7 @@ def validate_dataset(data):
             )
 
     else:
-        unprocessed_samples = Sample.public_objects.filter(
-            accession_code__in=accessions, is_processed=False
-        )
+        unprocessed_samples = samples.exclude(is_processed=True)
         if unprocessed_samples.count() > 0:
             raise serializers.ValidationError(
                 {
@@ -255,10 +260,7 @@ class DatasetSerializer(serializers.ModelSerializer):
         """
         Ensure this is something we want in our dataset.
         """
-        try:
-            validate_dataset(data)
-        except Exception:
-            raise
+        validate_dataset(data)
         return data
 
     def get_organism_samples(self, obj):
@@ -354,7 +356,7 @@ class DatasetView(
         try:
             token = APIToken.objects.get(id=token_id, is_activated=True)
             return {**serializer_context, "token": token}
-        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+        except (APIToken.DoesNotExist, ValidationError):
             return serializer_context
 
     def validate_token(self):
@@ -366,8 +368,7 @@ class DatasetView(
 
         try:
             APIToken.objects.get(id=token_id, is_activated=True)
-        # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-        except Exception:
+        except (APIToken.DoesNotExist, ValidationError):
             raise serializers.ValidationError("You must provide an active API token ID")
 
     @staticmethod
@@ -388,7 +389,7 @@ class DatasetView(
     def validate_email_address_is_nonempty(self):
         """Check to make sure the email exists. We call this when getting ready to dispatch a dataset"""
         supplied_email_address = self.request.data.get("email_address", None)
-        if supplied_email_address is None:
+        if supplied_email_address is None or supplied_email_address == "":
             raise serializers.ValidationError("You must provide an email address.")
 
     def dispatch_job(self, serializer, obj):
@@ -412,6 +413,7 @@ class DatasetView(
                 # We didn't actually send it, but we also didn't want to.
                 job_sent = True
         except Exception as e:
+            # Just log whatever exception happens, because the foreman wil requeue the job anyway
             logger.error(e)
 
         if not job_sent:

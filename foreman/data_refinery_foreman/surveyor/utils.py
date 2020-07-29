@@ -59,6 +59,6 @@ def get_title_and_authors_for_pubmed_id(pmid):
             author_names.append(author["name"])
 
         return (title, author_names)
-    except:
+    except Exception:
         # This is fine for a timeout
         return ("", [])

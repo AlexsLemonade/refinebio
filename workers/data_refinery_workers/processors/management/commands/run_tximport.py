@@ -5,10 +5,8 @@ from django.core.management.base import BaseCommand
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,
-    OriginalFile,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
-    Sample,
 )
 from data_refinery_workers.processors import tximport
 
