@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date
 
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -67,10 +67,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         experiment_object.technology = "MICROARRAY"
         experiment_object.description = experiment_descripton
 
-        experiment_object.source_first_published = parse_datetime(parsed_json["releasedate"])
-        experiment_object.source_last_modified = parse_datetime(
-            cls._get_last_update_date(parsed_json)
-        )
+        experiment_object.source_first_published = parse_date(parsed_json["releasedate"])
+        experiment_object.source_last_modified = parse_date(cls._get_last_update_date(parsed_json))
 
     def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
         """Given an experiment accession code, create an Experiment object.
