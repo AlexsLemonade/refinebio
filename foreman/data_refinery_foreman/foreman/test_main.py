@@ -144,7 +144,7 @@ class ForemanTestCase(TestCase):
         mock_send_job.return_value = True
         mock_breakdown.return_value = {
             "nomad_pending_jobs_by_volume": {"0": 7, "1": 9},
-            "nomad_running_jobs_by_volume": {"0": 100, "1": 150},
+            "nomad_running_jobs_by_volume": {"0": 75, "1": 50},
         }
         mock_active_volumes.return_value = ["0", "1"]
 
@@ -155,8 +155,8 @@ class ForemanTestCase(TestCase):
             self.create_processor_job()
 
         EXPECTED_WORK_DEPTH = {
-            "0": 107,  # 7 pending + 100 running
-            "1": 189,  # 9 pending + 150 running + 30 processor jobs
+            "0": 82,  # 7 pending + 75 running
+            "1": 89,  # 9 pending + 50 running + 30 processor jobs
         }
 
         # Make sure that we set sensible values for EXPECTED_WORK_DEPTH.
