@@ -500,7 +500,7 @@ class APITestCases(APITestCase):
             {
                 "start": True,
                 "data": {"GSE123": ["789"]},
-                "token_id": activated_token["id"],
+                "token_id": token_id,
                 "email_address": "",
             }
         )
