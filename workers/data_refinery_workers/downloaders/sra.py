@@ -131,7 +131,7 @@ def _download_file_aspera(
             downloader_job=downloader_job.id,
         )
 
-        if source is "ENA":
+        if source == "ENA":
             # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
             # We are also NOT using encryption (-T) to avoid slowdown,
             # and we are not using any kind of rate limiting.

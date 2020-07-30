@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:20.04
 
 RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
@@ -13,7 +13,7 @@ RUN \
   apt-fast update -qq && \
   apt-get install -y apt-transport-https && \
   apt-fast install -y lsb-release && \
-  echo "deb https://cran.revolutionanalytics.com/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -22,8 +22,8 @@ RUN \
   git \
   python3 \
   python3-pip \
-  r-base-core=3.4.2-1xenial1 \
-  r-base-dev=3.4.2-1xenial1 \
+  r-base-core=4.0.2-1.2004.0 \
+  r-base-dev=4.0.0-1.2004.0 \
   libpq-dev \
   libxml2-dev \
   libssl-dev \
@@ -53,8 +53,8 @@ RUN Rscript install_downloader_R_only.R
 # Even using `su - user &&` doesn't work...
 USER user
 
-# Install Aspera
-RUN wget -q https://download.asperasoft.com/download/sw/cli/3.7.7/aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
+# Install Aspera (their servers only serve HTTPS at TLSv1.0, which Ubuntu blocks because it is insecure)
+RUN OPENSSL_CONF=/etc/ssl/openssl-aspera-download.cnf wget -q http://download.asperasoft.com/download/sw/cli/3.7.7/aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 
 # Now that we're done installing Aspera go back to being root for a bit.

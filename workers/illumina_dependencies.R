@@ -2,20 +2,17 @@ options(warn=2)
 options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
 options(Ncpus=parallel::detectCores())
 
-# devtools::install_url() requires BiocInstaller
-install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
-
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
   lapply(packages,
          function(pkg) devtools::install_url(paste0(main_url, pkg)))
 }
 
-bioc_url <- 'https://bioconductor.org/packages/3.6/bioc/src/contrib/'
+bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
-   'oligo_1.42.0.tar.gz',
-   'limma_3.34.9.tar.gz',
-   'AnnotationDbi_1.40.0.tar.gz'
+  'oligo_1.52.0.tar.gz',
+  'AnnotationDbi_1.50.3.tar.gz',
+  'limma_3.44.3.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
 

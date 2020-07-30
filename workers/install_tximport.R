@@ -4,7 +4,4 @@ options(warn=2)
 options(Ncpus=parallel::detectCores())
 options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
 
-# devtools::install_url() requires BiocInstaller
-install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
-
-devtools::install_url('https://bioconductor.org/packages/3.6/bioc/src/contrib/tximport_1.6.0.tar.gz')
+devtools::install_url('https://bioconductor.org/packages/release/bioc/src/contrib/tximport_1.16.1.tar.gz')

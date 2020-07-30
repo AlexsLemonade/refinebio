@@ -4,6 +4,10 @@ options(warn=2)
 options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
 options(Ncpus=parallel::detectCores())
 
+# Use devtools::install_version() to install packages in cran.
+devtools::install_version('dplyr', version='1.0.0')
+devtools::install_version('tidyr', version='1.1.0')
+
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
   lapply(packages,
