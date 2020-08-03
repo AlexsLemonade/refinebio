@@ -5,20 +5,11 @@ from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
-    ComputationalResult,
-    ComputedFile,
     Dataset,
-    Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
     Organism,
-    OrganismIndex,
     ProcessorJob,
     ProcessorJobDatasetAssociation,
     Sample,
-    SampleComputedFileAssociation,
-    SurveyJob,
-    SurveyJobKeyValue,
 )
 
 logger = get_and_configure_logger(__name__)

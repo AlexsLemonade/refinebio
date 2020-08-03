@@ -279,6 +279,8 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
     quant_test_raw_dir="$volume_directory/QUANT"
     quant_name="smasher-test-quant.sf"
     quant_test_data_1="$quant_test_raw_dir/$quant_name"
+    quant_name_2="smasher-test-truncated-quant.sf"
+    quant_test_data_2="$quant_test_raw_dir/$quant_name_2"
     if [ ! -e "$pcl_test_data_1" ]; then
         mkdir -p "$pcl_test_raw_dir"
         echo "Downloading PCL for tests."
@@ -363,6 +365,12 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
         echo "Downloading Quant files for tests."
         wget -q -O "$quant_test_data_1" \
              "$test_data_repo/$quant_name"
+    fi
+    if [ ! -e "$quant_test_data_2" ]; then
+        mkdir -p "$quant_test_raw_dir"
+        echo "Downloading Quant files for tests."
+        wget -q -O "$quant_test_data_2" \
+             "$test_data_repo/$quant_name_2"
     fi
     # Mock out the AWS keys since we use VCR to mock out the request with these
     # as the AWS credentials

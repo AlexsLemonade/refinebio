@@ -22,14 +22,14 @@ def delete_job_and_retries(job) -> None:
     """Deletes a job and any jobs that retried it."""
     try:
         retried_job = job.retried_job
-    except:
+    except Exception:
         # I'm not sure why this isn't safe. It might be that we're
         # somehow able to delete the job this is referencing.
         retried_job = None
 
     try:
         job.delete()
-    except:
+    except Exception:
         # If the job already was deleted it's quite okay.
         pass
 
@@ -124,7 +124,7 @@ def purge_experiment(accession: str) -> None:
             try:
                 # Not all original files have absolute_file_path set apparently
                 original_file.delete_local_file()
-            except:
+            except Exception:
                 pass
 
     # Whether or not we can delete all of these original files, we

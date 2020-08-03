@@ -3,7 +3,7 @@
 ##
 
 from django.utils.decorators import method_decorator
-from rest_framework import generics, serializers
+from rest_framework import mixins, serializers, viewsets
 
 from drf_yasg.utils import swagger_auto_schema
 
@@ -21,13 +21,14 @@ class APITokenSerializer(serializers.ModelSerializer):
         }
 
 
-class CreateAPITokenView(generics.CreateAPIView):
-    """
-    token_create
-
+@method_decorator(
+    name="create",
+    decorator=swagger_auto_schema(
+        operation_description="""
     This endpoint can be used to create and activate tokens. These tokens can be used
-    in requests that provide urls to download computed files. They are a way to accept
-    our terms of service.
+    in requests that provide urls to download computed files. Setting `is_activated` to
+    true indicates agreement with refine.bio's [Terms of Use](https://www.refine.bio/terms)
+    and [Privacy Policy](https://www.refine.bio/privacy).
 
     ```py
     import requests
@@ -44,21 +45,31 @@ class CreateAPITokenView(generics.CreateAPIView):
     - [https://github.com/AlexsLemonade/refinebio/issues/731]()
     - [https://github.com/AlexsLemonade/refinebio-frontend/issues/560]()
     """
-
-    model = APIToken
-    serializer_class = APITokenSerializer
-
-
-@method_decorator(name="patch", decorator=swagger_auto_schema(auto_schema=None))
-class APITokenView(generics.RetrieveUpdateAPIView):
-    """
-    Read and modify Api Tokens.
-
-    get:
-    Return details about a specific token.
-
-    put:
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(operation_description="Return details about a specific token.",),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_description="""
     This can be used to activate a specific token by sending `is_activated: true`.
+    Setting `is_activated` to true indicates agreement with refine.bio's
+    [Terms of Use](https://www.refine.bio/terms) and
+    [Privacy Policy](https://www.refine.bio/privacy).
+    """
+    ),
+)
+class APITokenView(
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    Create, read, and modify Api Tokens.
     """
 
     model = APIToken

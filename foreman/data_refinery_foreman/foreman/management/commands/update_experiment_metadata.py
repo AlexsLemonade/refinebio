@@ -50,7 +50,7 @@ class Command(BaseCommand):
         page = paginator.page()
 
         while True:
-            for experiment in experiments:
+            for experiment in page.object_list:
                 logger.debug(
                     "Refreshing metadata for an experiment.", experiment=experiment.accession_code
                 )

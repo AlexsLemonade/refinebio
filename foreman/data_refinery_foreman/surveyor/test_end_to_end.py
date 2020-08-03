@@ -411,7 +411,7 @@ class GeoArchiveRedownloadingTestCase(EndToEndTestCase):
 
             try:
                 doomed_processor_job = original_file.processor_jobs.all()[0]
-            except:
+            except Exception:
                 # The doomed job may be aborted before we can get
                 # it. This is fine, we just can't look at it.
                 doomed_processor_job = None
@@ -531,7 +531,7 @@ class GeoCelgzRedownloadingTestCase(EndToEndTestCase):
 
             try:
                 doomed_processor_job = original_file.processor_jobs.all()[0]
-            except:
+            except Exception:
                 # The doomed job may be aborted before we can get
                 # it. This is fine, we just can't look at it.
                 doomed_processor_job = None
@@ -655,7 +655,7 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
                 )
                 try:
                     wait_for_job(processor_job, ProcessorJob, timezone.now())
-                except:
+                except Exception:
                     pass
 
             # The processor job that had a missing file will have
@@ -828,7 +828,7 @@ class SraRedownloadingTestCase(EndToEndTestCase):
                         good_failure_reason
                     ):
                         successful_processor_jobs.append(processor_job)
-                except:
+                except Exception:
                     pass
 
             self.assertEqual(len(successful_processor_jobs), 4)

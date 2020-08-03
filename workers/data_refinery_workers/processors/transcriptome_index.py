@@ -14,10 +14,7 @@ from data_refinery_common.models import (
     ComputedFile,
     Organism,
     OrganismIndex,
-    OriginalFile,
     Pipeline,
-    Processor,
-    ProcessorJob,
 )
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 from data_refinery_workers.processors import utils
@@ -328,7 +325,7 @@ def _zip_index(job_context: Dict) -> Dict:
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
             tar.add(job_context["output_dir"], arcname=os.path.basename(job_context["output_dir"]))
-    except:
+    except Exception:
         logger.exception(
             "Exception caught while zipping index directory %s",
             job_context["output_dir"],

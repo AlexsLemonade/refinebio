@@ -1127,8 +1127,45 @@ class SmasherTestCase(TransactionTestCase):
         )
         computed_file.save()
 
+        # Create a second sample whose quant.sf file is a real truncated file
+        # from prod, and make sure that we filter it out properly
+        result = ComputationalResult()
+        result.save()
+
+        sample = Sample()
+        sample.accession_code = "GSM1237819"
+        sample.title = "GSM1237819"
+        sample.organism = homo_sapiens
+        sample.technology = "RNA-SEQ"
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.s3_key = "smasher-test-truncated-quant.sf"
+        computed_file.s3_bucket = "data-refinery-test-assets"
+        computed_file.filename = "quant.sf"
+        computed_file.absolute_file_path = (
+            "/home/user/data_store/QUANT/smasher-test-truncated-quant.sf"
+        )
+        computed_file.result = result
+        computed_file.is_smashable = True
+        computed_file.size_in_bytes = 123123
+        computed_file.sha1 = (
+            "7a610039885be5f56b8ba29cf58d6555b1707ca5"  # this matches with the downloaded file
+        )
+        computed_file.save()
+
         ds = Dataset()
-        ds.data = {"GSE51088": ["GSM1237818"]}
+        ds.data = {"GSE51088": ["GSM1237818", "GSM1237819"]}
         ds.aggregate_by = "EXPERIMENT"
         ds.scale_by = "STANDARD"
         ds.email_address = "null@derp.com"
@@ -1149,6 +1186,10 @@ class SmasherTestCase(TransactionTestCase):
         self.assertTrue(final_context["metadata"]["quant_sf_only"])
         self.assertEqual(final_context["metadata"]["num_samples"], 1)
         self.assertEqual(final_context["metadata"]["num_experiments"], 1)
+        self.assertEqual(
+            final_context["filtered_samples"]["GSM1237819"]["reason"],
+            "This sample's quant.sf file was truncated and missing its header",
+        )
 
     @tag("smasher")
     def test_sanity_imports(self):
