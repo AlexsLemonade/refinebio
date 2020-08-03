@@ -62,13 +62,13 @@ PAGE_SIZE = 2000
 VOLUME_WORK_DEPTH = dict()
 TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now() - datetime.timedelta(minutes=10)
 
-# The number of downloader jobs currently in the queue
+# The number of downloader jobs currently in the nomad queue
 DOWNLOADER_JOBS_IN_QUEUE = 0
 TIME_OF_LAST_DOWNLOADER_JOB_CHECK = timezone.now() - datetime.timedelta(minutes=10)
 
 # The desired number of active + pending jobs on a volume. Downloader jobs
 # will be assigned to instances until this limit is reached.
-DESIRED_WORK_DEPTH = 500
+DESIRED_WORK_DEPTH = 100
 
 # This is the absolute max number of downloader jobs that should ever
 # be queued across the whole cluster no matter how many nodes we
@@ -142,8 +142,9 @@ def handle_repeated_failure(job) -> None:
 
 
 def update_volume_work_depth(window=datetime.timedelta(minutes=2)):
-    """When a new job is created our local idea of the work depth is updated, but every so often
-    we refresh from Nomad how many jobs were stopped or killed"""
+    """When a new downloader job is created our local idea of the work depth is
+    updated, but every so often we refresh from Nomad how many downloader and
+    processor jobs are active on each volume"""
     global VOLUME_WORK_DEPTH
     global TIME_OF_LAST_WORK_DEPTH_CHECK
 
@@ -156,6 +157,7 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=2)):
         # Loop through all active volumes, which are the keys to the
         # fields aggregated by volume
         for volume_index in get_active_volumes():
+            # First calculate the number of downloader jobs in the nomad queue
             if volume_index in breakdown["nomad_pending_jobs_by_volume"]:
                 VOLUME_WORK_DEPTH[volume_index] = (
                     breakdown["nomad_pending_jobs_by_volume"][volume_index]
@@ -165,6 +167,24 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=2)):
                 # There are no nomad jobs currently queued for the
                 # volume index, so set its work depth is 0.
                 VOLUME_WORK_DEPTH[volume_index] = 0
+
+            # Then add the number of processor jobs in the nomad queue and waiting to be queued
+            VOLUME_WORK_DEPTH[volume_index] += (
+                ProcessorJob.lost_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+                .filter(volume_index=volume_index)
+                .exclude(pipeline_applied="JANITOR")
+                .count()
+                + ProcessorJob.hung_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+                .filter(volume_index=volume_index)
+                .exclude(pipeline_applied="JANITOR")
+                .count()
+                # NOTE: ProcessorJob.failed_objects includes only failed jobs
+                # that haven't been retried and should be, which is what we want
+                + ProcessorJob.failed_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+                .filter(volume_index=volume_index)
+                .exclude(pipeline_applied="JANITOR")
+                .count()
+            )
 
         TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now()
 
@@ -243,7 +263,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
 
             experiment_completion_percent = processed_samples / len(related_samples)
             prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
-        except:
+        except Exception:
             logger.debug("Exception caught while prioritizing salmon jobs!", job=job)
 
     sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
@@ -271,7 +291,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
                 if sample.organism.name == "DANIO_RERIO":
                     zebrafish_jobs.append(job)
                     break
-        except:
+        except Exception:
             logger.debug("Exception caught while prioritizing zebrafish jobs!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
@@ -305,7 +325,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
                         prioritized_jobs.append(job)
                         is_prioritized_job = True
                         break
-        except:
+        except Exception:
             logger.exception("Exception caught while prioritizing jobs by accession!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
@@ -411,7 +431,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
             return False, ""
-    except:
+    except Exception:
         logger.error(
             "Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
             last_job.id,
@@ -446,7 +466,7 @@ def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=2)) -> int:
 
             DOWNLOADER_JOBS_IN_QUEUE = total
 
-        except:
+        except Exception:
             # Nomad is down, return an impossibly high number to prevent
             # additonal queuing from happening:
             DOWNLOADER_JOBS_IN_QUEUE = sys.maxsize
@@ -459,7 +479,6 @@ def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=2)) -> int:
 def get_capacity_for_downloader_jobs() -> int:
     """Returns how many downloader jobs the queue has capacity for.
     """
-
     update_volume_work_depth()
 
     total_capacity = 0
@@ -513,9 +532,6 @@ def retry_failed_downloader_jobs() -> None:
         .prefetch_related("original_files__samples")
     )
 
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs()
 
     paginator = Paginator(failed_jobs, PAGE_SIZE, "created_at")
@@ -795,7 +811,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         else:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
-    except:
+    except Exception:
         logger.warn(
             "Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
             last_job.id,
@@ -860,7 +876,7 @@ def retry_failed_processor_jobs() -> None:
     Ignores Janitor jobs since they are queued every half hour anyway."""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -900,7 +916,7 @@ def retry_hung_processor_jobs() -> None:
     Ignores Janitor jobs since they are queued every half hour anyway."""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -969,7 +985,7 @@ def retry_lost_processor_jobs() -> None:
     Ignores Janitor jobs since they are queued every half hour anyway."""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -1092,7 +1108,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
         else:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
-    except:
+    except Exception:
         logger.error(
             "Failed to requeue Survey Job which had ID %d with a new Surevey Job with ID %d.",
             last_job.id,
@@ -1296,7 +1312,7 @@ def send_janitor_jobs():
     """Dispatch a Janitor job for each instance in the cluster"""
     try:
         active_volumes = get_active_volumes()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
@@ -1351,7 +1367,7 @@ def cleanup_the_queue():
     try:
         active_volumes = get_active_volumes()
         jobs = nomad_client.jobs.get_jobs()
-    except:
+    except Exception:
         # If we cannot reach Nomad now then we can wait until a later loop.
         logger.warn("Couldn't query Nomad about current jobs.", exc_info=1)
         return
@@ -1404,7 +1420,7 @@ def cleanup_the_queue():
                     job_type=job_type,
                 )
                 num_jobs_killed += 1
-            except:
+            except Exception:
                 logger.exception(
                     "Could not remove Nomad job from the Nomad queue.",
                     nomad_job_id=job["ID"],

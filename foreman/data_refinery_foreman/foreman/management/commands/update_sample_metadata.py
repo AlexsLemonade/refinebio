@@ -50,7 +50,7 @@ class Command(BaseCommand):
         page = paginator.page()
 
         while True:
-            for sample in samples:
+            for sample in page.object_list:
                 logger.debug("Refreshing metadata for a sample.", sample=sample.accession_code)
                 if sample.source_database == "SRA":
                     metadata = SraSurveyor.gather_all_metadata(sample.accession_code)

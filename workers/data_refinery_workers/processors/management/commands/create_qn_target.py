@@ -5,18 +5,11 @@ from django.db.models import Count
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    ComputationalResult,
-    ComputedFile,
     Dataset,
-    Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
     Organism,
-    OrganismIndex,
     ProcessorJob,
     ProcessorJobDatasetAssociation,
     Sample,
-    SampleComputedFileAssociation,
 )
 from data_refinery_workers.processors import qn_reference
 

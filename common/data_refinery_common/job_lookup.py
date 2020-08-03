@@ -3,12 +3,7 @@ from enum import Enum, unique
 
 from data_refinery_common import utils
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    OriginalFile,
-    OriginalFileSampleAssociation,
-    ProcessorJob,
-    Sample,
-)
+from data_refinery_common.models import ProcessorJob, Sample
 
 logger = get_and_configure_logger(__name__)
 

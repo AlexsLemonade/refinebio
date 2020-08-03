@@ -4,7 +4,6 @@ import io
 import os
 import random
 import re
-import shutil
 import time
 from functools import partial
 from itertools import groupby

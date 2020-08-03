@@ -14,9 +14,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
-    OriginalFile,
     Pipeline,
-    Processor,
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )

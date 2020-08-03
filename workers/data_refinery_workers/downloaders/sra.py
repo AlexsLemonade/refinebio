@@ -1,3 +1,4 @@
+import ftplib
 import os
 import shutil
 import subprocess
@@ -8,8 +9,6 @@ from ftplib import FTP
 from typing import List
 
 from django.utils import timezone
-
-import requests
 
 from data_refinery_common.job_management import create_processor_job_for_original_files
 from data_refinery_common.logging import get_and_configure_logger
@@ -245,7 +244,7 @@ def _has_unmated_reads(accession_code: str) -> bool:
             return True
         else:
             return False
-    except:
+    except ftplib.all_errors:
         # If we can't find the sample on ENA's FTP server, then we
         # shouldn't try to download it from there.
         return False

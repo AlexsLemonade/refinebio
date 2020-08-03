@@ -24,6 +24,12 @@ data "local_file" "nomad_lead_server_config" {
   filename = "nomad-configuration/lead_server.hcl"
 }
 
+# This service takes care of restarting the nomad server if it goes down
+data "local_file" "nomad_server_service" {
+  filename = "nomad-configuration/nomad-server.service"
+}
+
+
 # This script smusher exists in order to be able to circumvent a
 # limitation of AWS which is that you get one script and one script
 # only to set up the instance when it boots up. Because there is only
@@ -38,6 +44,7 @@ data "template_file" "nomad_lead_server_script_smusher" {
   vars {
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
     nomad_server_config = "${data.local_file.nomad_lead_server_config.content}"
+    nomad_server_service = "${data.local_file.nomad_server_service.content}"
     server_number = 1
     user = "${var.user}"
     stage = "${var.stage}"
@@ -141,6 +148,7 @@ data "template_file" "nomad_client_script_smasher_smusher" {
   vars {
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
     nomad_client_smasher_config = "${data.template_file.nomad_client_smasher_config.rendered}"
+    nomad_client_service = "${data.local_file.nomad_client_service.content}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"

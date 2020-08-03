@@ -9,7 +9,6 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
     Pipeline,
-    Processor,
     SampleAnnotation,
     SampleComputedFileAssociation,
     SampleResultAssociation,
@@ -206,7 +205,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
 
     job_context["script_name"] = "gene_convert.R"
     try:
-        result = subprocess.check_output(
+        subprocess.check_output(
             [
                 "/usr/bin/Rscript",
                 "--vanilla",  # Shut up Rscript
@@ -322,7 +321,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
 
     job_context["script_name"] = "gene_convert_illumina.R"
     try:
-        result = subprocess.check_output(
+        subprocess.check_output(
             [
                 "/usr/bin/Rscript",
                 "--vanilla",
