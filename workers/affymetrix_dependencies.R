@@ -24,7 +24,6 @@ bioc_pkgs <- c(
   'preprocessCore_1.50.0.tar.gz',
   'genefilter_1.70.0.tar.gz',
   'sva_3.36.0.tar.gz',
-  'tximport_1.16.1.tar.gz',
   'limma_3.44.3.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
