@@ -42,6 +42,7 @@ mkdir -p /var/ebs/
 
 export STAGE="${stage}"
 export USER="${user}"
+EBS_VOLUME_INDEX="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
 
 # until fetch_and_mount_volume "$USER" "$STAGE"; do
 #     sleep 10
@@ -59,10 +60,10 @@ export USER="${user}"
 #         let COUNTER=COUNTER+1
 # done
 
-# Only a single volume for now
-export EBS_VOLUME_INDEX=0
+# # Only a single volume for now
+# export EBS_VOLUME_INDEX=0
 
-sleep 25
+# sleep 25
 # # We want to mount the biggest volume that its attached to the instance
 # # The size of this volume can be controlled with the varialbe
 # # `volume_size_in_gb` from the file `variables.tf`
@@ -75,7 +76,7 @@ sleep 25
 # mount /dev/$ATTACHED_AS /var/ebs/
 
 chown ubuntu:ubuntu /var/ebs/
-echo $EBS_VOLUME_INDEX >  /var/ebs/VOLUME_INDEX
+echo "$EBS_VOLUME_INDEX" > /var/ebs/VOLUME_INDEX
 chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX
 
 # Set up the required database extensions.
@@ -111,28 +112,35 @@ echo "
 service docker stop
 nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file --log-opt max-size=100m --log-opt max-file=3 > /var/log/docker_daemon.log &
 
-# Output the files we need to start up Nomad and register jobs:
-# (Note that the lines starting with "$" are where
-#  Terraform will template in the contents of those files.)
-
 # Create the Nomad Client configuration.
 cat <<"EOF" > client.hcl
 ${nomad_client_config}
 EOF
-# Make the client.meta.volume_id is set to waht we just mounted
+# Make sure the client.meta.volume_id is set to what we just mounted
 sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
 
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume
 chmod a+rwx /home/ubuntu/docker_volume
 
-# Start the Nomad agent in client mode via systemd
-cat <<"EOF" > /etc/systemd/system/nomad-client.service
-${nomad_client_service}
-EOF
+# Output the files we need to start up Nomad and register jobs. These are
+# stored gzipped at the end of this script
+sed '1,/^#__EOF__$/d' "$0" | base64 -d | tar xzv
 
+# Start the Nomad agent in client mode via systemd
+sudo mv nomad-client.service /etc/systemd/system/
 systemctl enable nomad-client.service
 systemctl start nomad-client.service
+
+# Sleep for a bit so nomad can start
+sleep 30
+
+# Start the nomad jobs that are templated for this instance
+for nomad_job_spec in nomad-job-specs/*; do
+    sed -i 's/__REPLACE_ME__/'"$EBS_VOLUME_INDEX"'/g' "$nomad_job_spec"
+    nomad run "$nomad_job_spec"
+done
+rm -r nomad-job-specs
 
 # Set up the Docker hung process killer
 # cat <<EOF >/home/ubuntu/killer.py

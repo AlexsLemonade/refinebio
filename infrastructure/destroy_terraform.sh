@@ -50,4 +50,11 @@ if [[ -z $TF_VAR_user ]]; then
     exit 1
 fi
 
+# If this file still exists, the previous deploy didn't succeed, so recover
+if [ -f nomad-configuration/client-instance-user-data.tpl.sh.bak ]; then
+    mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
+fi
+
 terraform destroy
+
+rm nomad-configuration/client-instance-user-data.sh
