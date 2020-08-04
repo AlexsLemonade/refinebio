@@ -5,6 +5,7 @@ TOKEN="$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-
 INSTANCE_ID="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
 is_this_instance() {
     while read -r line; do
+        # shellcheck disable=SC2016
         job=$(nomad job inspect "$line" | jq '.Job.TaskGroups[].Tasks[] | select(.Constraints != null) | .Constraints[] | select(.LTarget == "${meta.volume_index}" and .RTarget == "'"$INSTANCE_ID"'")')
         [ -n "$job" ] && echo "$line"
     done
