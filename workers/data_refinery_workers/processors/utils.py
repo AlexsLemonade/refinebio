@@ -17,21 +17,7 @@ import yaml
 from data_refinery_common.job_lookup import SMASHER_JOB_TYPES, ProcessorEnum, ProcessorPipeline
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    Dataset,
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
-    OriginalFile,
-    OriginalFileSampleAssociation,
-    Pipeline,
-    Processor,
-    ProcessorJob,
-    ProcessorJobDatasetAssociation,
-    ProcessorJobOriginalFileAssociation,
-    Sample,
-)
+from data_refinery_common.models import Processor, ProcessorJob, Sample
 from data_refinery_common.utils import get_env_variable, get_instance_id
 
 logger = get_and_configure_logger(__name__)
@@ -728,7 +714,7 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                 try:
                     values = pickle.load(open(cache_path, "rb"))
                     return {**job_context, **values}
-                except:
+                except (OSError, pickle.PickleError):
                     # don't fail if we can't load the cache
                     logger.warning(
                         "Failed to load cached data for pipeline function.",
@@ -743,7 +729,7 @@ def cache_keys(*keys, work_dir_key="work_dir"):
                 # save cached data for the next run
                 values = {key: job_context[key] for key in keys}
                 pickle.dump(values, open(cache_path, "wb"))
-            except:
+            except Exception:
                 # don't fail if we can't save the cache
                 logger.warning(
                     "Failed to cache data for pipeline function.",

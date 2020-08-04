@@ -15,7 +15,7 @@ coverage==4.5.1           # via -r requirements.in
 django-cors-headers==3.2.0  # via -r requirements.in
 django-elasticsearch-dsl-drf==0.20.3  # via -r requirements.in
 django-elasticsearch-dsl==6.4.2  # via -r requirements.in, django-elasticsearch-dsl-drf
-django-filter==2.0.0      # via -r requirements.in
+django-filter==2.3.0      # via -r requirements.in
 django-hstore==1.4.2      # via djangorestframework-hstore
 django-nine==0.2.2        # via django-elasticsearch-dsl-drf
 django==2.2.13            # via -r requirements.in, django-cors-headers, django-filter, djangorestframework-hstore, drf-yasg

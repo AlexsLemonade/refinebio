@@ -108,6 +108,7 @@ DATABASES = {
         "HOST": get_env_variable("DATABASE_HOST"),
         "PORT": get_env_variable("DATABASE_PORT"),
         "OPTIONS": {"connect_timeout": get_env_variable("DATABASE_TIMEOUT")},
+        "DISABLE_SERVER_SIDE_CURSORS": True,
     }
 }
 

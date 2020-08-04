@@ -45,7 +45,7 @@ def make_experiment_result_associations():
 
                         # If we've made it here, then the association exists so count it!
                         num_result_associations += 1
-                    except:
+                    except Exception:
                         # If we've made it here, then the
                         # association doesn't exist so this isn't
                         # the experiment that the result is for.

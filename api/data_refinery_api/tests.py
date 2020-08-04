@@ -459,16 +459,11 @@ class APITestCases(APITestCase):
 
         # Create a token first
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
-        )
-        token = response.json()
-        token["is_activated"] = True
-        token_id = token["id"]
-        response = self.client.put(
-            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
-            json.dumps(token),
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
             content_type="application/json",
         )
+        token_id = response.json()["id"]
 
         response = self.client.get(
             reverse("computed_files", kwargs={"version": API_VERSION}),
@@ -482,26 +477,27 @@ class APITestCases(APITestCase):
     @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
     def test_create_dataset_fails_without_email(self):
 
-        # Get a token first
+        # Create a token first
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
+            content_type="application/json",
         )
-        token = response.json()
-        token["is_activated"] = True
-        token_id = token["id"]
-        response = self.client.put(
-            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
-            json.dumps(token),
+        token_id = response.json()["id"]
+
+        # Good, except for missing email.
+        jdata = json.dumps({"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
             content_type="application/json",
         )
 
-        activated_token = response.json()
-        self.assertEqual(activated_token["id"], token_id)
-        self.assertEqual(activated_token["is_activated"], True)
+        self.assertEqual(response.status_code, 400)
 
-        # Good, except for missing email.
+        # Good, except for empty email.
         jdata = json.dumps(
-            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
+            {"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id, "email_address": "",}
         )
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
@@ -521,9 +517,7 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 201)
 
-        jdata = json.dumps(
-            {"start": True, "data": {"GSE123": ["789"]}, "token_id": activated_token["id"]}
-        )
+        jdata = json.dumps({"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id})
         response = self.client.put(
             reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
             jdata,
@@ -545,22 +539,13 @@ class APITestCases(APITestCase):
     @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
     def test_starting_dataset_fails_without_experiments(self):
 
-        # Get a token first
+        # Create a token first
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
-        )
-        token = response.json()
-        token["is_activated"] = True
-        token_id = token["id"]
-        response = self.client.put(
-            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
-            json.dumps(token),
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
             content_type="application/json",
         )
-
-        activated_token = response.json()
-        self.assertEqual(activated_token["id"], token_id)
-        self.assertEqual(activated_token["is_activated"], True)
+        token_id = response.json()["id"]
 
         # Good, except for having zero experiments
         data = {"email_address": "baz@gmail.com", "data": {}}
@@ -617,23 +602,6 @@ class APITestCases(APITestCase):
         experiment_sample_association.experiment = self.experiment
         experiment_sample_association.save()
 
-        # Get a token first
-        response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
-        )
-        token = response.json()
-        token["is_activated"] = True
-        token_id = token["id"]
-        response = self.client.put(
-            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
-            json.dumps(token),
-            content_type="application/json",
-        )
-
-        activated_token = response.json()
-        self.assertEqual(activated_token["id"], token_id)
-        self.assertEqual(activated_token["is_activated"], True)
-
         # Bad, 456 is not processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["456"]}})
         response = self.client.post(
@@ -646,6 +614,18 @@ class APITestCases(APITestCase):
             "Non-downloadable sample(s) in dataset", response.json()["message"][0],
         )
         self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
+
+        # Bad, 567 does not exist
+        jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["567"]}})
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            jdata,
+            content_type="application/json",
+        )
+        self.assertIn(
+            "Sample(s) in dataset do not exist on refine", response.json()["message"][0],
+        )
+        self.assertEqual(response.status_code, 400)
 
         # Good, 789 is processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
@@ -745,22 +725,14 @@ class APITestCases(APITestCase):
     @patch("data_refinery_api.views.dataset.send_job", lambda *args: True)
     def test_create_update_dataset(self):
 
-        # Get a token first
+        # Create a token first
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
-        )
-        token = response.json()
-        token["is_activated"] = True
-        token_id = token["id"]
-        response = self.client.put(
-            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
-            json.dumps(token),
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
             content_type="application/json",
         )
+        token_id = response.json()["id"]
 
-        activated_token = response.json()
-        self.assertEqual(activated_token["id"], token_id)
-        self.assertEqual(activated_token["is_activated"], True)
         # Good
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
         response = self.client.post(
@@ -1202,6 +1174,35 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("qn_targets_available", kwargs={"version": API_VERSION}))
         # there's another qn endpoint that is created in the setup method of this test case
         self.assertEqual(len(response.json()), 3)
+
+    def test_create_token(self):
+        # First, try activating right away
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        token_id = response.json()["id"]
+
+        # Now activate using a second request
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 201)
+        token = response.json()
+        token["is_activated"] = True
+        token_id = token["id"]
+        response = self.client.put(
+            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
+            json.dumps(token),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        activated_token = response.json()
+        self.assertEqual(activated_token["id"], token_id)
+        self.assertEqual(activated_token["is_activated"], True)
 
 
 MOCK_NOMAD_RESPONSE = [

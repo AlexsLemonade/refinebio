@@ -5,17 +5,7 @@ from django.core.management.base import BaseCommand
 import requests
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    Dataset,
-    Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
-    Organism,
-    OrganismIndex,
-    ProcessorJob,
-    ProcessorJobDatasetAssociation,
-    Sample,
-)
+from data_refinery_common.models import Dataset
 
 logger = get_and_configure_logger(__name__)
 
@@ -38,7 +28,7 @@ class Command(BaseCommand):
         for dataset in datasets:
             try:
                 organism_name = dataset.email_address.split("@")[0].split("compendia_")[1]
-            except:
+            except (IndexError, AttributeError):
                 organism_name = str(dataset.pk)
 
             if dataset.is_available:

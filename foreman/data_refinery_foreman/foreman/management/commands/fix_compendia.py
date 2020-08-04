@@ -5,7 +5,6 @@ We considered adding it in a migration but we didn't liked the idea of making
 S3 operations there.
 """
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 
 import boto3

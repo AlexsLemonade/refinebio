@@ -19,14 +19,9 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
     Organism,
-    OriginalFile,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
-    Sample,
 )
 from data_refinery_common.utils import get_active_volumes, get_env_variable
 
@@ -201,7 +196,7 @@ def requeue_job(job, volume_index):
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
             return False
-    except:
+    except Exception:
         logger.exception(
             (
                 "Failed to requeue %s which had ID %d with a new %s "

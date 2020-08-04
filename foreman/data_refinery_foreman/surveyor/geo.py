@@ -174,7 +174,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         """
         geo = experiment_accession_code.upper()
-        geotype = geo[:3]
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
 
         min_url_template = (
@@ -382,7 +381,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
                     logger.debug("Created OriginalFile: " + str(original_file))
 
-                    original_file_sample_association = OriginalFileSampleAssociation.objects.get_or_create(
+                    OriginalFileSampleAssociation.objects.get_or_create(
                         original_file=original_file, sample=sample_object
                     )
 

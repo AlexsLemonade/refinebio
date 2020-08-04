@@ -46,9 +46,6 @@ class Command(BaseCommand):
         """
         # Check against CDF corrected accessions table to prevent recorrection of the same samples.
         corrected_experiments = CdfCorrectedAccession.objects.all().values("accession_code")
-        corrected_accessions = [
-            experiment["accession_code"] for experiment in corrected_experiments
-        ]
 
         gse_experiments = Experiment.objects.filter(source_database="GEO").exclude(
             accession_code__in=corrected_experiments
@@ -103,7 +100,7 @@ class Command(BaseCommand):
                     # It's not a directory, but ignore_errors is useful.
                     try:
                         os.remove(download_path)
-                    except:
+                    except Exception:
                         # Don't anything interrupt this, like say,
                         # GEOParse downloading a directory instead of
                         # a file...
