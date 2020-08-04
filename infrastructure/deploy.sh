@@ -155,7 +155,7 @@ if [[ ! -f terraform.tfstate ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    if [[ -n $CIRCLE_BUILD_NUM ]]; then
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
         # Make sure we can't expose secrets in circleci
         terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
     else
@@ -178,7 +178,7 @@ if [[ -z $ran_init_build ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    if [[ -n $CIRCLE_BUILD_NUM ]]; then
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
         # Make sure we can't expose secrets in circleci
         terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
     else
@@ -342,7 +342,7 @@ terraform taint aws_instance.foreman_server_1
 echo "Removing ingress.."
 rm ci_ingress.tf
 
-if [[ -n $CIRCLE_BUILD_NUM ]]; then
+if [[ -n "$GITHUB_ACTIONS" ]]; then
     # Make sure we can't expose secrets in circleci
     terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
 else
