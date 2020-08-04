@@ -79,16 +79,11 @@ class APITestCases(APITestCase):
 
         # Create a token first
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
-        )
-        token = response.json()
-        token["is_activated"] = True
-        token_id = token["id"]
-        response = self.client.put(
-            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
-            json.dumps(token),
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
             content_type="application/json",
         )
+        token_id = response.json()["id"]
 
         response = self.client.get(
             reverse("computed_files", kwargs={"version": API_VERSION}),

@@ -452,3 +452,32 @@ class APITestCases(APITestCase):
         experiment.delete()
         sample.delete()
         sample2.delete()
+
+    def test_create_token(self):
+        # First, try activating right away
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        token_id = response.json()["id"]
+
+        # Now activate using a second request
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 201)
+        token = response.json()
+        token["is_activated"] = True
+        token_id = token["id"]
+        response = self.client.put(
+            reverse("token_id", kwargs={"id": token_id, "version": API_VERSION}),
+            json.dumps(token),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        activated_token = response.json()
+        self.assertEqual(activated_token["id"], token_id)
+        self.assertEqual(activated_token["is_activated"], True)
