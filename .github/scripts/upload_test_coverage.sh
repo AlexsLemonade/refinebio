@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to upload code coverage to circleci
+# Script to upload code coverage
 
 project=$1
 if [[ $project == "" ]]
