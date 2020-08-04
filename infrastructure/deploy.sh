@@ -330,7 +330,13 @@ for nomad_job_spec in nomad-job-specs/*.nomad; do
 done
 echo "Job registrations have been fired off."
 
-# Prepare the client instance user data script for the nomad client instances
+# Prepare the client instance user data script for the nomad client instances.
+# The `prepare-client-instance-user-data.sh` script overwrites
+# `client-instance-user-data.tpl.sh`, so we have to back it up first.
+if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
+    mv client-instance-user-data.tpl.sh client-instance-user-data.tpl.sh.bak
+fi
+
 ./nomad-configuration/prepare-client-instance-user-data.sh
 terraform taint aws_spot_fleet_request.cheap_ram
 
@@ -351,6 +357,7 @@ fi
 
 # Don't leave secrets lying around!
 rm -f prod_env
+# The tarball at the end of client-instance-user-data.tpl.sh has secrets, so restore from backup
 mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
 
 # We try to avoid rebuilding the API server because we can only run certbot

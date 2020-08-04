@@ -50,7 +50,9 @@ if [[ -z $TF_VAR_user ]]; then
     exit 1
 fi
 
-# If this file still exists, the previous deploy didn't succeed, so recover
+# If this file still exists, the previous deploy failed before it could remove
+# it, but we still should restore client-instance-user-data.tpl.sh back to its
+# original state
 if [ -f nomad-configuration/client-instance-user-data.tpl.sh.bak ]; then
     mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
 fi

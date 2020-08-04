@@ -12,12 +12,6 @@ script_directory="$(perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0")"
 cd "$script_directory" || exit
 
-if [ -f client-instance-user-data.tpl.sh.bak ]; then
-    mv client-instance-user-data.tpl.sh.bak client-instance-user-data.tpl.sh
-fi
-
-cp client-instance-user-data.tpl.sh client-instance-user-data.tpl.sh.bak
-
 # Remove all comments and empty lines except for the shebang
 sed -i -e '/^#[^!]/d' -e '/^$/d' client-instance-user-data.tpl.sh
 
