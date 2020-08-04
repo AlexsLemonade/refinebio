@@ -60,10 +60,6 @@ EBS_VOLUME_INDEX="$(wget -q -O - http://169.254.169.254/latest/meta-data/instanc
 #         let COUNTER=COUNTER+1
 # done
 
-# # Only a single volume for now
-# export EBS_VOLUME_INDEX=0
-
-# sleep 25
 # # We want to mount the biggest volume that its attached to the instance
 # # The size of this volume can be controlled with the varialbe
 # # `volume_size_in_gb` from the file `variables.tf`
@@ -141,6 +137,9 @@ for nomad_job_spec in nomad-job-specs/*; do
     nomad run "$nomad_job_spec"
 done
 rm -r nomad-job-specs
+
+# Kick off a script that will clean up all of our nomad jobs when this instance goes down
+setsid sh clean-nomad-jobs.sh
 
 # Set up the Docker hung process killer
 # cat <<EOF >/home/ubuntu/killer.py
