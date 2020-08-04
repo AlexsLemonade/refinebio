@@ -156,7 +156,8 @@ jobs:
         run: ./.github/scripts/push_docker_images.sh
 
   syntax_test:
-    runs-on: ubuntu-latest
+    # ubuntu-latest is ubuntu 18.04 which has a really outdated version of shellcheck
+    runs-on: ubuntu-20.04
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -171,8 +172,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pre-commit
-          sudo apt update
-          sudo apt upgrade -y shellcheck
 
       - name: Init terraform in the infrastructure folder for validation
         run: cd infrastructure && TF_VAR_user=ci TF_VAR_stage=dev ./init_terraform.sh
