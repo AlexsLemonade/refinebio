@@ -1,0 +1,91 @@
+import requests
+
+from django.db import models
+import xml.etree.ElementTree as ET
+
+from data_refinery_common.logging import get_and_configure_logger
+
+logger = get_and_configure_logger(__name__)
+OLS_URL_TEMPLATE = "http://www.ebi.ac.uk/ols/api/terms?id={}"
+ONTOLOGY_URL_TEMPLATE = "https://www.ebi.ac.uk/ols/ontologies/{}/download"
+
+
+def get_human_readable_name_from_api(ontology_term: str) -> str:
+    response = requests.get(OLS_URL_TEMPLATE.format(ontology_term)).json()
+    terms = response["_embedded"]["terms"]
+
+    # The same term can appear in multiple databases, but we only want the human-readable name so
+    # it doesn't matter which database we get it from
+    for term in terms:
+        # Sanity check if for some reason the first item returned isn't actually the one we want
+        if term["obo_id"] == ontology_term:
+            return term["label"]
+
+
+class OntologyTerm(models.Model):
+    """ The mapping between a human-readable name and an ontology term """
+
+    class Meta:
+        db_table = "ontology_terms"
+
+    ontology_term = models.CharField(max_length=256, unique=True)
+    human_readable_name = models.CharField(max_length=256)
+
+    @staticmethod
+    def _get_ontology_prefix(ontology_term: str) -> str:
+        """ Returns the ontology prefix for an ontology term
+
+        Example: For EFO:0002939, it would return efo
+        """
+        return ontology_term.split(':')[0].lower()
+
+    @staticmethod
+    def import_entire_ontology(ontology_prefix: str):
+        """ Given an ontology prefix, download the entire ontology and import it """
+        response = requests.get(ONTOLOGY_URL_TEMPLATE.format(ontology_prefix.lower()))
+        ontology_xml = ET.fromstring(response.text)
+
+        namespace = {
+            "owl": "http://www.w3.org/2002/07/owl#",
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+        }
+
+        for child in ontology_xml.findall("owl:Class/[rdfs:label]", namespace):
+            about = child.attrib.get("{" + namespace["rdf"] + "}about")
+            ontology_term = about.split("/")[-1].replace("_", ":")
+            human_readable_name = child.find("rdfs:label", namespace).text
+
+            if OntologyTerm._get_ontology_prefix(ontology_term) == ontology_prefix:
+                term = OntologyTerm()
+                term.ontology_term = ontology_term
+                term.human_readable_name = human_readable_name
+                term.save()
+
+    @classmethod
+    def poke_term(cls, ontology_term: str):
+        """ Make sure that the database contains an ontology term, but don't return the term
+
+        This can be called in the surveyor if we want to store the ontology term in ontology term
+        form but the API should return the human-readable-name. This would prevent us from making
+        an external API call from the API.
+        """
+        if cls.objects.filter(ontology_term=ontology_term).first() is None:
+            cls._create_from_api(ontology_term)
+
+    @staticmethod
+    def _create_from_api(ontology_term: str) -> 'OntologyTerm':
+        """ Creates and saves an OntologyTerm instance by querying the OLS API """
+        term = OntologyTerm()
+        term.ontology_term = ontology_term
+        term.human_readable_name = get_human_readable_name_from_api(ontology_term)
+        term.save()
+        return term
+
+    @classmethod
+    def get_or_create(cls, ontology_term: str) -> 'OntologyTerm':
+        match = cls.objects.filter(ontology_term=ontology_term).first()
+        if match is None:
+            return cls._create_from_api(ontology_term)
+        else:
+            return match

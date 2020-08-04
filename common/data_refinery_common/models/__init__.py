@@ -47,6 +47,7 @@ from data_refinery_common.models.jobs.downloader_job import DownloaderJob  # noq
 from data_refinery_common.models.jobs.processor_job import ProcessorJob  # noqa
 from data_refinery_common.models.jobs.survey_job import SurveyJob  # noqa
 from data_refinery_common.models.jobs.survey_job_key_value import SurveyJobKeyValue  # noqa
+from data_refinery_common.models.ontology_term import OntologyTerm  # noqa
 from data_refinery_common.models.organism import Organism  # noqa
 from data_refinery_common.models.organism_index import OrganismIndex  # noqa
 from data_refinery_common.models.original_file import OriginalFile  # noqa
