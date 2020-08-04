@@ -2,7 +2,7 @@
 
 set -e
 
-REPO=$(echo "docker.pkg.github.com/$GITHUB_REPOSITORY" | tr A-Z a-z)
+REPO=$(echo "docker.pkg.github.com/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
 if [ -z "$IMAGES" ]; then
     echo "Error: must put images to pull in \$IMAGES" >&2
     exit 1

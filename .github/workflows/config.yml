@@ -171,6 +171,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pre-commit
+          sudo apt update
+          sudo apt upgrade -y shellcheck
 
       - name: Init terraform in the infrastructure folder for validation
         run: cd infrastructure && TF_VAR_user=ci TF_VAR_stage=dev ./init_terraform.sh
