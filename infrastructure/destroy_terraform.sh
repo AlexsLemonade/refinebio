@@ -56,5 +56,3 @@ if [ -f nomad-configuration/client-instance-user-data.tpl.sh.bak ]; then
 fi
 
 terraform destroy
-
-rm nomad-configuration/client-instance-user-data.sh
