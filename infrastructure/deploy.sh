@@ -138,11 +138,6 @@ done
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
-# If this file still exists, the previous deploy didn't succeed, so recover
-if [ -f nomad-configuration/client-instance-user-data.tpl.sh.bak ]; then
-    mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
-fi
-
 # Always init terraform first, especially since we're using a remote backend.
 ./init_terraform.sh
 
