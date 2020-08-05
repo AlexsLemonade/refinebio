@@ -17,8 +17,8 @@ jobs:
       - name: Login to docker.pkg.github.com for cached docker images
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
 
-      # - name: Pull cached docker images
-      #   run: ./.github/scripts/pull_docker_images.sh
+      - name: Pull cached docker images
+        run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh

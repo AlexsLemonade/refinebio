@@ -2,7 +2,8 @@
 
 set -e
 
-REPO=$(echo "docker.pkg.github.com/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+# REPO=$(echo "docker.pkg.github.com/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+REPO="ccdlstaging"
 if [ -z "$IMAGES" ]; then
     echo "Error: must put images to pull in \$IMAGES" >&2
     exit 1
