@@ -1,5 +1,6 @@
 import os
 from unittest.mock import patch
+from ftplib import FTP
 
 from django.test import TestCase, tag
 
@@ -80,9 +81,16 @@ class DownloadSraTestCase(TestCase):
         assoc.save()
         result, downloaded_files = sra.download_sra(dlj.pk)
         utils.end_downloader_job(dlj, result)
-        self.assertTrue(result)
-        self.assertEqual(downloaded_files[0].sha1, "e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc")
-        self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
+
+        # If the FTP server is down, then we expect that the downloader job should have failed
+        ftp_server = "ftp.sra.ebi.ac.uk"
+        ftp = FTP(ftp_server)
+        if ftp.login()[0:3] == "550":
+            self.assertFalse(result)
+        else:
+            self.assertTrue(result)
+            self.assertEqual(downloaded_files[0].sha1, "e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc")
+            self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
 
     @tag("downloaders")
     @tag("downloaders_sra")

@@ -8,6 +8,8 @@ from contextlib import closing
 from ftplib import FTP
 from typing import List
 
+import sys
+
 from django.utils import timezone
 
 from data_refinery_common.job_management import create_processor_job_for_original_files
@@ -231,12 +233,12 @@ def _has_unmated_reads(accession_code: str) -> bool:
     # the path between the server and the filename itself.
     sample_directory = "/".join(split_link[1:-1])
 
-    ftp = None
+    # Connect to FTP (if this gives an error then that should be caught later)
+    ftp = FTP(ftp_server)
+    ftp.login()
+    ftp.cwd(sample_directory)
+    
     try:
-        ftp = FTP(ftp_server)
-        ftp.login()
-        ftp.cwd(sample_directory)
-
         # If there's three files then there's unmated reads, because
         # there's the one read file, the other read file, and the
         # unmated reads.
@@ -297,8 +299,15 @@ def download_sra(job_id: int) -> None:
 
     original_file = original_files.first()
     sample = original_file.samples.first()
-    if _has_unmated_reads(sample.accession_code):
-        original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
+
+    # Try checking FTP server
+    try:
+        if _has_unmated_reads(sample.accession_code):
+            original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
+    except:
+        job.failure_reason = "Failed to connect to ENA server."
+        utils.end_downloader_job(job, success=False)
+        return False, None
 
     downloaded_files = []
     success = None
