@@ -213,14 +213,10 @@ def _download_file_aspera(
     return True
 
 
-def _has_unmated_reads(accession_code: str, downloader_job: DownloaderJob) -> (bool, bool):
+def _has_unmated_reads(accession_code: str, downloader_job: DownloaderJob) -> bool:
     """Checks if the SRA accession has unmated reads.
 
     Returns True if it does and False if it doesn't, and also whether or not it successfully connected to the ENA server"""
-
-    # If connecting to the FTP server was successful
-    success = None
-
     full_ftp_link = _build_ena_file_url(accession_code)
 
     # Strip off the protocol code because we know it's FTP and the FTP
@@ -236,38 +232,29 @@ def _has_unmated_reads(accession_code: str, downloader_job: DownloaderJob) -> (b
     # the path between the server and the filename itself.
     sample_directory = "/".join(split_link[1:-1])
 
-    # Try to connect to FTP, if successful then mark success = True
-    try:
-        ftp = FTP(ftp_server)
-        ftp.login()
-        ftp.cwd(sample_directory)
-        success = True
-    except:
-        logger.exception(
-            "Failed to connect to ENA server.", downloader_job=downloader_job.id,
-        )
-        downloader_job.failure_reason = "Failed to connect to ENA server."
-        success = False
-        return False, success
+    # Try to connect to FTP
+    ftp = FTP(ftp_server)
+    ftp.login()
+    ftp.cwd(sample_directory)
 
     try:
         # If there's three files then there's unmated reads, because
         # there's the one read file, the other read file, and the
         # unmated reads.
         if len(ftp.nlst()) == 3:
-            return True, success
+            return True
         else:
-            return False, success
+            return False
     except ftplib.all_errors:
         # If we can't find the sample on ENA's FTP server, then we
         # shouldn't try to download it from there.
-        return False, success
+        return False
     finally:
         if ftp:
             ftp.close()
 
     # Shouldn't reach here, but just in case default to NCBI.
-    return False, success
+    return False
 
 
 def _replace_dotsra_with_fastq_files(
@@ -316,15 +303,17 @@ def download_sra(job_id: int) -> None:
     success = None
 
     # Try accessing FTP server, see if that was successful
-    unmated_reads, success = _has_unmated_reads(sample.accession_code, job)
-
-    # If this wasn't successful, then we want to mark the job as failed and end it here
-    if not success:
+    try:
+        if _has_unmated_reads(sample.accession_code, job):
+            original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
+    except:
+        logger.exception(
+            "Failed to connect to ENA server.", downloader_job=job.id,
+        )
+        job.failure_reason = "Failed to connect to ENA server."
+        success = False
         utils.end_downloader_job(job, success)
         return success, downloaded_files
-
-    if unmated_reads:
-        original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
 
     for original_file in original_files:
         exp_path = LOCAL_ROOT_DIR + "/" + job.accession_code

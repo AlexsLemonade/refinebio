@@ -122,7 +122,7 @@ class DownloadSraTestCase(TestCase):
         self.assertFalse(result)
         self.assertEqual(dlj.failure_reason, "Failed to connect to ENA server.")
 
-    # @tag("downloaders")
+    @tag("downloaders")
     @tag("downloaders_sra")
     def test_download_file_swapper(self):
         dlj = DownloaderJob()
