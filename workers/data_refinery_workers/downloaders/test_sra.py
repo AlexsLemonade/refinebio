@@ -1,4 +1,5 @@
 import os
+import ftplib
 from unittest.mock import patch
 from ftplib import FTP
 
@@ -93,6 +94,35 @@ class DownloadSraTestCase(TestCase):
             self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
 
     @tag("downloaders")
+    @tag("downloaders_sra")
+    @patch.object(ftplib.FTP, "login", side_effect=ftplib.error_perm)
+    def test_ftp_server_down(self, mock_ftp):
+        dlj = DownloaderJob()
+        dlj.accession_code = "SRR9117853"
+        dlj.save()
+        og = OriginalFile()
+        og.source_filename = "SRR9117853.sra"
+        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/SRR/SRR9117/SRR9117853/SRR9117853.sra"
+        og.is_archive = True
+        og.save()
+        sample = Sample()
+        sample.accession_code = "SRR9117853"
+        sample.save()
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = sample
+        assoc.original_file = og
+        assoc.save()
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = dlj
+        assoc.original_file = og
+        assoc.save()
+        result, downloaded_files = sra.download_sra(dlj.pk)
+        dlj.refresh_from_db()
+        utils.end_downloader_job(dlj, result)
+        self.assertFalse(result)
+        self.assertEqual(dlj.failure_reason, "Failed to connect to ENA server.")
+
+    #@tag("downloaders")
     @tag("downloaders_sra")
     def test_download_file_swapper(self):
         dlj = DownloaderJob()
