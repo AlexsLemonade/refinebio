@@ -2,13 +2,12 @@ import ftplib
 import os
 import shutil
 import subprocess
+import sys
 import time
 import urllib.request
 from contextlib import closing
 from ftplib import FTP
 from typing import List
-
-import sys
 
 from django.utils import timezone
 
@@ -218,7 +217,7 @@ def _has_unmated_reads(accession_code: str, downloader_job: DownloaderJob) -> (b
     """Checks if the SRA accession has unmated reads.
 
     Returns True if it does and False if it doesn't, and also whether or not it successfully connected to the ENA server"""
-    
+
     # If connecting to the FTP server was successful
     success = None
 
@@ -245,8 +244,7 @@ def _has_unmated_reads(accession_code: str, downloader_job: DownloaderJob) -> (b
         success = True
     except:
         logger.exception(
-            "Failed to connect to ENA server.",
-            downloader_job=downloader_job.id,
+            "Failed to connect to ENA server.", downloader_job=downloader_job.id,
         )
         downloader_job.failure_reason = "Failed to connect to ENA server."
         success = False

@@ -1,7 +1,7 @@
-import os
 import ftplib
-from unittest.mock import patch
+import os
 from ftplib import FTP
+from unittest.mock import patch
 
 from django.test import TestCase, tag
 
@@ -122,7 +122,7 @@ class DownloadSraTestCase(TestCase):
         self.assertFalse(result)
         self.assertEqual(dlj.failure_reason, "Failed to connect to ENA server.")
 
-    #@tag("downloaders")
+    # @tag("downloaders")
     @tag("downloaders_sra")
     def test_download_file_swapper(self):
         dlj = DownloaderJob()
