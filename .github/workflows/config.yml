@@ -64,6 +64,11 @@ jobs:
         run: |
           .github/scripts/filter_tests.sh -t downloaders
 
+      - name: Run NO_OP tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/scripts/filter_tests.sh -t no_op
+
       - name: Run foreman tests
         run: |
           mkdir -p test_volume
@@ -75,11 +80,6 @@ jobs:
           # workflows that include building those images.
           ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
           .github/scripts/upload_test_coverage.sh foreman
-
-      - name: Run NO_OP tests
-        run: |
-          sudo -E chown -R $USER:$USER workers/test_volume
-          .github/scripts/filter_tests.sh -t no_op
 
       - name: Push built docker images
         run: ./.github/scripts/push_docker_images.sh
