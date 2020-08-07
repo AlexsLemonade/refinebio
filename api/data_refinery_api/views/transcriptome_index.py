@@ -82,7 +82,7 @@ class TranscriptomeIndexListView(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = ["salmon_version", "index_type", "result_id", "organism__name"]
+    filterset_fields = ["salmon_version", "index_type", "result__id", "organism__name"]
     ordering_fields = ("created_at", "salmon_version")
     ordering = ("-created_at",)
 
