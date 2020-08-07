@@ -3,6 +3,8 @@ FROM ubuntu:16.04
 RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
 RUN add-apt-repository ppa:apt-fast/stable
+# deadsnakes packages new python versions for older Ubuntu releases
+RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
@@ -24,7 +26,8 @@ RUN \
   libcairo-dev \
   libedit-dev \
   lsb-release \
-  python3 \
+  python3.6 \
+  python3.6-dev \
   python3-pip \
   r-base-core=3.4.2-1xenial1 \
   r-base-dev=3.4.2-1xenial1 \
@@ -37,6 +40,9 @@ RUN \
   wget && \
   rm -rf /var/lib/apt/lists/*
 RUN rm CRAN.gpg
+
+# Set the system python version to python3.6 from deadsnakes
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
