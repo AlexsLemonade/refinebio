@@ -2,7 +2,6 @@ import ftplib
 import os
 import shutil
 import subprocess
-import sys
 import time
 import urllib.request
 from contextlib import closing
@@ -306,7 +305,7 @@ def download_sra(job_id: int) -> None:
     try:
         if _has_unmated_reads(sample.accession_code, job):
             original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
-    except:
+    except ftplib.all_errors:
         logger.exception(
             "Failed to connect to ENA server.", downloader_job=job.id,
         )
