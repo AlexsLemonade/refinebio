@@ -52,35 +52,45 @@ class Command(BaseCommand):
         while True:
             for sample in page.object_list:
                 logger.debug("Refreshing metadata for a sample.", sample=sample.accession_code)
-                if sample.source_database == "SRA":
-                    metadata = SraSurveyor.gather_all_metadata(sample.accession_code)
-                    SraSurveyor._apply_harmonized_metadata_to_sample(sample, metadata)
-                elif sample.source_database == "GEO":
-                    gse = GEOparse.get_GEO(
-                        sample.experiments.first().accession_code,
-                        destdir="/tmp/management",
-                        how="brief",
-                        silent=True,
-                    )
-                    preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
-                    harmonized_samples = harmony.harmonize(preprocessed_samples)
-                    GeoSurveyor._apply_harmonized_metadata_to_sample(
-                        sample, harmonized_samples[sample.title]
-                    )
-                elif sample.source_database == "ARRAY_EXPRESS":
-                    SDRF_URL_TEMPLATE = (
-                        "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
-                    )
-                    sdrf_url = SDRF_URL_TEMPLATE.format(
-                        code=sample.experiments.first().accession_code
-                    )
-                    sdrf_samples = harmony.parse_sdrf(sdrf_url)
-                    harmonized_samples = harmony.harmonize(sdrf_samples)
-                    ArrayExpressSurveyor._apply_harmonized_metadata_to_sample(
-                        sample, harmonized_samples[sample.title]
-                    )
+                try:
+                    if sample.source_database == "SRA":
+                        metadata = SraSurveyor.gather_all_metadata(sample.accession_code)
+                        SraSurveyor._apply_harmonized_metadata_to_sample(sample, metadata)
+                    elif sample.source_database == "GEO":
+                        gse = GEOparse.get_GEO(
+                            sample.experiments.first().accession_code,
+                            destdir="/tmp/management",
+                            how="brief",
+                            silent=True,
+                        )
+                        preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
+                        harmonized_samples = harmony.harmonize(preprocessed_samples)
+                        GeoSurveyor._apply_harmonized_metadata_to_sample(
+                            sample, harmonized_samples[sample.title]
+                        )
+                    elif sample.source_database == "ARRAY_EXPRESS":
+                        SDRF_URL_TEMPLATE = (
+                            "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
+                        )
+                        sdrf_url = SDRF_URL_TEMPLATE.format(
+                            code=sample.experiments.first().accession_code
+                        )
+                        sdrf_samples = harmony.parse_sdrf(sdrf_url)
+                        harmonized_samples = harmony.harmonize(sdrf_samples)
+                        ArrayExpressSurveyor._apply_harmonized_metadata_to_sample(
+                            sample, harmonized_samples[sample.title]
+                        )
 
-                sample.save()
+                    sample.save()
+
+                # If there are any errors, just continue. It's likely that it's
+                # just a problem with this sample.
+                except Exception:
+                    logger.exception(
+                        "exception caught while updating metadata for {}".format(
+                            sample.accession_code
+                        )
+                    )
 
             if not page.has_next():
                 break

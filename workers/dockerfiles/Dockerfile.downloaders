@@ -53,9 +53,13 @@ RUN Rscript install_downloader_R_only.R
 # Even using `su - user &&` doesn't work...
 USER user
 
-# Install Aspera
-RUN wget -q https://download.asperasoft.com/download/sw/cli/3.7.7/aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
-RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
+# Install Aspera. We have to install it using Holland Computing Center's conda
+# repo because download.asperasoft.com now returns 403s
+RUN wget -q https://anaconda.org/HCC/aspera-cli/3.9.1/download/linux-64/aspera-cli-3.9.1-0.tar.bz2
+RUN [ "$(sha256sum aspera-cli-3.9.1-0.tar.bz2 | cut -d' ' -f1)" = 60a09a7f3795186954079869106aa89a64183b7be8e0da7cbbe9d57c66c9bcdb ]
+RUN mkdir -p .aspera/cli
+RUN tar xf aspera-cli-3.9.1-0.tar.bz2 -C .aspera/cli
+RUN rm aspera-cli-3.9.1-0.tar.bz2
 
 # Now that we're done installing Aspera go back to being root for a bit.
 USER root
