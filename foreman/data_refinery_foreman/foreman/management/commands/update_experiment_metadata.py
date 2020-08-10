@@ -50,41 +50,53 @@ class Command(BaseCommand):
         page = paginator.page()
 
         while True:
-            for experiment in experiments:
+            for experiment in page.object_list:
                 logger.debug(
                     "Refreshing metadata for an experiment.", experiment=experiment.accession_code
                 )
-                if experiment.source_database == "SRA":
-                    metadata = SraSurveyor.gather_all_metadata(
-                        experiment.samples.first().accession_code
-                    )
-                    SraSurveyor._apply_metadata_to_experiment(experiment, metadata)
-
-                elif experiment.source_database == "GEO":
-                    gse = GEOparse.get_GEO(
-                        experiment.accession_code,
-                        destdir="/tmp/management",
-                        how="brief",
-                        silent=True,
-                    )
-
-                    GeoSurveyor._apply_metadata_to_experiment(experiment, gse)
-
-                elif experiment.source_database == "ARRAY_EXPRESS":
-                    request_url = EXPERIMENTS_URL + experiment.accession_code
-                    experiment_request = utils.requests_retry_session().get(request_url, timeout=60)
-                    try:
-                        parsed_json = experiment_request.json()["experiments"]["experiment"][0]
-                    except KeyError:
-                        logger.error(
-                            "Remote experiment has no Experiment data!",
-                            experiment_accession_code=experiment.accession_code,
-                            survey_job=self.survey_job.id,
+                try:
+                    if experiment.source_database == "SRA":
+                        metadata = SraSurveyor.gather_all_metadata(
+                            experiment.samples.first().accession_code
                         )
-                        continue
-                    ArrayExpressSurveyor._apply_metadata_to_experiment(experiment, parsed_json)
+                        SraSurveyor._apply_metadata_to_experiment(experiment, metadata)
 
-                experiment.save()
+                    elif experiment.source_database == "GEO":
+                        gse = GEOparse.get_GEO(
+                            experiment.accession_code,
+                            destdir="/tmp/management",
+                            how="brief",
+                            silent=True,
+                        )
+
+                        GeoSurveyor._apply_metadata_to_experiment(experiment, gse)
+
+                    elif experiment.source_database == "ARRAY_EXPRESS":
+                        request_url = EXPERIMENTS_URL + experiment.accession_code
+                        experiment_request = utils.requests_retry_session().get(
+                            request_url, timeout=60
+                        )
+                        try:
+                            parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+                        except KeyError:
+                            logger.error(
+                                "Remote experiment has no Experiment data!",
+                                experiment_accession_code=experiment.accession_code,
+                                survey_job=self.survey_job.id,
+                            )
+                            continue
+                        ArrayExpressSurveyor._apply_metadata_to_experiment(experiment, parsed_json)
+
+                    experiment.save()
+
+                # If there are any errors, just continue. It's likely that it's
+                # just a problem with this experiment.
+                except Exception:
+                    logger.exception(
+                        "exception caught while updating metadata for {}".format(
+                            experiment.accession_code
+                        )
+                    )
 
             if not page.has_next():
                 break

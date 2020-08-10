@@ -23,7 +23,7 @@ class OrganismListView(generics.ListAPIView):
 
 class OrganismDetailView(generics.RetrieveAPIView):
     """
-    Retrieves an organism by its taxonomy ID
+    Retrieves an organism by its name.
     """
 
     lookup_field = "name"

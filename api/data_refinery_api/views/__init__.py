@@ -1,4 +1,4 @@
-from data_refinery_api.views.api_token import APITokenView, CreateAPITokenView
+from data_refinery_api.views.api_token import APITokenView
 from data_refinery_api.views.compendium_result import (
     CompendiumResultDetailView,
     CompendiumResultListView,

@@ -20,7 +20,6 @@ from data_refinery_api.views import (
     ComputationalResultListView,
     ComputedFileDetailView,
     ComputedFileListView,
-    CreateAPITokenView,
     DatasetView,
     DownloaderJobDetailView,
     DownloaderJobListView,
@@ -145,8 +144,12 @@ urlpatterns = [
                     DatasetView.as_view({"get": "retrieve", "put": "update"}),
                     name="dataset",
                 ),
-                url(r"^token/$", CreateAPITokenView.as_view(), name="token"),
-                url(r"^token/(?P<id>[0-9a-f-]+)/$", APITokenView.as_view(), name="token_id"),
+                url(r"^token/$", APITokenView.as_view({"post": "create"}), name="token"),
+                url(
+                    r"^token/(?P<id>[0-9a-f-]+)/$",
+                    APITokenView.as_view({"get": "retrieve", "put": "update"}),
+                    name="token_id",
+                ),
                 # Jobs
                 url(r"^jobs/survey/$", SurveyJobListView.as_view(), name="survey_jobs"),
                 url(
