@@ -82,18 +82,28 @@ class TranscriptomeIndexListView(generics.ListAPIView):
         DjangoFilterBackend,
         filters.OrderingFilter,
     )
-    filterset_fields = ["salmon_version", "index_type", "result_id", "organism__name"]
+    filterset_fields = ["salmon_version", "index_type"]
     ordering_fields = ("created_at", "salmon_version")
     ordering = ("-created_at",)
 
     def get_queryset(self):
         queryset = OrganismIndex.public_objects.all()
 
-        organism_name = self.request.GET.get("organism_name", None)
+        organism_name = self.request.query_params.get("organism_name", None)
         if organism_name is not None:
             queryset = queryset.filter(organism__name=organism_name.upper())
 
-        length = self.request.GET.get("length", None)
+        # https://github.com/AlexsLemonade/refinebio/issues/2459
+        # It looks like when we set `result_id` as a filterset field,
+        # django_forms goes nuts and tries to call __str__ on every single
+        # computational result in our database trying to find all of the
+        # different possible computational_results. So let's just take care of
+        # this one ourselves.
+        result_id = self.request.query_params.get("result_id", None)
+        if result_id is not None:
+            queryset = queryset.filter(result_id=result_id)
+
+        length = self.request.query_params.get("length", None)
         if length is not None:
             index_type = "TRANSCRIPTOME_{}".format(length.upper())
             queryset = queryset.filter(index_type=index_type)
