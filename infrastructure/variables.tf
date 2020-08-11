@@ -118,7 +118,10 @@ variable "nomad_server_instance_type" {
 variable "smasher_instance_type" {
   # 128GiB Memory, smasher and compendia jobs need 30.
   # RNA-seq compendia needs 64gb
-  default = "m5.8xlarge"
+  # default = "m5.8xlarge"
+
+  # 976GiB Memory, smasher and compendia jobs need 900.
+  default = "x1.16xlarge"
 }
 
 variable "spot_price" {
