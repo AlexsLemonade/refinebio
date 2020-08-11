@@ -1,4 +1,6 @@
+import ftplib
 import os
+from ftplib import FTP
 from unittest.mock import patch
 
 from django.test import TestCase, tag
@@ -80,9 +82,45 @@ class DownloadSraTestCase(TestCase):
         assoc.save()
         result, downloaded_files = sra.download_sra(dlj.pk)
         utils.end_downloader_job(dlj, result)
-        self.assertTrue(result)
-        self.assertEqual(downloaded_files[0].sha1, "e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc")
-        self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
+
+        # If the FTP server is down, then we expect that the downloader job should have failed
+        ftp_server = "ftp.sra.ebi.ac.uk"
+        ftp = FTP(ftp_server)
+        if ftp.login()[0:3] == "550":
+            self.assertFalse(result)
+        else:
+            self.assertTrue(result)
+            self.assertEqual(downloaded_files[0].sha1, "e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc")
+            self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
+
+    @tag("downloaders")
+    @tag("downloaders_sra")
+    @patch.object(ftplib.FTP, "login", side_effect=ftplib.error_perm)
+    def test_ftp_server_down(self, mock_ftp):
+        dlj = DownloaderJob()
+        dlj.accession_code = "SRR9117853"
+        dlj.save()
+        og = OriginalFile()
+        og.source_filename = "SRR9117853.sra"
+        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/SRR/SRR9117/SRR9117853/SRR9117853.sra"
+        og.is_archive = True
+        og.save()
+        sample = Sample()
+        sample.accession_code = "SRR9117853"
+        sample.save()
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = sample
+        assoc.original_file = og
+        assoc.save()
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = dlj
+        assoc.original_file = og
+        assoc.save()
+        result, downloaded_files = sra.download_sra(dlj.pk)
+        dlj.refresh_from_db()
+        utils.end_downloader_job(dlj, result)
+        self.assertFalse(result)
+        self.assertEqual(dlj.failure_reason, "Failed to connect to ENA server.")
 
     @tag("downloaders")
     @tag("downloaders_sra")
