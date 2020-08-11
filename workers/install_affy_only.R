@@ -7,11 +7,12 @@ options(Ncpus=parallel::detectCores())
 # Use devtools::install_version() to install packages in cran.
 devtools::install_version('dplyr', version='1.0.0')
 devtools::install_version('tidyr', version='1.1.0')
+devtools::install_version('ff', version='2.2-14')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
   lapply(packages,
-         function(pkg) devtools::install_url(paste0(main_url, pkg)))
+         function(pkg) devtools::install_url(paste0(main_url, pkg), upgrade=F))
 }
 
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
