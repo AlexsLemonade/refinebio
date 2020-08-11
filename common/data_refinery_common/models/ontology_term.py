@@ -1,7 +1,8 @@
-import requests
+import xml.etree.ElementTree as ET
 
 from django.db import models
-import xml.etree.ElementTree as ET
+
+import requests
 
 from data_refinery_common.logging import get_and_configure_logger
 
@@ -11,8 +12,12 @@ ONTOLOGY_URL_TEMPLATE = "https://www.ebi.ac.uk/ols/ontologies/{}/download"
 
 
 def get_human_readable_name_from_api(ontology_term: str) -> str:
-    response = requests.get(OLS_URL_TEMPLATE.format(ontology_term)).json()
-    terms = response["_embedded"]["terms"]
+    response = requests.get(OLS_URL_TEMPLATE.format(ontology_term))
+
+    if response.json().get("_embedded", None) is None:
+        raise ValueError("Could not find a human-readable name for '{}'".format(ontology_term))
+
+    terms = response.json()["_embedded"]["terms"]
 
     # The same term can appear in multiple databases, but we only want the human-readable name so
     # it doesn't matter which database we get it from
@@ -21,6 +26,8 @@ def get_human_readable_name_from_api(ontology_term: str) -> str:
         if term["obo_id"] == ontology_term:
             return term["label"]
 
+    raise ValueError("We can't find {} in the Ontology Lookup Service".format(ontology_term))
+
 
 class OntologyTerm(models.Model):
     """ The mapping between a human-readable name and an ontology term """
@@ -28,8 +35,14 @@ class OntologyTerm(models.Model):
     class Meta:
         db_table = "ontology_terms"
 
-    ontology_term = models.CharField(max_length=256, unique=True)
-    human_readable_name = models.CharField(max_length=256)
+    ontology_term = models.TextField(unique=True)
+    human_readable_name = models.TextField()
+
+    def to_dict(self):
+        return {
+            "term": self.ontology_term,
+            "name": self.human_readable_name,
+        }
 
     @staticmethod
     def _get_ontology_prefix(ontology_term: str) -> str:
@@ -37,7 +50,7 @@ class OntologyTerm(models.Model):
 
         Example: For EFO:0002939, it would return efo
         """
-        return ontology_term.split(':')[0].lower()
+        return ontology_term.split(":")[0].lower()
 
     @staticmethod
     def import_entire_ontology(ontology_prefix: str):
@@ -48,17 +61,29 @@ class OntologyTerm(models.Model):
         namespace = {
             "owl": "http://www.w3.org/2002/07/owl#",
             "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-            "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
         }
 
+        # For some reason, there are two ways to find ontology terms in OWL files.
+        # The first is <owl:Class> tags with an <rdfs:label> child
         for child in ontology_xml.findall("owl:Class/[rdfs:label]", namespace):
             about = child.attrib.get("{" + namespace["rdf"] + "}about")
             ontology_term = about.split("/")[-1].replace("_", ":")
             human_readable_name = child.find("rdfs:label", namespace).text
 
             if OntologyTerm._get_ontology_prefix(ontology_term) == ontology_prefix:
-                term = OntologyTerm()
-                term.ontology_term = ontology_term
+                term, _ = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
+                term.human_readable_name = human_readable_name
+                term.save()
+
+        # The her way is <rdf:Description> tags with an <rdfs:label> child
+        for child in ontology_xml.findall("rdf:Description/[rdfs:label]", namespace):
+            about = child.attrib.get("{" + namespace["rdf"] + "}about")
+            ontology_term = about.split("/")[-1].replace("_", ":")
+            human_readable_name = child.find("rdfs:label", namespace).text
+
+            if OntologyTerm._get_ontology_prefix(ontology_term) == ontology_prefix:
+                term, _ = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
                 term.human_readable_name = human_readable_name
                 term.save()
 
@@ -74,7 +99,7 @@ class OntologyTerm(models.Model):
             cls._create_from_api(ontology_term)
 
     @staticmethod
-    def _create_from_api(ontology_term: str) -> 'OntologyTerm':
+    def _create_from_api(ontology_term: str) -> "OntologyTerm":
         """ Creates and saves an OntologyTerm instance by querying the OLS API """
         term = OntologyTerm()
         term.ontology_term = ontology_term
@@ -83,9 +108,9 @@ class OntologyTerm(models.Model):
         return term
 
     @classmethod
-    def get_or_create(cls, ontology_term: str) -> 'OntologyTerm':
+    def get_or_create_from_api(cls, ontology_term: str) -> "OntologyTerm":
         match = cls.objects.filter(ontology_term=ontology_term).first()
-        if match is None:
-            return cls._create_from_api(ontology_term)
-        else:
+        if match is not None:
             return match
+
+        return cls._create_from_api(ontology_term)

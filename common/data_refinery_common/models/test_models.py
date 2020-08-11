@@ -1,6 +1,12 @@
 from django.test import TestCase
 
-from data_refinery_common.models import Experiment, ExperimentSampleAssociation, Sample
+from data_refinery_common.models import (
+    Experiment,
+    ExperimentSampleAssociation,
+    OntologyTerm,
+    Sample,
+    SampleAttribute,
+)
 
 
 class ExperimentModelTestCase(TestCase):
@@ -20,13 +26,25 @@ class ExperimentModelTestCase(TestCase):
         sample.sex = "Male"
         sample.save()
 
+        length = OntologyTerm()
+        length.ontology_term = "PATO:0000122"
+        length.human_readable_name = "length"
+        length.save()
+
+        sa = SampleAttribute()
+        sa.name = length
+        sa.submitter = "Refinebio Tests"
+        sa.set_value(5)
+        sa.sample = sample
+        sa.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
 
         self.assertEqual(
-            set(experiment.get_sample_metadata_fields()), set(["specimen_part", "sex"])
+            set(experiment.get_sample_metadata_fields()), set(["specimen_part", "sex", "length"])
         )
 
     # Test for when no metadata fields are present

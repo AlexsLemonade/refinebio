@@ -124,36 +124,46 @@ class Experiment(models.Model):
         else:
             metadata["source_last_modified"] = ""
 
+        if self.experimentattribute_set.count() > 0:
+            metadata["other_metadata"] = [
+                attribute.to_dict() for attribute in self.experimentattribute_set.all()
+            ]
+
         return metadata
 
     def get_sample_metadata_fields(self):
         """ Get all metadata fields that are non-empty for at least one sample in the experiment.
         See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
         """
-        fields = []
+        fields = set()
 
-        possible_fields = [
-            "sex",
-            "age",
-            "specimen_part",
-            "genotype",
-            "disease",
-            "disease_stage",
-            "cell_line",
-            "treatment",
-            "race",
-            "subject",
-            "compound",
-            "time",
-        ]
+        possible_fields = set(
+            [
+                "sex",
+                "age",
+                "specimen_part",
+                "genotype",
+                "disease",
+                "disease_stage",
+                "cell_line",
+                "treatment",
+                "race",
+                "subject",
+                "compound",
+                "time",
+            ]
+        )
         samples = self.samples.all()
-        for field in possible_fields:
-            for sample in samples:
+        for sample in samples:
+            for field in possible_fields - fields:
                 if getattr(sample, field) != None and getattr(sample, field) != "":
-                    fields.append(field)
-                    break
+                    fields.add(field)
 
-        return fields
+            fields |= set(
+                sample.sampleattribute_set.values_list("name__human_readable_name", flat=True)
+            )
+
+        return list(fields)
 
     def update_sample_metadata_fields(self):
         self.sample_metadata_fields = self.get_sample_metadata_fields()

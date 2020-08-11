@@ -1,0 +1,342 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.23.0
+    method: GET
+    uri: http://www.ebi.ac.uk/ols/api/terms?id=UO:0000035
+  response:
+    body:
+      string: ''
+    headers:
+      Connection:
+      - Keep-Alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - text/html
+      Date:
+      - Fri, 07 Aug 2020 18:26:55 GMT
+      Location:
+      - https://www.ebi.ac.uk/ols/api/terms?id=UO:0000035
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.23.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ols/api/terms?id=UO:0000035
+  response:
+    body:
+      string: "{\n  \"_embedded\" : {\n    \"terms\" : [ {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : null,\n      \"annotation\"\
+        \ : {\n        \"created_by\" : [ \"george gkoutos\" ],\n        \"def\" :\
+        \ [ \"A time unit which is approximately equal to the length of time of one\
+        \ of cycle of the moon's phases which in science is taken to be equal to 30\
+        \ days.\" ],\n        \"inSubset\" : [ \"unit_slim\" ]\n      },\n      \"\
+        synonyms\" : null,\n      \"ontology_name\" : \"sep\",\n      \"ontology_prefix\"\
+        \ : \"SEP\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/sep\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : null,\n      \"obo_definition_citation\"\
+        \ : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n   \
+        \   \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/sep/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/sep/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/sep/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/sep/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/sep/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/sep/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/sep/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : null,\n      \"annotation\"\
+        \ : {\n        \"definition\" : [ \"A time unit which is approximately equal\
+        \ to the length of time of one of cycle of the moon's phases which in science\
+        \ is taken to be equal to 30 days.\" ],\n        \"imported from\" : [ \"\
+        http://purl.obolibrary.org/obo/uo.owl\" ]\n      },\n      \"synonyms\" :\
+        \ null,\n      \"ontology_name\" : \"genepio\",\n      \"ontology_prefix\"\
+        \ : \"GENEPIO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/genepio.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : null,\n      \"obo_definition_citation\"\
+        \ : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n   \
+        \   \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : {\n        \"created_by\" : [ \"george gkoutos\" ],\n     \
+        \   \"editor preferred term\" : [ \"month\" ],\n        \"has_obo_namespace\"\
+        \ : [ \"unit.ontology\" ],\n        \"id\" : [ \"UO:0000035\" ],\n       \
+        \ \"imported from\" : [ \"http://purl.obolibrary.org/obo/uo.owl\" ]\n    \
+        \  },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"enm\",\n  \
+        \    \"ontology_prefix\" : \"ENM\",\n      \"ontology_iri\" : \"http://purl.enanomapper.net/onto/enanomapper.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : [ \"unit_slim\" ],\n\
+        \      \"obo_definition_citation\" : [{\"definition\":\"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\",\"oboXrefs\"\
+        :[{\"database\":\"Wikipedia\",\"id\":\"Wikipedia\",\"description\":null,\"\
+        url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n\
+        \      \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/enm/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/enm/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/enm/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/enm/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/enm/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/enm/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/enm/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : {\n        \"created_by\" : [ \"george gkoutos\" ],\n     \
+        \   \"has_obo_namespace\" : [ \"unit.ontology\" ],\n        \"id\" : [ \"\
+        UO:0000035\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"ms\",\n      \"ontology_prefix\" : \"MS\",\n      \"ontology_iri\" :\
+        \ \"http://purl.obolibrary.org/obo/ms.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : false,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"UO_0000035\",\n      \"obo_id\" : \"UO:0000035\",\n      \"in_subset\"\
+        \ : [ \"unit_slim\" ],\n      \"obo_definition_citation\" : [{\"definition\"\
+        :\"A time unit which is approximately equal to the length of time of one of\
+        \ cycle of the moon's phases which in science is taken to be equal to 30 days.\"\
+        ,\"oboXrefs\":[{\"database\":\"Wikipedia\",\"id\":\"Wikipedia\",\"description\"\
+        :null,\"url\":\"http://en.wikipedia.org/wiki/Wikipedia\"}]}],\n      \"obo_xref\"\
+        \ : null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : {\n        \"editor preferred label\" : [ \"month\" ],\n  \
+        \      \"imported from\" : [ \"http://purl.obolibrary.org/obo/uo.owl\" ]\n\
+        \      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"bcgo\"\
+        ,\n      \"ontology_prefix\" : \"BCGO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/bcgo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : null,\n      \"obo_definition_citation\"\
+        \ : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n   \
+        \   \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : { },\n      \"synonyms\" : null,\n      \"ontology_name\" :\
+        \ \"agro\",\n      \"ontology_prefix\" : \"AGRO\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/agro-edit.owl\",\n      \"is_obsolete\"\
+        \ : false,\n      \"term_replaced_by\" : null,\n      \"is_defining_ontology\"\
+        \ : false,\n      \"has_children\" : false,\n      \"is_root\" : false,\n\
+        \      \"short_form\" : \"UO_0000035\",\n      \"obo_id\" : \"UO:0000035\"\
+        ,\n      \"in_subset\" : null,\n      \"obo_definition_citation\" : [{\"definition\"\
+        :\"A time unit which is approximately equal to the length of time of one of\
+        \ cycle of the moon's phases which in science is taken to be equal to 30 days.\"\
+        ,\"oboXrefs\":[{\"database\":\"Wikipedia\",\"id\":\"Wikipedia\",\"description\"\
+        :null,\"url\":\"http://en.wikipedia.org/wiki/Wikipedia\"}]}],\n      \"obo_xref\"\
+        \ : null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/agro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/agro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/agro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/agro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/agro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/agro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/agro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : {\n        \"created_by\" : [ \"george gkoutos\" ],\n     \
+        \   \"has_obo_namespace\" : [ \"unit.ontology\" ],\n        \"id\" : [ \"\
+        UO:0000035\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"uo\",\n      \"ontology_prefix\" : \"UO\",\n      \"ontology_iri\" :\
+        \ \"http://purl.obolibrary.org/obo/uo.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : true,\n\
+        \      \"has_children\" : false,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"UO_0000035\",\n      \"obo_id\" : \"UO:0000035\",\n      \"in_subset\"\
+        \ : [ \"unit_slim\" ],\n      \"obo_definition_citation\" : [{\"definition\"\
+        :\"A time unit which is approximately equal to the length of time of one of\
+        \ cycle of the moon's phases which in science is taken to be equal to 30 days.\"\
+        ,\"oboXrefs\":[{\"database\":\"Wikipedia\",\"id\":\"Wikipedia\",\"description\"\
+        :null,\"url\":\"http://en.wikipedia.org/wiki/Wikipedia\"}]}],\n      \"obo_xref\"\
+        \ : null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/uo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/uo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : {\n        \"created_by\" : [ \"george gkoutos\" ],\n     \
+        \   \"has_obo_namespace\" : [ \"unit.ontology\" ],\n        \"id\" : [ \"\
+        UO:0000035\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/uo.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"bao\"\
+        ,\n      \"ontology_prefix\" : \"BAO\",\n      \"ontology_iri\" : \"http://www.bioassayontology.org/bao/bao_complete.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : [ \"unit_slim\" ],\n\
+        \      \"obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n \
+        \     \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n    \
+        \  \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bao/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bao/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bao/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/bao/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/bao/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bao/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bao/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : {\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/uo.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"eupath\"\
+        ,\n      \"ontology_prefix\" : \"EUPATH\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/eupath.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : null,\n      \"obo_definition_citation\"\
+        \ : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n   \
+        \   \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A time unit which\
+        \ is approximately equal to the length of time of one of cycle of the moon's\
+        \ phases which in science is taken to be equal to 30 days.\" ],\n      \"\
+        annotation\" : {\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/uo.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"foodon\"\
+        ,\n      \"ontology_prefix\" : \"FOODON\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/foodon.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : null,\n      \"obo_definition_citation\"\
+        \ : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n   \
+        \   \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/foodon/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/foodon/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/foodon/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/foodon/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/foodon/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/foodon/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/foodon/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/UO_0000035\"\
+        ,\n      \"label\" : \"month\",\n      \"description\" : [ \"A month is a\
+        \ derived time unit which is approximately equal to the length of time of\
+        \ one of cycle of the moon's phases which in science is taken to be equal\
+        \ to 30 days. [ http://en.wikipedia.org/wiki/Wikipedia ]\" ],\n      \"annotation\"\
+        \ : {\n        \"EFO_URI\" : [ \"http://www.ebi.ac.uk/efo/EFO_0001726\" ],\n\
+        \        \"database_cross_reference\" : [ \"SNOMEDCT:258706009\", \"Wikipedia:Month\"\
+        , \"NCIt:C29846\" ],\n        \"definition_citation\" : [ \"UO_0000035\" ],\n\
+        \        \"term editor\" : [ \"James Malone\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"efo\",\n      \"ontology_prefix\" :\
+        \ \"EFO\",\n      \"ontology_iri\" : \"http://www.ebi.ac.uk/efo/efo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"UO_0000035\",\n    \
+        \  \"obo_id\" : \"UO:0000035\",\n      \"in_subset\" : null,\n      \"obo_definition_citation\"\
+        \ : null,\n      \"obo_xref\" : [{\"database\":\"Wikipedia\",\"id\":\"Month\"\
+        ,\"description\":null,\"url\":\"http://en.wikipedia.org/wiki/Month\"}, {\"\
+        database\":\"NCIt\",\"id\":\"C29846\",\"description\":null,\"url\":null},\
+        \ {\"database\":\"SNOMEDCT\",\"id\":\"258706009\",\"description\":null,\"\
+        url\":null}],\n      \"obo_synonym\" : null,\n      \"is_preferred_root\"\
+        \ : false,\n      \"_links\" : {\n        \"self\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUO_0000035/graph\"\
+        \n        }\n      }\n    } ]\n  },\n  \"_links\" : {\n    \"self\" : {\n\
+        \      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms\"\n    }\n  },\n \
+        \ \"page\" : {\n    \"size\" : 20,\n    \"totalElements\" : 11,\n    \"totalPages\"\
+        \ : 1,\n    \"number\" : 0\n  }\n}"
+    headers:
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Fri, 07 Aug 2020 18:26:55 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Application-Context:
+      - application:8080
+    status:
+      code: 200
+      message: OK
+version: 1

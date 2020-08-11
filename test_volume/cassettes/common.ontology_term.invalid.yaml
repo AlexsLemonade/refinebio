@@ -1,0 +1,66 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.23.0
+    method: GET
+    uri: http://www.ebi.ac.uk/ols/api/terms?id=UO:9999999
+  response:
+    body:
+      string: ''
+    headers:
+      Connection:
+      - Keep-Alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - text/html
+      Date:
+      - Fri, 07 Aug 2020 18:33:05 GMT
+      Location:
+      - https://www.ebi.ac.uk/ols/api/terms?id=UO:9999999
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.23.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ols/api/terms?id=UO:9999999
+  response:
+    body:
+      string: "{\n  \"_links\" : {\n    \"self\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms\"\
+        \n    }\n  },\n  \"page\" : {\n    \"size\" : 20,\n    \"totalElements\" :\
+        \ 0,\n    \"totalPages\" : 0,\n    \"number\" : 0\n  }\n}"
+    headers:
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Fri, 07 Aug 2020 18:33:06 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Application-Context:
+      - application:8080
+    status:
+      code: 200
+      message: OK
+version: 1

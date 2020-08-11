@@ -29,6 +29,7 @@ from data_refinery_common.models.associations.sample_computed_file_association i
 from data_refinery_common.models.associations.sample_result_association import (  # noqa
     SampleResultAssociation,
 )
+from data_refinery_common.models.attributes import ExperimentAttribute, SampleAttribute  # noqa
 from data_refinery_common.models.command_progress import (  # noqa
     CdfCorrectedAccession,
     SurveyedAccession,

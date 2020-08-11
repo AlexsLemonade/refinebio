@@ -288,6 +288,7 @@ class ExperimentDocumentView(DocumentViewSet):
             "field": "num_downloadable_samples",
             "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN, LOOKUP_QUERY_GT],
         },
+        "sample_metadata_fields": "sample_metadata_fields",
     }
 
     # Define ordering fields

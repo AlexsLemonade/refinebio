@@ -21,6 +21,7 @@ from data_refinery_common.models import (
     ExperimentAnnotation,
     ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
+    OntologyTerm,
     Organism,
     OrganismIndex,
     OriginalFile,
@@ -30,6 +31,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
+    SampleAttribute,
     SampleResultAssociation,
 )
 from data_refinery_common.models.documents import ExperimentDocument
@@ -96,6 +98,18 @@ class APITestCases(APITestCase):
         sample.save()
         self.sample = sample
 
+        length = OntologyTerm()
+        length.ontology_term = "PATO:0000122"
+        length.human_readable_name = "length"
+        length.save()
+
+        sa = SampleAttribute()
+        sa.name = length
+        sa.submitter = "Refinebio Tests"
+        sa.set_value(5)
+        sa.sample = sample
+        sa.save()
+
         # add qn target for sample organism
         result = ComputationalResult()
         result.commands.append("create_qn_target.py")
@@ -147,6 +161,7 @@ class APITestCases(APITestCase):
         experiment_sample_association.save()
         experiment.num_total_samples = 1
         experiment.num_processed_samples = 1
+        experiment.update_sample_metadata_fields()
         experiment.save()
 
         result = ComputationalResult()
@@ -309,6 +324,17 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 1)
         self.assertEqual(response.json()["results"][0]["alternate_accession_code"], "E-GEOD-000")
+
+    # Test if we can filter based on metadata supplied by an external contributor
+    def test_experiment_external_metadata(self):
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION}) + "?sample_metadata_fields=length",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["results"]), 1)
+        self.assertEqual(response.json()["results"][0]["accession_code"], "GSE123")
 
     def test_sample_multiple_accessions(self):
         response = self.client.get(
