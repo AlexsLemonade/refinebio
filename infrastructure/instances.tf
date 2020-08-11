@@ -191,7 +191,8 @@ resource "aws_instance" "smasher_instance" {
   root_block_device = {
     volume_type = "gp2"
     # 2000 is the largest we can use without reformatting the disk.
-    volume_size = 200
+    # volume_size = 200
+    volume_size = 1000
   }
 }
 
