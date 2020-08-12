@@ -50,6 +50,8 @@ class TestOntologyTerm(TestCase):
         # ontologies like EFO, which could take upwards of a minute to download and parse
         OntologyTerm.import_entire_ontology("uo")
 
+        self.assertGreater(OntologyTerm.objects.all().count(), 0)
+
         self.assertEqual(
             "month", OntologyTerm.get_or_create_from_api("UO:0000035").human_readable_name
         )
