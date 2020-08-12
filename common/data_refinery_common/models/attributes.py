@@ -53,7 +53,7 @@ class AbstractAttribute(models.Model):
             self.value_type = ONTOLOGY_TERM
 
             # make sure that we know how to deal with this ontology term, and error out if we don't
-            OntologyTerm.poke_term(value)
+            OntologyTerm.get_or_create_from_api(value)
 
         elif type(value) == bool:
             self.value_type = BOOL
@@ -83,8 +83,10 @@ class AbstractAttribute(models.Model):
 
 
 class SampleAttribute(AbstractAttribute):
-    sample = models.ForeignKey("Sample", on_delete=models.CASCADE)
+    sample = models.ForeignKey("Sample", on_delete=models.CASCADE, related_name="attributes")
 
 
 class ExperimentAttribute(AbstractAttribute):
-    experiment = models.ForeignKey("Experiment", on_delete=models.CASCADE)
+    experiment = models.ForeignKey(
+        "Experiment", on_delete=models.CASCADE, related_name="attributes"
+    )

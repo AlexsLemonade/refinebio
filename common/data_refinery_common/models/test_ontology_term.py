@@ -22,23 +22,10 @@ class TestOntologyTerm(TestCase):
     def test_get_or_create_from_api_returns_cached(self, mock_api_call):
         mock_api_call.return_value = "medulloblastoma"
 
-        term = OntologyTerm()
-        term.ontology_term = "EFO:0002939"
-        term.human_readable_name = "medulloblastoma"
-        term.save()
-
         self.assertEqual(
             "medulloblastoma",
             OntologyTerm.get_or_create_from_api("EFO:0002939").human_readable_name,
         )
-
-        mock_api_call.assert_not_called()
-
-    @patch("data_refinery_common.models.ontology_term.get_human_readable_name_from_api")
-    def test_poke_term(self, mock_api_call):
-        mock_api_call.return_value = "medulloblastoma"
-
-        OntologyTerm.poke_term("EFO:0002939")
 
         mock_api_call.assert_called_once_with("EFO:0002939")
         mock_api_call.reset_mock()

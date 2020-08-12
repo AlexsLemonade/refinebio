@@ -325,8 +325,8 @@ class APITestCases(APITestCase):
         self.assertEqual(len(response.json()["results"]), 1)
         self.assertEqual(response.json()["results"][0]["alternate_accession_code"], "E-GEOD-000")
 
-    # Test if we can filter based on metadata supplied by an external contributor
     def test_experiment_external_metadata(self):
+        """Test if we can filter based on metadata supplied by an external contributor"""
         response = self.client.get(
             reverse("search", kwargs={"version": API_VERSION}) + "?sample_metadata_fields=length",
             follow=True,

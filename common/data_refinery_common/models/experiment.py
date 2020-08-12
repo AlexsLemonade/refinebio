@@ -124,9 +124,9 @@ class Experiment(models.Model):
         else:
             metadata["source_last_modified"] = ""
 
-        if self.experimentattribute_set.count() > 0:
+        if self.attributes.count() > 0:
             metadata["other_metadata"] = [
-                attribute.to_dict() for attribute in self.experimentattribute_set.all()
+                attribute.to_dict() for attribute in self.attributes.all()
             ]
 
         return metadata
@@ -159,9 +159,7 @@ class Experiment(models.Model):
                 if getattr(sample, field) != None and getattr(sample, field) != "":
                     fields.add(field)
 
-            fields |= set(
-                sample.sampleattribute_set.values_list("name__human_readable_name", flat=True)
-            )
+            fields |= set(sample.attributes.values_list("name__human_readable_name", flat=True))
 
         return list(fields)
 

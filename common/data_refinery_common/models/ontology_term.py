@@ -7,12 +7,16 @@ import requests
 from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
-OLS_URL_TEMPLATE = "http://www.ebi.ac.uk/ols/api/terms?id={}"
+
+# The Ontology Lookup Service URL used to look up a single ontology term
+TERM_URL_TEMPLATE = "http://www.ebi.ac.uk/ols/api/terms?id={}"
+
+# The Ontology Lookup Service URL used to download an entire ontology
 ONTOLOGY_URL_TEMPLATE = "https://www.ebi.ac.uk/ols/ontologies/{}/download"
 
 
 def get_human_readable_name_from_api(ontology_term: str) -> str:
-    response = requests.get(OLS_URL_TEMPLATE.format(ontology_term))
+    response = requests.get(TERM_URL_TEMPLATE.format(ontology_term))
 
     if response.json().get("_embedded", None) is None:
         raise ValueError("Could not find a human-readable name for '{}'".format(ontology_term))
@@ -76,7 +80,7 @@ class OntologyTerm(models.Model):
                 term.human_readable_name = human_readable_name
                 term.save()
 
-        # The her way is <rdf:Description> tags with an <rdfs:label> child
+        # The other way is <rdf:Description> tags with an <rdfs:label> child
         for child in ontology_xml.findall("rdf:Description/[rdfs:label]", namespace):
             about = child.attrib.get("{" + namespace["rdf"] + "}about")
             ontology_term = about.split("/")[-1].replace("_", ":")
@@ -86,17 +90,6 @@ class OntologyTerm(models.Model):
                 term, _ = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
                 term.human_readable_name = human_readable_name
                 term.save()
-
-    @classmethod
-    def poke_term(cls, ontology_term: str):
-        """ Make sure that the database contains an ontology term, but don't return the term
-
-        This can be called in the surveyor if we want to store the ontology term in ontology term
-        form but the API should return the human-readable-name. This would prevent us from making
-        an external API call from the API.
-        """
-        if cls.objects.filter(ontology_term=ontology_term).first() is None:
-            cls._create_from_api(ontology_term)
 
     @staticmethod
     def _create_from_api(ontology_term: str) -> "OntologyTerm":
