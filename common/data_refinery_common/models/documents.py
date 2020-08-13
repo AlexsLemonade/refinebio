@@ -80,6 +80,9 @@ class ExperimentDocument(Document):
     # Index all downloadable samples as keywords so that we can calculate unique counts on the facets
     downloadable_samples = fields.ListField(fields.KeywordField())
 
+    # Index our sample keywords so that we can use them for better search
+    sample_keywords = fields.ListField(fields.KeywordField())
+
     class Django:
         model = Experiment
         parallel_indexing = True

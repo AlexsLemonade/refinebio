@@ -5,6 +5,7 @@ from django.test import TestCase
 import vcr
 
 from data_refinery_common.models import (
+    Contributor,
     Experiment,
     ExperimentSampleAssociation,
     OntologyTerm,
@@ -13,7 +14,6 @@ from data_refinery_common.models import (
 )
 from data_refinery_foreman.foreman.management.commands.import_external_sample_attributes import (
     Command,
-    OntologyTerm,
     import_metadata,
     import_sample_attributes,
 )
@@ -69,6 +69,11 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         unit.human_readable_name = "thou"
         unit.save()
 
+        submitter = Contributor()
+        submitter.name = SUBMITTER
+        submitter.save()
+        self.submitter = submitter
+
     #
     # Test import_sample_attributes()
     #
@@ -78,27 +83,21 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         surveyed then we just do nothing"""
 
         METADATA = [{"PATO:0000122": {"value": 25, "unit": "UO:0010012"}}]
-        import_sample_attributes("SRR789", METADATA, SUBMITTER, set())
+        import_sample_attributes("SRR789", METADATA, self.submitter)
         self.assertEqual(SampleAttribute.objects.all().count(), 0)
 
     def test_import_invalid_ontology_term(self):
         METADATA = [{"PATO:0000122": {"value": 25, "unit": "thou"}}]
-        self.assertRaises(
-            ValueError, import_sample_attributes, "SRR123", METADATA, SUBMITTER, set()
-        )
+        self.assertRaises(ValueError, import_sample_attributes, "SRR123", METADATA, self.submitter)
 
         METADATA = [{"length": {"value": 25, "unit": "UO:0010012"}}]
-        self.assertRaises(
-            ValueError, import_sample_attributes, "SRR123", METADATA, SUBMITTER, set()
-        )
+        self.assertRaises(ValueError, import_sample_attributes, "SRR123", METADATA, self.submitter)
 
     def test_import_valid_sample_attributes(self):
         METADATA = [{"PATO:0000122": {"value": 25, "unit": "UO:0010012"}}]
-        dirty_experiments = set()
-        import_sample_attributes("SRR123", METADATA, SUBMITTER, dirty_experiments)
+        import_sample_attributes("SRR123", METADATA, self.submitter)
 
         self.assertEqual(SampleAttribute.objects.all().count(), 1)
-        self.assertEqual(dirty_experiments, set([self.experiment]))
 
         metadata = Sample.objects.get(accession_code="SRR123").to_metadata_dict()
         self.assertIsNotNone(metadata.get("other_metadata", None))
@@ -134,9 +133,6 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         self.assertEqual(metadata["other_metadata"][0]["unit"]["name"], "thou")
         self.assertEqual(metadata["other_metadata"][0]["value"], 25)
         self.assertEqual(metadata["other_metadata"][0]["probability"], "unknown")
-
-        self.experiment.refresh_from_db()
-        self.assertEqual(self.experiment.sample_metadata_fields, ["length"])
 
     #
     # End-to-end test

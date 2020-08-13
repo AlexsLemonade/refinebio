@@ -14,6 +14,7 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
+    Contributor,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -31,7 +32,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
-    SampleAttribute,
+    SampleKeyword,
     SampleResultAssociation,
 )
 from data_refinery_common.models.documents import ExperimentDocument
@@ -99,16 +100,15 @@ class APITestCases(APITestCase):
         self.sample = sample
 
         length = OntologyTerm()
-        length.ontology_term = "PATO:0000122"
-        length.human_readable_name = "length"
+        length.ontology_term = "EFO:0002939"
+        length.human_readable_name = "medulloblastoma"
         length.save()
 
-        sa = SampleAttribute()
-        sa.name = length
-        sa.submitter = "Refinebio Tests"
-        sa.set_value(5)
-        sa.sample = sample
-        sa.save()
+        sk = SampleKeyword()
+        sk.name = length
+        sk.submitter = Contributor.objects.get_or_create(name="Refinebio Tests")
+        sk.sample = sample
+        sk.save()
 
         # add qn target for sample organism
         result = ComputationalResult()
@@ -161,7 +161,7 @@ class APITestCases(APITestCase):
         experiment_sample_association.save()
         experiment.num_total_samples = 1
         experiment.num_processed_samples = 1
-        experiment.update_sample_metadata_fields()
+        experiment.update_sample_keywords()
         experiment.save()
 
         result = ComputationalResult()
@@ -325,10 +325,21 @@ class APITestCases(APITestCase):
         self.assertEqual(len(response.json()["results"]), 1)
         self.assertEqual(response.json()["results"][0]["alternate_accession_code"], "E-GEOD-000")
 
-    def test_experiment_external_metadata(self):
-        """Test if we can filter based on metadata supplied by an external contributor"""
+    def test_experiment_keywords(self):
+        """Test if we can filter based on keywords supplied by an external contributor"""
         response = self.client.get(
-            reverse("search", kwargs={"version": API_VERSION}) + "?sample_metadata_fields=length",
+            reverse("search", kwargs={"version": API_VERSION}) + "?sample_keywords=medulloblastoma",
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["results"]), 1)
+        self.assertEqual(response.json()["results"][0]["accession_code"], "GSE123")
+
+        # Now see what happens if we just search "medulloblastoma". There still
+        # should only be one result since we only tagged one experiment.
+        response = self.client.get(
+            reverse("search", kwargs={"version": API_VERSION}) + "?search=medulloblastoma",
             follow=True,
         )
 

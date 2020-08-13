@@ -1,11 +1,12 @@
 from django.test import TestCase
 
 from data_refinery_common.models import (
+    Contributor,
     Experiment,
     ExperimentSampleAssociation,
     OntologyTerm,
     Sample,
-    SampleAttribute,
+    SampleKeyword,
 )
 
 
@@ -26,25 +27,13 @@ class ExperimentModelTestCase(TestCase):
         sample.sex = "Male"
         sample.save()
 
-        length = OntologyTerm()
-        length.ontology_term = "PATO:0000122"
-        length.human_readable_name = "length"
-        length.save()
-
-        sa = SampleAttribute()
-        sa.name = length
-        sa.submitter = "Refinebio Tests"
-        sa.set_value(5)
-        sa.sample = sample
-        sa.save()
-
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
 
         self.assertEqual(
-            set(experiment.get_sample_metadata_fields()), set(["specimen_part", "sex", "length"])
+            set(experiment.get_sample_metadata_fields()), set(["specimen_part", "sex"])
         )
 
     # Test for when no metadata fields are present
@@ -81,3 +70,31 @@ class ExperimentModelTestCase(TestCase):
         experiment_sample_association.save()
 
         self.assertEqual(set(experiment.get_sample_metadata_fields()), set(["age"]))
+
+    def test_get_sample_keywords(self):
+        experiment = Experiment()
+        experiment.save()
+
+        sample = Sample()
+        sample.title = "123"
+        sample.accession_code = "123"
+        sample.age = 23
+        sample.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = experiment
+        experiment_sample_association.save()
+
+        length = OntologyTerm()
+        length.ontology_term = "EFO:0002939"
+        length.human_readable_name = "medulloblastoma"
+        length.save()
+
+        sk = SampleKeyword()
+        sk.name = length
+        sk.submitter = Contributor.objects.get_or_create(name="Refinebio Tests")
+        sk.sample = sample
+        sk.save()
+
+        self.assertEqual(set(experiment.get_sample_keywords()), set(["medulloblastoma"]))

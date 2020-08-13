@@ -15,7 +15,7 @@ metadata for us.
 import json
 import sys
 import uuid
-from typing import Dict, List, Set
+from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 
@@ -29,9 +29,7 @@ from data_refinery_common.utils import parse_s3_url
 logger = get_and_configure_logger(__name__)
 
 
-def import_sample_attributes(
-    accession_code: str, attributes: List, submitter: str, dirty_experiments: Set
-):
+def import_sample_attributes(accession_code: str, attributes: List, source: Contributor):
     try:
         sample = Sample.objects.get(accession_code=accession_code)
     except Sample.DoesNotExist:
@@ -39,8 +37,6 @@ def import_sample_attributes(
             "Skipping metadata for sample {} that we don't know about".format(accession_code)
         )
         return
-
-    dirty_experiments |= set(sample.experiment_set.all())
 
     for attribute in attributes:
         if type(attribute) != dict:
@@ -60,12 +56,12 @@ def import_sample_attributes(
             # attributes with the same ontology term name?
             try:
                 attribute = SampleAttribute.objects.get(
-                    sample=sample, source=submitter, name__ontology_term=name
+                    sample=sample, source=source, name__ontology_term=name
                 )
             except SampleAttribute.DoesNotExist:
                 attribute = SampleAttribute()
                 attribute.sample = sample
-                attribute.source = submitter
+                attribute.source = source
                 attribute.name = OntologyTerm.get_or_create_from_api(name)
 
             attribute.set_value(value["value"])
@@ -82,7 +78,7 @@ def import_sample_attributes(
 
 
 def import_metadata(metadata: Dict, submitter: str):
-    dirty_experiments = set()
+    source, _ = Contributor.objects.get_or_create(name=submitter)
 
     for sample in metadata:
         if type(sample["sample_accession"]) != str:
@@ -91,7 +87,7 @@ def import_metadata(metadata: Dict, submitter: str):
                     sample["sample_accession"]
                 )
             )
-            sys.exit(1)
+            continue
 
         if type(sample["attributes"]) != list:
             # Don't print sample_attributes itself because it could be massive
@@ -100,15 +96,9 @@ def import_metadata(metadata: Dict, submitter: str):
                     sample["sample_accession"]
                 )
             )
-            sys.exit(1)
+            continue
 
-        import_sample_attributes(
-            sample["sample_accession"], sample["attributes"], submitter, dirty_experiments
-        )
-
-    for experiment in dirty_experiments:
-        experiment.update_sample_metadata_fields()
-        experiment.save()
+        import_sample_attributes(sample["sample_accession"], sample["attributes"], source)
 
 
 class Command(BaseCommand):
@@ -153,8 +143,9 @@ class Command(BaseCommand):
 
         with open(filepath) as file:
             metadata = json.load(file)
-            if type(metadata) != list:
-                logger.error("The provided metadata file is not a list of metadata information")
-                sys.exit(1)
 
-            import_metadata(metadata, options["submitter"])
+        if type(metadata) != list:
+            logger.error("The provided metadata file is not a list of metadata information")
+            sys.exit(1)
+
+        import_metadata(metadata, options["submitter"])

@@ -55,6 +55,7 @@ class Experiment(models.Model):
     num_total_samples = models.IntegerField(default=0)
     num_processed_samples = models.IntegerField(default=0)
     num_downloadable_samples = models.IntegerField(default=0)
+    sample_keywords = ArrayField(models.TextField(), default=list)
     sample_metadata_fields = ArrayField(models.TextField(), default=list)
     platform_names = ArrayField(models.TextField(), default=list)
     platform_accession_codes = ArrayField(models.TextField(), default=list)
@@ -124,44 +125,50 @@ class Experiment(models.Model):
         else:
             metadata["source_last_modified"] = ""
 
-        if self.attributes.count() > 0:
-            metadata["other_metadata"] = [
-                attribute.to_dict() for attribute in self.attributes.all()
-            ]
-
         return metadata
+
+    def get_sample_keywords(self):
+        """ Get the human-readable name of all of the keywords that are defined
+        on at least one sample
+        """
+        keywords = set()
+
+        for sample in self.samples.all():
+            keywords |= set(sample.keywords.values_list("name__human_readable_name", flat=True))
+
+        return list(keywords)
 
     def get_sample_metadata_fields(self):
         """ Get all metadata fields that are non-empty for at least one sample in the experiment.
         See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
         """
-        fields = set()
+        fields = []
 
-        possible_fields = set(
-            [
-                "sex",
-                "age",
-                "specimen_part",
-                "genotype",
-                "disease",
-                "disease_stage",
-                "cell_line",
-                "treatment",
-                "race",
-                "subject",
-                "compound",
-                "time",
-            ]
-        )
+        possible_fields = [
+            "sex",
+            "age",
+            "specimen_part",
+            "genotype",
+            "disease",
+            "disease_stage",
+            "cell_line",
+            "treatment",
+            "race",
+            "subject",
+            "compound",
+            "time",
+        ]
         samples = self.samples.all()
-        for sample in samples:
-            for field in possible_fields - fields:
+        for field in possible_fields:
+            for sample in samples:
                 if getattr(sample, field) != None and getattr(sample, field) != "":
-                    fields.add(field)
+                    fields.append(field)
+                    break
 
-            fields |= set(sample.attributes.values_list("name__human_readable_name", flat=True))
+        return fields
 
-        return list(fields)
+    def update_sample_keywords(self):
+        self.sample_keywords = self.get_sample_keywords()
 
     def update_sample_metadata_fields(self):
         self.sample_metadata_fields = self.get_sample_metadata_fields()

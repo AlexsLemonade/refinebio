@@ -40,6 +40,7 @@ from data_refinery_common.models.computational_result_annotation import (  # noq
     ComputationalResultAnnotation,
 )
 from data_refinery_common.models.computed_file import ComputedFile  # noqa
+from data_refinery_common.models.contributors import Contributor  # noqa
 from data_refinery_common.models.dataset import Dataset  # noqa
 from data_refinery_common.models.dataset_annotation import DatasetAnnotation  # noqa
 from data_refinery_common.models.experiment import Experiment  # noqa
@@ -48,6 +49,7 @@ from data_refinery_common.models.jobs.downloader_job import DownloaderJob  # noq
 from data_refinery_common.models.jobs.processor_job import ProcessorJob  # noqa
 from data_refinery_common.models.jobs.survey_job import SurveyJob  # noqa
 from data_refinery_common.models.jobs.survey_job_key_value import SurveyJobKeyValue  # noqa
+from data_refinery_common.models.keywords import SampleKeyword  # noqa
 from data_refinery_common.models.ontology_term import OntologyTerm  # noqa
 from data_refinery_common.models.organism import Organism  # noqa
 from data_refinery_common.models.organism_index import OrganismIndex  # noqa

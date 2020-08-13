@@ -260,6 +260,7 @@ class ExperimentDocumentView(DocumentViewSet):
     search_fields = {
         "title": {"boost": 10},
         "publication_authors": {"boost": 8},  # "People will search themselves"
+        "sample_keywords": {"boost": 7},
         "publication_title": {"boost": 5},
         "submitter_institution": {"boost": 3},
         "description": {"boost": 2},
@@ -288,7 +289,7 @@ class ExperimentDocumentView(DocumentViewSet):
             "field": "num_downloadable_samples",
             "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN, LOOKUP_QUERY_GT],
         },
-        "sample_metadata_fields": "sample_metadata_fields",
+        "sample_keywords": "sample_keywords",
     }
 
     # Define ordering fields
