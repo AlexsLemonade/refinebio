@@ -132,10 +132,6 @@ variable "spot_fleet_capacity" {
   default = "0"
 }
 
-variable "max_clients" {
-  default = "1"
-}
-
 variable "raven_dsn" {
   default = ""
 }
@@ -273,8 +269,6 @@ output "environment_variables" {
       value = "${aws_instance.nomad_server_1.public_ip}"},
     {name = "NOMAD_PORT"
       value = "4646"},
-    {name = "MAX_CLIENTS"
-      value = "${var.max_clients}"},
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
       value = "${var.max_downloader_jobs_per_node}"},
     {name = "ENGAGEMENTBOT_WEBHOOK"

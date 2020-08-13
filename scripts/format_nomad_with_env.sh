@@ -64,10 +64,6 @@ if [ -z "$env" ]; then
     env="local"
 fi
 
-if [ -z "$MAX_CLIENTS" ]; then
-    MAX_CLIENTS="1"
-fi
-
 if [ -z "$system_version" ]; then
     system_version="latest"
 fi
@@ -251,20 +247,23 @@ if [ "$project" = "workers" ]; then
             rams="1024 4096 16384"
             for r in $rams
             do
-		j=0
-                while [ "$j" -lt "$MAX_CLIENTS" ];
-                do
+                # If we are running locally, just make a single job with index
+                # 0. Otherwise, leave it as a template so it can be filled in
+                # by the spot instance itself
+                if [ "$env" = local ] || [ "$env" = test ]; then
+                    export INDEX="0"
                     export INDEX_POSTFIX="_$j"
-                    export INDEX="$j"
-                    export RAM_POSTFIX="_$r.nomad"
-                    export RAM="$r"
-                    perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                         < "nomad-job-specs/$template" \
-                         > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX" \
-                         2> /dev/null
-                    echo "Made $output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX"
-		    j=$((j + 1))
-                done
+                else
+                    export INDEX="__REPLACE_ME__"
+                    export TEMPLATE_POSTFIX=".tpl"
+                fi
+                export RAM_POSTFIX="_$r.nomad"
+                export RAM="$r"
+                perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                     < "nomad-job-specs/$template" \
+                     > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX$TEMPLATE_POSTFIX" \
+                     2> /dev/null
+                echo "Made $output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX$TEMPLATE_POSTFIX"
             done
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
         elif [ "$output_file" = "smasher.nomad" ] || [ "$output_file" = "create_qn_target.nomad" ] || [ "$output_file" = "create_compendia.nomad" ] || [ "$output_file" = "create_quantpendia.nomad" ] || [ "$output_file" = "tximport.nomad" ]; then
@@ -280,20 +279,24 @@ if [ "$project" = "workers" ]; then
             rams="2048 3072 4096 8192 12288 16384 32768 65536"
             for r in $rams
             do
-		j=0
-                while [ "$j" -lt "$MAX_CLIENTS" ];
-                do
+                # If we are running locally, just make a single job with index
+                # 0. Otherwise, leave it as a template so it can be filled in
+                # by the spot instance itself
+                if [ "$env" = local ] || [ "$env" = test ]; then
+                    export INDEX="0"
                     export INDEX_POSTFIX="_$j"
-                    export INDEX="$j"
-                    export RAM_POSTFIX="_$r.nomad"
-                    export RAM="$r"
-                    perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                         < "nomad-job-specs/$template" \
-                         > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX" \
-                         2> /dev/null
-                    echo "Made $output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX"
-		    j=$((j + 1))
-                done
+                else
+                    export INDEX="__REPLACE_ME__"
+                    export TEMPLATE_POSTFIX=".tpl"
+                fi
+
+                export RAM_POSTFIX="_$r.nomad"
+                export RAM="$r"
+                perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                     < "nomad-job-specs/$template" \
+                     > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX$TEMPLATE_POSTFIX" \
+                     2> /dev/null
+                echo "Made $output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX$TEMPLATE_POSTFIX"
             done
         fi
     done
