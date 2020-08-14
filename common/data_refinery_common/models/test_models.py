@@ -1,6 +1,13 @@
 from django.test import TestCase
 
-from data_refinery_common.models import Experiment, ExperimentSampleAssociation, Sample
+from data_refinery_common.models import (
+    Contribution,
+    Experiment,
+    ExperimentSampleAssociation,
+    OntologyTerm,
+    Sample,
+    SampleKeyword,
+)
 
 
 class ExperimentModelTestCase(TestCase):
@@ -63,3 +70,33 @@ class ExperimentModelTestCase(TestCase):
         experiment_sample_association.save()
 
         self.assertEqual(set(experiment.get_sample_metadata_fields()), set(["age"]))
+
+    def test_get_sample_keywords(self):
+        experiment = Experiment()
+        experiment.save()
+
+        sample = Sample()
+        sample.title = "123"
+        sample.accession_code = "123"
+        sample.age = 23
+        sample.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = experiment
+        experiment_sample_association.save()
+
+        length = OntologyTerm()
+        length.ontology_term = "EFO:0002939"
+        length.human_readable_name = "medulloblastoma"
+        length.save()
+
+        sk = SampleKeyword()
+        sk.name = length
+        sk.source, _ = Contribution.objects.get_or_create(
+            source_name="Refinebio Tests", methods_url="ccdatalab.org"
+        )
+        sk.sample = sample
+        sk.save()
+
+        self.assertEqual(set(experiment.get_sample_keywords()), set(["medulloblastoma"]))
