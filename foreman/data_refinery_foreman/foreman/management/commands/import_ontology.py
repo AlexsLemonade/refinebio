@@ -26,5 +26,3 @@ class Command(BaseCommand):
             sys.exit(1)
 
         OntologyTerm.import_entire_ontology(options["ontology"])
-
-        print(OntologyTerm.objects.all().count())
