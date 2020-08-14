@@ -37,6 +37,11 @@ workers/test_volume/*
 !workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.gtf.gz
 !workers/test_volume/raw/TEST/NO_OP/test.txt
 
+# We download the entire SRAmetadb database and MetaSRA json file while
+# processing the metadata from MetaSRA, which are ~24GB we don't need to track
+config/externally_supplied_metadata/metasra/metasra.v*.json
+config/externally_supplied_metadata/metasra/*.sqlite
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
