@@ -130,6 +130,26 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(survey_job.failure_reason, "No experiment found.")
 
     @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.sra.arrayexpress_alternate_accession.yaml"
+    )
+    def test_arrayexpress_alternate_accession(self):
+        """ Make sure that ENA experiments correctly detect their ArrayExpress alternate accession
+        """
+
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="experiment_accession_code", value="ERP108370"
+        )
+        key_value_pair.save()
+
+        sra_surveyor = SraSurveyor(survey_job)
+        experiment, _ = sra_surveyor.discover_experiment_and_samples()
+
+        self.assertEqual(experiment.accession_code, "ERP108370")
+        self.assertEqual(experiment.alternate_accession_code, "E-MTAB-6681")
+
+    @vcr.use_cassette(
         "/home/user/data_store/cassettes/surveyor.sra.metadata_is_gathered_correctly.yaml"
     )
     def test_metadata_is_gathered_correctly(self):
