@@ -552,6 +552,11 @@ class SraSurveyor(ExternalSourceSurveyor):
             response = utils.requests_retry_session().get(
                 ENA_METADATA_URL_TEMPLATE.format(accession)
             )
+
+            # If the status code is 404, then SRA doesn't know about this accession
+            if response.status_code == 404:
+                return None, None
+
             experiment_xml = ET.fromstring(response.text)[0]
             study_links = experiment_xml[2]  # STUDY_LINKS
 
