@@ -372,12 +372,10 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
         wget -q -O "$quant_test_data_2" \
              "$test_data_repo/$quant_name_2"
     fi
-    if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-        AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"
-	export AWS_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY="$(~/bin/aws configure get default.aws_secret_access_key)"
-	export AWS_SECRET_ACCESS_KEY
-    fi
+    # Mock out the AWS keys since we use VCR to mock out the request with these
+    # as the AWS credentials
+    export AWS_ACCESS_KEY_ID=XXX
+    export AWS_SECRET_ACCESS_KEY=XXX
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "qn" ]; then
@@ -504,9 +502,14 @@ for image in $worker_images; do
 	# shellcheck disable=2086
         test_command="$(run_tests_with_coverage --tag="$image" $args_without_tag)"
 
+        # Only run interactively if we are on a TTY
+        if [ -t 1 ]; then
+            INTERACTIVE="-i"
+        fi
+
         echo "Running tests with the following command:"
         echo "$test_command"
-        docker run -i -t \
+        docker run -t $INTERACTIVE \
                --add-host=database:"$DB_HOST_IP" \
                --add-host=nomad:"$HOST_IP" \
                --env-file workers/environments/test \
@@ -514,6 +517,6 @@ for image in $worker_images; do
                --env AWS_SECRET_ACCESS_KEY \
                --volume "$volume_directory":/home/user/data_store \
                --memory=5G \
-               -it "$image_name" bash -c "$test_command"
+               "$image_name" bash -c "$test_command"
     fi
 done

@@ -70,5 +70,6 @@ else
     exit 1
 fi
 
-# New deployment
+# New deployment (use -u circleci since we used to run on CircleCI and we don't
+# want to recreate all of our resources)
 ./deploy.sh -e "$ENVIRONMENT" -v "$CIRCLE_TAG" -u circleci

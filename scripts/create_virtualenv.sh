@@ -11,7 +11,7 @@ cd "$script_directory" || exit
 # move up a level
 cd ..
 
-if ! type "virtualenv" > /dev/null; then
+if ! command -v virtualenv >/dev/null; then
   pip3 install virtualenv
 fi
 
