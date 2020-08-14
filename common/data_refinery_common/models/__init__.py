@@ -40,7 +40,7 @@ from data_refinery_common.models.computational_result_annotation import (  # noq
     ComputationalResultAnnotation,
 )
 from data_refinery_common.models.computed_file import ComputedFile  # noqa
-from data_refinery_common.models.contributors import Contributor  # noqa
+from data_refinery_common.models.contributions import Contribution  # noqa
 from data_refinery_common.models.dataset import Dataset  # noqa
 from data_refinery_common.models.dataset_annotation import DatasetAnnotation  # noqa
 from data_refinery_common.models.experiment import Experiment  # noqa

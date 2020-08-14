@@ -1,6 +1,5 @@
 from django.db import models
 
-from data_refinery_common.models.contributors import Contributor
 from data_refinery_common.models.ontology_term import OntologyTerm
 
 BOOL = "bool"
@@ -17,7 +16,7 @@ class AbstractAttribute(models.Model):
     name = models.ForeignKey("OntologyTerm", on_delete=models.CASCADE, related_name="+")
     unit = models.ForeignKey("OntologyTerm", on_delete=models.CASCADE, related_name="+", null=True)
     probability = models.FloatField(null=True)
-    source = models.ForeignKey("Contributor", on_delete=models.CASCADE)
+    source = models.ForeignKey("Contribution", on_delete=models.CASCADE)
 
     value_type = models.TextField(
         choices=[
@@ -37,7 +36,8 @@ class AbstractAttribute(models.Model):
             "name": self.name.to_dict(),
             "unit": None if self.unit is None else self.unit.to_dict(),
             "probability": "unknown" if self.probability is None else self.probability,
-            "source": self.source.name,
+            "source": self.source.source_name,
+            "methods": self.source.methods_url,
             "value": self.get_value(),
         }
 

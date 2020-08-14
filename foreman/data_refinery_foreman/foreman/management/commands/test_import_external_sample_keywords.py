@@ -5,6 +5,7 @@ from django.test import TestCase
 import vcr
 
 from data_refinery_common.models import (
+    Contribution,
     Experiment,
     ExperimentSampleAssociation,
     OntologyTerm,
@@ -16,7 +17,6 @@ from data_refinery_foreman.foreman.management.commands.import_external_sample_ke
     import_keywords,
 )
 
-SUBMITTER = "Refinebio tests"
 TEST_KEYWORDS = "/home/user/data_store/externally_supplied_metadata/test_data/keywords.json"
 
 
@@ -67,21 +67,27 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         unit.human_readable_name = "thou"
         unit.save()
 
+        contribution = Contribution()
+        contribution.source_name = "refinebio_tests"
+        contribution.methods_url = "ccdatalab.org"
+        contribution.save()
+        self.contribution = contribution
+
     def test_skip_unknown_sample(self):
         """Make sure that if someone has keywords for a sample that we haven't
         surveyed then we just do nothing"""
 
         KEYWORDS = {"SRR789": ["PATO:0000122", "UO:0010012"]}
-        import_keywords(KEYWORDS, SUBMITTER)
+        import_keywords(KEYWORDS, self.contribution)
         self.assertEqual(SampleKeyword.objects.all().count(), 0)
 
     def test_import_invalid_ontology_term(self):
         KEYWORDS = {"SRR123": ["width", "UO:0010012"]}
-        self.assertRaises(ValueError, import_keywords, KEYWORDS, SUBMITTER)
+        self.assertRaises(ValueError, import_keywords, KEYWORDS, self.contribution)
 
     def test_import_valid_sample_keywords(self):
         KEYWORDS = {"SRR123": ["PATO:0000122", "UO:0010012"]}
-        import_keywords(KEYWORDS, SUBMITTER)
+        import_keywords(KEYWORDS, self.contribution)
 
         self.assertEqual(SampleKeyword.objects.all().count(), 2)
 
@@ -111,7 +117,9 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         sample2.save()
 
         command = Command()
-        command.handle(file=TEST_KEYWORDS, submitter=SUBMITTER)
+        command.handle(
+            file=TEST_KEYWORDS, source_name="refinebio_tests", methods_url="ccdatalab.org"
+        )
 
         # If you look below you'll only see 14, but this is because DRR001173
         # has two pairs of terms from different ontologies with the same

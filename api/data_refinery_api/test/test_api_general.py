@@ -14,7 +14,7 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    Contributor,
+    Contribution,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -104,9 +104,14 @@ class APITestCases(APITestCase):
         length.human_readable_name = "medulloblastoma"
         length.save()
 
+        contribution = Contribution()
+        contribution.source_name = "refinebio_tests"
+        contribution.methods_url = "ccdatalab.org"
+        contribution.save()
+
         sk = SampleKeyword()
         sk.name = length
-        sk.submitter = Contributor.objects.get_or_create(name="Refinebio Tests")
+        sk.source = contribution
         sk.sample = sample
         sk.save()
 

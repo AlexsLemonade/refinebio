@@ -5,7 +5,7 @@ from django.test import TestCase
 import vcr
 
 from data_refinery_common.models import (
-    Contributor,
+    Contribution,
     Experiment,
     ExperimentSampleAssociation,
     OntologyTerm,
@@ -18,7 +18,6 @@ from data_refinery_foreman.foreman.management.commands.import_external_sample_at
     import_sample_attributes,
 )
 
-SUBMITTER = "Refinebio tests"
 TEST_METADATA = "/home/user/data_store/externally_supplied_metadata/test_data/metadata.json"
 
 
@@ -69,10 +68,11 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         unit.human_readable_name = "thou"
         unit.save()
 
-        submitter = Contributor()
-        submitter.name = SUBMITTER
-        submitter.save()
-        self.submitter = submitter
+        contribution = Contribution()
+        contribution.source_name = "refinebio_tests"
+        contribution.methods_url = "ccdatalab.org"
+        contribution.save()
+        self.contribution = contribution
 
     #
     # Test import_sample_attributes()
@@ -83,19 +83,23 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         surveyed then we just do nothing"""
 
         METADATA = [{"PATO:0000122": {"value": 25, "unit": "UO:0010012"}}]
-        import_sample_attributes("SRR789", METADATA, self.submitter)
+        import_sample_attributes("SRR789", METADATA, self.contribution)
         self.assertEqual(SampleAttribute.objects.all().count(), 0)
 
     def test_import_invalid_ontology_term(self):
         METADATA = [{"PATO:0000122": {"value": 25, "unit": "thou"}}]
-        self.assertRaises(ValueError, import_sample_attributes, "SRR123", METADATA, self.submitter)
+        self.assertRaises(
+            ValueError, import_sample_attributes, "SRR123", METADATA, self.contribution
+        )
 
         METADATA = [{"length": {"value": 25, "unit": "UO:0010012"}}]
-        self.assertRaises(ValueError, import_sample_attributes, "SRR123", METADATA, self.submitter)
+        self.assertRaises(
+            ValueError, import_sample_attributes, "SRR123", METADATA, self.contribution
+        )
 
     def test_import_valid_sample_attributes(self):
         METADATA = [{"PATO:0000122": {"value": 25, "unit": "UO:0010012"}}]
-        import_sample_attributes("SRR123", METADATA, self.submitter)
+        import_sample_attributes("SRR123", METADATA, self.contribution)
 
         self.assertEqual(SampleAttribute.objects.all().count(), 1)
 
@@ -120,7 +124,7 @@ class ImportExternalSampleAttributesTestCase(TestCase):
             }
         ]
 
-        import_metadata(METADATA, SUBMITTER)
+        import_metadata(METADATA, self.contribution)
 
         self.assertEqual(SampleAttribute.objects.all().count(), 1)
 
@@ -147,7 +151,9 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         sample.save()
 
         command = Command()
-        command.handle(file=TEST_METADATA, submitter=SUBMITTER)
+        command.handle(
+            file=TEST_METADATA, source_name="refinebio_tests", methods_url="ccdatalab.org"
+        )
 
         self.assertEqual(SampleAttribute.objects.all().count(), 1)
 

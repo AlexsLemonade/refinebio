@@ -29,7 +29,7 @@ from data_refinery_common.utils import parse_s3_url
 logger = get_and_configure_logger(__name__)
 
 
-def import_sample_attributes(accession_code: str, attributes: List, source: Contributor):
+def import_sample_attributes(accession_code: str, attributes: List, source: Contribution):
     try:
         sample = Sample.objects.get(accession_code=accession_code)
     except Sample.DoesNotExist:
@@ -77,9 +77,7 @@ def import_sample_attributes(accession_code: str, attributes: List, source: Cont
             attribute.save()
 
 
-def import_metadata(metadata: Dict, submitter: str):
-    source, _ = Contributor.objects.get_or_create(name=submitter)
-
+def import_metadata(metadata: Dict, source: Contribution):
     for sample in metadata:
         if type(sample["sample_accession"]) != str:
             logger.error(
@@ -111,17 +109,19 @@ class Command(BaseCommand):
                 + "s3:// URLs are also accepted."
             ),
         )
-        parser.add_argument(
-            "--submitter", type=str, help=("The submitter name as it will appear to end users")
-        )
+        parser.add_argument("--source-name", type=str, help=("The name of the source"))
+        parser.add_argument("--methods-url", type=str, help=("A link to this metadata's methods"))
 
     def handle(self, *args, **options):
         okay = True
         if options["file"] is None:
             logger.error("You must specify a file to import metadata from")
             okay = False
-        if options["submitter"] is None:
-            logger.error("You must specify a submiter name")
+        if options["source_name"] is None:
+            logger.error("You must specify a source name")
+            okay = False
+        if options["methods_url"] is None:
+            logger.error("You must specify a methods url")
             okay = False
         if not okay:
             sys.exit(1)
@@ -148,4 +148,8 @@ class Command(BaseCommand):
             logger.error("The provided metadata file is not a list of metadata information")
             sys.exit(1)
 
-        import_metadata(metadata, options["submitter"])
+        source, _ = Contribution.objects.get_or_create(
+            source_name=options["source_name"], methods_url=options["methods_url"]
+        )
+
+        import_metadata(metadata, source)

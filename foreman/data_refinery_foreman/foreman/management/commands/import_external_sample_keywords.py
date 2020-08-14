@@ -31,9 +31,7 @@ from data_refinery_common.utils import parse_s3_url
 logger = get_and_configure_logger(__name__)
 
 
-def import_keywords(keywords: Dict, submitter: str):
-    source, _ = Contributor.objects.get_or_create(name=submitter)
-
+def import_keywords(keywords: Dict, source: Contribution):
     dirty_experiments = set()
 
     for accession_code, keywords in keywords.items():
@@ -76,17 +74,19 @@ class Command(BaseCommand):
                 + "s3:// URLs are also accepted."
             ),
         )
-        parser.add_argument(
-            "--submitter", type=str, help=("The submitter name as it will appear to end users")
-        )
+        parser.add_argument("--source-name", type=str, help=("The name of the source"))
+        parser.add_argument("--methods-url", type=str, help=("A link to this metadata's methods"))
 
     def handle(self, *args, **options):
         okay = True
         if options["file"] is None:
             logger.error("You must specify a file to import metadata from")
             okay = False
-        if options["submitter"] is None:
-            logger.error("You must specify a submiter name")
+        if options["source_name"] is None:
+            logger.error("You must specify a source name")
+            okay = False
+        if options["methods_url"] is None:
+            logger.error("You must specify a methods url")
             okay = False
         if not okay:
             sys.exit(1)
@@ -113,4 +113,8 @@ class Command(BaseCommand):
             logger.error("The provided keywords file is not a dict with accession code keys")
             sys.exit(1)
 
-        import_keywords(keywords, options["submitter"])
+        source, _ = Contribution.objects.get_or_create(
+            source_name=options["source_name"], methods_url=options["methods_url"]
+        )
+
+        import_keywords(keywords, source)

@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from data_refinery_common.models import (
-    Contributor,
+    Contribution,
     Experiment,
     ExperimentSampleAssociation,
     OntologyTerm,
@@ -93,7 +93,9 @@ class ExperimentModelTestCase(TestCase):
 
         sk = SampleKeyword()
         sk.name = length
-        sk.submitter = Contributor.objects.get_or_create(name="Refinebio Tests")
+        sk.source, _ = Contribution.objects.get_or_create(
+            source_name="Refinebio Tests", methods_url="ccdatalab.org"
+        )
         sk.sample = sample
         sk.save()
 
