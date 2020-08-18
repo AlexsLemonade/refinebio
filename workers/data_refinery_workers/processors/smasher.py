@@ -27,6 +27,7 @@ from data_refinery_workers.processors import smashing_utils, utils
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+AWS_REGION = get_env_variable("AWS_REGION", "us-east-1") # For now, default to us-east-1 if the region variable can't be found
 BODY_HTML = (
     Path("data_refinery_workers/processors/smasher_email.min.html").read_text().replace("\n", "")
 )
@@ -432,7 +433,6 @@ def _notify_send_email(job_context):
 
     SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
     RECIPIENT = job_context["dataset"].email_address
-    AWS_REGION = "us-east-1"
     CHARSET = "UTF-8"
 
     if job_context["job"].success is False:

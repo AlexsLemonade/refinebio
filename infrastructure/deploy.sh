@@ -138,6 +138,21 @@ done
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
+# Check if a new ccdl-ubuntu ami will be needed for this region
+if [[ $(aws ec2 describe-images --region $TF_VAR_region --owners 589864003899 --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' --query 'length(Images)') -eq 0 ]]; then
+    echo "No ccdl-ubuntu-18.04 AMI found for this region, creating a new one"
+
+    # Find most recent ccdl-ubuntu ami from us-east-1
+    template_ami_id=$(aws ec2 describe-images --region us-east-1 --owners 589864003899 --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text)
+    
+    # Make a copy into this region
+    new_ami_name="ccdl-ubuntu-18.04-$(date "+%Y-%m-%dT%H.%M.%S")"
+    new_ami_id=$(aws ec2 copy-image --source-image-id $template_ami_id --source-region us-east-1 --region $TF_VAR_region --name $new_ami_name --output text)
+    echo "Created new AMI for $TF_VAR_region"
+    echo "    name: $new_ami_name"
+    echo "    id:   $new_ami_id"
+fi
+
 # Always init terraform first, especially since we're using a remote backend.
 ./init_terraform.sh
 
@@ -191,6 +206,8 @@ NOMAD_LEAD_SERVER_IP="$(terraform output nomad_server_1_ip)"
 export NOMAD_LEAD_SERVER_IP
 
 export NOMAD_ADDR=http://$NOMAD_LEAD_SERVER_IP:4646
+
+echo "nomad address: $NOMAD_ADDR"
 
 # Wait for Nomad to get started in case the server just went up for
 # the first time.
@@ -334,7 +351,7 @@ echo "Job registrations have been fired off."
 # The `prepare-client-instance-user-data.sh` script overwrites
 # `client-instance-user-data.tpl.sh`, so we have to back it up first.
 if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
-    mv client-instance-user-data.tpl.sh client-instance-user-data.tpl.sh.bak
+    mv nomad-configuration/client-instance-user-data.tpl.sh nomad-configuration/client-instance-user-data.tpl.sh.bak
 fi
 
 ./nomad-configuration/prepare-client-instance-user-data.sh
@@ -418,7 +435,7 @@ if [[ -n $container_running ]]; then
        -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
-       --log-opt awslogs-region=$REGION \
+       --log-opt awslogs-region=$AWS_REGION \
        --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
        --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
        -p 8081:8081 \
@@ -440,7 +457,7 @@ if [[ -n $container_running ]]; then
        -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
-       --log-opt awslogs-region=$REGION \
+       --log-opt awslogs-region=$AWS_REGION \
        --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
        --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
        --name=dr_api_stats_refresh \

@@ -8,10 +8,10 @@ if [[ $# -eq 0 ]] ; then
     exit 0
 fi
 if [[ $# -eq 1 ]] ; then
-    REGION=us-east-1
+    AWS_REGION=us-east-1
 else
-    REGION=$2
+    AWS_REGION=$2
 fi
 
-# /Users/rjones/Library/Python/2.7/bin/aws ec2 describe-instances --region=$REGION --filters "Name=tag:User,Values=$1" | grep PublicDnsName | tr -d '"' | sed "s/PublicDnsName: //g" | tr -d "," | awk '{$1=$1};1' | uniq
-aws ec2 describe-instances --region="$REGION" --filters "Name=tag:User,Values=$1" | grep PublicDnsName | tr -d '"' | sed "s/PublicDnsName: //g" | tr -d "," | awk '{$1=$1};1' | uniq
+# /Users/rjones/Library/Python/2.7/bin/aws ec2 describe-instances --region=$AWS_REGION --filters "Name=tag:User,Values=$1" | grep PublicDnsName | tr -d '"' | sed "s/PublicDnsName: //g" | tr -d "," | awk '{$1=$1};1' | uniq
+aws ec2 describe-instances --region="$AWS_REGION" --filters "Name=tag:User,Values=$1" | grep PublicDnsName | tr -d '"' | sed "s/PublicDnsName: //g" | tr -d "," | awk '{$1=$1};1' | uniq

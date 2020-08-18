@@ -526,7 +526,7 @@ resource "aws_elasticsearch_domain" "es" {
         "AWS": "*"
       },
       "Action": "es:*",
-      "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
+      "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
     }
   ]
 }
