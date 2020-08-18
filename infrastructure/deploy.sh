@@ -207,8 +207,6 @@ export NOMAD_LEAD_SERVER_IP
 
 export NOMAD_ADDR=http://$NOMAD_LEAD_SERVER_IP:4646
 
-echo "nomad address: $NOMAD_ADDR"
-
 # Wait for Nomad to get started in case the server just went up for
 # the first time.
 
