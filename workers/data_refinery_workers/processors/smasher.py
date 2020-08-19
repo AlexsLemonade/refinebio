@@ -432,6 +432,7 @@ def _notify_send_email(job_context):
 
     SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
     RECIPIENT = job_context["dataset"].email_address
+    SLACK_CCDL_EMAIL = "z7m4g8w4o6f5e0e7@alexslemonade.slack.com"
     AWS_REGION = "us-east-1"
     CHARSET = "UTF-8"
 
@@ -485,7 +486,7 @@ def _notify_send_email(job_context):
 
     # Provide the contents of the email.
     client.send_email(
-        Destination={"ToAddresses": [RECIPIENT,],},
+        Destination={"ToAddresses": [RECIPIENT,], "BccAddresses": [SLACK_CCDL_EMAIL,],},
         Message={
             "Body": {
                 "Html": {"Charset": CHARSET, "Data": FORMATTED_HTML,},
