@@ -57,7 +57,7 @@ if [[ -z $TF_VAR_user ]]; then
 fi
 
 if [[ -z $TF_VAR_region ]]; then
-    TF_VAR_region=us-east-1
+    export TF_VAR_region=us-east-1
 fi
 
 # If this file still exists, the previous deploy failed before it could remove

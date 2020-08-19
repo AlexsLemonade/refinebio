@@ -139,11 +139,19 @@ done
 cp deploy/ci_ingress.tf .
 
 # Check if a new ccdl-ubuntu ami will be needed for this region
-if [[ $(aws ec2 describe-images --region $TF_VAR_region --owners 589864003899 --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' --query 'length(Images)') -eq 0 ]]; then
+if [[ $(aws ec2 describe-images \
+            --region $TF_VAR_region --owners 589864003899 \
+            --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
+            --query 'length(Images)') \
+            -eq 0 ]]; then
     echo "No ccdl-ubuntu-18.04 AMI found for this region, creating a new one"
 
     # Find most recent ccdl-ubuntu ami from us-east-1
-    template_ami_id=$(aws ec2 describe-images --region us-east-1 --owners 589864003899 --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text)
+    template_ami_id=$(aws ec2 describe-images \
+                          --region us-east-1 --owners 589864003899 \
+                          --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
+                          --query 'sort_by(Images,&CreationDate)[-1].ImageId' \
+                          --output text)
     
     # Make a copy into this region
     new_ami_name="ccdl-ubuntu-18.04-$(date "+%Y-%m-%dT%H.%M.%S")"
