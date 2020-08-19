@@ -279,10 +279,19 @@ class SraSurveyor(ExternalSourceSurveyor):
             elif child.tag == "IDENTIFIERS":
                 for grandchild in child:
                     if (
+                        # Check for GEO accessions. These live inside an
+                        # EXTERNAL_ID tag with namespace GEO
                         grandchild.tag == "EXTERNAL_ID"
                         and grandchild.attrib.get("namespace", "") == "GEO"
+                        and re.match(r"^GSE\d{2,6}", grandchild.text)
+                    ) or (
+                        # Check for ArrayExpress accessions. These live inside a
+                        # SUBMITTER_ID tag, but the namespace is not standardized
+                        grandchild.tag == "SUBMITTER_ID"
+                        and re.match(r"^E-[A-Z]{4}-\d{2,6}", grandchild.text)
                     ):
                         metadata["external_id"] = grandchild.text
+                        break
 
     @staticmethod
     def gather_all_metadata(run_accession):
@@ -355,8 +364,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         if "study_ena_last_update" in metadata:
             experiment.source_last_modified = parse_date(metadata["study_ena_last_update"])
 
-        # We only want GEO alternate accessions for SRA samples
-        if re.match(r"^GSE\d{2,6}", metadata.get("external_id", "")) is not None:
+        if metadata.get("external_id", None) is not None:
             experiment.alternate_accession_code = metadata["external_id"]
 
         # Rare, but it happens.
@@ -552,6 +560,11 @@ class SraSurveyor(ExternalSourceSurveyor):
             response = utils.requests_retry_session().get(
                 ENA_METADATA_URL_TEMPLATE.format(accession)
             )
+
+            # If the status code is 404, then SRA doesn't know about this accession
+            if response.status_code == 404:
+                return None, None
+
             experiment_xml = ET.fromstring(response.text)[0]
             study_links = experiment_xml[2]  # STUDY_LINKS
 

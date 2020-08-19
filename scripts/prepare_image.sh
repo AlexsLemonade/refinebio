@@ -103,10 +103,19 @@ else
             echo "Failed to build $image_name, trying again."
         fi
 
+
+        if test "$GITHUB_ACTIONS"; then
+            # docker needs repositories to be lowercase
+            CACHE_REPO="$(echo "docker.pkg.github.com/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+            CACHED_PACKAGE="$CACHE_REPO/dr_$image"
+            CACHE="--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $CACHED_PACKAGE"
+        fi
+
         docker build \
                -t "$image_name" \
                -f "$service/dockerfiles/Dockerfile.$image" \
-               --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
+               --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
+               $CACHE .
         finished=$?
         attempts=$((attempts+1))
     done

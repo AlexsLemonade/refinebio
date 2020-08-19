@@ -155,7 +155,7 @@ if [[ ! -f terraform.tfstate ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    if [[ -n $CIRCLE_BUILD_NUM ]]; then
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
         # Make sure we can't expose secrets in circleci
         terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
     else
@@ -178,7 +178,7 @@ if [[ -z $ran_init_build ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    if [[ -n $CIRCLE_BUILD_NUM ]]; then
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
         # Make sure we can't expose secrets in circleci
         terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
     else
@@ -323,16 +323,22 @@ mkdir -p nomad-job-specs
 ../scripts/format_nomad_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
 ../scripts/format_nomad_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
 
-
-# Don't leave secrets lying around!
-rm -f prod_env
-
-# Re-register Nomad jobs.
+# Re-register Nomad jobs (skip those that end in .tpl)
 echo "Registering new job specifications.."
-for nomad_job_spec in nomad-job-specs/*; do
+for nomad_job_spec in nomad-job-specs/*.nomad; do
     nomad run "$nomad_job_spec" &
 done
 echo "Job registrations have been fired off."
+
+# Prepare the client instance user data script for the nomad client instances.
+# The `prepare-client-instance-user-data.sh` script overwrites
+# `client-instance-user-data.tpl.sh`, so we have to back it up first.
+if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
+    mv client-instance-user-data.tpl.sh client-instance-user-data.tpl.sh.bak
+fi
+
+./nomad-configuration/prepare-client-instance-user-data.sh
+terraform taint aws_spot_fleet_request.cheap_ram
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1
@@ -342,12 +348,17 @@ terraform taint aws_instance.foreman_server_1
 echo "Removing ingress.."
 rm ci_ingress.tf
 
-if [[ -n $CIRCLE_BUILD_NUM ]]; then
+if [[ -n "$GITHUB_ACTIONS" ]]; then
     # Make sure we can't expose secrets in circleci
     terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
 else
     terraform apply -var-file="environments/$env.tfvars" -auto-approve
 fi
+
+# Don't leave secrets lying around!
+rm -f prod_env
+# The tarball at the end of client-instance-user-data.tpl.sh has secrets, so restore from backup
+mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API

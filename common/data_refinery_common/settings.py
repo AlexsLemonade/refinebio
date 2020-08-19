@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 
-from .utils import get_env_variable
+from .utils import get_env_variable, get_env_variable_gracefully
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -133,3 +133,6 @@ CACHES = {
         "LOCATION": "cache_table",
     }
 }
+
+# For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

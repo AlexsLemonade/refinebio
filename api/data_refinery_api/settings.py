@@ -340,3 +340,6 @@ Last Updated: March 2, 2018
 
 # EngagementBot
 ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
+
+# For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

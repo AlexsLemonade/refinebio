@@ -54,7 +54,11 @@ class DownloaderJob(models.Model):
 
     # Resources
     ram_amount = models.IntegerField(default=1024)
-    volume_index = models.CharField(max_length=3, null=True)
+
+    # The volume index is the instance id of an AWS EC2 machine. It looks like
+    # these are 19 characters, but just to be safe we'll make the max length a
+    # bit higher
+    volume_index = models.CharField(max_length=25, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried

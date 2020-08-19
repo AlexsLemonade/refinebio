@@ -90,6 +90,7 @@ echo "$SYSTEM_VERSION" > common/version
 rm -f common/dist/*
 cd common && python setup.py sdist
 
+# shellcheck disable=SC2103
 cd ..
 for IMG in $CCDL_WORKER_IMGS; do
     image_name="$DOCKERHUB_REPO/dr_$IMG"
