@@ -5,21 +5,27 @@ print_description() {
 }
 
 print_options() {
-    echo 'This script accepts the following arguments: -e, -u, and -h.'
+    echo 'This script accepts the following arguments: -e, -u, -r, and -h.'
     echo 'Neither -e or -u is optional unless TF_VAR_stage and TF_VAR_user is set.'
     echo '-h prints this help message and exits.'
     echo '-e specifies the environment you would like to destroy.'
     echo '-u specifies the username you used to spin up the stack.'
     echo 'Both arguments are needed to determine which stack to destroy.'
+    echo '-r specifies the region of the stack to destroy. Defaults to us-east-1,'
+    echo '   but if you deployed in a different region you must set this to that region.'
 }
 
-while getopts ":e:u:h" opt; do
+while getopts ":e:u:r:h" opt; do
     case $opt in
     e)
-        TF_VAR_stage=$OPTARG
+        export env=$OPTARG
+        export TF_VAR_stage=$OPTARG
         ;;
     u)
-        TF_VAR_user=$OPTARG
+        export TF_VAR_user=$OPTARG
+        ;;
+    r)
+        export TF_VAR_region=$OPTARG
         ;;
     h)
         print_description
@@ -50,6 +56,10 @@ if [[ -z $TF_VAR_user ]]; then
     exit 1
 fi
 
+if [[ -z $TF_VAR_region ]]; then
+    TF_VAR_region=us-east-1
+fi
+
 # If this file still exists, the previous deploy failed before it could remove
 # it, but we still should restore client-instance-user-data.tpl.sh back to its
 # original state
@@ -57,4 +67,4 @@ if [ -f nomad-configuration/client-instance-user-data.tpl.sh.bak ]; then
     mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
 fi
 
-terraform destroy
+terraform destroy -var-file="environments/$env.tfvars"
