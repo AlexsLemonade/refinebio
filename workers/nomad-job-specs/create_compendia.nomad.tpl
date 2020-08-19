@@ -69,10 +69,12 @@ job "CREATE_COMPENDIA" {
         cpu =   4000
 
         # Memory is in MB of RAM. Instance has 64GiB of RAM.
-        # memory = 30000
+        # Appropriate for most compendia.
+        memory = 30000
 
         # Memory is in MB of RAM. Instance has 976GiB of RAM
-	memory = 900000
+        # Required for human and mouse compendia.
+	# memory = 900000
       }
 
       logs {
