@@ -407,11 +407,13 @@ jobs:
       - affy_agilent_tests
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set the $CI_TAG environment variable
         run: |
           # Remove /ref/tags/ from the beginning of the tag name
-          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/origin/}
+          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/}
 
       - name: Install git crypt
         run: ./.github/scripts/install_git_decrypt.sh
@@ -439,14 +441,16 @@ jobs:
       CI_USERNAME: ${{ github.actor }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set the $CI_TAG environment variable
         run: |
           # Remove /ref/tags/ from the beginning of the tag name
-          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/origin/}
+          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/}
 
       - name: Install git crypt
-        run: ./.github/scripts/install_git_decrypt.sh
+        run: git status && ./.github/scripts/install_git_decrypt.sh
 
       - name: Git decrypt
         run: ./.github/scripts/git_decrypt.sh
