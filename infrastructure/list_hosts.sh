@@ -14,7 +14,7 @@ else
 fi
 
 aws ec2 describe-instances --region="$AWS_REGION" \
-                           --filters "Name=tag:User,Values=$1" \ 
+                           --filters "Name=tag:User,Values=$1" \
                            | grep PublicDnsName | tr -d '"' \
                            | sed "s/PublicDnsName: //g" \
                            | tr -d "," | awk '{$1=$1};1' | uniq

@@ -155,7 +155,12 @@ if [[ $(aws ec2 describe-images \
     
     # Make a copy into this region
     new_ami_name="ccdl-ubuntu-18.04-$(date "+%Y-%m-%dT%H.%M.%S")"
-    new_ami_id=$(aws ec2 copy-image --source-image-id $template_ami_id --source-region us-east-1 --region $TF_VAR_region --name $new_ami_name --output text)
+    new_ami_id=$(aws ec2 copy-image \
+                     --source-image-id $template_ami_id \
+                     --source-region us-east-1 \
+                     --region $TF_VAR_region \
+                     --name $new_ami_name \
+                     --output text)
     echo "Created new AMI for $TF_VAR_region"
     echo "    name: $new_ami_name"
     echo "    id:   $new_ami_id"
