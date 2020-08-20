@@ -3,7 +3,7 @@
 # Unlock encrypted files
 # Temporary attempt to debug this.
 pwd
-cd
+cd || exit
 pwd
 cd refinebio/.github/ || exit
 git clean -f
