@@ -446,7 +446,7 @@ jobs:
           echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/}
 
       - name: Install git crypt
-        run: ls -lah && ./.github/scripts/install_git_decrypt.sh
+        run: ./.github/scripts/install_git_decrypt.sh
 
       - name: Git decrypt
         run: ./.github/scripts/git_decrypt.sh
