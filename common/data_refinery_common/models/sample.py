@@ -114,6 +114,11 @@ class Sample(models.Model):
             data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
 
+        if self.attributes.count() > 0:
+            metadata["other_metadata"] = [
+                attribute.to_dict() for attribute in self.attributes.all()
+            ]
+
         return metadata
 
     # Returns a set of ProcessorJob objects but we cannot specify

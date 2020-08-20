@@ -176,3 +176,6 @@ else:
         "data_refinery_common.models.documents": "experiments",
     }
     ELASTICSEARCH_DSL_AUTOSYNC = False
+
+# For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

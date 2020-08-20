@@ -1,0 +1,13 @@
+[
+	{
+		"sample_accession": "DRR001173",
+		"attributes": [
+			{
+				"PATO:0000047": {
+					"value": "PATO:0000383",
+					"probability": 0.7856624891880539
+				}
+			}
+		]
+	}
+]
