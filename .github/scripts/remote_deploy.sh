@@ -65,7 +65,7 @@ run_on_deploy_box "source env_vars && ./.github/scripts/update_docker_img.sh 2>&
 run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
-source ~/refinebio/scripts/common.sh
+source scripts/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
 branch=$(get_master_or_dev "$CI_TAG")
