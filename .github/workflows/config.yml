@@ -437,7 +437,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
       CI_USERNAME: ${{ github.actor }}
-      CI_TAG: 'vkurt-test-tag'
+      # CI_TAG: 'vkurt-test-tag'
     steps:
       - uses: actions/checkout@v2
 
@@ -448,7 +448,7 @@ jobs:
       #     echo ::set-env name=CI_TAG::vTemporary
 
       - name: Install git crypt
-        run: ./.github/scripts/install_git_decrypt.sh
+        run: ls -lah && ./.github/scripts/install_git_decrypt.sh
 
       - name: Git decrypt
         run: ./.github/scripts/git_decrypt.sh
