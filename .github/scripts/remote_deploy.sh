@@ -19,8 +19,6 @@
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
 
-cd /home/runner/work/refinebio/refinebio || exit
-
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box () {

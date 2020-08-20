@@ -2,8 +2,6 @@
 
 # Unlock encrypted files
 # Temporary attempt to debug this.
-pwd
-ls
 cd .github || exit
 git clean -f
 openssl aes-256-cbc -md md5 -d -in git_crypt.key.enc -out git_crypt.key -k "$OPENSSL_KEY"
