@@ -59,7 +59,7 @@ cd ~/refinebio/infrastructure
 
 # Circle won't set the branch name for us, so do it ourselves.
 source ~/refinebio/scripts/common.sh
-branch=$(get_master_or_dev "$CIRCLE_TAG")
+branch=$(get_master_or_dev "$CI_TAG")
 
 if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod
@@ -72,4 +72,4 @@ fi
 
 # New deployment (use -u circleci since we used to run on CircleCI and we don't
 # want to recreate all of our resources)
-./deploy.sh -e "$ENVIRONMENT" -v "$CIRCLE_TAG" -u circleci
+./deploy.sh -e "$ENVIRONMENT" -v "$CI_TAG" -u circleci
