@@ -91,7 +91,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
+python3.5 ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
 echo "
 /var/log/nomad_client.log {
     missingok

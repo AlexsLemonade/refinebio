@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Unlock encrypted files
-cd ~/refinebio/.github/ || exit
+# Temporary attempt to debug this.
+cd .github || exit
 git clean -f
 openssl aes-256-cbc -md md5 -d -in git_crypt.key.enc -out git_crypt.key -k "$OPENSSL_KEY"
 git-crypt unlock git_crypt.key

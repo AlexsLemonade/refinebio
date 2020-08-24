@@ -187,7 +187,7 @@ variable "downloader_space_constraint" {
 # Output our production environment variables.
 output "environment_variables" {
   value = [
-    {name = "REGION"
+    {name = "AWS_REGION"
       value = "${var.region}"},
     {name = "USER"
       value = "${var.user}"},
