@@ -44,7 +44,7 @@ run_tests_with_coverage () {
     echo "$COVERAGE $PRINT_REPORT $SAVE_REPORT $RETURN"
 }
 
-# This function checks whether a given docker image name ($1:$CIRCLE_TAG)
+# This function checks whether a given docker image name ($1:$2)
 # exists in Docker Hub or not using Docker Hub API V2. Based on:
 # https://stackoverflow.com/questions/32113330/check-if-imagetag-combination-already-exists-on-docker-hub
 docker_img_exists() {
