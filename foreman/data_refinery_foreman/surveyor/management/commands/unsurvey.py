@@ -81,7 +81,7 @@ def purge_experiment(accession: str) -> None:
             sample_id__in=uniquely_assoced_sample_ids
         )
         if extra_assocs.count() == 0:
-            # It's not assoced with anything else, delete it, its
+            # It's not associated with anything else, delete it, its
             # associations, and its ComputedFile.
             uniquely_assoced_comp_result_ids.append(comp_result.id)
 
@@ -91,7 +91,7 @@ def purge_experiment(accession: str) -> None:
             # Delete all the actual files, both locally and in S3.
             for computed_file in computed_files:
                 computed_file.delete_local_file(force=True)
-                computed_file.delete_s3_file()
+                # computed_file.delete_s3_file()
 
             # Delete the database records for the ComputedFile
             SampleComputedFileAssociation.objects.filter(computed_file__in=computed_files).delete()
