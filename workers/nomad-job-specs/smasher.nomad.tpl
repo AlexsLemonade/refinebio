@@ -59,6 +59,8 @@ job "SMASHER" {
         LOG_LEVEL = "${{LOG_LEVEL}}"
 
         ENGAGEMENTBOT_WEBHOOK = "${{ENGAGEMENTBOT_WEBHOOK}}"
+
+        AWS_REGION = "${{AWS_REGION}}"
       }
 
       # The resources the job will require.

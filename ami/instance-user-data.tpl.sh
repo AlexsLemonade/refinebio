@@ -23,8 +23,14 @@ apt-key add - <<EOF
 ${docker_apt_key}
 EOF
 
+# Adding the PPA for python3.5
+add-apt-repository ppa:deadsnakes/ppa
+
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 apt-get update -y
+
+# This is the latest version of python that the aws logs can use (don't work with 3.7)
+apt-get install --yes python3.5
 
 # Install our dependencies
 apt-get install --yes jq iotop dstat speedometer awscli docker-ce docker-ce-cli containerd.io chrony htop monit
