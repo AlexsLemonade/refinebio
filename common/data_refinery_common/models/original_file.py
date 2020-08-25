@@ -4,10 +4,17 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+import boto3
+from botocore.client import Config
+
 from data_refinery_common.constants import CURRENT_SALMON_VERSION, SYSTEM_VERSION
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.managers import PublicObjectsManager
 from data_refinery_common.utils import FileUtils, calculate_file_size, calculate_sha1
+
+# We have to set the signature_version to v4 since us-east-1 buckets require
+# v4 authentication.
+S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
 
 logger = get_and_configure_logger(__name__)
 
@@ -125,6 +132,27 @@ class OriginalFile(models.Model):
             )
         self.is_downloaded = False
         self.save()
+
+    def delete_s3_file(self, force=False):
+        # If we're not running in the cloud then we shouldn't try to
+        # delete something from S3 unless force is set.
+        if not settings.RUNNING_IN_CLOUD and not force:
+            return False
+
+        try:
+            S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
+        except Exception:
+            logger.exception(
+                "Failed to delete S3 object for Original File.",
+                original_file=self.id,
+                s3_object=self.s3_key,
+            )
+            return False
+
+        self.s3_key = None
+        self.s3_bucket = None
+        self.save()
+        return True
 
     def has_blocking_jobs(self, own_processor_id=None) -> bool:
         # If the file has a processor job that should not have been
