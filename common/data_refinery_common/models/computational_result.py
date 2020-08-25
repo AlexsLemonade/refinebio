@@ -56,7 +56,7 @@ class ComputationalResult(models.Model):
         self.last_modified = current_time
         return super(ComputationalResult, self).save(*args, **kwargs)
 
-    # might not need this anymore?
+    # Currently unused because of pre_delete signal for computed files
     def remove_computed_files_from_s3(self):
         """ Removes all associated computed files from S3.
 

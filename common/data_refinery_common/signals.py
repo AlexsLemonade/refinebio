@@ -12,5 +12,4 @@ logger = get_and_configure_logger(__name__)
 def remove_file_from_s3(sender, instance, **kwargs):
     """ When the local model is about to be deleted, try to delete the s3 file
     """
-    logger.info("pre_delete for sender {} called".format(sender))
     instance.delete_s3_file()
