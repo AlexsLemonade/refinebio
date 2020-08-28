@@ -156,14 +156,16 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
             job_context["assembly_name"] = versionless_url[assembly_name_start_index:]
 
             # The division name follows right after the first occurence of the assembly version (is there a better way to do this?)
-            division_name = versionless_url.split(job_context["assembly_version"])[1][1:].split("/")[0]
+            division_name = versionless_url.split(job_context["assembly_version"])[1][1:].split(
+                "/"
+            )[0]
             database_name = "Ensembl"
 
             # If it's not one of the five divisions then we shouldn't include it
             if division_name not in ["plants", "metazoa", "fungi", "bacteria", "protists"]:
                 database_name = "EnsemblMain"
             else:
-                database_name = "Ensembl"+str.capitalize(division_name)
+                database_name = "Ensembl" + str.capitalize(division_name)
 
             job_context["database_name"] = database_name
 

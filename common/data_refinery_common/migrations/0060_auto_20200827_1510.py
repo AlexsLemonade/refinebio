@@ -6,18 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0059_auto_20200819_1632'),
+        ("data_refinery_common", "0059_auto_20200819_1632"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='organismindex',
-            old_name='source_version',
-            new_name='release_version',
+            model_name="organismindex", old_name="source_version", new_name="release_version",
         ),
         migrations.AddField(
-            model_name='organismindex',
-            name='database_name',
-            field=models.CharField(default='Ensembl', max_length=255),
+            model_name="organismindex",
+            name="database_name",
+            field=models.CharField(default="Ensembl", max_length=255),
         ),
     ]
