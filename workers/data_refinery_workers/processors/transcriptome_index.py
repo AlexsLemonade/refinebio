@@ -127,7 +127,7 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
     assemblies which are where the input files for this processor
     comes from.  All divisions other than the main one have identical
     release versions, but we don't know which division these files
-    came from so we can't just hit thier API again. Therefore, look at
+    came from so we can't just hit their API again. Therefore, look at
     the URL we used to get the files because it contains the assembly
     version and name.
 
@@ -155,17 +155,27 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
             assembly_name_start_index = versionless_url.rfind(".") + 1
             job_context["assembly_name"] = versionless_url[assembly_name_start_index:]
 
-            # The division name follows right after the first occurence of the assembly version (is there a better way to do this?)
-            division_name = versionless_url.split(job_context["assembly_version"])[1][1:].split(
-                "/"
-            )[0]
             database_name = "Ensembl"
 
-            # If it's not one of the five divisions then we shouldn't include it
-            if division_name not in ["plants", "metazoa", "fungi", "bacteria", "protists"]:
-                database_name = "EnsemblMain"
-            else:
-                database_name = "Ensembl" + str.capitalize(division_name)
+            # The division name follows right after the first occurence of the assembly version (is there a better way to do this?)
+            try:
+                division_name = versionless_url.split(job_context["assembly_version"])[1][1:].split(
+                    "/"
+                )[0]
+
+                # If the url is for the main Ensembl then it won't be any of the following
+                if division_name not in ["plants", "metazoa", "fungi", "bacteria", "protists"]:
+                    database_name = "EnsemblMain"
+                else:
+                    database_name = "Ensembl" + str.capitalize(division_name)
+            except:
+                # This may be a test without a source_url
+                if not og_file.source_url:
+                    logger.info(
+                        "Failed to retrieve/check for division name from url (looks like there was no source_url for the original file)"
+                    )
+                else:
+                    logger.error("Failed to retrieve/check for division name from url")
 
             job_context["database_name"] = database_name
 
@@ -360,9 +370,6 @@ def _zip_index(job_context: Dict) -> Dict:
 
 def _populate_index_object(job_context: Dict) -> Dict:
     """ """
-
-    logger.info("testtest {}".format(job_context))
-
     result = ComputationalResult()
     result.commands.append(job_context["salmon_formatted_command"])
     try:
