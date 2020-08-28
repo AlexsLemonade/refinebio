@@ -38,8 +38,7 @@ class OrganismIndex(models.Model):
     index_type = models.CharField(max_length=255)
 
     # The name of the database (for Ensembl, should specify Main, Plants, Bacteria, etc.)
-    # Since there are already existing transcriptome indices, default these to "Ensembl"
-    database_name = models.CharField(max_length=255, default="Ensembl")
+    database_name = models.CharField(max_length=255)
 
     # This corresponds to Ensembl's release number:
     # http://ensemblgenomes.org/info/about/release_cycle
