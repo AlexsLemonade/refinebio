@@ -155,6 +155,18 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
             assembly_name_start_index = versionless_url.rfind(".") + 1
             job_context["assembly_name"] = versionless_url[assembly_name_start_index:]
 
+            # The division name follows right after the first occurence of the assembly version (is there a better way to do this?)
+            division_name = versionless_url.split(job_context["assembly_version"])[1][1:].split("/")[0]
+            database_name = "Ensembl"
+
+            # If it's not one of the five divisions then we shouldn't include it
+            if division_name not in ["plants", "metazoa", "fungi", "bacteria", "protists"]:
+                database_name = "EnsemblMain"
+            else:
+                database_name = "Ensembl"+str.capitalize(division_name)
+
+            job_context["database_name"] = database_name
+
     return job_context
 
 
@@ -347,6 +359,8 @@ def _zip_index(job_context: Dict) -> Dict:
 def _populate_index_object(job_context: Dict) -> Dict:
     """ """
 
+    logger.info("testtest {}".format(job_context))
+
     result = ComputationalResult()
     result.commands.append(job_context["salmon_formatted_command"])
     try:
@@ -374,7 +388,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
     organism_object = Organism.get_object_for_name(job_context["organism_name"])
     index_object = OrganismIndex()
     index_object.organism = organism_object
-    index_object.source_version = job_context["assembly_version"]
+    index_object.database_name = job_context["database_name"]
+    index_object.release_version = job_context["assembly_version"]
     index_object.assembly_name = job_context["assembly_name"]
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context["length"].upper()
@@ -425,12 +440,12 @@ def _populate_index_object(job_context: Dict) -> Dict:
     short_indices = OrganismIndex.objects.filter(
         organism=organism_object,
         index_type="TRANSCRIPTOME_SHORT",
-        source_version=job_context["assembly_version"],
+        release_version=job_context["assembly_version"],
     )
     long_indices = OrganismIndex.objects.filter(
         organism=organism_object,
         index_type="TRANSCRIPTOME_LONG",
-        source_version=job_context["assembly_version"],
+        release_version=job_context["assembly_version"],
     )
     if short_indices.count() < 1 or long_indices.count() < 1:
         # utils.end_job deletes these, so remove them so it doesn't.

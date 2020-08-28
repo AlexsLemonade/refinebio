@@ -15,7 +15,6 @@ from data_refinery_common.models import OrganismIndex
 class OrganismIndexSerializer(serializers.ModelSerializer):
 
     organism_name = serializers.StringRelatedField(source="organism", read_only=True)
-    # ensembl_release = serializers.CharField(source="source_version")
     download_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -25,7 +24,8 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
             "id",
             "assembly_name",
             "organism_name",
-            "ensembl_release",
+            "database_name",
+            "release_version",
             "index_type",
             "salmon_version",
             "download_url",
