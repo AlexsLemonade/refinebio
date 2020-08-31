@@ -9,7 +9,13 @@ import json
 def find_division_by_species(species: str, division_jsons: dict) -> str:
     species_name = str.lower(species)
 
-    divisions = ["EnsemblPlants", "EnsemblProtists", "EnsemblFungi", "EnsemblMetazoa", "EnsemblBacteria"]
+    divisions = [
+        "EnsemblPlants",
+        "EnsemblProtists",
+        "EnsemblFungi",
+        "EnsemblMetazoa",
+        "EnsemblBacteria",
+    ]
 
     # Go through each division json to check if the organism we are looking for is in there
     for division in divisions:
@@ -25,12 +31,18 @@ def add_transcriptome_database_names(apps, schema_editor):
     # First make requests to the divisions for ensembl so we don't have to multiple times
     # Note: EnsemblBacteria takes a while to load and may give an error
     division_jsons = {}
-    divisions = ["EnsemblPlants", "EnsemblProtists", "EnsemblFungi", "EnsemblMetazoa", "EnsemblBacteria"]
+    divisions = [
+        "EnsemblPlants",
+        "EnsemblProtists",
+        "EnsemblFungi",
+        "EnsemblMetazoa",
+        "EnsemblBacteria",
+    ]
 
     root_url = "https://rest.ensembl.org/info/genomes/division/"
 
     for division in divisions:
-        r = requests.get(root_url+division, headers={"Content-Type" : "application/json"})
+        r = requests.get(root_url + division, headers={"Content-Type": "application/json"})
         division_jsons[division] = json.loads(r.text)
 
     # Make a dict of which species correspond to which division because of double entries
@@ -47,7 +59,7 @@ def add_transcriptome_database_names(apps, schema_editor):
         else:
             division = find_division_by_species(organism_name, division_jsons)
             discovered_species[organism_name] = division
-        
+
         transcriptome_index.database_name = division
         transcriptome_index.save()
 
@@ -55,7 +67,7 @@ def add_transcriptome_database_names(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0060_auto_20200828_1650'),
+        ("data_refinery_common", "0060_auto_20200828_1650"),
     ]
 
     operations = [

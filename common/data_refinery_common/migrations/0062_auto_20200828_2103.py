@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0061_transcriptome_database_name'),
+        ("data_refinery_common", "0061_transcriptome_database_name"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='organismindex',
-            name='database_name',
+            model_name="organismindex",
+            name="database_name",
             field=models.CharField(max_length=255),
         ),
     ]
