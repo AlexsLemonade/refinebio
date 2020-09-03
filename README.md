@@ -40,6 +40,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Gotchas](#gotchas)
     - [R](#r)
 - [Running Locally](#running-locally)
+  - [API](#api-1)
   - [Surveyor Jobs](#surveyor-jobs)
     - [Sequence Read Archive](#sequence-read-archive)
     - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
@@ -386,8 +387,16 @@ For a while we were using r-base, but we switched to r-base-core when we pinned 
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
-the Nomad and Postgres services running, you're ready to run
-jobs. There are three kinds of jobs within Refine.bio.
+the Nomad and Postgres services running, you're ready to run the API and/or jobs.
+There are three kinds of jobs within Refine.bio.
+
+### API
+
+The API can be run with:
+
+```bash
+./api/serve.sh
+```
 
 ### Surveyor Jobs
 
