@@ -387,7 +387,9 @@ For a while we were using r-base, but we switched to r-base-core when we pinned 
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
-the Nomad and Postgres services running, you're ready to run the API and/or jobs.
+the Nomad and Postgres services running, you're ready to run jobs.
+To run the API you also need the elasticsearch service running.
+
 There are three kinds of jobs within Refine.bio.
 
 ### API
