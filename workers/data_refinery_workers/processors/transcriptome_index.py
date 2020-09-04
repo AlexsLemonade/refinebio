@@ -169,13 +169,8 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
                 else:
                     database_name = "Ensembl" + str.capitalize(division_name)
             except:
-                # This may be a test without a source_url
-                if not og_file.source_url:
-                    logger.info(
-                        "Failed to retrieve/check for division name from url (looks like there was no source_url for the original file)"
-                    )
-                else:
-                    logger.error("Failed to retrieve/check for division name from url")
+                job_context["job"].failure_reason = "Failed to retrieve/check for division name from url"
+                job_context["success"] = False
 
             job_context["database_name"] = database_name
 
