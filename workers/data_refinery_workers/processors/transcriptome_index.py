@@ -169,7 +169,9 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
                 else:
                     database_name = "Ensembl" + str.capitalize(division_name)
             except:
-                job_context["job"].failure_reason = "Failed to retrieve/check for division name from url"
+                job_context[
+                    "job"
+                ].failure_reason = "Failed to retrieve/check for division name from url"
                 job_context["success"] = False
 
             job_context["database_name"] = database_name
