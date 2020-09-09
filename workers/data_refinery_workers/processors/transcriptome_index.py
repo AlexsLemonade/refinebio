@@ -157,7 +157,10 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
 
             database_name = "Ensembl"
 
-            # The division name follows right after the first occurence of the assembly version (is there a better way to do this?)
+            # The division name follows right after the first
+            # occurence of the assembly version. We don't have a great
+            # way to do this since we don't have any special object
+            # for organism index until it's created.
             try:
                 division_name = versionless_url.split(job_context["assembly_version"])[1][1:].split(
                     "/"
@@ -169,10 +172,15 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
                 else:
                     database_name = "Ensembl" + str.capitalize(division_name)
             except:
-                job_context[
-                    "job"
-                ].failure_reason = "Failed to retrieve/check for division name from url"
-                job_context["success"] = False
+                # We use special URLs for tests. I don't love this,
+                # but can't think of anything better right now.
+                if "data-refinery-test-assets.s3.amazonaws.com" in og_file.source_url:
+                    database_name = "EnsemblMain"
+                else:
+                    job_context[
+                        "job"
+                    ].failure_reason = "Failed to retrieve/check for division name from url"
+                    job_context["success"] = False
 
             job_context["database_name"] = database_name
 
