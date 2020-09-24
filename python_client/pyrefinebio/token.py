@@ -1,3 +1,4 @@
+import logging
 import os
 
 import yaml
@@ -14,7 +15,8 @@ class Token:
         before use of these tokens.
     """
 
-    def create_token(self, email_address):
+    @classmethod
+    def create_token(cls, email_address):
         """
             creates a token and emails the terms and conditions to a specified email.
 
@@ -33,7 +35,8 @@ class Token:
 
         return token_id
 
-    def agree_to_terms_and_conditions(self, api_token):
+    @classmethod
+    def agree_to_terms_and_conditions(cls, api_token):
         """
             Activates a token.
 
@@ -50,7 +53,8 @@ class Token:
         response = put("token" + api_token, payload={"is_activated": True})
         return response
 
-    def save_token(self, api_token, file_path=os.getenv("CONFIG_FILE", "~/.refinebio.yaml")):
+    @classmethod
+    def save_token(cls, api_token, file_path=os.getenv("CONFIG_FILE", "~/.refinebio.yaml")):
         """
             Saves a token to a file.
 
@@ -66,7 +70,8 @@ class Token:
         with open(file_path, "w+") as file:
             yaml.dump({"token": api_token}, file)
 
-    def load_token(self, file_path=os.getenv("CONFIG_FILE", "~/.refinebio.yaml")):
+    @classmethod
+    def load_token(cls, file_path=os.getenv("CONFIG_FILE", "~/.refinebio.yaml")):
         """
             Loads a token from a file.
 
@@ -76,6 +81,9 @@ class Token:
                                  loaded from. Defaults to `~/.refinebio.yaml`. Alternatively
                                  you can set this path in an environment variable `CONFIG_FILE`.
         """
+
+        if not os.path.exists(file_path):
+            raise Exception("Cannot load token - File {0} does not exist".format(file_path))
 
         with open(file_path) as file:
             tokens = yaml.full_load(file)
