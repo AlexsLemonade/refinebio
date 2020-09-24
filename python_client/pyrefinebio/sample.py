@@ -1,5 +1,5 @@
 from pyrefinebio.common.annotation import Annotation
-from pyrefinebio.common.organism_index import OgranismIndex
+from pyrefinebio.common.organism_index import OrganismIndex
 from pyrefinebio.http import get
 from pyrefinebio.organism import Organism
 from pyrefinebio.processor import Processor
@@ -7,133 +7,162 @@ from pyrefinebio.util import generator_from_pagination
 
 
 class Sample:
+    """Samples.
+
+    get a sample based on accession code
+
+        ex:
+        >>> import pyrefinebio
+        >>> accession_code = "GSM000000"
+        >>> sample = pyrefinebio.Samples.get(accession_code)
+
+    search for sampes based on filters
+
+        ex:
+        >>> import pyrefinebio
+        >>> samples = pyrefinebio.Samples.search(is_processed=True, specimen_part="soft-tissue sarcoma")
     """
-        Samples.
 
-        get a sample based on accession code
+    valid_filters = [
+        "ordering",
+        "title",
+        "organism",
+        "source_database",
+        "source_archive_url",
+        "has_raw",
+        "platform_name",
+        "technology",
+        "manufacturer",
+        "sex",
+        "age",
+        "specimen_part",
+        "genotype",
+        "disease",
+        "disease_stage",
+        "cell_line",
+        "treatment",
+        "race",
+        "subject",
+        "compound",
+        "time",
+        "is_processed",
+        "is_public",
+        "limit",
+        "offset",
+        "dataset_id",
+        "experiment_accession_code",
+        "accession_codes",
+    ]
 
-            ex:
-            >>> import pyrefinebio
-            >>> accession_code = ""
-            >>> sample = pyrefinebio.Samples.get(accession_code)
-
-        search for sampes based on filters
-
-            ex:
-            >>> import pyrefinebio
-            >>> samples = pyrefinebio.Samples.search(is_processed=True, specimen_part="soft-tissue sarcoma")
-    """
-
-    def __init__(self, **kwargs):
-        self.id = kwargs["id"]
-        self.title = kwargs["title"]
-        self.accession_code = kwargs["accession_code"]
-        self.source_database = kwargs["source_database"]
-        self.organism = Organism(**kwargs["organism"])
-        self.platform_accession_code = kwargs["platform_accession_code"]
-        self.platform_name = kwargs["platform_name"]
-        self.pretty_platform = kwargs["pretty_platform"]
-        self.technology = kwargs["technology"]
-        self.manufacturer = kwargs["manufacturer"]
-        self.protocol_info = kwargs["protocol_info"]
-        self.annotations = ([Annotation(**annotation) for annotation in kwargs["annotations"]],)
-        self.results = [Result(**result) for result in kwargs["results"]]
-        self.source_archive_url = kwargs["source_archive_url"]
-        self.has_raw = kwargs["has_raw"]
-        self.sex = kwargs["sex"]
-        self.age = kwargs["age"]
-        self.specimen_part = kwargs["specimen_part"]
-        self.genotype = kwargs["genotype"]
-        self.disease = kwargs["disease"]
-        self.disease_stage = kwargs["disease_stage"]
-        self.cell_line = kwargs["cell_line"]
-        self.treatment = kwargs["treatment"]
-        self.race = kwargs["race"]
-        self.subject = kwargs["subject"]
-        self.compound = kwargs["compound"]
-        self.time = kwargs["time"]
-        self.is_processed = kwargs["is_processed"]
-        self.created_at = kwargs["created_at"]
-        self.last_modified = kwargs["last_modified"]
-        self.original_files = kwargs["original_files"]
-        self.computed_files = kwargs["computed_files"]
-        self.experiment_accession_codes = kwargs["computed_files"]
+    def __init__(
+        self=None,
+        id=None,
+        title=None,
+        accession_code=None,
+        source_database=None,
+        organism=None,
+        platform_accession_code=None,
+        platform_name=None,
+        pretty_platform=None,
+        technology=None,
+        manufacturer=None,
+        protocol_info=None,
+        annotations=None,
+        results=None,
+        source_archive_url=None,
+        has_raw=None,
+        sex=None,
+        age=None,
+        specimen_part=None,
+        genotype=None,
+        disease=None,
+        disease_stage=None,
+        cell_line=None,
+        treatment=None,
+        race=None,
+        subject=None,
+        compound=None,
+        time=None,
+        is_processed=None,
+        created_at=None,
+        last_modified=None,
+        original_files=None,
+        computed_files=None,
+        experiment_accession_codes=None,
+    ):
+        self.id = id
+        self.title = title
+        self.accession_code = accession_code
+        self.source_database = source_database
+        self.organism = Organism(**organism)
+        self.platform_accession_code = platform_accession_code
+        self.platform_name = platform_name
+        self.pretty_platform = pretty_platform
+        self.technology = technology
+        self.manufacturer = manufacturer
+        self.protocol_info = protocol_info
+        self.annotations = [Annotation(**annotation) for annotation in annotations]
+        self.results = [Result(**result) for result in results]
+        self.source_archive_url = source_archive_url
+        self.has_raw = has_raw
+        self.sex = sex
+        self.age = age
+        self.specimen_part = specimen_part
+        self.genotype = genotype
+        self.disease = disease
+        self.disease_stage = disease_stage
+        self.cell_line = cell_line
+        self.treatment = treatment
+        self.race = race
+        self.subject = subject
+        self.compound = compound
+        self.time = time
+        self.is_processed = is_processed
+        self.created_at = created_at
+        self.last_modified = last_modified
+        self.original_files = original_files
+        self.computed_files = computed_files
+        self.experiment_accession_codes = computed_files
 
     @classmethod
     def get(cls, accession_code):
-        """
-            Retrieve details about a sample based on its accession code.
+        """Retrieve details about a sample based on its accession code.
 
-            parameters:
+        parameters:
 
-                accession_code (str): The accession code for the sample to be retrieved.
+            accession_code (str): The accession code for the sample to be retrieved.
         """
 
         return cls(**get("samples/" + accession_code))
 
     @classmethod
-    def search(
-        cls,
-        ordering="",
-        title="",
-        organism="",
-        source_database="",
-        source_archive_url="",
-        has_raw="",
-        platform_name="",
-        technology="",
-        manufacturer="",
-        sex="",
-        age=None,
-        specimen_part="",
-        genotype="",
-        disease="",
-        disease_stage="",
-        cell_line="",
-        treatment="",
-        race="",
-        subject="",
-        compound="",
-        time="",
-        is_processed="",
-        is_public="",
-        limit=None,
-        offset=None,
-        dataset_id="",
-        experiment_accession_code="",
-        accession_codes="",
-    ):
-        """
-        Returns a list of samples.
-
-        Usage:
-            `import pyrefinebio`
-            `samples = pyrefinebio.Samples.llist()`
+    def search(cls, **kwargs):
+        """Returns a list of samples.
 
         Parameters:
-            ordering (str):  which field to use when ordering the results
-            title (str)
-            organism (str)
-            source_database (str)
-            source_archive_url (str)
-            has_raw (str)
-            platform_name (str)
-            technology (str)
-            manufacturer (str)
-            sex (str)
-            age (number)
-            specimen_part (str)
-            genotype (str)
-            disease (str)
-            disease_stage (str)
-            cell_line (str)
-            treatment (str)
-            race (str)
-            subject (str)
-            compound (str)
-            time (str)
-            is_processed (str)
-            is_public (str)
+            ordering (str):                  which field to use when ordering the results
+            title (str):
+            organism (str):
+            source_database (str):
+            source_archive_url (str):
+            has_raw (str):
+            platform_name (str):
+            technology (str):
+            manufacturer (str):
+            sex (str):
+            age (number):
+            specimen_part (str):
+            genotype (str):
+            disease (str):
+            disease_stage (str):
+            cell_line (str):
+            treatment (str):
+            race (str):
+            subject (str):
+            compound (str):
+            time (str):
+            is_processed (str):
+            is_public (str):
             limit (int):                     Number of results to return per page.
 
             offset (int):                    The initial index from which to return the results.
@@ -150,48 +179,26 @@ class Sample:
                                              only return information about these samples.
         """
 
-        params = {
-            "ordering": ordering,
-            "title": title,
-            "organism": organism,
-            "source_database": source_database,
-            "source_archive_url": source_archive_url,
-            "has_raw": has_raw,
-            "platform_name": platform_name,
-            "technology": technology,
-            "manufacturer": manufacturer,
-            "sex": sex,
-            "age": age,
-            "specimen_part": specimen_part,
-            "genotype": genotype,
-            "disease": disease,
-            "disease_stage": disease_stage,
-            "cell_line": cell_line,
-            "treatment": treatment,
-            "race": race,
-            "subject": subject,
-            "compound": compound,
-            "time": time,
-            "is_processed": is_processed,
-            "is_public": is_public,
-            "limit": limit,
-            "offset": offset,
-            "dataset_id": dataset_id,
-            "experiment_accession_code": experiment_accession_code,
-            "accession_codes": accession_codes,
-        }
+        invalid_filters = []
 
-        response = get("samples", params=params)
+        for filter in kwargs.keys():
+            if filter not in cls.valid_filters:
+                invalid_filters.append(filter)
+
+        if invalid_filters:
+            raise Exception("You supplied invalid filters - {0}".format(invalid_filters))
+
+        response = get("samples", params=kwargs)
 
         return generator_from_pagination(response, cls)
 
 
 class Result:
-    def __init__(self, **kwargs):
-        self.id = kwargs["id"]
-        self.processor = Processor(**kwargs["processor"])
+    def __init__(self, id=None, processor=None, organism_index=None):
+        self.id = id
+        self.processor = Processor(**processor)
 
-        if kwargs["organism_index"]:
-            self.organism_index = OgranismIndex(**kwargs["organism_index"])
+        if organism_index:
+            self.organism_index = OrganismIndex(**organism_index)
         else:
             self.organism_index = None

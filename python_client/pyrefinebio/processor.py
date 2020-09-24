@@ -1,7 +1,7 @@
 class Processor:
-    def __init__(self, **kwargs):
-        self.id = (0,)
-        self.name = ("string",)
-        self.version = ("string",)
-        self.docker_image = ("string",)
-        self.environment = {}
+    def __init__(self, id=None, name=None, version=None, docker_image=None, environment=None):
+        self.id = id
+        self.name = name
+        self.version = version
+        self.docker_image = docker_image
+        self.environment = environment

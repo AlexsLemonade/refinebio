@@ -1,4 +1,4 @@
 class Organism:
-    def __init__(self, **kwargs):
-        self.name = kwargs["name"]
-        self.taxonomy_id = kwargs["taxonomy_id"]
+    def __init__(self, name=None, taxonomy_id=None):
+        self.name = name
+        self.taxonomy_id = taxonomy_id
