@@ -6,8 +6,15 @@ logger = logging.getLogger(__name__)
 
 
 def get(endpoint, params=None):
+    url = ""
+
+    if endpoint.startswith("http"):
+        url = endpoint
+    else:
+        url = "https://api.refine.bio/v1/" + endpoint + "/"
+
     try:
-        response = requests.get("http://localhost:8000/v1/" + endpoint + "/", params=params)
+        response = requests.get(url, params=params)
 
         response.raise_for_status()
         results = response.json()

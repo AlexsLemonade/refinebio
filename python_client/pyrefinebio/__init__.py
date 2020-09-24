@@ -1,2 +1,2 @@
-from .samples import Samples
+from .sample import Sample
 from .token import Token
