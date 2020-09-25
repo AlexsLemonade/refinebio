@@ -1,8 +1,9 @@
 import logging
 import os
+from pathlib import Path
 
 import yaml
-from pyrefinebio.http import get, post, put
+from pyrefinebio.http import get_by_endpoint, post_by_endpoint, put_by_endpoint
 
 
 class Token:
@@ -23,7 +24,7 @@ class Token:
             email_address (str): the email that the terms and conditions should be sent to.
         """
 
-        response = post("token")
+        response = post_by_endpoint("token")
 
         token_id = response["id"]
 
@@ -47,11 +48,13 @@ class Token:
                              you want to activate.
         """
 
-        response = put("token" + api_token, payload={"is_activated": True})
+        response = put_by_endpoint("token" + api_token, payload={"is_activated": True})
         return response
 
     @classmethod
-    def save_token(cls, api_token, file_path=os.getenv("CONFIG_FILE", "~/.refinebio.yaml")):
+    def save_token(
+        cls, api_token, file_path=os.getenv("CONFIG_FILE", str(Path.home()) + "/.refinebio.yaml")
+    ):
         """Saves a token to a file.
 
         parameters:
@@ -63,11 +66,11 @@ class Token:
                              you can set this path in an environment variable `CONFIG_FILE`.
         """
 
-        with open(file_path, "w+") as file:
+        with open(file_path, "w") as file:
             yaml.dump({"token": api_token}, file)
 
     @classmethod
-    def load_token(cls, file_path=os.getenv("CONFIG_FILE", "~/.refinebio.yaml")):
+    def load_token(cls, file_path=os.getenv("CONFIG_FILE", str(Path.home()) + "/.refinebio.yaml")):
         """Loads a token from a file.
 
         parameters:
