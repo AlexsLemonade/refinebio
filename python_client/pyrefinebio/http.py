@@ -1,65 +1,50 @@
 import logging
+import os
 
 import requests
 
 logger = logging.getLogger(__name__)
 
-
-def get(endpoint, params=None):
-    url = ""
-
-    if endpoint.startswith("http"):
-        url = endpoint
-    else:
-        url = "https://api.refine.bio/v1/" + endpoint + "/"
-
-    try:
-        response = requests.get(url, params=params)
-
-        response.raise_for_status()
-        results = response.json()
-        # cache results?
-
-    except requests.exceptions.HTTPError:
-        logging.error("GET %s failed", endpoint)
-        return None
-
-    return results
+base_url = os.getenv("BASE_URL") or "https://api.refine.bio/v1/"
 
 
-def post(endpoint, payload=None):
-    try:
-        response = requests.post(
-            "http://localhost:8000/v1/" + endpoint + "/",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-        )
+def get(url, params=None):
+    response = requests.get(url, params=params)
 
-        response.raise_for_status()
-        results = response.json()
-        # cache results?
+    response.raise_for_status()
 
-    except requests.exceptions.HTTPError:
-        logging.error("POST %s failed", endpoint)
-        return None
-
-    return results
+    return response.json()
 
 
-def put(endpoint, params=None, payload=None):
-    try:
-        response = requests.put(
-            "http://localhost:8000/v1/" + endpoint + "/",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-        )
+def post(url, payload=None):
+    response = requests.post(url, data=payload, headers={"Content-Type": "application/json"},)
 
-        response.raise_for_status()
-        results = response.json()
-        # cache results?
+    response.raise_for_status()
 
-    except requests.exceptions.HTTPError:
-        logging.error("POST %s failed", endpoint)
-        return None
+    return response.json()
 
-    return results
+
+def put(url, payload=None):
+    response = requests.put(url, data=payload, headers={"Content-Type": "application/json"},)
+
+    response.raise_for_status()
+
+    return response.json()
+
+
+def get_by_endpoint(endpoint, params=None):
+    url = base_url + endpoint + "/"
+
+    return get(url, params=params)
+
+
+def post_by_endpoint(endpoint, payload=None):
+    url = base_url + endpoint + "/"
+
+    return post(url, payload=payload)
+
+
+def put_by_endpoint(endpoint, payload=None):
+    url = base_url + endpoint + "/"
+
+    return put(url, payload=payload)

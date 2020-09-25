@@ -1,7 +1,7 @@
 from pyrefinebio.common.annotation import Annotation
 from pyrefinebio.common.organism_index import OrganismIndex
 from pyrefinebio.experiment import Experiment
-from pyrefinebio.http import get
+from pyrefinebio.http import get_by_endpoint
 from pyrefinebio.organism import Organism
 from pyrefinebio.processor import Processor
 from pyrefinebio.util import generator_from_pagination
@@ -146,7 +146,9 @@ class Sample:
             accession_code (str): The accession code for the sample to be retrieved.
         """
 
-        return cls(**get("samples/" + accession_code))
+        result = get_by_endpoint("samples/" + accession_code)
+
+        return cls(**result)
 
     @classmethod
     def search(cls, **kwargs):
@@ -201,9 +203,9 @@ class Sample:
         if invalid_filters:
             raise Exception("You supplied invalid filters - {0}".format(invalid_filters))
 
-        response = get("samples", params=kwargs)
+        result = get_by_endpoint("samples", params=kwargs)
 
-        return generator_from_pagination(response, cls)
+        return generator_from_pagination(result, cls)
 
 
 class Result:
