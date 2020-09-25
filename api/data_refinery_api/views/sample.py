@@ -228,7 +228,7 @@ class SampleListView(generics.ListAPIView):
 
 
 class SampleDetailView(generics.RetrieveAPIView):
-    """ Retrieve the details for a Sample given it's accession code """
+    """ Retrieve the details for a Sample given its accession code """
 
     lookup_field = "accession_code"
     queryset = Sample.public_objects.all()

@@ -1,5 +1,6 @@
 from pyrefinebio.common.annotation import Annotation
 from pyrefinebio.common.organism_index import OrganismIndex
+from pyrefinebio.experiment import Experiment
 from pyrefinebio.http import get
 from pyrefinebio.organism import Organism
 from pyrefinebio.processor import Processor
@@ -7,20 +8,20 @@ from pyrefinebio.util import generator_from_pagination
 
 
 class Sample:
-    """Samples.
+    """Sample.
 
     get a sample based on accession code
 
         ex:
         >>> import pyrefinebio
         >>> accession_code = "GSM000000"
-        >>> sample = pyrefinebio.Samples.get(accession_code)
+        >>> sample = pyrefinebio.Sample.get(accession_code)
 
-    search for sampes based on filters
+    search for samples based on filters
 
         ex:
         >>> import pyrefinebio
-        >>> samples = pyrefinebio.Samples.search(is_processed=True, specimen_part="soft-tissue sarcoma")
+        >>> samples = pyrefinebio.Sample.search(is_processed=True, specimen_part="soft-tissue sarcoma")
     """
 
     valid_filters = [
@@ -122,7 +123,19 @@ class Sample:
         self.last_modified = last_modified
         self.original_files = original_files
         self.computed_files = computed_files
-        self.experiment_accession_codes = computed_files
+        self.experiment_accession_codes = experiment_accession_codes
+        self.experiments = None
+
+    @property
+    def experiments(self):
+        if not self._experiments:
+            self._experiments = Experiment.search(accession_code=self.experiment_accession_codes)
+
+        return self._experiments
+
+    @experiments.setter
+    def experiments(self, value):
+        self._experiments = value
 
     @classmethod
     def get(cls, accession_code):
