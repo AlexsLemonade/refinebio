@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 # On the nomad client instances, our instance user data script is responsible
 # for a lot of setup. This includes creating a bunch of files on the client

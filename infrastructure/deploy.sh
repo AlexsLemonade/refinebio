@@ -359,10 +359,10 @@ done
 echo "Job registrations have been fired off."
 
 # Prepare the client instance user data script for the nomad client instances.
-# The `prepare-client-instance-user-data.sh` script overwrites
+# The `prepare-client-instance-user-data.sh` script modifies
 # `client-instance-user-data.tpl.sh`, so we have to back it up first.
 if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
-    mv nomad-configuration/client-instance-user-data.tpl.sh nomad-configuration/client-instance-user-data.tpl.sh.bak
+    cp nomad-configuration/client-instance-user-data.tpl.sh nomad-configuration/client-instance-user-data.tpl.sh.bak
 fi
 
 ./nomad-configuration/prepare-client-instance-user-data.sh

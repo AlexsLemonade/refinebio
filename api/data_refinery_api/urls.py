@@ -102,6 +102,7 @@ If you have a question or comment, please [file an issue on GitHub](https://gith
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    url="https://api.refine.bio",
 )
 
 urlpatterns = [

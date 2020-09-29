@@ -127,7 +127,7 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
     assemblies which are where the input files for this processor
     comes from.  All divisions other than the main one have identical
     release versions, but we don't know which division these files
-    came from so we can't just hit thier API again. Therefore, look at
+    came from so we can't just hit their API again. Therefore, look at
     the URL we used to get the files because it contains the assembly
     version and name.
 
@@ -154,6 +154,35 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
 
             assembly_name_start_index = versionless_url.rfind(".") + 1
             job_context["assembly_name"] = versionless_url[assembly_name_start_index:]
+
+            database_name = "Ensembl"
+
+            # The division name follows right after the first
+            # occurence of the assembly version. We don't have a great
+            # way to do this since we don't have any special object
+            # for organism index until it's created.
+            try:
+                division_name = versionless_url.split(job_context["assembly_version"])[1][1:].split(
+                    "/"
+                )[0]
+
+                # If the url is for the main Ensembl then it won't be any of the following
+                if division_name not in ["plants", "metazoa", "fungi", "bacteria", "protists"]:
+                    database_name = "EnsemblMain"
+                else:
+                    database_name = "Ensembl" + str.capitalize(division_name)
+            except:
+                # We use special URLs for tests. I don't love this,
+                # but can't think of anything better right now.
+                if "data-refinery-test-assets.s3.amazonaws.com" in og_file.source_url:
+                    database_name = "EnsemblMain"
+                else:
+                    job_context[
+                        "job"
+                    ].failure_reason = "Failed to retrieve/check for division name from url"
+                    job_context["success"] = False
+
+            job_context["database_name"] = database_name
 
     return job_context
 
@@ -346,7 +375,6 @@ def _zip_index(job_context: Dict) -> Dict:
 
 def _populate_index_object(job_context: Dict) -> Dict:
     """ """
-
     result = ComputationalResult()
     result.commands.append(job_context["salmon_formatted_command"])
     try:
@@ -374,7 +402,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
     organism_object = Organism.get_object_for_name(job_context["organism_name"])
     index_object = OrganismIndex()
     index_object.organism = organism_object
-    index_object.source_version = job_context["assembly_version"]
+    index_object.database_name = job_context["database_name"]
+    index_object.release_version = job_context["assembly_version"]
     index_object.assembly_name = job_context["assembly_name"]
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context["length"].upper()
@@ -425,12 +454,12 @@ def _populate_index_object(job_context: Dict) -> Dict:
     short_indices = OrganismIndex.objects.filter(
         organism=organism_object,
         index_type="TRANSCRIPTOME_SHORT",
-        source_version=job_context["assembly_version"],
+        release_version=job_context["assembly_version"],
     )
     long_indices = OrganismIndex.objects.filter(
         organism=organism_object,
         index_type="TRANSCRIPTOME_LONG",
-        source_version=job_context["assembly_version"],
+        release_version=job_context["assembly_version"],
     )
     if short_indices.count() < 1 or long_indices.count() < 1:
         # utils.end_job deletes these, so remove them so it doesn't.
