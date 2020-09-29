@@ -81,6 +81,7 @@ class TXTestCase(TestCase):
         job_context = transcriptome_index._extract_assembly_information(job_context)
         self.assertEqual("39", job_context["assembly_version"])
         self.assertEqual("ASM34733v1", job_context["assembly_name"])
+        self.assertEqual("EnsemblPlants", job_context["database_name"])
 
     @tag("transcriptome")
     def test_tx(self):
