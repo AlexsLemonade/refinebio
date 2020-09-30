@@ -165,10 +165,10 @@ resource "aws_instance" "smasher_instance" {
   count = "${var.stage == "prod" || var.full_stack == "True" ? 1 : 0}"
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.smasher_instance_type}"
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
 
   tags = {
     Name = "smasher-instance-${var.user}-${var.stage}"
