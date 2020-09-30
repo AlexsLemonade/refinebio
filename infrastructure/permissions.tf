@@ -127,10 +127,11 @@ resource "aws_iam_policy" "ec2_access_policy" {
       {
          "Effect":"Allow",
          "Action": [
-            "ec2:AttachVolumes"
+            "ec2:AttachVolume"
           ],
           "Resource": [
-            "${aws_ebs_volume.data_refinery_ebs_smasher}"
+            "${aws_ebs_volume.data_refinery_ebs_smasher.arn}",
+            "${aws_instance.smasher_instance.arn}"
           ]
       },
       {

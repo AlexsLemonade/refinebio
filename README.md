@@ -894,7 +894,7 @@ This can take a long time (>30 minutes)!
 
 ### Tearing Down
 
-A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev`.
+A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev -r us-east-1`.
 The same username and environment must be passed into `destroy_terraform.sh` as were used to run `deploy.sh` either via the -e and -u options or by specifying `TF_VAR_stage` or `TF_VAR_user` so that the script knows which to take down.
 Note that this will prompt you for confirmation before actually destroying all of your cloud resources.
 
