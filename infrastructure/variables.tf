@@ -158,7 +158,7 @@ variable "foreman_instance_type" {
 }
 
 variable "volume_size_in_gb" {
-  default = "2000"
+  default = "5000"
 }
 
 variable "max_downloader_jobs_per_node" {
@@ -176,6 +176,10 @@ variable "engagementbot_webhook" {
 
 variable "full_stack" {
   default = "False"
+}
+
+variable "processing_compendia" {
+  default = true
 }
 
 # Configuration

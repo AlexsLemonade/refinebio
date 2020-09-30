@@ -125,6 +125,15 @@ resource "aws_iam_policy" "ec2_access_policy" {
           ]
       },
       {
+         "Effect":"Allow",
+         "Action": [
+            "ec2:AttachVolumes"
+          ],
+          "Resource": [
+            "${aws_ebs_volume.data_refinery_ebs_smasher}"
+          ]
+      },
+      {
         "Effect": "Allow",
         "Action": [
           "sts:DecodeAuthorizationMessage"

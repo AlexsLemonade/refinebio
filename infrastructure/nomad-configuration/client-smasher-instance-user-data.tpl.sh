@@ -23,9 +23,41 @@ apt-get install --yes jq iotop dstat speedometer awscli docker.io
 
 ulimit -n 65536
 
-# Set up the data directory
+# Find, configure and mount the EBS volume
 mkdir -p /var/ebs/
+
+# Takes USER, STAGE
+fetch_and_mount_volume () {
+    INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+
+    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+
+    aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
+}
+
+export STAGE="${stage}"
+export USER="${user}"
+EBS_VOLUME_INDEX="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
+
+until fetch_and_mount_volume "$USER" "$STAGE"; do
+    sleep 10
+done
+
+# # We want to mount the biggest volume that its attached to the instance
+# # The size of this volume can be controlled with the varialbe
+# # `volume_size_in_gb` from the file `variables.tf`
+ATTACHED_AS=`lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1`
+
+# # grep -v ext4: make sure the disk is not already formatted.
+if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
+	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
+fi
+mount /dev/$ATTACHED_AS /var/ebs/
+
 chown ubuntu:ubuntu /var/ebs/
+echo "$EBS_VOLUME_INDEX" > /var/ebs/VOLUME_INDEX
+chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX
+
 
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
