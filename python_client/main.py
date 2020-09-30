@@ -1,12 +1,9 @@
 import pyrefinebio
 
-token_id = pyrefinebio.Token.create_token("")
-print(token_id)
-pyrefinebio.Token.save_token(token_id)
+r1 = pyrefinebio.ComputationalResult.search()
 
-print(pyrefinebio.Sample.get("GSM824740").organism.taxonomy_id)
+for i in r1:
+    print(i.id)
 
-samples = pyrefinebio.Sample.search(is_processed=True, specimen_part="soft-tissue sarcoma")
-
-for sample in samples:
-    print(sample.id)
+r = pyrefinebio.Experiment.get("SRP111833")
+print("done")

@@ -17,7 +17,7 @@ def get(url, params=None):
 
 
 def post(url, payload=None):
-    response = requests.post(url, data=payload, headers={"Content-Type": "application/json"},)
+    response = requests.post(url, data=payload, headers={"Content-Type": "application/json"})
 
     response.raise_for_status()
 
@@ -25,7 +25,7 @@ def post(url, payload=None):
 
 
 def put(url, payload=None):
-    response = requests.put(url, data=payload, headers={"Content-Type": "application/json"},)
+    response = requests.put(url, data=payload, headers={"Content-Type": "application/json"})
 
     response.raise_for_status()
 
