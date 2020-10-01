@@ -566,7 +566,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 )
                 if is_updated:
                     sample_object.protocol_info = protocol_info
-                    sample_obejct.save()
+                    sample_object.save()
 
                 logger.debug(
                     "Sample %s already exists, skipping object creation.",
