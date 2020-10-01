@@ -5,9 +5,9 @@
 ##
 
 resource "aws_ebs_volume" "data_refinery_ebs_smasher" {
- count = "${var.processing_compendia ? 1 :0}"
+ count = "${var.full_stack && var.processing_compendia ? 1 :0}"
  availability_zone = "${var.region}a"
- size = "${var.volume_size_in_gb}"
+ size = "${var.smasher_volume_size_in_gb}"
  type = "st1" # Throughput Optimized HDD
  tags {
    Name        = "data-refinery-ebs-smasher-${var.user}-${var.stage}"

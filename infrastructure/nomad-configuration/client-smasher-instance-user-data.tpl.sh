@@ -43,9 +43,9 @@ until fetch_and_mount_volume "$USER" "$STAGE"; do
     sleep 10
 done
 
-# # We want to mount the biggest volume that its attached to the instance
-# # The size of this volume can be controlled with the varialbe
-# # `volume_size_in_gb` from the file `variables.tf`
+# We want to mount the biggest volume that its attached to the instance
+# The size of this volume can be controlled with the varialbe
+# `smasher_volume_size_in_gb` from the file `variables.tf`
 ATTACHED_AS=$(lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1)
 
 # # grep -v ext4: make sure the disk is not already formatted.
