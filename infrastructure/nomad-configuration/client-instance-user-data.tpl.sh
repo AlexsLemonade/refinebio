@@ -23,53 +23,12 @@ apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop
 
 ulimit -n 65536
 
-# Find, configure and mount a free EBS volume
+# Configure and mount the EBS volume
 mkdir -p /var/ebs/
-
-# Takes USER, STAGE
-# fetch_and_mount_volume () {
-#     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-
-#     # Try to mount volume 0 first, so we have one volume we know is always mounted!
-#     if aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
-#         EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
-#     else
-#         EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
-#     fi
-
-#     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
-# }
 
 export STAGE="${stage}"
 export USER="${user}"
 EBS_VOLUME_INDEX="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
-
-# until fetch_and_mount_volume "$USER" "$STAGE"; do
-#     sleep 10
-# done
-
-# COUNTER=0
-# while [  $COUNTER -lt 99 ]; do
-#         EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
-#         if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
-#             echo "$EBS_VOLUME_INDEX is an integer!"
-#             break # This is a Volume Index
-#         else
-#             echo "$EBS_VOLUME_INDEX is not an integer"
-#         fi
-#         let COUNTER=COUNTER+1
-# done
-
-# # We want to mount the biggest volume that its attached to the instance
-# # The size of this volume can be controlled with the varialbe
-# # `volume_size_in_gb` from the file `variables.tf`
-# ATTACHED_AS=`lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1`
-
-# # grep -v ext4: make sure the disk is not already formatted.
-# if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
-# 	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
-# fi
-# mount /dev/$ATTACHED_AS /var/ebs/
 
 chown ubuntu:ubuntu /var/ebs/
 echo "$EBS_VOLUME_INDEX" > /var/ebs/VOLUME_INDEX
