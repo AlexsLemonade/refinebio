@@ -12,6 +12,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_api.views.relation_serializers import (
     OrganismIndexRelationSerializer,
     OrganismRelationSerializer,
@@ -156,6 +158,20 @@ class SampleListView(generics.ListAPIView):
         """
         ref https://www.django-rest-framework.org/api-guide/filtering/#filtering-against-query-parameters
         """
+        invalid_filters = check_filters(
+            self,
+            special_filters=[
+                "ids",
+                "organism__name",
+                "dataset_id",
+                "experiment_accession_code",
+                "accession_codes",
+            ],
+        )
+
+        if invalid_filters:
+            raise InvalidFilters("You have supplied invalid filters {0}".format(invalid_filters))
+
         queryset = (
             Sample.public_objects.prefetch_related("organism")
             .prefetch_related(

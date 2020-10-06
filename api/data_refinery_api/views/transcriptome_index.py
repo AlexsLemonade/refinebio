@@ -9,6 +9,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_common.models import OrganismIndex
 
 
@@ -88,6 +90,13 @@ class TranscriptomeIndexListView(generics.ListAPIView):
     ordering = ("-created_at",)
 
     def get_queryset(self):
+        invalid_filters = check_filters(
+            self, special_filters=["organism_name", "result_id", "length"]
+        )
+
+        if invalid_filters:
+            raise InvalidFilters("You have supplied invalid filters {0}".format(invalid_filters))
+
         queryset = OrganismIndex.public_objects.all()
 
         organism_name = self.request.query_params.get("organism_name", None)

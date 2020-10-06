@@ -12,6 +12,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_api.views.relation_serializers import (
     ComputedFileRelationSerializer,
     ComputedFileWithUrlRelationSerializer,
@@ -103,6 +105,11 @@ class CompendiumResultListView(generics.ListAPIView):
     ordering = ("primary_organism__name",)
 
     def get_queryset(self):
+        invalid_filters = check_filters(self, ["latest_version"])
+
+        if invalid_filters:
+            raise InvalidFilters("You have supplied invalid filters {0}".format(invalid_filters))
+
         public_result_queryset = CompendiumResult.objects.filter(result__is_public=True)
         latest_version = self.request.query_params.get("latest_version", False)
         if latest_version:
