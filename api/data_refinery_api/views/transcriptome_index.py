@@ -48,7 +48,7 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
     decorator=swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
-                name="organism_name",
+                name="organism__name",
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 description="Organism name. Eg. `MUS_MUSCULUS`",
@@ -91,7 +91,7 @@ class TranscriptomeIndexListView(generics.ListAPIView):
 
     def get_queryset(self):
         invalid_filters = check_filters(
-            self, special_filters=["organism_name", "result_id", "length"]
+            self, special_filters=["organism__name", "result_id", "length"]
         )
 
         if invalid_filters:
@@ -99,7 +99,7 @@ class TranscriptomeIndexListView(generics.ListAPIView):
 
         queryset = OrganismIndex.public_objects.all()
 
-        organism_name = self.request.query_params.get("organism_name", None)
+        organism_name = self.request.query_params.get("organism__name", None)
         if organism_name is not None:
             queryset = queryset.filter(organism__name=organism_name.upper())
 

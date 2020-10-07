@@ -286,7 +286,7 @@ class APITestCases(APITestCase):
 
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION})
-            + "?organism_name=DANIO_RERIO"
+            + "?organism__name=DANIO_RERIO"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
