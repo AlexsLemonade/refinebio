@@ -90,7 +90,7 @@ class OriginalFileListView(generics.ListAPIView):
         invalid_filters = check_filters(self)
 
         if invalid_filters:
-            raise InvalidFilters("You have supplied invalid filters {0}".format(invalid_filters))
+            raise InvalidFilters(invalid_filters)
 
         return self.queryset
 
