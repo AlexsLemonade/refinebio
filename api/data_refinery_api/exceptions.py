@@ -5,11 +5,9 @@ from rest_framework.views import exception_handler
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
-    if response:
-        if isinstance(exc, APIException):
-            response.data["error_code"] = exc.detail.code
-
+    if response is not None:
         if isinstance(exc, InvalidFilters):
+            response.data["error_type"] = exc.default_code
             response.data["invalid_filters"] = exc.invalid_filters
 
     return response
