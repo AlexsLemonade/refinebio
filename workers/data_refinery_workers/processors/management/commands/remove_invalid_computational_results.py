@@ -54,9 +54,10 @@ class Command(BaseCommand):
         if not options["dry_run"]:
             # delete all invalid compendias from S3
             compendias = ComputationalResult.objects.filter(id__in=computational_result_ids)
-            for computational_result in compendias:
-                computational_result.remove_computed_files_from_s3()
-            # delete all compendias
+            # for computational_result in compendias:
+            #     computational_result.remove_computed_files_from_s3()
+
+            # delete all compendias (should cascade to delete computed files with their s3 files)
             compendias.delete()
 
 

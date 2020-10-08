@@ -121,11 +121,11 @@ variable "smasher_instance_type" {
   # Appropriate for most compendia.
   # default = "m5.8xlarge"
   # Required for human and mouse quantpendia.
-  default = "m5.16xlarge"
+  # default = "m5.16xlarge"
 
   # 976GiB Memory, smasher and compendia jobs need 900.
   # Required for human and mouse compendia
-  # default = "x1.16xlarge"
+  default = "x1.16xlarge"
 }
 
 variable "spot_price" {
@@ -157,7 +157,7 @@ variable "foreman_instance_type" {
   default = "m5.2xlarge"
 }
 
-variable "volume_size_in_gb" {
+variable "smasher_volume_size_in_gb" {
   default = "5000"
 }
 

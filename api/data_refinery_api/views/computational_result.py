@@ -7,6 +7,8 @@ from rest_framework import generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_api.views.relation_serializers import (
     ComputationalResultAnnotationRelationSerializer,
     ComputedFileRelationSerializer,
@@ -87,6 +89,14 @@ class ComputationalResultListView(generics.ListAPIView):
             return ComputationalResultWithUrlSerializer
         except (APIToken.DoesNotExist, ValidationError):
             return ComputationalResultSerializer
+
+    def get_queryset(self):
+        invalid_filters = check_filters(self)
+
+        if invalid_filters:
+            raise InvalidFilters(invalid_filters)
+
+        return self.queryset
 
     def filter_queryset(self, queryset):
         filter_dict = self.request.query_params.dict()

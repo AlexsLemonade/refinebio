@@ -53,5 +53,8 @@ chmod +x install_nomad.sh
 echo 'server 169.254.169.123 prefer iburst' | cat - /etc/chrony/chrony.conf > temp && mv temp /etc/chrony/chrony.conf
 /etc/init.d/chrony restart
 
+# We seem to have run into: https://medium.com/spaceapetech/what-the-arp-is-going-on-b4bc0e73e4d4
+echo 'net.ipv4.neigh.default.gc_thresh1 = 0' | tee /etc/sysctl.d/55-arp-gc_thresh1.conf
+
 # Restart to apply the updates
 reboot now
