@@ -43,6 +43,9 @@ until fetch_and_mount_volume "$USER" "$STAGE"; do
     sleep 10
 done
 
+# AWS attaches volumes fast, but not quite instantly.
+sleep 10
+
 # We want to mount the biggest volume that its attached to the instance
 # The size of this volume can be controlled with the varialbe
 # `smasher_volume_size_in_gb` from the file `variables.tf`
