@@ -118,6 +118,8 @@ variable "nomad_server_instance_type" {
 variable "smasher_instance_type" {
   # 128GiB Memory, smasher and compendia jobs need 30.
   # RNA-seq compendia needs 131gb
+  # Enough for one smasher job at a time:
+  default = "m5.2xlarge"
   # Appropriate for most compendia.
   # default = "m5.8xlarge"
   # Required for human and mouse quantpendia.
@@ -125,7 +127,7 @@ variable "smasher_instance_type" {
 
   # 976GiB Memory, smasher and compendia jobs need 900.
   # Required for human and mouse compendia
-  default = "x1.16xlarge"
+  # default = "x1.16xlarge"
 }
 
 variable "spot_price" {
@@ -158,7 +160,7 @@ variable "foreman_instance_type" {
 }
 
 variable "smasher_volume_size_in_gb" {
-  default = "5000"
+  default = "200"
 }
 
 variable "max_downloader_jobs_per_node" {
