@@ -28,6 +28,12 @@ def find_division_by_species(species: str, division_jsons: dict) -> str:
 
 def add_transcriptome_database_names(apps, schema_editor):
     """ Updates `database_name` values for transcriptome indices """
+    OrganismIndex = apps.get_model("data_refinery_common", "OrganismIndex")
+    transcriptome_indices = OrganismIndex.objects.all()
+
+    if not transcriptome_indices.exists():
+        # Nothing to do!
+        return True
 
     # First make requests to the divisions for ensembl so we don't have to multiple times
     # Note: EnsemblBacteria takes a while to load and may give an error
@@ -48,9 +54,6 @@ def add_transcriptome_database_names(apps, schema_editor):
 
     # Make a dict of which species correspond to which division because of double entries
     discovered_species = {}
-
-    OrganismIndex = apps.get_model("data_refinery_common", "OrganismIndex")
-    transcriptome_indices = OrganismIndex.objects.all()
 
     for transcriptome_index in transcriptome_indices:
         organism_name = transcriptome_index.organism.name
