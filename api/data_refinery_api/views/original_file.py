@@ -50,6 +50,8 @@ class OriginalFileListSerializer(serializers.ModelSerializer):
             "id",
             "filename",
             "samples",
+            "processor_jobs",
+            "downloader_jobs",
             "size_in_bytes",
             "sha1",
             "source_url",
