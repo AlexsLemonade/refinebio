@@ -224,10 +224,6 @@ else:
     }
     ELASTICSEARCH_DSL_AUTOSYNC = False
 
-# DRF
-# XXX: Add this in Production!
-# REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = 'rest_framework.renderers.JSONRenderer'
-
 # ToS
 TERMS_AND_CONDITIONS = """Welcome to the Alex’s Lemonade Childhood Cancer Data Lab, which is supported by Alex’s Lemonade Stand Foundation ("we," "our," or "us"). These Terms of Use (these "Terms") are a binding legal agreement between you and us regarding your access to and use of the websites located at https://www.ccdatalab.org, https://cognoma.org, http://www.refine.bio or any subdomains thereof and any embedded or associated software, applications, data or other content, provided or managed by us in connection with such websites (collectively, as may be updated, modified or replaced from time to time, the "CCDL").
 
