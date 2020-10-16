@@ -9,6 +9,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_common.models import ProcessorJob
 from data_refinery_common.utils import get_nomad_jobs
 
@@ -72,6 +74,10 @@ class ProcessorJobListView(generics.ListAPIView):
     ordering = ("-id",)
 
     def get_queryset(self):
+        invalid_filters = check_filters(self, ["sample_accession_code", "nomad"])
+
+        if invalid_filters:
+            raise InvalidFilters(invalid_filters)
         queryset = ProcessorJob.objects.all()
 
         sample_accession_code = self.request.query_params.get("sample_accession_code", None)
