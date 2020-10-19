@@ -160,7 +160,8 @@ variable "foreman_instance_type" {
 }
 
 variable "smasher_volume_size_in_gb" {
-  default = "200"
+  # 500 is the smallest for ST1s.
+  default = "500"
 }
 
 variable "max_downloader_jobs_per_node" {
