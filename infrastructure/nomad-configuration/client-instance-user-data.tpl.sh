@@ -23,59 +23,15 @@ apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop
 
 ulimit -n 65536
 
-# Find, configure and mount a free EBS volume
+# Configure and mount the EBS volume
 mkdir -p /var/ebs/
-
-# Takes USER, STAGE
-# fetch_and_mount_volume () {
-#     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-
-#     # Try to mount volume 0 first, so we have one volume we know is always mounted!
-#     if aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
-#         EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
-#     else
-#         EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=$1" "Name=tag:Stage,Values=$2" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
-#     fi
-
-#     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
-# }
 
 export STAGE="${stage}"
 export USER="${user}"
-
-# until fetch_and_mount_volume "$USER" "$STAGE"; do
-#     sleep 10
-# done
-
-# COUNTER=0
-# while [  $COUNTER -lt 99 ]; do
-#         EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
-#         if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
-#             echo "$EBS_VOLUME_INDEX is an integer!"
-#             break # This is a Volume Index
-#         else
-#             echo "$EBS_VOLUME_INDEX is not an integer"
-#         fi
-#         let COUNTER=COUNTER+1
-# done
-
-# Only a single volume for now
-export EBS_VOLUME_INDEX=0
-
-sleep 25
-# # We want to mount the biggest volume that its attached to the instance
-# # The size of this volume can be controlled with the varialbe
-# # `volume_size_in_gb` from the file `variables.tf`
-# ATTACHED_AS=`lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1`
-
-# # grep -v ext4: make sure the disk is not already formatted.
-# if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
-# 	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
-# fi
-# mount /dev/$ATTACHED_AS /var/ebs/
+EBS_VOLUME_INDEX="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
 
 chown ubuntu:ubuntu /var/ebs/
-echo $EBS_VOLUME_INDEX >  /var/ebs/VOLUME_INDEX
+echo "$EBS_VOLUME_INDEX" > /var/ebs/VOLUME_INDEX
 chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX
 
 # Set up the required database extensions.
@@ -94,7 +50,7 @@ EOF
 
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-python ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
+python3.5 ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
 echo "
 /var/log/nomad_client.log {
     missingok
@@ -111,28 +67,38 @@ echo "
 service docker stop
 nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file --log-opt max-size=100m --log-opt max-file=3 > /var/log/docker_daemon.log &
 
-# Output the files we need to start up Nomad and register jobs:
-# (Note that the lines starting with "$" are where
-#  Terraform will template in the contents of those files.)
-
 # Create the Nomad Client configuration.
 cat <<"EOF" > client.hcl
 ${nomad_client_config}
 EOF
-# Make the client.meta.volume_id is set to waht we just mounted
+# Make sure the client.meta.volume_id is set to what we just mounted
 sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
 
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume
 chmod a+rwx /home/ubuntu/docker_volume
 
-# Start the Nomad agent in client mode via systemd
-cat <<"EOF" > /etc/systemd/system/nomad-client.service
-${nomad_client_service}
-EOF
+# Output the files we need to start up Nomad and register jobs. These are
+# stored gzipped at the end of this script
+sed '1,/^#__EOF__$/d' "$0" | base64 -d | tar xzv
 
+# Start the Nomad agent in client mode via systemd
+sudo mv nomad-client.service /etc/systemd/system/
 systemctl enable nomad-client.service
 systemctl start nomad-client.service
+
+# Sleep for a bit so nomad can start
+sleep 30
+
+# Start the nomad jobs that are templated for this instance
+for nomad_job_spec in nomad-job-specs/*; do
+    sed -i 's/__REPLACE_ME__/'"$EBS_VOLUME_INDEX"'/g' "$nomad_job_spec"
+    nomad run "$nomad_job_spec"
+done
+rm -r nomad-job-specs
+
+# Kick off a script that will clean up all of our nomad jobs when this instance goes down
+setsid sh clean-nomad-jobs.sh
 
 # Set up the Docker hung process killer
 # cat <<EOF >/home/ubuntu/killer.py

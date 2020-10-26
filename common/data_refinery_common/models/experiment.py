@@ -55,6 +55,7 @@ class Experiment(models.Model):
     num_total_samples = models.IntegerField(default=0)
     num_processed_samples = models.IntegerField(default=0)
     num_downloadable_samples = models.IntegerField(default=0)
+    sample_keywords = ArrayField(models.TextField(), default=list)
     sample_metadata_fields = ArrayField(models.TextField(), default=list)
     platform_names = ArrayField(models.TextField(), default=list)
     platform_accession_codes = ArrayField(models.TextField(), default=list)
@@ -126,6 +127,17 @@ class Experiment(models.Model):
 
         return metadata
 
+    def get_sample_keywords(self):
+        """ Get the human-readable name of all of the keywords that are defined
+        on at least one sample
+        """
+        keywords = set()
+
+        for sample in self.samples.all():
+            keywords |= set(sample.keywords.values_list("name__human_readable_name", flat=True))
+
+        return list(keywords)
+
     def get_sample_metadata_fields(self):
         """ Get all metadata fields that are non-empty for at least one sample in the experiment.
         See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
@@ -154,6 +166,9 @@ class Experiment(models.Model):
                     break
 
         return fields
+
+    def update_sample_keywords(self):
+        self.sample_keywords = self.get_sample_keywords()
 
     def update_sample_metadata_fields(self):
         self.sample_metadata_fields = self.get_sample_metadata_fields()

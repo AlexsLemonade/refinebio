@@ -117,8 +117,17 @@ variable "nomad_server_instance_type" {
 
 variable "smasher_instance_type" {
   # 128GiB Memory, smasher and compendia jobs need 30.
-  # RNA-seq compendia needs 64gb
-  default = "m5.8xlarge"
+  # RNA-seq compendia needs 131gb
+  # Enough for one smasher job at a time:
+  default = "m5.2xlarge"
+  # Appropriate for most compendia.
+  # default = "m5.8xlarge"
+  # Required for human and mouse quantpendia.
+  # default = "m5.16xlarge"
+
+  # 976GiB Memory, smasher and compendia jobs need 900.
+  # Required for human and mouse compendia
+  # default = "x1.16xlarge"
 }
 
 variable "spot_price" {
@@ -127,10 +136,6 @@ variable "spot_price" {
 
 variable "spot_fleet_capacity" {
   default = "0"
-}
-
-variable "max_clients" {
-  default = "1"
 }
 
 variable "raven_dsn" {
@@ -154,8 +159,9 @@ variable "foreman_instance_type" {
   default = "m5.2xlarge"
 }
 
-variable "volume_size_in_gb" {
-  default = "2000"
+variable "smasher_volume_size_in_gb" {
+  # 500 is the smallest for ST1s.
+  default = "500"
 }
 
 variable "max_downloader_jobs_per_node" {
@@ -175,6 +181,10 @@ variable "full_stack" {
   default = "False"
 }
 
+variable "processing_compendia" {
+  default = true
+}
+
 # Configuration
 variable "downloader_space_constraint" {
   # 600 GB
@@ -184,7 +194,7 @@ variable "downloader_space_constraint" {
 # Output our production environment variables.
 output "environment_variables" {
   value = [
-    {name = "REGION"
+    {name = "AWS_REGION"
       value = "${var.region}"},
     {name = "USER"
       value = "${var.user}"},
@@ -270,8 +280,6 @@ output "environment_variables" {
       value = "${aws_instance.nomad_server_1.public_ip}"},
     {name = "NOMAD_PORT"
       value = "4646"},
-    {name = "MAX_CLIENTS"
-      value = "${var.max_clients}"},
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
       value = "${var.max_downloader_jobs_per_node}"},
     {name = "ENGAGEMENTBOT_WEBHOOK"

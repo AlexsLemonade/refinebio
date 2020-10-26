@@ -169,9 +169,11 @@ ENABLE_SERVER_SIDE_CURSORS = False
 ##
 
 REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 25,
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "EXCEPTION_HANDLER": "data_refinery_api.exceptions.custom_exception_handler",
 }
 
 SWAGGER_SETTINGS = {
@@ -221,10 +223,6 @@ else:
         "data_refinery_common.models.documents": "experiments",
     }
     ELASTICSEARCH_DSL_AUTOSYNC = False
-
-# DRF
-# XXX: Add this in Production!
-# REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = 'rest_framework.renderers.JSONRenderer'
 
 # ToS
 TERMS_AND_CONDITIONS = """Welcome to the Alex’s Lemonade Childhood Cancer Data Lab, which is supported by Alex’s Lemonade Stand Foundation ("we," "our," or "us"). These Terms of Use (these "Terms") are a binding legal agreement between you and us regarding your access to and use of the websites located at https://www.ccdatalab.org, https://cognoma.org, http://www.refine.bio or any subdomains thereof and any embedded or associated software, applications, data or other content, provided or managed by us in connection with such websites (collectively, as may be updated, modified or replaced from time to time, the "CCDL").
@@ -340,3 +338,6 @@ Last Updated: March 2, 2018
 
 # EngagementBot
 ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
+
+# For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

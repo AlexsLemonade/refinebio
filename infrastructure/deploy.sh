@@ -138,6 +138,34 @@ done
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
+# Check if a new ccdl-ubuntu ami will be needed for this region
+if [[ $(aws ec2 describe-images \
+            --region $TF_VAR_region --owners 589864003899 \
+            --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
+            --query 'length(Images)') \
+            -eq 0 ]]; then
+    echo "No ccdl-ubuntu-18.04 AMI found for this region, creating a new one"
+
+    # Find most recent ccdl-ubuntu ami from us-east-1
+    template_ami_id=$(aws ec2 describe-images \
+                          --region us-east-1 --owners 589864003899 \
+                          --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
+                          --query 'sort_by(Images,&CreationDate)[-1].ImageId' \
+                          --output text)
+
+    # Make a copy into this region
+    new_ami_name="ccdl-ubuntu-18.04-$(date "+%Y-%m-%dT%H.%M.%S")"
+    new_ami_id=$(aws ec2 copy-image \
+                     --source-image-id "$template_ami_id" \
+                     --source-region us-east-1 \
+                     --region "$TF_VAR_region" \
+                     --name "$new_ami_name" \
+                     --output text)
+    echo "Created new AMI for $TF_VAR_region"
+    echo "    name: $new_ami_name"
+    echo "    id:   $new_ami_id"
+fi
+
 # Always init terraform first, especially since we're using a remote backend.
 ./init_terraform.sh
 
@@ -155,7 +183,7 @@ if [[ ! -f terraform.tfstate ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    if [[ -n $CIRCLE_BUILD_NUM ]]; then
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
         # Make sure we can't expose secrets in circleci
         terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
     else
@@ -178,7 +206,7 @@ if [[ -z $ran_init_build ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    if [[ -n $CIRCLE_BUILD_NUM ]]; then
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
         # Make sure we can't expose secrets in circleci
         terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
     else
@@ -323,16 +351,22 @@ mkdir -p nomad-job-specs
 ../scripts/format_nomad_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
 ../scripts/format_nomad_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
 
-
-# Don't leave secrets lying around!
-rm -f prod_env
-
-# Re-register Nomad jobs.
+# Re-register Nomad jobs (skip those that end in .tpl)
 echo "Registering new job specifications.."
-for nomad_job_spec in nomad-job-specs/*; do
+for nomad_job_spec in nomad-job-specs/*.nomad; do
     nomad run "$nomad_job_spec" &
 done
 echo "Job registrations have been fired off."
+
+# Prepare the client instance user data script for the nomad client instances.
+# The `prepare-client-instance-user-data.sh` script modifies
+# `client-instance-user-data.tpl.sh`, so we have to back it up first.
+if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
+    cp nomad-configuration/client-instance-user-data.tpl.sh nomad-configuration/client-instance-user-data.tpl.sh.bak
+fi
+
+./nomad-configuration/prepare-client-instance-user-data.sh
+terraform taint aws_spot_fleet_request.cheap_ram
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1
@@ -342,12 +376,17 @@ terraform taint aws_instance.foreman_server_1
 echo "Removing ingress.."
 rm ci_ingress.tf
 
-if [[ -n $CIRCLE_BUILD_NUM ]]; then
+if [[ -n "$GITHUB_ACTIONS" ]]; then
     # Make sure we can't expose secrets in circleci
     terraform apply -var-file="environments/$env.tfvars" -auto-approve > /dev/null
 else
     terraform apply -var-file="environments/$env.tfvars" -auto-approve
 fi
+
+# Don't leave secrets lying around!
+rm -f prod_env
+# The tarball at the end of client-instance-user-data.tpl.sh has secrets, so restore from backup
+mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API
@@ -407,7 +446,7 @@ if [[ -n $container_running ]]; then
        -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
-       --log-opt awslogs-region=$REGION \
+       --log-opt awslogs-region=$AWS_REGION \
        --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
        --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
        -p 8081:8081 \
@@ -429,7 +468,7 @@ if [[ -n $container_running ]]; then
        -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
-       --log-opt awslogs-region=$REGION \
+       --log-opt awslogs-region=$AWS_REGION \
        --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
        --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
        --name=dr_api_stats_refresh \

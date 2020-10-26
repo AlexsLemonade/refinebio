@@ -9,6 +9,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_common.models import OrganismIndex
 
 
@@ -24,7 +26,8 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
             "id",
             "assembly_name",
             "organism_name",
-            "source_version",
+            "database_name",
+            "release_version",
             "index_type",
             "salmon_version",
             "download_url",
@@ -45,7 +48,7 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
     decorator=swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
-                name="organism_name",
+                name="organism__name",
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 description="Organism name. Eg. `MUS_MUSCULUS`",
@@ -87,9 +90,16 @@ class TranscriptomeIndexListView(generics.ListAPIView):
     ordering = ("-created_at",)
 
     def get_queryset(self):
+        invalid_filters = check_filters(
+            self, special_filters=["organism__name", "result_id", "length"]
+        )
+
+        if invalid_filters:
+            raise InvalidFilters(invalid_filters)
+
         queryset = OrganismIndex.public_objects.all()
 
-        organism_name = self.request.query_params.get("organism_name", None)
+        organism_name = self.request.query_params.get("organism__name", None)
         if organism_name is not None:
             queryset = queryset.filter(organism__name=organism_name.upper())
 

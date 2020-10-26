@@ -4,6 +4,7 @@ foreman/volume
 volume
 test_volume/*
 !test_volume/cassettes
+!test_volume/externally_supplied_metadata
 workers/downloader.nomad
 workers/processor.nomad
 workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz
@@ -36,6 +37,12 @@ workers/test_volume/*
 # However for a couple tests we do store the data in the repo and need to track them.
 !workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.gtf.gz
 !workers/test_volume/raw/TEST/NO_OP/test.txt
+!workers/test_volume/cassettes
+
+# We download the entire SRAmetadb database and MetaSRA json file while
+# processing the metadata from MetaSRA, which are ~24GB we don't need to track
+config/externally_supplied_metadata/metasra/metasra.v*.json
+config/externally_supplied_metadata/metasra/*.sqlite
 
 
 # Byte-compiled / optimized / DLL files

@@ -23,8 +23,14 @@ apt-key add - <<EOF
 ${docker_apt_key}
 EOF
 
+# Adding the PPA for python3.5
+add-apt-repository ppa:deadsnakes/ppa
+
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 apt-get update -y
+
+# This is the latest version of python that the aws logs can use (don't work with 3.7)
+apt-get install --yes python3.5
 
 # Install our dependencies
 apt-get install --yes jq iotop dstat speedometer awscli docker-ce docker-ce-cli containerd.io chrony htop monit
@@ -46,6 +52,9 @@ chmod +x install_nomad.sh
 # via https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-time.html#configure_ntp
 echo 'server 169.254.169.123 prefer iburst' | cat - /etc/chrony/chrony.conf > temp && mv temp /etc/chrony/chrony.conf
 /etc/init.d/chrony restart
+
+# We seem to have run into: https://medium.com/spaceapetech/what-the-arp-is-going-on-b4bc0e73e4d4
+echo 'net.ipv4.neigh.default.gc_thresh1 = 0' | tee /etc/sysctl.d/55-arp-gc_thresh1.conf
 
 # Restart to apply the updates
 reboot now

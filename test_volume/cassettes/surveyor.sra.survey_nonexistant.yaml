@@ -1,0 +1,62 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/data/view/ERP006216&display=xml
+  response:
+    body:
+      string: ''
+    headers:
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 12 Aug 2020 15:12:15 GMT
+      Location:
+      - https://www.ebi.ac.uk/ena/browser/api/xml/ERP006216
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+    status:
+      code: 302
+      message: Found
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/browser/api/xml/ERP006216
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ErrorDetails>\n  <timestamp>1597245135507</timestamp>\n\
+        \  <status>404</status>\n  <error>Not Found</error>\n  <message>ERP006216\
+        \ not found.</message>\n  <path>/ena/browser/api/xml/ERP006216</path>\n</ErrorDetails>\n"
+    headers:
+      Content-Type:
+      - application/xml
+      Date:
+      - Wed, 12 Aug 2020 15:12:15 GMT
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 404
+      message: ''
+version: 1

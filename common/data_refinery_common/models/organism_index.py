@@ -37,11 +37,14 @@ class OrganismIndex(models.Model):
     # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     index_type = models.CharField(max_length=255)
 
+    # The name of the database (for Ensembl, should specify Main, Plants, Bacteria, etc.)
+    database_name = models.CharField(max_length=255)
+
     # This corresponds to Ensembl's release number:
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255, default="93")
+    release_version = models.CharField(max_length=255, default="93")
 
     # The name of the genome assembly used which corresponds to 'GRCh38' in:
     # ftp://ftp.ensembl.org/pub/release-93/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz

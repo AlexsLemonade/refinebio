@@ -165,10 +165,10 @@ resource "aws_instance" "smasher_instance" {
   count = "${var.stage == "prod" || var.full_stack == "True" ? 1 : 0}"
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.smasher_instance_type}"
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
 
   tags = {
     Name = "smasher-instance-${var.user}-${var.stage}"
@@ -191,6 +191,11 @@ resource "aws_instance" "smasher_instance" {
   root_block_device = {
     volume_type = "gp2"
     # 2000 is the largest we can use without reformatting the disk.
+    # Necessary for human/mouse quantpendia.
+    # volume_size = 2000
+    # Necessary for human/mouse compendia.
+    # volume_size = 1000
+    # Appropriate for general processing.
     volume_size = 200
   }
 }
@@ -525,7 +530,7 @@ resource "aws_elasticsearch_domain" "es" {
         "AWS": "*"
       },
       "Action": "es:*",
-      "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
+      "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
     }
   ]
 }

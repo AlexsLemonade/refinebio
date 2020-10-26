@@ -11,6 +11,7 @@ requests>=2.22.0
 retrying
 psutil>=5.6.6
 Jinja2>=2.10.1
+Pillow>=7.1.0
 # Fancyimpute needs this version.
 scikit-learn>=0.21.2
 scipy
@@ -25,3 +26,5 @@ datashader>=0.6.9
 datashape>=0.5.2
 holoviews>=1.11.2
 selenium==3.141.0
+# For mocking out S3 calls for the smasher
+vcrpy

@@ -1,0 +1,1265 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: http://www.ebi.ac.uk/ols/api/terms?id=PATO:0000047
+  response:
+    body:
+      string: ''
+    headers:
+      Connection:
+      - Keep-Alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - text/html
+      Date:
+      - Fri, 07 Aug 2020 20:01:34 GMT
+      Location:
+      - https://www.ebi.ac.uk/ols/api/terms?id=PATO:0000047
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ols/api/terms?id=PATO:0000047
+  response:
+    body:
+      string: "{\n  \"_embedded\" : {\n    \"terms\" : [ {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"imported from\" : [ \"pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"omiabis\"\
+        ,\n      \"ontology_prefix\" : \"OMIABIS\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/omiabis\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : null,\n\
+        \      \"annotation\" : { },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"oba\",\n      \"ontology_prefix\" : \"OBA\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/oba.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : true,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"PATO_0000047\",\n      \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\"\
+        \ : null,\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" :\
+        \ null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ],\n        \"imported from\" :\
+        \ [ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"ontoneo\",\n      \"ontology_prefix\"\
+        \ : \"ONTONEO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/ontoneo/ontoneo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n\
+        \      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n   \
+        \   \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ontoneo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ],\n        \"imported from\" :\
+        \ [ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"bcgo\",\n      \"ontology_prefix\"\
+        \ : \"BCGO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/bcgo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n\
+        \      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n   \
+        \   \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : null,\n\
+        \      \"annotation\" : {\n        \"definition\" : [ \"An organismal quality\
+        \ inhering in a bearer by virtue of the bearer's ability to undergo sexual\
+        \ reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"genepio\"\
+        ,\n      \"ontology_prefix\" : \"GENEPIO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/genepio.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n\
+        \      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n   \
+        \   \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.org/obo/owl/PATO#PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"editor preferred term\" : [ \"biological\
+        \ sex\" ],\n        \"imported from\" : [ \"http://purl.org/obo/owl/PATO\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"flu\"\
+        ,\n      \"ontology_prefix\" : \"FLU\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/flu/dev/flu.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ],\n        \"imported from\" :\
+        \ [ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"micro\",\n      \"ontology_prefix\"\
+        \ : \"MICRO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/MicrO.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n\
+        \      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n   \
+        \   \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : null,\n\
+        \      \"annotation\" : {\n        \"alternative term\" : [ \"biological sex\"\
+        , \"\u751F\u7269\u6027\", \"http://mged.sourceforge.net/ontologies/MGEDOntology.owl#sex\"\
+        \ ],\n        \"comment\" : [ \"The assemblage of physical properties or qualities\
+        \ by which male is distinguished from female; the physical difference between\
+        \ male and female; the distinguishing peculiarity of male or female.\", \"\
+        \u51ED\u501F\u6301\u6709\u8005\u8FDB\u884C\u6709\u6027\u589E\u6B96\u7684\u80FD\
+        \u529B\uFF0C\u6709\u673A\u4F53\u7684\u8D28\u91CF\u6210\u4E3A\u6301\u6709\u8005\
+        \u7684\u56FA\u6709\u90E8\u5206\uFF0C\u7531\u6B64\u533A\u5206\u6240\u6D89\u53CA\
+        \u7684\u4E2A\u4EBA\u6216\u7C7B\u578B\u3002\", \"\u9002\u7528\u4E8E\u4EFB\u4F55\
+        \u80FD\u591F\u8FDB\u884C\u6709\u6027\u7E41\u6B96\u7684\u751F\u7269\uFF0C\u4EE5\
+        \u533A\u5206\u6240\u6D89\u53CA\u7684\u4E2A\u4F53\u6216\u7C7B\u578B\u3002\"\
+        , \"\u7537\u6027\u4E0E\u5973\u6027\u533A\u522B\u7684\u7269\u7406\u5C5E\u6027\
+        \u6216\u7279\u8D28\u7684\u96C6\u5408;\u7537\u5973\u4E4B\u95F4\u7684\u751F\u7406\
+        \u5DEE\u5F02;\u7537\u6027\u6216\u5973\u6027\u7684\u663E\u8457\u7279\u70B9\u3002\
+        \", \"An organismal quality inhering in a bearer by virtue of the bearer's\
+        \ ability to undergo sexual reproduction in order to differentiate the individuals\
+        \ or types involved.\", \"Term applied to any organism able to undergo sexual\
+        \ reproduction in order to differentiate the individuals or types involved.\
+        \ Sexual reproduction is defined as the ability to exchange genetic material\
+        \ with the potential of recombinant progeny.\" ],\n        \"definition source\"\
+        \ : [ \"NCIt:C28421\", \"PATO:0000047\", \"MO_680\" ],\n        \"editor preferred\
+        \ label\" : [ \"biological sex\", \"\u751F\u7269\u6027\" ],\n        \"imported\
+        \ from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\", \"http://purl.obolibrary.org/obo/clo.owl\"\
+        \ ],\n        \"seeAlso\" : [ \"EFO_URI: http://www.ebi.ac.uk/efo/EFO_0000695\"\
+        \ ],\n        \"term editor\" : [ \"James Malone\", \"Tomasz Adamusiak\",\
+        \ \"Jie Zheng\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"clo\",\n      \"ontology_prefix\" : \"CLO\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/clo.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : true,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"PATO_0000047\",\n      \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\"\
+        \ : null,\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" :\
+        \ null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"planp\",\n      \"ontology_prefix\"\
+        \ : \"PLANP\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/planp.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : [{\"definition\":\"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        ,\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\":null,\"\
+        url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n\
+        \      \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"flopo\",\n      \"ontology_prefix\"\
+        \ : \"FLOPO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/flopo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : [{\"definition\":\"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        ,\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\":null,\"\
+        url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n\
+        \      \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"OBI_GSCID_BRC_Field_ID\" : [ \"\
+        CS5\" ],\n        \"editor preferred label\" : [ \"biological sex\" ],\n \
+        \       \"imported from\" : [ \"http://purl.obolibrary.org/obo/obi.owl\",\
+        \ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"eupath\",\n      \"ontology_prefix\"\
+        \ : \"EUPATH\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/eupath.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"Unique Apollo Label\" : [ \"biologicalSex\"\
+        \ ],\n        \"editor preferred label\" : [ \"biological sex\" ],\n     \
+        \   \"imported from\" : [ \"http://purl.obolibrary.org/obo/obi.owl\" ]\n \
+        \     },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"apollo_sv\"\
+        ,\n      \"ontology_prefix\" : \"APOLLO_SV\",\n      \"ontology_iri\" : \"\
+        http://purl.obolibrary.org/obo/apollo_sv.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : true,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"PATO_0000047\",\n      \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\"\
+        \ : null,\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" :\
+        \ null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ],\n        \"imported from\" :\
+        \ [ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"ohmi\",\n      \"ontology_prefix\"\
+        \ : \"OHMI\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/ohmi.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n  \
+        \    \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n\
+        \      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n   \
+        \   \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ohmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ohmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ohmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ohmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/ohmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ohmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ohmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"editor preferred label\" : [ \"\
+        biological sex\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"obib\"\
+        ,\n      \"ontology_prefix\" : \"OBIB\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/obib.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obib/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"hasOBONamespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"zp\",\n      \"ontology_prefix\" :\
+        \ \"ZP\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/zp.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : [{\"definition\":\"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        ,\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\":null,\"\
+        url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n\
+        \      \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/zp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"editor preferred term\" : [ \"biological\
+        \ sex\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"obi\"\
+        ,\n      \"ontology_prefix\" : \"OBI\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/obi.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"editor preferred label\" : [ \"\
+        biological sex\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"labo\"\
+        ,\n      \"ontology_prefix\" : \"LABO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/labo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"editor preferred label\" : [ \"\
+        biological sex\" ],\n        \"has_obo_namespace\" : [ \"quality\" ],\n  \
+        \      \"id\" : [ \"PATO:0000047\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/ontoneo.owl\"\
+        , \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"pdro\",\n      \"ontology_prefix\"\
+        \ : \"PDRO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/pdro.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n\
+        \      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n   \
+        \   \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"ms\",\n      \"ontology_prefix\" :\
+        \ \"MS\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/ms.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : [{\"definition\":\"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        ,\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\":null,\"\
+        url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n\
+        \      \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        ,\n      \"label\" : \"biological sex\",\n      \"description\" : [ \"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        \ ],\n      \"annotation\" : {\n        \"has_obo_namespace\" : [ \"quality\"\
+        \ ],\n        \"id\" : [ \"PATO:0000047\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"hp\",\n      \"ontology_prefix\" :\
+        \ \"HP\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/hp.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000047\",\n   \
+        \   \"obo_id\" : \"PATO:0000047\",\n      \"in_subset\" : [ \"attribute_slim\"\
+        \ ],\n      \"obo_definition_citation\" : [{\"definition\":\"An organismal\
+        \ quality inhering in a bearer by virtue of the bearer's ability to undergo\
+        \ sexual reproduction in order to differentiate the individuals or types involved.\"\
+        ,\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\":null,\"\
+        url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n\
+        \      \"is_preferred_root\" : false,\n      \"_links\" : {\n        \"self\"\
+        \ : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/hp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000047/graph\"\
+        \n        }\n      }\n    } ]\n  },\n  \"_links\" : {\n    \"first\" : {\n\
+        \      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms?page=0&size=20\"\n\
+        \    },\n    \"self\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms\"\
+        \n    },\n    \"next\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms?page=1&size=20\"\
+        \n    },\n    \"last\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms?page=1&size=20\"\
+        \n    }\n  },\n  \"page\" : {\n    \"size\" : 20,\n    \"totalElements\" :\
+        \ 31,\n    \"totalPages\" : 2,\n    \"number\" : 0\n  }\n}"
+    headers:
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Fri, 07 Aug 2020 20:01:34 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Application-Context:
+      - application:8080
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: http://www.ebi.ac.uk/ols/api/terms?id=PATO:0000383
+  response:
+    body:
+      string: ''
+    headers:
+      Connection:
+      - Keep-Alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - text/html
+      Date:
+      - Fri, 07 Aug 2020 20:01:35 GMT
+      Location:
+      - https://www.ebi.ac.uk/ols/api/terms?id=PATO:0000383
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.20.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ols/api/terms?id=PATO:0000383
+  response:
+    body:
+      string: "{\n  \"_embedded\" : {\n    \"terms\" : [ {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"has_obo_namespace\" : [ \"quality\" ],\n        \"id\" :\
+        \ [ \"PATO:0000383\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"bcgo\"\
+        ,\n      \"ontology_prefix\" : \"BCGO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/bcgo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : [ \"value_slim\"\
+        , \"mpath_slim\" ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\"\
+        \ : null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/bcgo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"PATO_0000383\",\n      \"description\" : null,\n  \
+        \    \"annotation\" : { },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"ero\",\n      \"ontology_prefix\" : \"ERO\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/ero\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : false,\n      \"is_root\" : true,\n      \"short_form\"\
+        \ : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\"\
+        \ : null,\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" :\
+        \ null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ero/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ero/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"created_by\" : [ \"Topito\" ],\n        \"creation_date\"\
+        \ : [ \"2013-05-28T14:34:52Z\" ],\n        \"database_cross_reference\" :\
+        \ [ \"PATO:0000383\" ],\n        \"has_obo_namespace\" : [ \"idomal_namespace\"\
+        \ ],\n        \"id\" : [ \"PATO:0000383\" ],\n        \"notation\" : [ \"\
+        PATO:0000383\" ],\n        \"treeView\" : [ \"http://purl.obolibrary.org/obo/PATO_0000047\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"idomal\"\
+        ,\n      \"ontology_prefix\" : \"IDOMAL\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/idomal.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n   \
+        \   \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : [{\"definition\":\"A biological sex quality inhering\
+        \ in an individual or a population that only produces gametes that can be\
+        \ fertilised by male gametes.\",\"oboXrefs\":[{\"database\":\"PATO\",\"id\"\
+        :\"0000383\",\"description\":null,\"url\":null}]}],\n      \"obo_xref\" :\
+        \ [{\"database\":\"PATO\",\"id\":\"0000383\",\"description\":null,\"url\"\
+        :null}],\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/idomal/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"imported from\" : [ \"pato.owl\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"omiabis\",\n      \"ontology_prefix\"\
+        \ : \"OMIABIS\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/omiabis\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/omiabis/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : null,\n      \"\
+        annotation\" : {\n        \"alternative term\" : [ \"http://mged.sourceforge.net/ontologies/MGEDOntology.owl#female\"\
+        \ ],\n        \"comment\" : [ \"\u5728\u4E2A\u4F53\u6216\u79CD\u7FA4\u4E2D\
+        \u56FA\u6709\u7684\u4E00\u79CD\u751F\u7269\u6027\u522B\u7279\u6027\uFF0C\u5B83\
+        \u53EA\u4EA7\u751F\u53EF\u4EE5\u7531\u96C4\u6027\u914D\u5B50\u53D7\u7CBE\u7684\
+        \u914D\u5B50\u3002\", \"A biological sex quality inhering in an individual\
+        \ or a population that only produces gametes that can be fertilised by male\
+        \ gametes.\" ],\n        \"definition source\" : [ \"CARO:0000028\", \"MO_506\"\
+        , \"PATO:0000383\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/clo.owl\"\
+        \ ],\n        \"term editor\" : [ \"James Malone\", \"Tomasz Adamusiak\",\
+        \ \"Jie Zheng\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"clo\",\n      \"ontology_prefix\" : \"CLO\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/clo.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : false,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\"\
+        \ : null,\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" :\
+        \ null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/clo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : null,\n      \"\
+        annotation\" : {\n        \"definition\" : [ \"A biological sex quality inhering\
+        \ in an individual or a population that only produces gametes that can be\
+        \ fertilised by male gametes.\" ],\n        \"hasDbXref\" : [ \"NCBI BioSample:\
+        \ female\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"genepio\"\
+        ,\n      \"ontology_prefix\" : \"GENEPIO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/genepio.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n   \
+        \   \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : [ \"value_slim\"\
+        , \"mpath_slim\" ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\"\
+        \ : [{\"database\":\"NCBI BioSample\",\"id\":\" female\",\"description\":null,\"\
+        url\":null}],\n      \"obo_synonym\" : null,\n      \"is_preferred_root\"\
+        \ : false,\n      \"_links\" : {\n        \"self\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/genepio/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.org/obo/owl/PATO#PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"editor preferred term\" : [ \"female\" ],\n        \"imported\
+        \ from\" : [ \"http://purl.org/obo/owl/PATO\" ]\n      },\n      \"synonyms\"\
+        \ : null,\n      \"ontology_name\" : \"flu\",\n      \"ontology_prefix\" :\
+        \ \"FLU\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/flu/dev/flu.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flu/terms/http%253A%252F%252Fpurl.org%252Fobo%252Fowl%252FPATO%2523PATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"has_obo_namespace\" : [ \"quality\" ],\n        \"id\" :\
+        \ [ \"PATO:0000383\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"micro\"\
+        ,\n      \"ontology_prefix\" : \"MICRO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/MicrO.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : true,\n \
+        \     \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n   \
+        \   \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : [ \"value_slim\"\
+        , \"mpath_slim\" ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\"\
+        \ : null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/micro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : null,\n      \"\
+        annotation\" : { },\n      \"synonyms\" : null,\n      \"ontology_name\" :\
+        \ \"oba\",\n      \"ontology_prefix\" : \"OBA\",\n      \"ontology_iri\" :\
+        \ \"http://purl.obolibrary.org/obo/oba.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : true,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\"\
+        \ : null,\n      \"obo_definition_citation\" : null,\n      \"obo_xref\" :\
+        \ null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/oba/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"has_obo_namespace\" : [ \"quality\" ],\n        \"id\" :\
+        \ [ \"PATO:0000383\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"flopo\",\n      \"ontology_prefix\" : \"FLOPO\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/flopo.owl\",\n      \"is_obsolete\" :\
+        \ false,\n      \"term_replaced_by\" : null,\n      \"is_defining_ontology\"\
+        \ : false,\n      \"has_children\" : true,\n      \"is_root\" : false,\n \
+        \     \"short_form\" : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\"\
+        ,\n      \"in_subset\" : [ \"value_slim\", \"mpath_slim\" ],\n      \"obo_definition_citation\"\
+        \ : [{\"definition\":\"A biological sex quality inhering in an individual\
+        \ or a population that only produces gametes that can be fertilised by male\
+        \ gametes.\",\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\"\
+        :null,\"url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/flopo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : null,\n      \"\
+        annotation\" : { },\n      \"synonyms\" : null,\n      \"ontology_name\" :\
+        \ \"geno\",\n      \"ontology_prefix\" : \"GENO\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/geno.owl\",\n      \"is_obsolete\" :\
+        \ false,\n      \"term_replaced_by\" : null,\n      \"is_defining_ontology\"\
+        \ : false,\n      \"has_children\" : false,\n      \"is_root\" : false,\n\
+        \      \"short_form\" : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\"\
+        ,\n      \"in_subset\" : null,\n      \"obo_definition_citation\" : null,\n\
+        \      \"obo_xref\" : null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\"\
+        \ : false,\n      \"_links\" : {\n        \"self\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/geno/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/geno/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/geno/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/geno/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/geno/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/geno/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/geno/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"has_obo_namespace\" : [ \"quality\" ],\n        \"id\" :\
+        \ [ \"PATO:0000383\" ],\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"opmi\"\
+        ,\n      \"ontology_prefix\" : \"OPMI\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/opmi.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : [ \"value_slim\"\
+        , \"mpath_slim\" ],\n      \"obo_definition_citation\" : null,\n      \"obo_xref\"\
+        \ : null,\n      \"obo_synonym\" : null,\n      \"is_preferred_root\" : false,\n\
+        \      \"_links\" : {\n        \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/opmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/opmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/opmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/opmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/opmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/opmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/opmi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"imported from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\"\
+        \ ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\" : \"eupath\"\
+        ,\n      \"ontology_prefix\" : \"EUPATH\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/eupath.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/eupath/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"editor preferred label\" : [ \"female\" ],\n        \"imported\
+        \ from\" : [ \"http://purl.obolibrary.org/obo/obi.owl\" ]\n      },\n    \
+        \  \"synonyms\" : null,\n      \"ontology_name\" : \"apollo_sv\",\n      \"\
+        ontology_prefix\" : \"APOLLO_SV\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/apollo_sv.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/apollo_sv/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"editor preferred label\" : [ \"female\" ],\n        \"imported\
+        \ from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n   \
+        \   \"synonyms\" : null,\n      \"ontology_name\" : \"labo\",\n      \"ontology_prefix\"\
+        \ : \"LABO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/labo.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/labo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"editor preferred label\" : [ \"female\" ],\n        \"imported\
+        \ from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n   \
+        \   \"synonyms\" : null,\n      \"ontology_name\" : \"pdro\",\n      \"ontology_prefix\"\
+        \ : \"PDRO\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/pdro.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pdro/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"has_obo_namespace\" : [ \"quality\" ],\n        \"id\" :\
+        \ [ \"PATO:0000383\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"ms\",\n      \"ontology_prefix\" : \"MS\",\n      \"ontology_iri\" :\
+        \ \"http://purl.obolibrary.org/obo/ms.owl\",\n      \"is_obsolete\" : false,\n\
+        \      \"term_replaced_by\" : null,\n      \"is_defining_ontology\" : false,\n\
+        \      \"has_children\" : true,\n      \"is_root\" : false,\n      \"short_form\"\
+        \ : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\"\
+        \ : [ \"value_slim\", \"mpath_slim\" ],\n      \"obo_definition_citation\"\
+        \ : [{\"definition\":\"A biological sex quality inhering in an individual\
+        \ or a population that only produces gametes that can be fertilised by male\
+        \ gametes.\",\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\"\
+        :null,\"url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/ms/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"editor preferred term\" : [ \"female\" ],\n        \"imported\
+        \ from\" : [ \"http://purl.obolibrary.org/obo/pato.owl\" ]\n      },\n   \
+        \   \"synonyms\" : null,\n      \"ontology_name\" : \"obi\",\n      \"ontology_prefix\"\
+        \ : \"OBI\",\n      \"ontology_iri\" : \"http://purl.obolibrary.org/obo/obi.owl\"\
+        ,\n      \"is_obsolete\" : false,\n      \"term_replaced_by\" : null,\n  \
+        \    \"is_defining_ontology\" : false,\n      \"has_children\" : false,\n\
+        \      \"is_root\" : false,\n      \"short_form\" : \"PATO_0000383\",\n  \
+        \    \"obo_id\" : \"PATO:0000383\",\n      \"in_subset\" : null,\n      \"\
+        obo_definition_citation\" : null,\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/obi/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"has_obo_namespace\" : [ \"quality\" ],\n        \"id\" :\
+        \ [ \"PATO:0000383\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"planp\",\n      \"ontology_prefix\" : \"PLANP\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/planp.owl\",\n      \"is_obsolete\" :\
+        \ false,\n      \"term_replaced_by\" : null,\n      \"is_defining_ontology\"\
+        \ : false,\n      \"has_children\" : false,\n      \"is_root\" : false,\n\
+        \      \"short_form\" : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\"\
+        ,\n      \"in_subset\" : [ \"value_slim\", \"mpath_slim\" ],\n      \"obo_definition_citation\"\
+        \ : [{\"definition\":\"A biological sex quality inhering in an individual\
+        \ or a population that only produces gametes that can be fertilised by male\
+        \ gametes.\",\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\"\
+        :null,\"url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/planp/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    }, {\n      \"iri\" : \"http://purl.obolibrary.org/obo/PATO_0000383\"\
+        ,\n      \"label\" : \"female\",\n      \"description\" : [ \"A biological\
+        \ sex quality inhering in an individual or a population that only produces\
+        \ gametes that can be fertilised by male gametes.\" ],\n      \"annotation\"\
+        \ : {\n        \"has_obo_namespace\" : [ \"quality\" ],\n        \"id\" :\
+        \ [ \"PATO:0000383\" ]\n      },\n      \"synonyms\" : null,\n      \"ontology_name\"\
+        \ : \"pato\",\n      \"ontology_prefix\" : \"PATO\",\n      \"ontology_iri\"\
+        \ : \"http://purl.obolibrary.org/obo/pato.owl\",\n      \"is_obsolete\" :\
+        \ false,\n      \"term_replaced_by\" : null,\n      \"is_defining_ontology\"\
+        \ : true,\n      \"has_children\" : true,\n      \"is_root\" : false,\n  \
+        \    \"short_form\" : \"PATO_0000383\",\n      \"obo_id\" : \"PATO:0000383\"\
+        ,\n      \"in_subset\" : [ \"value_slim\", \"mpath_slim\" ],\n      \"obo_definition_citation\"\
+        \ : [{\"definition\":\"A biological sex quality inhering in an individual\
+        \ or a population that only produces gametes that can be fertilised by male\
+        \ gametes.\",\"oboXrefs\":[{\"database\":\"MGED\",\"id\":\"MGED\",\"description\"\
+        :null,\"url\":null}]}],\n      \"obo_xref\" : null,\n      \"obo_synonym\"\
+        \ : null,\n      \"is_preferred_root\" : false,\n      \"_links\" : {\n  \
+        \      \"self\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383\"\
+        \n        },\n        \"parents\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/parents\"\
+        \n        },\n        \"ancestors\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/ancestors\"\
+        \n        },\n        \"hierarchicalParents\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalParents\"\
+        \n        },\n        \"hierarchicalAncestors\" : {\n          \"href\" :\
+        \ \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalAncestors\"\
+        \n        },\n        \"jstree\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/jstree\"\
+        \n        },\n        \"children\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/children\"\
+        \n        },\n        \"descendants\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/descendants\"\
+        \n        },\n        \"hierarchicalChildren\" : {\n          \"href\" : \"\
+        https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalChildren\"\
+        \n        },\n        \"hierarchicalDescendants\" : {\n          \"href\"\
+        \ : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/hierarchicalDescendants\"\
+        \n        },\n        \"graph\" : {\n          \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/pato/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPATO_0000383/graph\"\
+        \n        }\n      }\n    } ]\n  },\n  \"_links\" : {\n    \"first\" : {\n\
+        \      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms?page=0&size=20\"\n\
+        \    },\n    \"self\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms\"\
+        \n    },\n    \"next\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms?page=1&size=20\"\
+        \n    },\n    \"last\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms?page=1&size=20\"\
+        \n    }\n  },\n  \"page\" : {\n    \"size\" : 20,\n    \"totalElements\" :\
+        \ 25,\n    \"totalPages\" : 2,\n    \"number\" : 0\n  }\n}"
+    headers:
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Fri, 07 Aug 2020 20:01:36 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Application-Context:
+      - application:8080
+    status:
+      code: 200
+      message: OK
+version: 1

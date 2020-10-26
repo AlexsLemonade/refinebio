@@ -89,10 +89,14 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         "Queuing %s nomad job to run job %s with id %d.", nomad_job, job_type.value, job.id
     )
 
-    # We only want to dispatch processor jobs directly.
-    # Everything else will be handled by the Foreman, which will increment the retry counter.
-    if is_processor or is_dispatch or (not settings.RUNNING_IN_CLOUD):
+    if settings.AUTO_DISPATCH_NOMAD_JOBS:
+        # We only want to dispatch processor jobs directly.
+        # Everything else will be handled by the Foreman, which will increment the retry counter.
+        should_dispatch = is_processor or is_dispatch or (not settings.RUNNING_IN_CLOUD)
+    else:
+        should_dispatch = is_dispatch  # only dispatch when specifically requested to
 
+    if should_dispatch:
         # Smasher doesn't need to be on a specific instance since it will
         # download all the data to its instance anyway.
         if isinstance(job, ProcessorJob) and job_type not in SMASHER_JOB_TYPES:

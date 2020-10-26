@@ -6,6 +6,8 @@ from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_api.views.relation_serializers import (
     DetailedExperimentSampleSerializer,
     DownloaderJobRelationSerializer,
@@ -48,11 +50,10 @@ class OriginalFileListSerializer(serializers.ModelSerializer):
             "id",
             "filename",
             "samples",
-            "size_in_bytes",
-            "sha1",
-            "samples",
             "processor_jobs",
             "downloader_jobs",
+            "size_in_bytes",
+            "sha1",
             "source_url",
             "is_archive",
             "source_filename",
@@ -83,6 +84,14 @@ class OriginalFileListView(generics.ListAPIView):
         "last_modified",
     )
     ordering = ("-id",)
+
+    def get_queryset(self):
+        invalid_filters = check_filters(self)
+
+        if invalid_filters:
+            raise InvalidFilters(invalid_filters)
+
+        return self.queryset
 
 
 class OriginalFileDetailView(generics.RetrieveAPIView):

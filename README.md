@@ -40,6 +40,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Gotchas](#gotchas)
     - [R](#r)
 - [Running Locally](#running-locally)
+  - [API](#api-1)
   - [Surveyor Jobs](#surveyor-jobs)
     - [Sequence Read Archive](#sequence-read-archive)
     - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
@@ -386,8 +387,18 @@ For a while we were using r-base, but we switched to r-base-core when we pinned 
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
-the Nomad and Postgres services running, you're ready to run
-jobs. There are three kinds of jobs within Refine.bio.
+the Nomad and Postgres services running, you're ready to run jobs.
+To run the API you also need the elasticsearch service running.
+
+There are three kinds of jobs within Refine.bio.
+
+### API
+
+The API can be run with:
+
+```bash
+./api/serve.sh
+```
 
 ### Surveyor Jobs
 
@@ -883,7 +894,7 @@ This can take a long time (>30 minutes)!
 
 ### Tearing Down
 
-A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev`.
+A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev -r us-east-1`.
 The same username and environment must be passed into `destroy_terraform.sh` as were used to run `deploy.sh` either via the -e and -u options or by specifying `TF_VAR_stage` or `TF_VAR_user` so that the script knows which to take down.
 Note that this will prompt you for confirmation before actually destroying all of your cloud resources.
 

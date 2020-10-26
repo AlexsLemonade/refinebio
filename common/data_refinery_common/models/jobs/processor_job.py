@@ -52,7 +52,11 @@ class ProcessorJob(models.Model):
 
     # Resources
     ram_amount = models.IntegerField(default=2048)
-    volume_index = models.CharField(max_length=3, null=True)
+
+    # The volume index is the instance id of an AWS EC2 machine. It looks like
+    # these are 19 characters, but just to be safe we'll make the max length a
+    # bit higher
+    volume_index = models.CharField(max_length=25, null=True)
 
     # Tracking
     start_time = models.DateTimeField(null=True)

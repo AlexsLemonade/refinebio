@@ -57,6 +57,7 @@ apt-get update -qq
 apt-get install -y \
         make \
         g++ \
+        awscli \
         libssl-dev \
         python3 \
         python3-pip \
