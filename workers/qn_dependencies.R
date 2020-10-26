@@ -1,5 +1,5 @@
 options(warn=2)
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 options(Ncpus=parallel::detectCores())
 
 # Helper function that installs a list of packages based on input URL

@@ -1,7 +1,7 @@
 # Generated from cranlock
 options(warn=2)
 options(Ncpus=parallel::detectCores())
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 devtools::install_version('bit', version='1.1-14')
 devtools::install_version('ff', version='2.2-13')
 devtools::install_version('XML', version='3.98-1.10')

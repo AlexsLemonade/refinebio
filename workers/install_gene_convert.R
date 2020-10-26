@@ -2,7 +2,7 @@
 # of error if it fails to install something.
 options(warn=2)
 options(Ncpus=parallel::detectCores())
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
