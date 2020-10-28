@@ -141,7 +141,7 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertEqual(os.path.getsize(final_context["output_file_path"]), 920374)
+        self.assertEqual(os.path.getsize(final_context["output_file_path"]), 924426)
         self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
 
     @tag("no_op")
@@ -191,7 +191,7 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertEqual(os.path.getsize(final_context["output_file_path"]), 786207)
+        self.assertEqual(os.path.getsize(final_context["output_file_path"]), 789756)
 
     @tag("no_op")
     def test_convert_illumina_bad_cols(self):
