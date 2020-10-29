@@ -1,5 +1,5 @@
 provider "aws" {
-  version = "1.37.0"
+  version = "2.70.0"
   region = "us-east-1"
 }
 
@@ -25,12 +25,12 @@ resource "aws_instance" "ami-template-instance" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = "${data.template_file.instance_user_data.rendered}"
+  user_data = data.template_file.instance_user_data.rendered
 
-  subnet_id = "${data.aws_subnet.ccdl_dev_subnet.id}"
+  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   associate_public_ip_address = true
   key_name = "data-refinery-key-circleci-prod"
-  vpc_security_group_ids = ["${aws_security_group.ami_template_instance.id}"]
+  vpc_security_group_ids = [aws_security_group.ami_template_instance.id]
 
   tags = {
     Name = "AMI Template Instance"
