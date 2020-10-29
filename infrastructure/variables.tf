@@ -82,30 +82,39 @@ variable "dockerhub_repo" {
 variable "downloaders_docker_image" {
   default = "dr_downloaders:latest"
 }
+
 variable "transcriptome_docker_image" {
   default = "dr_transcriptome:latest"
 }
+
 variable "salmon_docker_image" {
   default = "dr_salmon:latest"
 }
+
 variable "smasher_docker_image" {
   default = "dr_smasher:latest"
 }
+
 variable "affymetrix_docker_image" {
   default = "dr_affymetrix:latest"
 }
+
 variable "illumina_docker_image" {
   default = "dr_illumina:latest"
 }
+
 variable "no_op_docker_image" {
   default = "dr_no_op:latest"
 }
+
 variable "foreman_docker_image" {
   default = "dr_foreman:latest"
 }
+
 variable "use_s3" {
   default = "True"
 }
+
 variable "local_root_dir" {
   default = "/home/user/data_store"
 }
@@ -194,97 +203,188 @@ variable "downloader_space_constraint" {
 # Output our production environment variables.
 output "environment_variables" {
   value = [
-    {name = "AWS_REGION"
-      value = "${var.region}"},
-    {name = "USER"
-      value = "${var.user}"},
-    {name = "STAGE"
-      value = "${var.stage}"},
-    {name = "AWS_ACCESS_KEY_ID_CLIENT"
-      value = "${aws_iam_access_key.data_refinery_user_client_key.id}"},
-    {name = "AWS_SECRET_ACCESS_KEY_CLIENT"
-      value = "${aws_iam_access_key.data_refinery_user_client_key.secret}"},
-    {name = "DJANGO_DEBUG"
-      value = "${var.django_debug}"},
-    {name = "DJANGO_SECRET_KEY"
-      value = "${var.django_secret_key}"},
-    {name = "DATABASE_NAME"
-      value = "${aws_db_instance.postgres_db.name}"},
-    {name = "DATABASE_HOST"
-      value = "${aws_instance.pg_bouncer.private_ip}"},
-    # We want to use the private IP from everywhere except wherever
-    # deployment is happening, so we also need to expose this IP.
-    {name = "DATABASE_PUBLIC_HOST"
-      value = "${aws_instance.pg_bouncer.public_ip}"},
-    {name = "RDS_HOST"
-      value = "${aws_db_instance.postgres_db.address}"},
-    {name = "DATABASE_USER"
-      value = "${var.database_user}"},
-    {name = "DATABASE_PASSWORD"
-      value = "${var.database_password}"},
-    {name = "DATABASE_PORT"
-      value = "${var.database_port}"},
-    {name = "DATABASE_HIDDEN_PORT"
-      value = "${var.database_hidden_port}"},
-    {name = "DATABASE_TIMEOUT"
-      value = "${var.database_timeout}"},
-    {name = "ELASTICSEARCH_HOST"
-      value = "${aws_elasticsearch_domain.es.endpoint}"},
-    {name = "ELASTICSEARCH_PORT"
-      value = "${var.elasticsearch_port}"},
-    {name = "RUNNING_IN_CLOUD"
-      value = "${var.running_in_cloud}"},
-    {name = "LOG_LEVEL"
-      value = "${var.log_level}"},
-    {name = "USE_S3"
-      value = "${var.use_s3}"},
-    {name = "RAVEN_DSN"
-      value = "${var.raven_dsn}"},
-    {name = "RAVEN_DSN_API"
-      value = "${var.raven_dsn_api}"},
-    {name = "S3_BUCKET_NAME"
-      value = "${aws_s3_bucket.data_refinery_bucket.id}"},
-    {name = "S3_COMPENDIA_BUCKET_NAME"
-      value = "${aws_s3_bucket.data_refinery_compendia_bucket.id}"},
-    {name = "S3_RESULTS_BUCKET_NAME"
-      value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
-    {name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
-      value = "${aws_s3_bucket.data_refinery_transcriptome_index_bucket.id}"},
-    {name = "S3_QN_TARGET_BUCKET_NAME"
-      value = "${aws_s3_bucket.data_refinery_qn_target_bucket.id}"},
-    {name = "LOCAL_ROOT_DIR"
-      value = "${var.local_root_dir}"},
-    {name = "DOCKERHUB_REPO"
-      value = "${var.dockerhub_repo}"},
-    {name = "DOWNLOADERS_DOCKER_IMAGE"
-      value = "${var.downloaders_docker_image}"},
-    {name = "TRANSCRIPTOME_DOCKER_IMAGE"
-      value = "${var.transcriptome_docker_image}"},
-    {name = "SALMON_DOCKER_IMAGE"
-      value = "${var.salmon_docker_image}"},
-    {name = "AFFYMETRIX_DOCKER_IMAGE"
-      value = "${var.affymetrix_docker_image}"},
-    {name = "ILLUMINA_DOCKER_IMAGE"
-      value = "${var.illumina_docker_image}"},
-    {name = "NO_OP_DOCKER_IMAGE"
-      value = "${var.no_op_docker_image}"},
-    {name = "FOREMAN_DOCKER_IMAGE"
-      value = "${var.foreman_docker_image}"},
-    {name = "SMASHER_DOCKER_IMAGE"
-      value = "${var.smasher_docker_image}"},
-    {name = "API_DOCKER_IMAGE"
-      value = "${var.api_docker_image}"},
-    {name = "NOMAD_HOST"
-      value = "${aws_instance.nomad_server_1.private_ip}"},
-    {name = "NOMAD_PUBLIC_HOST"
-      value = "${aws_instance.nomad_server_1.public_ip}"},
-    {name = "NOMAD_PORT"
-      value = "4646"},
-    {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
-      value = "${var.max_downloader_jobs_per_node}"},
-    {name = "ENGAGEMENTBOT_WEBHOOK"
-      value = "${var.engagementbot_webhook}"},
-    {name = "DOWNLOADER_SPACE_CONSTRAINT"
-      value = "${var.downloader_space_constraint}"}
+    {
+      name = "AWS_REGION"
+      value = var.region
+    },
+    {
+      name = "USER"
+      value = var.user
+    },
+    {
+      name = "STAGE"
+      value = var.stage
+    },
+    {
+      name = "AWS_ACCESS_KEY_ID_CLIENT"
+      value = aws_iam_access_key.data_refinery_user_client_key.id
+    },
+    {
+      name = "AWS_SECRET_ACCESS_KEY_CLIENT"
+      value = aws_iam_access_key.data_refinery_user_client_key.secret
+    },
+    {
+      name = "DJANGO_DEBUG"
+      value = var.django_debug
+    },
+    {
+      name = "DJANGO_SECRET_KEY"
+      value = var.django_secret_key
+    },
+    {
+      name = "DATABASE_NAME"
+      value = aws_db_instance.postgres_db.name
+    },
+    {
+      name = "DATABASE_HOST"
+      value = aws_instance.pg_bouncer.private_ip
+    },
+    {
+      # We want to use the private IP from everywhere except wherever
+      # deployment is happening, so we also need to expose this IP.
+      name = "DATABASE_PUBLIC_HOST"
+      value = aws_instance.pg_bouncer.public_ip
+    },
+    {
+      name = "RDS_HOST"
+      value = aws_db_instance.postgres_db.address
+    },
+    {
+      name = "DATABASE_USER"
+      value = var.database_user
+    },
+    {
+      name = "DATABASE_PASSWORD"
+      value = var.database_password
+    },
+    {
+      name = "DATABASE_PORT"
+      value = var.database_port
+    },
+    {
+      name = "DATABASE_HIDDEN_PORT"
+      value = var.database_hidden_port
+    },
+    {
+      name = "DATABASE_TIMEOUT"
+      value = var.database_timeout
+    },
+    {
+      name = "ELASTICSEARCH_HOST"
+      value = aws_elasticsearch_domain.es.endpoint
+    },
+    {
+      name = "ELASTICSEARCH_PORT"
+      value = var.elasticsearch_port
+    },
+    {
+      name = "RUNNING_IN_CLOUD"
+      value = var.running_in_cloud
+    },
+    {
+      name = "LOG_LEVEL"
+      value = var.log_level
+    },
+    {
+      name = "USE_S3"
+      value = var.use_s3
+    },
+    {
+      name = "RAVEN_DSN"
+      value = var.raven_dsn
+    },
+    {
+      name = "RAVEN_DSN_API"
+      value = var.raven_dsn_api
+    },
+    {
+      name = "S3_BUCKET_NAME"
+      value = aws_s3_bucket.data_refinery_bucket.id
+    },
+    {
+      name = "S3_COMPENDIA_BUCKET_NAME"
+      value = aws_s3_bucket.data_refinery_compendia_bucket.id
+    },
+    {
+      name = "S3_RESULTS_BUCKET_NAME"
+      value = aws_s3_bucket.data_refinery_results_bucket.id
+    },
+    {
+      name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
+      value = aws_s3_bucket.data_refinery_transcriptome_index_bucket.id
+    },
+    {
+      name = "S3_QN_TARGET_BUCKET_NAME"
+      value = aws_s3_bucket.data_refinery_qn_target_bucket.id
+    },
+    {
+      name = "LOCAL_ROOT_DIR"
+      value = var.local_root_dir
+    },
+    {
+      name = "DOCKERHUB_REPO"
+      value = var.dockerhub_repo
+    },
+    {
+      name = "DOWNLOADERS_DOCKER_IMAGE"
+      value = var.downloaders_docker_image
+    },
+    {
+      name = "TRANSCRIPTOME_DOCKER_IMAGE"
+      value = var.transcriptome_docker_image
+    },
+    {
+      name = "SALMON_DOCKER_IMAGE"
+      value = var.salmon_docker_image
+    },
+    {
+      name = "AFFYMETRIX_DOCKER_IMAGE"
+      value = var.affymetrix_docker_image
+    },
+    {
+      name = "ILLUMINA_DOCKER_IMAGE"
+      value = var.illumina_docker_image
+    },
+    {
+      name = "NO_OP_DOCKER_IMAGE"
+      value = var.no_op_docker_image
+    },
+    {
+      name = "FOREMAN_DOCKER_IMAGE"
+      value = var.foreman_docker_image
+    },
+    {
+      name = "SMASHER_DOCKER_IMAGE"
+      value = var.smasher_docker_image
+    },
+    {
+      name = "API_DOCKER_IMAGE"
+      value = var.api_docker_image
+    },
+    {
+      name = "NOMAD_HOST"
+      value = aws_instance.nomad_server_1.private_ip
+    },
+    {
+      name = "NOMAD_PUBLIC_HOST"
+      value = aws_instance.nomad_server_1.public_ip
+    },
+    {
+      name = "NOMAD_PORT"
+      value = "4646"
+    },
+    {
+      name = "MAX_DOWNLOADER_JOBS_PER_NODE"
+      value = var.max_downloader_jobs_per_node
+    },
+    {
+      name = "ENGAGEMENTBOT_WEBHOOK"
+      value = var.engagementbot_webhook
+    },
+    {
+      name = "DOWNLOADER_SPACE_CONSTRAINT"
+      value = var.downloader_space_constraint
+    },
   ]
 }
+
