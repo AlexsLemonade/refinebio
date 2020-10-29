@@ -87,4 +87,3 @@ resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_error" {
 resource "aws_cloudwatch_log_group" "compendia_object_metrics_log_group" {
   name = "/aws/events/data-refinery-compendia-log-group-${var.user}-${var.stage}"
 }
-

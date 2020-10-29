@@ -187,7 +187,7 @@ variable "engagementbot_webhook" {
 }
 
 variable "full_stack" {
-  default = "False"
+  default = false
 }
 
 variable "processing_compendia" {
@@ -387,4 +387,3 @@ output "environment_variables" {
     },
   ]
 }
-

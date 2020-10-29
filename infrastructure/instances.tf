@@ -161,7 +161,7 @@ data "template_file" "nomad_client_script_smasher_smusher" {
 
 resource "aws_instance" "smasher_instance" {
   # This is an expense we don't need in the staging stack.
-  count = var.stage == "prod" || var.full_stack == "True" ? 1 : 0
+  count = var.stage == "prod" || var.full_stack ? 1 : 0
   ami = data.aws_ami.ubuntu.id
   instance_type = var.smasher_instance_type
   availability_zone = "${var.region}a"
@@ -485,7 +485,7 @@ resource "aws_elasticsearch_domain" "es" {
   elasticsearch_version = "6.3"
 
   advanced_options = {
-    indices.query.bool.max_clause_count = 16384
+    "indices.query.bool.max_clause_count" = 16384
   }
 
   # TODO: Figure out the power/cost balance of this type.
