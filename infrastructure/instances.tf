@@ -161,7 +161,7 @@ data "template_file" "nomad_client_script_smasher_smusher" {
 
 resource "aws_instance" "smasher_instance" {
   # This is an expense we don't need in the staging stack.
-  count = var.stage = = "prod" || var.full_stack = = "True" ? 1 : 0
+  count = var.stage == "prod" || var.full_stack == "True" ? 1 : 0
   ami = data.aws_ami.ubuntu.id
   instance_type = var.smasher_instance_type
   availability_zone = "${var.region}a"
@@ -210,7 +210,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
   valid_until = "2021-11-04T20:44:20Z"
   fleet_type = "maintain"
 
-  # We're using RAM_IN_GB/100 here, so 100 capacity = = 10000GB = = 10TB
+  # We're using RAM_IN_GB/100 here, so 100 capacity == 10000GB == 10TB
   # (Letting capacity go up to 1000 is apparently too much for AWS.)
   target_capacity = var.spot_fleet_capacity
 
@@ -407,14 +407,14 @@ resource "aws_db_instance" "postgres_db" {
   # TF is broken, but we do want this protection in prod.
   # Related: https://github.com/hashicorp/terraform/issues/5417
   # Only the prod's bucket prefix is empty.
-  skip_final_snapshot = var.stage = = "prod" ? false : true
-  final_snapshot_identifier = var.stage = = "prod" ? "data-refinery-prod-snapshot" : "none"
+  skip_final_snapshot = var.stage == "prod" ? false : true
+  final_snapshot_identifier = var.stage == "prod" ? "data-refinery-prod-snapshot" : "none"
 
   vpc_security_group_ids = [aws_security_group.data_refinery_db.id]
   multi_az = true
   publicly_accessible = true
 
-  backup_retention_period = var.stage = = "prod" ? "7" : "0"
+  backup_retention_period = var.stage == "prod" ? "7" : "0"
 }
 
 resource "aws_instance" "pg_bouncer" {

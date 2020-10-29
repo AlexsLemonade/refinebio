@@ -176,9 +176,9 @@ resource "aws_acm_certificate" "ssl-cert" {
   # We don't need this resource for dev stacks.
   # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
   # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
-  count = var.stage = = "dev" ? 0 : 1
+  count = var.stage == "dev" ? 0 : 1
 
-  domain_name = "${var.stage = = "prod" ? "www." : local.stage_with_dot}refine.bio"
+  domain_name = "${var.stage == "prod" ? "www." : local.stage_with_dot}refine.bio"
   validation_method = "DNS"
 
   tags = {
@@ -190,7 +190,7 @@ resource "aws_acm_certificate_validation" "ssl-cert" {
   # We don't need this resource for dev stacks.
   # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
   # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
-  count = var.stage = = "dev" ? 0 : 1
+  count = var.stage == "dev" ? 0 : 1
 
   certificate_arn = aws_acm_certificate.ssl-cert[0].arn
 }
@@ -199,7 +199,7 @@ resource "aws_cloudfront_distribution" "static-distribution" {
   # We don't need this resource for dev stacks.
   # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
   # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
-  count = var.stage = = "dev" ? 0 : 1
+  count = var.stage == "dev" ? 0 : 1
 
   aliases = [aws_acm_certificate.ssl-cert[0].domain_name]
 
