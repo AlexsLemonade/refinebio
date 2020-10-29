@@ -6,7 +6,7 @@ curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
 # Install terraform and nomad
 cd
-TERRAFORM_VERSION=0.11.8
+TERRAFORM_VERSION=0.11.14
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig

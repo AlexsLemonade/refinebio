@@ -4,6 +4,8 @@
 data "aws_ami" "ubuntu" {
   most_recent = true
 
+  owners = ["589864003899"]
+
   filter {
     name   = "name"
     values = ["ccdl-ubuntu-18.04-*"]
