@@ -287,4 +287,3 @@ resource "aws_cloudfront_distribution" "static-distribution" {
     ssl_support_method = "sni-only"
   }
 }
-

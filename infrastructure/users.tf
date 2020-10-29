@@ -278,4 +278,3 @@ resource "aws_iam_user_policy" "data-refinery-deployer" {
   user = aws_iam_user.data-refinery-deployer.name
   policy = data.aws_iam_policy_document.data-refinery-deployment.json
 }
-
