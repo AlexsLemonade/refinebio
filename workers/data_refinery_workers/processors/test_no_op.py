@@ -1,3 +1,4 @@
+import math
 import os
 import shutil
 from pathlib import Path
@@ -11,7 +12,6 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
-    SurveyJob,
 )
 from data_refinery_workers.processors import no_op
 
@@ -93,7 +93,10 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertEqual(os.path.getsize(final_context["output_file_path"]), 346535)
+        # Check that filesizes are with 5% of what we'd expect as they vary slightly each run.
+        self.assertTrue(
+            math.isclose(os.path.getsize(final_context["output_file_path"]), 346535, rel_tol=0.05)
+        )
 
     @tag("no_op")
     def test_convert_processed_illumina(self):
@@ -141,7 +144,9 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertEqual(os.path.getsize(final_context["output_file_path"]), 924426)
+        self.assertEqual(
+            math.isclose(os.path.getsize(final_context["output_file_path"]), 924426, rel_tol=0.05)
+        )
         self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
 
     @tag("no_op")
@@ -191,7 +196,9 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertEqual(os.path.getsize(final_context["output_file_path"]), 789756)
+        self.assertEqual(
+            math.isclose(os.path.getsize(final_context["output_file_path"]), 789756, rel_tol=0.05)
+        )
 
     @tag("no_op")
     def test_convert_illumina_bad_cols(self):
