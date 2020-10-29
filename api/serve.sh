@@ -26,4 +26,4 @@ docker run \
        --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file api/environments/local \
        -p 8000:8000 \
-       -it ccdlstaging/dr_api_local python3.6 manage.py runserver 0.0.0.0:8000 "$@"
+       -it ccdlstaging/dr_api_local python3 manage.py runserver 0.0.0.0:8000 "$@"

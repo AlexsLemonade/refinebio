@@ -50,7 +50,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
     geneset = set(geneset_target_frame.index.values)
 
     # Sequentially build the target
-    sum_frame_input = {"index": geneset, "sum": [0 for value in geneset]}
+    sum_frame_input = {"index": list(geneset), "sum": [0 for value in geneset]}
     sum_frame = pd.DataFrame(data=sum_frame_input)
     sum_frame = sum_frame.set_index("index")
 
