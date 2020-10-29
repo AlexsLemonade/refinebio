@@ -1,4 +1,8 @@
-FROM python:3.6.1
+FROM python:3.8.5-buster
+
+# Install libpq-dev and gcc for psycopg2
+RUN apt-get update -qq
+RUN apt-get install -y libpq-dev gcc
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user

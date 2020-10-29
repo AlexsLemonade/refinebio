@@ -19,7 +19,7 @@ def compendium_version_number_fix(apps, schema_editor):
 
     for compendium_result in compendium_results:
         # assign the correct version if greater than 1
-        if compendium_result.version_number is not 1:
+        if compendium_result.version_number != 1:
             compendium_result.compendium_version = compendium_result.version_number
             compendium_result.save()
 
