@@ -144,7 +144,7 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertEqual(
+        self.assertTrue(
             math.isclose(os.path.getsize(final_context["output_file_path"]), 924426, rel_tol=0.05)
         )
         self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
@@ -196,7 +196,7 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertEqual(
+        self.assertTrue(
             math.isclose(os.path.getsize(final_context["output_file_path"]), 789756, rel_tol=0.05)
         )
 
