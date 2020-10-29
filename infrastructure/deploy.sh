@@ -112,7 +112,7 @@ check_nomad_status () {
 # variable, which we then read in as json using the command line tool
 # `jq`, so that we can use them via bash.
 format_environment_variables () {
-  json_env_vars=$(terraform output -json environment_variables | jq -c '.value[]')
+  json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
   for row in $json_env_vars; do
       env_var_assignment=$(echo "$row" | jq -r ".name")=$(echo "$row" | jq -r ".value")
       export "${env_var_assignment?}"
@@ -392,7 +392,7 @@ mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/
 # 5 times a week. Therefore we pull the newest image and restart the API
 # this way rather than by tainting the server like we do for foreman.
 chmod 600 data-refinery-key.pem
-API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
+API_IP_ADDRESS=$(terraform output -json api_server_1_ip | tr -d '"')
 
 # To check to see if the docker container needs to be stopped before
 # it can be started, grep for the name of the container. However if
