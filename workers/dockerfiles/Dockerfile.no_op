@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:20.04
 
 RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
@@ -15,7 +15,7 @@ RUN \
   apt-fast update -qq && \
   apt-get install -y apt-transport-https && \
   apt-fast install -y lsb-release && \
-  echo "deb https://cran.revolutionanalytics.com/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -29,8 +29,8 @@ RUN \
   python3.6 \
   python3.6-dev \
   python3-pip \
-  r-base-core=3.4.2-1xenial1 \
-  r-base-dev=3.4.2-1xenial1 \
+  r-base-core=4.0.2-1.2004.0 \
+  r-base-dev=4.0.0-1.2004.0 \
   libpq-dev \
   libxml2-dev \
   libssl-dev \

@@ -1,7 +1,7 @@
 # Generated from cranlock
 options(warn=2)
 options(Ncpus=parallel::detectCores())
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 devtools::install_version('getopt', version='1.20.3')
 devtools::install_version('optparse', version='1.4.4')
 devtools::install_version('rjson', version='0.2.19')
