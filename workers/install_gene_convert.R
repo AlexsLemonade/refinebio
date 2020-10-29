@@ -12,7 +12,7 @@ install_with_url <- function(main_url, packages) {
 
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
-  'AnnotationDbi_1.50.3.tar.gz'
+  'AnnotationDbi_1.52.0.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
 

@@ -18,7 +18,7 @@ bioc_pkgs <- c(
   'SCAN.UPC_2.30.0.tar.gz',
   'affy_1.66.0.tar.gz',
   'affyio_1.58.0.tar.gz',
-  'AnnotationDbi_1.50.3.tar.gz',
+  'AnnotationDbi_1.52.0.tar.gz',
   'zlibbioc_1.34.0.tar.gz',
   'preprocessCore_1.50.0.tar.gz',
   'genefilter_1.70.0.tar.gz',

@@ -13,7 +13,7 @@ devtools::install_version('dplyr', version='1.0.2')
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
   'oligo_1.54.0.tar.gz',
-  'AnnotationDbi_1.51.3.tar.gz',
+  'AnnotationDbi_1.52.0.tar.gz',
   'limma_3.46.0.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
