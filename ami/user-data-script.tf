@@ -11,7 +11,7 @@ data "local_file" "docker_apt_key" {
 data "template_file" "instance_user_data" {
   template = file("instance-user-data.tpl.sh")
 
-  vars {
+  vars = {
     install_nomad_script = data.local_file.install_nomad_script.content
     docker_apt_key = data.local_file.docker_apt_key.content
   }

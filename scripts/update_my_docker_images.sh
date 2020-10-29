@@ -88,10 +88,8 @@ echo "$SYSTEM_VERSION" > common/version
 # required by the workers and data_refinery_foreman images.
 ## Remove old common distributions if they exist
 rm -f common/dist/*
-cd common && python setup.py sdist
+(cd common && python setup.py sdist)
 
-# shellcheck disable=SC2103
-cd ..
 for IMG in $CCDL_WORKER_IMGS; do
     image_name="$DOCKERHUB_REPO/dr_$IMG"
 

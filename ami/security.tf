@@ -3,7 +3,7 @@ resource "aws_security_group" "ami_template_instance" {
   description = "data-refinery-ami-template-instance"
   vpc_id = data.aws_vpc.ccdl_dev_vpc.id
 
-  tags {
+  tags = {
     Name = "data-refinery-ami-template-instance"
   }
 }

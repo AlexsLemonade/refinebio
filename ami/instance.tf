@@ -5,14 +5,14 @@ provider "aws" {
 
 data "aws_vpc" "ccdl_dev_vpc" {
   filter {
-    name   = "tag:Name"
+    name = "tag:Name"
     values = ["ccdl-dev-vpc"]
   }
 }
 
 data "aws_subnet" "ccdl_dev_subnet" {
   filter {
-    name   = "tag:Name"
+    name = "tag:Name"
     values = ["ccdl-dev-vpc-subnet"]
   }
 }
@@ -25,7 +25,7 @@ resource "aws_instance" "ami-template-instance" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = data.template_file.instance_user_data.rendered
+  user_data = "data.template_file.instance_user_data.rendered"
 
   subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   associate_public_ip_address = true
