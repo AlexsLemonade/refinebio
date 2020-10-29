@@ -5,17 +5,17 @@
 ##
 
 resource "aws_ebs_volume" "data_refinery_ebs_smasher" {
- count = "${var.full_stack && var.processing_compendia ? 1 :0}"
- availability_zone = "${var.region}a"
- size = "${var.smasher_volume_size_in_gb}"
- type = "st1" # Throughput Optimized HDD
- tags {
-   Name        = "data-refinery-ebs-smasher-${var.user}-${var.stage}"
-   Environment = "${var.stage}"
-   User        = "${var.user}"
-   Stage       = "${var.stage}"
-   IsBig       = "True"
- }
+  count = var.full_stack && var.processing_compendia ? 1 : 0
+  availability_zone = "${var.region}a"
+  size = var.smasher_volume_size_in_gb
+  type = "st1" # Throughput Optimized HDD
+  tags = {
+    Name = "data-refinery-ebs-smasher-${var.user}-${var.stage}"
+    Environment = var.stage
+    User = var.user
+    Stage = var.stage
+    IsBig = "True"
+  }
 }
 
 ##
@@ -24,23 +24,23 @@ resource "aws_ebs_volume" "data_refinery_ebs_smasher" {
 
 resource "aws_s3_bucket" "data_refinery_bucket" {
   bucket = "data-refinery-s3-${var.user}-${var.stage}"
-  acl    = "private"
-  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+  acl = "private"
+  force_destroy = var.static_bucket_prefix == "dev" ? true : false
 
-  tags {
-    Name        = "data-refinery-s3-${var.user}-${var.stage}"
-    Environment = "${var.stage}"
+  tags = {
+    Name = "data-refinery-s3-${var.user}-${var.stage}"
+    Environment = var.stage
   }
 }
 
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
-  acl    = "private"
-  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+  acl = "private"
+  force_destroy = var.static_bucket_prefix == "dev" ? true : false
 
-  tags {
-    Name        = "data-refinery-s3-results-${var.user}-${var.stage}"
-    Environment = "${var.stage}"
+  tags = {
+    Name = "data-refinery-s3-results-${var.user}-${var.stage}"
+    Environment = var.stage
   }
 
   lifecycle_rule {
@@ -62,7 +62,7 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
 
 resource "aws_s3_bucket" "data-refinery-static" {
   bucket = "${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"
-  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+  force_destroy = var.static_bucket_prefix == "dev" ? true : false
 
   cors_rule {
     allowed_origins = ["*"]
@@ -71,7 +71,7 @@ resource "aws_s3_bucket" "data-refinery-static" {
     allowed_headers = ["Authorization"]
   }
 
-  tags {
+  tags = {
     Name = "data-refinery-static-site-${var.user}-${var.stage}"
   }
 
@@ -82,53 +82,53 @@ resource "aws_s3_bucket" "data-refinery-static" {
 
 resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   bucket = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
-  acl    = "public-read"
-  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+  acl = "public-read"
+  force_destroy = var.static_bucket_prefix == "dev" ? true : false
 
-  tags {
-    Name        = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
-    Environment = "${var.stage}"
+  tags = {
+    Name = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
+    Environment = var.stage
   }
 }
 
 resource "aws_s3_bucket" "data_refinery_qn_target_bucket" {
   bucket = "data-refinery-s3-qn-target-${var.user}-${var.stage}"
-  acl    = "public-read"
-  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+  acl = "public-read"
+  force_destroy = var.static_bucket_prefix == "dev" ? true : false
 
-  tags {
-    Name        = "data-refinery-s3-qn-target-${var.user}-${var.stage}"
-    Environment = "${var.stage}"
+  tags = {
+    Name = "data-refinery-s3-qn-target-${var.user}-${var.stage}"
+    Environment = var.stage
   }
 }
 
 resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   bucket = "data-refinery-s3-compendia-${var.user}-${var.stage}"
-  acl    = "private"
-  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+  acl = "private"
+  force_destroy = var.static_bucket_prefix == "dev" ? true : false
 
-  tags {
-    Name        = "data-refinery-s3-compendia-${var.user}-${var.stage}"
-    Environment = "${var.stage}"
+  tags = {
+    Name = "data-refinery-s3-compendia-${var.user}-${var.stage}"
+    Environment = var.stage
   }
 }
 
 resource "aws_s3_bucket" "data_refinery_cloudtrail_logs_bucket" {
   bucket = "data-refinery-s3-cloudtrail-logs-${var.user}-${var.stage}"
   acl = "private"
-  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+  force_destroy = var.static_bucket_prefix == "dev" ? true : false
 
-  tags {
+  tags = {
     Name = "data-refinery-s3-cloudtrail-logs-${var.user}-${var.stage}"
-    Environment = "${var.stage}"
+    Environment = var.stage
   }
 }
 
 # Passing the name attribute as `EntireBucket` enables request metrics for the bucket.
 # ref: https://www.terraform.io/docs/providers/aws/r/s3_bucket_metric.html
 resource "aws_s3_bucket_metric" "compendia_bucket_metrics" {
-  bucket = "${aws_s3_bucket.data_refinery_compendia_bucket.bucket}"
-  name   = "EntireBucket"
+  bucket = aws_s3_bucket.data_refinery_compendia_bucket.bucket
+  name = "EntireBucket"
 }
 
 resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
@@ -158,22 +158,29 @@ resource "aws_cloudwatch_event_rule" "compendia_object_metrics" {
   }
 }
 PATTERN
+
 }
 
 # arn needs to be stripped of trailing `:*`
 # aws appends this when creating the event_target
 resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
-  rule = "${aws_cloudwatch_event_rule.compendia_object_metrics.name}"
+  rule = aws_cloudwatch_event_rule.compendia_object_metrics.name
   target_id = "compendia-object-logs-target-${var.user}-${var.stage}"
-  arn = "${substr(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,0,length(aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn) - 2)}"
+  arn = substr(
+    aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,
+    0,
+    length(
+      aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,
+    ) - 2,
+  )
 }
 
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
   bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
 
-  tags {
+  tags = {
     Name = "data-refinery-static-access-logs-${var.user}-${var.stage}"
-    Environment = "${var.stage}"
+    Environment = var.stage
   }
 
   lifecycle_rule {
