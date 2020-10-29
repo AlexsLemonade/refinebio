@@ -10,7 +10,7 @@ install_with_url <- function(main_url, packages) {
 
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
-  'preprocessCore_1.50.0.tar.gz'
+  'preprocessCore_1.52.0.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
 
