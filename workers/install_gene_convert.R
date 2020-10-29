@@ -10,6 +10,8 @@ install_with_url <- function(main_url, packages) {
          function(pkg) devtools::install_url(paste0(main_url, pkg)))
 }
 
+devtools::install_version('dplyr', version='1.0.2')
+
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
   'AnnotationDbi_1.52.0.tar.gz'
