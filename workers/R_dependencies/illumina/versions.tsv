@@ -35,7 +35,7 @@ data.table	1.11.0
 devtools	1.13.6
 digest	0.6.18
 doParallel	1.0.11
-dplyr	0.7.8
+dplyr	1.0.0
 fansi	0.4.0
 ff	2.2-14
 foreach	1.4.4
@@ -55,12 +55,12 @@ iterators	1.0.10
 jsonlite	1.5
 lattice	0.20-38
 lazyeval	0.2.1
-limma	3.34.9
+limma	3.46.0
 magrittr	1.5
 matrixStats	0.54.0
 memoise	1.1.0
 mime	0.6
-oligo	1.42.0
+oligo	1.54.0
 oligoClasses	1.40.0
 openssl	1.0.2
 optparse	1.4.4

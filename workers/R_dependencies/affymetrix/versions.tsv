@@ -67,7 +67,7 @@ cyrgene10stmamuensgprobe	22.0.0
 cyrgene11stmamuensgprobe	22.0.0
 devtools	1.13.6
 digest	0.6.19
-dplyr	0.7.8
+dplyr	1.0.0
 drogene10stdmensgprobe	22.0.0
 drogene11stdmensgprobe	22.0.0
 drosgenome1dmensgprobe	22.0.0
@@ -123,7 +123,7 @@ jnj384screenhsensgprobe	22.0.0
 jsonlite	1.6
 lambda.r	1.2.3
 lattice	0.20-38
-limma	3.34.9
+limma	3.46.0
 mafacyrgene10stmamuensgprobe	22.0.0
 mafacyrgene11stmamuensgprobe	22.0.0
 magrittr	1.5
@@ -154,7 +154,7 @@ mu11ksubbmmensgprobe	22.0.0
 nlme	3.1-140
 nugohs1a520180hsensgprobe	22.0.0
 nugomm1a520177mmensgprobe	22.0.0
-oligo	1.42.0
+oligo	1.54.0
 oligoClasses	1.40.0
 openssl	1.4
 ovigene10stoaensgprobe	22.0.0
