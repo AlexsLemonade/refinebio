@@ -168,7 +168,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 0.12.29
+          terraform_version: 0.13.5
 
       - name: Install build & test dependencies
         run: |
