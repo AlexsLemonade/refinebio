@@ -13,6 +13,7 @@ from rest_framework.exceptions import APIException
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_api.exceptions import InvalidData
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
@@ -72,10 +73,10 @@ def validate_dataset(data):
     there should be at least one experiment.
     """
     if data.get("data") is None or type(data["data"]) != dict:
-        raise serializers.ValidationError("`data` must be a dict of lists.")
+        raise InvalidData("`data` must be a dict of lists.")
 
     if data.get("start") and len(data["data"]) == 0:
-        raise serializers.ValidationError("`data` must contain at least one experiment..")
+        raise InvalidData("`data` must contain at least one experiment.")
 
     accessions = []
     non_downloadable_experiments = []
@@ -86,14 +87,14 @@ def validate_dataset(data):
             )
 
         if len(value) < 1:
-            raise serializers.ValidationError(
+            raise InvalidData(
                 "`data` must be a dict of lists, each with one or more elements. Problem with `"
                 + str(key)
                 + "`"
             )
 
         if len(value) != len(set(value)):
-            raise serializers.ValidationError("Duplicate values detected in " + str(value))
+            raise InvalidData("Duplicate values detected in " + str(value))
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
@@ -107,11 +108,9 @@ def validate_dataset(data):
             accessions.extend(value)
 
     if len(non_downloadable_experiments) != 0:
-        raise serializers.ValidationError(
-            {
-                "message": "Experiment(s) in dataset have zero downloadable samples. See `non_downloadable_experiments` for a full list",
-                "non_downloadable_experiments": non_downloadable_experiments,
-            }
+        raise InvalidData(
+            message="Experiment(s) in dataset have zero downloadable samples. See `details` for a full list",
+            details=non_downloadable_experiments,
         )
 
     if len(accessions) == 0:
@@ -119,13 +118,9 @@ def validate_dataset(data):
 
     samples = Sample.public_objects.filter(accession_code__in=accessions)
     if samples.count() != len(accessions):
-        raise serializers.ValidationError(
-            {
-                "message": "Sample(s) in dataset do not exist on refine.bio. See `non_downloadable_samples` for a full list",
-                "non_downloadable_samples": list(
-                    set(accessions) - set(s.accession_code for s in samples)
-                ),
-            },
+        raise InvalidData(
+            message="Sample(s) in dataset do not exist on refine.bio. See `details` for a full list",
+            details=list(set(accessions) - set(s.accession_code for s in samples)),
         )
 
     if data.get("quant_sf_only", False):
@@ -136,23 +131,17 @@ def validate_dataset(data):
             results__computedfile__s3_bucket__isnull=False,
         )
         if samples_without_quant_sf.count() > 0:
-            raise serializers.ValidationError(
-                {
-                    "message": "Sample(s) in dataset are missing quant.sf files. See `non_downloadable_samples` for a full list",
-                    "non_downloadable_samples": [
-                        s.accession_code for s in samples_without_quant_sf
-                    ],
-                },
+            raise InvalidData(
+                message="Sample(s) in dataset are missing quant.sf files. See `details` for a full list",
+                details=[s.accession_code for s in samples_without_quant_sf],
             )
 
     else:
         unprocessed_samples = samples.exclude(is_processed=True)
         if unprocessed_samples.count() > 0:
-            raise serializers.ValidationError(
-                {
-                    "message": "Non-downloadable sample(s) in dataset. See `non_downloadable_samples` for a full list",
-                    "non_downloadable_samples": [s.accession_code for s in unprocessed_samples],
-                }
+            raise InvalidData(
+                message="Non-downloadable sample(s) in dataset. See `details` for a full list",
+                details=[s.accession_code for s in unprocessed_samples],
             )
 
 
