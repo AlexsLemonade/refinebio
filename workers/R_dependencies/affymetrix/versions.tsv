@@ -7,7 +7,7 @@ BiocParallel	1.12.0
 Biostrings	2.46.0
 DBI	1.0.0
 DelayedArray	0.4.1
-GEOquery	2.46.15
+GEOquery	2.48.0
 GenomeInfoDb	1.14.0
 GenomeInfoDbData	1.0.0
 GenomicRanges	1.30.3

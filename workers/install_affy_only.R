@@ -18,7 +18,7 @@ install_with_url <- function(main_url, packages) {
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
   'oligo_1.54.0.tar.gz',
-  'GEOquery_2.56.0.tar.gz',
+  'GEOquery_2.58.0.tar.gz',
   'SCAN.UPC_2.30.0.tar.gz',
   'affy_1.66.0.tar.gz',
   'affyio_1.58.0.tar.gz',
