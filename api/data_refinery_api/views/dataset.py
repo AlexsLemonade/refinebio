@@ -13,7 +13,7 @@ from rest_framework.exceptions import APIException
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from data_refinery_api.exceptions import InvalidData
+from data_refinery_api.exceptions import BadRequest, InvalidData
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
@@ -82,9 +82,7 @@ def validate_dataset(data):
     non_downloadable_experiments = []
     for key, value in data["data"].items():
         if type(value) != list:
-            raise serializers.ValidationError(
-                "`data` must be a dict of lists. Problem with `" + str(key) + "`"
-            )
+            raise InvalidData("`data` must be a dict of lists. Problem with `" + str(key) + "`")
 
         if len(value) < 1:
             raise InvalidData(
@@ -358,7 +356,9 @@ class DatasetView(
         try:
             APIToken.objects.get(id=token_id, is_activated=True)
         except (APIToken.DoesNotExist, ValidationError):
-            raise serializers.ValidationError("You must provide an active API token ID")
+            raise BadRequest(
+                message="You must provide an active API token ID", error_type="invalid_token"
+            )
 
     @staticmethod
     def convert_ALL_to_accessions(data):
@@ -379,7 +379,9 @@ class DatasetView(
         """Check to make sure the email exists. We call this when getting ready to dispatch a dataset"""
         supplied_email_address = self.request.data.get("email_address", None)
         if supplied_email_address is None or supplied_email_address == "":
-            raise serializers.ValidationError("You must provide an email address.")
+            raise BadRequest(
+                message="You must provide an email address.", error_type="invalid_email"
+            )
 
     def dispatch_job(self, serializer, obj):
         processor_job = ProcessorJob()
@@ -447,8 +449,8 @@ class DatasetView(
         # Check to make sure we have not already processed the dataset
         old_object = self.get_object()
         if old_object.is_processed:
-            raise serializers.ValidationError(
-                "You may not update Datasets which have already been processed"
+            raise BadRequest(
+                message="You may not update Datasets which have already been processed"
             )
         # Don't allow critical data updates to jobs that have already been submitted,
         # but do allow email address updating.
