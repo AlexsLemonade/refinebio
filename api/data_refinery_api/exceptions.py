@@ -1,5 +1,3 @@
-import pdb
-
 from rest_framework.exceptions import APIException
 from rest_framework.serializers import ValidationError
 from rest_framework.views import exception_handler
