@@ -108,7 +108,7 @@ class CompendiumResultListView(generics.ListAPIView):
         invalid_filters = check_filters(self, ["latest_version"])
 
         if invalid_filters:
-            raise InvalidFilters(invalid_filters)
+            raise InvalidFilters(invalid_filters=invalid_filters)
 
         public_result_queryset = CompendiumResult.objects.filter(result__is_public=True)
         latest_version = self.request.query_params.get("latest_version", False)

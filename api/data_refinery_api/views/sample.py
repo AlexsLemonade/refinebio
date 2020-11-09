@@ -170,7 +170,7 @@ class SampleListView(generics.ListAPIView):
         )
 
         if invalid_filters:
-            raise InvalidFilters(invalid_filters)
+            raise InvalidFilters(invalid_filters=invalid_filters)
 
         queryset = (
             Sample.public_objects.prefetch_related("organism")
