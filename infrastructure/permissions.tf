@@ -112,6 +112,8 @@ resource "aws_iam_policy" "ec2_access_policy" {
   description = "Allows EC2 Permissions."
   count = var.full_stack ? 1 : 0
 
+  depends_on = [aws_instance.smasher_instance]
+
   # We can't iterate instances from the fleet, so allow attaching to any instance,
   # but restrict which volumes can be attached.
   policy = <<EOF

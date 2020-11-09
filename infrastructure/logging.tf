@@ -2,7 +2,7 @@
 
 resource "aws_cloudtrail" "data_refinery_s3_cloudtrail" {
   name = "data-refinery-s3-cloudtrail-${var.user}-${var.stage}"
-  depends_on = [aws_s3_bucket.data_refinery_cloudtrail_logs_bucket]
+  depends_on = [aws_s3_bucket.data_refinery_cloudtrail_logs_bucket, aws_s3_bucket_policy.cloudtrail_access_policy]
   s3_bucket_name = aws_s3_bucket.data_refinery_cloudtrail_logs_bucket.id
   include_global_service_events = false
   event_selector {

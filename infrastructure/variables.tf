@@ -13,6 +13,10 @@ variable "stage" {
   default = "dev"
 }
 
+variable "environment" {
+  default = "dev"
+}
+
 variable "static_bucket_prefix" {
   default = "staging"
 }
