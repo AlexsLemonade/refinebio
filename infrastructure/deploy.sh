@@ -402,7 +402,7 @@ container_running=$(ssh -o StrictHostKeyChecking=no \
                         -o ServerAliveInterval=15 \
                         -o ConnectTimeout=5 \
                         -i data-refinery-key.pem \
-                        "ubuntu@$API_IP_ADDRESS"  "docker ps -a" | grep dr_api || echo "")
+                        "ubuntu@$API_IP_ADDRESS"  "docker ps -a" 2> /dev/null | grep dr_api || echo "")
 
 # If $container_running is empty, then it's because the container isn't running.
 # If the container isn't running, then it's because the instance is spinning up.

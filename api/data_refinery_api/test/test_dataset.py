@@ -319,9 +319,9 @@ class DatasetTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "Non-downloadable sample(s) in dataset", response.json()["message"][0],
+            "Non-downloadable sample(s) in dataset", response.json()["message"],
         )
-        self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
+        self.assertEqual(response.json()["details"], ["456"])
 
         # Bad, 567 does not exist
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["567"]}})
@@ -331,7 +331,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertIn(
-            "Sample(s) in dataset do not exist on refine", response.json()["message"][0],
+            "Sample(s) in dataset do not exist on refine", response.json()["message"],
         )
         self.assertEqual(response.status_code, 400)
 
@@ -361,9 +361,9 @@ class DatasetTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "Sample(s) in dataset are missing quant.sf files", response.json()["message"][0],
+            "Sample(s) in dataset are missing quant.sf files", response.json()["message"],
         )
-        self.assertEqual(response.json()["non_downloadable_samples"], ["456"])
+        self.assertEqual(response.json()["details"], ["456"])
 
         # Bad, none of the samples in GSE123 have a quant.sf file
         response = self.client.post(
@@ -379,10 +379,9 @@ class DatasetTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "Experiment(s) in dataset have zero downloadable samples",
-            response.json()["message"][0],
+            "Experiment(s) in dataset have zero downloadable samples", response.json()["message"],
         )
-        self.assertEqual(response.json()["non_downloadable_experiments"], ["GSE123"])
+        self.assertEqual(response.json()["details"], ["GSE123"])
 
         # Make 456 have a quant.sf file
         result = ComputationalResult()

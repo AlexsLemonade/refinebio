@@ -95,7 +95,7 @@ class TranscriptomeIndexListView(generics.ListAPIView):
         )
 
         if invalid_filters:
-            raise InvalidFilters(invalid_filters)
+            raise InvalidFilters(invalid_filters=invalid_filters)
 
         queryset = OrganismIndex.public_objects.all()
 
