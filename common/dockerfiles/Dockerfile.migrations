@@ -1,4 +1,4 @@
-FROM python:3.6.1-slim
+FROM python:3.8.5-slim-buster
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user

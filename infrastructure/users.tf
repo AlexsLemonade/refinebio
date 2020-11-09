@@ -3,11 +3,11 @@
 ##
 
 resource "aws_iam_access_key" "data_refinery_user_client_key" {
-  user    = "${aws_iam_user.data_refinery_user_client.name}"
+  user = aws_iam_user.data_refinery_user_client.name
 }
 
 resource "aws_iam_access_key" "data-refinery-deployer-access-key" {
-  user = "${aws_iam_user.data-refinery-deployer.name}"
+  user = aws_iam_user.data-refinery-deployer.name
 }
 
 ##
@@ -34,13 +34,12 @@ resource "aws_iam_group_membership" "data_refinery_group_membership" {
   name = "data-refinery-user-group-membership-${var.user}-${var.stage}"
 
   users = [
-    "${aws_iam_user.data_refinery_user_client.name}",
-    "${aws_iam_user.data-refinery-deployer.name}",
+    aws_iam_user.data_refinery_user_client.name,
+    aws_iam_user.data-refinery-deployer.name,
   ]
 
-  group = "${aws_iam_group.data_refinery_group.name}"
+  group = aws_iam_group.data_refinery_group.name
 }
-
 
 ##
 # Roles
@@ -66,6 +65,7 @@ resource "aws_iam_role" "data_refinery_user_role" {
   ]
 }
 EOF
+
 }
 
 ##
@@ -75,7 +75,6 @@ EOF
 # Logs
 resource "aws_iam_policy" "data_refinery_client_policy_logs" {
   name = "data-refinery-user-client-logs-${var.user}-${var.stage}"
-
 
   # Streams are dynamically created, allow anything in the group.
   policy = <<EOF
@@ -95,11 +94,12 @@ resource "aws_iam_policy" "data_refinery_client_policy_logs" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_logs" {
-  group      = "${aws_iam_group.data_refinery_group.name}"
-  policy_arn = "${aws_iam_policy.data_refinery_client_policy_logs.arn}"
+  group = aws_iam_group.data_refinery_group.name
+  policy_arn = aws_iam_policy.data_refinery_client_policy_logs.arn
 }
 
 # S3
@@ -137,11 +137,12 @@ resource "aws_iam_policy" "data_refinery_client_policy_s3" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_s3" {
-  group      = "${aws_iam_group.data_refinery_group.name}"
-  policy_arn = "${aws_iam_policy.data_refinery_client_policy_s3.arn}"
+  group = aws_iam_group.data_refinery_group.name
+  policy_arn = aws_iam_policy.data_refinery_client_policy_s3.arn
 }
 
 # SES
@@ -163,11 +164,12 @@ resource "aws_iam_policy" "data_refinery_client_policy_ses" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_ses" {
-  group      = "${aws_iam_group.data_refinery_group.name}"
-  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ses.arn}"
+  group = aws_iam_group.data_refinery_group.name
+  policy_arn = aws_iam_policy.data_refinery_client_policy_ses.arn
 }
 
 # EC2
@@ -194,11 +196,12 @@ resource "aws_iam_policy" "data_refinery_client_policy_ec2" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_ec2" {
-  group      = "${aws_iam_group.data_refinery_group.name}"
-  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ec2.arn}"
+  group = aws_iam_group.data_refinery_group.name
+  policy_arn = aws_iam_policy.data_refinery_client_policy_ec2.arn
 }
 
 # ES
@@ -232,11 +235,12 @@ resource "aws_iam_policy" "data_refinery_client_policy_es" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_es" {
-  group      = "${aws_iam_group.data_refinery_group.name}"
-  policy_arn = "${aws_iam_policy.data_refinery_client_policy_es.arn}"
+  group = aws_iam_group.data_refinery_group.name
+  policy_arn = aws_iam_policy.data_refinery_client_policy_es.arn
 }
 
 ##
@@ -260,7 +264,7 @@ data "aws_iam_policy_document" "data-refinery-deployment" {
 
   statement {
     actions = [
-      "s3:ListBucket"
+      "s3:ListBucket",
     ]
 
     resources = [
@@ -271,6 +275,6 @@ data "aws_iam_policy_document" "data-refinery-deployment" {
 
 resource "aws_iam_user_policy" "data-refinery-deployer" {
   name = "data-refinery-deployer-${var.user}-${var.stage}"
-  user = "${aws_iam_user.data-refinery-deployer.name}"
-  policy = "${data.aws_iam_policy_document.data-refinery-deployment.json}"
+  user = aws_iam_user.data-refinery-deployer.name
+  policy = data.aws_iam_policy_document.data-refinery-deployment.json
 }

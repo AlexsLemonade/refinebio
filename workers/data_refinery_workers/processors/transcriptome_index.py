@@ -312,7 +312,7 @@ def _create_index(job_context: Dict) -> Dict:
     )
 
     # See this function's docstring for more info.
-    if job_context["length"] is "long":
+    if job_context["length"] == "long":
         job_context["kmer_size"] = "31"
     else:
         job_context["kmer_size"] = "23"

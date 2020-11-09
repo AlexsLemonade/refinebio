@@ -1,8 +1,7 @@
-FROM miserlou/python3base:latest
+FROM nvidia/cuda:11.0-runtime-ubuntu20.04
 
-# This is very similar to the `smasher` image,
-# but comes from a base image with OpenBLAS, needed for fast impuation,
-# and some of the other libraries required for fancyimpute.
+# This is very similar to the `smasher` image, but comes with OpenBLAS and some
+# of the other libraries required for fancyimpute.
 
 RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
@@ -28,19 +27,21 @@ COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y lsb-release && \
-  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
   apt-fast install -y \
   ed \
   git \
+  liblapack-dev \
+  libopenblas-dev \
   python3 \
   python3-pip \
   libcurl4-openssl-dev \
   libpq-dev \
-  r-base \
-  r-base-dev \
+  r-base-core=4.0.2-1.2004.0 \
+  r-base-dev=4.0.0-1.2004.0 \
   libpq-dev \
   libxml2-dev \
   libssl-dev \
@@ -74,7 +75,7 @@ RUN Rscript qn_dependencies.R
 RUN pip3 install --upgrade pip
 
 # Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2===2.9.5 tzlocal
+RUN pip3 install numpy scipy matplotlib pandas==0.25.3 scikit-learn sympy nose rpy2===2.9.5 tzlocal
 # End smasher-specific
 
 # Some combination of pip and setuptools versions makes this bug appear:

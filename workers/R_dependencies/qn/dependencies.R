@@ -1,7 +1,7 @@
 # Generated from cranlock
 options(warn=2)
 options(Ncpus=parallel::detectCores())
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 devtools::install_version('codetools', version='0.2-15')
 devtools::install_version('iterators', version='1.0.10')
 devtools::install_version('foreach', version='1.4.4')

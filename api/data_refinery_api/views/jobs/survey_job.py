@@ -6,6 +6,8 @@ from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from data_refinery_api.exceptions import InvalidFilters
+from data_refinery_api.utils import check_filters
 from data_refinery_common.models import SurveyJob
 
 
@@ -38,6 +40,14 @@ class SurveyJobListView(generics.ListAPIView):
     filterset_fields = SurveyJobSerializer.Meta.fields
     ordering_fields = ("id", "created_at")
     ordering = ("-id",)
+
+    def get_queryset(self):
+        invalid_filters = check_filters(self)
+
+        if invalid_filters:
+            raise InvalidFilters(invalid_filters)
+
+        return self.queryset
 
 
 class SurveyJobDetailView(generics.RetrieveAPIView):

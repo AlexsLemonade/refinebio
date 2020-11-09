@@ -17,9 +17,9 @@ resource "aws_key_pair" "data_refinery" {
 resource "aws_security_group" "data_refinery_worker" {
   name = "data-refinery-worker-${var.user}-${var.stage}"
   description = "data-refinery-worker-${var.user}-${var.stage}"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+  vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags {
+  tags = {
     Name = "data-refinery-worker-${var.user}-${var.stage}"
   }
 }
@@ -31,7 +31,7 @@ resource "aws_security_group_rule" "data_refinery_worker_custom" {
   to_port = 8000
   protocol = "tcp"
   self = true
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 # Allow the Nomad HTTP API to be accessible by this security group. See:
@@ -42,7 +42,7 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad" {
   to_port = 4646
   protocol = "tcp"
   self = true
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 # Allow the Nomad HTTP API to be accessible by the Foreman security group. See:
@@ -52,8 +52,8 @@ resource "aws_security_group_rule" "data_refinery_nomad_from_foreman" {
   from_port = 4646
   to_port = 4646
   protocol = "tcp"
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
-  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
+  source_security_group_id = aws_security_group.data_refinery_foreman.id
 }
 
 # Allow the Nomad HTTP API to be accessible by the API security group. See:
@@ -63,8 +63,8 @@ resource "aws_security_group_rule" "data_refinery_api_nomad" {
   from_port = 4646
   to_port = 4646
   protocol = "tcp"
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
-  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
+  source_security_group_id = aws_security_group.data_refinery_api.id
 }
 
 # Allow Nomad RPC calls to go through to each other. See:
@@ -75,7 +75,7 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad_rpc" {
   to_port = 4647
   protocol = "tcp"
   self = true
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 # Allow Nomad Servers to gossip with each other over TCP. See:
@@ -86,7 +86,7 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad_serf_tcp" {
   to_port = 4648
   protocol = "tcp"
   self = true
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 # Allow Nomad Servers to gossip with each other over UDP. See:
@@ -97,7 +97,7 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad_serf_udp" {
   to_port = 4648
   protocol = "udp"
   self = true
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 # Allow statsd updates from clients to lead server. See:
@@ -107,7 +107,7 @@ resource "aws_security_group_rule" "data_refinery_statsd" {
   to_port = 8125
   protocol = "udp"
   self = true
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 # Allow SSH connections to Nomad instances. This is pretty much the
@@ -119,16 +119,16 @@ resource "aws_security_group_rule" "data_refinery_worker_ssh" {
   to_port = 22
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 resource "aws_security_group_rule" "data_refinery_worker_pg" {
   type = "ingress"
-  from_port = "${var.database_port}"
-  to_port = "${var.database_port}"
+  from_port = var.database_port
+  to_port = var.database_port
   protocol = "tcp"
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
-  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
+  source_security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 # Allow outbound requests from Nomad so they can actually do useful
@@ -142,7 +142,7 @@ resource "aws_security_group_rule" "data_refinery_worker_outbound" {
   protocol = "all"
   cidr_blocks = ["0.0.0.0/0"]
   ipv6_cidr_blocks = ["::/0"]
-  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = aws_security_group.data_refinery_worker.id
 }
 
 ##
@@ -152,9 +152,9 @@ resource "aws_security_group_rule" "data_refinery_worker_outbound" {
 resource "aws_security_group" "data_refinery_db" {
   name = "data-refinery_db-${var.user}-${var.stage}"
   description = "data_refinery_db-${var.user}-${var.stage}"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+  vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags {
+  tags = {
     Name = "data-refinery-db-${var.user}-${var.stage}"
   }
 }
@@ -165,7 +165,7 @@ resource "aws_security_group_rule" "data_refinery_db_outbound" {
   to_port = 65535
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
+  security_group_id = aws_security_group.data_refinery_db.id
 }
 
 resource "aws_security_group_rule" "data_refinery_db_pg_tcp" {
@@ -173,8 +173,8 @@ resource "aws_security_group_rule" "data_refinery_db_pg_tcp" {
   from_port = 0
   to_port = 65535
   protocol = "tcp"
-  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
+  source_security_group_id = aws_security_group.data_refinery_pg.id
+  security_group_id = aws_security_group.data_refinery_db.id
 }
 
 ##
@@ -184,9 +184,9 @@ resource "aws_security_group_rule" "data_refinery_db_pg_tcp" {
 resource "aws_security_group" "data_refinery_pg" {
   name = "data-refinery-pg-${var.user}-${var.stage}"
   description = "data_refinery_pg-${var.user}-${var.stage}"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+  vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags {
+  tags = {
     Name = "data-refinery-pg-${var.user}-${var.stage}"
   }
 }
@@ -197,17 +197,16 @@ resource "aws_security_group_rule" "data_refinery_pg_ssh" {
   to_port = 22
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
-
 
 resource "aws_security_group_rule" "data_refinery_pg_workers_tcp" {
   type = "ingress"
   from_port = 0
   to_port = 65535
   protocol = "tcp"
-  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  source_security_group_id = aws_security_group.data_refinery_worker.id
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_foreman_tcp" {
@@ -215,8 +214,8 @@ resource "aws_security_group_rule" "data_refinery_pg_foreman_tcp" {
   from_port = 0
   to_port = 65535
   protocol = "tcp"
-  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  source_security_group_id = aws_security_group.data_refinery_foreman.id
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_api_tcp" {
@@ -224,8 +223,8 @@ resource "aws_security_group_rule" "data_refinery_pg_api_tcp" {
   from_port = 0
   to_port = 65535
   protocol = "tcp"
-  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  source_security_group_id = aws_security_group.data_refinery_api.id
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_workers_icmp" {
@@ -233,8 +232,8 @@ resource "aws_security_group_rule" "data_refinery_pg_workers_icmp" {
   from_port = -1
   to_port = -1
   protocol = "icmp"
-  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  source_security_group_id = aws_security_group.data_refinery_worker.id
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_api_icmp" {
@@ -242,8 +241,8 @@ resource "aws_security_group_rule" "data_refinery_pg_api_icmp" {
   from_port = -1
   to_port = -1
   protocol = "icmp"
-  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  source_security_group_id = aws_security_group.data_refinery_api.id
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_foreman_icmp" {
@@ -251,8 +250,8 @@ resource "aws_security_group_rule" "data_refinery_pg_foreman_icmp" {
   from_port = -1
   to_port = -1
   protocol = "icmp"
-  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  source_security_group_id = aws_security_group.data_refinery_foreman.id
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_outbound" {
@@ -262,7 +261,7 @@ resource "aws_security_group_rule" "data_refinery_pg_outbound" {
   protocol = "all"
   cidr_blocks = ["0.0.0.0/0"]
   ipv6_cidr_blocks = ["::/0"]
-  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 ##
@@ -272,18 +271,18 @@ resource "aws_security_group_rule" "data_refinery_pg_outbound" {
 resource "aws_security_group" "data_refinery_es" {
   name = "data-refinery-es-${var.user}-${var.stage}"
   description = "data_refinery_es-${var.user}-${var.stage}"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+  vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags {
+  tags = {
     Name = "data-refinery-es-${var.user}-${var.stage}"
   }
 
   # Wide open, but inside inside the VPC
   ingress {
-      from_port = 0
-      to_port = 0
-      protocol = "-1"
-      cidr_blocks = [ "0.0.0.0/0" ]
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
@@ -294,9 +293,9 @@ resource "aws_security_group" "data_refinery_es" {
 resource "aws_security_group" "data_refinery_api" {
   name = "data-refinery-api-${var.user}-${var.stage}"
   description = "data-refinery-api-${var.user}-${var.stage}"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+  vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags {
+  tags = {
     Name = "data-refinery-api-${var.user}-${var.stage}"
   }
 }
@@ -308,7 +307,7 @@ resource "aws_security_group_rule" "data_refinery_api_ssh" {
   to_port = 22
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = aws_security_group.data_refinery_api.id
 }
 
 resource "aws_security_group_rule" "data_refinery_api_http" {
@@ -317,7 +316,7 @@ resource "aws_security_group_rule" "data_refinery_api_http" {
   to_port = 80
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = aws_security_group.data_refinery_api.id
 }
 
 resource "aws_security_group_rule" "data_refinery_api_https" {
@@ -326,16 +325,16 @@ resource "aws_security_group_rule" "data_refinery_api_https" {
   to_port = 443
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = aws_security_group.data_refinery_api.id
 }
 
 resource "aws_security_group_rule" "data_refinery_api_pg" {
   type = "ingress"
-  from_port = "${var.database_port}"
-  to_port = "${var.database_port}"
+  from_port = var.database_port
+  to_port = var.database_port
   protocol = "tcp"
-  security_group_id = "${aws_security_group.data_refinery_api.id}"
-  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  security_group_id = aws_security_group.data_refinery_api.id
+  source_security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 resource "aws_security_group_rule" "data_refinery_api_outbound" {
@@ -345,7 +344,7 @@ resource "aws_security_group_rule" "data_refinery_api_outbound" {
   protocol = "all"
   cidr_blocks = ["0.0.0.0/0"]
   ipv6_cidr_blocks = ["::/0"]
-  security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = aws_security_group.data_refinery_api.id
 }
 
 ##
@@ -355,9 +354,9 @@ resource "aws_security_group_rule" "data_refinery_api_outbound" {
 resource "aws_security_group" "data_refinery_foreman" {
   name = "data-refinery-foreman-${var.user}-${var.stage}"
   description = "data-refinery-foreman-${var.user}-${var.stage}"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+  vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags {
+  tags = {
     Name = "data-refinery-foreman-${var.user}-${var.stage}"
   }
 }
@@ -370,7 +369,7 @@ resource "aws_security_group_rule" "data_refinery_worker_foreman" {
   to_port = 4646
   protocol = "tcp"
   self = true
-  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+  security_group_id = aws_security_group.data_refinery_foreman.id
 }
 
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
@@ -380,16 +379,16 @@ resource "aws_security_group_rule" "data_refinery_foreman_ssh" {
   to_port = 22
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+  security_group_id = aws_security_group.data_refinery_foreman.id
 }
 
 resource "aws_security_group_rule" "data_refinery_foreman_pg" {
   type = "ingress"
-  from_port = "${var.database_port}"
-  to_port = "${var.database_port}"
+  from_port = var.database_port
+  to_port = var.database_port
   protocol = "tcp"
-  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
-  source_security_group_id = "${aws_security_group.data_refinery_pg.id}"
+  security_group_id = aws_security_group.data_refinery_foreman.id
+  source_security_group_id = aws_security_group.data_refinery_pg.id
 }
 
 # Necessary to retrieve
@@ -401,5 +400,5 @@ resource "aws_security_group_rule" "data_refinery_foreman_outbound" {
   protocol = "all"
   cidr_blocks = ["0.0.0.0/0"]
   ipv6_cidr_blocks = ["::/0"]
-  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+  security_group_id = aws_security_group.data_refinery_foreman.id
 }
