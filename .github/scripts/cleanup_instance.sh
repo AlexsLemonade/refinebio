@@ -18,3 +18,5 @@ sudo apt-get autoremove -y
 sudo apt-get clean
 
 rm -rf /usr/share/dotnet/
+
+docker system prune -f
