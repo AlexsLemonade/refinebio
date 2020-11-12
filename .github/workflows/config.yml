@@ -317,7 +317,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: wheres my space going?
-        run: du -sh /*
+        run: du -sh *
 
       - name: First Space check
         run: df -h
