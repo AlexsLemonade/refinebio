@@ -7,17 +7,16 @@ options(Ncpus=parallel::detectCores())
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
-  lapply(packages,
-         function(pkg) devtools::install_url(paste0(main_url, pkg)))
+  devtools::install_url(paste0(main_url, packages))
 }
 
 devtools::install_version('dplyr', version='1.0.2')
 
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
-  'oligo_1.54.0.tar.gz',
+  'oligo_1.54.1.tar.gz',
   'GEOquery_2.58.0.tar.gz',
-  'SCAN.UPC_2.30.0.tar.gz',
+  'SCAN.UPC_2.32.0.tar.gz',
   'affy_1.66.0.tar.gz',
   'affyio_1.58.0.tar.gz',
   'AnnotationDbi_1.52.0.tar.gz',
