@@ -7,7 +7,12 @@ options(Ncpus=parallel::detectCores())
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
-  devtools::install_url(paste0(main_url, packages))
+  pkg_ids <- devtools::install_url(paste0(main_url, packages))
+  if(any(is.na(pkg_ids))) {
+    pkg_fails <- paste(packages[is.na(pkg_ids)], collapse = "; ")
+    stop(paste("Failed to install package(s):", pkg_fails ))
+  }
+  return(pkg_ids)
 }
 
 devtools::install_version('dplyr', version='1.0.2')

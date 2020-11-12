@@ -11,8 +11,12 @@ devtools::install_version('ff', version='2.2-14')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
-  lapply(packages,
-         function(pkg) devtools::install_url(paste0(main_url, pkg), upgrade=F))
+  pkg_ids <- devtools::install_url(paste0(main_url, packages))
+  if(any(is.na(pkg_ids))) {
+    pkg_fails <- paste(packages[is.na(pkg_ids)], collapse = "; ")
+    stop(paste("Failed to install package(s):", pkg_fails ))
+  }
+  return(pkg_ids)
 }
 
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
