@@ -319,6 +319,9 @@ jobs:
       - name: First Space check
         run: df -h
 
+      - name: list docker images
+        run: docker image ls
+
       - name: Free up space
         run: ./.github/scripts/cleanup_instance.sh
 
