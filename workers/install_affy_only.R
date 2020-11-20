@@ -17,13 +17,13 @@ install_with_url <- function(main_url, packages) {
 
 bioc_url <- 'https://bioconductor.org/packages/release/bioc/src/contrib/'
 bioc_pkgs <- c(
-  'oligo_1.54.0.tar.gz',
+  'oligo_1.54.1.tar.gz',
   'GEOquery_2.58.0.tar.gz',
-  'SCAN.UPC_2.30.0.tar.gz',
+  'SCAN.UPC_2.32.0.tar.gz',
   'affy_1.66.0.tar.gz',
-  'affyio_1.58.0.tar.gz',
+  'affyio_1.60.0.tar.gz',
   'AnnotationDbi_1.52.0.tar.gz',
-  'zlibbioc_1.34.0.tar.gz',
+  'zlibbioc_1.36g.0.tar.gz',
   'preprocessCore_1.50.0.tar.gz',
   'genefilter_1.70.0.tar.gz',
   'sva_3.36.0.tar.gz',
