@@ -6,7 +6,7 @@ options(Ncpus=parallel::detectCores())
 install_with_url <- function(urls) {
   pkg_ids <- devtools::install_url(urls)
   if(any(is.na(pkg_ids))) {
-    pkg_fails <- paste(packages[is.na(pkg_ids)], collapse = "; ")
+    pkg_fails <- paste(urls[is.na(pkg_ids)], collapse = "; ")
     stop(paste("Failed to install package(s):", pkg_fails ))
   }
   return(pkg_ids)

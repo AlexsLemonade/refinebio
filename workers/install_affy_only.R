@@ -13,7 +13,7 @@ devtools::install_version('ff', version='2.2-14')
 install_with_url <- function(urls) {
   pkg_ids <- devtools::install_url(urls)
   if(any(is.na(pkg_ids))) {
-    pkg_fails <- paste(packages[is.na(pkg_ids)], collapse = "; ")
+    pkg_fails <- paste(urls[is.na(pkg_ids)], collapse = "; ")
     stop(paste("Failed to install package(s):", pkg_fails ))
   }
   return(pkg_ids)
@@ -30,7 +30,7 @@ bioc_pkgs <- c(
   'https://bioconductor.org/packages/3.11/bioc/src/contrib/preprocessCore_1.50.0.tar.gz',
   'https://bioconductor.org/packages/3.11/bioc/src/contrib/genefilter_1.70.0.tar.gz',
   'https://bioconductor.org/packages/3.11/bioc/src/contrib/sva_3.36.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/bioc/src/contrib/tximport_1.16.1.tar.gz',
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/tximport_1.16.1.tar.gz',
   'https://bioconductor.org/packages/3.12/bioc/src/contrib/limma_3.46.0.tar.gz'
 )
 install_with_url(bioc_pkgs)
