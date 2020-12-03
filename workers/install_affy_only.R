@@ -26,7 +26,7 @@ bioc_pkgs <- c(
   'https://bioconductor.org/packages/3.11/bioc/src/contrib/affy_1.66.0.tar.gz',
   'https://bioconductor.org/packages/3.12/bioc/src/contrib/affyio_1.60.0.tar.gz',
   'https://bioconductor.org/packages/3.12/bioc/src/contrib/AnnotationDbi_1.52.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/bioc/src/contrib/zlibbioc_1.36g.0.tar.gz',
+  'https://bioconductor.org/packages/3.12/bioc/src/contrib/zlibbioc_1.36.0.tar.gz',
   'https://bioconductor.org/packages/3.11/bioc/src/contrib/preprocessCore_1.50.0.tar.gz',
   'https://bioconductor.org/packages/3.11/bioc/src/contrib/genefilter_1.70.0.tar.gz',
   'https://bioconductor.org/packages/3.11/bioc/src/contrib/sva_3.36.0.tar.gz',
