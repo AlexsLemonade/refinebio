@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.0-runtime-ubuntu20.04
+FROM nvidia/cuda:11.1-runtime-ubuntu18.04
 
 # This is very similar to the `smasher` image, but comes with OpenBLAS and some
 # of the other libraries required for fancyimpute.
