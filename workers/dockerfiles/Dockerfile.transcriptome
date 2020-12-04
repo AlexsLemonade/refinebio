@@ -6,6 +6,9 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
+# Prevent tzdata from prompting us for a timezone and hanging the build.
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN \
   apt-fast update -qq && \
   apt-fast install -y \

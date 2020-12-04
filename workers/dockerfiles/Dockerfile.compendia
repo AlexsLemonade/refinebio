@@ -27,7 +27,7 @@ COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y lsb-release && \
-  echo "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" \
+  echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -40,8 +40,8 @@ RUN \
   python3-pip \
   libcurl4-openssl-dev \
   libpq-dev \
-  r-base-core=4.0.2-1.2004.0 \
-  r-base-dev=4.0.0-1.2004.0 \
+  r-base-core \
+  r-base-dev \
   libpq-dev \
   libxml2-dev \
   libssl-dev \
