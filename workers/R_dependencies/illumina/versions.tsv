@@ -1,4 +1,4 @@
-AnnotationDbi	1.52.0
+AnnotationDbi	1.50.3
 BH	1.69.0-1
 Biobase	2.38.0
 BiocGenerics	0.24.0
@@ -61,7 +61,7 @@ matrixStats	0.54.0
 memoise	1.1.0
 mime	0.6
 oligo	1.52.1
-oligoClasses	1.40.0
+oligoClasses	1.50.4
 openssl	1.0.2
 optparse	1.4.4
 org.Hs.eg.db	3.5.0

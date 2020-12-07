@@ -1,4 +1,4 @@
-AnnotationDbi	1.52.0
+AnnotationDbi	1.50.3
 BH	1.69.0-1
 Biobase	2.38.0
 BiocGenerics	0.24.0
@@ -155,7 +155,7 @@ nlme	3.1-140
 nugohs1a520180hsensgprobe	22.0.0
 nugomm1a520177mmensgprobe	22.0.0
 oligo	1.52.1
-oligoClasses	1.40.0
+oligoClasses	1.50.4
 openssl	1.4
 ovigene10stoaensgprobe	22.0.0
 ovigene11stoaensgprobe	22.0.0
