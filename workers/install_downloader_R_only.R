@@ -18,7 +18,7 @@ install_with_url <- function(urls) {
 }
 
 bioc_pkgs <- c(
-  'https://bioconductor.org/packages/3.12/bioc/src/contrib/affyio_1.60.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/bioc/src/contrib/zlibbioc_1.36.0.tar.gz'
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/affyio_1.58.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/zlibbioc_1.34.0.tar.gz'
 )
 install_with_url(bioc_pkgs)

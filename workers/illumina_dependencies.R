@@ -15,21 +15,22 @@ install_with_url <- function(urls) {
 devtools::install_version('dplyr', version='1.0.2')
 
 bioc_pkgs <- c(
-  'https://bioconductor.org/packages/3.12/bioc/src/contrib/oligo_1.54.1.tar.gz',
-  'https://bioconductor.org/packages/3.12/bioc/src/contrib/AnnotationDbi_1.52.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/bioc/src/contrib/limma_3.46.0.tar.gz'
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/oligoClasses_1.50.4.tar.gz',
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/oligo_1.52.1.tar.gz',
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/AnnotationDbi_1.50.3.tar.gz',
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/limma_3.44.3.tar.gz'
 )
 install_with_url(bioc_pkgs)
 
 illumina_pkgs <- c(
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaHumanv1.db_1.26.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaHumanv2.db_1.26.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaHumanv3.db_1.26.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaHumanv4.db_1.26.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaMousev1.db_1.26.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaMousev1p1.db_1.26.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaMousev2.db_1.26.0.tar.gz',
-  'https://bioconductor.org/packages/3.12/data/annotation/src/contrib/illuminaRatv1.db_1.26.0.tar.gz'
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv1.db_1.26.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv2.db_1.26.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv3.db_1.26.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv4.db_1.26.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev1.db_1.26.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev1p1.db_1.26.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev2.db_1.26.0.tar.gz',
+  'https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaRatv1.db_1.26.0.tar.gz'
 )
 install_with_url(illumina_pkgs)
 

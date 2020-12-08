@@ -13,7 +13,7 @@ install_with_url <- function(urls) {
 }
 
 bioc_pkgs <- c(
-  'https://bioconductor.org/packages/release/bioc/src/contrib/preprocessCore_1.52.0.tar.gz'
+  'https://bioconductor.org/packages/3.11/bioc/src/contrib/preprocessCore_1.50.0.tar.gz'
 )
 install_with_url(bioc_pkgs)
 

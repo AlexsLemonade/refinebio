@@ -16,7 +16,7 @@ memoise	1.1.0
 mime	0.6
 openssl	1.0.2
 optparse	1.4.4
-preprocessCore	1.42.0
+preprocessCore	1.50.0
 rstudioapi	0.8
 whisker	0.3-2
 withr	2.1.2
