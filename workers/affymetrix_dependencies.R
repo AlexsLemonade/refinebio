@@ -38,7 +38,7 @@ source("install_ensg_pkgs.R")
 
 # Install Bioconductor platform design (pd) packages
 pd_experiment_pkgs <- c(
-  'https://bioconductor.org/packages/3.11/data/experiment/src/contrib/pd.atdschip.tiling_0.28.0.tar.gz'
+  'https://bioconductor.org/packages/3.11/data/experiment/src/contrib/pd.atdschip.tiling_0.26.0.tar.gz'
 )
 install_with_url(pd_experiment_pkgs)
 
