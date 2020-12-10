@@ -83,13 +83,18 @@ class OntologyTerm(models.Model):
         # The other way is <rdf:Description> tags with an <rdfs:label> child
         for child in ontology_xml.findall("rdf:Description/[rdfs:label]", namespace):
             about = child.attrib.get("{" + namespace["rdf"] + "}about")
-            ontology_term = about.split("/")[-1].replace("_", ":")
-            human_readable_name = child.find("rdfs:label", namespace).text
 
-            if OntologyTerm._get_ontology_prefix(ontology_term) == ontology_prefix:
-                term, _ = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
-                term.human_readable_name = human_readable_name
-                term.save()
+            # Something seems to have changed and this no longer to
+            # match anything. I'm leaving it on the off chance that it
+            # ever does pick anything up.
+            if about:
+                ontology_term = about.split("/")[-1].replace("_", ":")
+                human_readable_name = child.find("rdfs:label", namespace).text
+
+                if OntologyTerm._get_ontology_prefix(ontology_term) == ontology_prefix:
+                    term, _ = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
+                    term.human_readable_name = human_readable_name
+                    term.save()
 
     @staticmethod
     def _create_from_api(ontology_term: str) -> "OntologyTerm":
