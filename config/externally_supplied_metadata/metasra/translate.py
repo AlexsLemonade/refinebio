@@ -40,7 +40,7 @@ def translate_metasra_metadata(metasra_metadata: dict, cursor) -> (dict, dict):
     dictionary of keywords that refine.bio can import
     """
 
-    metadata = {}
+    metadata = []
     keywords = {}
 
     counter = 0
@@ -56,9 +56,14 @@ def translate_metasra_metadata(metasra_metadata: dict, cursor) -> (dict, dict):
 
         for accession in accessions:
             if len(value["real-value properties"]) != 0:
-                metadata[accession] = [
-                    translate_attribute(a) for a in value["real-value properties"]
-                ]
+                metadata.append(
+                    {
+                        "sample_accession": accession,
+                        "attributes": [
+                            translate_attribute(a) for a in value["real-value properties"]
+                        ],
+                    }
+                )
 
             if len(value["mapped ontology terms"]) != 0:
                 keywords[accession] = value["mapped ontology terms"]

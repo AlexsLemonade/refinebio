@@ -78,19 +78,25 @@ def import_sample_attributes(accession_code: str, attributes: List, source: Cont
 
 
 def import_metadata(metadata: Dict, source: Contribution):
-    for sample_accession, attributes in metadata.items():
-        if type(sample_accession) != str:
+    for sample in metadata:
+        if type(sample["sample_accession"]) != str:
             logger.error(
-                "The provided sample accession {} is not a string".format(sample_accession)
+                "The provided sample accession {} is not a string".format(
+                    sample["sample_accession"]
+                )
             )
             continue
 
-        if type(attributes) != list:
+        if type(sample["attributes"]) != list:
             # Don't print sample_attributes itself because it could be massive
-            logger.error("The provided attributes for sample {} is not a list".format(attributes))
+            logger.error(
+                "The provided attributes for sample {} is not a list".format(
+                    sample["sample_accession"]
+                )
+            )
             continue
 
-        import_sample_attributes(sample_accession, attributes, source)
+        import_sample_attributes(sample["sample_accession"], sample["attributes"], source)
 
 
 class Command(BaseCommand):
@@ -138,8 +144,8 @@ class Command(BaseCommand):
         with open(filepath) as file:
             metadata = json.load(file)
 
-        if type(metadata) != dict:
-            logger.error("The provided metadata file is not a dict of metadata information")
+        if type(metadata) != list:
+            logger.error("The provided metadata file is not a list of metadata information")
             sys.exit(1)
 
         source, _ = Contribution.objects.get_or_create(
