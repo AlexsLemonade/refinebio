@@ -310,7 +310,7 @@ jobs:
   affy_agilent_tests:
     runs-on: ubuntu-latest
     env:
-      IMAGES: migrations affymetrix downloaders foreman
+      IMAGES: migrations downloaders foreman
       DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
