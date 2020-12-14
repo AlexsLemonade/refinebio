@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
 RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
@@ -13,11 +13,15 @@ RUN \
   apt-fast update -qq && \
   apt-get install -y apt-transport-https && \
   apt-fast install -y lsb-release && \
-  echo "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" \
+  echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
-  apt-fast update -qq && \
-  apt-fast install -y \
+  apt-fast update -qq
+
+# Prevent tzdata from prompting us for a timezone and hanging the build.
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-fast install -y \
   ed \
   git \
   mercurial \
@@ -26,8 +30,8 @@ RUN \
   lsb-release \
   python3 \
   python3-pip \
-  r-base-core=4.0.2-1.2004.0 \
-  r-base-dev=4.0.0-1.2004.0 \
+  r-base-core \
+  r-base-dev \
   libpq-dev \
   libxml2-dev \
   libssl-dev \
@@ -35,6 +39,7 @@ RUN \
   curl \
   wget && \
   rm -rf /var/lib/apt/lists/*
+
 RUN rm CRAN.gpg
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user

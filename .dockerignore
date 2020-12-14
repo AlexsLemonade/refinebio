@@ -14,5 +14,4 @@ env/
 infrastructure/
 terraform/
 */nomad-job-specs
-config/externally_supplied_metadata/metasra/*.json
 config/externally_supplied_metadata/metasra/*.sqlite

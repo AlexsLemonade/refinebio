@@ -414,7 +414,7 @@ jobs:
       - name: Set the $CI_TAG environment variable
         run: |
           # Remove /ref/tags/ from the beginning of the tag name
-          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/}
+          echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Install git crypt
         run: ./.github/scripts/install_git_decrypt.sh
@@ -449,7 +449,7 @@ jobs:
       - name: Set the $CI_TAG environment variable
         run: |
           # Remove /ref/tags/ from the beginning of the tag name
-          echo ::set-env name=CI_TAG::${GITHUB_REF#refs/tags/}
+          echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Install git crypt
         run: git status && ./.github/scripts/install_git_decrypt.sh

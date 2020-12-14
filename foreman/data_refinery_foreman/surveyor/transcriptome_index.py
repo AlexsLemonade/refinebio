@@ -83,19 +83,28 @@ def get_species_detail_by_assembly(assembly: str, division: str) -> str:
     )
 
     urllib.request.urlcleanup()
-    collection_path = assembly + "_collection.tsv"
-    with open(collection_path, "wb") as collection_file:
-        with urllib.request.urlopen(bacteria_species_detail_url) as request:
-            shutil.copyfileobj(request, collection_file, CHUNK_SIZE)
+
+    with urllib.request.urlopen(bacteria_species_detail_url) as request:
+        header = None
+
+        for line in request:
+            # Generally bad to roll your own CSV parser, but some
+            # encoding issue seemed to have been breaking the csv
+            # parser module and this works.
+            row = line.decode("utf-8").strip().split("\t")
+
+            if not header:
+                header = row
+            else:
+                row_dict = {}
+                for (index, key) in enumerate(header):
+                    row_dict[key] = row[index]
+
+                if row_dict["assembly"] == assembly:
+                    return row_dict
 
     # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
     urllib.request.urlcleanup()
-
-    with open(collection_path) as csvfile:
-        reader = csv.DictReader(csvfile, delimiter="\t")
-        for row in reader:
-            if row["assembly"] == assembly:
-                return row
 
 
 class EnsemblUrlBuilder(ABC):
