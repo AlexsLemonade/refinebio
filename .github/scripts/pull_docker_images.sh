@@ -9,7 +9,7 @@ if [ -z "$IMAGES" ]; then
 fi
 
 for image in $IMAGES; do
-    if [[ "$image" == "affymetrix" ]]; then
+    if [ "$image" = "affymetrix" ]; then
         continue
     fi
 
