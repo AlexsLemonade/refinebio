@@ -346,6 +346,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     # We never want these!
                     if "idat.gz" in supplementary_file_url.lower():
                         continue
+                    if ".chp" in supplementary_file_url.lower():
+                        continue
                     if "chp.gz" in supplementary_file_url.lower():
                         continue
                     if "ndf.gz" in supplementary_file_url.lower():

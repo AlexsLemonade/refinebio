@@ -141,8 +141,8 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int = No
     while job.success is None and timezone.now() - start_time < MAX_WAIT_TIME:
         time.sleep(loop_time)
 
-        # Don't log statuses more often than every 5 seconds.
-        if timezone.now() - last_log_time > timedelta(seconds=5):
+        # Don't log statuses more often than every 15 seconds.
+        if timezone.now() - last_log_time > timedelta(seconds=15):
             logger.info("Still polling the %s with ID %s.", job_class.__name__, job.nomad_job_id)
             last_log_time = timezone.now()
 
@@ -492,13 +492,13 @@ class GeoCelgzRedownloadingTestCase(EndToEndTestCase):
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
-            organism = Organism(name="MUS_MUSCULUS", taxonomy_id=10090, is_scientific_name=True)
+            organism = Organism(name="DANIO_RERIO", taxonomy_id=7955, is_scientific_name=True)
             organism.save()
 
-            accession_code = "GSE100388"
+            accession_code = "GSE8724"
             survey_job = surveyor.survey_experiment(accession_code, "GEO")
 
-            SAMPLES_IN_EXPERIMENT = 15
+            SAMPLES_IN_EXPERIMENT = 3
 
             self.assertTrue(survey_job.success)
 
