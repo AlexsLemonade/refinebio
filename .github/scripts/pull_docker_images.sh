@@ -10,10 +10,6 @@ if [ -z "$IMAGES" ]; then
 fi
 
 for image in $IMAGES; do
-    if [ "$image" = "affymetrix" ]; then
-        continue
-    fi
-
     PACKAGE="$REPO/dr_$image"
     # Only pull the package if it already exists
     (docker pull "$PACKAGE" && docker tag "$PACKAGE" "ccdlstaging/dr_$image") || true
