@@ -27,6 +27,7 @@ from drf_yasg.utils import swagger_auto_schema
 from elasticsearch_dsl import TermsFacet
 from six import iteritems
 
+from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_common.models.documents import ExperimentDocument
 
 
@@ -85,8 +86,8 @@ class POSTFilteringFilterBackend(FilteringFilterBackend):
                 self.query_params.appendlist(key, str(value))
             else:
                 # We shouldn't be filtering on Null, lists, or dicts
-                raise serializers.ValidationError(
-                    "Invalid type {} for filter value {}".format(type(value), str(value))
+                raise InvalidFilters(
+                    message="Invalid type {} for filter value {}".format(type(value), str(value))
                 )
 
         def __init__(self, request):

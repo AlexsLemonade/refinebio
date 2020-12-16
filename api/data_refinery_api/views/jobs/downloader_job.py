@@ -75,7 +75,7 @@ class DownloaderJobListView(generics.ListAPIView):
         invalid_filters = check_filters(self, ["sample_accession_code", "nomad"])
 
         if invalid_filters:
-            raise InvalidFilters(invalid_filters)
+            raise InvalidFilters(invalid_filters=invalid_filters)
 
         queryset = DownloaderJob.objects.all()
 

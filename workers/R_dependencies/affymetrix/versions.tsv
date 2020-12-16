@@ -1,4 +1,4 @@
-AnnotationDbi	1.52.0
+AnnotationDbi	1.50.3
 BH	1.69.0-1
 Biobase	2.38.0
 BiocGenerics	0.24.0
@@ -7,7 +7,7 @@ BiocParallel	1.12.0
 Biostrings	2.46.0
 DBI	1.0.0
 DelayedArray	0.4.1
-GEOquery	2.48.0
+GEOquery	2.56.0
 GenomeInfoDb	1.14.0
 GenomeInfoDbData	1.0.0
 GenomicRanges	1.30.3
@@ -19,13 +19,13 @@ RCurl	1.95-4.10
 RSQLite	2.0
 Rcpp	1.0.1
 S4Vectors	0.16.0
-SCAN.UPC	2.20.0
+SCAN.UPC	2.30.0
 SummarizedExperiment	1.8.1
 XML	3.98-1.10
 XVector	0.18.0
 affxparser	1.50.0
 affy	1.56.0
-affyio	1.48.0
+affyio	1.58.0
 annotate	1.56.2
 askpass	1.1
 assertthat	0.2.1
@@ -82,7 +82,7 @@ foreach	1.4.4
 formatR	1.7
 futile.logger	1.4.3
 futile.options	1.0.1
-genefilter	1.60.0
+genefilter	1.70.0
 git2r	0.23.0
 glue	1.3.1
 gngnf1bahsensgprobe	22.0.0
@@ -154,8 +154,8 @@ mu11ksubbmmensgprobe	22.0.0
 nlme	3.1-140
 nugohs1a520180hsensgprobe	22.0.0
 nugomm1a520177mmensgprobe	22.0.0
-oligo	1.54.0
-oligoClasses	1.40.0
+oligo	1.52.1
+oligoClasses	1.50.4
 openssl	1.4
 ovigene10stoaensgprobe	22.0.0
 ovigene11stoaensgprobe	22.0.0
@@ -334,7 +334,7 @@ plogr	0.2.0
 porcinessensgprobe	22.0.0
 porgene10stssensgprobe	22.0.0
 porgene11stssensgprobe	22.0.0
-preprocessCore	1.40.0
+preprocessCore	1.50.0
 prettyunits	1.0.2
 primeviewhsensgprobe	22.0.0
 purrr	0.3.2
@@ -383,7 +383,7 @@ zeallot	0.1.0
 zebgene10stdrensgprobe	22.0.0
 zebgene11stdrensgprobe	22.0.0
 zebrafishdrensgprobe	22.0.0
-zlibbioc	1.24.0
+zlibbioc	1.34.0
 base	3.4.2
 compiler	3.4.2
 datasets	3.4.2
