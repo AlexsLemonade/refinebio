@@ -4,6 +4,10 @@ set -e
 
 REPO=$(echo "docker.pkg.github.com/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
 if [ -z "$IMAGES" ]; then
+    if [ "$image" = "affymetrix" ]; then
+        continue
+    fi
+
     echo "Error: must put images to pull in \$IMAGES" >&2
     exit 1
 fi
