@@ -3,7 +3,7 @@
 # This script downloads the json file published by MetaSRA and translates it
 # into the format that our metadata processing code understands.
 
-METASRA_URL="http://metasra.biostat.wisc.edu/static/metasra_versions/v1.6/metasra.v1-6.json"
+METASRA_URL="https://metasra.biostat.wisc.edu/static/metasra_versions/v1.6/metasra.v1-6.json"
 JSON_FILE="$(basename "$METASRA_URL")"
 SRADB_FILE="SRAmetadb.sqlite"
 

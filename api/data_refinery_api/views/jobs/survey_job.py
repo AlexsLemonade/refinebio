@@ -45,7 +45,7 @@ class SurveyJobListView(generics.ListAPIView):
         invalid_filters = check_filters(self)
 
         if invalid_filters:
-            raise InvalidFilters(invalid_filters)
+            raise InvalidFilters(invalid_filters=invalid_filters)
 
         return self.queryset
 

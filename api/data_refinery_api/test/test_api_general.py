@@ -308,7 +308,7 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}) + "?foo=bar")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertListEqual(response.json()["invalid_filters"], ["foo"])
+        self.assertListEqual(response.json()["details"], ["foo"])
 
     def test_experiment_multiple_accessions(self):
         response = self.client.get(
