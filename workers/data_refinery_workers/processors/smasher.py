@@ -470,7 +470,7 @@ def _notify_send_email(job_context):
             )
             .replace(
                 "REPLACE_MAILTO",
-                "mailto:ccdl@alexslemonade.org?subject={0}&body={1}".format(
+                "mailto:requests@ccdatalab.org?subject={0}&body={1}".format(
                     ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY
                 ),
             )

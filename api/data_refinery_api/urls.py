@@ -94,10 +94,10 @@ Additional documentation can be found at [docs.refine.bio](http://docs.refine.bi
 
 ### Questions/Feedback?
 
-If you have a question or comment, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues) or send us an email at [ccdl@alexslemonade.org](mailto:ccdl@alexslemonade.org).
+If you have a question or comment, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues) or send us an email at [requests@ccdatalab.org](mailto:requests@ccdatalab.org).
         """,
         terms_of_service="https://www.refine.bio/terms",
-        contact=openapi.Contact(email="ccdl@alexslemonade.org"),
+        contact=openapi.Contact(email="requests@ccdatalab.org"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,
