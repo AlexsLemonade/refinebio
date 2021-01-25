@@ -372,10 +372,27 @@ resource "aws_spot_fleet_request" "cheap_ram" {
 # Database
 ##
 
+# Temporary. This will go away once we can delete things.
 resource "aws_db_parameter_group" "postgres_parameters" {
   name = "postgres-parameters-${var.user}-${var.stage}"
   description = "Postgres Parameters ${var.user} ${var.stage}"
   family = "postgres9.6"
+
+  parameter {
+    name = "deadlock_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+
+  parameter {
+    name = "statement_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+}
+
+resource "aws_db_parameter_group" "postgres_parameter_group" {
+  name = "postgres-parameter-group-${var.user}-${var.stage}"
+  description = "Postgres Parameters ${var.user} ${var.stage}"
+  family = "postgres11"
 
   parameter {
     name = "deadlock_timeout"
@@ -393,7 +410,8 @@ resource "aws_db_instance" "postgres_db" {
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
-  engine_version = "9.6.11"
+  engine_version = "11.1"
+  allow_major_version_upgrade = true
   auto_minor_version_upgrade = false
   instance_class = "db.${var.database_instance_type}"
   name = "data_refinery"
@@ -402,7 +420,7 @@ resource "aws_db_instance" "postgres_db" {
   password = var.database_password
 
   db_subnet_group_name = aws_db_subnet_group.data_refinery.name
-  parameter_group_name = aws_db_parameter_group.postgres_parameters.name
+  parameter_group_name = aws_db_parameter_group.postgres_parameter_group.name
 
   # TF is broken, but we do want this protection in prod.
   # Related: https://github.com/hashicorp/terraform/issues/5417

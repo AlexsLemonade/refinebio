@@ -16,8 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Login to docker.pkg.github.com for cached docker images
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+      - name: Login to ghcr.io for cached docker images
+        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -98,8 +98,8 @@ jobs:
       - name: Free up space
         run: ./.github/scripts/cleanup_instance.sh
 
-      - name: Login to docker.pkg.github.com for cached docker images
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+      - name: Login to ghcr.io for cached docker images
+        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -197,8 +197,8 @@ jobs:
       - name: Free up space
         run: ./.github/scripts/cleanup_instance.sh
 
-      - name: Login to docker.pkg.github.com for cached docker images
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+      - name: Login to ghcr.io for cached docker images
+        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -272,8 +272,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Login to docker.pkg.github.com for cached docker images
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+      - name: Login to ghcr.io for cached docker images
+        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -319,8 +319,8 @@ jobs:
       - name: Free up space
         run: ./.github/scripts/cleanup_instance.sh
 
-      - name: Login to docker.pkg.github.com for cached docker images
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+      - name: Login to ghcr.io for cached docker images
+        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
