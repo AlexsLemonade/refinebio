@@ -13,4 +13,4 @@ Or you can use the script `create_ecs_ami.sh` to create a new [ECS-optimized](ht
 This is used by worker instances of the AWS Batch cluster.
 
 Be sure that everything on the template instance is fully installed before using either of the
-create AMI scripts, and that you only destroy terraform until the AMI is complete.
+create AMI scripts, and that you only `terraform destroy` once the AMI is complete.
