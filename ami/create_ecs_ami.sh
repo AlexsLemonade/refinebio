@@ -6,7 +6,7 @@ if [ -z "$instance_id" ]; then
     echo "Could not find an instance with name 'ECS AMI Template Instance'"
 fi
 
-echo "Creating an ami for instance $instance_id..."
+echo "Creating an ecs ami for instance $instance_id..."
 ami_name="ccdl-ecs-optimized-$(date "+%Y-%m-%dT%H.%M.%S")"
 aws ec2 create-image --instance-id "$instance_id" --name "$ami_name"
 echo "Created an ami with name $ami_name"
