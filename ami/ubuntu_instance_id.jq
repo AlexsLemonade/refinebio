@@ -4,7 +4,7 @@
 | select(
     .Tags[]
     | select(.Key == "Name")
-    | select(.Value == "AMI Template Instance")
+    | select(.Value == "Ubuntu AMI Template Instance")
 )
 # Then look for the one that is either running or stopped
 | select(.State.Name == "running" or .State.Name == "stopped")

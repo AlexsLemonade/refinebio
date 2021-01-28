@@ -1,9 +1,9 @@
 #!/bin/sh
 
-instance_id="$(aws ec2 describe-instances | jq -r -f instance_id.jq)"
+instance_id="$(aws ec2 describe-instances | jq -r -f ecs_instance_id.jq)"
 
 if [ -z "$instance_id" ]; then
-    echo "Could not find an instance with name 'AMI Template Instance'"
+    echo "Could not find an instance with name 'ECS AMI Template Instance'"
 fi
 
 echo "Creating an ami for instance $instance_id..."
