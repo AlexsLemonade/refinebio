@@ -20,7 +20,7 @@ sed -i -e '/^#[^!]/d' -e '/^$/d' client-instance-user-data.tpl.sh
 printf "exit 0\n#__EOF__\n" >> client-instance-user-data.tpl.sh
 
 # Tar up all of the files we need in the client instance
-tar c nomad-client.service ../nomad-job-specs clean-nomad-jobs.sh | \
+tar c ../batch-job-templates clean-nomad-jobs.sh | \
     # Gzip them (using --best because we only have 16k to work with)
     gzip --best | \
     # base64 encode the output because terraform requires the file to be valid UTF-8

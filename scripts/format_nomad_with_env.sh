@@ -158,9 +158,10 @@ if [ "$env" != "prod" ] && [ "$env" != "staging" ] && [ "$env" != "dev" ]; then
         extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
 "
-    export AWS_CREDS="
-    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID\"
-    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY\""
+    export AWS_CREDS<<EOF
+            {"name": "AWS_ACCESS_KEY_ID", "value": "$AWS_ACCESS_KEY_ID"},
+            {"name": "AWS_SECRET_ACCESS_KEY": "value": $AWS_SECRET_ACCESS_KEY},
+EOF
     export LOGGING_CONFIG=""
     environment_file="environments/$env"
 else
