@@ -390,7 +390,7 @@ output "environment_variables" {
       value = var.downloader_space_constraint
     },
     {
-      name = "AWS_BATCH_QUEUE_NAME"
+      name = "REFINEBIO_JOB_QUEUE_NAME"
       value = module.batch.data_refinery_default_queue_name
     },
   ]

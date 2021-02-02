@@ -42,6 +42,7 @@
             {"name": "S3_BUCKET_NAME", "value": "${{S3_BUCKET_NAME}}"},
             {"name": "LOCAL_ROOT_DIR", "value": "${{LOCAL_ROOT_DIR}}"},
             {"name": "MAX_DOWNLOADER_JOBS_PER_NODE", "value": "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"},
+            {"name": "REFINEBIO_JOB_QUEUE_NAME", "value": "${{REFINEBIO_JOB_QUEUE_NAME}}"},
             {"name": "LOG_LEVEL", "value": "${{LOG_LEVEL}}"}
         ],
         "mountPoints": [

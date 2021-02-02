@@ -26,7 +26,7 @@ logger = get_and_configure_logger(__name__)
 AWS_REGION = get_env_variable(
     "AWS_REGION", "us-east-1"
 )  # Default to us-east-1 if the region variable can't be found
-AWS_BATCH_QUEUE_NAME = get_env_variable("AWS_BATCH_QUEUE_NAME")
+AWS_BATCH_QUEUE_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_NAME")
 
 # These two constants refer to image names that should be used for
 # multiple jobs.
