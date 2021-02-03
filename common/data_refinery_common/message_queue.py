@@ -78,12 +78,7 @@ def get_job_name(job_type, job_id):
 
 
 def is_job_processor(job_type):
-    if job_type in list(Downloaders):
-        return False
-    elif job_type in list(SurveyJobTypes):
-        return False
-
-    return True
+    return job_type not in list(Downloaders) and job_type not in list(SurveyJobTypes)
 
 
 def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
