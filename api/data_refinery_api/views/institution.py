@@ -7,6 +7,7 @@ class InstitutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experiment
         fields = ("submitter_institution",)
+        read_only_fields = fields
 
 
 class InstitutionListView(generics.ListAPIView):
