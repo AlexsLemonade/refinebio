@@ -23,6 +23,7 @@ class SurveyJobSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class SurveyJobListView(generics.ListAPIView):

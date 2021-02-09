@@ -30,6 +30,7 @@ class OrganismRelationSerializer(serializers.ModelSerializer):
             "name",
             "taxonomy_id",
         )
+        read_only_fields = fields
 
 
 ##
@@ -52,6 +53,7 @@ class ComputedFileRelationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class ComputedFileWithUrlRelationSerializer(serializers.ModelSerializer):
@@ -70,6 +72,7 @@ class ComputedFileWithUrlRelationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 ##
@@ -87,6 +90,7 @@ class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
             "technology",
             "is_processed",
         )
+        read_only_fields = fields
 
 
 class SampleRelationSerializer(serializers.ModelSerializer):
@@ -110,6 +114,7 @@ class SampleRelationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 ##
@@ -137,6 +142,7 @@ class DownloaderJobRelationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class ProcessorJobRelationSerializer(serializers.ModelSerializer):
@@ -161,6 +167,7 @@ class ProcessorJobRelationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 ##
@@ -206,6 +213,7 @@ class ProcessorRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Processor
         fields = ("id", "name", "version", "docker_image", "environment")
+        read_only_fields = fields
 
 
 ##
@@ -217,6 +225,7 @@ class ComputationalResultAnnotationRelationSerializer(serializers.ModelSerialize
     class Meta:
         model = ComputationalResultAnnotation
         fields = ("id", "data", "is_ccdl", "created_at", "last_modified")
+        read_only_fields = fields
 
 
 class ComputationalResultRelationSerializer(serializers.ModelSerializer):
@@ -242,6 +251,7 @@ class ComputationalResultRelationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class ComputationalResultNoFilesRelationSerializer(serializers.ModelSerializer):
@@ -265,3 +275,4 @@ class ComputationalResultNoFilesRelationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields

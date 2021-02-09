@@ -55,6 +55,7 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
             "last_modified",
             "result",
         )
+        read_only_fields = fields
         extra_kwargs = {
             "download_url": {
                 "help_text": "This will contain an url to download the file. You must send a valid [token](#tag/token) in order to receive this."
@@ -92,6 +93,7 @@ class DetailedComputedFileSerializer(serializers.ModelSerializer):
             "last_modified",
             "result",
         )
+        read_only_fields = fields
 
 
 class ComputedFileListView(generics.ListAPIView):

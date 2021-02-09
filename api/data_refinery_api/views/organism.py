@@ -10,6 +10,7 @@ class OrganismSerializer(serializers.ModelSerializer):
             "name",
             "taxonomy_id",
         )
+        read_only_fields = fields
 
 
 class OrganismListView(generics.ListAPIView):
