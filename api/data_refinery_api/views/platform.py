@@ -10,6 +10,7 @@ class PlatformSerializer(serializers.ModelSerializer):
             "platform_accession_code",
             "platform_name",
         )
+        read_only_fields = fields
 
 
 class PlatformListView(generics.ListAPIView):
