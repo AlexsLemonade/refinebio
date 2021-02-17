@@ -13,8 +13,11 @@ class APITestCases(APITestCase):
         self.homo_sapiens.save()
         self.danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
         self.danio_rerio.save()
+        self.rattus_rattus = Organism(
+            name="RATTUS_RATTUS", taxonomy_id=10117, is_scientific_name=True
+        )
+        self.rattus_rattus.save()
 
-    def test_compendia(self):
         result = ComputationalResult()
         result.save()
 
@@ -27,6 +30,7 @@ class APITestCases(APITestCase):
         hsc1.is_qn_target = False
         hsc1.result = result
         hsc1.is_compendia = True
+        hsc1.quant_sf_only = False
         hsc1.compendia_organism = self.homo_sapiens
         hsc1.compendia_version = 1
         hsc1.s3_bucket = "dr-compendia"
@@ -42,6 +46,7 @@ class APITestCases(APITestCase):
         hsc2.is_qn_target = False
         hsc2.result = result
         hsc2.is_compendia = True
+        hsc2.quant_sf_only = False
         hsc2.compendia_organism = self.homo_sapiens
         hsc2.compendia_version = 2
         hsc2.s3_bucket = "dr-compendia"
@@ -57,12 +62,33 @@ class APITestCases(APITestCase):
         drc1.is_qn_target = False
         drc1.result = result
         drc1.is_compendia = True
+        drc1.quant_sf_only = True
         drc1.compendia_organism = self.danio_rerio
         drc1.compendia_version = 1
         drc1.s3_bucket = "dr-compendia"
         drc1.s3_key = "drc2.tsv"
         drc1.save()
 
+        rrc1 = ComputedFile()
+        rrc1.absolute_file_path = "/null/1.tsv"
+        rrc1.filename = "1.tsv"
+        rrc1.sha1 = "abc"
+        rrc1.size_in_bytes = 1
+        rrc1.is_smashable = False
+        rrc1.is_qn_target = False
+        rrc1.result = result
+        rrc1.is_compendia = False
+        rrc1.quant_sf_only = False
+        rrc1.compendia_organism = self.rattus_rattus
+        rrc1.compendia_version = 1
+        rrc1.s3_bucket = "dr-compendia"
+        rrc1.s3_key = "drc2.tsv"
+        rrc1.save()
+
+    def tearDown(self):
+        ComputedFile.objects.all().delete()
+
+    def test_compendia(self):
         response = self.client.get(
             reverse("computed_files", kwargs={"version": API_VERSION}), {"is_compendia": True}
         )
@@ -77,7 +103,7 @@ class APITestCases(APITestCase):
         # it will set the download_url field to None rather than
         # generate one.
 
-        # Create a token first
+        # create token
         response = self.client.post(
             reverse("token", kwargs={"version": API_VERSION}),
             json.dumps({"is_activated": True}),
@@ -93,3 +119,16 @@ class APITestCases(APITestCase):
         response_json = response.json()["results"]
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]["download_url"])
+
+    def test_organism_has_compendia(self):
+        response = self.client.get(
+            reverse("organisms", kwargs={"version": API_VERSION}), {"has_compendia": True},
+        )
+        response_json = response.json()["results"]
+        self.assertEqual(2, len(response_json))
+
+        response = self.client.get(
+            reverse("organisms", kwargs={"version": API_VERSION}), {"has_compendia": False},
+        )
+        response_json = response.json()["results"]
+        self.assertEqual(1, len(response_json))

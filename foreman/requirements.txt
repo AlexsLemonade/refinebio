@@ -35,3 +35,4 @@ urllib3==1.25.10          # via elasticsearch, requests
 vcrpy==4.0.2              # via -r requirements.in
 wrapt==1.12.1             # via vcrpy
 yarl==1.5.0               # via vcrpy
+django-computedfields

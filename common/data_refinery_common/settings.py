@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "django.contrib.staticfiles",
     "data_refinery_common",
+    "computedfields",
 ]
 
 MIDDLEWARE = [

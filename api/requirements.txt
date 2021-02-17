@@ -46,6 +46,7 @@ sqlparse==0.4.1           # via django
 tzlocal==2.1              # via apscheduler
 uritemplate==3.0.1        # via coreapi, drf-yasg
 urllib3==1.25.11          # via -r requirements.in, botocore, elasticsearch, requests
+django-computedfields
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

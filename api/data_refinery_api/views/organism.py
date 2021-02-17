@@ -9,6 +9,8 @@ class OrganismSerializer(serializers.ModelSerializer):
         fields = (
             "name",
             "taxonomy_id",
+            "has_compendia",
+            "has_quantfile_compendia",
         )
         read_only_fields = fields
 

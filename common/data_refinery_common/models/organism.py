@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import timezone
 
 import requests
+from computedfields.models import ComputedFieldsModel, computed
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
@@ -106,7 +107,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     return int(id_list[0].text)
 
 
-class Organism(models.Model):
+class Organism(ComputedFieldsModel):
     """Provides a lookup between organism name and taxonomy ids.
 
     Should only be used via the two class methods get_name_for_id and
@@ -127,6 +128,15 @@ class Organism(models.Model):
     qn_target = models.ForeignKey(
         "ComputationalResult", blank=True, null=True, on_delete=models.SET_NULL
     )
+
+    @computed(models.BooleanField(blank=False, null=True))
+    def has_compendia(self):
+        return self.qn_target.get_quant_sf_file().is_compendia
+
+    @computed(models.BooleanField(blank=False, null=True))
+    def has_quantfile_compendia(self):
+        computed_file = self.qn_target.get_quant_sf_file()
+        return computed_file.is_compendia and computed_file.quant_sf_only
 
     def __str__(self):
         return str(self.name)
