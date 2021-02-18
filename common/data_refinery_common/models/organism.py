@@ -7,6 +7,7 @@ import requests
 from computedfields.models import ComputedFieldsModel, computed
 
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models.compendium_result import CompendiumResult
 from data_refinery_common.utils import get_env_variable
 
 logger = get_and_configure_logger(__name__)
@@ -129,14 +130,21 @@ class Organism(ComputedFieldsModel):
         "ComputationalResult", blank=True, null=True, on_delete=models.SET_NULL
     )
 
-    @computed(models.BooleanField(blank=False, null=True))
+    @computed(
+        models.BooleanField(blank=False, null=True),
+        depends=[["primary_compendium_results", ["quant_sf_only"]]],
+    )
     def has_compendia(self):
-        return self.qn_target.get_quant_sf_file().is_compendia
+        results = CompendiumResult.objects.all().filter(primary_organism=self, quant_sf_only=False)
+        return results.count() != 0
 
-    @computed(models.BooleanField(blank=False, null=True))
+    @computed(
+        models.BooleanField(blank=False, null=True),
+        depends=[["primary_compendium_results", ["quant_sf_only"]]],
+    )
     def has_quantfile_compendia(self):
-        computed_file = self.qn_target.get_quant_sf_file()
-        return computed_file.is_compendia and computed_file.quant_sf_only
+        results = CompendiumResult.objects.all().filter(primary_organism=self, quant_sf_only=True)
+        return results.count() != 0
 
     def __str__(self):
         return str(self.name)
