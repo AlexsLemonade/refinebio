@@ -4,35 +4,96 @@
 #
 #    pip-compile requirements.in
 #
-certifi==2020.6.20        # via elasticsearch, requests
-chardet==3.0.4            # via requests
-coverage==5.2.1           # via -r requirements.in
-django-elasticsearch-dsl-drf==0.20.8  # via -r requirements.in
-django-elasticsearch-dsl==7.1.4  # via django-elasticsearch-dsl-drf
-django-nine==0.2.3        # via django-elasticsearch-dsl-drf
-django==2.2.13            # via -r requirements.in, djangorestframework
-djangorestframework==3.11.0  # via django-elasticsearch-dsl-drf
-elasticsearch-dsl==7.2.1  # via -r requirements.in, django-elasticsearch-dsl, django-elasticsearch-dsl-drf
-elasticsearch==7.8.0      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
-geoparse==2.0.1           # via -r requirements.in
-idna==2.10                # via requests, yarl
-multidict==4.7.6          # via yarl
-numpy==1.18.5             # via geoparse, pandas
-pandas==1.0.5             # via geoparse
-psycopg2-binary==2.8.5    # via -r requirements.in
-python-dateutil==2.8.1    # via -r requirements.in, elasticsearch-dsl, pandas
-python-nomad==1.2.1       # via -r requirements.in
-pytz==2020.1              # via django, pandas
-pyyaml==5.3.1             # via vcrpy
-raven==6.10.0             # via -r requirements.in
-requests==2.24.0          # via -r requirements.in, geoparse, python-nomad
-retrying==1.3.3           # via -r requirements.in
-six==1.15.0               # via django-elasticsearch-dsl, django-elasticsearch-dsl-drf, elasticsearch-dsl, python-dateutil, retrying, vcrpy
-sqlparse==0.3.1           # via django
-tqdm==4.48.0              # via geoparse
-typing-extensions==3.7.4.2  # via yarl
-urllib3==1.25.10          # via elasticsearch, requests
-vcrpy==4.0.2              # via -r requirements.in
-wrapt==1.12.1             # via vcrpy
-yarl==1.5.0               # via vcrpy
-django-computedfields
+certifi==2020.6.20
+    # via
+    #   elasticsearch
+    #   requests
+chardet==3.0.4
+    # via requests
+coverage==5.2.1
+    # via -r requirements.in
+django-computedfields==0.1.3
+    # via -r requirements.in
+django-elasticsearch-dsl-drf==0.20.8
+    # via -r requirements.in
+django-elasticsearch-dsl==7.1.4
+    # via django-elasticsearch-dsl-drf
+django-nine==0.2.3
+    # via django-elasticsearch-dsl-drf
+django==2.2.13
+    # via
+    #   -r requirements.in
+    #   djangorestframework
+djangorestframework==3.11.0
+    # via django-elasticsearch-dsl-drf
+elasticsearch-dsl==7.2.1
+    # via
+    #   -r requirements.in
+    #   django-elasticsearch-dsl
+    #   django-elasticsearch-dsl-drf
+elasticsearch==7.8.0
+    # via
+    #   django-elasticsearch-dsl-drf
+    #   elasticsearch-dsl
+geoparse==2.0.1
+    # via -r requirements.in
+idna==2.10
+    # via
+    #   requests
+    #   yarl
+multidict==4.7.6
+    # via yarl
+numpy==1.18.5
+    # via
+    #   geoparse
+    #   pandas
+pandas==1.0.5
+    # via geoparse
+psycopg2-binary==2.8.5
+    # via -r requirements.in
+python-dateutil==2.8.1
+    # via
+    #   -r requirements.in
+    #   elasticsearch-dsl
+    #   pandas
+python-nomad==1.2.1
+    # via -r requirements.in
+pytz==2020.1
+    # via
+    #   django
+    #   pandas
+pyyaml==5.3.1
+    # via vcrpy
+raven==6.10.0
+    # via -r requirements.in
+requests==2.24.0
+    # via
+    #   -r requirements.in
+    #   geoparse
+    #   python-nomad
+retrying==1.3.3
+    # via -r requirements.in
+six==1.15.0
+    # via
+    #   django-elasticsearch-dsl
+    #   django-elasticsearch-dsl-drf
+    #   elasticsearch-dsl
+    #   python-dateutil
+    #   retrying
+    #   vcrpy
+sqlparse==0.3.1
+    # via django
+tqdm==4.48.0
+    # via geoparse
+typing-extensions==3.7.4.2
+    # via yarl
+urllib3==1.25.10
+    # via
+    #   elasticsearch
+    #   requests
+vcrpy==4.0.2
+    # via -r requirements.in
+wrapt==1.12.1
+    # via vcrpy
+yarl==1.5.0
+    # via vcrpy
