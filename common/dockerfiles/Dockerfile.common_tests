@@ -54,13 +54,15 @@ COPY workers/install_affy_only.R .
 
 RUN Rscript install_affy_only.R
 
-RUN pip3 install --upgrade pip
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG C.UTF-8
 
 COPY config config
 
 COPY common/requirements.txt .
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Install this rpy2 here instead of via requirements.txt because
 # pip-compile throws an error for it.
