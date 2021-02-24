@@ -139,30 +139,10 @@ class Stats(APIView):
 
         return data
 
-    EMAIL_USERNAME_BLACKLIST = [
-        "arielsvn",
-        "cansav09",
-        "d.prasad",
-        "daniel.himmelstein",
-        "dv.prasad991",
-        "greenescientist",
-        "jaclyn.n.taroni",
-        "kurt.wheeler91",
-        "michael.zietz",
-        "miserlou",
-    ]
-
     @classmethod
     def _get_dataset_stats(cls, range_param):
         """Returns stats for processed datasets"""
-        filter_query = Q()
-        for username in Stats.EMAIL_USERNAME_BLACKLIST:
-            filter_query = filter_query | Q(email_address__startswith=username)
-        filter_query = filter_query | Q(email_address__endswith="@alexslemonade.org")
-        processed_datasets = Dataset.objects.filter(
-            is_processed=True, email_address__isnull=False
-        ).exclude(filter_query)
-        result = processed_datasets.aggregate(
+        result = Dataset.processed_filtered_objects.aggregate(
             total=Count("id"),
             aggregated_by_experiment=Count("id", filter=Q(aggregate_by="EXPERIMENT")),
             aggregated_by_species=Count("id", filter=Q(aggregate_by="SPECIES")),
@@ -176,7 +156,7 @@ class Stats(APIView):
             # We don't save the dates when datasets are processed, but we can use
             # `last_modified`, since datasets aren't modified again after they are processed
             result["timeline"] = cls._get_intervals(
-                processed_datasets, range_param, "last_modified"
+                Dataset.processed_filtered_objects, range_param, "last_modified"
             ).annotate(total=Count("id"), total_size=Sum("size_in_bytes"))
         return result
 

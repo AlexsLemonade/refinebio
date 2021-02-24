@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models.expressions import Q
 from django.utils import timezone
 
 import boto3
@@ -16,8 +17,49 @@ from data_refinery_common.models.sample import Sample
 S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
 
 
+EMAIL_USERNAME_BLACKLIST = [
+    "arielsvn",
+    "cansav09",
+    "d.prasad",
+    "daniel.himmelstein",
+    "dv.prasad991",
+    "greenescientist",
+    "jaclyn.n.taroni",
+    "kurt.wheeler91",
+    "michael.zietz",
+    "miserlou",
+]
+
+EMAIL_DOMAIN_BLACKLIST = ["@alexslemonade.org", "@ccdatalab.org"]
+
+
+class ProcessedFilteredDatasets(models.Manager):
+    """Returns only Dataset downloads that are processed and not
+    from internal email addresses."""
+
+    def get_queryset(self):
+        filter_query = Q()
+        for username in EMAIL_USERNAME_BLACKLIST:
+            filter_query = filter_query | Q(email_address__startswith=username)
+
+        for domain in EMAIL_DOMAIN_BLACKLIST:
+            filter_query = filter_query | Q(email_address__endswith=domain)
+
+        processed_datasets = (
+            super()
+            .get_queryset()
+            .filter(is_processed=True, email_address__isnull=False)
+            .exclude(filter_query)
+        )
+
+        return processed_datasets
+
+
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
+
+    # Additional Manager
+    processed_filtered_objects = ProcessedFilteredDatasets()
 
     AGGREGATE_CHOICES = (("ALL", "All"), ("EXPERIMENT", "Experiment"), ("SPECIES", "Species"))
 
