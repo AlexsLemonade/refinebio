@@ -58,7 +58,11 @@ class ProcessedFilteredDatasets(models.Manager):
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
-    # Additional Manager
+    class Meta:
+        base_manager_name = "objects"
+
+    # Managers
+    objects = models.Manager()
     processed_filtered_objects = ProcessedFilteredDatasets()
 
     AGGREGATE_CHOICES = (("ALL", "All"), ("EXPERIMENT", "Experiment"), ("SPECIES", "Species"))

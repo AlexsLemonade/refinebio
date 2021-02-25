@@ -6,7 +6,7 @@ from django.utils import timezone
 
 import requests
 
-from data_refinery_common.models import Dataset
+from data_refinery_common.models import Dataset, DatasetAnnotation
 
 
 def post_downloads_summary(days, channel):
@@ -16,7 +16,7 @@ def post_downloads_summary(days, channel):
         created_at__gt=start_time
     ).prefetch_related("datasetannotation_set")
 
-    annotation_queryset = datasets.datasetannotation_set.all()
+    annotation_queryset = DatasetAnnotation.objects.filter(dataset__in=datasets)
 
     # Save the locations permanently, since IP addresses can cycle over time
     location_cache = dict()
