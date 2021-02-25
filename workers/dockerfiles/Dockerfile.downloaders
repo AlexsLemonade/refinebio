@@ -40,6 +40,10 @@ RUN rm CRAN.gpg
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG C.UTF-8
+
 RUN pip3 install --upgrade pip
 
 ENV R_LIBS "/usr/local/lib/R/site-library"

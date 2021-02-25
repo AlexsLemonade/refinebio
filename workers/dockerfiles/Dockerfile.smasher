@@ -55,6 +55,10 @@ COPY workers/qn_dependencies.R .
 RUN Rscript qn_dependencies.R
 # End QN-specific
 
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG C.UTF-8
+
 RUN pip3 install --upgrade pip
 
 # Smasher-specific requirements

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "data_refinery_foreman.foreman",
     "raven.contrib.django.raven_compat",
     "django_elasticsearch_dsl",
+    "computedfields",
 ]
 
 MIDDLEWARE = [

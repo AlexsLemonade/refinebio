@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "data_refinery_workers.downloaders",
     "data_refinery_workers.processors",
     "raven.contrib.django.raven_compat",
+    "computedfields",
 ]
 
 MIDDLEWARE = [
