@@ -4,8 +4,8 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils import timezone
 
-from data_refinery_common.models import Dataset, DatasetAnnotation
 from data_refinery_api.management.commands.post_downloads_summary import post_downloads_summary
+from data_refinery_common.models import Dataset, DatasetAnnotation
 
 
 class DownloadsPostTestCase(TestCase):
@@ -40,7 +40,7 @@ class DownloadsPostTestCase(TestCase):
         dataset.save()
         DatasetAnnotation(dataset=dataset, data={"location": "Testyville"}).save()
         last_week = timezone.now() - timedelta(days=8)
-        dataset = Dataset(created_at=last_week, email_address="test2@gmail.com", is_processed=True,)
+        dataset = Dataset(created_at=last_week, email_address="test2@gmail.com", is_processed=True)
         dataset.save()
         DatasetAnnotation(
             created_at=last_week, dataset=dataset, data={"location": "Not Testyville"}
