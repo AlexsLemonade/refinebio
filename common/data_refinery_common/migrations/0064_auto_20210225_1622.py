@@ -6,12 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0063_auto_20210212_1855'),
+        ("data_refinery_common", "0063_auto_20210212_1855"),
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='dataset',
-            options={'base_manager_name': 'objects'},
-        ),
+        migrations.AlterModelOptions(name="dataset", options={"base_manager_name": "objects"},),
     ]
