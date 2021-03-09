@@ -113,6 +113,14 @@ class Sample(models.Model):
         metadata["refinebio_annotations"] = [
             data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
+        metadata["refinebio_processor_info"] = [
+            {
+                "id": result.processor.id,
+                "name": result.processor.name,
+                "version": result.processor.version,
+            }
+            for result in self.results.filter(processor__isnull=False)
+        ]
 
         if self.attributes.count() > 0:
             metadata["other_metadata"] = [
