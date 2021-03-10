@@ -128,7 +128,7 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
             job.save()
             return True
         except Exception as e:
-            logger.info(
+            logger.warn(
                 "Unable to Dispatch Batch Job.",
                 job_name=job_type.value,
                 job_id=str(job.id),

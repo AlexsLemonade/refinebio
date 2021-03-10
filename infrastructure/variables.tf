@@ -172,6 +172,10 @@ variable "foreman_instance_type" {
   default = "m5.2xlarge"
 }
 
+variable "worker_ami" {
+  default = "ami-0f9b369e4ad339b15"
+}
+
 variable "smasher_volume_size_in_gb" {
   # 500 is the smallest for ST1s.
   default = "500"
@@ -226,6 +230,10 @@ output "environment_variables" {
     {
       name = "AWS_SECRET_ACCESS_KEY_CLIENT"
       value = aws_iam_access_key.data_refinery_user_client_key.secret
+    },
+    {
+      name = "WORKER_ROLE_ARN"
+      value = aws_iam_role.data_refinery_worker.arn
     },
     {
       name = "DJANGO_DEBUG"

@@ -112,8 +112,8 @@ class ComputedFile(models.Model):
             logger.exception(
                 "Error uploading computed file to S3",
                 computed_file_id=self.pk,
-                s3_key=self.s3_key,
-                s3_bucket=self.s3_bucket,
+                s3_key=s3_key,
+                s3_bucket=s3_bucket,
             )
             return False
 

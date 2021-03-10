@@ -115,9 +115,6 @@ data "template_file" "nomad_client_script_smusher" {
   template = file("nomad-configuration/client-instance-user-data.tpl.sh")
 
   vars = {
-    install_nomad_script = data.local_file.install_nomad_script.content
-    nomad_client_config = data.template_file.nomad_client_config.rendered
-    nomad_client_service = data.local_file.nomad_client_service.content
     user = var.user
     stage = var.stage
     region = var.region
@@ -129,244 +126,6 @@ data "template_file" "nomad_client_script_smusher" {
   }
 }
 
-# The Smasher Instance needs to be aware of the Nomad Server's IP address,
-# so we template it into its configuration.
-data "template_file" "nomad_client_smasher_config" {
-  template = file("nomad-configuration/smasher-client.tpl.hcl")
-
-  vars = {
-    nomad_lead_server_ip = aws_instance.nomad_server_1.private_ip
-  }
-}
-
-data "template_file" "nomad_client_script_smasher_smusher" {
-  template = file(
-    "nomad-configuration/client-smasher-instance-user-data.tpl.sh",
-  )
-
-  vars = {
-    install_nomad_script = data.local_file.install_nomad_script.content
-    nomad_client_smasher_config = data.template_file.nomad_client_smasher_config.rendered
-    nomad_client_service = data.local_file.nomad_client_service.content
-    user = var.user
-    stage = var.stage
-    region = var.region
-    database_host = aws_instance.pg_bouncer.private_ip
-    database_port = var.database_port
-    database_user = var.database_user
-    database_password = var.database_password
-    database_name = aws_db_instance.postgres_db.name
-  }
-}
-
-resource "aws_instance" "smasher_instance" {
-  # This is an expense we don't need in the staging stack.
-  count = var.stage == "prod" || var.full_stack ? 1 : 0
-  ami = data.aws_ami.ubuntu.id
-  instance_type = var.smasher_instance_type
-  availability_zone = "${var.region}a"
-  vpc_security_group_ids = [aws_security_group.data_refinery_worker.id]
-  iam_instance_profile = aws_iam_instance_profile.data_refinery_instance_profile.name
-  subnet_id = aws_subnet.data_refinery_1a.id
-
-  tags = {
-    Name = "smasher-instance-${var.user}-${var.stage}"
-  }
-
-  depends_on = [
-    aws_internet_gateway.data_refinery,
-    aws_instance.nomad_server_1,
-    aws_instance.pg_bouncer,
-  ]
-
-  key_name = aws_key_pair.data_refinery.key_name
-
-  # Our instance-user-data.sh script is built by Terraform at
-  # apply-time so that it can put additional files onto the
-  # instance. For more information see the definition of this resource.
-  user_data = data.template_file.nomad_client_script_smasher_smusher.rendered
-
-  # Should be more than enough to store 2 jobs worth of data at a time.
-  root_block_device {
-    volume_type = "gp2"
-
-    # 2000 is the largest we can use without reformatting the disk.
-    # Necessary for human/mouse quantpendia.
-    # volume_size = 2000
-    # Necessary for human/mouse compendia.
-    # volume_size = 1000
-    # Appropriate for general processing.
-    volume_size = 200
-  }
-}
-
-##
-# Autoscaling / Spot Fleets
-##
-
-resource "aws_spot_fleet_request" "cheap_ram" {
-  iam_fleet_role = aws_iam_role.data_refinery_spot_fleet.arn
-  allocation_strategy = "diversified"
-  valid_until = "2021-11-04T20:44:20Z"
-  fleet_type = "maintain"
-
-  # We're using RAM_IN_GB/100 here, so 100 capacity == 10000GB == 10TB
-  # (Letting capacity go up to 1000 is apparently too much for AWS.)
-  target_capacity = var.spot_fleet_capacity
-
-  # Instances won't be destroyed on Terraform destroy without this flag.
-  # See https://github.com/hashicorp/terraform/issues/13859
-  terminate_instances_with_expiration = true
-
-  ##
-  # Common / Depends On
-  ##
-  depends_on = [
-    aws_internet_gateway.data_refinery,
-    aws_instance.nomad_server_1,
-    aws_instance.pg_bouncer,
-  ]
-
-  ##
-  # x1e.8xlarge
-  ##
-  launch_specification {
-    # Client Specific
-    instance_type = "x1e.8xlarge"
-    weighted_capacity = 10 # via https://aws.amazon.com/ec2/instance-types/
-    spot_price = var.spot_price
-    ami = data.aws_ami.ubuntu.id
-    iam_instance_profile_arn = aws_iam_instance_profile.data_refinery_instance_profile.arn
-    user_data = data.template_file.nomad_client_script_smusher.rendered
-    vpc_security_group_ids = [aws_security_group.data_refinery_worker.id]
-    subnet_id = aws_subnet.data_refinery_1a.id
-    availability_zone = "${var.region}a"
-    key_name = aws_key_pair.data_refinery.key_name
-
-    root_block_device {
-      volume_size = 900
-      volume_type = "gp2"
-    }
-
-    tags = {
-      Name = "Spot Fleet Launch Specification x1e.16xlarge ${var.user}-${var.stage}"
-      User = var.user
-      Stage = var.stage
-    }
-  }
-
-  ##
-  # x1.16xlarge
-  ##
-  launch_specification {
-    # Client Specific
-    instance_type = "x1.16xlarge"
-    weighted_capacity = 10 # via https://aws.amazon.com/ec2/instance-types/
-    spot_price = var.spot_price
-    ami = data.aws_ami.ubuntu.id
-    iam_instance_profile_arn = aws_iam_instance_profile.data_refinery_instance_profile.arn
-    user_data = data.template_file.nomad_client_script_smusher.rendered
-    vpc_security_group_ids = [aws_security_group.data_refinery_worker.id]
-    subnet_id = aws_subnet.data_refinery_1a.id
-    availability_zone = "${var.region}a"
-    key_name = aws_key_pair.data_refinery.key_name
-
-    root_block_device {
-      volume_size = 900
-      volume_type = "gp2"
-    }
-
-    tags = {
-      Name = "Spot Fleet Launch Specification x1.32xlarge ${var.user}-${var.stage}"
-      User = var.user
-      Stage = var.stage
-    }
-  }
-
-  ##
-  # x1.32xlarge
-  ##
-  launch_specification {
-    # Client Specific
-    instance_type = "x1.32xlarge"
-    weighted_capacity = 20 # via https://aws.amazon.com/ec2/instance-types/
-    spot_price = var.spot_price
-    ami = data.aws_ami.ubuntu.id
-    iam_instance_profile_arn = aws_iam_instance_profile.data_refinery_instance_profile.arn
-    user_data = data.template_file.nomad_client_script_smusher.rendered
-    vpc_security_group_ids = [aws_security_group.data_refinery_worker.id]
-    subnet_id = aws_subnet.data_refinery_1a.id
-    availability_zone = "${var.region}a"
-    key_name = aws_key_pair.data_refinery.key_name
-
-    root_block_device {
-      volume_size = 900
-      volume_type = "gp2"
-    }
-
-    tags = {
-      Name = "Spot Fleet Launch Specification x1.32xlarge ${var.user}-${var.stage}"
-      User = var.user
-      Stage = var.stage
-    }
-  }
-
-  ##
-  # x1e.16xlarge
-  ##
-  launch_specification {
-    # Client Specific
-    instance_type = "x1e.16xlarge"
-    weighted_capacity = 20 # via https://aws.amazon.com/ec2/instance-types/
-    spot_price = var.spot_price
-    ami = data.aws_ami.ubuntu.id
-    iam_instance_profile_arn = aws_iam_instance_profile.data_refinery_instance_profile.arn
-    user_data = data.template_file.nomad_client_script_smusher.rendered
-    vpc_security_group_ids = [aws_security_group.data_refinery_worker.id]
-    subnet_id = aws_subnet.data_refinery_1a.id
-    availability_zone = "${var.region}a"
-    key_name = aws_key_pair.data_refinery.key_name
-
-    root_block_device {
-      volume_size = 900
-      volume_type = "gp2"
-    }
-
-    tags = {
-      Name = "Spot Fleet Launch Specification x1e.16xlarge ${var.user}-${var.stage}"
-      User = var.user
-      Stage = var.stage
-    }
-  }
-
-  ##
-  # x1e.32xlarge
-  ##
-  launch_specification {
-    # Client Specific
-    instance_type = "x1e.32xlarge"
-    weighted_capacity = 40 # via https://aws.amazon.com/ec2/instance-types/
-    spot_price = var.spot_price
-    ami = data.aws_ami.ubuntu.id
-    iam_instance_profile_arn = aws_iam_instance_profile.data_refinery_instance_profile.arn
-    user_data = data.template_file.nomad_client_script_smusher.rendered
-    vpc_security_group_ids = [aws_security_group.data_refinery_worker.id]
-    subnet_id = aws_subnet.data_refinery_1a.id
-    availability_zone = "${var.region}a"
-    key_name = aws_key_pair.data_refinery.key_name
-
-    root_block_device {
-      volume_size = 900
-      volume_type = "gp2"
-    }
-
-    tags = {
-      Name = "Spot Fleet Launch Specification x1e.32xlarge ${var.user}-${var.stage}"
-      User = var.user
-      Stage = var.stage
-    }
-  }
-}
 
 ##
 # Database
@@ -440,7 +199,7 @@ resource "aws_instance" "pg_bouncer" {
   instance_type = var.nomad_server_instance_type
   availability_zone = "${var.region}a"
   vpc_security_group_ids = [aws_security_group.data_refinery_pg.id]
-  iam_instance_profile = aws_iam_instance_profile.data_refinery_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.data_refinery_api.name
   subnet_id = aws_subnet.data_refinery_1a.id
   depends_on = [aws_db_instance.postgres_db]
   key_name = aws_key_pair.data_refinery.key_name
@@ -610,7 +369,7 @@ resource "aws_instance" "api_server_1" {
   instance_type = var.api_instance_type
   availability_zone = "${var.region}a"
   vpc_security_group_ids = [aws_security_group.data_refinery_api.id]
-  iam_instance_profile = aws_iam_instance_profile.data_refinery_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.data_refinery_api.name
   subnet_id = aws_subnet.data_refinery_1a.id
   depends_on = [
     aws_db_instance.postgres_db,
@@ -660,7 +419,6 @@ data "template_file" "foreman_server_script_smusher" {
     user = var.user
     stage = var.stage
     region = var.region
-    nomad_lead_server_ip = aws_instance.nomad_server_1.private_ip
     database_host = aws_instance.pg_bouncer.private_ip
     database_user = var.database_user
     database_password = var.database_password
@@ -678,7 +436,7 @@ resource "aws_instance" "foreman_server_1" {
   instance_type = var.foreman_instance_type
   availability_zone = "${var.region}a"
   vpc_security_group_ids = [aws_security_group.data_refinery_foreman.id]
-  iam_instance_profile = aws_iam_instance_profile.data_refinery_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.data_refinery_foreman.name
   subnet_id = aws_subnet.data_refinery_1a.id
   depends_on = [
     aws_db_instance.postgres_db,

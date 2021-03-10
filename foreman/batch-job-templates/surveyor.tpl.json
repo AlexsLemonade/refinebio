@@ -64,6 +64,6 @@
         }
     },
     "tags": {
-        "Name": "data-refinery-${{USER}}-${{STAGE}}"
+        "Name": "data-refinery-${{USER}}-${{STAGE}}-surveyor"
     }
 }

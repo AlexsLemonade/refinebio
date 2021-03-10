@@ -121,7 +121,7 @@ def create_long_and_short_processor_jobs(files_to_process):
         send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long)
     except Exception:
         # This is fine, the foreman will requeue these later.
-        pass
+        logger.exception("Problem with submitting a long transcriptome index job.")
 
     processor_job_short = ProcessorJob()
     processor_job_short.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
@@ -139,4 +139,4 @@ def create_long_and_short_processor_jobs(files_to_process):
         send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short)
     except Exception:
         # This is fine, the foreman will requeue these later.
-        pass
+        logger.exception("Problem with submitting a long transcriptome index job.")
