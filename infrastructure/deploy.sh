@@ -171,12 +171,6 @@ fi
 # Always init terraform first, especially since we're using a remote backend.
 ./init_terraform.sh
 
-# These resources will prevent the deletion of the compute
-# environment, so we have to taint them each time. (Since we don't
-# know when they'll be necessary.)
-terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
-terraform taint module.batch.aws_batch_job_queue.data_refinery_bigdisk_queue || true
-
 if [[ ! -f terraform.tfstate ]]; then
     ran_init_build=true
     echo "No terraform state file found, applying initial terraform deployment."
@@ -197,6 +191,11 @@ if [[ ! -f terraform.tfstate ]]; then
     else
         terraform apply -var-file="environments/$env.tfvars" -auto-approve
     fi
+else
+    # These resources will prevent the deletion of the compute
+    # environment, so we have to taint them each time. (Since we don't
+    # know when they'll be necessary.)
+    terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
 fi
 
 # We have to do this once before the initial deploy..
@@ -295,6 +294,7 @@ echo "Registering new job specifications.."
 # shellcheck disable=SC2010
 for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
     aws batch register-job-definition --cli-input-json file://"$batch_job_template" &
+    sleep 1
 done
 echo "Job registrations have been fired off."
 
@@ -308,9 +308,7 @@ echo "Job registrations have been fired off."
 # ./nomad-configuration/prepare-client-instance-user-data.sh
 # terraform taint aws_spot_fleet_request.cheap_ram
 terraform taint module.batch.aws_launch_template.data_refinery_lt_standard
-terraform taint module.batch.aws_launch_template.data_refinery_lt_bigdisk
 terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
-terraform taint module.batch.aws_batch_job_queue.data_refinery_bigdisk_queue || true
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1

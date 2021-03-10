@@ -24,6 +24,7 @@
                 "name": "data_store"
             }
         ],
+        "jobRoleArn": "${{WORKER_ROLE_ARN}}",
         "environment": [
             {"name": "DJANGO_SECRET_KEY", "value": "${{DJANGO_SECRET_KEY}}"},
             {"name": "DJANGO_DEBUG", "value": "${{DJANGO_DEBUG}}"},
@@ -65,6 +66,6 @@
         }
     },
     "tags": {
-        "Name": "data-refinery-${{USER}}-${{STAGE}}"
+        "Name": "data-refinery-${{USER}}-${{STAGE}}-downloader"
     }
 }

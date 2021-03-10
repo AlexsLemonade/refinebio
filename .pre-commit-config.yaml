@@ -41,7 +41,9 @@ repos:
             # SC1090,SC1091: Don't try to follow sourced files
           - --exclude=SC2154,SC1090,SC1091
 
-  - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.45.0
-    hooks:
-      - id: terraform_validate
+  # XXX
+  # TEMPORARY until my next PR, so I don't have to remove Nomad in this one.
+  # - repo: https://github.com/antonbabenko/pre-commit-terraform
+  #   rev: v1.45.0
+  #   hooks:
+  #     - id: terraform_validate

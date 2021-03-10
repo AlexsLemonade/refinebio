@@ -25,12 +25,3 @@ resource "aws_batch_job_queue" "data_refinery_default_queue" {
 output "data_refinery_default_queue_name" {
   value = aws_batch_job_queue.data_refinery_default_queue.name
 }
-
-resource "aws_batch_job_queue" "data_refinery_bigdisk_queue" {
-  name = "data-refinery-batch-bigdisk-queue-${var.user}-${var.stage}"
-  state = "ENABLED"
-  priority = 1
-  compute_environments = [
-    aws_batch_compute_environment.data_refinery_spot_bigdisk.arn,
-  ]
-}

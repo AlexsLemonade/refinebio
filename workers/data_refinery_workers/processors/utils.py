@@ -649,7 +649,7 @@ def get_runtime_env(yml_filename):
 
     runtime_env = dict()
     with open(yml_filename) as yml_fh:
-        pkgs = yaml.load(yml_fh)
+        pkgs = yaml.load(yml_fh, Loader=yaml.SafeLoader)
         for pkg_type, pkg_list in pkgs.items():
             if pkg_type == "os_distribution":
                 value = get_os_distro()
