@@ -88,7 +88,7 @@ class Sample(models.Model):
         self.last_modified = current_time
         return super(Sample, self).save(*args, **kwargs)
 
-    def to_metadata_dict(self):
+    def to_metadata_dict(self, computed_file=None):
         """Render this Sample as a dict."""
         metadata = {}
         metadata["refinebio_title"] = self.title
@@ -113,14 +113,11 @@ class Sample(models.Model):
         metadata["refinebio_annotations"] = [
             data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
-        metadata["refinebio_processor_info"] = [
-            {
-                "id": result.processor.id,
-                "name": result.processor.name,
-                "version": result.processor.version,
-            }
-            for result in self.results.filter(processor__isnull=False)
-        ]
+
+        if computed_file and computed_file.result and computed_file.result.processor:
+            metadata["refinebio_processor_id"] = computed_file.result.processor.id
+            metadata["refinebio_processor_name"] = computed_file.result.processor.name
+            metadata["refinebio_processor_version"] = computed_file.result.processor.version
 
         if self.attributes.count() > 0:
             metadata["other_metadata"] = [
