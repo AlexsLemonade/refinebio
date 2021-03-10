@@ -32,8 +32,6 @@ docker run \\
        -e DATABASE_PASSWORD="${database_password}" \\
        -e ELASTICSEARCH_HOST="${elasticsearch_host}" \\
        -e ELASTICSEARCH_PORT="${elasticsearch_port}" \\
-       -e AWS_ACCESS_KEY_ID="${aws_access_key_id}" \\
-       -e AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}" \\
        -v /tmp:/tmp \\
        --add-host=nomad:"${nomad_lead_server_ip}" \\
        --log-driver=awslogs \\
@@ -63,8 +61,6 @@ docker run \\
        -e DATABASE_PASSWORD=${database_password} \\
        -e ELASTICSEARCH_HOST=${elasticsearch_host} \\
        -e ELASTICSEARCH_PORT=${elasticsearch_port} \\
-       -e AWS_ACCESS_KEY_ID=${aws_access_key_id} \\
-       -e AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \\
        -v /tmp:/tmp \\
        --add-host=nomad:${nomad_lead_server_ip} \\
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@

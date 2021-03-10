@@ -389,5 +389,9 @@ output "environment_variables" {
       name = "DOWNLOADER_SPACE_CONSTRAINT"
       value = var.downloader_space_constraint
     },
+    {
+      name = "REFINEBIO_JOB_QUEUE_NAME"
+      value = module.batch.data_refinery_default_queue_name
+    },
   ]
 }

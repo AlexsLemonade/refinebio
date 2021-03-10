@@ -1,0 +1,69 @@
+{
+    "jobDefinitionName": "SURVEYOR_${{RAM}}",
+    "type": "container",
+    "parameters": {
+        "job_name": "",
+        "job_id": ""
+    },
+    "containerProperties": {
+        "image": "${{DOCKERHUB_REPO}}/${{DOWNLOADERS_DOCKER_IMAGE}}",
+        "vcpus": 1,
+        "memory": ${{RAM}},
+        "command": [
+            "python3",
+            "manage.py",
+            "survey_all",
+            "--job-id", "Ref::job_id"
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "${{VOLUME_DIR}}"
+                },
+                "name": "data_store"
+            }
+        ],
+        "environment": [
+            {"name": "DJANGO_SECRET_KEY", "value": "${{DJANGO_SECRET_KEY}}"},
+            {"name": "DJANGO_DEBUG", "value": "${{DJANGO_DEBUG}}"},
+            {"name": "DATABASE_NAME", "value": "${{DATABASE_NAME}}"},
+            {"name": "DATABASE_USER", "value": "${{DATABASE_USER}}"},
+            {"name": "DATABASE_PASSWORD", "value": "${{DATABASE_PASSWORD}}"},
+            {"name": "DATABASE_HOST", "value": "${{DATABASE_HOST}}"},
+            {"name": "DATABASE_PORT", "value": "${{DATABASE_PORT}}"},
+            {"name": "DATABASE_TIMEOUT", "value": "${{DATABASE_TIMEOUT}}"},
+            {"name": "RAVEN_DSN", "value": "${{RAVEN_DSN}}"},
+            {"name": "RAVEN_DSN_API", "value": "${{RAVEN_DSN_API}}"},
+            {"name": "NOMAD_HOST", "value": "${{NOMAD_HOST}}"},
+            {"name": "NOMAD_PORT", "value": "${{NOMAD_PORT}}"},
+            {"name": "RUNNING_IN_CLOUD", "value": "${{RUNNING_IN_CLOUD}}"},
+            {"name": "USE_S3", "value": "${{USE_S3}}"},
+            {"name": "S3_BUCKET_NAME", "value": "${{S3_BUCKET_NAME}}"},
+            {"name": "LOCAL_ROOT_DIR", "value": "${{LOCAL_ROOT_DIR}}"},
+            {"name": "MAX_DOWNLOADER_JOBS_PER_NODE", "value": "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"},
+            {"name": "REFINEBIO_JOB_QUEUE_NAME", "value": "${{REFINEBIO_JOB_QUEUE_NAME}}"},
+            {"name": "LOG_LEVEL", "value": "${{LOG_LEVEL}}"}
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/home/user/data_store",
+                "readOnly": false,
+                "sourceVolume": "data_store"
+            }
+        ],
+        "readonlyRootFilesystem": false,
+        "privileged": true,
+        "user": "user",
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-region": "${{AWS_REGION}}",
+                "awslogs-group": "data-refinery-log-group-${{USER}}-${{STAGE}}",
+                "awslogs-stream-prefix": "data-refinery-downloader-${{USER}}-${{STAGE}}"
+            }
+        }
+    },
+    "tags": {
+        "Name": "data-refinery-${{USER}}-${{STAGE}}"
+    }
+}

@@ -115,6 +115,8 @@ format_environment_variables () {
   json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
   for row in $json_env_vars; do
       env_var_assignment=$(echo "$row" | jq -r ".name")=$(echo "$row" | jq -r ".value")
+      # Exporting an expansion rather than a variable, which is exactly what we want to do.
+      # shellcheck disable=SC2163
       export "${env_var_assignment?}"
       echo "$env_var_assignment" >> prod_env
   done
@@ -169,11 +171,17 @@ fi
 # Always init terraform first, especially since we're using a remote backend.
 ./init_terraform.sh
 
+# These resources will prevent the deletion of the compute
+# environment, so we have to taint them each time. (Since we don't
+# know when they'll be necessary.)
+terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
+terraform taint module.batch.aws_batch_job_queue.data_refinery_bigdisk_queue || true
+
 if [[ ! -f terraform.tfstate ]]; then
     ran_init_build=true
     echo "No terraform state file found, applying initial terraform deployment."
 
-    # These files are inputs but are created by format_nomad_with_env.sh
+    # These files are inputs but are created by format_batch_with_env.sh
     # based on outputs from terraform. Kinda a Catch 22, but we can
     # get around it by providing dummy files to get bootstrapped.
     touch api-configuration/environment
@@ -195,8 +203,8 @@ fi
 rm -f prod_env
 format_environment_variables
 
-../scripts/format_nomad_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
-../scripts/format_nomad_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration/"
+../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
+../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration/"
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.
@@ -214,79 +222,8 @@ if [[ -z $ran_init_build ]]; then
     fi
 fi
 
-# Find address of Nomad server.
-NOMAD_LEAD_SERVER_IP="$(terraform output nomad_server_1_ip)"
-export NOMAD_LEAD_SERVER_IP
-
-export NOMAD_ADDR=http://$NOMAD_LEAD_SERVER_IP:4646
-
-# Wait for Nomad to get started in case the server just went up for
-# the first time.
-
-set +e # curl fails if the nomad server isn't up
-
-echo "Confirming Nomad cluster.."
-start_time=$(date +%s)
-diff=0
-nomad_status=$(check_nomad_status)
-while [ "$diff" -lt "900" ] && [ "$nomad_status" != "200" ]; do
-    sleep 1
-    nomad_status=$(check_nomad_status)
-    (( diff = $(date +%s) - start_time ))
-done
-
-if [[ $nomad_status != "200" ]]; then
-    echo "Nomad didn't start, aborting deploy."
-    echo "Either the timeout needs to be raised or there's something else broken."
-    exit 1
-fi
-
-set -e # Turn errors back on after we confirm that the nomad server is up
-
-# Kill Base Nomad Jobs so no new jobs can be queued.
-echo "Killing base jobs.. (this takes a while..)"
-if [[ "$(nomad status)" != "No running jobs" ]]; then
-    for job in $(nomad status | grep running | awk '{print $1}' | grep --invert-match /)
-    do
-        # '|| true' so that if a job is garbage collected before we can remove it the error
-        # doesn't interrupt our deploy.
-        nomad stop -purge -detach "$job" > /dev/null || true &
-    done
-fi
-
-# Wait to make sure that all base jobs are killed so no new jobs can
-# be queued while we kill the parameterized Nomad jobs.
-# shellcheck disable=SC2046
-wait $(jobs -p)
-
-# Kill parameterized Nomad Jobs so no jobs will be running when we
-# apply migrations.
-echo "Killing dispatch jobs.. (this also takes a while..)"
-if [[ "$(nomad status)" != "No running jobs" ]]; then
-    counter=0
-    for job in $(nomad status | awk '{print $1}' | grep /)
-    do
-        # Skip the header row for jobs.
-        if [ "$job" != "ID" ]; then
-            # '|| true' so that if a job is garbage collected before we can remove it the error
-            # doesn't interrupt our deploy.
-            nomad stop -purge -detach "$job" > /dev/null || true &
-            counter=$((counter+1))
-        fi
-
-        # Wait for all the jobs to stop every 100 so we don't knock
-        # over the deploy box if there are 1000's.
-        if [[ "$counter" -gt 100 ]]; then
-            # shellcheck disable=SC2046
-            wait $(jobs -p)
-            counter=0
-        fi
-    done
-fi
-
-# Wait for any remaining jobs to all die.
-# shellcheck disable=SC2046
-wait $(jobs -p)
+# Remove all Batch jobs because it's the only way to be sure we don't
+# have any old ones.
 
 # Make sure that prod_env is empty since we are only appending to it.
 # prod_env is a temporary file we use to pass environment variables to
@@ -337,36 +274,43 @@ docker run \
 
 # Make sure to clear out any old nomad job specifications since we
 # will register everything in this directory.
-if [ -e nomad-job-specs ]; then
-  rm -r nomad-job-specs
+if [ -e batch-job-templates ]; then
+  rm -r batch-job-templates
 fi
 
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
-mkdir -p nomad-job-specs
-../scripts/format_nomad_with_env.sh -p workers -e "$env" -o "$(pwd)/nomad-job-specs"
-../scripts/format_nomad_with_env.sh -p surveyor -e "$env" -o "$(pwd)/nomad-job-specs"
+mkdir -p batch-job-templates
+../scripts/format_batch_with_env.sh -p workers -e "$env" -o "$(pwd)/batch-job-templates"
+../scripts/format_batch_with_env.sh -p surveyor -e "$env" -o "$(pwd)/batch-job-templates"
 
 # API and foreman aren't run as nomad jobs, but the templater still works.
-../scripts/format_nomad_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
-../scripts/format_nomad_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
+../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
+../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
 
 # Re-register Nomad jobs (skip those that end in .tpl)
 echo "Registering new job specifications.."
-for nomad_job_spec in nomad-job-specs/*.nomad; do
-    nomad run "$nomad_job_spec" &
+# SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
+# We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.
+# shellcheck disable=SC2010
+for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
+    aws batch register-job-definition --cli-input-json file://"$batch_job_template" &
 done
 echo "Job registrations have been fired off."
 
 # Prepare the client instance user data script for the nomad client instances.
 # The `prepare-client-instance-user-data.sh` script modifies
 # `client-instance-user-data.tpl.sh`, so we have to back it up first.
-if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
-    cp nomad-configuration/client-instance-user-data.tpl.sh nomad-configuration/client-instance-user-data.tpl.sh.bak
-fi
+# if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
+#     cp nomad-configuration/client-instance-user-data.tpl.sh nomad-configuration/client-instance-user-data.tpl.sh.bak
+# fi
 
-./nomad-configuration/prepare-client-instance-user-data.sh
-terraform taint aws_spot_fleet_request.cheap_ram
+# ./nomad-configuration/prepare-client-instance-user-data.sh
+# terraform taint aws_spot_fleet_request.cheap_ram
+terraform taint module.batch.aws_launch_template.data_refinery_lt_standard
+terraform taint module.batch.aws_launch_template.data_refinery_lt_bigdisk
+terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
+terraform taint module.batch.aws_batch_job_queue.data_refinery_bigdisk_queue || true
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1
@@ -386,7 +330,7 @@ fi
 # Don't leave secrets lying around!
 rm -f prod_env
 # The tarball at the end of client-instance-user-data.tpl.sh has secrets, so restore from backup
-mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
+# mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API

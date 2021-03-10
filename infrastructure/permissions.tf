@@ -229,3 +229,44 @@ resource "aws_s3_bucket_policy" "cloudtrail_access_policy" {
 POLICY
 
 }
+
+
+
+resource "aws_iam_policy" "batch_policy" {
+  name = "data-refinery-batch-policy-${var.user}-${var.stage}"
+  description = "Allows Batch Permissions."
+
+  # Policy text found at:
+  # http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html
+
+  # Log streams are created dynamically by Nomad, so we give permission to the entire group
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "batch:*"
+            ],
+            "Resource": [
+              "arn:aws:batch:${var.region}:${data.aws_caller_identity.current.account_id}:*"
+            ]
+        }
+    ]
+}
+EOF
+
+}
+
+resource "aws_iam_role_policy_attachment" "batch" {
+  role = aws_iam_role.data_refinery_instance.name
+  policy_arn = aws_iam_policy.batch_policy.arn
+}
+
+
+# Needed by Batch. Don't love that This has to be defined here instead of in Batch's module.
+resource "aws_iam_role_policy_attachment" "ecs_ec2_container" {
+  role = aws_iam_role.data_refinery_instance.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}

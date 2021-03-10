@@ -6,6 +6,7 @@ from enum import Enum
 
 from django.conf import settings
 
+import boto3
 import nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 
@@ -22,6 +23,11 @@ from data_refinery_common.utils import get_env_variable, get_volume_index
 logger = get_and_configure_logger(__name__)
 
 
+AWS_REGION = get_env_variable(
+    "AWS_REGION", "us-east-1"
+)  # Default to us-east-1 if the region variable can't be found
+AWS_BATCH_QUEUE_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_NAME")
+
 # These two constants refer to image names that should be used for
 # multiple jobs.
 NOMAD_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
@@ -29,53 +35,38 @@ NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
-def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
-    """Queues a worker job by sending a Nomad Job dispatch message.
-
-    job_type must be a valid Enum for ProcessorPipelines or
-    Downloaders as defined in data_refinery_common.job_lookup.
-    job must be an existing ProcessorJob or DownloaderJob record.
-
-    Returns True if the job was successfully dispatch, return False otherwise.
-    """
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    is_processor = True
+def get_job_name(job_type, job_id):
     if (
         job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG
         or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT
     ):
-        nomad_job = NOMAD_TRANSCRIPTOME_JOB
+        return NOMAD_TRANSCRIPTOME_JOB
     elif job_type is ProcessorPipeline.SALMON or job_type is ProcessorPipeline.TXIMPORT:
         # Tximport uses the same job specification as Salmon.
-        nomad_job = ProcessorPipeline.SALMON.value
+        return ProcessorPipeline.SALMON.value
     elif job_type is ProcessorPipeline.AFFY_TO_PCL:
-        nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
+        return ProcessorPipeline.AFFY_TO_PCL.value
     elif job_type is ProcessorPipeline.NO_OP:
-        nomad_job = ProcessorPipeline.NO_OP.value
+        return ProcessorPipeline.NO_OP.value
     elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
-        nomad_job = ProcessorPipeline.ILLUMINA_TO_PCL.value
+        return ProcessorPipeline.ILLUMINA_TO_PCL.value
     elif job_type is ProcessorPipeline.SMASHER:
-        nomad_job = ProcessorPipeline.SMASHER.value
+        return ProcessorPipeline.SMASHER.value
     elif job_type is ProcessorPipeline.JANITOR:
-        nomad_job = ProcessorPipeline.JANITOR.value
+        return ProcessorPipeline.JANITOR.value
     elif job_type is ProcessorPipeline.QN_REFERENCE:
-        nomad_job = ProcessorPipeline.QN_REFERENCE.value
+        return ProcessorPipeline.QN_REFERENCE.value
     elif job_type is ProcessorPipeline.CREATE_COMPENDIA:
-        nomad_job = ProcessorPipeline.CREATE_COMPENDIA.value
+        return ProcessorPipeline.CREATE_COMPENDIA.value
     elif job_type is ProcessorPipeline.CREATE_QUANTPENDIA:
-        nomad_job = ProcessorPipeline.CREATE_QUANTPENDIA.value
+        return ProcessorPipeline.CREATE_QUANTPENDIA.value
     elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
         # Agilent twocolor uses the same job specification as Affy.
-        nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
+        return ProcessorPipeline.AFFY_TO_PCL.value
     elif job_type in list(Downloaders):
-        nomad_job = NOMAD_DOWNLOADER_JOB
-        is_processor = False
+        return NOMAD_DOWNLOADER_JOB
     elif job_type in list(SurveyJobTypes):
-        nomad_job = job_type.value
-        is_processor = False
+        return job_type.value
     elif job_type is Downloaders.NONE:
         logger.warn("Not queuing %s job.", job_type, job_id=job_id)
         raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id))
@@ -85,9 +76,14 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     else:
         raise ValueError("Invalid job_type: {}".format(job_type.value))
 
-    logger.debug(
-        "Queuing %s nomad job to run job %s with id %d.", nomad_job, job_type.value, job.id
-    )
+
+def is_job_processor(job_type):
+    return job_type not in list(Downloaders) and job_type not in list(SurveyJobTypes)
+
+
+def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
+    job_name = get_job_name(job_type, job.id)
+    is_processor = is_job_processor(job_type)
 
     if settings.AUTO_DISPATCH_NOMAD_JOBS:
         # We only want to dispatch processor jobs directly.
@@ -96,7 +92,12 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     else:
         should_dispatch = is_dispatch  # only dispatch when specifically requested to
 
+    # Temporary until the foreman will dispatch these correctly.
+    should_dispatch = True
+
     if should_dispatch:
+        batch = boto3.client("batch", region_name=AWS_REGION)
+
         # Smasher doesn't need to be on a specific instance since it will
         # download all the data to its instance anyway.
         if isinstance(job, ProcessorJob) and job_type not in SMASHER_JOB_TYPES:
@@ -108,33 +109,27 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
             if job.volume_index is None:
                 job.volume_index = get_volume_index()
                 job.save()
-            nomad_job = nomad_job + "_" + job.volume_index + "_" + str(job.ram_amount)
+            job_name = job_name + "_" + job.volume_index + "_" + str(job.ram_amount)
         elif isinstance(job, SurveyJob):
-            nomad_job = nomad_job + "_" + str(job.ram_amount)
+            job_name = job_name + "_" + str(job.ram_amount)
         elif isinstance(job, DownloaderJob):
-            volume_index = job.volume_index if settings.RUNNING_IN_CLOUD else "0"
-            nomad_job = nomad_job + "_" + volume_index + "_" + str(job.ram_amount)
+            # volume_index = job.volume_index if settings.RUNNING_IN_CLOUD else "0"
+            volume_index = job.volume_index or "0"
+            job_name = job_name + "_" + volume_index + "_" + str(job.ram_amount)
 
         try:
-            nomad_response = nomad_client.job.dispatch_job(
-                nomad_job, meta={"JOB_NAME": job_type.value, "JOB_ID": str(job.id)}
+            batch_response = batch.submit_job(
+                jobName=job_name + f"_{job.id}",
+                jobQueue=AWS_BATCH_QUEUE_NAME,
+                jobDefinition=job_name,
+                parameters={"job_name": job_type.value, "job_id": str(job.id)},
             )
-            job.nomad_job_id = nomad_response["DispatchedJobID"]
+            job.nomad_job_id = batch_response["jobId"]
             job.save()
             return True
-        except URLNotFoundNomadException:
-            logger.info(
-                "Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
-                job_type,
-                nomad_job,
-                nomad_host,
-                nomad_port,
-                job=str(job.id),
-            )
-            raise
         except Exception as e:
             logger.info(
-                "Unable to Dispatch Nomad Job.",
+                "Unable to Dispatch Batch Job.",
                 job_name=job_type.value,
                 job_id=str(job.id),
                 reason=str(e),
