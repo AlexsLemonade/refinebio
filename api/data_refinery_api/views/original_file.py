@@ -35,6 +35,7 @@ class OriginalFileSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class DetailedOriginalFileSerializer(OriginalFileSerializer):
@@ -61,6 +62,7 @@ class OriginalFileListSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class OriginalFileListView(generics.ListAPIView):

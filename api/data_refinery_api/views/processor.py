@@ -7,6 +7,7 @@ class ProcessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Processor
         fields = ("id", "name", "version", "docker_image", "environment")
+        read_only_fields = fields
 
 
 class ProcessorListView(generics.ListAPIView):

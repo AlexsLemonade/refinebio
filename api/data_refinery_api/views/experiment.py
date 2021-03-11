@@ -22,6 +22,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class ExperimentSerializer(serializers.ModelSerializer):
@@ -61,6 +62,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
             "sample_metadata",
             "technologies",
         )
+        read_only_fields = fields
 
     @staticmethod
     def setup_eager_loading(queryset):
@@ -111,6 +113,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
             "num_processed_samples",
             "num_downloadable_samples",
         )
+        read_only_fields = fields
 
 
 class ExperimentListView(generics.ListAPIView):

@@ -106,7 +106,7 @@ else
 
         if test "$GITHUB_ACTIONS"; then
             # docker needs repositories to be lowercase
-            CACHE_REPO="$(echo "docker.pkg.github.com/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+            CACHE_REPO="$(echo "ghrc.io/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
             CACHED_PACKAGE="$CACHE_REPO/dr_$image"
             CACHE="--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $CACHED_PACKAGE"
         fi

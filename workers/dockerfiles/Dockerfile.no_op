@@ -73,6 +73,11 @@ WORKDIR /home/user
 # End Noop-specific
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
+
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG C.UTF-8
+
 RUN pip3 install --upgrade pip
 RUN  pip3 install -r requirements.txt
 

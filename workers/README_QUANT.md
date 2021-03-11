@@ -30,7 +30,7 @@ Please see [our documentation](http://docs.refine.bio/en/latest/main_text.html#r
 ## Contact
 
 If you identify issues with this download, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues).
-If you would prefer to report issues via e-mail, you can also email [ccdl@alexslemonade.org](mailto:ccdl@alexslemonade.org).
+If you would prefer to report issues via e-mail, you can also email [requests@ccdatalab.org](mailto:requests@ccdatalab.org).
 
 ## Citing refine.bio
 

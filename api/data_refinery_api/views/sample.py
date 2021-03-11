@@ -37,6 +37,7 @@ class SampleAnnotationSerializer(serializers.ModelSerializer):
             "created_at",
             "last_modified",
         )
+        read_only_fields = fields
 
 
 class DetailedSamplesComputationalResultSerializer(serializers.ModelSerializer):
@@ -50,6 +51,7 @@ class DetailedSamplesComputationalResultSerializer(serializers.ModelSerializer):
             "processor",
             "organism_index",
         )
+        read_only_fields = fields
 
 
 class DetailedSampleSerializer(serializers.ModelSerializer):
@@ -94,6 +96,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             "computed_files",
             "experiment_accession_codes",
         )
+        read_only_fields = fields
 
 
 @method_decorator(
@@ -206,8 +209,8 @@ class SampleListView(generics.ListAPIView):
         return queryset
 
     def get_query_params_filters(self):
-        """ We do advanced filtering on the queryset depending on the query parameters.
-            This returns the parameters that should be used for that. """
+        """We do advanced filtering on the queryset depending on the query parameters.
+        This returns the parameters that should be used for that."""
         filter_dict = dict()
 
         ids = self.request.query_params.get("ids", None)

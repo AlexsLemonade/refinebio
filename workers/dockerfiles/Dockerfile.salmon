@@ -81,6 +81,10 @@ RUN wget "http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/sratoolkit.${
     tar zxfv sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz && \
     cp -r sratoolkit.${SRA_VERSION}-ubuntu64/bin/* /usr/bin
 
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG C.UTF-8
+
 RUN pip3 install --upgrade pip
 
 COPY config/ config/

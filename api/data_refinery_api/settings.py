@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     # Local
     "data_refinery_common",
     "data_refinery_api",
+    "computedfields",
 ]
 
 MIDDLEWARE = [

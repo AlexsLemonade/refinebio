@@ -34,6 +34,7 @@ class QNTargetSerializer(serializers.ModelSerializer):
             "last_modified",
             "result",
         )
+        read_only_fields = fields
 
 
 class QNTargetsAvailable(generics.ListAPIView):

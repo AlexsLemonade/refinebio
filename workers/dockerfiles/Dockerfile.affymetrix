@@ -58,6 +58,10 @@ COPY workers/install_ensg_pkgs.R .
 
 RUN Rscript affymetrix_dependencies.R
 
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG C.UTF-8
+
 RUN pip3 install pip --upgrade
 
 RUN pip3 install setuptools --upgrade && \
