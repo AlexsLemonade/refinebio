@@ -73,6 +73,11 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
+def choose_job_queue():
+    """Temporarily just use one job queue."""
+    return "0"
+
+
 def get_volume_index(path="/home/user/data_store/VOLUME_INDEX") -> str:
     """ Reads the contents of the VOLUME_INDEX file, else returns default """
 

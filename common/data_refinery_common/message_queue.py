@@ -18,7 +18,7 @@ from data_refinery_common.job_lookup import (
 )
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import DownloaderJob, ProcessorJob, SurveyJob
-from data_refinery_common.utils import get_env_variable, get_volume_index
+from data_refinery_common.utils import choose_job_queue, get_env_variable, get_volume_index
 
 logger = get_and_configure_logger(__name__)
 
@@ -27,6 +27,9 @@ AWS_REGION = get_env_variable(
     "AWS_REGION", "us-east-1"
 )  # Default to us-east-1 if the region variable can't be found
 AWS_BATCH_QUEUE_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_NAME")
+
+# Job definitons are AWS objects so they have to be namespaced for our stack.
+JOB_DEFINITION_PREFIX = get_env_variable("JOB_DEFINITION_PREFIX", "")
 
 # These two constants refer to image names that should be used for
 # multiple jobs.
@@ -98,24 +101,11 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     if should_dispatch:
         batch = boto3.client("batch", region_name=AWS_REGION)
 
-        # Smasher doesn't need to be on a specific instance since it will
-        # download all the data to its instance anyway.
-        if isinstance(job, ProcessorJob) and job_type not in SMASHER_JOB_TYPES:
-            # Make sure this job goes to the correct EBS resource.
-            # If this is being dispatched for the first time, make sure that
-            # we store the currently attached index.
-            # If this is being dispatched by the Foreman, it should already
-            # have an attached volume index, so use that.
-            if job.volume_index is None:
-                job.volume_index = get_volume_index()
-                job.save()
-            job_name = job_name + "_" + job.volume_index + "_" + str(job.ram_amount)
-        elif isinstance(job, SurveyJob):
+        job_name = JOB_DEFINITION_PREFIX + job_name
+
+        # Smasher related jobs don't have RAM tiers.
+        if job_type not in SMASHER_JOB_TYPES:
             job_name = job_name + "_" + str(job.ram_amount)
-        elif isinstance(job, DownloaderJob):
-            # volume_index = job.volume_index if settings.RUNNING_IN_CLOUD else "0"
-            volume_index = job.volume_index or "0"
-            job_name = job_name + "_" + volume_index + "_" + str(job.ram_amount)
 
         try:
             batch_response = batch.submit_job(

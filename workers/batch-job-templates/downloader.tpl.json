@@ -1,5 +1,5 @@
 {
-    "jobDefinitionName": "DOWNLOADER_${{INDEX}}_${{RAM}}",
+    "jobDefinitionName": "${{USER}}_${{STAGE}}_DOWNLOADER_${{RAM}}",
     "type": "container",
     "parameters": {
         "job_name": "",
@@ -44,6 +44,7 @@
             {"name": "LOCAL_ROOT_DIR", "value": "${{LOCAL_ROOT_DIR}}"},
             {"name": "MAX_DOWNLOADER_JOBS_PER_NODE", "value": "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"},
             {"name": "REFINEBIO_JOB_QUEUE_NAME", "value": "${{REFINEBIO_JOB_QUEUE_NAME}}"},
+            {"name": "JOB_DEFINITION_PREFIX", "value": "${{USER}}_${{STAGE}}_"},
             {"name": "LOG_LEVEL", "value": "${{LOG_LEVEL}}"}
         ],
         "mountPoints": [
