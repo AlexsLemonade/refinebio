@@ -33,7 +33,6 @@ docker run \\
        -e ELASTICSEARCH_HOST="${elasticsearch_host}" \\
        -e ELASTICSEARCH_PORT="${elasticsearch_port}" \\
        -v /tmp:/tmp \\
-       --add-host=nomad:"${nomad_lead_server_ip}" \\
        --log-driver=awslogs \\
        --log-opt awslogs-region="${region}" \\
        --log-opt awslogs-group="${log_group}" \\
@@ -62,7 +61,6 @@ docker run \\
        -e ELASTICSEARCH_HOST=${elasticsearch_host} \\
        -e ELASTICSEARCH_PORT=${elasticsearch_port} \\
        -v /tmp:/tmp \\
-       --add-host=nomad:${nomad_lead_server_ip} \\
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@
 " >> /home/ubuntu/run_management_command.sh
 chmod +x /home/ubuntu/run_management_command.sh
@@ -103,7 +101,6 @@ docker run \
        -e DATABASE_USER="${database_user}" \
        -e DATABASE_PASSWORD="${database_password}" \
        -v /tmp:/tmp \
-       --add-host=nomad:"${nomad_lead_server_ip}" \
        --log-driver=awslogs \
        --log-opt awslogs-region="${region}" \
        --log-opt awslogs-group="${log_group}" \

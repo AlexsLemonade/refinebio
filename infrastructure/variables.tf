@@ -374,14 +374,6 @@ output "environment_variables" {
       value = var.api_docker_image
     },
     {
-      name = "NOMAD_HOST"
-      value = aws_instance.nomad_server_1.private_ip
-    },
-    {
-      name = "NOMAD_PUBLIC_HOST"
-      value = aws_instance.nomad_server_1.public_ip
-    },
-    {
       name = "NOMAD_PORT"
       value = "4646"
     },
