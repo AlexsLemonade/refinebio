@@ -171,10 +171,15 @@ ENABLE_SERVER_SIDE_CURSORS = False
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "DEFAULT_PAGINATION_CLASS": "data_refinery_api.pagination.LimitedLimitOffsetPagination",
     "PAGE_SIZE": 25,
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "EXCEPTION_HANDLER": "data_refinery_api.exceptions.custom_exception_handler",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "3/second", "user": "3/second"},
 }
 
 SWAGGER_SETTINGS = {

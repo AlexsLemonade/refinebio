@@ -169,6 +169,7 @@ class SampleListView(generics.ListAPIView):
                 "dataset_id",
                 "experiment_accession_code",
                 "accession_codes",
+                "filter_by",
             ],
         )
 
