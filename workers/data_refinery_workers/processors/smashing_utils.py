@@ -690,9 +690,9 @@ def compile_metadata(job_context: Dict) -> Dict:
             continue
         computed_file = None
         if quant_sf_only:
-            computed_file = sample.get_most_recent_quant_sf_file
+            computed_file = sample.get_most_recent_quant_sf_file()
         else:
-            computed_file = sample.get_most_recent_smashable_result_file
+            computed_file = sample.get_most_recent_smashable_result_file()
         samples[sample.accession_code] = sample.to_metadata_dict(computed_file)
 
     metadata["samples"] = samples
