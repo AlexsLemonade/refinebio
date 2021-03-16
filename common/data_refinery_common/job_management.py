@@ -15,7 +15,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
 )
-from data_refinery_common.utils import get_volume_index
+from data_refinery_common.utils import choose_job_queue
 
 logger = get_and_configure_logger(__name__)
 
@@ -196,7 +196,7 @@ def create_processor_job_for_original_files(
         elif downloader_job.volume_index:
             processor_job.volume_index = downloader_job.volume_index
         else:
-            processor_job.volume_index = get_volume_index()
+            processor_job.volume_index = choose_job_queue()
 
         processor_job.save()
 
