@@ -1,18 +1,19 @@
 {
-    "jobDefinitionName": "${{USER}}_${{STAGE}}_SURVEYOR_${{RAM}}",
+    "jobDefinitionName": "${{USER}}_${{STAGE}}_QN_REFERENCE_${{RAM}}",
     "type": "container",
     "parameters": {
         "job_name": "",
         "job_id": ""
     },
     "containerProperties": {
-        "image": "${{DOCKERHUB_REPO}}/${{DOWNLOADERS_DOCKER_IMAGE}}",
+        "image": "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}",
         "vcpus": 1,
         "memory": ${{RAM}},
         "command": [
             "python3",
             "manage.py",
-            "survey_all",
+            "run_processor_job",
+            "--job-name", "Ref::job_name",
             "--job-id", "Ref::job_id"
         ],
         "volumes": [
@@ -23,6 +24,7 @@
                 "name": "data_store"
             }
         ],
+        "jobRoleArn": "${{WORKER_ROLE_ARN}}",
         "environment": [
             {"name": "DJANGO_SECRET_KEY", "value": "${{DJANGO_SECRET_KEY}}"},
             {"name": "DJANGO_DEBUG", "value": "${{DJANGO_DEBUG}}"},
@@ -39,6 +41,7 @@
             {"name": "RUNNING_IN_CLOUD", "value": "${{RUNNING_IN_CLOUD}}"},
             {"name": "USE_S3", "value": "${{USE_S3}}"},
             {"name": "S3_BUCKET_NAME", "value": "${{S3_BUCKET_NAME}}"},
+            {"name": "S3_QN_TARGET_BUCKET_NAME", "value": "${{S3_QN_TARGET_BUCKET_NAME}}"},
             {"name": "LOCAL_ROOT_DIR", "value": "${{LOCAL_ROOT_DIR}}"},
             {"name": "MAX_DOWNLOADER_JOBS_PER_NODE", "value": "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"},
             {"name": "REFINEBIO_JOB_QUEUE_NAME", "value": "${{REFINEBIO_JOB_QUEUE_NAME}}"},
@@ -60,11 +63,11 @@
             "options": {
                 "awslogs-region": "${{AWS_REGION}}",
                 "awslogs-group": "data-refinery-log-group-${{USER}}-${{STAGE}}",
-                "awslogs-stream-prefix": "data-refinery-downloader-${{USER}}-${{STAGE}}"
+                "awslogs-stream-prefix": "data-refinery-surveyor-${{USER}}-${{STAGE}}"
             }
         }
     },
     "tags": {
-        "Name": "data-refinery-${{USER}}-${{STAGE}}-surveyor"
+        "Name": "data-refinery-${{USER}}-${{STAGE}}-qn-reference"
     }
 }
