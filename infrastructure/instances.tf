@@ -21,7 +21,7 @@ data "aws_ami" "ubuntu" {
 # makes its way onto the instance it can spit them back out onto the
 # disk.
 data "template_file" "worker_script_smusher" {
-  template = file("workers-configuration/client-instance-user-data.tpl.sh")
+  template = file("workers-configuration/workers-instance-user-data.tpl.sh")
 
   vars = {
     user = var.user
