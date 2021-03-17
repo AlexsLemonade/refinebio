@@ -124,7 +124,7 @@ variable "local_root_dir" {
 }
 
 # Instance types / ASG
-variable "nomad_server_instance_type" {
+variable "pg_bouncer_instance_type" {
   default = "t2.medium"
 }
 
@@ -372,10 +372,6 @@ output "environment_variables" {
     {
       name = "API_DOCKER_IMAGE"
       value = var.api_docker_image
-    },
-    {
-      name = "NOMAD_PORT"
-      value = "4646"
     },
     {
       name = "MAX_DOWNLOADER_JOBS_PER_NODE"

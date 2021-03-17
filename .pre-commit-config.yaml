@@ -33,7 +33,7 @@ repos:
       - id: shell-lint
         # We didn't write codecov.sh, we just get it from their servers
         # The other one is a template.
-        exclude: "codecov.sh|infrastructure/nomad-configuration/client-instance-user-data.tpl.sh"
+        exclude: "codecov.sh|infrastructure/workers-configuration/client-instance-user-data.tpl.sh"
         args:
             # SC2154: Exclude warnings about variables being used without being
             #         assigned, because we sometimes use lowercase environment
@@ -45,3 +45,6 @@ repos:
     rev: v1.45.0
     hooks:
       - id: terraform_validate
+        # It's a small file that gets copied up temporarily during deploys.
+        # Because it's not where it gets run it seems to be in a module when it's not.
+        exclude: "infrastructure/deploy/ci_ingress.tf"

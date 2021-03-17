@@ -20,8 +20,8 @@ data "aws_ami" "ubuntu" {
 # the instance-user-data.sh script needs into it, so that once it
 # makes its way onto the instance it can spit them back out onto the
 # disk.
-data "template_file" "nomad_client_script_smusher" {
-  template = file("nomad-configuration/client-instance-user-data.tpl.sh")
+data "template_file" "worker_script_smusher" {
+  template = file("workers-configuration/client-instance-user-data.tpl.sh")
 
   vars = {
     user = var.user
@@ -105,7 +105,7 @@ resource "aws_db_instance" "postgres_db" {
 
 resource "aws_instance" "pg_bouncer" {
   ami = data.aws_ami.ubuntu.id
-  instance_type = var.nomad_server_instance_type
+  instance_type = var.pg_bouncer_instance_type
   availability_zone = "${var.region}a"
   vpc_security_group_ids = [aws_security_group.data_refinery_pg.id]
   iam_instance_profile = aws_iam_instance_profile.data_refinery_api.name
@@ -123,10 +123,6 @@ resource "aws_instance" "pg_bouncer" {
     Name = "pg-bouncer-${var.user}-${var.stage}"
   }
 
-  # Nomad server requirements can be found here:
-  # https://www.nomadproject.io/guides/cluster/requirements.html
-  # However I do not think that these accurately reflect those requirements.
-  # I think these are the defaults provided in terraform examples.
   root_block_device {
     volume_type = "gp2"
     volume_size = 100
@@ -134,7 +130,7 @@ resource "aws_instance" "pg_bouncer" {
 }
 
 data "template_file" "pg_bouncer_script_smusher" {
-  template = file("nomad-configuration/pg-bouncer-instance-user-data.tpl.sh")
+  template = file("workers-configuration/pg-bouncer-instance-user-data.tpl.sh")
 
   vars = {
     database_host = aws_db_instance.postgres_db.address
@@ -242,7 +238,7 @@ data "local_file" "api_environment" {
 }
 
 # This script smusher serves a similar purpose to
-# ${data.template_file.nomad_lead_server_script_smusher} but for the Nginx/API.
+# ${data.template_file.worker_script_smusher} but for the Nginx/API.
 data "template_file" "api_server_script_smusher" {
   template = file("api-configuration/api-server-instance-user-data.tpl.sh")
 
@@ -315,7 +311,7 @@ data "local_file" "foreman_environment" {
 }
 
 # This script smusher serves a similar purpose to
-# ${data.template_file.nomad_lead_server_script_smusher} but for the Foreman.
+# ${data.template_file.worker_script_smusher} but for the Foreman.
 data "template_file" "foreman_server_script_smusher" {
   template = file(
     "foreman-configuration/foreman-server-instance-user-data.tpl.sh",
