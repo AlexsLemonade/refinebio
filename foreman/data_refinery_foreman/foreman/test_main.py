@@ -25,17 +25,19 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.foreman import job_control as main
+from data_refinery_foreman.foreman import job_control
 
 # For use in tests that test the JOB_CREATED_AT_CUTOFF functionality.
-DAY_BEFORE_JOB_CUTOFF = main.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
+DAY_BEFORE_JOB_CUTOFF = job_control.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
+
+EMPTY_JOB_QUEUE_RESPONSE = {"jobSummaryList": []}
 
 
 class ForemanTestCase(TestCase):
     def create_downloader_job(self, suffix="e8eaf540"):
         job = DownloaderJob(
             downloader_task="SRA",
-            nomad_job_id="DOWNLOADER/dispatch-1528945054-" + suffix,
+            batch_job_id="DOWNLOADER/dispatch-1528945054-" + suffix,
             num_retries=0,
             accession_code="NUNYA",
             success=None,
@@ -66,13 +68,13 @@ class ForemanTestCase(TestCase):
 
         return job
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
     def test_requeuing_downloader_job(self, mock_send_job):
         mock_send_job.return_value = True
 
         job = self.create_downloader_job()
 
-        main.requeue_downloader_job(job)
+        job_control.requeue_downloader_job(job)
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by("id")
@@ -86,15 +88,17 @@ class ForemanTestCase(TestCase):
 
         self.assertEqual(retried_job.original_files.count(), 2)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_repeated_download_failures(self, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    def test_repeated_download_failures(self, mock_list_jobs, mock_send_job):
         """Jobs will be repeatedly retried."""
         mock_send_job.return_value = True
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_downloader_job()
 
-        for i in range(main.MAX_NUM_RETRIES):
-            main.handle_downloader_jobs([job])
+        for i in range(job_control.MAX_NUM_RETRIES):
+            job_control.handle_downloader_jobs([job])
             self.assertEqual(i + 1, len(mock_send_job.mock_calls))
 
             jobs = DownloaderJob.objects.all().order_by("-id")
@@ -109,21 +113,23 @@ class ForemanTestCase(TestCase):
 
         # Once MAX_NUM_RETRIES has been hit handle_repeated_failure
         # should be called.
-        main.handle_downloader_jobs([job])
+        job_control.handle_downloader_jobs([job])
         last_job = DownloaderJob.objects.all().order_by("-id")[0]
         self.assertTrue(last_job.retried)
-        self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
+        self.assertEqual(last_job.num_retries, job_control.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_failed_downloader_jobs(self, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    def test_retrying_failed_downloader_jobs(self, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_downloader_job()
         job.success = False
         job.save()
 
-        main.retry_failed_downloader_jobs()
+        job_control.retry_failed_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by("id")
@@ -135,89 +141,29 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.get_nomad_jobs_breakdown")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_many_failed_downloader_jobs(
-        self, mock_send_job, mock_breakdown, mock_active_volumes
-    ):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_retrying_hung_downloader_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_breakdown.return_value = {
-            "nomad_pending_jobs_by_volume": {"0": 7, "1": 9},
-            "nomad_running_jobs_by_volume": {"0": 75, "1": 50},
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "FAILED"}]
         }
-        mock_active_volumes.return_value = ["0", "1"]
-
-        # Create 30 processor jobs to add to the volume work depth.
-        # This helper function adds them all to volume 1, which we have to keep
-        # in mind later
-        for x in range(0, 30):
-            self.create_processor_job()
-
-        EXPECTED_WORK_DEPTH = {
-            "0": 82,  # 7 pending + 75 running
-            "1": 89,  # 9 pending + 50 running + 30 processor jobs
-        }
-
-        # Make sure that we set sensible values for EXPECTED_WORK_DEPTH.
-        # Otherwise the rest of the test fails mysteriously
-        for num in EXPECTED_WORK_DEPTH.values():
-            self.assertLess(num, main.DESIRED_WORK_DEPTH)
-
-        main.update_volume_work_depth(datetime.timedelta(0))
-        self.assertEqual(main.VOLUME_WORK_DEPTH, EXPECTED_WORK_DEPTH)
-
-        # Ensure that there are at least enough jobs to saturate the desired work depth
-        # for both mocked volumes
-        NUM_PAGES = 4 + math.ceil(2 * main.DESIRED_WORK_DEPTH / main.PAGE_SIZE)
-        for x in range(0, main.PAGE_SIZE * NUM_PAGES):
-            job = self.create_downloader_job(str(x))
-            job.success = False
-            job.save()
-
-        main.retry_failed_downloader_jobs()
-        # No jobs actually make it in Nomad queue, but we keep a tally of the last reported work
-        # depth plus any new queued jobs, so this should only queue up enough jobs to fill the
-        # DESIRED_WORK_DEPTH for every node
-        self.assertEqual(
-            len(mock_send_job.mock_calls),
-            (main.DESIRED_WORK_DEPTH - EXPECTED_WORK_DEPTH["0"])
-            + (main.DESIRED_WORK_DEPTH - EXPECTED_WORK_DEPTH["1"]),
-        )
-        self.assertEqual(
-            main.VOLUME_WORK_DEPTH, {"0": main.DESIRED_WORK_DEPTH, "1": main.DESIRED_WORK_DEPTH}
-        )
-
-        jobs = DownloaderJob.objects.order_by("id")
-
-        original_job = jobs[0]
-        self.assertTrue(original_job.retried)
-        self.assertEqual(original_job.num_retries, 0)
-        self.assertFalse(original_job.success)
-
-        retried_job = jobs[main.PAGE_SIZE * NUM_PAGES + 1]
-        self.assertEqual(retried_job.num_retries, 1)
-
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_hung_downloader_jobs(self, mock_nomad, mock_send_job):
-        mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_downloader_job()
         job.start_time = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_hung_downloader_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
+        # This second job is no longer listed by Batch, needs to be retried.
+        job2 = self.create_downloader_job()
+        job2.start_time = timezone.now()
+        job2.batch_job_id = "MISSING"
+        job2.save()
+
+        job_control.retry_hung_downloader_jobs()
+        self.assertEqual(len(mock_send_job.mock_calls), 2)
 
         jobs = DownloaderJob.objects.order_by("id")
         original_job = jobs[0]
@@ -225,29 +171,36 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[1]
+        original_job2 = jobs[1]
+        self.assertTrue(original_job2.retried)
+        self.assertEqual(original_job2.num_retries, 0)
+        self.assertFalse(original_job2.success)
+
+        retried_job = jobs[2]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_not_retrying_hung_downloader_jobs(self, mock_nomad, mock_send_job):
+        retried_job2 = jobs[3]
+        self.assertEqual(retried_job2.num_retries, 1)
+
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_hung_downloader_jobs(
+        self, mock_describe_jobs, mock_list_jobs, mock_send_job
+    ):
         """Tests that we don't restart downloader jobs that are still running."""
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "running"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNING"}]
+        }
 
         job = self.create_downloader_job()
         job.start_time = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_hung_downloader_jobs()
+        job_control.retry_hung_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = DownloaderJob.objects.order_by("id")
@@ -258,26 +211,26 @@ class ForemanTestCase(TestCase):
 
         self.assertEqual(jobs.count(), 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_lost_downloader_jobs(self, mock_nomad, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_retrying_lost_downloader_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_downloader_job()
         job.created_at = timezone.now()
         job.save()
 
-        main.retry_lost_downloader_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
+        # Test that jobs with batch_job_id still get requeued.
+        job2 = self.create_downloader_job()
+        job2.created_at = timezone.now()
+        job2.batch_job_id = "MISSING"
+        job2.save()
+
+        job_control.retry_lost_downloader_jobs()
+        self.assertEqual(len(mock_send_job.mock_calls), 2)
 
         jobs = DownloaderJob.objects.order_by("id")
         original_job = jobs[0]
@@ -285,73 +238,56 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[1]
+        original_job2 = jobs[1]
+        self.assertTrue(original_job2.retried)
+        self.assertEqual(original_job2.num_retries, 0)
+        self.assertFalse(original_job2.success)
+
+        retried_job = jobs[2]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_not_retrying_old_downloader_jobs(self, mock_nomad, mock_send_job):
+        retried_job2 = jobs[3]
+        self.assertEqual(retried_job2.num_retries, 1)
+
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_old_downloader_jobs(
+        self, mock_describe_jobs, mock_list_jobs, mock_send_job
+    ):
         """Makes sure temporary logic to limit the Foreman's scope works."""
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_downloader_job()
         job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
-        main.retry_lost_downloader_jobs()
+        job_control.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         self.assertEqual(1, DownloaderJob.objects.all().count())
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_lost_downloader_jobs_time(self, mock_send_job):
-        mock_send_job.return_value = True
-
-        job = self.create_downloader_job()
-        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
-        job.save()
-
-        main.retry_lost_downloader_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
-
-        jobs = DownloaderJob.objects.order_by("id")
-        original_job = jobs[0]
-        self.assertTrue(original_job.retried)
-        self.assertEqual(original_job.num_retries, 0)
-        self.assertFalse(original_job.success)
-
-        retried_job = jobs[1]
-        self.assertEqual(retried_job.num_retries, 1)
-
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_not_retrying_lost_downloader_jobs(self, mock_nomad, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_lost_downloader_jobs(
+        self, mock_describe_jobs, mock_list_jobs, mock_send_job
+    ):
         """Make sure that we don't retry downloader jobs we shouldn't."""
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "pending"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNABLE"}]
+        }
 
         job = self.create_downloader_job()
         job.created_at = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_lost_downloader_jobs()
+        job_control.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = DownloaderJob.objects.order_by("id")
@@ -366,7 +302,7 @@ class ForemanTestCase(TestCase):
     def create_processor_job(self, pipeline="AFFY_TO_PCL", ram_amount=2048, start_time=None):
         job = ProcessorJob(
             pipeline_applied=pipeline,
-            nomad_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
+            batch_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
             ram_amount=ram_amount,
             num_retries=0,
             volume_index="1",
@@ -399,15 +335,13 @@ class ForemanTestCase(TestCase):
 
         return job
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_requeuing_processor_job(self, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    def test_requeuing_processor_job(self, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job()
 
-        main.requeue_processor_job(job)
+        job_control.requeue_processor_job(job)
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by("id")
@@ -419,11 +353,9 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_requeuing_processor_job_no_volume(self, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    def test_requeuing_processor_job_no_volume(self, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job()
         job.volume_index = None
@@ -433,7 +365,7 @@ class ForemanTestCase(TestCase):
         self.env.set("RUNING_IN_CLOUD", "True")
 
         with self.settings(RUNNING_IN_CLOUD=True):
-            main.requeue_processor_job(job)
+            job_control.requeue_processor_job(job)
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -445,13 +377,11 @@ class ForemanTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-        self.assertIn(retried_job.volume_index, ["1", "2", "3"])
+        self.assertEqual(retried_job.volume_index, "0")
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_requeuing_compendia_job_no_volume(self, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    def test_requeuing_compendia_job_no_volume(self, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job()
         job.volume_index = None
@@ -462,7 +392,7 @@ class ForemanTestCase(TestCase):
         self.env.set("RUNING_IN_CLOUD", "True")
 
         with self.settings(RUNNING_IN_CLOUD=True):
-            main.requeue_processor_job(job)
+            job_control.requeue_processor_job(job)
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -476,17 +406,15 @@ class ForemanTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
         self.assertEqual(retried_job.volume_index, None)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_requeuing_processor_job_w_more_ram(self, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    def test_requeuing_processor_job_w_more_ram(self, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job(
             pipeline="SALMON", ram_amount=16384, start_time=timezone.now()
         )
 
-        main.requeue_processor_job(job)
+        job_control.requeue_processor_job(job)
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by("id")
@@ -499,17 +427,17 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.ram_amount, 16384)
         self.assertEqual(retried_job.ram_amount, 32768)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_repeated_processor_failures(self, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    def test_repeated_processor_failures(self, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         """Jobs will be repeatedly retried."""
         job = self.create_processor_job()
 
-        for i in range(main.MAX_NUM_RETRIES):
-            main.handle_processor_jobs([job])
+        for i in range(job_control.MAX_NUM_RETRIES):
+            job_control.handle_processor_jobs([job])
             self.assertEqual(i + 1, len(mock_send_job.mock_calls))
 
             jobs = ProcessorJob.objects.all().order_by("-id")
@@ -524,23 +452,23 @@ class ForemanTestCase(TestCase):
 
         # Once MAX_NUM_RETRIES has been hit handle_repeated_failure
         # should be called.
-        main.handle_processor_jobs([job])
+        job_control.handle_processor_jobs([job])
         last_job = ProcessorJob.objects.all().order_by("-id")[0]
         self.assertTrue(last_job.retried)
-        self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
+        self.assertEqual(last_job.num_retries, job_control.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_failed_processor_jobs(self, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    def test_retrying_failed_processor_jobs(self, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_processor_job()
         job.success = False
         job.save()
 
-        main.retry_failed_processor_jobs()
+        job_control.retry_failed_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by("id")
@@ -552,50 +480,28 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_not_retrying_wrong_volume_index(self, mock_send_job, mock_get_active_volumes):
-        """If a volume isn't mounted then we shouldn't queue jobs for it."""
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_retrying_hung_processor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"2", "3"}
-
-        job = self.create_processor_job()
-        job.success = False
-        job.save()
-
-        main.retry_failed_processor_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 0)
-
-        jobs = ProcessorJob.objects.order_by("id")
-        original_job = jobs[0]
-        self.assertFalse(original_job.retried)
-        self.assertEqual(original_job.num_retries, 0)
-        self.assertFalse(original_job.success)
-
-        self.assertEqual(len(jobs), 1)
-
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
-        mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "FAILED"}]
+        }
 
         job = self.create_processor_job()
         job.start_time = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_hung_processor_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
+        job2 = self.create_processor_job()
+        job2.start_time = timezone.now()
+        job2.batch_job_id = "MISSING"
+        job2.save()
+
+        job_control.retry_hung_processor_jobs()
+        self.assertEqual(len(mock_send_job.mock_calls), 2)
 
         jobs = ProcessorJob.objects.order_by("id")
         original_job = jobs[0]
@@ -603,34 +509,36 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[1]
+        original_job2 = jobs[1]
+        self.assertTrue(original_job2.retried)
+        self.assertEqual(original_job2.num_retries, 0)
+        self.assertFalse(original_job2.success)
+
+        retried_job = jobs[2]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
+        retried_job2 = jobs[3]
+        self.assertEqual(retried_job2.num_retries, 1)
+
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
     def test_not_retrying_hung_processor_jobs(
-        self, mock_nomad, mock_send_job, mock_get_active_volumes
+        self, mock_describe_jobs, mock_list_jobs, mock_send_job
     ):
-        mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
-
         """Tests that we don't restart processor jobs that are still running."""
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "running"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_send_job.return_value = True
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNING"}]
+        }
 
         job = self.create_processor_job()
         job.start_time = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_hung_processor_jobs()
+        job_control.retry_hung_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by("id")
@@ -641,29 +549,23 @@ class ForemanTestCase(TestCase):
 
         self.assertEqual(jobs.count(), 1)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_retrying_lost_processor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_processor_job()
-        job.created_at = timezone.now()
         job.save()
 
-        main.retry_lost_processor_jobs()
+        job2 = self.create_processor_job()
+        job2.batch_job_id = "MISSING"
+        job2.save()
 
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
+        job_control.retry_lost_processor_jobs()
+        self.assertEqual(len(mock_send_job.mock_calls), 2)
 
         jobs = ProcessorJob.objects.order_by("id")
         original_job = jobs[0]
@@ -671,34 +573,37 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[1]
+        original_job2 = jobs[1]
+        self.assertTrue(original_job2.retried)
+        self.assertEqual(original_job2.num_retries, 0)
+        self.assertFalse(original_job2.success)
+
+        retried_job = jobs[2]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_lost_smasher_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
+        retried_job2 = jobs[3]
+        self.assertEqual(retried_job2.num_retries, 1)
+
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_retrying_lost_smasher_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Make sure that the smasher jobs will get retried even though they
         don't have a volume_index.
+
+        I'm not entirely sure this test is still necessary but we'll
+        need a separate smasher compute environment so this could test
+        that once it's done.
         """
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_processor_job(pipeline="SMASHER")
         job.volume_index = None  # Smasher jobs won't have a volume_index.
-        job.created_at = timezone.now()
         job.save()
 
-        main.retry_lost_processor_jobs()
+        job_control.retry_lost_processor_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -711,54 +616,44 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_not_retrying_old_processor_jobs(self, mock_nomad, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_old_processor_jobs(
+        self, mock_describe_jobs, mock_list_jobs, mock_send_job
+    ):
         """Makes sure temporary logic to limit the Foreman's scope works."""
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_processor_job()
         job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
-        main.retry_lost_processor_jobs()
+        job_control.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         self.assertEqual(1, ProcessorJob.objects.all().count())
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
     def test_not_retrying_lost_processor_jobs(
-        self, mock_nomad, mock_send_job, mock_get_active_volumes
+        self, mock_describe_jobs, mock_list_jobs, mock_send_job
     ):
         """Make sure that we don't retry processor jobs we shouldn't."""
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "pending"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNABLE"}]
+        }
 
         job = self.create_processor_job()
-        job.created_at = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_lost_processor_jobs()
+        job_control.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by("id")
@@ -770,39 +665,18 @@ class ForemanTestCase(TestCase):
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
 
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_lost_processor_jobs_time(self, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_janitor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
-
-        job = self.create_processor_job()
-        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
-        job.save()
-
-        main.retry_lost_processor_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
-
-        jobs = ProcessorJob.objects.order_by("id")
-        original_job = jobs[0]
-        self.assertTrue(original_job.retried)
-        self.assertEqual(original_job.num_retries, 0)
-        self.assertFalse(original_job.success)
-
-        retried_job = jobs[1]
-        self.assertEqual(retried_job.num_retries, 1)
-
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_not_retrying_janitor_jobs(self, mock_send_job, mock_get_active_volumes):
-        mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_processor_job(pipeline="JANITOR")
-        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
-        main.retry_lost_processor_jobs()
+        job_control.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by("id")
@@ -811,7 +685,7 @@ class ForemanTestCase(TestCase):
     def create_survey_job(self):
         job = SurveyJob(
             source_type="SRA",
-            nomad_job_id="SURVEYOR/dispatch-1528945054-e8eaf540",
+            batch_job_id="SURVEYOR/dispatch-1528945054-e8eaf540",
             num_retries=0,
             success=None,
         )
@@ -826,13 +700,13 @@ class ForemanTestCase(TestCase):
 
         return job
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
     def test_requeuing_survey_job(self, mock_send_job):
         mock_send_job.return_value = True
 
         job = self.create_survey_job()
 
-        main.requeue_survey_job(job)
+        job_control.requeue_survey_job(job)
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by("id")
@@ -844,15 +718,17 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_repeated_survey_failures(self, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    def test_repeated_survey_failures(self, mock_list_jobs, mock_send_job):
         """Jobs will be repeatedly retried."""
         mock_send_job.return_value = True
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_survey_job()
 
-        for i in range(main.MAX_NUM_RETRIES):
-            main.handle_survey_jobs([job])
+        for i in range(job_control.MAX_NUM_RETRIES):
+            job_control.handle_survey_jobs([job])
             self.assertEqual(i + 1, len(mock_send_job.mock_calls))
 
             jobs = SurveyJob.objects.all().order_by("-id")
@@ -867,10 +743,10 @@ class ForemanTestCase(TestCase):
 
         # Once MAX_NUM_RETRIES has been hit handle_repeated_failure
         # should be called.
-        main.handle_survey_jobs([job])
+        job_control.handle_survey_jobs([job])
         last_job = SurveyJob.objects.all().order_by("-id")[0]
         self.assertTrue(last_job.retried)
-        self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
+        self.assertEqual(last_job.num_retries, job_control.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
 
         # MAX TOTAL tests
@@ -878,24 +754,26 @@ class ForemanTestCase(TestCase):
         self.env.set("MAX_TOTAL_JOBS", "0")
         with self.env:
             job = self.create_survey_job()
-            result = main.handle_survey_jobs([job])
+            result = job_control.handle_survey_jobs([job])
             self.assertFalse(result)
 
         self.env.set("MAX_TOTAL_JOBS", "1000")
         with self.env:
             job = self.create_survey_job()
-            result = main.requeue_survey_job(job)
+            result = job_control.requeue_survey_job(job)
             self.assertTrue(result)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_failed_survey_jobs(self, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    def test_retrying_failed_survey_jobs(self, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_survey_job()
         job.success = False
         job.save()
 
-        main.retry_failed_survey_jobs()
+        job_control.retry_failed_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by("id")
@@ -907,26 +785,25 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_hung_survey_jobs(self, mock_nomad, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_retrying_hung_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_survey_job()
         job.start_time = timezone.now()
         job.save()
 
-        main.retry_hung_survey_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
+        job2 = self.create_survey_job()
+        job2.start_time = timezone.now()
+        job2.batch_job_id = "MISSING"
+        job2.save()
+
+        job_control.retry_hung_survey_jobs()
+        self.assertEqual(len(mock_send_job.mock_calls), 2)
 
         jobs = SurveyJob.objects.order_by("id")
         original_job = jobs[0]
@@ -934,29 +811,35 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[1]
+        jobs = SurveyJob.objects.order_by("id")
+        original_job2 = jobs[1]
+        self.assertTrue(original_job2.retried)
+        self.assertEqual(original_job2.num_retries, 0)
+        self.assertFalse(original_job2.success)
+
+        retried_job = jobs[2]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_not_retrying_hung_survey_jobs(self, mock_nomad, mock_send_job):
+        retried_job2 = jobs[3]
+        self.assertEqual(retried_job2.num_retries, 1)
+
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_hung_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Tests that we don't restart survey jobs that are still running."""
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "running"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNING"}]
+        }
 
         job = self.create_survey_job()
         job.start_time = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_hung_survey_jobs()
+        job_control.retry_hung_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = SurveyJob.objects.order_by("id")
@@ -967,27 +850,25 @@ class ForemanTestCase(TestCase):
 
         self.assertEqual(jobs.count(), 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_retrying_lost_survey_jobs(self, mock_nomad, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_retrying_lost_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_survey_job()
         job.created_at = timezone.now()
         job.save()
 
-        main.retry_lost_survey_jobs()
+        job2 = self.create_survey_job()
+        job2.created_at = timezone.now()
+        job2.save()
 
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
+        job_control.retry_lost_survey_jobs()
+
+        self.assertEqual(len(mock_send_job.mock_calls), 2)
 
         jobs = SurveyJob.objects.order_by("id")
         original_job = jobs[0]
@@ -995,53 +876,53 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[1]
+        jobs = SurveyJob.objects.order_by("id")
+        original_job2 = jobs[1]
+        self.assertTrue(original_job2.retried)
+        self.assertEqual(original_job2.num_retries, 0)
+        self.assertFalse(original_job2.success)
+
+        retried_job = jobs[2]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_not_retrying_old_survey_jobs(self, mock_nomad, mock_send_job):
+        retried_job2 = jobs[3]
+        self.assertEqual(retried_job2.num_retries, 1)
+
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_old_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Makes sure temporary logic to limit the Foreman's scope works."""
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
         job = self.create_survey_job()
         job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
-        main.retry_lost_survey_jobs()
+        job_control.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         self.assertEqual(1, SurveyJob.objects.all().count())
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    @patch("data_refinery_foreman.foreman.main.Nomad")
-    def test_not_retrying_lost_survey_jobs(self, mock_nomad, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    @patch("data_refinery_foreman.foreman.job_control.batch.list_jobs")
+    @patch("data_refinery_foreman.foreman.job_control.batch.describe_jobs")
+    def test_not_retrying_lost_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Make sure that we don't retry survey jobs we shouldn't."""
         mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "pending"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {
+            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNABLE"}]
+        }
 
         job = self.create_survey_job()
         job.created_at = timezone.now()
+        job.batch_job_id = "FINDME"
         job.save()
 
-        main.retry_lost_survey_jobs()
+        job_control.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = SurveyJob.objects.order_by("id")
@@ -1053,47 +934,14 @@ class ForemanTestCase(TestCase):
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
 
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_retrying_lost_survey_jobs_time(self, mock_send_job):
+    @patch("data_refinery_foreman.foreman.job_control.send_job")
+    def test_janitor(self, mock_send_job):
+        """For now super simple, this will evolve once we have more than one compute environment"""
         mock_send_job.return_value = True
 
-        job = self.create_survey_job()
-        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
-        job.save()
+        job_control.send_janitor_jobs()
 
-        main.retry_lost_survey_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
-
-        jobs = SurveyJob.objects.order_by("id")
-        original_job = jobs[0]
-        self.assertTrue(original_job.retried)
-        self.assertEqual(original_job.num_retries, 0)
-        self.assertFalse(original_job.success)
-
-        retried_job = jobs[1]
-        self.assertEqual(retried_job.num_retries, 1)
-
-    @patch("data_refinery_foreman.foreman.main.get_active_volumes")
-    @patch("data_refinery_foreman.foreman.main.send_job")
-    def test_janitor(self, mock_send_job, mock_get_active_volumes):
-        mock_send_job.return_value = True
-        mock_get_active_volumes.return_value = {"1", "2", "3"}
-
-        for p in ["1", "2", "3"]:
-            pj = ProcessorJob()
-            pj.volume_index = p
-            pj.save()
-
-        main.send_janitor_jobs()
-
-        self.assertEqual(ProcessorJob.objects.all().count(), 7)
-        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 4)
-
-        # Make sure that the janitors are dispatched to the correct volumes.
-        ixs = ["1", "2", "3", None]
-        for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
-            self.assertTrue(p.volume_index in ixs)
-            ixs.remove(p.volume_index)
+        self.assertEqual(ProcessorJob.objects.all().count(), 1)
 
 
 class CleanDatabaseTestCase(TransactionTestCase):
@@ -1134,359 +982,5 @@ class CleanDatabaseTestCase(TransactionTestCase):
 
         self.assertEqual(sample.computed_files.count(), 2)
         self.assertEqual(sample.get_most_recent_smashable_result_file().id, bad_file.id)
-        main.clean_database()
+        job_control.clean_database()
         self.assertEqual(sample.get_most_recent_smashable_result_file().id, good_file.id)
-
-
-# class JobPrioritizationTestCase(TestCase):
-#     def setUp(self):
-#         """Create a lot of resources that could be associated with either
-#         ProcessorJobs or DownloaderJobs. Since the logic of when to actually
-#         queue these is the same, we can use these for testing both. However
-#         The actual jobs that will be queued need to be created by the job-type
-#         specific functions.
-#         """
-#         human = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-#         human.save()
-#         zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
-#         zebrafish.save()
-
-#         # Salmon experiment that is 50% complete.
-#         experiment = Experiment(accession_code='ERP036000')
-#         experiment.save()
-
-#         ## First sample, this one has been processed.
-#         pj = ProcessorJob()
-#         pj.accession_code = "ERR036000"
-#         pj.pipeline_applied = "SALMON"
-#         pj.success = True
-#         pj.save()
-
-#         og = OriginalFile()
-#         og.filename = "ERR036000.fastq.gz"
-#         og.source_filename = "ERR036000.fastq.gz"
-#         og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
-#         og.is_archive = True
-#         og.save()
-
-#         sample = Sample()
-#         sample.accession_code = 'ERR036000'
-#         sample.organism = human
-#         sample.save()
-
-#         assoc = OriginalFileSampleAssociation()
-#         assoc.sample = sample
-#         assoc.original_file = og
-#         assoc.save()
-
-#         assoc = ProcessorJobOriginalFileAssociation()
-#         assoc.processor_job = pj
-#         assoc.original_file = og
-#         assoc.save()
-
-#         assoc = ExperimentSampleAssociation()
-#         assoc.sample = sample
-#         assoc.experiment = experiment
-#         assoc.save()
-
-#         ## Second sample, this one hasn't been processed.
-#         self.in_progress_salmon_og = OriginalFile()
-#         self.in_progress_salmon_og.filename = "ERR036001.fastq.gz"
-#         self.in_progress_salmon_og.source_filename = "ERR036001.fastq.gz"
-#         self.in_progress_salmon_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036001/ERR036001_1.fastq.gz"
-#         self.in_progress_salmon_og.is_archive = True
-#         self.in_progress_salmon_og.save()
-
-#         self.in_progress_salmon_sample = Sample()
-#         self.in_progress_salmon_sample.accession_code = 'ERR036001'
-#         self.in_progress_salmon_sample.organism = human
-#         self.in_progress_salmon_sample.save()
-
-#         assoc = OriginalFileSampleAssociation()
-#         assoc.sample = self.in_progress_salmon_sample
-#         assoc.original_file = self.in_progress_salmon_og
-#         assoc.save()
-
-#         assoc = ExperimentSampleAssociation()
-#         assoc.sample = self.in_progress_salmon_sample
-#         assoc.experiment = experiment
-#         assoc.save()
-
-
-#         # Salmon experiment that is 0% complete.
-#         experiment = Experiment(accession_code='ERP037000')
-#         experiment.save()
-
-#         self.unstarted_salmon_og = OriginalFile()
-#         self.unstarted_salmon_og.filename = "ERR037001.fastq.gz"
-#         self.unstarted_salmon_og.source_filename = "ERR037001.fastq.gz"
-#         self.unstarted_salmon_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR037/ERR037001/ERR037001_1.fastq.gz"
-#         self.unstarted_salmon_og.is_archive = True
-#         self.unstarted_salmon_og.save()
-
-#         self.unstarted_salmon_sample = Sample()
-#         self.unstarted_salmon_sample.accession_code = 'ERR037001'
-#         self.unstarted_salmon_sample.organism = human
-#         self.unstarted_salmon_sample.save()
-
-#         assoc = OriginalFileSampleAssociation()
-#         assoc.sample = self.unstarted_salmon_sample
-#         assoc.original_file = self.unstarted_salmon_og
-#         assoc.save()
-
-#         assoc = ExperimentSampleAssociation()
-#         assoc.sample = self.unstarted_salmon_sample
-#         assoc.experiment = experiment
-#         assoc.save()
-
-
-#         # Zebrafish experiment.
-#         experiment = Experiment(accession_code='ERP038000')
-#         experiment.save()
-
-#         self.zebrafish_og = OriginalFile()
-#         self.zebrafish_og.source_filename = "ERR038001.fastq.gz"
-#         self.zebrafish_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR038/ERR038001/ERR038001_1.fastq.gz"
-#         self.zebrafish_og.is_archive = True
-#         self.zebrafish_og.save()
-
-#         self.zebrafish_sample = Sample()
-#         self.zebrafish_sample.accession_code = 'ERR038001'
-#         self.zebrafish_sample.organism = zebrafish
-#         self.zebrafish_sample.save()
-
-#         assoc = OriginalFileSampleAssociation()
-#         assoc.sample = self.zebrafish_sample
-#         assoc.original_file = self.zebrafish_og
-#         assoc.save()
-
-#         assoc = ExperimentSampleAssociation()
-#         assoc.sample = self.zebrafish_sample
-#         assoc.experiment = experiment
-#         assoc.save()
-
-
-#         # Pediatric experiment.
-#         experiment = Experiment(accession_code='GSE100568')
-#         experiment.save()
-
-#         self.pediatric_og = OriginalFile()
-#         self.pediatric_og.source_url = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE100568&format=file"
-#         self.pediatric_og.is_archive = True
-#         self.pediatric_og.save()
-
-#         self.pediatric_sample = Sample()
-#         self.pediatric_sample.accession_code = 'GSM2687180'
-#         self.pediatric_sample.organism = human
-#         self.pediatric_sample.save()
-
-#         assoc = OriginalFileSampleAssociation()
-#         assoc.sample = self.pediatric_sample
-#         assoc.original_file = self.pediatric_og
-#         assoc.save()
-
-#         assoc = ExperimentSampleAssociation()
-#         assoc.sample = self.pediatric_sample
-#         assoc.experiment = experiment
-#         assoc.save()
-
-
-#         # hgu133plus2 experiment.
-#         experiment = Experiment(accession_code='GSE100014')
-#         experiment.save()
-
-#         self.hgu133plus2_og = OriginalFile()
-#         self.hgu133plus2_og.source_url = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE100014&format=file"
-#         self.hgu133plus2_og.is_archive = True
-#         self.hgu133plus2_og.save()
-
-#         self.hgu133plus2_sample = Sample()
-#         self.hgu133plus2_sample.accession_code = 'GSM2667926'
-#         self.hgu133plus2_sample.organism = human
-#         self.hgu133plus2_sample.save()
-
-#         assoc = OriginalFileSampleAssociation()
-#         assoc.sample = self.hgu133plus2_sample
-#         assoc.original_file = self.hgu133plus2_og
-#         assoc.save()
-
-#         assoc = ExperimentSampleAssociation()
-#         assoc.sample = self.hgu133plus2_sample
-#         assoc.experiment = experiment
-#         assoc.save()
-
-#     @patch('data_refinery_foreman.foreman.main.Nomad')
-#     @patch('data_refinery_foreman.foreman.main.requeue_downloader_job')
-#     def test_handle_downloader_jobs(self, mock_requeue_downloader_job, mock_nomad):
-#         """Tests the prioritization of downloader jobs.
-
-#         We want zebrafish jobs to be first, then jobs for hgu133plus2,
-#         then jobs for pediatric cancer, finally salmon jobs should be
-#         prioritized based on how close to completion they are."""
-
-#         def mock_init_nomad(host, port=0, timeout=0):
-#             ret_value = MagicMock()
-#             ret_value.jobs = MagicMock()
-#             ret_value.jobs.get_jobs = MagicMock()
-#             ret_value.jobs.get_jobs.side_effect = lambda: []
-#             return ret_value
-
-#         mock_nomad.side_effect = mock_init_nomad
-
-#         unstarted_salmon_job = DownloaderJob()
-#         unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
-#         unstarted_salmon_job.save()
-
-#         assoc = DownloaderJobOriginalFileAssociation()
-#         assoc.downloader_job = unstarted_salmon_job
-#         assoc.original_file = self.unstarted_salmon_og
-#         assoc.save()
-
-#         in_progress_salmon_job = DownloaderJob()
-#         in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
-#         in_progress_salmon_job.save()
-
-#         assoc = DownloaderJobOriginalFileAssociation()
-#         assoc.downloader_job = in_progress_salmon_job
-#         assoc.original_file = self.in_progress_salmon_og
-#         assoc.save()
-
-#         zebrafish_job = DownloaderJob()
-#         zebrafish_job.accession_code = self.zebrafish_sample.accession_code
-#         zebrafish_job.save()
-
-#         assoc = DownloaderJobOriginalFileAssociation()
-#         assoc.downloader_job = zebrafish_job
-#         assoc.original_file = self.zebrafish_og
-#         assoc.save()
-
-#         pediatric_job = DownloaderJob()
-#         pediatric_job.accession_code = self.pediatric_sample.accession_code
-#         pediatric_job.save()
-
-#         assoc = DownloaderJobOriginalFileAssociation()
-#         assoc.downloader_job = pediatric_job
-#         assoc.original_file = self.pediatric_og
-#         assoc.save()
-
-#         hgu133plus2_job = DownloaderJob()
-#         hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
-#         hgu133plus2_job.save()
-
-#         assoc = DownloaderJobOriginalFileAssociation()
-#         assoc.downloader_job = hgu133plus2_job
-#         assoc.original_file = self.hgu133plus2_og
-#         assoc.save()
-
-#         jobs = [unstarted_salmon_job,
-#                 in_progress_salmon_job,
-#                 hgu133plus2_job,
-#                 zebrafish_job,
-#                 pediatric_job
-#         ]
-#         jobs_in_correct_order = [zebrafish_job,
-#                                  hgu133plus2_job,
-#                                  pediatric_job,
-#                                  in_progress_salmon_job,
-#                                  unstarted_salmon_job
-#         ]
-
-#         main.handle_downloader_jobs(jobs)
-
-#         for count, job in enumerate(jobs_in_correct_order):
-#             # Calls are a weird object that I think is just basically
-#             # a tuple. Index 1 of a call object is the arguments
-#             # tuple, we're interested in the first argument
-#             job_called_at_count = mock_requeue_downloader_job.mock_calls[count][1][0]
-#             self.assertEqual(job.id, job_called_at_count.id)
-
-
-#     @patch('data_refinery_foreman.foreman.main.Nomad')
-#     @patch('data_refinery_foreman.foreman.main.requeue_processor_job')
-#     def test_handle_processor_jobs(self, mock_requeue_processor_job, mock_nomad):
-#         """Tests the prioritization of processor jobs.
-
-#         We want zebrafish jobs to be first, then jobs for hgu133plus2,
-#         then jobs for pediatric cancer, finally salmon jobs should be
-#         prioritized based on how close to completion they are."""
-
-#         def mock_init_nomad(host, port=0, timeout=0):
-#             ret_value = MagicMock()
-#             ret_value.jobs = MagicMock()
-#             ret_value.jobs.get_jobs = MagicMock()
-#             ret_value.jobs.get_jobs.side_effect = lambda: []
-#             return ret_value
-
-#         mock_nomad.side_effect = mock_init_nomad
-
-#         unstarted_salmon_job = ProcessorJob()
-#         unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
-#         unstarted_salmon_job.pipeline_applied = "SALMON"
-#         unstarted_salmon_job.save()
-
-#         assoc = ProcessorJobOriginalFileAssociation()
-#         assoc.processor_job = unstarted_salmon_job
-#         assoc.original_file = self.unstarted_salmon_og
-#         assoc.save()
-
-#         in_progress_salmon_job = ProcessorJob()
-#         in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
-#         in_progress_salmon_job.pipeline_applied = "SALMON"
-#         in_progress_salmon_job.save()
-
-#         assoc = ProcessorJobOriginalFileAssociation()
-#         assoc.processor_job = in_progress_salmon_job
-#         assoc.original_file = self.in_progress_salmon_og
-#         assoc.save()
-
-#         zebrafish_job = ProcessorJob()
-#         zebrafish_job.accession_code = self.zebrafish_sample.accession_code
-#         zebrafish_job.pipeline_applied = "SALMON"
-#         zebrafish_job.save()
-
-#         assoc = ProcessorJobOriginalFileAssociation()
-#         assoc.processor_job = zebrafish_job
-#         assoc.original_file = self.zebrafish_og
-#         assoc.save()
-
-#         pediatric_job = ProcessorJob()
-#         pediatric_job.accession_code = self.pediatric_sample.accession_code
-#         pediatric_job.pipeline_applied = "SALMON"
-#         pediatric_job.save()
-
-#         assoc = ProcessorJobOriginalFileAssociation()
-#         assoc.processor_job = pediatric_job
-#         assoc.original_file = self.pediatric_og
-#         assoc.save()
-
-#         hgu133plus2_job = ProcessorJob()
-#         hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
-#         hgu133plus2_job.pipeline_applied = "SALMON"
-#         hgu133plus2_job.save()
-
-#         assoc = ProcessorJobOriginalFileAssociation()
-#         assoc.processor_job = hgu133plus2_job
-#         assoc.original_file = self.hgu133plus2_og
-#         assoc.save()
-
-#         jobs = [unstarted_salmon_job,
-#                 in_progress_salmon_job,
-#                 hgu133plus2_job,
-#                 zebrafish_job,
-#                 pediatric_job
-#         ]
-#         jobs_in_correct_order = [zebrafish_job,
-#                                  hgu133plus2_job,
-#                                  pediatric_job,
-#                                  in_progress_salmon_job,
-#                                  unstarted_salmon_job
-#         ]
-
-#         main.handle_processor_jobs(jobs)
-
-#         for count, job in enumerate(jobs_in_correct_order):
-#             # Calls are a weird object that I think is just basically
-#             # a tuple. Index 1 of a call object is the arguments
-#             # tuple, we're interested in the first argument
-#             job_called_at_count = mock_requeue_processor_job.mock_calls[count][1][0]
-#             self.assertEqual(job.id, job_called_at_count.id)

@@ -364,15 +364,15 @@ def check_hung_jobs(object_list):
     # Batch will describe up to 100 jobs at a time.
     for page_start in range(0, len(object_list), DESCRIBE_JOBS_PAGE_SIZE):
         page_end = page_start + DESCRIBE_JOBS_PAGE_SIZE
-        network_page = object_list[page_start:page_end]
+        page = object_list[page_start:page_end]
 
-        job_ids = [job.batch_job_id for job in network_page if job.batch_job_id]
-        batch_jobs = batch.describe_jobs(jobs=job_ids)["jobs"]
+        job_ids = [job.batch_job_id for job in page if job.batch_job_id]
+        batch_jobs = batch.describe_jobs(jobs=job_ids)["jobSummaryList"]
 
-        hung_job_batch_ids = {job["jobId"] for job in batch_jobs if job["status"] != "RUNNING"}
+        running_job_batch_ids = {job["jobId"] for job in batch_jobs if job["status"] == "RUNNING"}
 
-        for job in network_page:
-            if job.batch_job_id and job.batch_job_id in hung_job_batch_ids:
+        for job in page:
+            if job.batch_job_id and job.batch_job_id not in running_job_batch_ids:
                 hung_jobs.append(job)
 
     return hung_jobs
@@ -397,7 +397,7 @@ def retry_hung_downloader_jobs() -> None:
 
     if queue_capacity <= 0:
         logger.info(
-            "Not handling failed (explicitly-marked-as-failure) downloader jobs "
+            "Not handling hung (started-but-never-finished) downloader jobs "
             "because there is no capacity for them."
         )
     while queue_capacity > 0:
@@ -410,6 +410,70 @@ def retry_hung_downloader_jobs() -> None:
                 jobs_count=len(hung_jobs),
             )
             handle_downloader_jobs(hung_jobs)
+
+        if database_page.has_next():
+            database_page = paginator.page(database_page.next_page_number())
+            database_page_count += 1
+            queue_capacity = get_capacity_for_downloader_jobs()
+        else:
+            break
+
+
+def check_lost_jobs(object_list):
+    lost_jobs = []
+    # Batch will describe up to 100 jobs at a time.
+    for page_start in range(0, len(object_list), DESCRIBE_JOBS_PAGE_SIZE):
+        page_end = page_start + DESCRIBE_JOBS_PAGE_SIZE
+        page = object_list[page_start:page_end]
+
+        job_ids = [job.batch_job_id for job in page if job.batch_job_id]
+        batch_jobs = batch.describe_jobs(jobs=job_ids)["jobSummaryList"]
+
+        # Need to ignore statuses where the job wouldn't have its
+        # start_time set. This includes RUNNING because it may not
+        # have yet gotten to that point.
+        ignore = ["SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING"]
+        ignore_job_batch_ids = {job["jobId"] for job in batch_jobs if job["status"] in ignore}
+
+        for job in page:
+            if not job.batch_job_id or job.batch_job_id not in ignore_job_batch_ids:
+                lost_jobs.append(job)
+
+    return lost_jobs
+
+
+def retry_lost_downloader_jobs() -> None:
+    """Retry downloader jobs that were started but never finished."""
+    potentially_lost_jobs = (
+        DownloaderJob.lost_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+        .order_by("created_at")
+        .prefetch_related("original_files__samples")
+    )
+    paginator = Paginator(potentially_lost_jobs, PAGE_SIZE, "created_at")
+    database_page = paginator.page()
+    database_page_count = 0
+
+    if len(database_page.object_list) <= 0:
+        # No failed jobs, nothing to do!
+        return
+
+    queue_capacity = get_capacity_for_downloader_jobs()
+
+    if queue_capacity <= 0:
+        logger.info(
+            "Not handling lost (never-started) downloader jobs "
+            "because there is no capacity for them."
+        )
+    while queue_capacity > 0:
+        lost_jobs = check_lost_jobs(database_page.object_list)
+
+        if lost_jobs:
+            logger.info(
+                "Handling page %d of lost (never-started) downloader jobs!",
+                database_page_count,
+                jobs_count=len(lost_jobs),
+            )
+            handle_downloader_jobs(lost_jobs)
 
         if database_page.has_next():
             database_page = paginator.page(database_page.next_page_number())
@@ -570,6 +634,12 @@ def retry_failed_processor_jobs() -> None:
 
     queue_capacity = get_capacity_for_jobs()
 
+    if queue_capacity <= 0:
+        logger.info(
+            "Not handling failed (explicitly-marked-as-failure) processor jobs "
+            "because there is no capacity for them."
+        )
+
     if queue_capacity > 0:
         for i in range(queue_capacity):
             logger.info(
@@ -605,9 +675,10 @@ def retry_hung_processor_jobs() -> None:
 
     if queue_capacity <= 0:
         logger.info(
-            "Not handling failed (explicitly-marked-as-failure) processor jobs "
+            "Not handling hung (started-but-never-finished) processor jobs "
             "because there is no capacity for them."
         )
+
     while queue_capacity > 0:
         hung_jobs = check_hung_jobs(database_page.object_list)
 
@@ -618,6 +689,49 @@ def retry_hung_processor_jobs() -> None:
                 jobs_count=len(hung_jobs),
             )
             handle_processor_jobs(hung_jobs)
+
+        if database_page.has_next():
+            database_page = paginator.page(database_page.next_page_number())
+            database_page_count += 1
+            queue_capacity = get_capacity_for_jobs()
+        else:
+            break
+
+
+def retry_lost_processor_jobs() -> None:
+    """Retry processor jobs that were started but never finished."""
+    potentially_lost_jobs = (
+        ProcessorJob.lost_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF)
+        .exclude(pipeline_applied="JANITOR")
+        .order_by("created_at")
+        .prefetch_related("original_files__samples")
+    )
+    paginator = Paginator(potentially_lost_jobs, PAGE_SIZE, "created_at")
+    database_page = paginator.page()
+    database_page_count = 0
+
+    if len(database_page.object_list) <= 0:
+        # No failed jobs, nothing to do!
+        return
+
+    queue_capacity = get_capacity_for_jobs()
+
+    if queue_capacity <= 0:
+        logger.info(
+            "Not handling lost (never-started) processor jobs "
+            "because there is no capacity for them."
+        )
+
+    while queue_capacity > 0:
+        lost_jobs = check_lost_jobs(database_page.object_list)
+
+        if lost_jobs:
+            logger.info(
+                "Handling page %d of lost (never-started) processor jobs!",
+                database_page_count,
+                jobs_count=len(lost_jobs),
+            )
+            handle_processor_jobs(lost_jobs)
 
         if database_page.has_next():
             database_page = paginator.page(database_page.next_page_number())
@@ -735,6 +849,84 @@ def retry_failed_survey_jobs() -> None:
             break
 
 
+def retry_hung_survey_jobs() -> None:
+    """Retry survey jobs that were started but never finished."""
+    potentially_hung_jobs = SurveyJob.hung_objects.filter(
+        created_at__gt=JOB_CREATED_AT_CUTOFF
+    ).order_by("created_at")
+    paginator = Paginator(potentially_hung_jobs, PAGE_SIZE, "created_at")
+    database_page = paginator.page()
+    database_page_count = 0
+
+    if len(database_page.object_list) <= 0:
+        # No failed jobs, nothing to do!
+        return
+
+    queue_capacity = get_capacity_for_jobs()
+
+    if queue_capacity <= 0:
+        logger.info(
+            "Not handling hung (started-but-never-finished) survey jobs "
+            "because there is no capacity for them."
+        )
+    while queue_capacity > 0:
+        hung_jobs = check_hung_jobs(database_page.object_list)
+
+        if hung_jobs:
+            logger.info(
+                "Handling page %d of hung (started-but-never-finished) survey jobs!",
+                database_page_count,
+                jobs_count=len(hung_jobs),
+            )
+            handle_survey_jobs(hung_jobs)
+
+        if database_page.has_next():
+            database_page = paginator.page(database_page.next_page_number())
+            database_page_count += 1
+            queue_capacity = get_capacity_for_jobs()
+        else:
+            break
+
+
+def retry_lost_survey_jobs() -> None:
+    """Retry survey jobs that were started but never finished."""
+    potentially_lost_jobs = SurveyJob.lost_objects.filter(
+        created_at__gt=JOB_CREATED_AT_CUTOFF
+    ).order_by("created_at")
+    paginator = Paginator(potentially_lost_jobs, PAGE_SIZE, "created_at")
+    database_page = paginator.page()
+    database_page_count = 0
+
+    if len(database_page.object_list) <= 0:
+        # No failed jobs, nothing to do!
+        return
+
+    queue_capacity = get_capacity_for_jobs()
+
+    if queue_capacity <= 0:
+        logger.info(
+            "Not handling lost (never-started) survey jobs "
+            "because there is no capacity for them."
+        )
+    while queue_capacity > 0:
+        lost_jobs = check_lost_jobs(database_page.object_list)
+
+        if lost_jobs:
+            logger.info(
+                "Handling page %d of lost (never-started) survey jobs!",
+                database_page_count,
+                jobs_count=len(lost_jobs),
+            )
+            handle_survey_jobs(lost_jobs)
+
+        if database_page.has_next():
+            database_page = paginator.page(database_page.next_page_number())
+            database_page_count += 1
+            queue_capacity = get_capacity_for_jobs()
+        else:
+            break
+
+
 ##
 # Janitor
 ##
@@ -811,14 +1003,14 @@ def monitor_jobs():
         # Surveyors go last so we don't end up with tons and tons of unqueued jobs.
         requeuing_functions_in_order = [
             retry_failed_processor_jobs,
-            # retry_hung_processor_jobs,
-            # retry_lost_processor_jobs,
+            retry_hung_processor_jobs,
+            retry_lost_processor_jobs,
             retry_failed_downloader_jobs,
-            # retry_hung_downloader_jobs,
-            # retry_lost_downloader_jobs,
+            retry_hung_downloader_jobs,
+            retry_lost_downloader_jobs,
             retry_failed_survey_jobs,
-            # retry_hung_survey_jobs,
-            # retry_lost_survey_jobs,
+            retry_hung_survey_jobs,
+            retry_lost_survey_jobs,
         ]
 
         for function in requeuing_functions_in_order:
@@ -828,9 +1020,12 @@ def monitor_jobs():
                 logger.exception("Caught exception in %s: ", function.__name__)
 
         if settings.RUNNING_IN_CLOUD:
-            if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
-                send_janitor_jobs()
-                last_janitorial_time = timezone.now()
+            # Disable this for now because this will trigger regardless of
+            # whether or not we have an instance to clean up, which means that
+            # we could spin up an instance just to run a janitor job.
+            # if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
+            #     send_janitor_jobs()
+            #     last_janitorial_time = timezone.now()
 
             if timezone.now() - last_dbclean_time > DBCLEAN_TIME:
                 clean_database()

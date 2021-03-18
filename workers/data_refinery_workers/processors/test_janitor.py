@@ -5,21 +5,10 @@ from django.test import TestCase, tag
 
 from data_refinery_common.models import (
     ComputationalResult,
-    ComputationalResultAnnotation,
     ComputedFile,
-    Dataset,
-    Experiment,
-    ExperimentSampleAssociation,
-    Organism,
-    OriginalFile,
     ProcessorJob,
-    ProcessorJobDatasetAssociation,
-    ProcessorJobOriginalFileAssociation,
     Sample,
-    SampleAnnotation,
     SampleComputedFileAssociation,
-    SampleResultAssociation,
-    SurveyJob,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import janitor
@@ -72,12 +61,12 @@ def prepare_job():
     # nomad raises an exception.
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
-    pj.nomad_job_id = "running_job"
+    pj.batch_job_id = "running_job"
     pj.save()
 
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
-    pj.nomad_job_id = "missing_job"
+    pj.batch_job_id = "missing_job"
     pj.save()
 
     pj = ProcessorJob()

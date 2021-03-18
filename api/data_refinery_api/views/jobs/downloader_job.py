@@ -26,7 +26,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
             "was_recreated",
             "worker_id",
             "worker_version",
-            "nomad_job_id",
+            "batch_job_id",
             "failure_reason",
             "success",
             "original_files",
@@ -91,7 +91,7 @@ class DownloaderJobListView(generics.ListAPIView):
             running_nomad_jobs_ids = [
                 job["ID"] for job in get_nomad_jobs() if job["Status"] == "running"
             ]
-            queryset = queryset.filter(nomad_job_id__in=running_nomad_jobs_ids)
+            queryset = queryset.filter(batch_job_id__in=running_nomad_jobs_ids)
 
         return queryset
 

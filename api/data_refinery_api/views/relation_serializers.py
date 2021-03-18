@@ -1,6 +1,7 @@
 ##
 # Contains helper serializers needed by other serializers
-# * These are the same as the old serializers from serializers.py used by other serializers except with "Relation" added in the name
+# * These are the same as the old serializers from serializers.py used
+#   by other serializers except with "Relation" added in the name
 # * Some of these relation serializers are dependent on each other
 ##
 
@@ -133,7 +134,7 @@ class DownloaderJobRelationSerializer(serializers.ModelSerializer):
             "was_recreated",
             "worker_id",
             "worker_version",
-            "nomad_job_id",
+            "batch_job_id",
             "failure_reason",
             "success",
             "original_files",
@@ -158,7 +159,7 @@ class ProcessorJobRelationSerializer(serializers.ModelSerializer):
             "volume_index",
             "worker_version",
             "failure_reason",
-            "nomad_job_id",
+            "batch_job_id",
             "success",
             "original_files",
             "datasets",

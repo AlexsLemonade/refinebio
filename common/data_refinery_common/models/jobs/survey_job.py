@@ -3,15 +3,11 @@ from typing import Dict
 from django.db import models
 from django.utils import timezone
 
-import nomad
-from nomad import Nomad
-
 from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
     LostJobsManager,
 )
-from data_refinery_common.utils import get_env_variable
 
 
 class SurveyJob(models.Model):
@@ -29,7 +25,7 @@ class SurveyJob(models.Model):
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
     no_retry = models.BooleanField(default=False)
-    nomad_job_id = models.CharField(max_length=256, null=True)
+    batch_job_id = models.CharField(max_length=256, null=True)
 
     ram_amount = models.IntegerField(default=256)
 
@@ -73,20 +69,6 @@ class SurveyJob(models.Model):
             return kvp.value
         except Exception:
             return None
-
-    def kill_nomad_job(self) -> bool:
-        if not self.nomad_job_id:
-            return False
-
-        try:
-            nomad_host = get_env_variable("NOMAD_HOST")
-            nomad_port = get_env_variable("NOMAD_PORT", "4646")
-            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-            nomad_client.job.deregister_job(self.nomad_job_id)
-        except nomad.api.exceptions.BaseNomadException:
-            return False
-
-        return True
 
     def __str__(self):
         return "SurveyJob " + str(self.pk) + ": " + str(self.source_type)
