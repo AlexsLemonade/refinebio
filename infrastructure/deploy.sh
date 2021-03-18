@@ -11,8 +11,8 @@ print_description() {
     # shellcheck disable=SC2016
     echo 'This script can be used to deploy and update a `refine.bio` instance stack.'
     echo 'It will create all of the AWS infrasctructure (roles/instances/db/network/etc),'
-    echo 'open an ingress, kill all running Nomad jobs, perform a database migration,'
-    echo 're-define and re-register Nomad job specifications, and finally close the'
+    echo 'open an ingress, kill all running Batch jobs, perform a database migration,'
+    echo 're-define and re-register Batch job specifications, and finally close the'
     echo 'ingress. This can be run from a CI/CD machine or a local dev box.'
 }
 
@@ -99,14 +99,6 @@ if [[ -z $TF_VAR_region ]]; then
     TF_VAR_region=us-east-1
 fi
 
-# This function checks what the status of the Nomad agent is.
-# Returns an HTTP response code. i.e. 200 means everything is ok.
-check_nomad_status () {
-    curl --write-out "%{http_code}" \
-      --silent \
-      --output /dev/null \
-      "$NOMAD_ADDR/v1/status/leader"
-}
 
 # We have terraform output environment variables via a single output
 # variable, which we then read in as json using the command line tool
@@ -223,6 +215,7 @@ fi
 
 # Remove all Batch jobs because it's the only way to be sure we don't
 # have any old ones.
+# TODO!!! Kill old Batch jobs.
 
 # Make sure that prod_env is empty since we are only appending to it.
 # prod_env is a temporary file we use to pass environment variables to
@@ -271,23 +264,23 @@ docker run \
        --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
        "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" python3 manage.py createcachetable
 
-# Make sure to clear out any old nomad job specifications since we
+# Make sure to clear out any old batch job templates since we
 # will register everything in this directory.
 if [ -e batch-job-templates ]; then
   rm -r batch-job-templates
 fi
 
-# Template the environment variables for production into the Nomad Job
-# specs and API confs.
+# Template the environment variables for production into the Batch Job
+# definitions and API confs.
 mkdir -p batch-job-templates
 ../scripts/format_batch_with_env.sh -p workers -e "$env" -o "$(pwd)/batch-job-templates"
 ../scripts/format_batch_with_env.sh -p surveyor -e "$env" -o "$(pwd)/batch-job-templates"
 
-# API and foreman aren't run as nomad jobs, but the templater still works.
+# API and foreman aren't run as Batch jobs, but the templater still works.
 ../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
 ../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
 
-# Re-register Nomad jobs (skip those that end in .tpl)
+# Re-register Batch jobs (skip those that end in .tpl)
 echo "Registering new job specifications.."
 # SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
 # We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.
@@ -298,15 +291,6 @@ for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
 done
 echo "Job registrations have been fired off."
 
-# Prepare the client instance user data script for the nomad client instances.
-# The `prepare-client-instance-user-data.sh` script modifies
-# `client-instance-user-data.tpl.sh`, so we have to back it up first.
-# if [ ! -f client-instance-user-data.tpl.sh.bak ]; then
-#     cp nomad-configuration/client-instance-user-data.tpl.sh nomad-configuration/client-instance-user-data.tpl.sh.bak
-# fi
-
-# ./nomad-configuration/prepare-client-instance-user-data.sh
-# terraform taint aws_spot_fleet_request.cheap_ram
 terraform taint module.batch.aws_launch_template.data_refinery_lt_standard
 terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
 
@@ -327,8 +311,6 @@ fi
 
 # Don't leave secrets lying around!
 rm -f prod_env
-# The tarball at the end of client-instance-user-data.tpl.sh has secrets, so restore from backup
-# mv nomad-configuration/client-instance-user-data.tpl.sh.bak nomad-configuration/client-instance-user-data.tpl.sh
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API

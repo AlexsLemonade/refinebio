@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is a template for the instance-user-data.sh script for the Nomad Server.
+# This is a template for the instance-user-data.sh script for the PG bouncer instance.
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
@@ -13,8 +13,7 @@
 
 # A more ideal solution than this would be if we could just give AWS a list of
 # files to put onto the instance for us, but they only give us this one script
-# to do it with. Nomad has file provisioners which will put files onto the
-# instance after it starts up, but those run after this script runs.
+# to do it with.
 
 # Change to home directory of the default user
 cd /home/ubuntu || exit

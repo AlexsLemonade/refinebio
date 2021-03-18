@@ -16,7 +16,7 @@ module "batch" {
   data_refinery_keypair = aws_key_pair.data_refinery
   data_refinery_worker_security_group = aws_security_group.data_refinery_worker
 
-  data_refinery_worker_user_data = data.template_file.nomad_client_script_smusher.rendered
+  data_refinery_worker_user_data = data.template_file.worker_script_smusher.rendered
   data_refinery_worker_ami = var.worker_ami
 
   user = var.user
