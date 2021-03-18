@@ -20,7 +20,7 @@ django-elasticsearch-dsl==7.1.4
     # via django-elasticsearch-dsl-drf
 django-nine==0.2.3
     # via django-elasticsearch-dsl-drf
-django==2.2.13
+django==2.2.18
     # via
     #   -r requirements.in
     #   djangorestframework
