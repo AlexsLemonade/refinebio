@@ -43,7 +43,7 @@ resource "aws_cloudwatch_log_group" "data_refinery_log_group" {
 # Streams
 ##
 
-# Nomad / Docker
+# Workers
 resource "aws_cloudwatch_log_stream" "log_stream_surveyor" {
   name = "log-stream-surveyor-${var.user}-${var.stage}"
   log_group_name = aws_cloudwatch_log_group.data_refinery_log_group.name

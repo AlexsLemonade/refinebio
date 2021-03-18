@@ -65,7 +65,7 @@ docker run \\
 " >> /home/ubuntu/run_management_command.sh
 chmod +x /home/ubuntu/run_management_command.sh
 
-# Start the Nomad agent in server mode via Monit
+# Use Monit to ensure the Foreman is always running
 apt-get -y update
 apt-get -y install monit htop
 
