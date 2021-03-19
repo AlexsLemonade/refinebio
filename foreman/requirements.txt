@@ -24,7 +24,7 @@ django==2.2.13
     # via
     #   -r requirements.in
     #   djangorestframework
-djangorestframework==3.11.0
+djangorestframework==3.11.2
     # via django-elasticsearch-dsl-drf
 elasticsearch-dsl==7.2.1
     # via
