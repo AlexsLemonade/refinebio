@@ -441,7 +441,8 @@ jobs:
       ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
       CI_USERNAME: ${{ github.actor }}
     needs:
-      - main_tests
+      - foreman_tests
+      - downloader_no_op_tests
       - common_smasher_tests
       - syntax_test
       - salmon_and_api_tests
