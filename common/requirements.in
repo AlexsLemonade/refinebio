@@ -13,6 +13,6 @@ django-elasticsearch-dsl-drf
 # Can't go above 6.4.2 without upgrading elasticsearch
 django-elasticsearch-dsl==6.4.2
 # DRF 3.10 breaks an import.
-djangorestframework==3.9.4
+djangorestframework==3.11.2
 vcrpy
 django-computedfields
