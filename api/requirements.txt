@@ -73,7 +73,7 @@ inflection==0.5.1
     # via drf-yasg
 itypes==1.2.0
     # via coreapi
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   -r requirements.in
     #   coreschema
@@ -109,8 +109,6 @@ requests==2.24.0
     #   -r requirements.in
     #   coreapi
     #   python-nomad
-ruamel.yaml.clib==0.2.2
-    # via ruamel.yaml
 ruamel.yaml==0.16.12
     # via drf-yasg
 s3transfer==0.3.3
