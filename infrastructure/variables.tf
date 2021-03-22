@@ -202,12 +202,6 @@ variable "processing_compendia" {
   default = true
 }
 
-# Configuration
-variable "downloader_space_constraint" {
-  # 600 GB
-  default = "600000000000"
-}
-
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -380,10 +374,6 @@ output "environment_variables" {
     {
       name = "ENGAGEMENTBOT_WEBHOOK"
       value = var.engagementbot_webhook
-    },
-    {
-      name = "DOWNLOADER_SPACE_CONSTRAINT"
-      value = var.downloader_space_constraint
     },
     {
       name = "REFINEBIO_JOB_QUEUE_NAME"

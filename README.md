@@ -105,7 +105,6 @@ The following services will need to be installed:
 [post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./scripts/install_nomad.sh`.
 - [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [black](https://black.readthedocs.io/en/stable/) can be installed on Linux clients with `pip3 install black`
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
@@ -113,7 +112,7 @@ so Docker does not need sudo permissions.
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
 - [shellcheck](https://github.com/koalaman/shellcheck/)
 
-Instructions for installing Docker, Terraform, and Nomad can be found by
+Instructions for installing Docker and Terraform can be found by
 following the link for each service. git-crypt, jq, and iproute2 can be installed via
 `sudo apt-get install git-crypt jq iproute2 shellcheck`.
 
@@ -123,7 +122,6 @@ The following services will need to be installed:
 - [Homebrew](https://brew.sh/)
 - [Docker for Mac](https://www.docker.com/docker-mac)
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomadproject.io/)
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
@@ -133,7 +131,7 @@ The following services will need to be installed:
 Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
 on their respective homepages.
 
-Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq black shellcheck`.
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt terraform jq black shellcheck`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -150,9 +148,8 @@ containers. When returning to this project you should run
 
 #### Services
 
-`refinebio` also depends on Postgres and Nomad. Postgres can be
-run in a local Docker container, but Nomad must be run on your
-development machine.
+`refinebio` also depends on Postgres. Postgres can be
+run in a local Docker container
 
 ##### Postgres
 

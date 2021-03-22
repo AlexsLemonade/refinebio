@@ -32,8 +32,7 @@ logger = get_and_configure_logger(__name__)
 # excessive spinning.
 MIN_LOOP_TIME = datetime.timedelta(seconds=15)
 
-# How frequently we dispatch Janitor jobs and clean unplaceable jobs
-# out of the Nomad queue.
+# How frequently we dispatch Janitor jobs.
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 
 # How frequently we clean up the database.
@@ -73,14 +72,12 @@ def clean_database():
 
 
 def monitor_jobs():
-    """Main Foreman thread that helps manage the Nomad job queue.
+    """Main Foreman thread that helps manage the Batch job queue.
 
     Will find jobs that failed, hung, or got lost and requeue them.
 
     Also will queue up Janitor jobs regularly to free up disk space.
 
-    Also cleans jobs out of the Nomad queue which cannot be queued
-    because the volume containing the job's data isn't mounted.
 
     It does so on a loop forever that won't spin faster than
     MIN_LOOP_TIME, but it may spin slower than that.

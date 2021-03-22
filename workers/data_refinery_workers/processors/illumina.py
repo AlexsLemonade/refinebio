@@ -297,7 +297,7 @@ def _detect_platform(job_context: Dict) -> Dict:
         try:
             send_job(ProcessorPipeline.NO_OP, processor_job)
         except Exception as e:
-            # Nomad dispatch error, likely during local test.
+            # Batch dispatch error, likely during local test.
             logger.error(e, job=processor_job)
 
         job_context["abort"] = True

@@ -108,7 +108,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
             last_job.retried_job = new_job
             last_job.save()
         else:
-            # Can't communicate with nomad just now, leave the job for a later loop.
+            # Can't communicate with Batch just now, leave the job for a later loop.
             new_job.delete()
             return False, ""
     except Exception:
@@ -117,7 +117,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
             last_job.id,
             new_job.id,
         )
-        # Can't communicate with nomad just now, leave the job for a later loop.
+        # Can't communicate with Batch just now, leave the job for a later loop.
         new_job.delete()
         return False, ""
 
@@ -214,7 +214,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             last_job.retried_job = new_job
             last_job.save()
         else:
-            # Can't communicate with nomad just now, leave the job for a later loop.
+            # Can't communicate with Batch just now, leave the job for a later loop.
             new_job.delete()
     except Exception:
         logger.warn(
@@ -223,7 +223,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             new_job.id,
             exc_info=1,
         )
-        # Can't communicate with nomad just now, leave the job for a later loop.
+        # Can't communicate with Batch just now, leave the job for a later loop.
         new_job.delete()
 
 
