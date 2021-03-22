@@ -193,9 +193,8 @@ class RunTximportTestCase(TestCase):
     percent.
     """
 
-    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
     @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
-    def test_early_tximport(self, mock_send_job, mock_get_active_volumes):
+    def test_early_tximport(self, mock_send_job):
         """Tests that tximport jobs are created when the experiment is past the thresholds.
 
         Makes sure that when we should in fact run create tximport jobs that
@@ -209,8 +208,6 @@ class RunTximportTestCase(TestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes = {"1", "2", "3"}
-        mock_get_active_volumes.return_value = active_volumes
 
         # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
         # don't actually want to process them so it's okay.
@@ -250,16 +247,15 @@ class RunTximportTestCase(TestCase):
         pj = ProcessorJob.objects.all()[0]
         self.assertEqual(pj.pipeline_applied, ProcessorPipeline.TXIMPORT.value)
 
-        # Verify that we attempted to send the jobs off to nomad
+        # Verify that we attempted to send the jobs off to Batch
         mock_calls = mock_send_job.mock_calls
         self.assertEqual(len(mock_calls), 1)
 
         first_call_job_type = mock_calls[0][1][0]
         self.assertEqual(first_call_job_type, ProcessorPipeline.TXIMPORT)
 
-    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
     @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
-    def test_tximport_percent_cutoff(self, mock_send_job, mock_get_active_volumes):
+    def test_tximport_percent_cutoff(self, mock_send_job):
         """Tests logic for determining if tximport should be run early.
 
         This test is verifying that a tximport job won't be creatd if
@@ -273,8 +269,6 @@ class RunTximportTestCase(TestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes = {"1", "2", "3"}
-        mock_get_active_volumes.return_value = active_volumes
 
         # Accessions SRR5125615-SRR5125620 don't exist in SRA, but we
         # don't actually want to process them so it's okay.
@@ -317,13 +311,12 @@ class RunTximportTestCase(TestCase):
         # doens't have enough samples to have tximport run early.
         self.assertEqual(ProcessorJob.objects.all().count(), 0)
 
-        # Verify that we didn't attempt to send the jobs off to nomad
+        # Verify that we didn't attempt to send the jobs off to Batch
         mock_calls = mock_send_job.mock_calls
         self.assertEqual(len(mock_calls), 0)
 
-    @patch("data_refinery_foreman.foreman.management.commands.run_tximport.get_active_volumes")
     @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
-    def test_tximport_numerical_cutoff(self, mock_send_job, mock_get_active_volumes):
+    def test_tximport_numerical_cutoff(self, mock_send_job):
         """Tests logic for determining if tximport should be run early.
 
         This test is verifying that a tximport job won't be created if
@@ -336,8 +329,6 @@ class RunTximportTestCase(TestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes = {"1", "2", "3"}
-        mock_get_active_volumes.return_value = active_volumes
 
         # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
         # don't actually want to process them so it's okay.
@@ -378,6 +369,6 @@ class RunTximportTestCase(TestCase):
         # doens't have enough samples to have tximport run early.
         self.assertEqual(ProcessorJob.objects.all().count(), 0)
 
-        # Verify that we didn't attempt to send the jobs off to nomad
+        # Verify that we didn't attempt to send the jobs off to Batch
         mock_calls = mock_send_job.mock_calls
         self.assertEqual(len(mock_calls), 0)

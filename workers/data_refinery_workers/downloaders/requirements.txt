@@ -4,58 +4,25 @@
 #
 #    pip-compile requirements.in
 #
-certifi==2020.6.20
-    # via requests
-chardet==3.0.4
-    # via requests
-coverage==5.2.1
-    # via coveralls
-coveralls==2.1.1
-    # via -r requirements.in
-django-computedfields==0.1.3
-    # via -r requirements.in
-django==2.2.13
-    # via -r requirements.in
-docopt==0.6.2
-    # via coveralls
-idna==2.10
-    # via
-    #   requests
-    #   yarl
-multidict==4.7.6
-    # via yarl
-psutil==5.7.2
-    # via -r requirements.in
-psycopg2-binary==2.8.5
-    # via -r requirements.in
-python-nomad==1.2.1
-    # via -r requirements.in
-pytz==2020.1
-    # via django
-pyyaml==5.3.1
-    # via vcrpy
-requests==2.24.0
-    # via
-    #   -r requirements.in
-    #   coveralls
-    #   python-nomad
-retrying==1.3.3
-    # via -r requirements.in
-six==1.15.0
-    # via
-    #   retrying
-    #   vcrpy
-sqlparse==0.3.1
-    # via django
-typing-extensions==3.7.4.2
-    # via yarl
-urllib3==1.25.10
-    # via
-    #   -r requirements.in
-    #   requests
-vcrpy==4.0.2
-    # via -r requirements.in
-wrapt==1.12.1
-    # via vcrpy
-yarl==1.5.0
-    # via vcrpy
+certifi==2020.6.20        # via requests
+chardet==3.0.4            # via requests
+coverage==5.2.1           # via coveralls
+coveralls==2.1.1          # via -r requirements.in
+django-computedfields==0.1.3  # via -r requirements.in
+django==2.2.13            # via -r requirements.in
+docopt==0.6.2             # via coveralls
+idna==2.10                # via requests, yarl
+multidict==4.7.6          # via yarl
+psutil==5.7.2             # via -r requirements.in
+psycopg2-binary==2.8.5    # via -r requirements.in
+pytz==2020.1              # via django
+pyyaml==5.3.1             # via vcrpy
+requests==2.24.0          # via -r requirements.in, coveralls
+retrying==1.3.3           # via -r requirements.in
+six==1.15.0               # via retrying, vcrpy
+sqlparse==0.3.1           # via django
+typing-extensions==3.7.4.2  # via yarl
+urllib3==1.25.10          # via -r requirements.in, requests
+vcrpy==4.0.2              # via -r requirements.in
+wrapt==1.12.1             # via vcrpy
+yarl==1.5.0               # via vcrpy

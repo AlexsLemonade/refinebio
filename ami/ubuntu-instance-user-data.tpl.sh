@@ -41,13 +41,6 @@ sudo usermod -aG docker ubuntu
 # Change to home directory of the default user
 cd /home/ubuntu || exit
 
-# Install nomad
-cat <<"EOF" > install_nomad.sh
-${install_nomad_script}
-EOF
-chmod +x install_nomad.sh
-./install_nomad.sh
-
 # Set up the AWS NTP
 # via https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-time.html#configure_ntp
 echo 'server 169.254.169.123 prefer iburst' | cat - /etc/chrony/chrony.conf > temp && mv temp /etc/chrony/chrony.conf

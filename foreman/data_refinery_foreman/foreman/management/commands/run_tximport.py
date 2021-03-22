@@ -6,8 +6,6 @@ experiments with a single organism since we don't yet have logic to
 split experiments into multiple tximport jobs.
 """
 
-import random
-
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 
@@ -21,7 +19,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.rna_seq import get_quant_results_for_experiment, should_run_tximport
-from data_refinery_common.utils import get_active_volumes
+from data_refinery_common.utils import choose_job_queue
 
 logger = get_and_configure_logger(__name__)
 
@@ -55,9 +53,9 @@ def run_tximport():
                 processor_job.pipeline_applied = tximport_pipeline.value
                 processor_job.ram_amount = 8192
                 # This job doesn't need to run on a specific volume
-                # but it uses the same Nomad job as Salmon jobs which
+                # but it uses the same Batch job as Salmon jobs which
                 # do require the volume index.
-                processor_job.volume_index = random.choice(list(get_active_volumes()))
+                processor_job.volume_index = choose_job_queue
                 processor_job.save()
 
                 assoc = ProcessorJobOriginalFileAssociation()

@@ -12,7 +12,6 @@ from drf_yasg.utils import swagger_auto_schema
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_api.utils import check_filters
 from data_refinery_common.models import DownloaderJob
-from data_refinery_common.utils import get_nomad_jobs
 
 
 class DownloaderJobSerializer(serializers.ModelSerializer):
@@ -48,12 +47,6 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                 type=openapi.TYPE_STRING,
                 description="List the downloader jobs associated with a sample",
             ),
-            openapi.Parameter(
-                name="nomad",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                description="Only return jobs that are in the nomad queue currently",
-            ),
         ]
     ),
 )
@@ -73,7 +66,7 @@ class DownloaderJobListView(generics.ListAPIView):
     ordering = ("-id",)
 
     def get_queryset(self):
-        invalid_filters = check_filters(self, ["sample_accession_code", "nomad"])
+        invalid_filters = check_filters(self, ["sample_accession_code"])
 
         if invalid_filters:
             raise InvalidFilters(invalid_filters=invalid_filters)
@@ -85,13 +78,6 @@ class DownloaderJobListView(generics.ListAPIView):
             queryset = queryset.filter(
                 original_files__samples__accession_code=sample_accession_code
             ).distinct()
-
-        nomad = self.request.query_params.get("nomad", None)
-        if nomad:
-            running_nomad_jobs_ids = [
-                job["ID"] for job in get_nomad_jobs() if job["Status"] == "running"
-            ]
-            queryset = queryset.filter(batch_job_id__in=running_nomad_jobs_ids)
 
         return queryset
 

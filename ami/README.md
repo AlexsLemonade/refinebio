@@ -1,7 +1,7 @@
 ### AMI Creation
 
 This directory contains the terraform config for an instance "AMI Template
-Instance" which upgrades Ubuntu and installs docker and nomad.
+Instance" which upgrades Ubuntu and installs docker.
 This can be run with `terraform apply`.
 
 You can then use the script `create_ubuntu_ami.sh` to create a new Ubuntu AMI with the name

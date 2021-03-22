@@ -11,9 +11,6 @@ DATABASE_TIMEOUT=5
 RUNNING_IN_CLOUD=False
 SERVICE=worker
 
-NOMAD_HOST=nomad
-NOMAD_PORT=4646
-
 USE_S3=False
 S3_BUCKET_NAME=data-refinery
 LOCAL_ROOT_DIR=/home/user/data_store

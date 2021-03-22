@@ -29,32 +29,6 @@ fi
 unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 sudo mv terraform /usr/local/bin/
 
-sudo apt-get update
-sudo apt-get install lxc -y  # Install lxc, which is required by nomad
-
-NOMAD_VERSION=0.8.3
-wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_linux_amd64.zip
-wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS
-wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS.sig
-
-
-# Verify the signature file is untampered.
-gpg_ok=$(gpg --verify nomad_${NOMAD_VERSION}_SHA256SUMS.sig nomad_${NOMAD_VERSION}_SHA256SUMS |& grep Good)
-if [[ "$gpg_ok" == "" ]]; then
-    echo "Could not verify the signature from HashiCorp Security <security@hashicorp.com>."
-    exit 1
-fi
-
-# Verify the SHASUM matches the binary.
-shasum_ok=$(sha256sum -c nomad_${NOMAD_VERSION}_SHA256SUMS |& grep OK)
-if [[ "$shasum_ok" == "" ]]; then
-    echo "Could not verify the Nomad checksum provided by Hashicorp."
-    exit 1
-fi
-
-unzip nomad_${NOMAD_VERSION}_linux_amd64.zip
-sudo mv nomad /usr/local/bin/
-
 cd ~/refinebio/infrastructure
 
 # Circle won't set the branch name for us, so do it ourselves.

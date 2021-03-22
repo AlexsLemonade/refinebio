@@ -180,25 +180,6 @@ or if you have `psql` installed this command will give you a better shell experi
 source scripts/common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_address) -U postgres -d data_refinery
 ```
 
-##### Nomad
-
-Similarly, you will need to run a local [Nomad](https://www.nomadproject.io/) service in development mode.
-
-However if you run Linux and you have followed the [installation instructions](#installation), you
-can run Nomad with:
-
-```bash
-sudo -E ./scripts/run_nomad.sh
-```
-
-(_Note:_ This step may take some time because it downloads lots of files.)
-
-Nomad is an orchestration tool which Refine.bio uses to run
-`Surveyor`, `Downloader`, `Processor` jobs. Jobs are queued by sending a message to
-the Nomad agent, which will then launch a Docker container which runs
-the job. If address conflicts emerge, old Docker containers can be purged
-with `docker container prune -f`.
-
 #### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
@@ -232,14 +213,6 @@ And then the ES Indexes (akin to Postgres 'databases') can be created with:
 
 ### Testing
 
-The end to end tests require a separate Nomad client to be running so
-that the tests can be run without interfering with local
-development. The second Nomad client can be started with:
-
-```bash
-sudo -E ./scripts/run_nomad.sh -e test
-```
-
 To run the entire test suite:
 
 ```bash
@@ -247,40 +220,6 @@ To run the entire test suite:
 ```
 
 (_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
-
-You can use the following to get the current status of nomad when running in the test environment.
-
-```
-$ source scripts/common.sh
-$ set_nomad_test_address
-$ nomad status
-```
-
-Running the end to end tests is tricky because Nomad's needs to pull images from docker with our code.
-We have a docker image registry that runs locally, but you'll need to update it with different images in order to make the code run.
-The script `./scripts/prepare_image.sh` can be used to prepare the images before pushing them.
-
-```
-$ ./scripts/prepare_image.sh -i downloaders -d localhost:5000
-$ docker push localhost:5000/dr_downloaders:latest
-
-$ ./scripts/prepare_image.sh -i no_op -d localhost:5000
-$ docker push localhost:5000/dr_no_op:latest
-```
-
-That's for the images `downloaders` and `no_op`, the same need to be executed for the other images: `salmon`, `transcriptome`, `illumina` and `affymetrix`.
-
-If you want to debug the status of a specific nomad job you can use:
-
-```
-$ nomad status NO_OP_0_2048/dispatch-1567796915-3d7c7c87
-$ nomad status f9c1345b
-$ nomad logs f9c1345b
-```
-
-`f9c1345b` is the allocation id that it's returned in `nomad status`.
-
-These tests will also be run continuously for each commit via CircleCI.
 
 For more granular testing, you can just run the tests for specific parts of the system.
 
@@ -387,7 +326,7 @@ For a while we were using r-base, but we switched to r-base-core when we pinned 
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
-the Nomad and Postgres services running, you're ready to run jobs.
+the Postgres service running, you're ready to run jobs.
 To run the API you also need the elasticsearch service running.
 
 There are three kinds of jobs within Refine.bio.
@@ -639,71 +578,6 @@ nomad job dispatch -meta EXPERIMENT_ACCESSION=SRP009841 TXIMPORT
 
 Note that if the experiment does not have at least 25 samples with at least 80% of them processed, this will do nothing.
 
-
-### Checking on Local Jobs
-
-_Note:_ The following instructions assume you have set the environment
-variable NOMAD_ADDR to include the IP address of your development
-machine. This can be done with:
-
-```bash
-source ./scripts/common.sh && export NOMAD_ADDR=http://$(get_ip_address):4646
-```
-
-To check on the status of a job, run:
-
-```bash
-nomad status
-```
-
-It should output something like:
-
-```
-ID                                       Type                 Priority  Status   Submit Date
-DOWNLOADER                               batch/parameterized  50        running  01/31/18 18:34:05 EST
-DOWNLOADER/dispatch-1517441663-4b02e7a3  batch                50        dead     01/31/18 18:34:23 EST
-PROCESSOR                                batch/parameterized  50        running  01/31/18 18:34:05 EST
-```
-
-The rows whose `ID`s are `DOWNLOADER` or `PROCESSOR` are the parameterized
-jobs which are waiting to dispatch Refine.bio jobs. If you don't understand
-what that means, don't worry about it. All you really need to do is select
-one of the jobs whose ID contains `dispatch` and whose `Submit Date`
-matches the time when the job you want to check on was run, copy that full ID
-(in this case `DOWNLOADER/dispatch-1517437920-ae8b77a4`), and paste it
-after the previous command, like so:
-
-```bash
-nomad status DOWNLOADER/dispatch-1517441663-4b02e7a3
-```
-
-This will output a lot of information about that `Nomad Dispatch Job`,
-of which we're mostly interested in the section titled **Allocations**.
-Here is an example:
-
-```
-Allocations
-ID        Node ID   Task Group  Version  Desired  Status    Created At
-b30e4edd  fda75a5a  jobs        0        run      complete  01/31/18 18:34:23 EST
-```
-
-If you paste that after the original `nomad status` command, like so:
-
-```bash
-nomad status b30e4edd
-```
-
-you'll see a lot of information about allocation, which probably isn't
-what you're interested in. Instead, you should run:
-
-```bash
-nomad logs -verbose b30e4edd
-```
-
-This command will output both the stderr and stdout logs from the container
-which ran that allocation. The allocation is really a Refine.bio job.
-
-
 ### Development Helpers
 
 It can be useful to have an interactive Python interpreter running within the
@@ -784,7 +658,7 @@ This directory is used to validate signed tags so that we know only trusted memb
 ### Terraform
 
 Once you have Terraform installed, `git-crypt` unlocked, and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
-configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
+configuration steps, such as setting environment variables, setting up Batch job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
 
 ```bash
 ./deploy.sh -u myusername -e dev -r us-east-1 -v v1.0.0 -d my-dockerhub-repo

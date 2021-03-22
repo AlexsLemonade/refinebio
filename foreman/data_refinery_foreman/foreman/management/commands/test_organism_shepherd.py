@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TransactionTestCase
@@ -10,7 +10,6 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     Experiment,
     ExperimentOrganismAssociation,
-    ExperimentResultAssociation,
     ExperimentSampleAssociation,
     Organism,
     OriginalFile,
@@ -20,12 +19,13 @@ from data_refinery_common.models import (
     Sample,
 )
 
+EMPTY_JOB_QUEUE_RESPONSE = {"jobSummaryList": []}
+
 
 class OrganismShepherdTestCase(TransactionTestCase):
-    @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.get_active_volumes")
     @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job")
-    @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.Nomad")
-    def test_organism_shepherd_command(self, mock_nomad, mock_send_job, mock_get_active_volumes):
+    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    def test_organism_shepherd_command(self, mock_list_jobs, mock_send_job):
         """Tests that the organism shepherd requeues jobs in the right order.
 
         The situation we're setting up is basically this:
@@ -41,17 +41,8 @@ class OrganismShepherdTestCase(TransactionTestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
-        active_volumes = {"1", "2", "3"}
-        mock_get_active_volumes.return_value = active_volumes
+        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
 
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.jobs = MagicMock()
-            ret_value.jobs.get_jobs = MagicMock()
-            ret_value.jobs.get_jobs.side_effect = lambda: []
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
         zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
         zebrafish.save()
 
@@ -60,7 +51,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
         zero_percent_experiment.technology = "RNA-SEQ"
         zero_percent_experiment.save()
 
-        organism_assoc = ExperimentOrganismAssociation.objects.create(
+        ExperimentOrganismAssociation.objects.create(
             organism=zebrafish, experiment=zero_percent_experiment
         )
 
@@ -107,11 +98,11 @@ class OrganismShepherdTestCase(TransactionTestCase):
         fify_percent_experiment.technology = "RNA-SEQ"
         fify_percent_experiment.save()
 
-        organism_assoc = ExperimentOrganismAssociation.objects.create(
+        ExperimentOrganismAssociation.objects.create(
             organism=zebrafish, experiment=fify_percent_experiment
         )
 
-        ## First sample, this one has been processed.
+        # First sample, this one has been processed.
         successful_pj = ProcessorJob()
         successful_pj.accession_code = "ERR036000"
         successful_pj.pipeline_applied = "SALMON"
@@ -150,7 +141,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
         assoc.experiment = fify_percent_experiment
         assoc.save()
 
-        ## Second sample, this one hasn't been processed.
+        # Second sample, this one hasn't been processed.
         fifty_percent_unprocessed_og = OriginalFile()
         fifty_percent_unprocessed_og.filename = "ERR036001.fastq.gz"
         fifty_percent_unprocessed_og.source_filename = "ERR036001.fastq.gz"
@@ -204,18 +195,9 @@ class OrganismShepherdTestCase(TransactionTestCase):
             first_call_job_object.pipeline_applied, fifty_percent_processor_job.pipeline_applied
         )
         self.assertEqual(first_call_job_object.ram_amount, fifty_percent_processor_job.ram_amount)
-        self.assertIn(first_call_job_object.volume_index, active_volumes)
 
         fifty_percent_processor_job.refresh_from_db()
         self.assertEqual(first_call_job_object, fifty_percent_processor_job.retried_job)
 
         # For now we aren't queuing experiments that haven't been processed at all.
         self.assertEqual(len(mock_calls), 1)
-        # second_call_job_type = mock_calls[1][1][0]
-        # second_call_job_object = mock_calls[1][2]["job"]
-        # self.assertEqual(second_call_job_type, Downloaders.SRA)
-        # self.assertEqual(second_call_job_object.accession_code, zero_percent_dl_job.accession_code)
-        # self.assertEqual(second_call_job_object.downloader_task, zero_percent_dl_job.downloader_task)
-
-        # zero_percent_dl_job.refresh_from_db()
-        # self.assertEqual(second_call_job_object, zero_percent_dl_job.retried_job)

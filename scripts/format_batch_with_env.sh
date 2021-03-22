@@ -2,11 +2,11 @@
 
 ##
 # This script takes your environment variables and uses them to populate
-# Nomad job specifications, as defined in each project.
+# Batch job specifications, as defined in each project.
 ##
 
 print_description() {
-    echo "Formats Nomad Job Specifications with the specified environment overlaid "
+    echo "Formats Batch Job Specifications with the specified environment overlaid "
     echo "onto the current environment."
 }
 
@@ -125,8 +125,6 @@ fi
 . ../scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 export DB_HOST_IP
-NOMAD_HOST_IP=$(get_ip_address)
-export NOMAD_HOST_IP
 
 export VOLUME_DIR=/var/ebs
 
@@ -136,12 +134,6 @@ export AWS_CREDS="{\"name\": \"AWS_ACCESS_KEY_ID\", \"value\": \"$AWS_ACCESS_KEY
 # When deploying prod we write the output of Terraform to a
 # temporary environment file.
 environment_file="$project_directory/infrastructure/prod_env"
-
-# Temporarily set the logging config to nothing so we can see the logs
-# through nomad.
-if [ "$env" = "staging" ]; then
-    export LOGGING_CONFIG=""
-fi
 
 # Read all environment variables from the file for the appropriate
 # project and environment we want to run.
@@ -154,47 +146,16 @@ while read -r line; do
     fi
 done < "$environment_file"
 
-# There is a current outstanding Nomad issue for the ability to
-# template environment variables into the job specifications. Until
-# this issue is resolved, we are using perl to accomplish this. The
-# issue can be found here:
-# https://github.com/hashicorp/nomad/issues/1185
-
 # If output_dir wasn't specified then assume the same folder we're
 # getting the templates from.
 if [ -z "$output_dir" ]; then
-    output_dir=nomad-job-specs
+    output_dir=batch-job-specs
 fi
 
 if [ ! -d "$output_dir" ]; then
     mkdir "$output_dir"
 fi
 
-export_log_conf (){
-    if [ "$env" = 'prod' ] || [ "$env" = 'staging' ] || [ "$env" = 'dev' ]; then
-        export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$AWS_REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
-          }
-        }"
-
-        # Only constrain smasher jobs in the cloud so that
-        # local/test can still run smasher jobs.
-        export SMASHER_CONSTRAINT="
-        constraint {
-          attribute = \"\${meta.is_smasher}\"
-          operator = \"=\"
-          value = \"true\"
-        }"
-    else
-        export LOGGING_CONFIG=""
-        export SMASHER_CONSTRAINT=""
-    fi
-}
 
 # Not quite sure how to deal with this just yet, so punt.
 # export INDEX=0
@@ -210,9 +171,7 @@ if [ "$project" = "workers" ]; then
         FILETYPE=".json"
         OUTPUT_FILE="$OUTPUT_BASE$FILETYPE"
 
-        # Downloader logs go to a separate log stream.
         if [ "$OUTPUT_FILE" = "downloader.json" ]; then
-            export_log_conf "downloader"
             rams="1024 4096 16384"
             for r in $rams
             do
@@ -227,14 +186,12 @@ if [ "$project" = "workers" ]; then
             done
             echo "Made $output_dir/$OUTPUT_FILE"
         elif [ "$OUTPUT_FILE" = "smasher.json" ] || [ "$OUTPUT_FILE" = "create_qn_target.json" ] || [ "$OUTPUT_FILE" = "create_compendia.json" ] || [ "$OUTPUT_FILE" = "create_quantpendia.json" ] || [ "$OUTPUT_FILE" = "tximport.json" ]; then
-            export_log_conf "processor"
             perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                  < "batch-job-templates/$template" \
                  > "$output_dir/$OUTPUT_FILE" \
                  2> /dev/null
             echo "Made $output_dir/$OUTPUT_FILE"
         else
-            export_log_conf "processor"
             # rams="1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312"
             rams="2048 3072 4096 8192 12288 16384 32768 65536"
             for r in $rams
@@ -260,16 +217,13 @@ elif [ "$project" = "surveyor" ]; then
         FILETYPE=".json"
         OUTPUT_FILE="$OUTPUT_BASE$FILETYPE"
 
-        # Downloader logs go to a separate log stream.
         if [ "$OUTPUT_FILE" = "surveyor_dispatcher.json" ]; then
-            export_log_conf "surveyor_dispatcher"
             perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                  < "batch-job-templates/$template" \
                  > "$output_dir/$OUTPUT_FILE" \
                  2> /dev/null
             echo "Made $output_dir/$OUTPUT_FILE"
         else
-            export_log_conf "surveyor"
             rams="256 4096 16384"
             for r in $rams
             do
@@ -287,13 +241,11 @@ elif [ "$project" = "surveyor" ]; then
 
 elif [ "$project" = "foreman" ]; then
     # foreman sub-project
-    export_log_conf "foreman"
     perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
          < environment.tpl \
          > "$output_dir/environment" \
          2> /dev/null
 elif [ "$project" = "api" ]; then
-    export_log_conf "api"
     perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
          < environment.tpl \
          > "$output_dir/environment" \
