@@ -22,11 +22,11 @@ jobs:
       - name: Disk Space Check
         run: df -h
 
-      - name: Pull cached docker images
-        run: ./.github/scripts/pull_docker_images.sh
+      # - name: Pull cached docker images
+      #   run: ./.github/scripts/pull_docker_images.sh
 
-      - name: Disk Space Check
-        run: df -h
+      # - name: Disk Space Check
+      #   run: df -h
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
