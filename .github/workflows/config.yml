@@ -19,8 +19,14 @@ jobs:
       - name: Login to ghcr.io for cached docker images
         run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
+      - name: Disk Space Check
+        run: df -h
+
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
+
+      - name: Disk Space Check
+        run: df -h
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
@@ -50,6 +56,9 @@ jobs:
       - name: Start Nomad
         run: sudo -E ./scripts/run_nomad.sh -e test
 
+      - name: Disk Space Check
+        run: df -h
+
       - name: Prepare docker images for end-to-end tests
         run: |
           ./scripts/prepare_image.sh -i no_op -s workers
@@ -58,6 +67,9 @@ jobs:
           ./scripts/prepare_image.sh -i downloaders -s workers
           docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
           docker push localhost:5000/dr_downloaders
+
+      - name: Disk Space Check
+        run: df -h
 
       - name: Run foreman tests
         run: |
@@ -70,6 +82,9 @@ jobs:
           # workflows that include building those images.
           ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
           .github/scripts/upload_test_coverage.sh foreman
+
+      - name: Disk Space Check
+        run: df -h
 
       - name: Push built docker images
         run: ./.github/scripts/push_docker_images.sh
