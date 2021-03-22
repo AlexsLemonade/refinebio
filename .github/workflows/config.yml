@@ -121,18 +121,6 @@ jobs:
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
 
-      - name: Prepare docker images for end-to-end tests
-        run: |
-          ./scripts/prepare_image.sh -i no_op -s workers
-          docker tag ccdlstaging/dr_no_op localhost:5000/dr_no_op
-          docker push localhost:5000/dr_no_op
-          ./scripts/prepare_image.sh -i downloaders -s workers
-          docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
-          docker push localhost:5000/dr_downloaders
-      # Running these in the same job as the common tests is good
-      # because their dockerfiles are very similar so a lot of the
-      # build time is saved by only building those layers once.
-
       - name: Run downloader tests
         run: |
           .github/scripts/filter_tests.sh -t downloaders
