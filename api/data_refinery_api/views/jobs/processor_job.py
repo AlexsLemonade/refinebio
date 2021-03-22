@@ -28,7 +28,7 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
             "volume_index",
             "worker_version",
             "failure_reason",
-            "nomad_job_id",
+            "batch_job_id",
             "success",
             "original_files",
             "datasets",
@@ -93,7 +93,7 @@ class ProcessorJobListView(generics.ListAPIView):
             running_nomad_jobs_ids = [
                 job["ID"] for job in get_nomad_jobs() if job["Status"] == "running"
             ]
-            queryset = queryset.filter(nomad_job_id__in=running_nomad_jobs_ids)
+            queryset = queryset.filter(batch_job_id__in=running_nomad_jobs_ids)
 
         return queryset
 

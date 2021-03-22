@@ -3,16 +3,12 @@ from typing import Set
 from django.db import models
 from django.utils import timezone
 
-import nomad
-from nomad import Nomad
-
 from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
     LostJobsManager,
 )
 from data_refinery_common.models.sample import Sample
-from data_refinery_common.utils import get_env_variable
 
 
 class ProcessorJob(models.Model):
@@ -62,7 +58,7 @@ class ProcessorJob(models.Model):
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
-    nomad_job_id = models.CharField(max_length=256, null=True)
+    batch_job_id = models.CharField(max_length=256, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried
@@ -98,20 +94,6 @@ class ProcessorJob(models.Model):
                 samples.add(sample)
 
         return samples
-
-    def kill_nomad_job(self) -> bool:
-        if not self.nomad_job_id:
-            return False
-
-        try:
-            nomad_host = get_env_variable("NOMAD_HOST")
-            nomad_port = get_env_variable("NOMAD_PORT", "4646")
-            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-            nomad_client.job.deregister_job(self.nomad_job_id)
-        except nomad.api.exceptions.BaseNomadException:
-            return False
-
-        return True
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """

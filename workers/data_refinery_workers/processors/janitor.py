@@ -41,7 +41,7 @@ def _find_and_remove_expired_jobs(job_context):
 
                 # Is this job running?
                 try:
-                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                    job_status = nomad_client.job.get_job(job.batch_job_id)["Status"]
 
                     # This job is running, don't delete the working directory.
                     if job_status in ["running", "pending"]:

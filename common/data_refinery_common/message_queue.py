@@ -7,8 +7,6 @@ from enum import Enum
 from django.conf import settings
 
 import boto3
-import nomad
-from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.job_lookup import (
     SMASHER_JOB_TYPES,
@@ -17,8 +15,7 @@ from data_refinery_common.job_lookup import (
     SurveyJobTypes,
 )
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import DownloaderJob, ProcessorJob, SurveyJob
-from data_refinery_common.utils import choose_job_queue, get_env_variable, get_volume_index
+from data_refinery_common.utils import get_env_variable
 
 logger = get_and_configure_logger(__name__)
 
@@ -33,8 +30,8 @@ JOB_DEFINITION_PREFIX = get_env_variable("JOB_DEFINITION_PREFIX", "")
 
 # These two constants refer to image names that should be used for
 # multiple jobs.
-NOMAD_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
-NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
+BATCH_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
+BATCH_DOWNLOADER_JOB = "DOWNLOADER"
 NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
@@ -43,7 +40,7 @@ def get_job_name(job_type, job_id):
         job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG
         or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT
     ):
-        return NOMAD_TRANSCRIPTOME_JOB
+        return BATCH_TRANSCRIPTOME_JOB
     elif job_type is ProcessorPipeline.SALMON or job_type is ProcessorPipeline.TXIMPORT:
         # Tximport uses the same job specification as Salmon.
         return ProcessorPipeline.SALMON.value
@@ -67,7 +64,7 @@ def get_job_name(job_type, job_id):
         # Agilent twocolor uses the same job specification as Affy.
         return ProcessorPipeline.AFFY_TO_PCL.value
     elif job_type in list(Downloaders):
-        return NOMAD_DOWNLOADER_JOB
+        return BATCH_DOWNLOADER_JOB
     elif job_type in list(SurveyJobTypes):
         return job_type.value
     elif job_type is Downloaders.NONE:
@@ -88,7 +85,7 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     job_name = get_job_name(job_type, job.id)
     is_processor = is_job_processor(job_type)
 
-    if settings.AUTO_DISPATCH_NOMAD_JOBS:
+    if settings.AUTO_DISPATCH_BATCH_JOBS:
         # We only want to dispatch processor jobs directly.
         # Everything else will be handled by the Foreman, which will increment the retry counter.
         should_dispatch = is_processor or is_dispatch or (not settings.RUNNING_IN_CLOUD)
@@ -114,7 +111,7 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
                 jobDefinition=job_name,
                 parameters={"job_name": job_type.value, "job_id": str(job.id)},
             )
-            job.nomad_job_id = batch_response["jobId"]
+            job.batch_job_id = batch_response["jobId"]
             job.save()
             return True
         except Exception as e:
