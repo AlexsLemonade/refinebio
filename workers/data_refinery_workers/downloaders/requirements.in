@@ -1,4 +1,4 @@
-django==2.2.13
+django>=2.2.18
 requests>=2.23.0
 urllib3>=1.24.2
 psycopg2-binary>=2.8.4
