@@ -67,8 +67,12 @@ job "CREATE_QUANTPENDIA" {
       resources {
         # CPU is in AWS's CPU units.
         cpu =   4000
+
+        # Appropriate for testing
+        memory = 4000
+
         # Should be appropriate for most quantpendia
-        memory = 32000
+        # memory = 32000
         # Necessary for human/mouse quantpendia.
         # memory = 131000
       }

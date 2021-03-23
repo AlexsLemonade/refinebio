@@ -5,7 +5,7 @@ on: push
 jobs:
   # This runs foreman, end-to-end, and illumina tests.
   # These are grouped together because in total they take less time than our other tests individually.
-  main_tests:
+  foreman_tests:
     runs-on: ubuntu-latest
     env:
       # We have issues when downloading the no_op image, so for now let's just not pull it
@@ -18,9 +18,6 @@ jobs:
 
       - name: Login to ghcr.io for cached docker images
         run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-
-      - name: Pull cached docker images
-        run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
@@ -58,18 +55,6 @@ jobs:
           ./scripts/prepare_image.sh -i downloaders -s workers
           docker tag ccdlstaging/dr_downloaders localhost:5000/dr_downloaders
           docker push localhost:5000/dr_downloaders
-      # Running these in the same job as the common tests is good
-      # because their dockerfiles are very similar so a lot of the
-      # build time is saved by only building those layers once.
-
-      - name: Run downloader tests
-        run: |
-          .github/scripts/filter_tests.sh -t downloaders
-
-      - name: Run NO_OP tests
-        run: |
-          sudo -E chown -R $USER:$USER workers/test_volume
-          .github/scripts/filter_tests.sh -t no_op
 
       - name: Run foreman tests
         run: |
@@ -83,8 +68,46 @@ jobs:
           ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
           .github/scripts/upload_test_coverage.sh foreman
 
-      - name: Push built docker images
-        run: ./.github/scripts/push_docker_images.sh
+  # This runs downloader and NO_OP tests.
+  downloader_no_op_tests:
+    runs-on: ubuntu-latest
+    env:
+      # We have issues when downloading the no_op image, so for now let's just not pull it
+      # IMAGES: migrations api_local downloaders no_op foreman
+      IMAGES: migrations api_local downloaders foreman
+      DOCKER_BUILDKIT: 1
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login to ghcr.io for cached docker images
+        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
+      - name: Pull cached docker images
+        run: ./.github/scripts/pull_docker_images.sh
+
+      - name: Start Postgres
+        run: ./scripts/run_postgres.sh
+
+      - name: Pause for initialization
+        run: sleep 30
+
+      - name: Install the database
+        run: ./scripts/install_db_docker.sh
+
+      - name: Update the models
+        run: |
+          sudo chmod -R a+wr common
+          ./scripts/update_models.sh
+
+      - name: Run downloader tests
+        run: |
+          .github/scripts/filter_tests.sh -t downloaders
+
+      - name: Run NO_OP tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/scripts/filter_tests.sh -t no_op
 
   common_smasher_tests:
     runs-on: ubuntu-latest
@@ -400,7 +423,8 @@ jobs:
       ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
       CI_USERNAME: ${{ github.actor }}
     needs:
-      - main_tests
+      - foreman_tests
+      - downloader_no_op_tests
       - common_smasher_tests
       - syntax_test
       - salmon_and_api_tests
