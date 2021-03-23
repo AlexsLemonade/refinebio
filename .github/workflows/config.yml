@@ -62,9 +62,6 @@ jobs:
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
 
-      - name: Rebuild the Elasticsearch index
-        run: ./scripts/rebuild_es_index.sh
-
       - name: Run affymetrix tests
         run: |
           sudo chmod -R a+rw workers/test_volume
