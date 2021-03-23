@@ -98,7 +98,8 @@ EOF
         {
             "Effect": "Allow",
             "Action": [
-                "batch:ListJobs"
+                "batch:ListJobs",
+                "batch:DescribeJobs"
             ],
             "Resource": [
               "*"
