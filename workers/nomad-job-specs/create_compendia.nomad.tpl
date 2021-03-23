@@ -68,9 +68,12 @@ job "CREATE_COMPENDIA" {
         # CPU is in AWS's CPU units.
         cpu =   4000
 
+        # Appropriate for testing
+        memory = 4000
+
         # Memory is in MB of RAM. Instance should have 64GiB of RAM.
-        # Appropriate for most compendia.
-        memory = 30000
+        # Appropriate for most compendia, but too heavy for testing
+        # memory = 30000
 
         # Memory is in MB of RAM. Instance should have 976GiB of RAM
         # Required for human and mouse compendia.
