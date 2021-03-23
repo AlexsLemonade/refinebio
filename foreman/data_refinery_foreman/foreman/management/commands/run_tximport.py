@@ -55,7 +55,7 @@ def run_tximport():
                 # This job doesn't need to run on a specific volume
                 # but it uses the same Batch job as Salmon jobs which
                 # do require the volume index.
-                processor_job.volume_index = choose_job_queue
+                processor_job.volume_index = choose_job_queue()
                 processor_job.save()
 
                 assoc = ProcessorJobOriginalFileAssociation()

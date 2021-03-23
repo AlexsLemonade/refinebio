@@ -10,7 +10,6 @@ from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_common.foreman import get_capacity_for_jobs
 from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
@@ -22,6 +21,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
 )
 from data_refinery_common.utils import choose_job_queue
+from data_refinery_foreman.foreman.utils import get_capacity_for_jobs
 
 logger = get_and_configure_logger(__name__)
 
