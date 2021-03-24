@@ -138,6 +138,9 @@ jobs:
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
 
+      - name: Start Elasticsearch
+        run: ./scripts/run_es.sh
+
       - name: Pause for initialization
         run: sleep 30
 
@@ -148,6 +151,9 @@ jobs:
         run: |
           sudo chmod -R a+wr common
           ./scripts/update_models.sh
+
+      - name: Rebuild the Elasticsearch index
+        run: ./scripts/rebuild_es_index.sh
 
       - name: Run Common tests
         run: |
