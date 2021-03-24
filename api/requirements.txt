@@ -34,7 +34,7 @@ django-cors-headers==3.5.0
     # via -r requirements.in
 django-elasticsearch-dsl-drf==0.20.9
     # via -r requirements.in
-django-elasticsearch-dsl==6.4.2
+django-elasticsearch-dsl==6.5.0
     # via
     #   -r requirements.in
     #   django-elasticsearch-dsl-drf
@@ -60,7 +60,7 @@ djangorestframework==3.12.2
     #   django-elasticsearch-dsl-drf
     #   djangorestframework-hstore
     #   drf-yasg
-drf_yasg==1.17.1
+drf-yasg==1.20.0
     # via -r requirements.in
 elasticsearch-dsl==6.4.0
     # via
@@ -122,8 +122,8 @@ six==1.15.0
     # via
     #   -r requirements.in
     #   apscheduler
+    #   django-elasticsearch-dsl
     #   django-elasticsearch-dsl-drf
-    #   drf-yasg
     #   elasticsearch-dsl
     #   packaging
     #   python-dateutil

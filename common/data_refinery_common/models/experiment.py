@@ -1,4 +1,4 @@
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Count
 from django.db.models.expressions import Q
@@ -40,7 +40,7 @@ class Experiment(models.Model):
     # https://www.postgresql.org/docs/9.0/static/datatype-character.html
     title = models.TextField()
     description = models.TextField()
-    protocol_description = JSONField(default=dict)
+    protocol_description = models.JSONField(default=dict)
     technology = models.CharField(max_length=256, blank=True)
     submitter_institution = models.CharField(max_length=256, blank=True)
     has_publication = models.BooleanField(default=False)

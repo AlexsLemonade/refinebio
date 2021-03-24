@@ -10,8 +10,8 @@ python-nomad>=1.0.2
 raven
 elasticsearch-dsl
 django-elasticsearch-dsl-drf
-# Can't go above 6.4.2 without upgrading elasticsearch
-django-elasticsearch-dsl==6.4.2
+# Can't go above 6.X without upgrading elasticsearch
+django-elasticsearch-dsl==6.5.0
 djangorestframework>=3.11.2
 vcrpy
 django-computedfields
