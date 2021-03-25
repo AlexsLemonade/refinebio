@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
@@ -22,7 +21,7 @@ class ComputationalResultAnnotation(models.Model):
     )
 
     # Properties
-    data = JSONField(default=dict)
+    data = models.JSONField(default=dict)
     is_ccdl = models.BooleanField(default=True)
 
     # Common Properties

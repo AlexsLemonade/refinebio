@@ -1,25 +1,23 @@
 coverage
-django==2.2.13
+django>=2.2.18
 psycopg2-binary
 boto3>=1.12.21
 requests>=2.23.0
 urllib3>=1.24.2
-Jinja2>=2.10.1
+Jinja2>=2.11.3
 # We need at least 1.1 because of https://github.com/pallets/markupsafe/issues/57
 markupsafe>=1.1
 python-nomad>=1.0.2
-djangorestframework>=3.9.1
+djangorestframework>=3.11.2
 djangorestframework-hstore
 django-cors-headers
 django-filter
 coreapi
 # For ElasticSearch support:
 django-elasticsearch-dsl-drf
-# Can't go above 6.4.2 without upgrading elasticsearch
-django-elasticsearch-dsl==6.4.2
-# DRF 3.10 breaks an import.
-djangorestframework==3.9.4
+# Can't go above 6.X without upgrading elasticsearch
+django-elasticsearch-dsl==6.5.0
 six
-drf_yasg==1.17.1
+drf_yasg>=1.20.0
 apscheduler
 django-computedfields

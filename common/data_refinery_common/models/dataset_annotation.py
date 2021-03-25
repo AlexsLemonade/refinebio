@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
@@ -21,7 +20,7 @@ class DatasetAnnotation(models.Model):
     dataset = models.ForeignKey("Dataset", blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = JSONField(default=dict)
+    data = models.JSONField(default=dict)
 
     # Common Properties
     is_public = models.BooleanField(default=False)
