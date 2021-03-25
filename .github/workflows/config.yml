@@ -405,6 +405,7 @@ jobs:
       - test_foreman
       - test_illumina
       - test_salmon
+      - test_smasher
       - test_transcriptome
     steps:
       - uses: actions/checkout@v2
