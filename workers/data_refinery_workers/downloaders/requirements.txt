@@ -34,7 +34,7 @@ python-nomad==1.2.1
     # via -r requirements.in
 pytz==2020.1
     # via django
-pyyaml==5.3.1
+pyyaml==5.4
     # via vcrpy
 requests==2.24.0
     # via
