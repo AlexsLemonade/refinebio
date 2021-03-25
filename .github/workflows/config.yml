@@ -129,11 +129,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # - name: Login to ghcr.io for cached docker images
-      #   run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Login to ghcr.io for cached docker images
+        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
-      # - name: Pull cached docker images
-      #   run: ./.github/scripts/pull_docker_images.sh
+      - name: Pull cached docker images
+        run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
@@ -162,8 +162,8 @@ jobs:
           ./common/run_tests.sh
           .github/scripts/upload_test_coverage.sh common
 
-      # - name: Push built docker images
-      #   run: ./.github/scripts/push_docker_images.sh
+      - name: Push built docker images
+        run: ./.github/scripts/push_docker_images.sh
 
   test_foreman:
     runs-on: ubuntu-latest
