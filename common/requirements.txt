@@ -69,7 +69,7 @@ python-nomad==1.2.1
     # via -r requirements.in
 pytz==2020.1
     # via django
-pyyaml==5.3.1
+pyyaml==5.4
     # via vcrpy
 raven==6.10.0
     # via -r requirements.in
@@ -91,8 +91,6 @@ six==1.15.0
     #   vcrpy
 sqlparse==0.4.1
     # via django
-typing-extensions==3.7.4.3
-    # via yarl
 urllib3==1.25.11
     # via
     #   -r requirements.in
