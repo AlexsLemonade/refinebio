@@ -36,8 +36,6 @@
             {"name": "DATABASE_TIMEOUT", "value": "${{DATABASE_TIMEOUT}}"},
             {"name": "RAVEN_DSN", "value": "${{RAVEN_DSN}}"},
             {"name": "RAVEN_DSN_API", "value": "${{RAVEN_DSN_API}}"},
-            {"name": "NOMAD_HOST", "value": "${{NOMAD_HOST}}"},
-            {"name": "NOMAD_PORT", "value": "${{NOMAD_PORT}}"},
             {"name": "RUNNING_IN_CLOUD", "value": "${{RUNNING_IN_CLOUD}}"},
             {"name": "USE_S3", "value": "${{USE_S3}}"},
             {"name": "S3_BUCKET_NAME", "value": "${{S3_BUCKET_NAME}}"},

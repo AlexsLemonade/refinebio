@@ -8,11 +8,9 @@ import time
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from nomad import Nomad
-
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import SurveyedAccession
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.models import SurveyedAccession, SurveyJob
+from data_refinery_foreman.foreman.utils import JOB_CREATED_AT_CUTOFF
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
 )
@@ -22,10 +20,6 @@ logger = get_and_configure_logger(__name__)
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        nomad_host = get_env_variable("NOMAD_HOST")
-        nomad_port = get_env_variable("NOMAD_PORT", "4646")
-        nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
         with open("config/all_rna_seq_accessions.txt") as accession_list_file:
             all_rna_accessions = [line.strip() for line in accession_list_file]
 
@@ -42,7 +36,8 @@ class Command(BaseCommand):
 
         while batch_accessions:
             logger.info(
-                "Looping through another batch of 1000 experiments, starting with accession code: %s",
+                "Looping through another batch of 1000 experiments, "
+                "starting with accession code: %s",
                 batch_accessions[0],
             )
 
@@ -57,22 +52,11 @@ class Command(BaseCommand):
 
             missing_accessions = set(batch_accessions) - set(surveyed_accessions)
             while len(missing_accessions) > 0:
-                try:
-                    all_surveyor_jobs = nomad_client.jobs.get_jobs(prefix="SURVEYOR")
-
-                    num_surveyor_jobs = 0
-                    for job in all_surveyor_jobs:
-                        if job["ParameterizedJob"] and job["JobSummary"].get("Children", None):
-                            num_surveyor_jobs = (
-                                num_surveyor_jobs + job["JobSummary"]["Children"]["Pending"]
-                            )
-                            num_surveyor_jobs = (
-                                num_surveyor_jobs + job["JobSummary"]["Children"]["Running"]
-                            )
-                except Exception:
-                    logger.exception("Exception caught counting surveyor jobs!")
-                    # Probably having trouble communicating with Nomad, let's try again next loop.
-                    continue
+                num_surveyor_jobs = SurveyJob.objects.filter(
+                    created_at__gt=JOB_CREATED_AT_CUTOFF,
+                    start_time__is_null=False,
+                    end_time__is_null=True,
+                ).count()
 
                 if num_surveyor_jobs < 15:
                     accession_code = missing_accessions.pop()

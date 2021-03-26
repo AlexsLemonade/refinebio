@@ -6,22 +6,6 @@ export ALL_CCDL_IMAGES="smasher compendia illumina affymetrix salmon transcripto
 # Sometimes we only want to work with the worker images.
 export CCDL_WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders"
 
-get_ip_address () {
-    if [ "$(uname)" = "Linux" ]; then
-        # If we're not connected to the internet return an error code.
-        if ! ip_out="$(ip route get 8.8.8.8)"; then
-            return 1
-        fi
-        echo "$ip_out" | grep -oE 'src ([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $2; exit}'
-    elif [ "$(uname)" = 'Darwin' ]; then # MacOS
-         ip_out=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2 | tail -1)
-         if [ -z "$ip_out" ]; then
-             return 1
-         fi
-         echo "$ip_out"
-    fi
-}
-
 get_docker_db_ip_address () {
     docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drdb 2> /dev/null
 }
@@ -79,18 +63,4 @@ get_master_or_dev() {
             echo "unknown"
         fi
     fi
-}
-
-# Convenience function to export the NOMAD_ADDR environment variable,
-# set to the address used for local development.
-set_nomad_address() {
-    NOMAD_ADDR="http://$(get_ip_address):4646"
-    export NOMAD_ADDR
-}
-
-# Convenience function to export the NOMAD_ADDR environment variable,
-# set to the address used for tests.
-set_nomad_test_address() {
-    NOMAD_ADDR="http://$(get_ip_address):5646"
-    export NOMAD_ADDR
 }

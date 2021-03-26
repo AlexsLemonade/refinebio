@@ -143,15 +143,6 @@ if ! command -v terraform > /dev/null; then
     fi
 fi
 
-if ! command -v nomad > /dev/null; then
-    echo "Installing nomad..."
-    if [ $BREW ]; then
-        $INSTALL_CMD nomad > $OUTPUT
-    else
-        sudo ./install_nomad.sh
-    fi
-fi
-
 if ! command -v pre-commit > /dev/null; then
     message="Would you like to automatically install pre-commit? \
 Note: This will install all the required dependencies (black, isort, etc) \

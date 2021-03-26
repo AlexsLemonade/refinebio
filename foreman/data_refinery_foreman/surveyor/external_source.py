@@ -161,7 +161,7 @@ class ExternalSourceSurveyor:
 
         Queries the external source's API to discover an experiment
         and its samples, creates database records for them, and queues
-        nomad jobs for them.
+        Batch jobs for them.
         Returns True if successful, False otherwise.
         """
         try:

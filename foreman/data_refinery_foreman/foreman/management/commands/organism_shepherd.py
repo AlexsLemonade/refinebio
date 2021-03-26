@@ -4,15 +4,13 @@ out which experiments are closest to completion and queuing them
 first.
 """
 
-import random
 import sys
 import time
 from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 
-from nomad import Nomad
-
+from data_refinery_common.foreman import get_capacity_for_jobs
 from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
@@ -23,7 +21,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
 )
-from data_refinery_common.utils import get_active_volumes, get_env_variable
+from data_refinery_common.utils import choose_job_queue
 
 logger = get_and_configure_logger(__name__)
 
@@ -173,7 +171,7 @@ def requeue_job(job, volume_index):
         raise ValueError("Told to requeue a job that's not a ProcessorJob nor DownloaderJob!")
 
     try:
-        # Only dispatch a job to Nomad immediately if it's a processor
+        # Only dispatch a job to Batch immediately if it's a processor
         # job so that the Foreman can control the flow of
         # DownloaderJobs.
         dispatch_immediately = isinstance(job, ProcessorJob)
@@ -193,7 +191,7 @@ def requeue_job(job, volume_index):
                 type(job).__name__,
                 new_job.id,
             )
-            # Can't communicate with nomad just now, leave the job for a later loop.
+            # Can't communicate with Batch just now, leave the job for a later loop.
             new_job.delete()
             return False
     except Exception:
@@ -207,7 +205,7 @@ def requeue_job(job, volume_index):
             type(job).__name__,
             new_job.id,
         )
-        # Can't communicate with nomad just now, leave the job for a later loop.
+        # Can't communicate with Batch just now, leave the job for a later loop.
         new_job.delete()
         return False
 
@@ -248,23 +246,12 @@ class Command(BaseCommand):
             len(prioritized_job_list),
         )
 
-        nomad_host = get_env_variable("NOMAD_HOST")
-        nomad_port = get_env_variable("NOMAD_PORT", "4646")
-        nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
         while len(prioritized_job_list) > 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
+            job_capacity = get_capacity_for_jobs()
 
-            num_short_from_max = MAX_JOBS_FOR_THIS_MODE - len_all_jobs
-            if num_short_from_max > 0:
-                # We don't want these jobs to sit in our queue because
-                # the volume we assigned isn't available, so only use
-                # active volumes. Also in order to spread them around
-                # do so randomly. We don't want to hammer Nomad to
-                # get the active volumes though, so just do it once
-                # per 5 minute loop.
-                volume_index = random.choice(list(get_active_volumes()))
-                for i in range(num_short_from_max):
+            if job_capacity > 0:
+                volume_index = choose_job_queue()
+                for i in range(job_capacity):
                     if len(prioritized_job_list) > 0:
                         requeue_job(prioritized_job_list.pop(0), volume_index)
 

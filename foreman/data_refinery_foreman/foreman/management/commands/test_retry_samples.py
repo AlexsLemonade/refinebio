@@ -28,7 +28,7 @@ from data_refinery_foreman.foreman.management.commands.retry_samples import retr
 
 def setup_experiment() -> Dict:
     """ Create an experiment with two samples where one of them has a processor job that failed
-    because nomad restarted it."""
+    because Batch restarted it."""
 
     # Create the experiment
     experiment_accession = "SRP095529"
@@ -79,7 +79,7 @@ def setup_experiment() -> Dict:
     processor_job.no_retry = True
     processor_job.success = False
     processor_job.failure_reason = (
-        "ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!"
+        "ProcessorJob has already completed with a fail - why are we here again?"
     )
     processor_job.save()
 

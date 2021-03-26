@@ -6,15 +6,13 @@ import random
 import re
 import time
 from functools import partial
-from itertools import groupby
 from multiprocessing import current_process
-from typing import Dict, Set
+from typing import Dict
 from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-import nomad
 import requests
 from retrying import retry
 
@@ -73,11 +71,6 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
-def choose_job_queue():
-    """Temporarily just use one job queue."""
-    return "0"
-
-
 def get_volume_index(path="/home/user/data_store/VOLUME_INDEX") -> str:
     """ Reads the contents of the VOLUME_INDEX file, else returns default """
 
@@ -101,79 +94,11 @@ def get_volume_index(path="/home/user/data_store/VOLUME_INDEX") -> str:
     return default
 
 
-def get_nomad_jobs() -> list:
-    """Calls nomad service and return all jobs"""
-    try:
-        nomad_host = get_env_variable("NOMAD_HOST")
-        nomad_port = get_env_variable("NOMAD_PORT", "4646")
-        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-        return nomad_client.jobs.get_jobs()
-    except nomad.api.exceptions.BaseNomadException:
-        # Nomad is not available right now
-        return []
+def choose_job_queue() -> str:
+    """This will actually have to do stuff soon, but for now it is better
+    than hardcoding "0" everywhere."""
 
-
-def get_active_volumes() -> Set[str]:
-    """Returns a Set of indices for volumes that are currently mounted.
-
-    These can be used to determine which jobs would actually be able
-    to be placed if they were queued up.
-    """
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    volumes = set()
-    try:
-        for node in nomad_client.nodes.get_nodes():
-            node_detail = nomad_client.node.get_node(node["ID"])
-            if (
-                "Status" in node_detail
-                and node_detail["Status"] == "ready"
-                and "Meta" in node_detail
-                and "volume_index" in node_detail["Meta"]
-            ):
-                volumes.add(node_detail["Meta"]["volume_index"])
-    except nomad.api.exceptions.BaseNomadException:
-        # Nomad is down, return the empty set.
-        pass
-
-    return volumes
-
-
-def get_active_volumes_detailed() -> Dict:
-    """Returns the instance type and number of allocations (jobs) for each active volume
-
-    These can be used to determine which jobs would actually be able
-    to be placed if they were queued up.
-    """
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    volumes = dict()
-    try:
-        for node in nomad_client.nodes.get_nodes():
-            node_detail = nomad_client.node.get_node(node["ID"])
-            allocations = len(nomad_client.node.get_allocations(node["ID"]))
-            if (
-                "Status" in node_detail
-                and node_detail["Status"] == "ready"
-                and "Meta" in node_detail
-                and "volume_index" in node_detail["Meta"]
-            ):
-                volume_info = dict()
-                volume_info["type"] = node_detail["Attributes"].get(
-                    "platform.aws.instance-type", None
-                )
-                volume_info["allocations"] = allocations
-
-                volumes[node_detail["Meta"]["volume_index"]] = volume_info
-    except nomad.api.exceptions.BaseNomadException:
-        # Nomad is down, return the empty dict.
-        pass
-
-    return volumes
+    return "0"
 
 
 def get_supported_microarray_platforms(
@@ -442,85 +367,6 @@ def load_blacklist(blacklist_csv: str = "config/RNASeqRunBlackList.csv"):
             blacklisted_samples.append(line[0].strip())
 
     return blacklisted_samples
-
-
-def get_nomad_jobs_breakdown():
-    jobs = get_nomad_jobs()
-    parameterized_jobs = [job for job in jobs if job["ParameterizedJob"]]
-
-    def get_job_type(job):
-        return get_job_details(job)[0]
-
-    def get_job_volume(job):
-        return get_job_details(job)[1]
-
-    # groupby must be executed on a sorted iterable
-    # ref: https://docs.python.org/2/library/itertools.html#itertools.groupby
-    sorted_jobs_by_type = sorted(filter(get_job_type, parameterized_jobs), key=get_job_type)
-    aggregated_jobs_by_type = groupby(sorted_jobs_by_type, get_job_type)
-    nomad_pending_jobs_by_type, nomad_running_jobs_by_type = _aggregate_nomad_jobs(
-        aggregated_jobs_by_type
-    )
-
-    # To get the total jobs for running and pending, the easiest
-    # AND the most efficient way is to sum up the stats we've
-    # already partially summed up.
-    nomad_running_jobs = sum(num_jobs for job_type, num_jobs in nomad_running_jobs_by_type.items())
-    nomad_pending_jobs = sum(num_jobs for job_type, num_jobs in nomad_pending_jobs_by_type.items())
-
-    sorted_jobs_by_volume = sorted(filter(get_job_volume, parameterized_jobs), key=get_job_volume)
-    aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, get_job_volume)
-    nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = _aggregate_nomad_jobs(
-        aggregated_jobs_by_volume
-    )
-
-    return {
-        "nomad_pending_jobs": nomad_pending_jobs,
-        "nomad_running_jobs": nomad_running_jobs,
-        "nomad_pending_jobs_by_type": nomad_pending_jobs_by_type,
-        "nomad_running_jobs_by_type": nomad_running_jobs_by_type,
-        "nomad_pending_jobs_by_volume": nomad_pending_jobs_by_volume,
-        "nomad_running_jobs_by_volume": nomad_running_jobs_by_volume,
-    }
-
-
-def get_job_details(job):
-    """Given a Nomad Job, as returned by the API, returns the type and volume id"""
-
-    # Surveyor jobs don't have ids and RAM, so handle them specially.
-    if job["ID"].startswith("SURVEYOR"):
-        return "SURVEYOR", False
-
-    # example SALMON_1_2323
-    name_match = re.match(r"(?P<type>\w+)_(?P<volume_id>\d+)_\d+$", job["ID"])
-    if not name_match:
-        return False, False
-
-    return name_match.group("type"), name_match.group("volume_id")
-
-
-def _aggregate_nomad_jobs(aggregated_jobs):
-    """Aggregates the job counts.
-
-    This is accomplished by using the stats that each
-    parameterized job has about its children jobs.
-
-    `jobs` should be a response from the Nomad API's jobs endpoint.
-    """
-    nomad_running_jobs = {}
-    nomad_pending_jobs = {}
-    for (aggregate_key, group) in aggregated_jobs:
-        pending_jobs_count = 0
-        running_jobs_count = 0
-        for job in group:
-            if job["JobSummary"]["Children"]:  # this can be null
-                pending_jobs_count += job["JobSummary"]["Children"]["Pending"]
-                running_jobs_count += job["JobSummary"]["Children"]["Running"]
-
-        nomad_pending_jobs[aggregate_key] = pending_jobs_count
-        nomad_running_jobs[aggregate_key] = running_jobs_count
-
-    return nomad_pending_jobs, nomad_running_jobs
 
 
 def queryset_page_iterator(queryset, page_size=2000):

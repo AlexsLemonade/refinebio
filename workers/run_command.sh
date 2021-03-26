@@ -49,7 +49,6 @@ if [ ! -d "$volume_directory" ]; then
 fi
 
 . ./scripts/common.sh
-HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 chmod -R a+rwX "$volume_directory"
@@ -59,7 +58,6 @@ image_name=ccdlstaging/dr_"$image"
 
 docker run \
        --add-host=database:"$DB_HOST_IP" \
-       --add-host=nomad:"$HOST_IP" \
        --env-file workers/environments/local \
        --env AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY \
