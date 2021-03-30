@@ -169,7 +169,11 @@ def create_processor_job_for_original_files(
     """
     Create a processor job and queue a processor task for sample related to an experiment.
     """
-    # If there's more than one original
+    # If there's no acceptable original files then we've created all the jobs we need to!
+    if len(original_files) == 0:
+        return
+
+    # If there's more than one original file we should prefer one with raw data.
     original_file_to_use = original_files[0]
     for original_file in original_files:
         if original_file.is_blacklisted():
@@ -183,10 +187,6 @@ def create_processor_job_for_original_files(
 
         if original_file.has_raw:
             original_file_to_use = original_file
-
-    # If there's no acceptable original files then we've created all the jobs we need to!
-    if len(original_files) == 0:
-        return
 
     # For anything that has raw data there should only be one Sample per OriginalFile
     sample_object = original_file_to_use.samples.first()
