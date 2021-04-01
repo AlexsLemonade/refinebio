@@ -217,8 +217,10 @@ if [[ -z $ran_init_build ]]; then
 fi
 
 # Remove all Batch jobs because it's the only way to be sure we don't
-# have any old ones.
-# TODO!!! Kill old Batch jobs.
+# have any old ones. Deleting the job queue is the easiest way to do
+# this, and it will be recreated by the following run of terraform
+# anyway.
+python3 delete_batch_job_queue.py
 
 # Make sure that prod_env is empty since we are only appending to it.
 # prod_env is a temporary file we use to pass environment variables to
