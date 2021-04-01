@@ -15,8 +15,6 @@ from data_refinery_foreman.foreman import job_control, utils
 # For use in tests that test the JOB_CREATED_AT_CUTOFF functionality.
 DAY_BEFORE_JOB_CUTOFF = utils.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
 
-EMPTY_JOB_QUEUE_RESPONSE = {"jobSummaryList": []}
-
 
 class ForemanTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.job_control.send_job")

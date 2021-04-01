@@ -167,8 +167,10 @@ def check_hung_jobs(object_list):
         page_end = page_start + DESCRIBE_JOBS_PAGE_SIZE
         page = object_list[page_start:page_end]
 
+        batch_jobs = []
         job_ids = [job.batch_job_id for job in page if job.batch_job_id]
-        batch_jobs = batch.describe_jobs(jobs=job_ids)["jobSummaryList"]
+        if job_ids:
+            batch_jobs = batch.describe_jobs(jobs=job_ids)["jobs"]
 
         running_job_batch_ids = {job["jobId"] for job in batch_jobs if job["status"] == "RUNNING"}
 
@@ -186,8 +188,10 @@ def check_lost_jobs(object_list):
         page_end = page_start + DESCRIBE_JOBS_PAGE_SIZE
         page = object_list[page_start:page_end]
 
+        batch_jobs = []
         job_ids = [job.batch_job_id for job in page if job.batch_job_id]
-        batch_jobs = batch.describe_jobs(jobs=job_ids)["jobSummaryList"]
+        if job_ids:
+            batch_jobs = batch.describe_jobs(jobs=job_ids)["jobs"]
 
         # Need to ignore statuses where the job wouldn't have its
         # start_time set. This includes RUNNING because it may not

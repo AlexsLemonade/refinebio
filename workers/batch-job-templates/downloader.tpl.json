@@ -60,7 +60,7 @@
             "options": {
                 "awslogs-region": "${{AWS_REGION}}",
                 "awslogs-group": "data-refinery-log-group-${{USER}}-${{STAGE}}",
-                "awslogs-stream-prefix": "data-refinery-surveyor-${{USER}}-${{STAGE}}"
+                "awslogs-stream-prefix": "data-refinery-downloader-${{USER}}-${{STAGE}}"
             }
         }
     },

@@ -82,9 +82,7 @@ class JanitorTestCase(TestCase):
         """ Main tester. """
         job = prepare_job()
 
-        mock_describe_jobs.return_value = {
-            "jobSummaryList": [{"jobId": "running_job", "status": "RUNNING"}]
-        }
+        mock_describe_jobs.return_value = {"jobs": [{"jobId": "running_job", "status": "RUNNING"}]}
 
         final_context = janitor.run_janitor(job.pk)
 
