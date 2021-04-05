@@ -72,9 +72,6 @@ job "SURVEYOR_${{RAM}}" {
         max_file_size = 1
       }
 
-      # Run this on the smasher instance so we can make sure they get run.
-      ${{SMASHER_CONSTRAINT}}
-
       config {
         image = "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}"
         force_pull = false
