@@ -30,7 +30,7 @@ django-elasticsearch-dsl==6.5.0
     #   django-elasticsearch-dsl-drf
 django-nine==0.2.3
     # via django-elasticsearch-dsl-drf
-django==3.1.7
+django==3.1.8
     # via
     #   -r requirements.in
     #   djangorestframework
@@ -91,8 +91,6 @@ six==1.15.0
     #   vcrpy
 sqlparse==0.4.1
     # via django
-typing-extensions==3.7.4.3
-    # via yarl
 urllib3==1.25.11
     # via
     #   -r requirements.in
