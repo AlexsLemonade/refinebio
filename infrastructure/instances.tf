@@ -509,7 +509,7 @@ resource "aws_elasticsearch_domain" "es" {
   # TODO: Figure out the power/cost balance of this type.
   # Prices are here: https://aws.amazon.com/elasticsearch-service/pricing/
   cluster_config {
-    instance_type = "t2.medium.elasticsearch"
+    instance_type = "m5.large.elasticsearch"
   }
 
   vpc_options {
