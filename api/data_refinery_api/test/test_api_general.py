@@ -210,6 +210,7 @@ class APITestCases(APITestCase):
 
     def tearDown(self):
         """ Good bye """
+        cache.clear()
         Experiment.objects.all().delete()
         ExperimentAnnotation.objects.all().delete()
         Sample.objects.all().delete()
@@ -219,41 +220,51 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response["X-Source-Revision"], get_env_variable("SYSTEM_VERSION"))
+        cache.clear()
 
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}),
             {"ids": str(self.sample.id) + ",1000"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}),
             {"accession_codes": str(self.sample.accession_code) + ",1000"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(
             reverse("organisms", kwargs={"version": API_VERSION}) + "HOMO_SAPIENS/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("platforms", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("institutions", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("survey_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("downloader_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         # Don't know the best way to deal with this, but since the other tests in different files
         # create objects which are then deleted, the new objects from these tests will have different
@@ -263,40 +274,50 @@ class APITestCases(APITestCase):
             reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("processor_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(
             reverse("processor_jobs", kwargs={"version": API_VERSION}) + "1/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("stats", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}) + "1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("schema_redoc", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION})
             + "?organism__name=DANIO_RERIO"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=1"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(reverse("search", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
 
         response = self.client.get(
             reverse("transcriptome_indices", kwargs={"version": API_VERSION})
@@ -309,6 +330,12 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}) + "?foo=bar")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertListEqual(response.json()["details"], ["foo"])
+
+        # Fourth call since reset_cache() should be throttled
+        response = self.client.get(
+            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
+        )
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
     def test_experiment_multiple_accessions(self):
         response = self.client.get(
@@ -369,18 +396,21 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse("samples", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 2)
+        cache.clear()
 
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}), {"limit": 1}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 1)
+        cache.clear()
 
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}), {"limit": 1, "ordering": "-title"}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["title"], "789")
+        cache.clear()
 
         response = self.client.get(
             reverse("samples", kwargs={"version": API_VERSION}), {"limit": 1, "ordering": "title"}

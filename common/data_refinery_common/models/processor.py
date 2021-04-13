@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 
@@ -8,7 +7,7 @@ class Processor(models.Model):
     name = models.CharField(max_length=255)
     version = models.CharField(max_length=64)
     docker_image = models.CharField(max_length=255)
-    environment = JSONField(default=dict)
+    environment = models.JSONField(default=dict)
 
     class Meta:
         db_table = "processors"

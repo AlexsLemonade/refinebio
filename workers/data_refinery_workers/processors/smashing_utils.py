@@ -668,7 +668,9 @@ def compile_metadata(job_context: Dict) -> Dict:
     metadata["num_experiments"] = job_context["experiments"].count()
     metadata["quant_sf_only"] = job_context["dataset"].quant_sf_only
 
-    if not job_context["dataset"].quant_sf_only:
+    quant_sf_only = job_context["dataset"].quant_sf_only
+
+    if not quant_sf_only:
         metadata["aggregate_by"] = job_context["dataset"].aggregate_by
         metadata["scale_by"] = job_context["dataset"].scale_by
         # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
@@ -686,7 +688,12 @@ def compile_metadata(job_context: Dict) -> Dict:
         if sample.accession_code in filtered_samples:
             # skip the samples that were filtered
             continue
-        samples[sample.accession_code] = sample.to_metadata_dict()
+        computed_file = None
+        if quant_sf_only:
+            computed_file = sample.get_most_recent_quant_sf_file()
+        else:
+            computed_file = sample.get_most_recent_smashable_result_file()
+        samples[sample.accession_code] = sample.to_metadata_dict(computed_file)
 
     metadata["samples"] = samples
     metadata["num_samples"] = len(metadata["samples"])

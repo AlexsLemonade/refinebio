@@ -1,7 +1,6 @@
 import uuid
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models.expressions import Q
 from django.utils import timezone
@@ -86,7 +85,7 @@ class Dataset(models.Model):
     # Experiments and samples live here: {'E-ABC-1': ['SAMP1', 'SAMP2']}
     # This isn't going to be queryable, so we can use JSON-in-text, just make
     # sure we validate properly in and out!
-    data = JSONField(
+    data = models.JSONField(
         default=dict,
         help_text=(
             "This is a dictionary where the keys are experiment accession codes and the values are"
@@ -141,7 +140,7 @@ class Dataset(models.Model):
     )
 
     # Fail handling
-    success = models.NullBooleanField(null=True)
+    success = models.BooleanField(null=True)
     failure_reason = models.TextField()
 
     # Delivery properties

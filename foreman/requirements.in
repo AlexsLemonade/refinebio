@@ -1,4 +1,4 @@
-django==2.2.13
+django>=2.2.18
 psycopg2-binary>=2.8.4
 requests>=2.20.0
 retrying
@@ -7,6 +7,9 @@ coverage
 GEOparse
 python-dateutil
 raven
+djangorestframework>=3.11.2
+# Can't go above 6.X without upgrading elasticsearch
+django-elasticsearch-dsl==6.5.0
 django-elasticsearch-dsl-drf>=0.17.1
 elasticsearch-dsl>=6.1.0
 vcrpy

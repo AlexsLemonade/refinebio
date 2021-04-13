@@ -380,7 +380,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         return
 
     if len(pipeline) == 0:
-        logger.error("Empty pipeline specified.", procesor_job=job_id)
+        logger.error("Empty pipeline specified.", processor_job=job_id)
 
     last_result = start_value
     last_result["job"] = job
@@ -672,7 +672,7 @@ def get_runtime_env(yml_filename):
 
 
 def find_processor(enum_key):
-    """Retursn either a newly created Processor record, or the one in
+    """Returns either a newly created Processor record, or the one in
     database that matches the current processor name, version and environment.
     """
 

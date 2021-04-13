@@ -169,20 +169,34 @@ def create_processor_job_for_original_files(
     """
     Create a processor job and queue a processor task for sample related to an experiment.
     """
-
-    # If there's no original files then we've created all the jobs we need to!
+    # If there's no acceptable original files then we've created all the jobs we need to!
     if len(original_files) == 0:
         return
 
+    # If there's more than one original file we should prefer one with raw data.
+    original_file_to_use = original_files[0]
+    for original_file in original_files:
+        if original_file.is_blacklisted():
+            logger.debug(
+                "Original file had a blacklisted extension of %s, skipping",
+                extension=original_file.get_extension(),
+                original_file=original_file.id,
+            )
+            original_file.delete_local_file()
+            continue
+
+        if original_file.has_raw:
+            original_file_to_use = original_file
+
     # For anything that has raw data there should only be one Sample per OriginalFile
-    sample_object = original_files[0].samples.first()
-    pipeline_to_apply = determine_processor_pipeline(sample_object, original_files[0])
+    sample_object = original_file_to_use.samples.first()
+    pipeline_to_apply = determine_processor_pipeline(sample_object, original_file_to_use)
 
     if pipeline_to_apply == ProcessorPipeline.NONE:
         logger.info(
             "No valid processor pipeline found to apply to sample.",
             sample=sample_object.id,
-            original_file=original_files[0].id,
+            original_file=original_file_to_use.id,
         )
         for original_file in original_files:
             original_file.delete_local_file()
@@ -201,15 +215,6 @@ def create_processor_job_for_original_files(
         processor_job.save()
 
         for original_file in original_files:
-            if original_file.is_blacklisted():
-                logger.debug(
-                    "Original file had a blacklisted extension of %s, skipping",
-                    extension=original_file.get_extension(),
-                    original_file=original_file.id,
-                )
-                original_file.delete_local_file()
-                continue
-
             assoc = ProcessorJobOriginalFileAssociation()
             assoc.original_file = original_file
             assoc.processor_job = processor_job
