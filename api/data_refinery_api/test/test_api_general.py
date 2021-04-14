@@ -332,7 +332,7 @@ class APITestCases(APITestCase):
         self.assertListEqual(response.json()["details"], ["foo"])
 
         # Tenth call since reset_cache() should be throttled, three have happened.
-        for i in range(7):
+        for i in range(8):
             response = self.client.get(
                 reverse("transcriptome_indices", kwargs={"version": API_VERSION})
             )
