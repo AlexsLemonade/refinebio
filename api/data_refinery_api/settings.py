@@ -179,7 +179,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
-    "DEFAULT_THROTTLE_RATES": {"anon": "3/second", "user": "3/second"},
+    "DEFAULT_THROTTLE_RATES": {"anon": "10/second", "user": "10/second"},
 }
 
 SWAGGER_SETTINGS = {
