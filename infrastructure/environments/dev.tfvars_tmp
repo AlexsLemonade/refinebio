@@ -1,0 +1,12 @@
+static_bucket_prefix = "dev"
+static_bucket_root = ".refine.bio"
+database_password = "3vaBmwEBH7VrYlAejDLhI9pdK2hWvumKN5Zke6Iv60r8JcNrGPvVM3qfPZqHQm"
+database_timeout = "300"
+database_instance_type = "m4.xlarge"
+django_secret_key = "d@xrYaDKJPFS9espDl0c$5unpiJLlnk#tAhHN16pVNFsCvZ8e8M%ev9&Gf*lfZ2D"
+nomad_server_instance_type = "t2.medium"
+spot_price = "0.320"
+spot_fleet_capacity = "0"
+api_instance_type = "t2.small"
+max_downloader_jobs_per_node="10"
+full_stack = true

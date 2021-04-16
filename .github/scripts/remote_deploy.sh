@@ -38,6 +38,11 @@ export DOCKER_PASSWD='$DOCKER_PASSWD'
 export OPENSSL_KEY='$OPENSSL_KEY'
 export AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'
 export AWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY'
+export TF_VAR_database_password='$DATABASE_PASSWORD'
+export TF_VAR_django_secret_key='$DJANGO_SECRET_KEY'
+export TF_VAR_raven_dsn='$RAVEN_DSN'
+export TF_VAR_raven_dsn_api='$RAVEN_DSN_API'
+export TF_VAR_engagementbot_webhook='$ENGAGEMENTBOT_WEBHOOK'
 EOF
 
 # And checkout the correct tag.

@@ -1,0 +1,12 @@
+static_bucket_prefix = "staging"
+static_bucket_root = ".refine.bio"
+database_instance_type = "m4.xlarge"
+django_debug = "True"
+nomad_server_instance_type = "t2.medium"
+spot_price = "0.320"
+api_instance_type = "t2.small"
+dockerhub_repo = "ccdlstaging"
+log_level = "DEBUG"
+smasher_instance_type = "m5.2xlarge"
+smasher_volume_size_in_gb = "500"
+full_stack = false
