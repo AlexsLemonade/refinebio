@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Login to ghcr.io for cached docker images
-        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Login to ghcr.io for cached docker images
-        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -122,7 +122,7 @@ jobs:
         run: ./.github/scripts/cleanup_instance.sh
 
       - name: Login to ghcr.io for cached docker images
-        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -221,7 +221,7 @@ jobs:
         run: ./.github/scripts/cleanup_instance.sh
 
       - name: Login to ghcr.io for cached docker images
-        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -296,7 +296,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Login to ghcr.io for cached docker images
-        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -343,7 +343,7 @@ jobs:
         run: ./.github/scripts/cleanup_instance.sh
 
       - name: Login to ghcr.io for cached docker images
-        run: echo ${{ secrets.GH_CONTAINER_REGISTRY_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Pull cached docker images
         run: ./.github/scripts/pull_docker_images.sh
@@ -409,6 +409,20 @@ jobs:
       - name: Push built docker images
         run: ./.github/scripts/push_docker_images.sh
 
+  determine_branch:
+    # As far as I can tell, this is the only way to use the output of
+    # a script in a github conditional.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.set_branch.outputs.branch }}
+    steps:
+      - id: set_branch
+        name: Set the $CI_TAG environment variable
+        run: |
+          source scripts/common.sh
+          echo "::set-output name=branch::$(get_master_or_dev ${GITHUB_REF#refs/tags/})"
+
   deploy:
     if: startsWith(github.ref, 'refs/tags/v') && ! endsWith(github.ref, '-hotfix')
     runs-on: ubuntu-latest
@@ -423,6 +437,7 @@ jobs:
       ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
       CI_USERNAME: ${{ github.actor }}
     needs:
+      - determine_branch
       - foreman_tests
       - downloader_no_op_tests
       - common_smasher_tests
@@ -435,10 +450,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set the $CI_TAG environment variable
+      - name: Set the $MASTER_OR_DEV and $CI_TAG environment variables
         run: |
+          source scripts/common.sh
+          echo "MASTER_OR_DEV=$(get_master_or_dev ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
           # Remove /ref/tags/ from the beginning of the tag name
           echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Set staging specific environment variables
+        if: ${{needs.determine_branch.outputs.branch == 'dev'}}
+        run: |
+          echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
+          echo "ENGAGEMENTBOT_WEBHOOK=${STAGING_ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
+
+      - name: Set prod specific environment variables
+        if: ${{needs.determine_branch.outputs.branch == 'master'}}
+        run: |
+          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
+          echo "ENGAGEMENTBOT_WEBHOOK=${PROD_ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
 
       - name: Install git crypt
         run: ./.github/scripts/install_git_decrypt.sh
@@ -465,15 +500,37 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
       CI_USERNAME: ${{ github.actor }}
+    needs:
+      - determine_branch
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Set the $CI_TAG environment variable
+      - name: Set the $MASTER_OR_DEV and $CI_TAG environment variables
         run: |
+          source scripts/common.sh
+          echo "MASTER_OR_DEV=$(get_master_or_dev ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
           # Remove /ref/tags/ from the beginning of the tag name
           echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Set staging specific environment variables
+        if: ${{needs.determine_branch.outputs.branch == 'dev'}}
+        run: |
+          echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
+          # Staging doesn't notify the engagementbot, so overwrite this to be blank.
+          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
+
+      - name: Set prod specific environment variables
+        if: ${{needs.determine_branch.outputs.branch == 'master'}}
+        run: |
+          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
 
       - name: Install git crypt
         run: git status && ./.github/scripts/install_git_decrypt.sh

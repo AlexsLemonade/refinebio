@@ -53,7 +53,6 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
   - [Docker Images](#docker-images)
-  - [Git Crypt](#git-crypt)
   - [Terraform](#terraform)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
@@ -108,14 +107,13 @@ so Docker does not need sudo permissions.
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./scripts/install_nomad.sh`.
 - [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [black](https://black.readthedocs.io/en/stable/) can be installed on Linux clients with `pip3 install black`
-- [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
 - [shellcheck](https://github.com/koalaman/shellcheck/)
 
 Instructions for installing Docker, Terraform, and Nomad can be found by
-following the link for each service. git-crypt, jq, and iproute2 can be installed via
-`sudo apt-get install git-crypt jq iproute2 shellcheck`.
+following the link for each service. jq, and iproute2 can be installed via
+`sudo apt-get install jq iproute2 shellcheck`.
 
 #### Mac (Manual)
 
@@ -124,7 +122,6 @@ The following services will need to be installed:
 - [Docker for Mac](https://www.docker.com/docker-mac)
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/)
-- [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
 - [black](https://black.readthedocs.io/en/stable/)
@@ -133,7 +130,7 @@ The following services will need to be installed:
 Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
 on their respective homepages.
 
-Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq black shellcheck`.
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac nomad terraform jq black shellcheck`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -765,25 +762,13 @@ It can instead be built with `./scripts/prepare_image.sh -i affymetrix -d <YOUR_
 WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
 It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
 
-### Git Crypt
-
-Secrets are stored using [git-crypt](https://www.agwa.name/projects/git-crypt/).
-Team members can access secret files in the repo by running `git-crypt unlock`.
-
-An existing team member can add a new team member who provides a GPG key `user.armor` with the following:
-    1. `gpg --import user.armor`
-    2. `git-crypt add-gpg-user --trusted KEYID`
-
-Note that `git-crypt lock && git-crypt unlock` will reset permission secret files.
-For the ssh key, this will require running `chmod 600 infrastructure/data-refinery-key.pem` before sshing onto AWS instances.
-
-If you are adding a member to git-crypt, you should also consider adding thier GPG key to the `keys/` directory.
-This directory is used to validate signed tags so that we know only trusted members are pushing deploys.
-
-
 ### Terraform
 
-Once you have Terraform installed, `git-crypt` unlocked, and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
+Once you have Terraform installed and your AWS account credentials installed, you're almost ready to deploy a dev stack.
+The only thing remaining is to copy the RefinebioSSHKey from LastPass and save it to the file: `infrastructure/data-refinery-key.pem`.
+If you do not have access to this key in LastPass, ask another developer.
+
+The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
 configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
 
 ```bash
