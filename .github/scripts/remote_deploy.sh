@@ -19,6 +19,7 @@
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
 
+echo $INSTANCE_SSH_KEY > infrastructure/data-refinery-key.pem
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box () {

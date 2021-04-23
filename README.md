@@ -764,7 +764,11 @@ It's not recommended to build the image with less than 60GB of free space on the
 
 ### Terraform
 
-Once you have Terraform installed and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
+Once you have Terraform installed and your AWS account credentials installed, you're almost ready to deploy a dev stack.
+The only thing remaining is to copy the RefinebioSSHKey from LastPass and save it to the file: `infrastructure/data-refinery-key.pem`.
+If you do not have access to this key in LastPass, ask another developer.
+
+The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
 configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
 
 ```bash
