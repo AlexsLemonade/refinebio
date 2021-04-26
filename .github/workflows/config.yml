@@ -463,6 +463,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
+      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
       CI_USERNAME: ${{ github.actor }}
     needs:
       - determine_branch
@@ -527,6 +528,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       ENGAGEMENT_WEBHOOK: ${{ secrets.ENGAGEMENT_WEBHOOK }}
+      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
       CI_USERNAME: ${{ github.actor }}
     needs:
       - determine_branch
