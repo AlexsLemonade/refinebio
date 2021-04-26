@@ -417,6 +417,10 @@ jobs:
     outputs:
       branch: ${{ steps.set_branch.outputs.branch }}
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
       - id: set_branch
         name: Set the $CI_TAG environment variable
         run: |
