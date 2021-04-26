@@ -243,7 +243,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     elif new_job.num_retries in [2, 3]:
         new_job.ram_amount = 16384
     else:
-        new_job.ram_amount = 256
+        new_job.ram_amount = 1024
 
     new_job.save()
 

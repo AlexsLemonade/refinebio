@@ -12,6 +12,7 @@ from data_refinery_foreman.foreman.downloader_job_manager import (
     retry_failed_downloader_jobs,
     retry_hung_downloader_jobs,
     retry_lost_downloader_jobs,
+    retry_unqueued_downloader_jobs,
 )
 from data_refinery_foreman.foreman.processor_job_manager import (
     retry_failed_processor_jobs,
@@ -22,6 +23,7 @@ from data_refinery_foreman.foreman.survey_job_manager import (
     retry_failed_survey_jobs,
     retry_hung_survey_jobs,
     retry_lost_survey_jobs,
+    retry_unqueued_survey_jobs,
 )
 
 logger = get_and_configure_logger(__name__)
@@ -108,9 +110,11 @@ def monitor_jobs():
             retry_failed_downloader_jobs,
             retry_hung_downloader_jobs,
             retry_lost_downloader_jobs,
+            retry_unqueued_downloader_jobs,
             retry_failed_survey_jobs,
             retry_hung_survey_jobs,
             retry_lost_survey_jobs,
+            retry_unqueued_survey_jobs,
         ]
 
         for function in requeuing_functions_in_order:

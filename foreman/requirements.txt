@@ -15,7 +15,7 @@ django==2.2.13            # via -r requirements.in, djangorestframework
 djangorestframework==3.11.0  # via django-elasticsearch-dsl-drf
 elasticsearch-dsl==7.2.1  # via -r requirements.in, django-elasticsearch-dsl, django-elasticsearch-dsl-drf
 elasticsearch==7.8.0      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
-geoparse==2.0.1           # via -r requirements.in
+geoparse==2.0.3           # via -r requirements.in
 idna==2.10                # via requests, yarl
 multidict==4.7.6          # via yarl
 numpy==1.18.5             # via geoparse, pandas
