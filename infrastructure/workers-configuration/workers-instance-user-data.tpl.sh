@@ -15,8 +15,32 @@ yum install -y jq iotop dstat speedometer awscli docker.io htop wget
 
 ulimit -n 65536
 
+# Add docker login to the ECS agent configuration. This is based off of
+# https://aws.amazon.com/blogs/aws/ec2-container-service-ecs-update-access-private-docker-repos-mount-volumes-in-containers/,
+# although it also changes ECS_CONTAINER_STOP_TIMEOUT based on
+# https://github.com/aws/amazon-ecs-agent/issues/2312.
+# systemctl stop ecs
+
+aws s3 cp s3://data-refinery-secrets/instance-ecs-agent.config instance-ecs-agent.config
+cat instance-ecs-agent.config >> /etc/ecs/ecs.config
+rm instance-ecs-agent.config
+
+systemctl restart docker --no-block
+# systemctl start ecs
+
 # Configure and mount the EBS volume
 mkdir -p /var/ebs/
+
+# We want to mount the biggest volume that its attached to the instance
+# The size of this volume can be controlled with the varialbe
+# `volume_size_in_gb` from the file `variables.tf`
+ATTACHED_AS=`lsblk -n --sort SIZE | tail -1 | cut -d' ' -f1`
+
+# grep -v ext4: make sure the disk is not already formatted.
+if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
+	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
+fi
+mount /dev/$ATTACHED_AS /var/ebs/
 
 export STAGE="${stage}"
 export USER="${user}"

@@ -1,27 +1,3 @@
-# EBS Volumes and S3
-
-##
-# EBS
-##
-
-resource "aws_ebs_volume" "data_refinery_ebs_smasher" {
-  count = var.full_stack && var.processing_compendia ? 1 : 0
-  availability_zone = "${var.region}a"
-  size = var.smasher_volume_size_in_gb
-  type = "st1" # Throughput Optimized HDD
-  tags = {
-    Name = "data-refinery-ebs-smasher-${var.user}-${var.stage}"
-    Environment = var.stage
-    User = var.user
-    Stage = var.stage
-    IsBig = "True"
-  }
-}
-
-##
-# S3
-##
-
 resource "aws_s3_bucket" "data_refinery_bucket" {
   bucket = "data-refinery-s3-${var.user}-${var.stage}"
   acl = "private"
