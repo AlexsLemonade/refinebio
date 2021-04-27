@@ -58,8 +58,10 @@ scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
     -r env_vars ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/env_vars
 
-# Decrypt the secrets in our repo.
-run_on_deploy_box "source env_vars && bash .github/scripts/git_decrypt.sh"
+# Along with the ssh key iself, which the deploy script will use.
+scp -o StrictHostKeyChecking=no \
+    -i infrastructure/data-refinery-key.pem \
+    -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/infrastructure/data-refinery-key.pem
 
 # Output to CircleCI
 echo "Building new images"
@@ -110,6 +112,4 @@ run_on_deploy_box "source env_vars && ./.github/scripts/run_terraform.sh >> /var
 run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CI_TAG finished!\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
 
 # Don't leave secrets lying around.
-## Clean out any files we've created or moved so git-crypt will relock the repo.
 run_on_deploy_box "git clean -f"
-run_on_deploy_box "git-crypt lock"
