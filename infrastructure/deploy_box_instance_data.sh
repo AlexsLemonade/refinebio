@@ -52,7 +52,6 @@ add-apt-repository \
    $(lsb_release -cs) \
    stable"
 
-# Install git-crypt
 apt-get update -qq
 apt-get install -y \
         make \
@@ -67,12 +66,6 @@ apt-get install -y \
         postgresql-client
 
 usermod -aG docker ubuntu
-
-cd /home/ubuntu
-git clone https://github.com/AGWA/git-crypt.git
-cd git-crypt
-make
-make install
 
 touch /var/log/docker_update.log
 chown ubuntu:ubuntu /var/log/docker_update.log

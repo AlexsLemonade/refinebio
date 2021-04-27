@@ -512,12 +512,6 @@ jobs:
           echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
           echo "ENGAGEMENTBOT_WEBHOOK=${PROD_ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
 
-      - name: Install git crypt
-        run: ./.github/scripts/install_git_decrypt.sh
-
-      - name: Git decrypt
-        run: ./.github/scripts/git_decrypt.sh
-
       - name: Deploy
         run: ./.github/scripts/remote_deploy.sh
 
@@ -577,12 +571,6 @@ jobs:
           echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
           echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
           echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
-
-      - name: Install git crypt
-        run: git status && ./.github/scripts/install_git_decrypt.sh
-
-      - name: Git decrypt
-        run: ./.github/scripts/git_decrypt.sh
 
       - name: Deploy
         run: ./.github/scripts/remote_deploy.sh
