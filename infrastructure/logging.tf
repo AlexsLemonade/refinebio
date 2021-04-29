@@ -22,6 +22,8 @@ resource "aws_cloudtrail" "data_refinery_s3_cloudtrail" {
       ]
     }
   }
+
+  tags = var.default_tags
 }
 
 # CloudWatch Log Groups and Streams
@@ -34,9 +36,12 @@ resource "aws_cloudtrail" "data_refinery_s3_cloudtrail" {
 resource "aws_cloudwatch_log_group" "data_refinery_log_group" {
   name = "data-refinery-log-group-${var.user}-${var.stage}"
 
-  tags = {
-    Name = "data-refinery-log-group-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-log-group-${var.user}-${var.stage}"
+    }
+  )
 }
 
 ##
@@ -86,4 +91,6 @@ resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_error" {
 # Must start with `/aws/events` in order to connect to a cloudwatch_event_target.
 resource "aws_cloudwatch_log_group" "compendia_object_metrics_log_group" {
   name = "/aws/events/data-refinery-compendia-log-group-${var.user}-${var.stage}"
+
+  tags = var.default_tags
 }

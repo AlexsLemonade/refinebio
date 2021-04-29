@@ -40,4 +40,6 @@ resource "aws_batch_compute_environment" "data_refinery_spot" {
   service_role = aws_iam_role.batch_service_role.arn
   type = "MANAGED"
   depends_on = [aws_iam_role_policy_attachment.batch_service_role]
+
+  tags = var.default_tags
 }
