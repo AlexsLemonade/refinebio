@@ -53,7 +53,7 @@ def run_tximport():
             if should_run_tximport(experiment, quant_results, True):
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = tximport_pipeline.value
-                processor_job.ram_amount = 8192
+                processor_job.ram_amount = 32768
                 # This job doesn't need to run on a specific volume
                 # but it uses the same Batch job as Salmon jobs which
                 # do require the volume index.
@@ -73,7 +73,7 @@ def run_tximport():
                 created_jobs.append(processor_job)
 
                 try:
-                    send_job(tximport_pipeline, processor_job, is_dispatch=True)
+                    send_job(tximport_pipeline, processor_job)
                 except Exception:
                     # If we cannot queue the job now the Foreman will do
                     # it later.

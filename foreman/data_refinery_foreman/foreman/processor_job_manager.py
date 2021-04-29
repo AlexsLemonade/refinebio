@@ -1,6 +1,7 @@
 from typing import List
 
 import data_refinery_foreman.foreman.utils as utils
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import ProcessorJob
@@ -188,7 +189,11 @@ def retry_unqueued_processor_jobs() -> None:
 
     while queue_capacity > 0:
         for processor_job in database_page.object_list:
-            if send_job(processor_job.pipeline_applied, job=processor_job, is_dispatch=True):
+            if send_job(
+                ProcessorPipeline[processor_job.pipeline_applied],
+                job=processor_job,
+                is_dispatch=True,
+            ):
                 queue_capacity -= 1
         else:
             # Can't communicate with Batch just now, leave the job for a later loop.

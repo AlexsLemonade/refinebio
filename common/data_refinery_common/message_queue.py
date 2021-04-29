@@ -41,9 +41,10 @@ def get_job_name(job_type, job_id):
         or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT
     ):
         return BATCH_TRANSCRIPTOME_JOB
-    elif job_type is ProcessorPipeline.SALMON or job_type is ProcessorPipeline.TXIMPORT:
-        # Tximport uses the same job specification as Salmon.
+    elif job_type is ProcessorPipeline.SALMON:
         return ProcessorPipeline.SALMON.value
+    elif job_type is ProcessorPipeline.TXIMPORT:
+        return ProcessorPipeline.TXIMPORT.value
     elif job_type is ProcessorPipeline.AFFY_TO_PCL:
         return ProcessorPipeline.AFFY_TO_PCL.value
     elif job_type is ProcessorPipeline.NO_OP:
@@ -100,8 +101,8 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
 
         job_name = JOB_DEFINITION_PREFIX + job_name
 
-        # Smasher related jobs don't have RAM tiers.
-        if job_type not in SMASHER_JOB_TYPES:
+        # Smasher related and tximport jobs  don't have RAM tiers.
+        if job_type not in SMASHER_JOB_TYPES and job_type is not ProcessorPipeline.TXIMPORT:
             job_name = job_name + "_" + str(job.ram_amount)
 
         try:
