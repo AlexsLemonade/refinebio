@@ -9,7 +9,7 @@ chardet==3.0.4            # via requests
 coverage==5.2.1           # via -r requirements.in
 django-computedfields==0.1.3  # via -r requirements.in
 django==2.2.13            # via -r requirements.in
-geoparse==2.0.1           # via -r requirements.in
+geoparse==2.0.3           # via -r requirements.in
 idna==2.10                # via requests, yarl
 multidict==4.7.6          # via yarl
 numpy==1.18.5             # via geoparse, pandas

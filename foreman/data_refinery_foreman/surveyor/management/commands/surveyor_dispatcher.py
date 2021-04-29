@@ -63,7 +63,7 @@ def set_source_type_for_accession(survey_job, accession: str) -> None:
 def queue_surveyor_for_accession(accession: str) -> None:
     """Dispatches a surveyor job for the accession code."""
     # Start at 256MB of RAM for surveyor jobs.
-    survey_job = SurveyJob(ram_amount=256)
+    survey_job = SurveyJob(ram_amount=1024)
     set_source_type_for_accession(survey_job, accession)
 
     key_value_pair = SurveyJobKeyValue(

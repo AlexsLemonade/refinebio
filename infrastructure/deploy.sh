@@ -46,6 +46,7 @@ while getopts ":e:d:v:u:r:h" opt; do
         ;;
     v)
         export SYSTEM_VERSION=$OPTARG
+        export TF_VAR_system_version=$OPTARG
         ;;
     u)
         export TF_VAR_user=$OPTARG
@@ -166,7 +167,14 @@ fi
 # Always init terraform first, especially since we're using a remote backend.
 ./init_terraform.sh
 
-if [[ ! -f terraform.tfstate ]]; then
+
+# Terraform doesn't manage these well, so they need to be tainted if
+# they exist to ensure they won't require manual intervention.
+terraform taint module.batch.aws_launch_template.data_refinery_launch_template || true
+terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
+terraform taint module.batch.aws_batch_compute_environment.data_refinery_spot || true
+
+if [[ ! -f .terraform/terraform.tfstate ]]; then
     ran_init_build=true
     echo "No terraform state file found, applying initial terraform deployment."
 
@@ -186,11 +194,6 @@ if [[ ! -f terraform.tfstate ]]; then
     else
         terraform apply -var-file="environments/$env.tfvars" -auto-approve
     fi
-else
-    # These resources will prevent the deletion of the compute
-    # environment, so we have to taint them each time. (Since we don't
-    # know when they'll be necessary.)
-    terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
 fi
 
 # We have to do this once before the initial deploy..
@@ -216,10 +219,6 @@ if [[ -z $ran_init_build ]]; then
     fi
 fi
 
-# Remove all Batch jobs because it's the only way to be sure we don't
-# have any old ones. Deleting the job queue is the easiest way to do
-# this, and it will be recreated by the following run of terraform
-# anyway.
 python3 delete_batch_job_queue.py
 
 # Make sure that prod_env is empty since we are only appending to it.
@@ -229,6 +228,12 @@ rm -f prod_env
 
 # (cont'd) ..and once again after the update when this is re-run.
 format_environment_variables
+
+# Remove all Batch jobs because it's the only way to be sure we don't
+# have any old ones. Deleting the job queue is the easiest way to do
+# this, and it will be recreated by the following run of terraform
+# anyway.
+python3 deregister_batch_job_definitions.py
 
 # Get an image to run the migrations with.
 docker pull "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
@@ -297,7 +302,9 @@ for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
 done
 echo "Job registrations have been fired off."
 
-terraform taint module.batch.aws_launch_template.data_refinery_lt_standard
+# Terraform doesn't manage these well, so they need to be tainted to
+# ensure they won't require manual intervention.
+terraform taint module.batch.aws_launch_template.data_refinery_launch_template
 terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
 
 # Ensure the latest image version is being used for the Foreman
@@ -379,27 +386,6 @@ if [[ -n $container_running ]]; then
        -p 8081:8081 \
        --name=dr_api \
        -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
-
-    # shellcheck disable=SC2029
-    ssh -o StrictHostKeyChecking=no \
-        -o ServerAliveInterval=15 \
-        -o ConnectTimeout=5 \
-        -i data-refinery-key.pem \
-        "ubuntu@$API_IP_ADDRESS" "docker run \
-       --env-file environment \
-       -e DATABASE_HOST=$DATABASE_HOST \
-       -e DATABASE_NAME=$DATABASE_NAME \
-       -e DATABASE_USER=$DATABASE_USER \
-       -e DATABASE_PASSWORD=$DATABASE_PASSWORD \
-       -e ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST \
-       -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
-       -v /tmp/volumes_static:/tmp/www/static \
-       --log-driver=awslogs \
-       --log-opt awslogs-region=$AWS_REGION \
-       --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
-       --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
-       --name=dr_api_stats_refresh \
-       -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE python3 manage.py start_stats_refresh"
 
     # Don't leave secrets lying around.
     ssh -o StrictHostKeyChecking=no \

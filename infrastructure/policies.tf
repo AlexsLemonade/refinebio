@@ -150,6 +150,16 @@ EOF
                 "logs:PutLogEvents"
             ],
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow"
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Sid": "Stmt0123456789",
+            "Resource": [
+                "arn:aws:s3:::data-refinery-secrets/instance-ecs-agent.config"
+            ],
         }
     ]
 }

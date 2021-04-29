@@ -177,7 +177,7 @@ if [ "$project" = "workers" ]; then
             do
                 export RAM_POSTFIX="_$r"
                 export RAM="$r"
-                FILEPATH="$output_dir/$OUTPUT_FILE$RAM_POSTFIX$FILETYPE"
+                FILEPATH="$output_dir/downloader$RAM_POSTFIX$FILETYPE"
                 perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                      < "batch-job-templates/$template" \
                      > "$FILEPATH" \
@@ -192,7 +192,6 @@ if [ "$project" = "workers" ]; then
                  2> /dev/null
             echo "Made $output_dir/$OUTPUT_FILE"
         else
-            # rams="1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312"
             rams="2048 4096 8192 12288 16384 32768 65536"
             for r in $rams
             do
@@ -224,7 +223,7 @@ elif [ "$project" = "surveyor" ]; then
                  2> /dev/null
             echo "Made $output_dir/$OUTPUT_FILE"
         else
-            rams="256 4096 16384"
+            rams="1024 4096 16384"
             for r in $rams
             do
                 export RAM_POSTFIX="_$r"

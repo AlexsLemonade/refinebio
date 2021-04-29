@@ -7,6 +7,7 @@ from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
     LostJobsManager,
+    UnqueuedJobsManager,
 )
 
 
@@ -21,13 +22,14 @@ class SurveyJob(models.Model):
     failed_objects = FailedJobsManager()
     hung_objects = HungJobsManager()
     lost_objects = LostJobsManager()
+    unqueued_objects = UnqueuedJobsManager()
 
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
     no_retry = models.BooleanField(default=False)
     batch_job_id = models.CharField(max_length=256, null=True)
 
-    ram_amount = models.IntegerField(default=256)
+    ram_amount = models.IntegerField(default=1024)
 
     # The start time of the job
     start_time = models.DateTimeField(null=True)

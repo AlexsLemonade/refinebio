@@ -8,16 +8,17 @@ resource "aws_batch_compute_environment" "data_refinery_spot" {
   compute_resources {
     instance_role = aws_iam_instance_profile.ecs_instance_profile.arn
     instance_type = [
-      "optimal",
+      "m5.12xlarge", "r5.12xlarge"
     ]
+    # allocation_strategy = "BEST_FIT_PROGRESSIVE"
     allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
     spot_iam_fleet_role = var.data_refinery_spot_fleet_role.arn
     bid_percentage = 100
-    max_vcpus = 2
+    max_vcpus = 48
     min_vcpus = 0
     # standard launch template
     launch_template {
-      launch_template_id = aws_launch_template.data_refinery_lt_standard.id
+      launch_template_id = aws_launch_template.data_refinery_launch_template.id
     }
     ec2_key_pair = var.data_refinery_keypair.key_name
     security_group_ids = [

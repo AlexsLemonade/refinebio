@@ -28,19 +28,22 @@ resource "aws_iam_role_policy_attachment" "batch_service_role" {
 }
 
 ### ECS Instance Role
+# data-refinery-secrets/instance-ecs-agent.config has configuration
+# for the ECS agent along with docker creds to remove limitations on
+# number of pulls.
 resource "aws_iam_role" "ecs_instance_role" {
   name = "data-refinery-ecs-instance-role-${var.user}-${var.stage}"
   assume_role_policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
-    {
-        "Action": "sts:AssumeRole",
-        "Effect": "Allow",
-        "Principal": {
-        "Service": "ec2.amazonaws.com"
+        {
+            "Action": "sts:AssumeRole",
+            "Effect": "Allow",
+            "Principal": {
+            "Service": "ec2.amazonaws.com"
+            }
         }
-    }
     ]
 }
 EOF
@@ -53,6 +56,8 @@ resource "aws_iam_policy" "ecs_instance_role" {
 
   # Policy text based off of:
   # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
+  # and
+  # https://aws.amazon.com/blogs/aws/ec2-container-service-ecs-update-access-private-docker-repos-mount-volumes-in-containers/
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -77,6 +82,17 @@ resource "aws_iam_policy" "ecs_instance_role" {
                 "logs:PutLogEvents"
             ],
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:HeadObject"
+            ],
+            "Sid": "Stmt0123456789",
+            "Resource": [
+                "arn:aws:s3:::data-refinery-secrets/instance-ecs-agent.config"
+            ]
         }
     ]
 }
