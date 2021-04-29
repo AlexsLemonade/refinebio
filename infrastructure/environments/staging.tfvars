@@ -9,4 +9,4 @@ dockerhub_repo = "ccdlstaging"
 log_level = "DEBUG"
 smasher_instance_type = "m5.2xlarge"
 smasher_volume_size_in_gb = "500"
-full_stack = true
+full_stack = false
