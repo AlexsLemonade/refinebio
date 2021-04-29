@@ -60,12 +60,12 @@ def purge_experiment(accession: str) -> None:
     I.e. if a sample is part of two experiments, it won't be removed
     but it will be disassociated from the one being purged.
     """
-    experiments = Experiment.objects.filter(accession_code=accession)
-    if experiments.count() == 0:
-        logger.info("Experiment %s not found. Unsurveying is unnecessary.", accession)
+    experiment = Experiment.objects.filter(accession_code=accession).first()
+
+    if not experiment:
+        logger.info("Experiment with accession %s does not exist.", accession)
         return
 
-    experiment = experiments[0]
     ExperimentAnnotation.objects.filter(experiment=experiment).delete()
 
     # Samples

@@ -4,6 +4,7 @@ from unittest import TestCase
 from django.test import tag
 
 from data_refinery_common.models import DownloaderJob, Experiment, ProcessorJob, Sample
+from data_refinery_foreman.foreman.management.commands.run_tximport import run_tximport
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
 )
@@ -11,16 +12,35 @@ from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_ex
 
 MICROARRAY_ACCESSION_CODES = [
     "E-TABM-496",  # 39 samples of SACCHAROMYCES_CEREVISIAE microarray data
-    "GSE96849",  # 66 samples of SACCHAROMYCES_CEREVISIAE microarray data
+    "GSE96849",  # 68 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE41094",  # 18 samples of SACCHAROMYCES_CEREVISIAE submitter processed data
 ]
 
 RNA_SEQ_ACCESSION_CODES = [
-    "SRP047410",  # 21 samples of SACCHAROMYCES_CEREVISIAE RNA-Seq data
+    "SRP047410",  # 26 samples of SACCHAROMYCES_CEREVISIAE RNA-Seq data, one will fail.
     "SRP094706",  # 4 samples of SACCHAROMYCES_CEREVISIAE RNA-Seq data
 ]
 
 EXPERIMENT_ACCESSION_CODES = MICROARRAY_ACCESSION_CODES + RNA_SEQ_ACCESSION_CODES
+
+
+def wait_for_job(job) -> bool:
+    """Waits for a job and all of its retries."""
+    is_done = False
+    while not is_done:
+
+        if job.end_time is None and job.success is None:
+            print(f"Polling {type(job).__name__}s. Currently waiting for job id: {job.id}")
+            sleep(20)
+            job.refresh_from_db()
+        elif job.retried and job.retried_job:
+            job = job.retried_job
+        elif job.success:
+            return True
+        else:
+            return False
+
+    return False
 
 
 # Use unittest TestCase instead of django TestCase to avoid the test
@@ -60,64 +80,37 @@ class EndToEndTestCase(TestCase):
             survey_jobs.append(queue_surveyor_for_accession(accession_code))
 
         # However, before we kick of RNA-Seq jobs, we have to build a transcriptome index for them.
-        transcriptome_survey_job = queue_surveyor_for_accession(
-            "SACCHAROMYCES_CEREVISIAE, EnsemblFungi"
+        transcriptome_survey_job = queue_surveyor_for_accession("SACCHAROMYCES_CEREVISIAE, Ensembl")
+
+        print(
+            "First, creating transcriptome indices (and starting on Affy jobs while we're at it):"
         )
-
-        while transcriptome_survey_job.retried_job is None:
-            sleep(20)
-            print("Polling original transcriptome survey job.")
-            transcriptome_survey_job.refresh_from_db()
-
-        retried_transcritpome_survey_job = transcriptome_survey_job.retried_job
-
-        while retried_transcritpome_survey_job.end_time is None:
-            sleep(20)
-            print("Polling retried transcriptome survey job.")
-            retried_transcritpome_survey_job.refresh_from_db()
+        self.assertTrue(wait_for_job(transcriptome_survey_job))
 
         transcriptome_downloader_jobs = DownloaderJob.objects.filter(
             downloader_task="TRANSCRIPTOME_INDEX",
-            created_at__gt=retried_transcritpome_survey_job.created_at,
+            created_at__gt=transcriptome_survey_job.created_at,
         )
 
         for downloader_job in transcriptome_downloader_jobs:
-            while downloader_job.end_time is None:
-                sleep(20)
-                print("Polling transcriptome downloader jobs.")
-                downloader_job.refresh_from_db()
+            self.assertTrue(wait_for_job(downloader_job))
 
         transcriptome_processor_jobs = ProcessorJob.objects.filter(
-            processor_pipeline__startswith="TRANSCRIPTOME_INDEX",
-            created_at__gt=retried_transcritpome_survey_job.created_at,
+            pipeline_applied__startswith="TRANSCRIPTOME_INDEX",
+            created_at__gt=transcriptome_survey_job.created_at,
         )
 
         for processor_job in transcriptome_processor_jobs:
-            while processor_job.end_time is None:
-                sleep(20)
-                print("Polling processor jobs.")
-                processor_job.refresh_from_db()
+            self.assertTrue(wait_for_job(processor_job))
 
-        survey_jobs = []
         for accession_code in RNA_SEQ_ACCESSION_CODES:
             survey_jobs.append(queue_surveyor_for_accession(accession_code))
 
-        retried_jobs = []
+        print("Next, processing all the raw data.")
         for survey_job in survey_jobs:
-            while survey_job.retried_job is None:
-                sleep(20)
-                print("Polling original survey jobs.")
-                survey_job.refresh_from_db()
+            self.assertTrue(wait_for_job(survey_job))
 
-            retried_jobs.append(survey_job.retried_job)
-
-        for retried_job in retried_jobs:
-            while retried_job.end_time is None:
-                sleep(20)
-                print("Polling retried survey jobs.")
-                retried_job.refresh_from_db()
-
-        self.assertEqual(Sample.objects.count(), 147)
+        self.assertEqual(Sample.objects.count(), 155)
 
         samples = []
         for accession_code in EXPERIMENT_ACCESSION_CODES:
@@ -139,13 +132,14 @@ class EndToEndTestCase(TestCase):
             downloader_jobs.append(last_job)
 
         for downloader_job in downloader_jobs:
-            while downloader_job.end_time is None:
-                sleep(20)
-                print("Polling downloader jobs.")
-                downloader_job.refresh_from_db()
+            self.assertTrue(wait_for_job(downloader_job))
 
         processor_jobs = []
         for sample in samples:
+            # This sample fails for good reason, so don't expect it to pass.
+            if sample.accession_code == "SRR1583739":
+                continue
+
             greatest_job_id = -1
             last_job = None
 
@@ -157,9 +151,16 @@ class EndToEndTestCase(TestCase):
             processor_jobs.append(last_job)
 
         for processor_job in processor_jobs:
-            while processor_job.end_time is None:
-                sleep(20)
-                print("Polling processor jobs.")
-                processor_job.refresh_from_db()
+            self.assertTrue(wait_for_job(processor_job))
 
-        self.assertTrue(Sample.processed_objects.count() == 147)
+        # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
+        self.assertEqual(Sample.processed_objects.count(), 129)
+
+        print("Finally, need to run tximport to finish an experiment with one bad sample.")
+        tximport_jobs = run_tximport()
+        self.assertEqual(len(tximport_jobs), 1)
+
+        self.assertTrue(wait_for_job(tximport_jobs[0]))
+
+        # This is the full total of jobs minus one.
+        self.assertEqual(Sample.processed_objects.count(), 154)

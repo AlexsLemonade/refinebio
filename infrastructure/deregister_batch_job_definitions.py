@@ -33,9 +33,9 @@ JOB_DEFINITION_PREFIX = os.environ["USER"] + "_" + os.environ["STAGE"] + "_"
 
 job_definition_files = os.listdir("batch-job-templates")
 
-job_definition_list = [
-    JOB_DEFINITION_PREFIX + job_def.upper().split(".")[0] for job_def in job_definition_files
-]
+job_definition_list = list(
+    {JOB_DEFINITION_PREFIX + job_def.upper().split(".")[0] for job_def in job_definition_files}
+)
 
 # If we ever go over 100 definitions we'll have to make more than one call.
 job_definitions = batch.describe_job_definitions(
