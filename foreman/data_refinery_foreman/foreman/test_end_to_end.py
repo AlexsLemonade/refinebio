@@ -26,7 +26,9 @@ EXPERIMENT_ACCESSION_CODES = MICROARRAY_ACCESSION_CODES + RNA_SEQ_ACCESSION_CODE
 
 def wait_for_job(job) -> bool:
     """Waits for a job and all of its retries."""
+    job.refresh_from_db()
     is_done = False
+
     while not is_done:
 
         if job.end_time is None and job.success is None:

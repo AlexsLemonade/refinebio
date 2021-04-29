@@ -7,6 +7,7 @@ from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
     LostJobsManager,
+    UnqueuedJobsManager,
 )
 from data_refinery_common.models.sample import Sample
 
@@ -34,6 +35,7 @@ class ProcessorJob(models.Model):
     failed_objects = FailedJobsManager()
     hung_objects = HungJobsManager()
     lost_objects = LostJobsManager()
+    unqueued_objects = UnqueuedJobsManager()
 
     # This field will contain an enumerated value specifying which
     # processor pipeline was applied during the processor job.

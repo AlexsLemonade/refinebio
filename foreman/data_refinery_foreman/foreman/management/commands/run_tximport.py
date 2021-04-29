@@ -73,7 +73,7 @@ def run_tximport():
                 created_jobs.append(processor_job)
 
                 try:
-                    send_job(tximport_pipeline, processor_job)
+                    send_job(tximport_pipeline, processor_job, is_dispatch=True)
                 except Exception:
                     # If we cannot queue the job now the Foreman will do
                     # it later.

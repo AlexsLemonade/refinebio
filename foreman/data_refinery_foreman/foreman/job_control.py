@@ -18,6 +18,7 @@ from data_refinery_foreman.foreman.processor_job_manager import (
     retry_failed_processor_jobs,
     retry_hung_processor_jobs,
     retry_lost_processor_jobs,
+    retry_unqueued_processor_jobs,
 )
 from data_refinery_foreman.foreman.survey_job_manager import (
     retry_failed_survey_jobs,
@@ -107,6 +108,7 @@ def monitor_jobs():
             retry_failed_processor_jobs,
             retry_hung_processor_jobs,
             retry_lost_processor_jobs,
+            retry_unqueued_processor_jobs,
             retry_failed_downloader_jobs,
             retry_hung_downloader_jobs,
             retry_lost_downloader_jobs,
