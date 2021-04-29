@@ -75,8 +75,6 @@ def queue_surveyor_for_accession(accession: str) -> None:
     # The foreman will pick it up and dispatch it when the time is appropriate.
     return survey_job
 
-    return survey_job
-
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
