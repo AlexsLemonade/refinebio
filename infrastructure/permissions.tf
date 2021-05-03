@@ -23,6 +23,7 @@ resource "aws_iam_role" "data_refinery_worker" {
 }
 EOF
 
+  tags = var.default_tags
 }
 
 resource "aws_iam_role" "data_refinery_foreman" {
@@ -46,6 +47,7 @@ resource "aws_iam_role" "data_refinery_foreman" {
 }
 EOF
 
+  tags = var.default_tags
 }
 
 resource "aws_iam_role" "data_refinery_api" {
@@ -69,6 +71,7 @@ resource "aws_iam_role" "data_refinery_api" {
 }
 EOF
 
+  tags = var.default_tags
 }
 
 resource "aws_iam_role" "data_refinery_spot_fleet" {
@@ -90,6 +93,7 @@ resource "aws_iam_role" "data_refinery_spot_fleet" {
 }
 EOF
 
+  tags = var.default_tags
 }
 
 resource "aws_iam_policy_attachment" "fleet_role" {
@@ -121,6 +125,7 @@ resource "aws_iam_policy" "s3_access_policy" {
   # http://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html
   policy = local.s3_access_policy
 
+  tags = var.default_tags
 }
 
 resource "aws_iam_role_policy_attachment" "worker_s3" {
@@ -139,6 +144,7 @@ resource "aws_iam_policy" "cloudwatch_policy" {
 
   policy = local.cloudwatch_logs_policy
 
+  tags = var.default_tags
 }
 
 resource "aws_iam_role_policy_attachment" "foreman_cloudwatch" {
@@ -154,7 +160,6 @@ resource "aws_iam_role_policy_attachment" "api_cloudwatch" {
 resource "aws_s3_bucket_policy" "cloudtrail_access_policy" {
   bucket = aws_s3_bucket.data_refinery_cloudtrail_logs_bucket.id
   policy = local.cloudtrail_access_policy
-
 }
 
 # Needed by Batch. Don't love that This has to be defined here instead of in Batch's module.
@@ -168,6 +173,8 @@ resource "aws_iam_policy" "batch_read_policy" {
   description = "Allows Batch Read Permissions."
 
   policy = local.batch_read_policy
+
+  tags = var.default_tags
 }
 
 resource "aws_iam_policy" "batch_write_policy" {
@@ -175,6 +182,8 @@ resource "aws_iam_policy" "batch_write_policy" {
   description = "Allows Batch Write Permissions."
 
   policy = local.batch_write_policy
+
+  tags = var.default_tags
 }
 
 resource "aws_iam_role_policy_attachment" "worker_batch_read" {

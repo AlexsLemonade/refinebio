@@ -11,9 +11,12 @@ resource "aws_vpc" "data_refinery_vpc" {
   enable_dns_support = true
   enable_dns_hostnames = true
 
-  tags = {
-    Name = "data-refinery-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_subnet" "data_refinery_1a" {
@@ -22,9 +25,12 @@ resource "aws_subnet" "data_refinery_1a" {
   vpc_id = aws_vpc.data_refinery_vpc.id
   map_public_ip_on_launch = true
 
-  tags = {
-    Name = "data-refinery-1a-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-1a-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_subnet" "data_refinery_1b" {
@@ -35,17 +41,23 @@ resource "aws_subnet" "data_refinery_1b" {
   # Unsure if this should be set to true
   map_public_ip_on_launch = true
 
-  tags = {
-    Name = "data-refinery-1b-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-1b-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_internet_gateway" "data_refinery" {
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-${var.user}-${var.stage}"
+    }
+  )
 }
 
 # Note: this is a insecure practice long term, however it's
@@ -58,9 +70,12 @@ resource "aws_route_table" "data_refinery" {
     gateway_id = aws_internet_gateway.data_refinery.id
   }
 
-  tags = {
-    Name = "data-refinery-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_route_table_association" "data_refinery_1a" {
@@ -77,18 +92,24 @@ resource "aws_db_subnet_group" "data_refinery" {
   name = "data-refinery-${var.user}-${var.stage}"
   subnet_ids = [aws_subnet.data_refinery_1a.id, aws_subnet.data_refinery_1b.id]
 
-  tags = {
-    Name = "Data Refinery DB Subnet ${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "Data Refinery DB Subnet ${var.user}-${var.stage}"
+    }
+  )
 }
 
 # Get the API a static IP address.
 resource "aws_eip" "data_refinery_api_ip" {
   vpc = true
 
-  tags = {
-    Name = "Data Refinery API Elastic IP ${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "Data Refinery API Elastic IP ${var.user}-${var.stage}"
+    }
+  )
 }
 
 # As per https://aws.amazon.com/elasticloadbalancing/details/:
@@ -114,6 +135,8 @@ resource "aws_lb" "data_refinery_api_load_balancer" {
     subnet_id = aws_subnet.data_refinery_1a.id
     allocation_id = aws_eip.data_refinery_api_ip.id
   }
+
+  tags = var.default_tags
 }
 
 resource "aws_lb_target_group" "api-http" {
@@ -121,6 +144,8 @@ resource "aws_lb_target_group" "api-http" {
   port = 80
   protocol = "TCP"
   vpc_id = aws_vpc.data_refinery_vpc.id
+
+  tags = var.default_tags
 }
 
 resource "aws_lb_listener" "api-http" {
@@ -145,6 +170,8 @@ resource "aws_lb_target_group" "api-https" {
   port = 443
   protocol = "TCP"
   vpc_id = aws_vpc.data_refinery_vpc.id
+
+  tags = var.default_tags
 }
 
 resource "aws_lb_listener" "api-https" {
@@ -181,9 +208,12 @@ resource "aws_acm_certificate" "ssl-cert" {
   domain_name = "${var.stage == "prod" ? "www." : local.stage_with_dot}refine.bio"
   validation_method = "DNS"
 
-  tags = {
-    Environment = "data-refinery-circleci-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Environment = "data-refinery-circleci-${var.stage}"
+    }
+  )
 }
 
 resource "aws_acm_certificate_validation" "ssl-cert" {
@@ -277,9 +307,12 @@ resource "aws_cloudfront_distribution" "static-distribution" {
 
   price_class = "PriceClass_100"
 
-  tags = {
-    Environment = "data-refinery-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Environment = "data-refinery-${var.user}-${var.stage}"
+    }
+  )
 
   viewer_certificate {
     cloudfront_default_certificate = true

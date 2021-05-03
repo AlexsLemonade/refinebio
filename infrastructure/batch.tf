@@ -22,4 +22,5 @@ module "batch" {
   user = var.user
   stage = var.stage
   region = var.region
+  default_tags = var.default_tags
 }

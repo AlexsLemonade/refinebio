@@ -18,9 +18,12 @@ resource "aws_security_group" "data_refinery_worker" {
   description = "data-refinery-worker-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-worker-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-worker-${var.user}-${var.stage}"
+    }
+  )
 }
 
 # Allow HTTP connections from this security group to itself.
@@ -76,9 +79,12 @@ resource "aws_security_group" "data_refinery_db" {
   description = "data_refinery_db-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-db-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-db-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_security_group_rule" "data_refinery_db_outbound" {
@@ -108,9 +114,12 @@ resource "aws_security_group" "data_refinery_pg" {
   description = "data_refinery_pg-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-pg-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-pg-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_ssh" {
@@ -195,9 +204,12 @@ resource "aws_security_group" "data_refinery_es" {
   description = "data_refinery_es-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-es-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-es-${var.user}-${var.stage}"
+    }
+  )
 
   # Wide open, but inside inside the VPC
   ingress {
@@ -217,9 +229,12 @@ resource "aws_security_group" "data_refinery_api" {
   description = "data-refinery-api-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-api-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-api-${var.user}-${var.stage}"
+    }
+  )
 }
 
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
@@ -278,9 +293,12 @@ resource "aws_security_group" "data_refinery_foreman" {
   description = "data-refinery-foreman-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-foreman-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-foreman-${var.user}-${var.stage}"
+    }
+  )
 }
 
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!

@@ -14,3 +14,4 @@ variable "data_refinery_worker_ami" { default = "" }
 variable "user" { default = "" }
 variable "stage" { default = "" }
 variable "region" { default = "" }
+variable "default_tags" { default = "" }

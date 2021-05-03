@@ -40,11 +40,10 @@ data "template_file" "worker_script_smusher" {
 # Database
 ##
 
-# Temporary. This will go away once we can delete things.
 resource "aws_db_parameter_group" "postgres_parameters" {
   name = "postgres-parameters-${var.user}-${var.stage}"
   description = "Postgres Parameters ${var.user} ${var.stage}"
-  family = "postgres9.6"
+  family = "postgres11"
 
   parameter {
     name = "deadlock_timeout"
@@ -55,8 +54,11 @@ resource "aws_db_parameter_group" "postgres_parameters" {
     name = "statement_timeout"
     value = "60000" # 60000ms = 60s
   }
+
+  tags = var.default_tags
 }
 
+# Temporary. This will go away once we can delete things.
 resource "aws_db_parameter_group" "postgres_parameter_group" {
   name = "postgres-parameter-group-${var.user}-${var.stage}"
   description = "Postgres Parameters ${var.user} ${var.stage}"
@@ -88,7 +90,7 @@ resource "aws_db_instance" "postgres_db" {
   password = var.database_password
 
   db_subnet_group_name = aws_db_subnet_group.data_refinery.name
-  parameter_group_name = aws_db_parameter_group.postgres_parameter_group.name
+  parameter_group_name = aws_db_parameter_group.postgres_parameters.name
 
   # TF is broken, but we do want this protection in prod.
   # Related: https://github.com/hashicorp/terraform/issues/5417
@@ -119,9 +121,12 @@ resource "aws_instance" "pg_bouncer" {
   # instance. For more information see the definition of this resource.
   user_data = data.template_file.pg_bouncer_script_smusher.rendered
 
-  tags = {
-    Name = "pg-bouncer-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "pg-bouncer-${var.user}-${var.stage}"
+    }
+  )
 
   root_block_device {
     volume_type = "gp2"
@@ -215,10 +220,13 @@ CONFIG
     automated_snapshot_start_hour = 23
   }
 
-  tags = {
-    Domain = "es-${var.user}-${var.stage}"
-    Name = "es-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Domain = "es-${var.user}-${var.stage}"
+      Name = "es-${var.user}-${var.stage}"
+    }
+  )
 }
 
 output "elasticsearch_endpoint" {
@@ -286,9 +294,12 @@ resource "aws_instance" "api_server_1" {
   user_data = data.template_file.api_server_script_smusher.rendered
   key_name = aws_key_pair.data_refinery.key_name
 
-  tags = {
-    Name = "API Server 1 ${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "API Server 1 ${var.user}-${var.stage}"
+    }
+  )
 
   # I think these are the defaults provided in terraform examples.
   # They should be removed or revisited.
@@ -351,9 +362,12 @@ resource "aws_instance" "foreman_server_1" {
   user_data = data.template_file.foreman_server_script_smusher.rendered
   key_name = aws_key_pair.data_refinery.key_name
 
-  tags = {
-    Name = "Foreman Server 1 ${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "Foreman Server 1 ${var.user}-${var.stage}"
+    }
+  )
 
   # I think these are the defaults provided in terraform examples.
   # They should be removed or revisited.
