@@ -19,6 +19,7 @@
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
 
+echo "$INSTANCE_SSH_KEY" > infrastructure/data-refinery-key.pem
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box () {
@@ -38,6 +39,11 @@ export DOCKER_PASSWD='$DOCKER_PASSWD'
 export OPENSSL_KEY='$OPENSSL_KEY'
 export AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'
 export AWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY'
+export TF_VAR_database_password='$DATABASE_PASSWORD'
+export TF_VAR_django_secret_key='$DJANGO_SECRET_KEY'
+export TF_VAR_raven_dsn='$RAVEN_DSN'
+export TF_VAR_raven_dsn_api='$RAVEN_DSN_API'
+export TF_VAR_engagementbot_webhook='$ENGAGEMENTBOT_WEBHOOK'
 EOF
 
 # And checkout the correct tag.
@@ -52,8 +58,10 @@ scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
     -r env_vars ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/env_vars
 
-# Decrypt the secrets in our repo.
-run_on_deploy_box "source env_vars && bash .github/scripts/git_decrypt.sh"
+# Along with the ssh key iself, which the deploy script will use.
+scp -o StrictHostKeyChecking=no \
+    -i infrastructure/data-refinery-key.pem \
+    -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/infrastructure/data-refinery-key.pem
 
 # Output to CircleCI
 echo "Building new images"
@@ -104,6 +112,4 @@ run_on_deploy_box "source env_vars && ./.github/scripts/run_terraform.sh >> /var
 run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CI_TAG finished!\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
 
 # Don't leave secrets lying around.
-## Clean out any files we've created or moved so git-crypt will relock the repo.
 run_on_deploy_box "git clean -f"
-run_on_deploy_box "git-crypt lock"

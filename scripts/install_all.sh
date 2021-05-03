@@ -166,10 +166,6 @@ using an additional ~185MB of disk space."
     fi
 fi
 
-if ! command -v git-crypt > /dev/null; then
-    echo "Installing git-crypt..."
-    $INSTALL_CMD git-crypt > $OUTPUT || (echo "You must manually install git-crypt" && exit 1)
-fi
 if ! command -v jq > /dev/null; then
     echo "Installing jq..."
     $INSTALL_CMD jq > $OUTPUT || (echo "You must manually install jq" && exit 1)
