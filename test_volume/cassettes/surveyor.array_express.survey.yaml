@@ -9,7 +9,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050
   response:
@@ -45,7 +45,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:36 GMT
+      - Mon, 03 May 2021 16:25:40 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -71,7 +71,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.idf.txt
   response:
@@ -189,7 +189,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 18:55:36 GMT
+      - Mon, 03 May 2021 16:25:39 GMT
       ETag:
       - E-MTAB-3050.idf.txt_6820_1414664139000
       Last-Modified:
@@ -211,7 +211,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/protocols
   response:
@@ -271,7 +271,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:37 GMT
+      - Mon, 03 May 2021 16:25:41 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -297,7 +297,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/samples
   response:
@@ -355,7 +355,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:38 GMT
+      - Mon, 03 May 2021 16:25:42 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -381,7 +381,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt
   response:
@@ -444,7 +444,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 18:55:38 GMT
+      - Mon, 03 May 2021 16:25:43 GMT
       ETag:
       - E-MTAB-3050.sdrf.txt_3955_1414664139000
       Last-Modified:
@@ -466,7 +466,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-GEOD-44719
   response:
@@ -519,7 +519,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:39 GMT
+      - Mon, 03 May 2021 16:25:44 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -545,7 +545,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-GEOD-44719/E-GEOD-44719.idf.txt
   response:
@@ -715,7 +715,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 18:55:40 GMT
+      - Mon, 03 May 2021 16:25:45 GMT
       ETag:
       - E-GEOD-44719.idf.txt_8726_1414218543000
       Last-Modified:
@@ -737,7 +737,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-GEOD-44719/protocols
   response:
@@ -840,7 +840,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:40 GMT
+      - Mon, 03 May 2021 16:25:46 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -866,7 +866,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-GEOD-44719/samples
   response:
@@ -1578,7 +1578,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:43 GMT
+      - Mon, 03 May 2021 16:25:48 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -1604,7 +1604,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-GEOD-44719/E-GEOD-44719.sdrf.txt
   response:
@@ -2282,7 +2282,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 18:55:45 GMT
+      - Mon, 03 May 2021 16:25:50 GMT
       ETag:
       - E-GEOD-44719.sdrf.txt_55694_1414218543000
       Last-Modified:
