@@ -93,9 +93,6 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     else:
         should_dispatch = is_dispatch  # only dispatch when specifically requested to
 
-    # Temporary until the foreman will dispatch these correctly.
-    should_dispatch = True
-
     if should_dispatch:
         batch = boto3.client("batch", region_name=AWS_REGION)
 
