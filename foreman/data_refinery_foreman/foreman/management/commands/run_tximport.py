@@ -42,6 +42,8 @@ def run_tximport():
     # cause it does this stuff.
     tximport_pipeline = ProcessorPipeline.TXIMPORT
 
+    created_jobs = []
+
     while True:
         creation_count = 0
 
@@ -51,7 +53,7 @@ def run_tximport():
             if should_run_tximport(experiment, quant_results, True):
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = tximport_pipeline.value
-                processor_job.ram_amount = 8192
+                processor_job.ram_amount = 32768
                 # This job doesn't need to run on a specific volume
                 # but it uses the same Batch job as Salmon jobs which
                 # do require the volume index.
@@ -68,6 +70,7 @@ def run_tximport():
                 assoc.save()
 
                 creation_count += 1
+                created_jobs.append(processor_job)
 
                 try:
                     send_job(tximport_pipeline, processor_job)
@@ -82,6 +85,8 @@ def run_tximport():
             break
         else:
             page = paginator.page(page.next_page_number())
+
+    return created_jobs
 
 
 class Command(BaseCommand):

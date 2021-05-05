@@ -83,7 +83,7 @@ def _find_and_remove_expired_jobs(job_context):
             page = jobs_to_check[page_start:page_end]
 
             job_ids = [job.batch_job_id for job in page if job.batch_job_id]
-            batch_jobs = batch.describe_jobs(jobs=job_ids)["jobSummaryList"]
+            batch_jobs = batch.describe_jobs(jobs=job_ids)["jobs"]
 
             running_ids = {job["jobId"] for job in batch_jobs if job["status"] == "RUNNING"}
 

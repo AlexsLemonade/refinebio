@@ -46,6 +46,9 @@ class SurveyJob(models.Model):
     # already or not.
     retried = models.BooleanField(default=False)
 
+    # If the job is retried, this is the id of the new job
+    retried_job = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)
+
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
 

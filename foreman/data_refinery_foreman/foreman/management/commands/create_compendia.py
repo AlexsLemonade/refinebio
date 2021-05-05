@@ -29,48 +29,56 @@ class Command(BaseCommand):
             "--svd-algorithm",
             type=str,
             help=(
-                "Specify SVD algorithm applied during imputation ARPACK, RANDOMIZED or NONE to skip."
+                "Specify SVD algorithm applied during imputation "
+                "ARPACK, RANDOMIZED or NONE to skip."
             ),
         )
 
     def handle(self, *args, **options):
-        """Create a compendium for one or more organisms."""
-        svd_algorithm = options["svd_algorithm"] or "ARPACK"
-
-        svd_algorithm_choices = ["ARPACK", "RANDOMIZED", "NONE"]
-        if options["svd_algorithm"] and options["svd_algorithm"] not in svd_algorithm_choices:
-            raise Exception(
-                "Invalid svd_algorithm option provided. Possible values are "
-                + str(svd_algorithm_choices)
-            )
-
-        target_organisms = self._get_target_organisms(options)
-        grouped_organisms = group_organisms_by_biggest_platform(target_organisms)
-
-        logger.debug("Generating compendia for organisms", organism_groups=str(grouped_organisms))
-
-        for organism in grouped_organisms:
-            job = create_job_for_organism(organism, svd_algorithm)
-            logger.info(
-                "Sending compendia job for Organism", job_id=str(job.pk), organism=str(organism)
-            )
-            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
-
-    def _get_target_organisms(self, options):
-        all_organisms = get_compendia_organisms()
-
-        if options["organisms"] is None:
-            target_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
-        else:
-            organisms = options["organisms"].upper().replace(" ", "_").split(",")
-            target_organisms = all_organisms.filter(name__in=organisms)
-
-        return target_organisms
+        create_compendia(options["svd_algorithm"], options["organisms"])
 
 
-def get_compendia_organisms():
-    """ We start with the organisms that have QN targets associated with them. """
-    return Organism.objects.filter(qn_target__isnull=False)
+def create_compendia(svd_algorithm, organisms):
+    """Create a compendium for one or more organisms."""
+
+    svd_algorithm_choices = ["ARPACK", "RANDOMIZED", "NONE"]
+    if svd_algorithm and svd_algorithm not in svd_algorithm_choices:
+        raise Exception(
+            "Invalid svd_algorithm option provided. Possible values are "
+            + str(svd_algorithm_choices)
+        )
+
+    svd_algorithm = svd_algorithm or "ARPACK"
+
+    target_organisms = get_target_organisms(organisms)
+    grouped_organisms = group_organisms_by_biggest_platform(target_organisms)
+
+    logger.debug("Generating compendia for organisms", organism_groups=str(grouped_organisms))
+
+    created_jobs = []
+    for organism in grouped_organisms:
+        job = create_job_for_organism(organism, svd_algorithm)
+        logger.info(
+            "Sending compendia job for Organism", job_id=str(job.pk), organism=str(organism)
+        )
+        send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
+
+        created_jobs.append(job)
+
+    return created_jobs
+
+
+def get_target_organisms(organisms):
+    # We start with the organisms that have QN targets associated with them.
+    all_organisms = Organism.objects.filter(qn_target__isnull=False)
+
+    if organisms is None:
+        target_organisms = all_organisms.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
+    else:
+        organisms = organisms.upper().replace(" ", "_").split(",")
+        target_organisms = all_organisms.filter(name__in=organisms)
+
+    return target_organisms
 
 
 def group_organisms_by_biggest_platform(target_organisms):

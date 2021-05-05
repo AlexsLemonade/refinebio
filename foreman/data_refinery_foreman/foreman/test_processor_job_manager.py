@@ -11,7 +11,8 @@ from data_refinery_foreman.foreman.test_utils import create_processor_job
 # For use in tests that test the JOB_CREATED_AT_CUTOFF functionality.
 DAY_BEFORE_JOB_CUTOFF = utils.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
 
-EMPTY_JOB_QUEUE_RESPONSE = {"jobSummaryList": []}
+EMPTY_LIST_JOBS_QUEUE_RESPONSE = {"jobSummaryList": []}
+EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE = {"jobs": []}
 
 
 class ProcessorJobManagerTestCase(TestCase):
@@ -20,7 +21,7 @@ class ProcessorJobManagerTestCase(TestCase):
     def test_repeated_processor_failures(self, mock_list_jobs, mock_send_job):
         """Jobs will be repeatedly retried."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job()
 
@@ -50,7 +51,7 @@ class ProcessorJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
     def test_retrying_failed_processor_jobs(self, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job()
         job.success = False
@@ -73,10 +74,8 @@ class ProcessorJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_retrying_hung_processor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = {
-            "jobSummaryList": [{"jobId": "FINDME", "status": "FAILED"}]
-        }
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "FAILED"}]}
 
         job = create_processor_job()
         job.start_time = timezone.now()
@@ -116,10 +115,8 @@ class ProcessorJobManagerTestCase(TestCase):
     ):
         """Tests that we don't restart processor jobs that are still running."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = {
-            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNING"}]
-        }
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "RUNNING"}]}
 
         job = create_processor_job()
         job.start_time = timezone.now()
@@ -142,8 +139,8 @@ class ProcessorJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_retrying_lost_processor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job()
         job.save()
@@ -184,8 +181,8 @@ class ProcessorJobManagerTestCase(TestCase):
         that once it's done.
         """
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job(pipeline="SMASHER")
         job.volume_index = None  # Smasher jobs won't have a volume_index.
@@ -212,8 +209,8 @@ class ProcessorJobManagerTestCase(TestCase):
     ):
         """Makes sure temporary logic to limit the Foreman's scope works."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job()
         job.created_at = DAY_BEFORE_JOB_CUTOFF
@@ -232,10 +229,8 @@ class ProcessorJobManagerTestCase(TestCase):
     ):
         """Make sure that we don't retry processor jobs we shouldn't."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = {
-            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNABLE"}]
-        }
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "RUNNABLE"}]}
 
         job = create_processor_job()
         job.batch_job_id = "FINDME"
@@ -258,8 +253,8 @@ class ProcessorJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_not_retrying_janitor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job(pipeline="JANITOR")
         job.save()

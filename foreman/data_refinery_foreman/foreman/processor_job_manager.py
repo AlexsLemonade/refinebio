@@ -1,7 +1,9 @@
 from typing import List
 
 import data_refinery_foreman.foreman.utils as utils
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import ProcessorJob
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_foreman.foreman.job_requeuing import requeue_processor_job
@@ -156,6 +158,46 @@ def retry_lost_processor_jobs() -> None:
                 jobs_count=len(lost_jobs),
             )
             handle_processor_jobs(lost_jobs)
+
+        if database_page.has_next():
+            database_page = paginator.page(database_page.next_page_number())
+            database_page_count += 1
+            queue_capacity = utils.get_capacity_for_jobs()
+        else:
+            break
+
+
+def retry_unqueued_processor_jobs() -> None:
+    """Retry processor jobs that never made it into the Batch job queue."""
+    potentially_lost_jobs = ProcessorJob.unqueued_objects.filter(
+        created_at__gt=utils.JOB_CREATED_AT_CUTOFF
+    ).order_by("created_at")
+    paginator = Paginator(potentially_lost_jobs, utils.PAGE_SIZE, "created_at")
+    database_page = paginator.page()
+    database_page_count = 0
+
+    if len(database_page.object_list) <= 0:
+        # No failed jobs, nothing to do!
+        return
+
+    queue_capacity = utils.get_capacity_for_jobs()
+
+    if queue_capacity <= 0:
+        logger.info(
+            "Not handling unqueued processor jobs " "because there is no capacity for them."
+        )
+
+    while queue_capacity > 0:
+        for processor_job in database_page.object_list:
+            if send_job(
+                ProcessorPipeline[processor_job.pipeline_applied],
+                job=processor_job,
+                is_dispatch=True,
+            ):
+                queue_capacity -= 1
+        else:
+            # Can't communicate with Batch just now, leave the job for a later loop.
+            break
 
         if database_page.has_next():
             database_page = paginator.page(database_page.next_page_number())

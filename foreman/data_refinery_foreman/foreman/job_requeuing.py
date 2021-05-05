@@ -140,11 +140,12 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     # cycled which means we didn't get OOM-killed, so we don't need to
     # increase the RAM amount.
     if last_job.start_time:
+        # There's only one size of tximport jobs.
+        if last_job.pipeline_applied == "TXIMPORT":
+            new_ram_amount = 32768
         # These initial values are set in common/job_lookup.py:determine_ram_amount
-        if (
-            last_job.pipeline_applied == "SALMON"
-            or last_job.pipeline_applied == "TXIMPORT"
-            or last_job.pipeline_applied.startswith("TRANSCRIPTOME")
+        elif last_job.pipeline_applied == "SALMON" or last_job.pipeline_applied.startswith(
+            "TRANSCRIPTOME"
         ):
             if new_ram_amount == 4096:
                 new_ram_amount = 8192

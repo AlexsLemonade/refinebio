@@ -12,7 +12,8 @@ from data_refinery_foreman.foreman.test_utils import create_survey_job
 # For use in tests that test the JOB_CREATED_AT_CUTOFF functionality.
 DAY_BEFORE_JOB_CUTOFF = utils.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
 
-EMPTY_JOB_QUEUE_RESPONSE = {"jobSummaryList": []}
+EMPTY_LIST_JOBS_QUEUE_RESPONSE = {"jobSummaryList": []}
+EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE = {"jobs": []}
 
 
 class SurveyJobManagerTestCase(TestCase):
@@ -21,7 +22,7 @@ class SurveyJobManagerTestCase(TestCase):
     def test_repeated_survey_failures(self, mock_list_jobs, mock_send_job):
         """Jobs will be repeatedly retried."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
 
         job = create_survey_job()
 
@@ -65,7 +66,7 @@ class SurveyJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
     def test_retrying_failed_survey_jobs(self, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
 
         job = create_survey_job()
         job.success = False
@@ -88,8 +89,8 @@ class SurveyJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_retrying_hung_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
         job = create_survey_job()
         job.start_time = timezone.now()
@@ -127,10 +128,8 @@ class SurveyJobManagerTestCase(TestCase):
     def test_not_retrying_hung_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Tests that we don't restart survey jobs that are still running."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = {
-            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNING"}]
-        }
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "RUNNING"}]}
 
         job = create_survey_job()
         job.start_time = timezone.now()
@@ -153,8 +152,8 @@ class SurveyJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_retrying_lost_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
         job = create_survey_job()
         job.created_at = timezone.now()
@@ -192,8 +191,8 @@ class SurveyJobManagerTestCase(TestCase):
     def test_not_retrying_old_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Makes sure temporary logic to limit the Foreman's scope works."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
         job = create_survey_job()
         job.created_at = DAY_BEFORE_JOB_CUTOFF
@@ -210,10 +209,8 @@ class SurveyJobManagerTestCase(TestCase):
     def test_not_retrying_lost_survey_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Make sure that we don't retry survey jobs we shouldn't."""
         mock_send_job.return_value = True
-        mock_list_jobs.return_value = EMPTY_JOB_QUEUE_RESPONSE
-        mock_describe_jobs.return_value = {
-            "jobSummaryList": [{"jobId": "FINDME", "status": "RUNNABLE"}]
-        }
+        mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
+        mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "RUNNABLE"}]}
 
         job = create_survey_job()
         job.created_at = timezone.now()

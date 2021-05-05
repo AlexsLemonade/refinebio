@@ -6,7 +6,7 @@
         "job_id": ""
     },
     "containerProperties": {
-        "image": "${{DOCKERHUB_REPO}}/${{DOWNLOADERS_DOCKER_IMAGE}}",
+        "image": "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}",
         "vcpus": 1,
         "memory": ${{RAM}},
         "command": [

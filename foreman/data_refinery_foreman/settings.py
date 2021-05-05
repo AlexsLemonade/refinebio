@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     "data_refinery_foreman.surveyor",
     "data_refinery_foreman.foreman",
     "raven.contrib.django.raven_compat",
-    "django_elasticsearch_dsl",
     "computedfields",
 ]
 
@@ -160,23 +159,6 @@ else:
     raven_logger.setLevel(logging.CRITICAL)
 
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
-
-ELASTICSEARCH_DSL = {
-    "default": {
-        "hosts": get_env_variable("ELASTICSEARCH_HOST")
-        + ":"
-        + get_env_variable("ELASTICSEARCH_PORT")
-    }
-}
-if "test" in sys.argv:
-    ELASTICSEARCH_INDEX_NAMES = {
-        "data_refinery_common.models.documents": "experiments_test",
-    }
-else:
-    ELASTICSEARCH_INDEX_NAMES = {
-        "data_refinery_common.models.documents": "experiments",
-    }
-    ELASTICSEARCH_DSL_AUTOSYNC = False
 
 # For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
 AUTO_DISPATCH_BATCH_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_BATCH_JOBS") != "False"

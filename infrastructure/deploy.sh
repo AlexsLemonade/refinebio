@@ -107,13 +107,16 @@ fi
 format_environment_variables () {
   json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
   for row in $json_env_vars; do
-      env_var_assignment=$(echo "$row" | jq -r ".name")=$(echo "$row" | jq -r ".value")
+      name=$(echo "$row" | jq -r ".name")
+      value=$(echo "$row" | jq -r ".value")
+      env_var_assignment="$name=$value"
       # Exporting an expansion rather than a variable, which is exactly what we want to do.
       # shellcheck disable=SC2163
       export "${env_var_assignment?}"
       echo "$env_var_assignment" >> prod_env
   done
 }
+
 
 # Load $ALL_CCDL_IMAGES and helper functions
 source ../scripts/common.sh
@@ -216,6 +219,8 @@ if [[ -z $ran_init_build ]]; then
     fi
 fi
 
+python3 delete_batch_job_queue.py
+
 # Make sure that prod_env is empty since we are only appending to it.
 # prod_env is a temporary file we use to pass environment variables to
 # `docker run` commands when running migrations.
@@ -232,6 +237,7 @@ python3 deregister_batch_job_definitions.py
 
 # Get an image to run the migrations with.
 docker pull "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
+
 
 # Test that the pg_bouncer instance is up. 15 minutes should be more than enough.
 start_time=$(date +%s)
@@ -306,8 +312,8 @@ terraform taint aws_instance.foreman_server_1
 
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.
-echo "Removing ingress.."
-rm ci_ingress.tf
+# echo "Removing ingress.."
+# rm ci_ingress.tf
 
 if [[ -n "$GITHUB_ACTIONS" ]]; then
     # Make sure we can't expose secrets in circleci
@@ -315,9 +321,6 @@ if [[ -n "$GITHUB_ACTIONS" ]]; then
 else
     terraform apply -var-file="environments/$env.tfvars" -auto-approve
 fi
-
-# Don't leave secrets lying around!
-rm -f prod_env
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API

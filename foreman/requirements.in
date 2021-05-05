@@ -6,7 +6,5 @@ coverage
 GEOparse>=2.0.3
 python-dateutil
 raven
-django-elasticsearch-dsl-drf>=0.17.1
-elasticsearch-dsl>=6.1.0
 vcrpy
 django-computedfields

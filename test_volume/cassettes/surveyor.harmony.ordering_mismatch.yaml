@@ -9,7 +9,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-TABM-38/samples
   response:
@@ -4552,7 +4552,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:56:46 GMT
+      - Mon, 03 May 2021 16:27:58 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -4578,7 +4578,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-TABM-38/E-TABM-38.sdrf.txt
   response:
@@ -7857,7 +7857,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 18:56:47 GMT
+      - Mon, 03 May 2021 16:28:00 GMT
       ETag:
       - E-TABM-38.sdrf.txt_294548_1365156707000
       Last-Modified:

@@ -24,11 +24,9 @@ fi
 
 . ./scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
-ES_HOST_IP=$(get_docker_es_ip_address)
 
 docker run -it \
        --add-host=database:"$DB_HOST_IP" \
-       --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file foreman/environments/local \
        --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
        --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
