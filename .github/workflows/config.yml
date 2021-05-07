@@ -501,7 +501,8 @@ jobs:
           echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
           echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
           echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
-          echo "ENGAGEMENTBOT_WEBHOOK=${STAGING_ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
+          # Staging doesn't notify the engagementbot, so overwrite this to be blank.
+          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
 
       - name: Set prod specific environment variables
         if: ${{needs.determine_branch.outputs.branch == 'master'}}
@@ -510,7 +511,7 @@ jobs:
           echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
           echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
           echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
-          echo "ENGAGEMENTBOT_WEBHOOK=${PROD_ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
+          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
 
       - name: Deploy
         run: ./.github/scripts/remote_deploy.sh
@@ -571,6 +572,7 @@ jobs:
           echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
           echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
           echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
+          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
 
       - name: Deploy
         run: ./.github/scripts/remote_deploy.sh
