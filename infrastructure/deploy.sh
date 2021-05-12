@@ -171,12 +171,22 @@ fi
 # Terraform doesn't manage these well, so they need to be tainted if
 # they exist to ensure they won't require manual intervention.
 terraform taint module.batch.aws_launch_template.data_refinery_launch_template || true
-terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
-terraform taint module.batch.aws_batch_compute_environment.data_refinery_spot || true
+if terraform state list | grep -q module.batch.aws_batch_job_queue.data_refinery_; then
+    terraform state list \
+        | grep module.batch.aws_batch_job_queue.data_refinery_ \
+        | xargs -L 1 terraform taint \
+        || true
+fi
+if terraform state list | grep -q module.batch.aws_batch_compute_environment.data_refinery__; then
+    terraform state list \
+        | grep module.batch.aws_batch_compute_environment.data_refinery_ \
+        | xargs -L 1 terraform taint \
+        || true
+fi
 
-if [[ ! -f .terraform/terraform.tfstate ]]; then
+if terraform output | grep -q 'No outputs found'; then
     ran_init_build=true
-    echo "No terraform state file found, applying initial terraform deployment."
+    echo "No existing stack detected, applying initial terraform deployment."
 
     # These files are inputs but are created by format_batch_with_env.sh
     # based on outputs from terraform. Kinda a Catch 22, but we can
@@ -305,7 +315,10 @@ echo "Job registrations have been fired off."
 # Terraform doesn't manage these well, so they need to be tainted to
 # ensure they won't require manual intervention.
 terraform taint module.batch.aws_launch_template.data_refinery_launch_template
-terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
+terraform state list \
+    | grep module.batch.aws_batch_job_queue.data_refinery_ \
+    | xargs -L 1 terraform taint \
+    || true
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1

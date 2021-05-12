@@ -56,6 +56,9 @@ class ProcessorJob(models.Model):
     # bit higher
     volume_index = models.CharField(max_length=25, null=True)
 
+    # Which AWS Batch Job Queue the job was run in.
+    batch_job_queue = models.CharField(max_length=100, null=True)
+
     # Tracking
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
@@ -82,6 +85,11 @@ class ProcessorJob(models.Model):
 
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
+
+    # If the job had data downloaded for it, this is the DownloaderJob that did so.
+    downloader_job = models.ForeignKey(
+        "data_refinery_common.DownloaderJob", on_delete=models.SET_NULL, null=True,
+    )
 
     # If the job is retried, this is the id of the new job
     retried_job = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)

@@ -29,6 +29,9 @@ class SurveyJob(models.Model):
     no_retry = models.BooleanField(default=False)
     batch_job_id = models.CharField(max_length=256, null=True)
 
+    # Which AWS Batch Job Queue the job was run in.
+    batch_job_queue = models.CharField(max_length=100, null=True)
+
     ram_amount = models.IntegerField(default=1024)
 
     # The start time of the job

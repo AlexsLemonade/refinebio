@@ -14,7 +14,6 @@ logger = get_and_configure_logger(__name__)
 
 # Default to us-east-1 if the region variable can't be found
 AWS_REGION = get_env_variable("AWS_REGION", "us-east-1")
-AWS_BATCH_QUEUE_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_NAME")
 
 # 100 is the maximum number of jobIds you can pass to a AWS Batch's
 # describe_jobs.

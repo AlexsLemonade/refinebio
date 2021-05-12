@@ -53,11 +53,11 @@ class JobRequeuingTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    def test_requeuing_processor_job_no_volume(self, mock_send_job):
+    def test_requeuing_processor_job_no_batch_job_queue(self, mock_send_job):
         mock_send_job.return_value = True
 
         job = create_processor_job()
-        job.volume_index = None
+        job.batch_job_queue = None
         job.save()
 
         self.env = EnvironmentVarGuard()
@@ -76,14 +76,14 @@ class JobRequeuingTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-        self.assertEqual(retried_job.volume_index, "0")
+        self.assertNotNone(retried_job.batch_job_queue)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    def test_requeuing_compendia_job_no_volume(self, mock_send_job):
+    def test_requeuing_compendia_job_no_batch_job_queue(self, mock_send_job):
         mock_send_job.return_value = True
 
         job = create_processor_job()
-        job.volume_index = None
+        job.batch_job_queue = None
         job.pipeline_applied = "CREATE_COMPENDIA"
         job.save()
 
@@ -103,7 +103,7 @@ class JobRequeuingTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-        self.assertEqual(retried_job.volume_index, None)
+        self.assertNotNone(retried_job.batch_job_queue)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
     def test_requeuing_processor_job_w_more_ram(self, mock_send_job):

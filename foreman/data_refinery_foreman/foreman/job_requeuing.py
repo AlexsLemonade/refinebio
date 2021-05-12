@@ -1,11 +1,10 @@
-from data_refinery_common.job_lookup import (
-    SMASHER_JOB_TYPES,
-    Downloaders,
-    ProcessorPipeline,
-    SurveyJobTypes,
-)
+from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline, SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
+from data_refinery_common.message_queue import (
+    increment_downloader_job_queue_depth,
+    increment_job_queue_depth,
+    send_job,
+)
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -53,7 +52,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
             "Foreman told to requeue a DownloaderJob without an OriginalFile - why?!",
             last_job=str(last_job),
         )
-        return False, ""
+        return False
 
     if not original_file.needs_processing():
         last_job.no_retry = True
@@ -64,7 +63,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
             "Foreman told to redownload job with prior successful processing.",
             last_job=str(last_job),
         )
-        return False, ""
+        return False
 
     first_sample = original_file.samples.first()
 
@@ -78,7 +77,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
             "Avoiding requeuing for DownloaderJob for dbGaP run accession: "
             + str(first_sample.accession_code)
         )
-        return False, ""
+        return False
 
     new_job = DownloaderJob(
         num_retries=num_retries,
@@ -86,8 +85,6 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
         ram_amount=ram_amount,
         accession_code=last_job.accession_code,
         was_recreated=last_job.was_recreated,
-        # For now default to 0, will need to be calculated.
-        volume_index=0,
     )
     new_job.save()
 
@@ -110,7 +107,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
         else:
             # Can't communicate with Batch just now, leave the job for a later loop.
             new_job.delete()
-            return False, ""
+            return False
     except Exception:
         logger.error(
             "Failed to requeue DownloaderJob which had ID %d with a new DownloaderJob with ID %d.",
@@ -119,9 +116,12 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
         )
         # Can't communicate with Batch just now, leave the job for a later loop.
         new_job.delete()
-        return False, ""
+        return False
 
-    return True, new_job.volume_index
+    increment_job_queue_depth(new_job.batch_job_queue)
+    increment_downloader_job_queue_depth(new_job.batch_job_queue)
+
+    return True
 
 
 def requeue_processor_job(last_job: ProcessorJob) -> None:
@@ -176,22 +176,12 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             elif new_ram_amount == 4096:
                 new_ram_amount = 8192
 
-    volume_index = last_job.volume_index
-    # Make sure volume_index is set to something, unless it's a
-    # smasher job type because the smasher instance doesn't have a
-    # volume_index.
-    if (not volume_index or volume_index == "-1") and ProcessorPipeline[
-        last_job.pipeline_applied
-    ] not in SMASHER_JOB_TYPES:
-        # Default to 0 for now. At some point we'll have to detect
-        # when 0 is full, and if so go to 1, etc.
-        volume_index = 0
-
     new_job = ProcessorJob(
+        downloader_job=last_job.downloader_job,
         num_retries=num_retries,
         pipeline_applied=last_job.pipeline_applied,
         ram_amount=new_ram_amount,
-        volume_index=volume_index,
+        batch_job_queue=last_job.batch_job_queue,
     )
     new_job.save()
 
@@ -217,6 +207,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         else:
             # Can't communicate with Batch just now, leave the job for a later loop.
             new_job.delete()
+            return False
     except Exception:
         logger.warn(
             "Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
@@ -226,6 +217,11 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         )
         # Can't communicate with Batch just now, leave the job for a later loop.
         new_job.delete()
+        return False
+
+    increment_job_queue_depth(new_job.batch_job_queue)
+
+    return True
 
 
 def requeue_survey_job(last_job: SurveyJob) -> None:
@@ -278,5 +274,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
         )
         # Can't communicate with AWS just now, leave the job for a later loop.
         new_job.delete()
+
+    increment_job_queue_depth(new_job.batch_job_queue)
 
     return True

@@ -15,7 +15,6 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
 )
-from data_refinery_common.utils import choose_job_queue
 
 logger = get_and_configure_logger(__name__)
 
@@ -150,21 +149,17 @@ def create_downloader_job(
 
 
 def create_processor_jobs_for_original_files(
-    original_files: List[OriginalFile],
-    downloader_job: DownloaderJob = None,
-    volume_index: str = None,
+    original_files: List[OriginalFile], downloader_job: DownloaderJob = None,
 ):
     """
     Creates one processor job for each original file given.
     """
     for original_file in original_files:
-        create_processor_job_for_original_files([original_file], downloader_job, volume_index)
+        create_processor_job_for_original_files([original_file], downloader_job)
 
 
 def create_processor_job_for_original_files(
-    original_files: List[OriginalFile],
-    downloader_job: DownloaderJob = None,
-    volume_index: str = None,
+    original_files: List[OriginalFile], downloader_job: DownloaderJob = None,
 ):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
@@ -188,15 +183,9 @@ def create_processor_job_for_original_files(
             original_file.delete_local_file()
     else:
         processor_job = ProcessorJob()
+        processor_job.downloader_job = downloader_job
         processor_job.pipeline_applied = pipeline_to_apply.value
         processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
-
-        if volume_index:
-            processor_job.volume_index = volume_index
-        elif downloader_job.volume_index:
-            processor_job.volume_index = downloader_job.volume_index
-        else:
-            processor_job.volume_index = choose_job_queue()
 
         processor_job.save()
 

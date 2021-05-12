@@ -57,7 +57,11 @@ class DownloaderJob(models.Model):
     # The volume index is the instance id of an AWS EC2 machine. It looks like
     # these are 19 characters, but just to be safe we'll make the max length a
     # bit higher
+    # DEPRECATED
     volume_index = models.CharField(max_length=25, null=True)
+
+    # Which AWS Batch Job Queue the job was run in.
+    batch_job_queue = models.CharField(max_length=100, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried

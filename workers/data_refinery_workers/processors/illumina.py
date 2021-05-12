@@ -284,8 +284,8 @@ def _detect_platform(job_context: Dict) -> Dict:
         logger.info("Match percentage too low, NO_OP'ing and aborting.", job=job_context["job_id"])
 
         processor_job = ProcessorJob()
+        processor_job.downloader_job = job_context["job"].downloader_job
         processor_job.pipeline_applied = "NO_OP"
-        processor_job.volume_index = job_context["job"].volume_index
         processor_job.ram_amount = job_context["job"].ram_amount
         processor_job.save()
 

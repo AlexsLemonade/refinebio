@@ -50,13 +50,13 @@ class SurveyJobManagerTestCase(TestCase):
 
         # MAX TOTAL tests
         self.env = EnvironmentVarGuard()
-        self.env.set("MAX_TOTAL_JOBS", "0")
+        self.env.set("MAX_JOBS_PER_NODE", "0")
         with self.env:
             job = create_survey_job()
             result = survey_job_manager.handle_survey_jobs([job])
             self.assertFalse(result)
 
-        self.env.set("MAX_TOTAL_JOBS", "1000")
+        self.env.set("MAX_JOBS_PER_NODE", "200")
         with self.env:
             job = create_survey_job()
             result = survey_job_manager.requeue_survey_job(job)

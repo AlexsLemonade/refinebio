@@ -71,36 +71,6 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
-def get_volume_index(path="/home/user/data_store/VOLUME_INDEX") -> str:
-    """ Reads the contents of the VOLUME_INDEX file, else returns default """
-
-    if settings.RUNNING_IN_CLOUD:
-        default = "-1"
-    else:
-        default = "0"
-
-    try:
-        with open(path, "r") as f:
-            v_id = f.read().strip()
-            return v_id
-    except Exception as e:
-        # Our configured logger needs util, so we use the standard logging library for just this.
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.info(str(e))
-        logger.info("Could not read volume index file, using default: " + str(default))
-
-    return default
-
-
-def choose_job_queue() -> str:
-    """This will actually have to do stuff soon, but for now it is better
-    than hardcoding "0" everywhere."""
-
-    return "0"
-
-
 def get_supported_microarray_platforms(
     platforms_csv: str = "config/supported_microarray_platforms.csv",
 ) -> list:

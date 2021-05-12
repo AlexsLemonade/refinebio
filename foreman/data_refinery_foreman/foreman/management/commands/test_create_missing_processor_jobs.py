@@ -77,6 +77,7 @@ class SurveyTestCase(TransactionTestCase):
         )
 
         ma_processor_job = ProcessorJob()
+        ma_processor_job.downloader_job = ma_dl_job_doesnt_need_processor
         ma_processor_job.success = True
         ma_processor_job.worker_id = "worker_1"
         ma_processor_job.volume_index = "1"
@@ -179,6 +180,7 @@ class SurveyTestCase(TransactionTestCase):
         )
 
         rna_processor_job = ProcessorJob()
+        rna_processor_job.downloader_job = rna_dl_job_doesnt_need_processor
         # Failed ProcessorJobs will be retried, so they still count.
         rna_processor_job.success = False
         rna_processor_job.worker_id = "worker_1"
