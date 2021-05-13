@@ -20,7 +20,6 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
 )
-from data_refinery_common.utils import choose_job_queue
 
 logger = get_and_configure_logger(__name__)
 

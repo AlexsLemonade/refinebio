@@ -25,7 +25,7 @@ logger = get_and_configure_logger(__name__)
 PAGE_SIZE = 2000
 
 
-def run_tximport():
+def run_tximport(dispatch_jobs=True):
     """Creates a tximport job for all eligible experiments."""
     eligible_experiments = (
         Experiment.objects.annotate(num_organisms=Count("organisms"))
@@ -67,12 +67,13 @@ def run_tximport():
                 creation_count += 1
                 created_jobs.append(processor_job)
 
-                try:
-                    send_job(tximport_pipeline, processor_job)
-                except Exception:
-                    # If we cannot queue the job now the Foreman will do
-                    # it later.
-                    pass
+                if dispatch_jobs:
+                    try:
+                        send_job(tximport_pipeline, processor_job)
+                    except Exception:
+                        # If we cannot queue the job now the Foreman will do
+                        # it later.
+                        pass
 
         logger.info("Created %d tximport jobs for experiments past the thresholds.", creation_count)
 
