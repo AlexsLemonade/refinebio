@@ -57,6 +57,7 @@ def create_processor_job(pipeline="AFFY_TO_PCL", ram_amount=2048, start_time=Non
     og_file_2.absolute_file_path = "nor this"
     og_file_2.save()
 
+    downloader_job = None
     if pipeline == "AFFY_TO_PCL":
         downloader_job = DownloaderJob(
             downloader_task="SRA",
