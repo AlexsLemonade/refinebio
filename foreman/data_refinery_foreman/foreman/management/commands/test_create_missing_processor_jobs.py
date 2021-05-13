@@ -18,7 +18,7 @@ from data_refinery_foreman.foreman.management.commands.create_missing_processor_
 
 
 class SurveyTestCase(TransactionTestCase):
-    # @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    # @patch('data_refinery_foreman.surveyor.external_source.send_job')
     def test_create_missing_jobs(self):
         """Tests that files which should have processor jobs get them created.
 
