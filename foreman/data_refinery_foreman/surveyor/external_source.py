@@ -2,11 +2,7 @@ import abc
 from typing import List
 
 from data_refinery_common import job_lookup, logging
-from data_refinery_common.message_queue import (
-    increment_downloader_job_queue_depth,
-    increment_job_queue_depth,
-    send_job,
-)
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -97,9 +93,7 @@ class ExternalSourceSurveyor:
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id,
                     )
-                    if send_job(downloader_task, downloader_job):
-                        increment_downloader_job_queue_depth(downloader_job.batch_job_queue)
-                        increment_job_queue_depth(downloader_job.batch_job_queue)
+                    send_job(downloader_task, downloader_job)
                 except Exception:
                     # If we fail to queue the job, it will be requeued.
                     pass

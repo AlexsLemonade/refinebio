@@ -1,10 +1,6 @@
 from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline, SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import (
-    increment_downloader_job_queue_depth,
-    increment_job_queue_depth,
-    send_job,
-)
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -118,9 +114,6 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
         new_job.delete()
         return False
 
-    increment_job_queue_depth(new_job.batch_job_queue)
-    increment_downloader_job_queue_depth(new_job.batch_job_queue)
-
     return True
 
 
@@ -219,8 +212,6 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         new_job.delete()
         return False
 
-    increment_job_queue_depth(new_job.batch_job_queue)
-
     return True
 
 
@@ -274,7 +265,5 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
         )
         # Can't communicate with AWS just now, leave the job for a later loop.
         new_job.delete()
-
-    increment_job_queue_depth(new_job.batch_job_queue)
 
     return True

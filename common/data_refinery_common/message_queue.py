@@ -159,7 +159,7 @@ def get_capacity_for_downloader_jobs() -> int:
 
 def increment_job_queue_depth(job_queue_name):
     global DOWNLOADER_JOB_QUEUE_DEPTHS
-    DOWNLOADER_JOB_QUEUE_DEPTHS[job_queue_name] += 1
+    JOB_QUEUE_DEPTHS[job_queue_name] += 1
 
 
 def increment_downloader_job_queue_depth(job_queue_name):
@@ -306,6 +306,11 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
             job.batch_job_queue = job_queue
             job.batch_job_id = batch_response["jobId"]
             job.save()
+
+            increment_job_queue_depth(job_queue)
+            if job_type in list(Downloaders):
+                increment_downloader_job_queue_depth(job_queue)
+
             return True
         except Exception as e:
             logger.warn(
