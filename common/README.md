@@ -15,7 +15,7 @@ model. First you should make and run migrations:
 Next you should generate the package:
 
 ```
-python setup.py sdist
+python3 setup.py sdist
 ```
 
 The Dockerfiles for other projects know how to find the package and install it

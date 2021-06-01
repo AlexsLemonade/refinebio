@@ -32,4 +32,4 @@ echo "$SYSTEM_VERSION" > common/version
 # Ensure there is only one distribution to copy over.
 rm -f common/dist/*
 
-./scripts/make_migrations.sh && cd common && python setup.py sdist
+./scripts/make_migrations.sh && cd common && python3 setup.py sdist
