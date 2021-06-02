@@ -117,10 +117,13 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
     cel_name="GSM1426071_CD_colon_active_1.CEL"
     cel_name2="GSM45588.CEL"
     cel_name3="GSM1364667_U_110208_7-02-10_S2.CEL"
+    pcl_name="GSM1426071_CD_colon_active_1.PCL"
     cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
     cel_test_data_1="$cel_test_raw_dir/$cel_name"
     cel_test_data_2="$cel_test_raw_dir/$cel_name2"
     cel_test_data_3="$cel_test_raw_dir/$cel_name3"
+    pcl_test_dir="$volume_directory/TEST/PCL"
+    pcl_test_data_1="$pcl_test_dir/$pcl_name"
     if [ ! -e "$cel_test_data_1" ]; then
         mkdir -p "$cel_test_raw_dir"
         echo "Downloading CEL for tests."
@@ -136,6 +139,12 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
         echo "Downloading Huex Brain Array CEL for tests."
         wget -q -O "$cel_test_data_3" \
              "$test_data_repo/$cel_name3"
+    fi
+    if [ ! -e "$pcl_test_data_1" ]; then
+        mkdir -p "$pcl_test_dir"
+        echo "Downloading pre-computed PCL for tests."
+        wget -q -O "$pcl_test_data_1" \
+             "$test_data_repo/$pcl_name"
     fi
 
 fi
