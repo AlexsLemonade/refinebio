@@ -341,8 +341,15 @@ jobs:
       - name: Rebuild the Elasticsearch index
         run: ./scripts/rebuild_es_index.sh
 
+      - name: Run transcriptome tests
+        run: |
+          mkdir -p workers/test_volume
+          sudo chmod -R a+rw workers/test_volume
+          .github/scripts/filter_tests.sh -t transcriptome
+
       - name: Run Illumina tests
         run: |
+          sudo rm -rf workers/test_volume
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t illumina
