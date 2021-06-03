@@ -199,13 +199,13 @@ if [ -z "$tag" ] || [ "$tag" = "agilent" ]; then
     fi
 fi
 if [ -z "$tag" ] || [ "$tag" = "no_op" ]; then
-    no_file="GSM269747-tbl-1.txt"
     no_test_raw_dir="$volume_directory/raw/TEST/NO_OP"
-    if [ ! -e "$no_test_raw_dir/$no_file" ]; then
+    no_file1="GSM557500_sample_table.txt"
+    if [ ! -e "$no_test_raw_dir/$no_file1" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file1."
-        wget -q -O "$no_test_raw_dir/$no_file" \
-             "$test_data_repo/$no_file"
+        wget -q -O "$no_test_raw_dir/$no_file1" \
+             "$test_data_repo/$no_file1"
     fi
     no_file2="GSM269747-tbl-1.txt"
     if [ ! -e "$no_test_raw_dir/$no_file2" ]; then
@@ -214,40 +214,55 @@ if [ -z "$tag" ] || [ "$tag" = "no_op" ]; then
         wget -q -O "$no_test_raw_dir/$no_file2" \
              "$test_data_repo/$no_file2"
     fi
-    no_file3="GSM557500_sample_table.txt"
+    no_file3="GSM1234847_sample_table.txt"
     if [ ! -e "$no_test_raw_dir/$no_file3" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file3."
         wget -q -O "$no_test_raw_dir/$no_file3" \
              "$test_data_repo/$no_file3"
     fi
-    no_file4="GSM269747-tbl-1.txt"
+    no_file4="GSM1089291-tbl-1.txt"
     if [ ! -e "$no_test_raw_dir/$no_file4" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file4."
         wget -q -O "$no_test_raw_dir/$no_file4" \
              "$test_data_repo/$no_file4"
     fi
-    no_file5="GSM1234847_sample_table.txt"
+    no_file5="GSM1089291-tbl-1-modified.txt"
     if [ ! -e "$no_test_raw_dir/$no_file5" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file5."
         wget -q -O "$no_test_raw_dir/$no_file5" \
              "$test_data_repo/$no_file5"
     fi
-    no_file6="GSM1089291-tbl-1.txt"
-    if [ ! -e "$no_test_raw_dir/$no_file6" ]; then
-        mkdir -p "$no_test_raw_dir"
-        echo "Downloading NOOP file6."
-        wget -q -O "$no_test_raw_dir/$no_file6" \
-             "$test_data_repo/$no_file6"
+    no_test_exp_dir="$volume_directory/TEST/NO_OP/EXPECTED"
+    no_exp_file1="gene_converted_GSM557500-tbl-1.txt"
+    if [ ! -e "$no_test_exp_dir/$no_exp_file1" ]; then
+        mkdir -p "$no_test_exp_dir"
+        echo "Downloading NOOP expected file1."
+        wget -q -O "$no_test_exp_dir/$no_exp_file1" \
+             "$test_data_repo/$no_exp_file1"
     fi
-    no_file7="GSM1089291-tbl-1-modified.txt"
-    if [ ! -e "$no_test_raw_dir/$no_file7" ]; then
-        mkdir -p "$no_test_raw_dir"
-        echo "Downloading NOOP file7."
-        wget -q -O "$no_test_raw_dir/$no_file7" \
-             "$test_data_repo/$no_file7"
+    no_exp_file2="GSM269747.PCL"
+    if [ ! -e "$no_test_exp_dir/$no_exp_file2" ]; then
+        mkdir -p "$no_test_exp_dir"
+        echo "Downloading NOOP expected file2."
+        wget -q -O "$no_test_exp_dir/$no_exp_file2" \
+             "$test_data_repo/$no_exp_file2"
+    fi
+    no_exp_file3="gene_converted_GSM1234847-tbl-1.txt"
+    if [ ! -e "$no_test_exp_dir/$no_exp_file3" ]; then
+        mkdir -p "$no_test_exp_dir"
+        echo "Downloading NOOP expected file3."
+        wget -q -O "$no_test_exp_dir/$no_exp_file3" \
+             "$test_data_repo/$no_exp_file3"
+    fi
+    no_exp_file4="gene_converted_GSM1089291-tbl-1.txt"
+    if [ ! -e "$no_test_exp_dir/$no_exp_file4" ]; then
+        mkdir -p "$no_test_exp_dir"
+        echo "Downloading NOOP expected file4."
+        wget -q -O "$no_test_exp_dir/$no_exp_file4" \
+             "$test_data_repo/$no_exp_file4"
     fi
 fi
 

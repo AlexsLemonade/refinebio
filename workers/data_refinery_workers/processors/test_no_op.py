@@ -5,6 +5,9 @@ from pathlib import Path
 
 from django.test import TestCase, tag
 
+import pandas as pd
+import scipy.stats
+
 from data_refinery_common.models import (
     Organism,
     OriginalFile,
@@ -24,7 +27,7 @@ class NOOPTestCase(TestCase):
             shutil.rmtree(str(job_dir), ignore_errors=True)
 
     @tag("no_op")
-    def test_convert_simple_pcl(self):
+    def test_convert_simple_pcl_with_header(self):
         """ """
 
         job = ProcessorJob()
@@ -58,7 +61,21 @@ class NOOPTestCase(TestCase):
         assoc1.save()
 
         final_context = no_op.no_op_processor(job.pk)
+        self.assertTrue(final_context["success"])
+        self.assertTrue(os.path.exists(final_context["output_file_path"]))
 
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/gene_converted_GSM1234847-tbl-1.txt",
+            sep="\t",
+        )["VALUE"]
+        actual_data = pd.read_csv(final_context["output_file_path"], sep="\t")["VALUE"]
+
+        (rho, _) = scipy.stats.spearmanr(expected_data, actual_data)
+        self.assertAlmostEqual(rho, 1.0, delta=0.01)
+
+    @tag("no_op")
+    def test_convert_simple_pcl_with_no_header(self):
+        """ """
         # No header - ex
         # AFFX-BioB-3_at  0.74218756
         og_file = OriginalFile()
@@ -93,10 +110,14 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        # Check that filesizes are with 5% of what we'd expect as they vary slightly each run.
-        self.assertTrue(
-            math.isclose(os.path.getsize(final_context["output_file_path"]), 346535, rel_tol=0.05)
-        )
+
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/GSM269747.PCL", sep="\t",
+        )["GSM269747.CEL"]
+        actual_data = pd.read_csv(final_context["output_file_path"], sep="\t")["VALUE"]
+
+        (rho, _) = scipy.stats.spearmanr(expected_data, actual_data)
+        self.assertAlmostEqual(rho, 1.0, delta=0.01)
 
     @tag("no_op")
     def test_convert_processed_illumina(self):
@@ -144,10 +165,19 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertTrue(
-            math.isclose(os.path.getsize(final_context["output_file_path"]), 924426, rel_tol=0.05)
-        )
         self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
+
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/gene_converted_GSM557500-tbl-1.txt",
+            sep="\t",
+            names=["", "VALUE"],
+        )["VALUE"]
+        actual_data = pd.read_csv(final_context["output_file_path"], sep="\t", names=["", "VALUE"])[
+            "VALUE"
+        ]
+
+        (rho, _) = scipy.stats.spearmanr(expected_data, actual_data)
+        self.assertAlmostEqual(rho, 1.0, delta=0.01)
 
     @tag("no_op")
     def test_convert_illumina_no_header(self):
@@ -196,9 +226,18 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context["success"])
         self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertTrue(
-            math.isclose(os.path.getsize(final_context["output_file_path"]), 789756, rel_tol=0.05)
-        )
+
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/gene_converted_GSM1089291-tbl-1.txt",
+            sep="\t",
+            names=["", "VALUE"],
+        )["VALUE"]
+        actual_data = pd.read_csv(final_context["output_file_path"], sep="\t", names=["", "VALUE"])[
+            "VALUE"
+        ]
+
+        (rho, _) = scipy.stats.spearmanr(expected_data, actual_data)
+        self.assertAlmostEqual(rho, 1.0, delta=0.01)
 
     @tag("no_op")
     def test_convert_illumina_bad_cols(self):
