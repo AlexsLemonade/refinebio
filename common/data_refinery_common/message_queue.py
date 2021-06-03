@@ -143,7 +143,7 @@ def get_capacity_for_downloader_jobs() -> int:
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_DOWNLOADER_JOBS = MAX_DOWNLOADER_JOBS_PER_NODE * num_job_queues
 
-    job_queue_depths = get_job_queue_depths()["all_jobs"]
+    job_queue_depths = get_job_queue_depths()["downloader_jobs"]
     num_downloader_jobs = 0
     for job_queue in settings.AWS_BATCH_QUEUE_WORKERS_NAMES:
         num_downloader_jobs += job_queue_depths[job_queue]
@@ -206,6 +206,11 @@ def get_batch_queue_for_job(job_type, job):
     elif job_type in list(Downloaders):
         return get_batch_queue_for_downloader_job()
     elif job_type in list(ProcessorPipeline):
+        log_str = f"The downloader job is {job.downloader_job}."
+        if job.downloader_job:
+            log_str = log_str + f", it's queue is {job.downloader_job.batch_job_queue}"
+
+        logger.info(log_str, job_type=job_type)
         # Queue it in the same queue as the downloader job as long as
         # that is set and still available.
         if (
@@ -323,4 +328,5 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     else:
         job.num_retries = job.num_retries - 1
         job.save()
+
     return True
