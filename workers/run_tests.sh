@@ -200,26 +200,25 @@ if [ -z "$tag" ] || [ "$tag" = "agilent" ]; then
 fi
 if [ -z "$tag" ] || [ "$tag" = "no_op" ]; then
     no_test_raw_dir="$volume_directory/raw/TEST/NO_OP"
-    no_file1="GSM557500_sample_table.txt"
+    no_file1="GSM557500-tbl-1.txt"
     if [ ! -e "$no_test_raw_dir/$no_file1" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file1."
         wget -q -O "$no_test_raw_dir/$no_file1" \
              "$test_data_repo/$no_file1"
     fi
-    no_file2="GSM269747-tbl-1.txt"
+    no_file2="GSM1234847_sample_table.txt"
     if [ ! -e "$no_test_raw_dir/$no_file2" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file2."
         wget -q -O "$no_test_raw_dir/$no_file2" \
              "$test_data_repo/$no_file2"
     fi
-    no_file3="GSM1234847_sample_table.txt"
+    no_file3="GSM1234847_sample_table_headerless.txt"
     if [ ! -e "$no_test_raw_dir/$no_file3" ]; then
         mkdir -p "$no_test_raw_dir"
-        echo "Downloading NOOP file3."
-        wget -q -O "$no_test_raw_dir/$no_file3" \
-             "$test_data_repo/$no_file3"
+        echo "Processing NOOP file3."
+        tail -n +2 "$no_test_raw_dir/$no_file2" > "$no_test_raw_dir/$no_file3"
     fi
     no_file4="GSM1089291-tbl-1.txt"
     if [ ! -e "$no_test_raw_dir/$no_file4" ]; then
