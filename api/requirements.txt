@@ -44,7 +44,7 @@ django-hstore==1.4.2
     # via djangorestframework-hstore
 django-nine==0.2.3
     # via django-elasticsearch-dsl-drf
-django==3.1.7
+django==3.1.9
     # via
     #   -r requirements.in
     #   django-cors-headers
@@ -112,8 +112,6 @@ requests==2.24.0
     #   -r requirements.in
     #   coreapi
     #   python-nomad
-ruamel.yaml.clib==0.2.2
-    # via ruamel.yaml
 ruamel.yaml==0.16.12
     # via drf-yasg
 s3transfer==0.3.3
