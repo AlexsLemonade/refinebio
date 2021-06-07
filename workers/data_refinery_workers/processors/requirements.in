@@ -1,6 +1,6 @@
 boto3>=1.9.199
 coveralls
-django>=3.1.8
+django>=3.2.4
 matplotlib
 numpy
 pandas
@@ -27,5 +27,5 @@ holoviews>=1.11.2
 selenium==3.141.0
 # For mocking out S3 calls for the smasher
 vcrpy
-django-computedfields
+django-computedfields>=0.1.5
 pyyaml>=5.4

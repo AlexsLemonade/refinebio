@@ -28,7 +28,7 @@ coreschema==0.0.4
     #   drf-yasg
 coverage==5.3
     # via -r requirements.in
-django-computedfields==0.1.3
+django-computedfields==0.1.5
     # via -r requirements.in
 django-cors-headers==3.5.0
     # via -r requirements.in
@@ -44,7 +44,7 @@ django-hstore==1.4.2
     # via djangorestframework-hstore
 django-nine==0.2.3
     # via django-elasticsearch-dsl-drf
-django==3.2
+django==3.2.4
     # via
     #   -r requirements.in
     #   django-cors-headers
