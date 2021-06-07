@@ -18,63 +18,28 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers.processors import no_op
 
-JOB_INFO = {
-    "GSM1234847": {
-        "accession_code": "GSM1234847",
-        "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/",
-        "filename": "GSM1234847_sample_table.txt",
-        "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table.txt",
-        "platform_accession_code": "A-AFFY-38",
-    },
-    "GSM1234847_headerless": {
-        "accession_code": "GSM1234847",
-        "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/",
-        "filename": "GSM1234847_sample_table.txt",
-        "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table_headerless.txt",
-        "platform_accession_code": "A-AFFY-38",
-    },
-    "GSM557500": {
-        "accession_code": "GSM557500",
-        "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22433/",
-        "filename": "GSM557500-tbl-1.txt",
-        "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM557500-tbl-1.txt",
-        "platform_accession_code": "A-MEXP-1171",
-        "manufacturer": "ILLUMINA",
-    },
-    "GSM1089291": {
-        "accession_code": "GSM1089291",
-        "source_filename": "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1.txt",
-        "filename": "GSM1089291-tbl-1.txt",
-        "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1.txt",
-        "platform_accession_code": "A-MEXP-1171",
-        "manufacturer": "ILLUMINA",
-    },
-}
 
-
-def prepare_job(sample: str) -> ProcessorJob:
-    info = JOB_INFO[sample]
-
+def prepare_job(job_info: dict) -> ProcessorJob:
     job = ProcessorJob()
     job.pipeline_applied = "NO_OP"
     job.save()
 
     og_file = OriginalFile()
-    og_file.source_filename = info["source_filename"]
-    og_file.filename = info["filename"]
-    og_file.absolute_file_path = info["absolute_file_path"]
+    og_file.source_filename = job_info["source_filename"]
+    og_file.filename = job_info["filename"]
+    og_file.absolute_file_path = job_info["absolute_file_path"]
     og_file.is_downloaded = True
     og_file.save()
 
     sample = Sample()
-    sample.accession_code = info["accession_code"]
-    sample.title = info["accession_code"]
-    sample.platform_accession_code = info["platform_accession_code"]
-    man = info.get("manufacturer", None)
+    sample.accession_code = job_info["accession_code"]
+    sample.title = job_info["accession_code"]
+    sample.platform_accession_code = job_info["platform_accession_code"]
+    man = job_info.get("manufacturer", None)
     if man is not None:
         sample.manufacturer = man
     # The illumina samples need the human organism
-    if info.get("manufacturer", None) == "ILLUMINA":
+    if job_info.get("manufacturer", None) == "ILLUMINA":
         homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         homo_sapiens.save()
         sample.organism = homo_sapiens
@@ -146,7 +111,15 @@ class NOOPTestCase(TestCase):
         """PCL with header
         > ID_REF, VALUE
         """
-        job = prepare_job("GSM1234847")
+        job = prepare_job(
+            {
+                "accession_code": "GSM1234847",
+                "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/",
+                "filename": "GSM1234847_sample_table.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table.txt",
+                "platform_accession_code": "A-AFFY-38",
+            }
+        )
         final_context = assertRunsSuccessfully(self, job)
 
         expected_data = pd.read_csv(
@@ -163,7 +136,15 @@ class NOOPTestCase(TestCase):
         """PCL with no header, ex:
         > AFFX-BioB-3_at  0.74218756
         """
-        job = prepare_job("GSM1234847_headerless")
+        job = prepare_job(
+            {
+                "accession_code": "GSM1234847",
+                "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/",
+                "filename": "GSM1234847_sample_table.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table_headerless.txt",
+                "platform_accession_code": "A-AFFY-38",
+            }
+        )
         final_context = assertRunsSuccessfully(self, job)
 
         expected_data = pd.read_csv(
@@ -182,7 +163,16 @@ class NOOPTestCase(TestCase):
         > ILMN_1343291    14.943602   0
         > ILMN_1343295    13.528082   0
         """
-        job = prepare_job("GSM557500")
+        job = prepare_job(
+            {
+                "accession_code": "GSM557500",
+                "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22433/",
+                "filename": "GSM557500-tbl-1.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM557500-tbl-1.txt",
+                "platform_accession_code": "A-MEXP-1171",
+                "manufacturer": "ILLUMINA",
+            }
+        )
         final_context = assertRunsSuccessfully(self, job)
 
         self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
@@ -209,7 +199,16 @@ class NOOPTestCase(TestCase):
         > ILMN_2209417    10.0000   0.2029
         > ILMN_1765401    152.0873  0.0000
         """
-        job = prepare_job("GSM1089291")
+        job = prepare_job(
+            {
+                "accession_code": "GSM1089291",
+                "source_filename": "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1.txt",
+                "filename": "GSM1089291-tbl-1.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1.txt",
+                "platform_accession_code": "A-MEXP-1171",
+                "manufacturer": "ILLUMINA",
+            }
+        )
         final_context = assertRunsSuccessfully(self, job)
 
         self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
