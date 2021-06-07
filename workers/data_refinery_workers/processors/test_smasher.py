@@ -248,10 +248,7 @@ class SmasherTestCase(TransactionTestCase):
         dataset.get_samples_by_species()
         dataset.get_aggregated_samples()
 
-        # XXX: agg_type 'SPECIES' hangs on Linux, not OSX.
-        # Don't know why yet.
-        # for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
-        for ag_type in ["ALL", "EXPERIMENT"]:
+        for ag_type in ["ALL", "EXPERIMENT", "SPECIES"]:
             dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.aggregate_by = ag_type
             dataset.save()
