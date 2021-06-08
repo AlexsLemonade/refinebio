@@ -118,12 +118,16 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
     cel_name2="GSM45588.CEL"
     cel_name3="GSM1364667_U_110208_7-02-10_S2.CEL"
     pcl_name="GSM1426071_CD_colon_active_1.PCL"
+    pcl_name2="GSM45588.PCL"
+    pcl_name3="GSM1364667_U_110208_7-02-10_S2.PCL"
     cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
     cel_test_data_1="$cel_test_raw_dir/$cel_name"
     cel_test_data_2="$cel_test_raw_dir/$cel_name2"
     cel_test_data_3="$cel_test_raw_dir/$cel_name3"
     pcl_test_dir="$volume_directory/TEST/PCL"
     pcl_test_data_1="$pcl_test_dir/$pcl_name"
+    pcl_test_data_2="$pcl_test_dir/$pcl_name2"
+    pcl_test_data_3="$pcl_test_dir/$pcl_name3"
     if [ ! -e "$cel_test_data_1" ]; then
         mkdir -p "$cel_test_raw_dir"
         echo "Downloading CEL for tests."
@@ -145,6 +149,18 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
         echo "Downloading pre-computed PCL for tests."
         wget -q -O "$pcl_test_data_1" \
              "$test_data_repo/$pcl_name"
+    fi
+    if [ ! -e "$pcl_test_data_2" ]; then
+        mkdir -p "$pcl_test_dir"
+        echo "Downloading pre-computed Non-Brainarray PCL for tests."
+        wget -q -O "$pcl_test_data_2" \
+             "$test_data_repo/$pcl_name2"
+    fi
+    if [ ! -e "$pcl_test_data_3" ]; then
+        mkdir -p "$pcl_test_dir"
+        echo "Downloading pre-computed Huex Brain Array PCL for tests."
+        wget -q -O "$pcl_test_data_3" \
+             "$test_data_repo/$pcl_name3"
     fi
 
 fi
