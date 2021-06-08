@@ -12,6 +12,7 @@ from typing import Callable, Dict, List
 from django.conf import settings
 from django.utils import timezone
 
+import pandas as pd
 import yaml
 
 from data_refinery_common.job_lookup import SMASHER_JOB_TYPES, ProcessorEnum, ProcessorPipeline
@@ -741,3 +742,12 @@ def cache_keys(*keys, work_dir_key="work_dir"):
         return pipeline
 
     return inner
+
+
+def squish_duplicates(data: pd.DataFrame) -> pd.DataFrame:
+    """Squish duplicated rows together.
+    XXX/TODO: Is mean the appropriate method here?
+              We can make this an option in future.
+    Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+    """
+    return data.groupby(data.index, sort=False).mean()
