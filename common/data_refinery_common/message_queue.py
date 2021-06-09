@@ -50,7 +50,7 @@ for queue_name in settings.AWS_BATCH_QUEUE_WORKERS_NAMES:
     DOWNLOADER_JOB_QUEUE_DEPTHS[queue_name] = 0
 
 
-def count_jobs_in_queue(batch_job_queue) -> int:
+def count_jobs_in_queue(batch_job_queue) -> dict:
     """Counts how many jobs are in the job queue that aren't finished.
 
     Also returns how many of those are downloader jobs."""
@@ -86,7 +86,7 @@ def count_jobs_in_queue(batch_job_queue) -> int:
         num_jobs = sys.maxsize
         num_downloader_jobs = sys.maxsize
 
-    return num_jobs, num_downloader_jobs
+    return {"all_jobs": num_jobs, "downloader_jobs": num_downloader_jobs}
 
 
 def get_job_queue_depths(window=datetime.timedelta(minutes=2)):
@@ -96,11 +96,11 @@ def get_job_queue_depths(window=datetime.timedelta(minutes=2)):
 
     if timezone.now() - TIME_OF_LAST_JOB_CHECK > window:
         for job_queue in settings.AWS_BATCH_QUEUE_ALL_NAMES:
-            num_jobs, num_downloader_jobs = count_jobs_in_queue(job_queue)
-            JOB_QUEUE_DEPTHS[job_queue] = num_jobs
+            job_count_dict = count_jobs_in_queue(job_queue)
+            JOB_QUEUE_DEPTHS[job_queue] = job_count_dict["all_jobs"]
 
             if job_queue in settings.AWS_BATCH_QUEUE_WORKERS_NAMES:
-                DOWNLOADER_JOB_QUEUE_DEPTHS[job_queue] = num_downloader_jobs
+                DOWNLOADER_JOB_QUEUE_DEPTHS[job_queue] = job_count_dict["downloader_jobs"]
 
         TIME_OF_LAST_JOB_CHECK = timezone.now()
 
