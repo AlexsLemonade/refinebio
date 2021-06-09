@@ -37,8 +37,10 @@ branch=$(get_master_or_dev "$CI_TAG")
 
 if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod
+    BATCH_USE_ON_DEMAND_INSTANCES="false"
 elif [[ $branch == "dev" ]]; then
     ENVIRONMENT=staging
+    BATCH_USE_ON_DEMAND_INSTANCES="true"
 else
     echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!?!?"
     exit 1
@@ -46,4 +48,4 @@ fi
 
 # New deployment (use -u circleci since we used to run on CircleCI and we don't
 # want to recreate all of our resources)
-./deploy.sh -e "$ENVIRONMENT" -v "$CI_TAG" -u circleci
+./deploy.sh -e "$ENVIRONMENT" -v "$CI_TAG" -u circleci -i "$BATCH_USE_ON_DEMAND_INSTANCES"

@@ -1,6 +1,7 @@
 from test.support import EnvironmentVarGuard
 from unittest.mock import patch
 
+from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
 
@@ -13,10 +14,17 @@ from data_refinery_foreman.foreman.test_utils import (
 )
 
 
+def fake_send_job(job_type, job, is_dispatch=False):
+    job.batch_job_queue = settings.AWS_BATCH_QUEUE_WORKERS_NAMES[0]
+    job.save()
+
+    return True
+
+
 class JobRequeuingTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
     def test_requeuing_downloader_job(self, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
 
         job = create_downloader_job()
 
@@ -36,7 +44,7 @@ class JobRequeuingTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
     def test_requeuing_processor_job(self, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
 
         job = create_processor_job()
 
@@ -53,11 +61,11 @@ class JobRequeuingTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    def test_requeuing_processor_job_no_volume(self, mock_send_job):
-        mock_send_job.return_value = True
+    def test_requeuing_processor_job_no_batch_job_queue(self, mock_send_job):
+        mock_send_job.side_effect = fake_send_job
 
         job = create_processor_job()
-        job.volume_index = None
+        job.batch_job_queue = None
         job.save()
 
         self.env = EnvironmentVarGuard()
@@ -76,14 +84,14 @@ class JobRequeuingTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-        self.assertEqual(retried_job.volume_index, "0")
+        self.assertIsNotNone(retried_job.batch_job_queue)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    def test_requeuing_compendia_job_no_volume(self, mock_send_job):
-        mock_send_job.return_value = True
+    def test_requeuing_compendia_job_no_batch_job_queue(self, mock_send_job):
+        mock_send_job.side_effect = fake_send_job
 
         job = create_processor_job()
-        job.volume_index = None
+        job.batch_job_queue = None
         job.pipeline_applied = "CREATE_COMPENDIA"
         job.save()
 
@@ -103,11 +111,11 @@ class JobRequeuingTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-        self.assertEqual(retried_job.volume_index, None)
+        self.assertIsNotNone(retried_job.batch_job_queue)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
     def test_requeuing_processor_job_w_more_ram(self, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
 
         job = create_processor_job(pipeline="SALMON", ram_amount=16384, start_time=timezone.now())
 
@@ -126,7 +134,7 @@ class JobRequeuingTestCase(TestCase):
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
     def test_requeuing_survey_job(self, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
 
         job = create_survey_job()
 

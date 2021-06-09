@@ -152,7 +152,7 @@ class APITestCases(APITestCase):
         download_assoc.downloader_job = downloader_job
         download_assoc.save()
 
-        processor_job = ProcessorJob()
+        processor_job = ProcessorJob(downloader_job=downloader_job)
         processor_job.save()
 
         processor_assoc = ProcessorJobOriginalFileAssociation()

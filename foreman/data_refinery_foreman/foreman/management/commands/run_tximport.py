@@ -19,14 +19,13 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.rna_seq import get_quant_results_for_experiment, should_run_tximport
-from data_refinery_common.utils import choose_job_queue
 
 logger = get_and_configure_logger(__name__)
 
 PAGE_SIZE = 2000
 
 
-def run_tximport():
+def run_tximport(dispatch_jobs=True):
     """Creates a tximport job for all eligible experiments."""
     eligible_experiments = (
         Experiment.objects.annotate(num_organisms=Count("organisms"))
@@ -54,10 +53,6 @@ def run_tximport():
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = tximport_pipeline.value
                 processor_job.ram_amount = 32768
-                # This job doesn't need to run on a specific volume
-                # but it uses the same Batch job as Salmon jobs which
-                # do require the volume index.
-                processor_job.volume_index = choose_job_queue()
                 processor_job.save()
 
                 assoc = ProcessorJobOriginalFileAssociation()
@@ -72,12 +67,13 @@ def run_tximport():
                 creation_count += 1
                 created_jobs.append(processor_job)
 
-                try:
-                    send_job(tximport_pipeline, processor_job)
-                except Exception:
-                    # If we cannot queue the job now the Foreman will do
-                    # it later.
-                    pass
+                if dispatch_jobs:
+                    try:
+                        send_job(tximport_pipeline, processor_job)
+                    except Exception:
+                        # If we cannot queue the job now the Foreman will do
+                        # it later.
+                        pass
 
         logger.info("Created %d tximport jobs for experiments past the thresholds.", creation_count)
 

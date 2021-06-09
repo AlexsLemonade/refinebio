@@ -40,6 +40,7 @@ def wait_for_job(job) -> bool:
         elif job.success:
             return True
         else:
+            print(f"{type(job).__name__} {job.id} failed!")
             return False
 
     return False
@@ -159,7 +160,7 @@ class EndToEndTestCase(TestCase):
         self.assertEqual(Sample.processed_objects.count(), 129)
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
-        tximport_jobs = run_tximport()
+        tximport_jobs = run_tximport(dispatch_jobs=False)
         self.assertEqual(len(tximport_jobs), 1)
 
         self.assertTrue(wait_for_job(tximport_jobs[0]))

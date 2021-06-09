@@ -149,5 +149,15 @@ RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 # EngagementBot
 ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
 
+MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
+MAX_DOWNLOADER_JOBS_PER_NODE = int(get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE"))
+
 # For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
 AUTO_DISPATCH_BATCH_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_BATCH_JOBS") != "False"
+
+AWS_BATCH_QUEUE_WORKERS_NAMES = sorted(
+    get_env_variable("REFINEBIO_JOB_QUEUE_WORKERS_NAMES").split(",")
+)
+AWS_BATCH_QUEUE_SMASHER_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_SMASHER_NAME")
+AWS_BATCH_QUEUE_COMPENDIA_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_COMPENDIA_NAME")
+AWS_BATCH_QUEUE_ALL_NAMES = sorted(get_env_variable("REFINEBIO_JOB_QUEUE_ALL_NAMES").split(","))

@@ -24,7 +24,7 @@ EMPTY_JOB_QUEUE_RESPONSE = {"jobSummaryList": []}
 
 class OrganismShepherdTestCase(TransactionTestCase):
     @patch("data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     def test_organism_shepherd_command(self, mock_list_jobs, mock_send_job):
         """Tests that the organism shepherd requeues jobs in the right order.
 

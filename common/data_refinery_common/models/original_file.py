@@ -158,12 +158,12 @@ class OriginalFile(models.Model):
         that processor jobs can use this function without their job
         being counted as currently processing this file.
         """
+        if self.has_blocking_jobs(own_processor_id):
+            return False
+
         sample = self.samples.first()
         if not sample:
             return True
-
-        if self.has_blocking_jobs(own_processor_id):
-            return False
 
         if sample.source_database == "SRA":
             computed_file = sample.get_most_recent_smashable_result_file()

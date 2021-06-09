@@ -23,4 +23,6 @@ module "batch" {
   stage = var.stage
   region = var.region
   default_tags = var.default_tags
+  num_workers = var.num_workers
+  use_on_demand_instances = var.batch_use_on_demand_instances
 }

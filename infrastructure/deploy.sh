@@ -17,7 +17,7 @@ print_description() {
 }
 
 print_options() {
-    echo 'This script accepts the following arguments: -e, -v, -u, -r, and -h.'
+    echo 'This script accepts the following arguments: -e, -d, -i, -v, -u, -r, and -h.'
     echo '-h prints this help message and exits.'
     echo '-e specifies the environment you would like to deploy to and is not optional. Its valid values are:'
     echo '   "-e prod" will deploy the production stack. This should only be used from a CD machine.'
@@ -29,13 +29,14 @@ print_options() {
     echo '   for dev and staging environments and "ccdl" for prod.'
     echo '   This option is useful for testing code changes. Images with the code to be tested can be pushed'
     echo '   to your private Dockerhub repo and then the system will find them.'
+    echo '-i specifies to use On Demand EC2 instances instead of Spot instances.'
     echo '-v specifies the version of the system which is being deployed and is not optional.'
     echo "-u specifies the username of the deployer. Should be the developer's name in development stacks."
     echo '   This option may be omitted, in which case the TF_VAR_user variable MUST be set instead.'
     echo '-r specifies the AWS region to deploy the stack to. Defaults to us-east-1.'
 }
 
-while getopts ":e:d:v:u:r:h" opt; do
+while getopts ":e:d:i:v:u:r:h" opt; do
     case $opt in
     e)
         export env=$OPTARG
@@ -43,6 +44,9 @@ while getopts ":e:d:v:u:r:h" opt; do
         ;;
     d)
         export TF_VAR_dockerhub_repo=$OPTARG
+        ;;
+    i)
+        export TF_VAR_batch_use_on_demand_instances=$OPTARG
         ;;
     v)
         export SYSTEM_VERSION=$OPTARG
@@ -171,12 +175,22 @@ fi
 # Terraform doesn't manage these well, so they need to be tainted if
 # they exist to ensure they won't require manual intervention.
 terraform taint module.batch.aws_launch_template.data_refinery_launch_template || true
-terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
-terraform taint module.batch.aws_batch_compute_environment.data_refinery_spot || true
+if terraform state list | grep -q module.batch.aws_batch_job_queue.data_refinery_; then
+    terraform state list \
+        | grep module.batch.aws_batch_job_queue.data_refinery_ \
+        | xargs -L 1 terraform taint \
+        || true
+fi
+if terraform state list | grep -q module.batch.aws_batch_compute_environment.data_refinery__; then
+    terraform state list \
+        | grep module.batch.aws_batch_compute_environment.data_refinery_ \
+        | xargs -L 1 terraform taint \
+        || true
+fi
 
-if [[ ! -f .terraform/terraform.tfstate ]]; then
+if terraform output | grep -q 'No outputs found'; then
     ran_init_build=true
-    echo "No terraform state file found, applying initial terraform deployment."
+    echo "No existing stack detected, applying initial terraform deployment."
 
     # These files are inputs but are created by format_batch_with_env.sh
     # based on outputs from terraform. Kinda a Catch 22, but we can
@@ -305,7 +319,10 @@ echo "Job registrations have been fired off."
 # Terraform doesn't manage these well, so they need to be tainted to
 # ensure they won't require manual intervention.
 terraform taint module.batch.aws_launch_template.data_refinery_launch_template
-terraform taint module.batch.aws_batch_job_queue.data_refinery_default_queue || true
+terraform state list \
+    | grep module.batch.aws_batch_job_queue.data_refinery_ \
+    | xargs -L 1 terraform taint \
+    || true
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1

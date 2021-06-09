@@ -157,6 +157,7 @@ class ProcessorJobRelationSerializer(serializers.ModelSerializer):
             "worker_id",
             "ram_amount",
             "volume_index",
+            "batch_job_queue",
             "worker_version",
             "failure_reason",
             "batch_job_id",

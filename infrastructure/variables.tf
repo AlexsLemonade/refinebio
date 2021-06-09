@@ -190,8 +190,21 @@ variable "smasher_volume_size_in_gb" {
   default = "500"
 }
 
+variable "num_workers" {
+  default = 5
+}
+
+variable "batch_use_on_demand_instances" {
+  type = bool
+  default = false
+}
+
+variable "max_jobs_per_node" {
+  default = 250
+}
+
 variable "max_downloader_jobs_per_node" {
-  default = 8
+  default = 200
 }
 
 variable "elasticsearch_port" {
@@ -377,6 +390,10 @@ output "environment_variables" {
       value = var.api_docker_image
     },
     {
+      name = "MAX_JOBS_PER_NODE"
+      value = var.max_jobs_per_node
+    },
+    {
       name = "MAX_DOWNLOADER_JOBS_PER_NODE"
       value = var.max_downloader_jobs_per_node
     },
@@ -385,8 +402,20 @@ output "environment_variables" {
       value = var.engagementbot_webhook
     },
     {
-      name = "REFINEBIO_JOB_QUEUE_NAME"
-      value = module.batch.data_refinery_default_queue_name
+      name = "REFINEBIO_JOB_QUEUE_WORKERS_NAMES"
+      value = module.batch.data_refinery_workers_queue_names
+    },
+    {
+      name = "REFINEBIO_JOB_QUEUE_SMASHER_NAME"
+      value = module.batch.data_refinery_smasher_queue_name
+    },
+    {
+      name = "REFINEBIO_JOB_QUEUE_COMPENDIA_NAME"
+      value = module.batch.data_refinery_compendia_queue_name
+    },
+    {
+      name = "REFINEBIO_JOB_QUEUE_ALL_NAMES"
+      value = module.batch.data_refinery_all_queue_names
     },
   ]
 }

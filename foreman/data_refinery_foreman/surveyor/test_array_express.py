@@ -42,7 +42,7 @@ class SurveyTestCase(TestCase):
         return survey_job
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.array_express.survey.yaml")
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey(self, mock_send_task):
         """A Simple test of the ArrayExpress surveyor."""
         survey_job = self.create_job_for_accession("E-MTAB-3050")

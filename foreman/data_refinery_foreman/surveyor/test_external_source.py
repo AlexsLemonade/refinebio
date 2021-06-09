@@ -16,7 +16,7 @@ from data_refinery_foreman.surveyor.sra import SraSurveyor
 
 
 class SraSurveyorTestCase(TestCase):
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_queue_downloader_jobs_for_original_files(self, mock_send_task):
         """Make sure that queue_downloader_jobs queues all expected Downloader
         jobs for a given experiment.

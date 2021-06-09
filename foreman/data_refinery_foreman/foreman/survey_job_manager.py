@@ -3,7 +3,7 @@ from typing import List
 import data_refinery_foreman.foreman.utils as utils
 from data_refinery_common.job_lookup import SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
+from data_refinery_common.message_queue import get_capacity_for_jobs, send_job
 from data_refinery_common.models import SurveyJob
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_foreman.foreman.job_requeuing import requeue_survey_job
@@ -17,7 +17,7 @@ def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> Non
     No more than queue_capacity jobs will be retried.
     """
     if queue_capacity is None:
-        queue_capacity = utils.get_capacity_for_jobs()
+        queue_capacity = get_capacity_for_jobs()
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -29,8 +29,8 @@ def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> Non
             return
 
         if job.num_retries < utils.MAX_NUM_RETRIES:
-            requeue_survey_job(job)
-            jobs_dispatched = jobs_dispatched + 1
+            if requeue_survey_job(job):
+                jobs_dispatched = jobs_dispatched + 1
         else:
             utils.handle_repeated_failure(job)
 
@@ -49,7 +49,7 @@ def retry_failed_survey_jobs() -> None:
         # No failed jobs, nothing to do!
         return
 
-    queue_capacity = utils.get_capacity_for_jobs()
+    queue_capacity = get_capacity_for_jobs()
 
     while queue_capacity > 0:
         logger.info(
@@ -60,7 +60,7 @@ def retry_failed_survey_jobs() -> None:
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
-            queue_capacity = utils.get_capacity_for_jobs()
+            queue_capacity = get_capacity_for_jobs()
         else:
             break
 
@@ -78,7 +78,7 @@ def retry_hung_survey_jobs() -> None:
         # No failed jobs, nothing to do!
         return
 
-    queue_capacity = utils.get_capacity_for_jobs()
+    queue_capacity = get_capacity_for_jobs()
 
     if queue_capacity <= 0:
         logger.info(
@@ -99,7 +99,7 @@ def retry_hung_survey_jobs() -> None:
         if database_page.has_next():
             database_page = paginator.page(database_page.next_page_number())
             database_page_count += 1
-            queue_capacity = utils.get_capacity_for_jobs()
+            queue_capacity = get_capacity_for_jobs()
         else:
             break
 
@@ -117,7 +117,7 @@ def retry_lost_survey_jobs() -> None:
         # No failed jobs, nothing to do!
         return
 
-    queue_capacity = utils.get_capacity_for_jobs()
+    queue_capacity = get_capacity_for_jobs()
 
     if queue_capacity <= 0:
         logger.info(
@@ -138,7 +138,7 @@ def retry_lost_survey_jobs() -> None:
         if database_page.has_next():
             database_page = paginator.page(database_page.next_page_number())
             database_page_count += 1
-            queue_capacity = utils.get_capacity_for_jobs()
+            queue_capacity = get_capacity_for_jobs()
         else:
             break
 
@@ -156,7 +156,7 @@ def retry_unqueued_survey_jobs() -> None:
         # No failed jobs, nothing to do!
         return
 
-    queue_capacity = utils.get_capacity_for_jobs()
+    queue_capacity = get_capacity_for_jobs()
 
     if queue_capacity <= 0:
         logger.info("Not handling unqueued survey jobs " "because there is no capacity for them.")
@@ -172,6 +172,6 @@ def retry_unqueued_survey_jobs() -> None:
         if database_page.has_next():
             database_page = paginator.page(database_page.next_page_number())
             database_page_count += 1
-            queue_capacity = utils.get_capacity_for_jobs()
+            queue_capacity = get_capacity_for_jobs()
         else:
             break

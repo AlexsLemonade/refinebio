@@ -1,6 +1,7 @@
 import datetime
 from unittest.mock import patch
 
+from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
 
@@ -15,12 +16,19 @@ EMPTY_LIST_JOBS_QUEUE_RESPONSE = {"jobSummaryList": []}
 EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE = {"jobs": []}
 
 
+def fake_send_job(job_type, job, is_dispatch=False):
+    job.batch_job_queue = settings.AWS_BATCH_QUEUE_WORKERS_NAMES[0]
+    job.save()
+
+    return True
+
+
 class ProcessorJobManagerTestCase(TestCase):
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     def test_repeated_processor_failures(self, mock_list_jobs, mock_send_job):
         """Jobs will be repeatedly retried."""
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job()
@@ -48,9 +56,9 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertFalse(last_job.success)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     def test_retrying_failed_processor_jobs(self, mock_list_jobs, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
 
         job = create_processor_job()
@@ -70,10 +78,10 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_retrying_hung_processor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
         mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "FAILED"}]}
 
@@ -108,13 +116,13 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertEqual(retried_job2.num_retries, 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_not_retrying_hung_processor_jobs(
         self, mock_describe_jobs, mock_list_jobs, mock_send_job
     ):
         """Tests that we don't restart processor jobs that are still running."""
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
         mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "RUNNING"}]}
 
@@ -135,10 +143,10 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertEqual(jobs.count(), 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_retrying_lost_processor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
         mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
@@ -170,7 +178,7 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertEqual(retried_job2.num_retries, 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_retrying_lost_smasher_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
         """Make sure that the smasher jobs will get retried even though they
@@ -180,7 +188,7 @@ class ProcessorJobManagerTestCase(TestCase):
         need a separate smasher compute environment so this could test
         that once it's done.
         """
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
         mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
@@ -202,13 +210,13 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_not_retrying_old_processor_jobs(
         self, mock_describe_jobs, mock_list_jobs, mock_send_job
     ):
         """Makes sure temporary logic to limit the Foreman's scope works."""
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
         mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 
@@ -222,13 +230,13 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertEqual(1, ProcessorJob.objects.all().count())
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_not_retrying_lost_processor_jobs(
         self, mock_describe_jobs, mock_list_jobs, mock_send_job
     ):
         """Make sure that we don't retry processor jobs we shouldn't."""
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
         mock_describe_jobs.return_value = {"jobs": [{"jobId": "FINDME", "status": "RUNNABLE"}]}
 
@@ -249,10 +257,10 @@ class ProcessorJobManagerTestCase(TestCase):
         self.assertEqual(jobs.count(), 1)
 
     @patch("data_refinery_foreman.foreman.job_requeuing.send_job")
-    @patch("data_refinery_foreman.foreman.utils.batch.list_jobs")
+    @patch("data_refinery_common.message_queue.batch.list_jobs")
     @patch("data_refinery_foreman.foreman.utils.batch.describe_jobs")
     def test_not_retrying_janitor_jobs(self, mock_describe_jobs, mock_list_jobs, mock_send_job):
-        mock_send_job.return_value = True
+        mock_send_job.side_effect = fake_send_job
         mock_list_jobs.return_value = EMPTY_LIST_JOBS_QUEUE_RESPONSE
         mock_describe_jobs.return_value = EMPTY_DESCRIBE_JOBS_QUEUE_RESPONSE
 

@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 
 from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
+from data_refinery_common.message_queue import get_capacity_for_jobs, send_job
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -20,8 +20,6 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
 )
-from data_refinery_common.utils import choose_job_queue
-from data_refinery_foreman.foreman.utils import get_capacity_for_jobs
 
 logger = get_and_configure_logger(__name__)
 
@@ -125,7 +123,7 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
     return prioritized_job_list
 
 
-def requeue_job(job, volume_index):
+def requeue_job(job):
     """Requeues a job regardless of whether it is a DownloaderJob or ProcessorJob.
 
     This function reuses a lot of logic from requeue_downloader_job
@@ -143,7 +141,6 @@ def requeue_job(job, volume_index):
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
             ram_amount=job.ram_amount,
-            volume_index=volume_index,
         )
         new_job.save()
 
@@ -250,10 +247,9 @@ class Command(BaseCommand):
             job_capacity = get_capacity_for_jobs()
 
             if job_capacity > 0:
-                volume_index = choose_job_queue()
                 for i in range(job_capacity):
                     if len(prioritized_job_list) > 0:
-                        requeue_job(prioritized_job_list.pop(0), volume_index)
+                        requeue_job(prioritized_job_list.pop(0))
 
             # Wait 5 minutes in between queuing additional work to
             # give it time to actually get done.
