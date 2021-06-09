@@ -53,8 +53,11 @@ numpy==1.18.5
     # via
     #   geoparse
     #   pandas
+    #   scipy
 pandas==1.0.5
-    # via geoparse
+    # via
+    #   -r requirements.in
+    #   geoparse
 psycopg2-binary==2.8.5
     # via -r requirements.in
 python-dateutil==2.8.1
@@ -78,6 +81,8 @@ requests==2.24.0
     #   geoparse
     #   python-nomad
 retrying==1.3.3
+    # via -r requirements.in
+scipy==1.5.3
     # via -r requirements.in
 six==1.15.0
     # via

@@ -9,16 +9,46 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/data/view/SRR1603661&display=xml
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRR1603661&amp;display=xml\"\
-        >\n<RUN accession=\"SRR1603661\" alias=\"GSM1519616_r1\" center_name=\"GEO\"\
-        \ broker_name=\"NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRR1603661</PRIMARY_ID>\n\
-        \          <SUBMITTER_ID namespace=\"GEO\">GSM1519616_r1</SUBMITTER_ID>\n\
-        \     </IDENTIFIERS>\n     <TITLE>Illumina HiSeq 2000 paired end sequencing;\
+      string: ''
+    headers:
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 09 Jun 2021 12:44:31 GMT
+      Location:
+      - https://www.ebi.ac.uk/ena/browser/api/xml/SRR1603661?display=xml
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.24.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/browser/api/xml/SRR1603661?display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<RUN_SET>\n<RUN accession=\"\
+        SRR1603661\" alias=\"GSM1519616_r1\" center_name=\"GEO\" broker_name=\"NCBI\"\
+        >\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRR1603661</PRIMARY_ID>\n   \
+        \       <SUBMITTER_ID namespace=\"GEO\">GSM1519616_r1</SUBMITTER_ID>\n   \
+        \  </IDENTIFIERS>\n     <TITLE>Illumina HiSeq 2000 paired end sequencing;\
         \ GSM1519616: RNA-seq of the corpus callosum #5308; Homo sapiens; RNA-Seq</TITLE>\n\
         \     <EXPERIMENT_REF accession=\"SRX725593\" refname=\"GSM1519616\">\n  \
         \        <IDENTIFIERS>\n               <PRIMARY_ID>SRX725593</PRIMARY_ID>\n\
@@ -44,10 +74,10 @@ interactions:
         \                  <DB>ARRAYEXPRESS</DB>\n                    <ID>E-GEOD-62098</ID>\n\
         \               </XREF_LINK>\n          </RUN_LINK>\n          <RUN_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n\
-        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRR1603661&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRR1603661&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
         \               </XREF_LINK>\n          </RUN_LINK>\n          <RUN_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
-        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRR1603661&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRR1603661&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
         \               </XREF_LINK>\n          </RUN_LINK>\n     </RUN_LINKS>\n \
         \    <RUN_ATTRIBUTES>\n          <RUN_ATTRIBUTE>\n               <TAG>assembly</TAG>\n\
         \               <VALUE>GRCh37</VALUE>\n          </RUN_ATTRIBUTE>\n      \
@@ -58,31 +88,19 @@ interactions:
         \               <VALUE>2015-03-23</VALUE>\n          </RUN_ATTRIBUTE>\n  \
         \        <RUN_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n    \
         \           <VALUE>2019-11-21</VALUE>\n          </RUN_ATTRIBUTE>\n     </RUN_ATTRIBUTES>\n\
-        </RUN>\n</ROOT>"
+        </RUN>\n</RUN_SET>\n"
     headers:
-      Access-Control-Allow-Headers:
-      - Origin, X-Requested-With, Content-Type, Accept
-      Access-Control-Allow-Methods:
-      - GET
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - private, no-store, no-cache, must-revalidate
       Content-Type:
-      - text/plain;charset=UTF-8
+      - application/xml
       Date:
-      - Tue, 18 Feb 2020 19:42:25 GMT
-      Server:
-      - Apache-Coyote/1.1
-      Set-Cookie:
-      - JSESSIONID=7719E01583115579CA65BB836A1EEFBB; Path=/ena/data/; HttpOnly
+      - Wed, 09 Jun 2021 12:44:32 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
       - chunked
     status:
       code: 200
-      message: OK
+      message: ''
 - request:
     body: null
     headers:
@@ -93,20 +111,49 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/data/view/SRX725593&display=xml
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRX725593&amp;display=xml\"\
-        >\n<EXPERIMENT accession=\"SRX725593\" alias=\"GSM1519616\" center_name=\"\
-        GEO\" broker_name=\"NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRX725593</PRIMARY_ID>\n\
-        \          <SUBMITTER_ID namespace=\"GEO\">GSM1519616</SUBMITTER_ID>\n   \
-        \  </IDENTIFIERS>\n     <TITLE>Illumina HiSeq 2000 paired end sequencing;\
-        \ GSM1519616: RNA-seq of the corpus callosum #5308; Homo sapiens; RNA-Seq</TITLE>\n\
-        \     <STUDY_REF accession=\"SRP048683\" refname=\"GSE62098\">\n         \
-        \ <IDENTIFIERS>\n               <PRIMARY_ID>SRP048683</PRIMARY_ID>\n     \
-        \     </IDENTIFIERS>\n     </STUDY_REF>\n     <DESIGN>\n          <DESIGN_DESCRIPTION/>\n\
+      string: ''
+    headers:
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 09 Jun 2021 12:44:32 GMT
+      Location:
+      - https://www.ebi.ac.uk/ena/browser/api/xml/SRX725593?display=xml
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.24.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/browser/api/xml/SRX725593?display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<EXPERIMENT_SET>\n<EXPERIMENT\
+        \ accession=\"SRX725593\" alias=\"GSM1519616\" center_name=\"GEO\">\n    \
+        \ <IDENTIFIERS>\n          <PRIMARY_ID>SRX725593</PRIMARY_ID>\n          <SUBMITTER_ID\
+        \ namespace=\"GEO\">GSM1519616</SUBMITTER_ID>\n     </IDENTIFIERS>\n     <TITLE>Illumina\
+        \ HiSeq 2000 paired end sequencing; GSM1519616: RNA-seq of the corpus callosum\
+        \ #5308; Homo sapiens; RNA-Seq</TITLE>\n     <STUDY_REF accession=\"SRP048683\"\
+        \ refname=\"GSE62098\">\n          <IDENTIFIERS>\n               <PRIMARY_ID>SRP048683</PRIMARY_ID>\n\
+        \          </IDENTIFIERS>\n     </STUDY_REF>\n     <DESIGN>\n          <DESIGN_DESCRIPTION/>\n\
         \          <SAMPLE_DESCRIPTOR accession=\"SRS716925\">\n               <IDENTIFIERS>\n\
         \                    <PRIMARY_ID>SRS716925</PRIMARY_ID>\n                \
         \    <EXTERNAL_ID namespace=\"GEO\">GSM1519616</EXTERNAL_ID>\n           \
@@ -141,10 +188,10 @@ interactions:
         \                    <DB>ENA-SUBMISSION</DB>\n                    <ID>SRA188845</ID>\n\
         \               </XREF_LINK>\n          </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n\
-        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRX725593&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRX725593&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
         \               </XREF_LINK>\n          </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
-        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRX725593&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRX725593&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
         \               </XREF_LINK>\n          </EXPERIMENT_LINK>\n     </EXPERIMENT_LINKS>\n\
         \     <EXPERIMENT_ATTRIBUTES>\n          <EXPERIMENT_ATTRIBUTE>\n        \
         \       <TAG>GEO Accession</TAG>\n               <VALUE>GSM1519616</VALUE>\n\
@@ -153,31 +200,19 @@ interactions:
         \          </EXPERIMENT_ATTRIBUTE>\n          <EXPERIMENT_ATTRIBUTE>\n   \
         \            <TAG>ENA-BASE-COUNT</TAG>\n               <VALUE>28185753687</VALUE>\n\
         \          </EXPERIMENT_ATTRIBUTE>\n     </EXPERIMENT_ATTRIBUTES>\n</EXPERIMENT>\n\
-        </ROOT>"
+        </EXPERIMENT_SET>\n"
     headers:
-      Access-Control-Allow-Headers:
-      - Origin, X-Requested-With, Content-Type, Accept
-      Access-Control-Allow-Methods:
-      - GET
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - private, no-store, no-cache, must-revalidate
       Content-Type:
-      - text/plain;charset=UTF-8
+      - application/xml
       Date:
-      - Tue, 18 Feb 2020 19:42:25 GMT
-      Server:
-      - Apache-Coyote/1.1
-      Set-Cookie:
-      - JSESSIONID=C23C0C27ABF514008F4C820E63E7D31F; Path=/ena/data/; HttpOnly
+      - Wed, 09 Jun 2021 12:44:33 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
       - chunked
     status:
       code: 200
-      message: OK
+      message: ''
 - request:
     body: null
     headers:
@@ -188,16 +223,46 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/data/view/SRS716925&display=xml
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRS716925&amp;display=xml\"\
-        >\n<SAMPLE accession=\"SRS716925\" alias=\"GSM1519616\" center_name=\"GEO\"\
-        \ broker_name=\"NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRS716925</PRIMARY_ID>\n\
-        \          <EXTERNAL_ID namespace=\"BioSample\">SAMN03097499</EXTERNAL_ID>\n\
-        \          <EXTERNAL_ID namespace=\"GEO\">GSM1519616</EXTERNAL_ID>\n     </IDENTIFIERS>\n\
+      string: ''
+    headers:
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 09 Jun 2021 12:44:33 GMT
+      Location:
+      - https://www.ebi.ac.uk/ena/browser/api/xml/SRS716925?display=xml
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.24.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/browser/api/xml/SRS716925?display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<SAMPLE_SET>\n<SAMPLE accession=\"\
+        SRS716925\" alias=\"GSM1519616\" center_name=\"GEO\" broker_name=\"NCBI\"\
+        >\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRS716925</PRIMARY_ID>\n    \
+        \      <EXTERNAL_ID namespace=\"BioSample\">SAMN03097499</EXTERNAL_ID>\n \
+        \         <EXTERNAL_ID namespace=\"GEO\">GSM1519616</EXTERNAL_ID>\n     </IDENTIFIERS>\n\
         \     <TITLE>RNA-seq of the corpus callosum #5308</TITLE>\n     <SAMPLE_NAME>\n\
         \          <TAXON_ID>9606</TAXON_ID>\n          <SCIENTIFIC_NAME>Homo sapiens</SCIENTIFIC_NAME>\n\
         \     </SAMPLE_NAME>\n     <SAMPLE_LINKS>\n          <SAMPLE_LINK>\n     \
@@ -214,10 +279,10 @@ interactions:
         \               <XREF_LINK>\n                    <DB>ARRAYEXPRESS</DB>\n \
         \                   <ID>E-GEOD-62098</ID>\n               </XREF_LINK>\n \
         \         </SAMPLE_LINK>\n          <SAMPLE_LINK>\n               <XREF_LINK>\n\
-        \                    <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRS716925&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \                    <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS716925&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
         \               </XREF_LINK>\n          </SAMPLE_LINK>\n          <SAMPLE_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
-        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRS716925&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS716925&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
         \               </XREF_LINK>\n          </SAMPLE_LINK>\n     </SAMPLE_LINKS>\n\
         \     <SAMPLE_ATTRIBUTES>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>source_name</TAG>\n\
         \               <VALUE>human brain</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
@@ -233,31 +298,19 @@ interactions:
         \               <VALUE>2015-03-23</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
         \          <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n\
         \               <VALUE>2015-06-23</VALUE>\n          </SAMPLE_ATTRIBUTE>\n\
-        \     </SAMPLE_ATTRIBUTES>\n</SAMPLE>\n</ROOT>"
+        \     </SAMPLE_ATTRIBUTES>\n</SAMPLE>\n</SAMPLE_SET>\n"
     headers:
-      Access-Control-Allow-Headers:
-      - Origin, X-Requested-With, Content-Type, Accept
-      Access-Control-Allow-Methods:
-      - GET
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - private, no-store, no-cache, must-revalidate
       Content-Type:
-      - text/plain;charset=UTF-8
+      - application/xml
       Date:
-      - Tue, 18 Feb 2020 19:42:26 GMT
-      Server:
-      - Apache-Coyote/1.1
-      Set-Cookie:
-      - JSESSIONID=54F6E432676766A74917B58B69AEC727; Path=/ena/data/; HttpOnly
+      - Wed, 09 Jun 2021 12:44:34 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
       - chunked
     status:
       code: 200
-      message: OK
+      message: ''
 - request:
     body: null
     headers:
@@ -268,44 +321,74 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/data/view/SRP048683&display=xml
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRP048683&amp;display=xml\"\
-        >\n<STUDY accession=\"SRP048683\" alias=\"GSE62098\" center_name=\"GEO\" broker_name=\"\
-        NCBI\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRP048683</PRIMARY_ID>\n\
-        \          <SECONDARY_ID>PRJNA263196</SECONDARY_ID>\n          <EXTERNAL_ID\
-        \ label=\"primary\" namespace=\"BioProject\">PRJNA263196</EXTERNAL_ID>\n \
-        \         <EXTERNAL_ID namespace=\"GEO\">GSE62098</EXTERNAL_ID>\n     </IDENTIFIERS>\n\
-        \     <DESCRIPTOR>\n          <STUDY_TITLE>RNA-Seq of the corpus callosum\
-        \ from 12 individuals</STUDY_TITLE>\n          <STUDY_TYPE existing_study_type=\"\
-        Transcriptome Analysis\"/>\n          <STUDY_ABSTRACT>We performed RNA-Seq\
-        \ for the corpus callosum sampled from 12 individuals. The samples were dissected\
-        \ from the frozen postmortem brain. The 12 individuals were matched by their\
-        \ age, sex and ethnicity for the postmortem brain samples, but differed in\
-        \ their disease status with half of the subjects were diagnosed with autism\
-        \ spectrum disorders. Overall design: RNA-Seq for the corpus callosum sampled\
-        \ from 12 individuals.</STUDY_ABSTRACT>\n          <CENTER_PROJECT_NAME>Homo\
-        \ sapiens</CENTER_PROJECT_NAME>\n     </DESCRIPTOR>\n     <STUDY_LINKS>\n\
-        \          <STUDY_LINK>\n               <XREF_LINK>\n                    <DB>pubmed</DB>\n\
-        \                    <ID>25549968</ID>\n               </XREF_LINK>\n    \
-        \      </STUDY_LINK>\n          <STUDY_LINK>\n               <XREF_LINK>\n\
-        \                    <DB>ENA-SAMPLE</DB>\n                    <ID>SRS716925-SRS716936</ID>\n\
+      string: ''
+    headers:
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 09 Jun 2021 12:44:34 GMT
+      Location:
+      - https://www.ebi.ac.uk/ena/browser/api/xml/SRP048683?display=xml
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.24.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/browser/api/xml/SRP048683?display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<STUDY_SET>\n<STUDY accession=\"\
+        SRP048683\" alias=\"GSE62098\" center_name=\"GEO\" broker_name=\"NCBI\">\n\
+        \     <IDENTIFIERS>\n          <PRIMARY_ID>SRP048683</PRIMARY_ID>\n      \
+        \    <SECONDARY_ID>PRJNA263196</SECONDARY_ID>\n          <EXTERNAL_ID label=\"\
+        primary\" namespace=\"BioProject\">PRJNA263196</EXTERNAL_ID>\n          <EXTERNAL_ID\
+        \ namespace=\"GEO\">GSE62098</EXTERNAL_ID>\n     </IDENTIFIERS>\n     <DESCRIPTOR>\n\
+        \          <STUDY_TITLE>RNA-Seq of the corpus callosum from 12 individuals</STUDY_TITLE>\n\
+        \          <STUDY_TYPE existing_study_type=\"Transcriptome Analysis\"/>\n\
+        \          <STUDY_ABSTRACT>We performed RNA-Seq for the corpus callosum sampled\
+        \ from 12 individuals. The samples were dissected from the frozen postmortem\
+        \ brain. The 12 individuals were matched by their age, sex and ethnicity for\
+        \ the postmortem brain samples, but differed in their disease status with\
+        \ half of the subjects were diagnosed with autism spectrum disorders. Overall\
+        \ design: RNA-Seq for the corpus callosum sampled from 12 individuals.</STUDY_ABSTRACT>\n\
+        \          <CENTER_PROJECT_NAME>Homo sapiens</CENTER_PROJECT_NAME>\n     </DESCRIPTOR>\n\
+        \     <STUDY_LINKS>\n          <STUDY_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>pubmed</DB>\n                    <ID>25549968</ID>\n\
         \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
-        \               <XREF_LINK>\n                    <DB>ENA-EXPERIMENT</DB>\n\
-        \                    <ID>SRX725593-SRX725604</ID>\n               </XREF_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n   \
+        \                 <ID>SRS716925-SRS716936</ID>\n               </XREF_LINK>\n\
         \          </STUDY_LINK>\n          <STUDY_LINK>\n               <XREF_LINK>\n\
-        \                    <DB>ENA-RUN</DB>\n                    <ID>SRR1603661-SRR1603672</ID>\n\
+        \                    <DB>ENA-EXPERIMENT</DB>\n                    <ID>SRX725593-SRX725604</ID>\n\
         \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
-        \               <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n\
-        \                    <ID>SRA188845</ID>\n               </XREF_LINK>\n   \
-        \       </STUDY_LINK>\n          <STUDY_LINK>\n               <XREF_LINK>\n\
-        \                    <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRP048683&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-RUN</DB>\n      \
+        \              <ID>SRR1603661-SRR1603672</ID>\n               </XREF_LINK>\n\
+        \          </STUDY_LINK>\n          <STUDY_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-SUBMISSION</DB>\n                    <ID>SRA188845</ID>\n\
+        \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP048683&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
         \               </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
-        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRP048683&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP048683&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
         \               </XREF_LINK>\n          </STUDY_LINK>\n     </STUDY_LINKS>\n\
         \     <STUDY_ATTRIBUTES>\n          <STUDY_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n\
         \               <VALUE>1970386940</VALUE>\n          </STUDY_ATTRIBUTE>\n\
@@ -315,31 +398,19 @@ interactions:
         \               <VALUE>2015-03-20</VALUE>\n          </STUDY_ATTRIBUTE>\n\
         \          <STUDY_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n\
         \               <VALUE>2017-07-19</VALUE>\n          </STUDY_ATTRIBUTE>\n\
-        \     </STUDY_ATTRIBUTES>\n</STUDY>\n</ROOT>"
+        \     </STUDY_ATTRIBUTES>\n</STUDY>\n</STUDY_SET>\n"
     headers:
-      Access-Control-Allow-Headers:
-      - Origin, X-Requested-With, Content-Type, Accept
-      Access-Control-Allow-Methods:
-      - GET
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - private, no-store, no-cache, must-revalidate
       Content-Type:
-      - text/plain;charset=UTF-8
+      - application/xml
       Date:
-      - Tue, 18 Feb 2020 19:42:27 GMT
-      Server:
-      - Apache-Coyote/1.1
-      Set-Cookie:
-      - JSESSIONID=3B44AEE866BB85D660407D18C011AA66; Path=/ena/data/; HttpOnly
+      - Wed, 09 Jun 2021 12:44:34 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
       - chunked
     status:
       code: 200
-      message: OK
+      message: ''
 - request:
     body: null
     headers:
@@ -350,33 +421,63 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/data/view/SRA188845&display=xml
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ROOT request=\"SRA188845&amp;display=xml\"\
-        >\n<SUBMISSION accession=\"SRA188845\" alias=\"GEO: GSE62098\" broker_name=\"\
-        GEO\" center_name=\"GEO\" lab_name=\"\" submission_comment=\"submission brokered\
-        \ by GEO\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>SRA188845</PRIMARY_ID>\n\
-        \          <SUBMITTER_ID namespace=\"GEO\">GEO: GSE62098</SUBMITTER_ID>\n\
-        \     </IDENTIFIERS>\n     <TITLE>Submitted by Gene Expression Omnibus on\
-        \ 20-MAR-2015</TITLE>\n     <SUBMISSION_LINKS>\n          <SUBMISSION_LINK>\n\
-        \               <XREF_LINK>\n                    <DB>ENA-STUDY</DB>\n    \
-        \                <ID>SRP048683</ID>\n               </XREF_LINK>\n       \
-        \   </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n               <XREF_LINK>\n\
-        \                    <DB>ENA-SAMPLE</DB>\n                    <ID>SRS716925-SRS716936</ID>\n\
-        \               </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
-        \               <XREF_LINK>\n                    <DB>ENA-EXPERIMENT</DB>\n\
-        \                    <ID>SRX725593-SRX725604</ID>\n               </XREF_LINK>\n\
-        \          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n             \
-        \  <XREF_LINK>\n                    <DB>ENA-RUN</DB>\n                   \
-        \ <ID>SRR1603661-SRR1603672</ID>\n               </XREF_LINK>\n          </SUBMISSION_LINK>\n\
+      string: ''
+    headers:
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 09 Jun 2021 12:44:35 GMT
+      Location:
+      - https://www.ebi.ac.uk/ena/browser/api/xml/SRA188845?display=xml
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+    status:
+      code: 301
+      message: Moved Permanently
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.24.0
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/browser/api/xml/SRA188845?display=xml
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<SUBMISSION_SET>\n<SUBMISSION\
+        \ accession=\"SRA188845\" alias=\"GEO: GSE62098\" broker_name=\"NCBI\" center_name=\"\
+        GEO\" lab_name=\"\" submission_comment=\"submission brokered by GEO\">\n \
+        \    <IDENTIFIERS>\n          <PRIMARY_ID>SRA188845</PRIMARY_ID>\n       \
+        \   <SUBMITTER_ID namespace=\"GEO\">GEO: GSE62098</SUBMITTER_ID>\n     </IDENTIFIERS>\n\
+        \     <TITLE>Submitted by GEO on 20-MAR-2015</TITLE>\n     <SUBMISSION_LINKS>\n\
         \          <SUBMISSION_LINK>\n               <XREF_LINK>\n               \
-        \     <DB>ENA-FASTQ-FILES</DB>\n                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRA188845&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
+        \     <DB>ENA-STUDY</DB>\n                    <ID>SRP048683</ID>\n       \
+        \        </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n   \
+        \                 <ID>SRS716925-SRS716936</ID>\n               </XREF_LINK>\n\
+        \          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n             \
+        \  <XREF_LINK>\n                    <DB>ENA-EXPERIMENT</DB>\n            \
+        \        <ID>SRX725593-SRX725604</ID>\n               </XREF_LINK>\n     \
+        \     </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n               <XREF_LINK>\n\
+        \                    <DB>ENA-RUN</DB>\n                    <ID>SRR1603661-SRR1603672</ID>\n\
+        \               </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
+        \               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRA188845&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n\
         \               </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n\
-        \                    <ID><![CDATA[http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=SRA188845&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
+        \                    <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRA188845&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n\
         \               </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n\
         \               <XREF_LINK>\n                    <DB>ARRAYEXPRESS</DB>\n \
         \                   <ID>E-GEOD-62098</ID>\n               </XREF_LINK>\n \
@@ -385,31 +486,19 @@ interactions:
         \               <VALUE>1970386940</VALUE>\n          </SUBMISSION_ATTRIBUTE>\n\
         \          <SUBMISSION_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n\
         \               <VALUE>344049637386</VALUE>\n          </SUBMISSION_ATTRIBUTE>\n\
-        \     </SUBMISSION_ATTRIBUTES>\n</SUBMISSION>\n</ROOT>"
+        \     </SUBMISSION_ATTRIBUTES>\n</SUBMISSION>\n</SUBMISSION_SET>\n"
     headers:
-      Access-Control-Allow-Headers:
-      - Origin, X-Requested-With, Content-Type, Accept
-      Access-Control-Allow-Methods:
-      - GET
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - private, no-store, no-cache, must-revalidate
       Content-Type:
-      - text/plain;charset=UTF-8
+      - application/xml
       Date:
-      - Tue, 18 Feb 2020 19:42:28 GMT
-      Server:
-      - Apache-Coyote/1.1
-      Set-Cookie:
-      - JSESSIONID=33EF985BE2AB76AE85DC04F2107ACC8C; Path=/ena/data/; HttpOnly
+      - Wed, 09 Jun 2021 12:44:35 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
       - chunked
     status:
       code: 200
-      message: OK
+      message: ''
 - request:
     body: acc=SRR1603661&accept-proto=fasp&version=2.0
     headers:
@@ -422,16 +511,16 @@ interactions:
       Content-Length:
       - '44'
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: POST
     uri: https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA53OPW4CMRBA4T6nsJSCCjQztseevUQkoKLzX7SJVni164CQfHiWtOnSvuZ973SA
+        H4sIAAAAAAAAA5zOPW4CMRBA4T6nsJSCCjQztseevUQkoKLzX7SJVni164CQfHiWtOnSvuZ973SA
         t3UJ80/sp+MRGTQzdiRgzYJaXCdAs0fYA59JD2AGlEv3kiGzIbEB2LroEbyQ9sgxOGdT790A9I/r
         9FC7sbV53al5qa2mOqmvVYVpqveS1WddVBu3UON3Se0v5XDLMYU0ls2ktx8Q/pLci0T6DDIYGIy5
-        dJJkMZBx2z+yzt4iFh9LBm+oFPkv6QlM6dz2IwEAAA==
+        dJJkMZBx2z+yzt4iFh9LBm+oFPkv6QkAAP//AwBM6dz2IwEAAA==
     headers:
       Cache-Control:
       - private
@@ -439,31 +528,31 @@ interactions:
       - Keep-Alive
       Content-Encoding:
       - gzip
-      Content-Length:
-      - '202'
       Content-Security-Policy:
       - upgrade-insecure-requests
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 19:42:28 GMT
+      - Wed, 09 Jun 2021 12:44:36 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC953CAEE4C3E2410000000000000001.m_1
+      - C7A40F7C0C0B7B410000000000000001.m_1
       NCBI-SID:
-      - CC953CAEE4C3E241_0000SID
+      - C7A40F7C0C0B7B41_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC953CAEE4C3E241_0000SID; domain=.nih.gov; path=/; expires=Thu, 18
-        Feb 2021 19:42:28 GMT
+      - ncbi_sid=C7A40F7C0C0B7B41_0000SID; domain=.nih.gov; path=/; expires=Thu, 09
+        Jun 2022 12:44:36 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
       Vary:
       - Accept-Encoding
       X-UA-Compatible:
@@ -483,34 +572,33 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=25549968&retmode=json&tool=refinebio&email=hello@refine.bio
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAJyRywrCMBBF935FyLpI7UPUneJK7KpLcRHbQANpU/IQSum/205p7ANRnF3uPXNn
-        ktQr1BbOKEmpxAdUwxk0XZW0VTBVJs+JrLDz9p5UKiaKznbXPgaj6X0s2waup1mGpapVblYB1QvD
-        YL/f7rCV76MZ1h0nDWndZAs4U7s0j5Ro2N1zNwE60wT57pyiv2FKGJkAFAmO4kppdGKCzzFidCbk
-        8o5d1QsFWgqSQ+6VocssbhI7/MMRRnwiE26UprJ/GbxgmmXbl7XijKHor71eAAAA///Ml1tv2jAU
-        gP+KxTvg3BqgT1WHtk5jqlTtBWkPJjkFq7bT+cLGfv1OCLRAEgIqTIn8EPl2Pp+rfV2uCSPTFmJN
-        FywjTy0EGzvzwnWyAEU+txBvyhFPtTICfugZU+SuhWRfmBCSrUC3Um9PaoXF5H8kj72enwcpWTBj
-        i7R8BKpjuRVrkgdlYa6xIKTEYJYHaQhTTKwMN0TDEpjADiIzAYkTTBMF9nemX4hTuK9YcTUnKI0b
-        ScwrJFY7SVJuMo2jpleuKtq+SeZXlHwoeJkJV1jJK5U6boxbD5UKKptDXto6cRwejgmm5pVVrwM4
-        cNRASkin+C8HhX096vlBFAyGFVyqCgs2/V4cht3QH/oVF4GNn1XgfcXCjlomd9ryBA1xFFVDgvpE
-        f7JurYhHN5ugubqEow3+4N9zhr41/vTt4fu4guJ9YVC6OBTiq+5H+VcTajzdBhDuLiGtC6BiXq4l
-        r2bGkonC6OXL2PY7PQPsYMmkmWnQxPQ4uQ8DSsNhdBmqNOPNVEETlUd7XuRHfl+aWS+/OkbhIL4M
-        YJ7qPq62y5oSWsiE7nUKVdREhft0eToi7452e26ZWXBjM3wdnRG9exkBlNXwt+4sOy+UqE89bITe
-        jCj9iBr3xB/PH1cXj7IFV3CC/Js+xebXym/I38+gQSVwVpbFVTXPvx7J4/7Wo6M4Pnx/7i7f+ut9
-        JiUaGstF3eRXua6CmzAZ1sxSWaGPc8/PrNV85mzp/P8AAAD//5RYSxKDIAzdewqnF9B+LtBdrwFU
-        Ky0Sh0JnuvDuDSq0A9GZrvNE3oMkjyzxC3uWZzwWw4Td7oSYMchLgNP+iX9K2squdUrd584aH2zR
-        uAR3w1FBuL2zfq5AMCtBz34AizW2LbLWJh9eQQShhbTTEpnhMkKA9iIozNdMhJQlB3hEf5auhXdW
-        up50JFdpl7EI4QLwzx0atoXkJihoR9AIKZGGTDOgqdSu59MgJ4uzF5OKcdW0BnpnFIUJe0NcQwJQ
-        6X9kRPjadr3CayxFxwZLs/DGORncVPtDdazLuvZ1gYC30vw+BIhxix9naTbd0e+hR8ScWWMxFsUH
-        AAD//wMAXcA8Cy4TAAA=
+        H4sIAAAAAAAAAJSQT0sDMRDFv8ow56Ws/SN2bxWlIu5p8VLxMN0dSDCblEkiLIvf3aSWigcPuQ3v
+        vR9vZmZUTAMLNjOG6cTYIPs4jiQTVvjJ4rWzSawXK/yqUJJpQg5HPXhs3nC52ay329s7fK9+5x8/
+        YVelwlM8DhRywbK+WcMD97Cqk87/Gd5F6bPcOgPd5APca2eSQTEoJ7l9RktjjrxoeL44lyt251DS
+        ehN9YDmvk064Ip3S0BYyLcGhEDkoctAVQo/Rf2jpFVvYl/bphNrib7zKkSzsCqknMmakieVv3zcA
+        AAD//7RVS2/TQBC+8ytWuTexHbtp0lNVeiiiqHfEwV5v0qX7KPsoFNT/zje7dpxADuWAZCnxeJ7f
+        fDPzFvTNC1j3xgaAWqr1Iff92DjIoMjy1gSxc6BRzzyoIrRnrWnVi5eeOfEsWgUB01YJHlXrmBHh
+        u3WPLBp4Ui/S7BjcS6+ZfxI8uKhZL711+OrniYwujLHkf4xFQ2dVTBiVNAXS+0gvNEHtToD1s9Wq
+        nhEiZkcDKPADgIzS0chvUSTMyqKsls3yYp09mOxA5H/lqq7P6mpd5anM2H+efcC8oQx25YLkKPQL
+        jTtHWkA+RAp8H7s7FH3GJCr5gX9biy7cvP94++km+9qrLqmx2VFeFL9msh+6DD0tesosSZBSiapb
+        lercbwwiy2Si+aH+xaR/f3ddL4uiXjfHFr2VhxbLyaIs5mVTNdVC+25OK6epL1bHxkS80+FOpyf+
+        UR/lHFs0kwW+ncl+w6bCLtMEPEgfLLYyQXmItDDBiZ9wNi3RZlGUeFhxvimKFPnQYA//Ww2graQR
+        RxbniwJPNVokrmyFE4aL3G28nl7gc0aYX5bFZrWiuwDFAZVrqzWqAbuITJqIPMC3Br9tCp1CtSE4
+        2cWQQmEJeXaFbF3LA5EWAMInt9HgUDVo/DYq9TWTe9zj+9kcB7hDZnZHN08oy9uAq5cGCTTasNOM
+        ARyWD6lzGZINbQrHuTWUoELHkCBS6qx9HLcHVACojHqYyV6GfGLzBMHoAVtiyOEP8ZB+jjI0I0H4
+        hPVkou7okJOkfW6lajslts7q6FSWjl7xRQwilPBXtpBNvin1KSx/aJ/CGIR24vHxXpTVYlmwoiBS
+        ZIWtdAebe7jTz1RKasAeldfX13e/AQAA//8DANw4jtyNCAAA
     headers:
       Access-Control-Allow-Origin:
       - '*'
+      Access-Control-Expose-Headers:
+      - X-RateLimit-Limit,X-RateLimit-Remaining
       Cache-Control:
       - private
       Connection:
@@ -520,18 +608,18 @@ interactions:
       Content-Type:
       - application/json; charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 19:42:28 GMT
+      - Wed, 09 Jun 2021 12:44:36 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - D0BD79652B528725000047015DFDDB4B.1.1.m_1
+      - 322C46D9B283B5F50000538962EDE972.1.1.m_1
       NCBI-SID:
-      - 9BDBF5574DC83E13_2215SID
+      - 92947961901E19DE_B6E5SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=9BDBF5574DC83E13_2215SID; domain=.nih.gov; path=/; expires=Thu, 18
-        Feb 2021 19:42:28 GMT
+      - ncbi_sid=92947961901E19DE_B6E5SID; domain=.nih.gov; path=/; expires=Thu, 09
+        Jun 2022 12:44:36 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:

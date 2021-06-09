@@ -11,6 +11,8 @@ from unittest.mock import patch
 from django.test import TransactionTestCase, tag
 from django.utils import timezone
 
+import pandas as pd
+import scipy.stats
 import vcr
 
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -586,7 +588,7 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
     )
     @patch("data_refinery_foreman.surveyor.surveyor.TranscriptomeIndexSurveyor")
     def test_transcriptome_redownloading(self, mock_surveyor):
-        """Survey, download, then process a transcriptome index. """
+        """Survey, download, then process a transcriptome index."""
 
         mock_surveyor.side_effect = build_surveyor_init_mock("TRANSCRIPTOME_INDEX")
 
@@ -715,6 +717,88 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
 
             self.assertTrue(has_long)
             self.assertTrue(has_short)
+
+            pj = ProcessorJob()
+            pj.pipeline_applied = "SALMON"
+            pj.ram_amount = 4096
+            pj.save()
+
+            c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
+
+            samp = Sample()
+            samp.accession_code = "SALMON"  # So the test files go to the right place
+            samp.organism = c_elegans
+            samp.source_database = "SRA"
+            samp.technology = "RNA-SEQ"
+            samp.save()
+
+            og_file = OriginalFile()
+            filename = "ERR1562482.sra"
+            og_file.source_filename = filename
+            og_file.filename = filename
+            og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
+            og_file.is_downloaded = True
+            og_file.save()
+
+            og_file_samp_assoc = OriginalFileSampleAssociation()
+            og_file_samp_assoc.original_file = og_file
+            og_file_samp_assoc.sample = samp
+            og_file_samp_assoc.save()
+
+            assoc1 = ProcessorJobOriginalFileAssociation()
+            assoc1.original_file = og_file
+            assoc1.processor_job = pj
+            assoc1.save()
+
+            send_job(
+                ProcessorPipeline[pj.pipeline_applied], job=pj, is_dispatch=True,
+            )
+            try:
+                wait_for_job(pj, ProcessorJob, timezone.now())
+            except Exception:
+                pass
+
+            if not pj.success:
+                raise AssertionError(f"Processor job failed with reason {pj.failure_reason}")
+
+            # Make sure that the output file agrees with our reference file
+
+            output_filename = ComputedFile.objects.filter(filename="quant.sf")[0].absolute_file_path
+
+            ref_filename = "/home/user/data_store/reference/ERR1562482_quant.sf"
+
+            def squish_duplicates(data: pd.DataFrame) -> pd.DataFrame:
+                return data.groupby(data.index, sort=False).mean()
+
+            ref = pd.read_csv(ref_filename, delimiter="\t", index_col=0)
+            ref_TPM = squish_duplicates(pd.DataFrame({"reference": ref["TPM"]}))
+            ref_NumReads = squish_duplicates(pd.DataFrame({"reference": ref["NumReads"]}))
+
+            out = pd.read_csv(output_filename, delimiter="\t", index_col=0)
+            out_TPM = squish_duplicates(pd.DataFrame({"actual": out["TPM"]}))
+            out_NumReads = squish_duplicates(pd.DataFrame({"actual": out["NumReads"]}))
+
+            # Make sure that there is a lot of gene overlap between the
+            # reference and the output files. If this fails, it might not be the
+            # end of the world but it is a good thing to know about.
+            print(
+                f"""expected - actual:
+{chr(10).join(set(ref_TPM.index) - set(out_TPM.index))}
+actual - expected:
+{chr(10).join(set(out_TPM.index) - set(ref_TPM.index))}"""
+            )
+
+            # XXX: right now this check is failing and I am not sure why. We
+            # might have to normalize the genes first, before joining?
+            self.assertGreater(
+                len(set(ref_TPM.index) & set(out_TPM.index)),
+                0.95 * min(len(ref_TPM), len(out_TPM)),
+            )
+
+            (tpm_rho, _) = scipy.stats.spearmanr(ref_TPM.join(out_TPM, how="inner"))
+            self.assertGreater(tpm_rho, 0.99)
+            (num_reads_rho, _) = scipy.stats.spearmanr(ref_NumReads.join(out_NumReads, how="inner"))
+            self.assertGreater(num_reads_rho, 0.99)
 
 
 class SraRedownloadingTestCase(EndToEndTestCase):
@@ -881,7 +965,7 @@ class EnaFallbackTestCase(EndToEndTestCase):
             self.assertIsNotNone(downloader_job.start_time)
 
             for original_file in downloader_job.original_files.all():
-                self.assertTrue(".fastq.gz" in original_file.source_url)
+                self.assertIn(".fastq.gz", original_file.source_url)
 
             # The downloader job will take a while to complete. Let's not wait.
             print(downloader_job.kill_nomad_job())

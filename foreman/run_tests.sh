@@ -44,6 +44,29 @@ fi
 
 ./scripts/prepare_image.sh -i foreman -s foreman
 
+# Download the necessary files for the end-to-end tests
+test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
+
+rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
+sra_name="ERR1562482.sra"
+rna_seq_test_data="$rna_seq_test_raw_dir/$sra_name"
+reference_dir="$volume_directory/reference"
+quant_name="ERR1562482_quant.sf"
+rna_seq_ref_data="$reference_dir/$quant_name"
+if [ ! -e "$rna_seq_test_data" ]; then
+    mkdir -p "$rna_seq_test_raw_dir"
+    echo "Downloading $sra_name for transcriptome index tests."
+    wget -q -O "$rna_seq_test_data" \
+            "$test_data_repo/$sra_name"
+fi
+if [ ! -e "$rna_seq_ref_data" ]; then
+    mkdir -p "$reference_dir"
+    echo "Downloading $quant_name for transcriptome index tests."
+    wget -q -O "$rna_seq_ref_data" \
+            "$test_data_repo/$quant_name"
+fi
+
+
 . ./scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
