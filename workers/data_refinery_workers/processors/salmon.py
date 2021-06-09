@@ -47,7 +47,7 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
 def _set_job_prefix(job_context: Dict) -> Dict:
-    """ Sets the `job_dir_prefix` value in the job context object."""
+    """Sets the `job_dir_prefix` value in the job context object."""
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
     return job_context
 
@@ -418,7 +418,16 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             ]
 
             for subfile in index_files:
-                os.symlink(index_hard_dir + subfile, job_context["index_directory"] + "/" + subfile)
+                # Remove any broken links before symlinking.
+                # If a link is broken, os.path.exists returns false because the
+                # file pointed to by the link does not exist but
+                # os.symlink throws an error because the broken link itself exists.
+                # os.path.lexists, however, returns true if a broken link exists
+                target_file = job_context["index_directory"] + "/" + subfile
+                if os.path.lexists(target_file):
+                    os.unlink(target_file)
+
+                os.symlink(index_hard_dir + subfile, target_file)
         elif index_hard_dir:
             # We have failed the race.
             logger.error("We have failed the index extraction race! Removing dead trees.")
@@ -957,7 +966,7 @@ def _run_salmon(job_context: Dict) -> Dict:
 
 
 def _run_salmontools(job_context: Dict) -> Dict:
-    """ Run Salmontools to extract unmapped genes. """
+    """Run Salmontools to extract unmapped genes."""
 
     logger.debug("Running SalmonTools ...")
     unmapped_filename = job_context["output_directory"] + "aux_info/unmapped_names.txt"
