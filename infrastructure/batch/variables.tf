@@ -16,3 +16,4 @@ variable "stage" { default = "" }
 variable "region" { default = "" }
 variable "default_tags" { default = "" }
 variable "num_workers" { default = "" }
+variable "use_on_demand_instances" { default = false }

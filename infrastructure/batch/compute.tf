@@ -1,6 +1,11 @@
 # This file creates the compute environments used by the queues
 # The default environment is a 2 vCPU spot cluster
 
+locals {
+  compute_environment_type = var.use_on_demand_instances == true ? "EC2" : "SPOT"
+  allocation_strategy = var.use_on_demand_instances == true ? "BEST_FIT" : "SPOT_CAPACITY_OPTIMIZED"
+}
+
 resource "aws_batch_compute_environment" "data_refinery_workers" {
   count = var.num_workers
 
@@ -8,12 +13,16 @@ resource "aws_batch_compute_environment" "data_refinery_workers" {
   compute_resources {
     instance_role = aws_iam_instance_profile.ecs_instance_profile.arn
     instance_type = [
-      "m5.12xlarge", "r5.12xlarge"
+      # Large enough to be worth our time, small enough to be affordable.
+      "m5.12xlarge", "m5.16xlarge", "r5.12xlarge", "r5.8xlarge"
     ]
-    allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
+
+    type = local.compute_environment_type
+    allocation_strategy = local.allocation_strategy
     spot_iam_fleet_role = var.data_refinery_spot_fleet_role.arn
     bid_percentage = 100
-    max_vcpus = 48
+
+    max_vcpus = 32
     min_vcpus = 0
     # standard launch template
     launch_template {
@@ -27,7 +36,6 @@ resource "aws_batch_compute_environment" "data_refinery_workers" {
     subnets = [
       var.data_refinery_subnet.id,
     ]
-    type = "SPOT"
     tags = merge(
       var.default_tags,
       {
@@ -50,12 +58,17 @@ resource "aws_batch_compute_environment" "data_refinery_smasher" {
   compute_resources {
     instance_role = aws_iam_instance_profile.ecs_instance_profile.arn
     instance_type = [
-      "m5.12xlarge", "r5.12xlarge"
+      # Just large enough to run one job at a time. We haven't had a
+      # backlog yet.
+      "m5.2xlarge", "r5.xlarge"
     ]
-    allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
+
+    type = local.compute_environment_type
+    allocation_strategy = local.allocation_strategy
     spot_iam_fleet_role = var.data_refinery_spot_fleet_role.arn
     bid_percentage = 100
-    max_vcpus = 48
+
+    max_vcpus = 32
     min_vcpus = 0
     # standard launch template
     launch_template {
@@ -69,7 +82,6 @@ resource "aws_batch_compute_environment" "data_refinery_smasher" {
     subnets = [
       var.data_refinery_subnet.id,
     ]
-    type = "SPOT"
     tags = merge(
       var.default_tags,
       {
@@ -91,12 +103,16 @@ resource "aws_batch_compute_environment" "data_refinery_compendia" {
   compute_resources {
     instance_role = aws_iam_instance_profile.ecs_instance_profile.arn
     instance_type = [
-      "m5.12xlarge", "r5.12xlarge"
+      # 384 GB RAM
+      "r5.12xlarge"
     ]
-    allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
+
+    type = local.compute_environment_type
+    allocation_strategy = local.allocation_strategy
     spot_iam_fleet_role = var.data_refinery_spot_fleet_role.arn
     bid_percentage = 100
-    max_vcpus = 48
+
+    max_vcpus = 32
     min_vcpus = 0
     # standard launch template
     launch_template {
@@ -110,7 +126,6 @@ resource "aws_batch_compute_environment" "data_refinery_compendia" {
     subnets = [
       var.data_refinery_subnet.id,
     ]
-    type = "SPOT"
     tags = merge(
       var.default_tags,
       {

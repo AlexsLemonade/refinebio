@@ -194,6 +194,11 @@ variable "num_workers" {
   default = 5
 }
 
+variable "batch_use_on_demand_instances" {
+  type = bool
+  default = false
+}
+
 variable "max_jobs_per_node" {
   default = 250
 }

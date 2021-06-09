@@ -40,6 +40,7 @@ def wait_for_job(job) -> bool:
         elif job.success:
             return True
         else:
+            print(f"{type(job).__name__} {job.id} failed!")
             return False
 
     return False

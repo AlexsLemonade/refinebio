@@ -17,7 +17,7 @@ print_description() {
 }
 
 print_options() {
-    echo 'This script accepts the following arguments: -e, -v, -u, -r, and -h.'
+    echo 'This script accepts the following arguments: -e, -d, -i, -v, -u, -r, and -h.'
     echo '-h prints this help message and exits.'
     echo '-e specifies the environment you would like to deploy to and is not optional. Its valid values are:'
     echo '   "-e prod" will deploy the production stack. This should only be used from a CD machine.'
@@ -29,13 +29,14 @@ print_options() {
     echo '   for dev and staging environments and "ccdl" for prod.'
     echo '   This option is useful for testing code changes. Images with the code to be tested can be pushed'
     echo '   to your private Dockerhub repo and then the system will find them.'
+    echo '-i specifies to use On Demand EC2 instances instead of Spot instances.'
     echo '-v specifies the version of the system which is being deployed and is not optional.'
     echo "-u specifies the username of the deployer. Should be the developer's name in development stacks."
     echo '   This option may be omitted, in which case the TF_VAR_user variable MUST be set instead.'
     echo '-r specifies the AWS region to deploy the stack to. Defaults to us-east-1.'
 }
 
-while getopts ":e:d:v:u:r:h" opt; do
+while getopts ":e:d:i:v:u:r:h" opt; do
     case $opt in
     e)
         export env=$OPTARG
@@ -43,6 +44,9 @@ while getopts ":e:d:v:u:r:h" opt; do
         ;;
     d)
         export TF_VAR_dockerhub_repo=$OPTARG
+        ;;
+    i)
+        export TF_VAR_batch_use_on_demand_instances=$OPTARG
         ;;
     v)
         export SYSTEM_VERSION=$OPTARG
