@@ -168,7 +168,7 @@ class SmasherEndToEndTestCase(TestCase):
         dataset_path = "end_to_end_test_dataset"
         pyrefinebio.download_dataset(
             dataset_path,
-            "test@endtoend.com",
+            "testendtoend@example.com",
             dataset_dict={"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]},
         )
         self.assertTrue(path.exists(dataset_path))
