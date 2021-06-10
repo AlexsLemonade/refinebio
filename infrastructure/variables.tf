@@ -298,6 +298,10 @@ output "environment_variables" {
       value = var.database_timeout
     },
     {
+      name = "API_HOST"
+      value = aws_eip.data_refinery_api_ip.public_ip
+    },
+    {
       name = "ELASTICSEARCH_HOST"
       value = aws_elasticsearch_domain.es.endpoint
     },

@@ -8,3 +8,5 @@ python-dateutil
 raven
 vcrpy
 django-computedfields
+pyrefinebio
+tblib

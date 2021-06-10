@@ -126,6 +126,22 @@ EOF
 }
 EOF
 
+  ses_access_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action":[
+              "SES:SendEmail",
+              "SES:SendRawEmail"
+            ],
+            "Resource": "arn:aws:ses:${var.region}:${data.aws_caller_identity.current.account_id}:identity/refine.bio"
+        }
+    ]
+}
+EOF
+
   ecs_instance_role_policy = <<EOF
 {
     "Version": "2012-10-17",

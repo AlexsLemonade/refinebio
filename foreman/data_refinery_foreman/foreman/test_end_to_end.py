@@ -1,14 +1,32 @@
+from os import path
 from time import sleep
 from unittest import TestCase
 
 from django.test import tag
 
-from data_refinery_common.models import DownloaderJob, Experiment, ProcessorJob, Sample
+import pyrefinebio
+
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputationalResultAnnotation,
+    ComputedFile,
+    DownloaderJob,
+    Experiment,
+    ExperimentSampleAssociation,
+    Organism,
+    ProcessorJob,
+    Sample,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
+)
 from data_refinery_foreman.foreman.management.commands.run_tximport import run_tximport
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
 )
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
+
+SMASHER_SAMPLES = ["GSM1487313", "SRR332914"]
+SMASHER_EXPERIMENTS = ["GSE1487313", "SRP332914"]
 
 MICROARRAY_ACCESSION_CODES = [
     "E-TABM-496",  # 39 samples of SACCHAROMYCES_CEREVISIAE microarray data
@@ -22,6 +40,8 @@ RNA_SEQ_ACCESSION_CODES = [
 ]
 
 EXPERIMENT_ACCESSION_CODES = MICROARRAY_ACCESSION_CODES + RNA_SEQ_ACCESSION_CODES
+
+TEST_DATA_BUCKET = "data-refinery-test-assets"
 
 
 def wait_for_job(job) -> bool:
@@ -46,9 +66,117 @@ def wait_for_job(job) -> bool:
     return False
 
 
+def prepare_computed_files():
+    # MICROARRAY TECH
+    experiment = Experiment()
+    experiment.accession_code = "GSE1487313"
+    experiment.num_processed_samples = 1
+    experiment.save()
+
+    result = ComputationalResult()
+    result.save()
+
+    gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS", taxonomy_id=1001)
+
+    sample = Sample()
+    sample.accession_code = "GSM1487313"
+    sample.title = "GSM1487313"
+    sample.organism = gallus_gallus
+    sample.technology = "MICROARRAY"
+    sample.is_processed = True
+    sample.save()
+
+    sra = SampleResultAssociation()
+    sra.sample = sample
+    sra.result = result
+    sra.save()
+
+    esa = ExperimentSampleAssociation()
+    esa.experiment = experiment
+    esa.sample = sample
+    esa.save()
+
+    computed_file = ComputedFile()
+    computed_file.filename = "GSM1487313_liver.PCL"
+    computed_file.result = result
+    computed_file.size_in_bytes = 123
+    computed_file.is_smashable = True
+    computed_file.s3_key = "GSM1487313_liver.PCL"
+    computed_file.s3_bucket = TEST_DATA_BUCKET
+    computed_file.save()
+
+    assoc = SampleComputedFileAssociation()
+    assoc.sample = sample
+    assoc.computed_file = computed_file
+    assoc.save()
+
+    # RNASEQ TECH
+    experiment2 = Experiment()
+    experiment2.accession_code = "SRP332914"
+    experiment2.num_processed_samples = 1
+    experiment2.save()
+
+    result2 = ComputationalResult()
+    result2.save()
+
+    sample2 = Sample()
+    sample2.accession_code = "SRR332914"
+    sample2.title = "SRR332914"
+    sample2.organism = gallus_gallus
+    sample2.technology = "RNA-SEQ"
+    sample2.is_processed = True
+    sample2.save()
+
+    sra2 = SampleResultAssociation()
+    sra2.sample = sample2
+    sra2.result = result2
+    sra2.save()
+
+    esa2 = ExperimentSampleAssociation()
+    esa2.experiment = experiment2
+    esa2.sample = sample2
+    esa2.save()
+
+    computed_file2 = ComputedFile()
+    computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
+    computed_file2.result = result2
+    computed_file2.size_in_bytes = 234
+    computed_file2.is_smashable = True
+    computed_file2.s3_key = "SRP149598_gene_lengthScaledTPM.tsv"
+    computed_file2.s3_bucket = TEST_DATA_BUCKET
+    computed_file2.save()
+
+    assoc2 = SampleComputedFileAssociation()
+    assoc2.sample = sample2
+    assoc2.computed_file = computed_file2
+    assoc2.save()
+
+
 # Use unittest TestCase instead of django TestCase to avoid the test
 # being done in a transaction.
-class EndToEndTestCase(TestCase):
+class SmasherEndToEndTestCase(TestCase):
+    """Test only the smasher using precomuted samples."""
+
+    @tag("end_to_end")
+    def test_smasher_job(self):
+        for accession_code in SMASHER_EXPERIMENTS:
+            purge_experiment(accession_code)
+
+        prepare_computed_files()
+        pyrefinebio.create_token(agree_to_terms=True, save_token=False)
+
+        dataset_path = "end_to_end_test_dataset"
+        pyrefinebio.download_dataset(
+            dataset_path,
+            "testendtoend@example.com",
+            dataset_dict={"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]},
+        )
+        self.assertTrue(path.exists(dataset_path))
+
+
+# Use unittest TestCase instead of django TestCase to avoid the test
+# being done in a transaction.
+class FullFlowEndToEndTestCase(TestCase):
     """In order to parallelize the jobs as much as possible, everything is
     done in one big ol' function.
 
@@ -113,7 +241,7 @@ class EndToEndTestCase(TestCase):
         for survey_job in survey_jobs:
             self.assertTrue(wait_for_job(survey_job))
 
-        self.assertEqual(Sample.objects.count(), 155)
+        self.assertEqual(Sample.objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 155)
 
         samples = []
         for accession_code in EXPERIMENT_ACCESSION_CODES:
@@ -157,7 +285,9 @@ class EndToEndTestCase(TestCase):
             self.assertTrue(wait_for_job(processor_job))
 
         # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
-        self.assertEqual(Sample.processed_objects.count(), 129)
+        self.assertEqual(
+            Sample.processed_objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 129
+        )
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
         tximport_jobs = run_tximport(dispatch_jobs=False)
@@ -166,4 +296,6 @@ class EndToEndTestCase(TestCase):
         self.assertTrue(wait_for_job(tximport_jobs[0]))
 
         # This is the full total of jobs minus one.
-        self.assertEqual(Sample.processed_objects.count(), 154)
+        self.assertEqual(
+            Sample.processed_objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 154
+        )
