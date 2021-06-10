@@ -299,7 +299,7 @@ output "environment_variables" {
     },
     {
       name = "API_HOST"
-      value = aws_instance.api_server_1.public_ip
+      value = aws_eip.data_refinery_api_ip.public_ip
     },
     {
       name = "ELASTICSEARCH_HOST"

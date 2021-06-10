@@ -154,7 +154,29 @@ def prepare_computed_files():
 
 # Use unittest TestCase instead of django TestCase to avoid the test
 # being done in a transaction.
-class EndToEndTestCase(TestCase):
+class SmasherEndToEndTestCase(TestCase):
+    """Test only the smasher using precomuted samples."""
+
+    @tag("end_to_end")
+    def test_smasher_job(self):
+        for accession_code in SMASHER_EXPERIMENTS:
+            purge_experiment(accession_code)
+
+        prepare_computed_files()
+        pyrefinebio.create_token(agree_to_terms=True, save_token=False)
+
+        dataset_path = "end_to_end_test_dataset"
+        pyrefinebio.download_dataset(
+            dataset_path,
+            "test@endtoend.com",
+            dataset_dict={"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]},
+        )
+        self.assertTrue(path.exists(dataset_path))
+
+
+# Use unittest TestCase instead of django TestCase to avoid the test
+# being done in a transaction.
+class FullFlowEndToEndTestCase(TestCase):
     """In order to parallelize the jobs as much as possible, everything is
     done in one big ol' function.
 
@@ -176,22 +198,6 @@ class EndToEndTestCase(TestCase):
       * Creating a Quantpendium for SACCHAROMYCES_CEREVISIAE.
       * Downloading a dataset aggregated by species.
     """
-
-    @tag("end_to_end")
-    def test_smasher_job(self):
-        for accession_code in SMASHER_EXPERIMENTS:
-            purge_experiment(accession_code)
-
-        prepare_computed_files()
-        pyrefinebio.create_token(agree_to_terms=True, save_token=False)
-
-        dataset_path = "end_to_end_test_dataset"
-        pyrefinebio.download_dataset(
-            dataset_path,
-            "test@endtoend.com",
-            dataset_dict={"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]},
-        )
-        self.assertTrue(path.exists(dataset_path))
 
     @tag("end_to_end")
     def test_all_the_things(self):
@@ -235,7 +241,7 @@ class EndToEndTestCase(TestCase):
         for survey_job in survey_jobs:
             self.assertTrue(wait_for_job(survey_job))
 
-        self.assertEqual(Sample.objects.exclude(accession_code in SMASHER_SAMPLES).count(), 155)
+        self.assertEqual(Sample.objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 155)
 
         samples = []
         for accession_code in EXPERIMENT_ACCESSION_CODES:
@@ -280,7 +286,7 @@ class EndToEndTestCase(TestCase):
 
         # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
         self.assertEqual(
-            Sample.processed_objects.exclude(accession_code in SMASHER_SAMPLES).count(), 129
+            Sample.processed_objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 129
         )
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
@@ -291,5 +297,5 @@ class EndToEndTestCase(TestCase):
 
         # This is the full total of jobs minus one.
         self.assertEqual(
-            Sample.processed_objects.exclude(accession_code in SMASHER_SAMPLES).count(), 154
+            Sample.processed_objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 154
         )
