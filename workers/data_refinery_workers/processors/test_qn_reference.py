@@ -1,8 +1,8 @@
 import os
+from io import StringIO
 
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
-from django.utils.six import StringIO
 
 import numpy as np
 

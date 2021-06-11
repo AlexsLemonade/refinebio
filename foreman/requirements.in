@@ -1,4 +1,4 @@
-django>=2.2.18
+django>=3.2.4
 psycopg2-binary>=2.8.4
 requests>=2.20.0
 retrying
@@ -14,6 +14,8 @@ django-elasticsearch-dsl-drf>=0.17.1
 elasticsearch-dsl>=6.1.0
 vcrpy
 django-computedfields
+django-computedfields>=0.1.5
+pyyaml>=5.4
 # We need these for some of the end-to-end tests
 pandas
 scipy
