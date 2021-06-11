@@ -1,16 +1,11 @@
 static_bucket_prefix = ""
 static_bucket_root = "refine.bio"
-database_password = "0MhlrhJnT2RgW1nAIrOqVyHutmZIZR5Cxt2K99iRP84BW3Baqf0m311yiQ05ugz"
 database_instance_type = "m4.xlarge"
-django_secret_key = "HANB8GOtQ4MlP2A823JKsDmb2zJZp73oS2f1p0362D0oYL0mbXLiQw0ykYD89KrN"
 pg_bouncer_instance_type = "t2.medium"
 spot_price = "2.320"
 api_instance_type = "t3.large"
 dockerhub_repo = "ccdl"
-raven_dsn = "https://9cc7b20407de4dbd85bf7230ba830c81@sentry.io/1227131"
-raven_dsn_api = "https://a4670626c8124de68cd7cade9966de62:6061acc54c5142b5a6be89e2f8cbbede@sentry.io/1236818"
 environment = "prod"
-engagementbot_webhook = "https://hooks.slack.com/services/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"
 full_stack = true
 max_jobs_per_node = 250
 max_downloader_jobs_per_node = 200
