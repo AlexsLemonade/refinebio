@@ -9,11 +9,8 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
     Experiment,
     ExperimentOrganismAssociation,
-    ExperimentResultAssociation,
     ExperimentSampleAssociation,
     Organism,
     OrganismIndex,
@@ -21,22 +18,25 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation,
     Processor,
     ProcessorJob,
-    ProcessorJobOriginalFileAssociation,
     Sample,
     SampleResultAssociation,
 )
 from data_refinery_foreman.foreman.management.commands import run_tximport
 
 
-def run_tximport_at_progress_point(
+def prep_tximport_at_progress_point(
     complete_accessions: List[str], incomplete_accessions: List[str]
 ) -> Dict:
-    """Create an experiment and associated objects and run tximport on it.
+    """Create an experiment and associated objects that tximport needs to run on it.
 
     Creates a sample for each accession contained in either input
     list. The samples in complete_accessions will be simlulated as
     already having salmon quant run on them. The samples in
     incomplete_accessions won't.
+
+    If the accession_codes parameter is supplied the
+    run_tximport_for_list function will be used, otherwise the
+    run_tximport_for_all_eligible_experiments function will be used.
     """
     # Create the experiment
     experiment_accession = "SRP095529"
@@ -176,9 +176,6 @@ def run_tximport_at_progress_point(
 
         SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
 
-    # Setup is done, actually run the command.
-    run_tximport.run_tximport()
-
 
 class RunTximportTestCase(TestCase):
     """Tests that run_tximport only queues Tximport jobs for experiments which are ready.
@@ -242,7 +239,9 @@ class RunTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+        prep_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+
+        run_tximport.run_tximport_for_all_eligible_experiments()
 
         pj = ProcessorJob.objects.all()[0]
         self.assertEqual(pj.pipeline_applied, ProcessorPipeline.TXIMPORT.value)
@@ -252,6 +251,20 @@ class RunTximportTestCase(TestCase):
         self.assertEqual(len(mock_calls), 1)
 
         first_call_job_type = mock_calls[0][1][0]
+        self.assertEqual(first_call_job_type, ProcessorPipeline.TXIMPORT)
+
+        # And then run things again, passing a list of accession codes
+        # to verify that run_tximport_for_list also works.
+        run_tximport.run_tximport_for_list("SRP095529,TO_BE_SKIPPED")
+
+        pj = ProcessorJob.objects.all()[1]
+        self.assertEqual(pj.pipeline_applied, ProcessorPipeline.TXIMPORT.value)
+
+        # Verify that we attempted to send the jobs off to Batch
+        mock_calls = mock_send_job.mock_calls
+        self.assertEqual(len(mock_calls), 2)
+
+        first_call_job_type = mock_calls[1][1][0]
         self.assertEqual(first_call_job_type, ProcessorPipeline.TXIMPORT)
 
     @patch("data_refinery_foreman.foreman.management.commands.run_tximport.send_job")
@@ -304,7 +317,8 @@ class RunTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+        prep_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+        run_tximport.run_tximport_for_all_eligible_experiments()
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample' and it
@@ -362,7 +376,8 @@ class RunTximportTestCase(TestCase):
             "SRR5125640",
         ]
 
-        run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+        prep_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+        run_tximport.run_tximport_for_list("SRP095529")
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample' and it

@@ -8,7 +8,6 @@ import pyrefinebio
 
 from data_refinery_common.models import (
     ComputationalResult,
-    ComputationalResultAnnotation,
     ComputedFile,
     DownloaderJob,
     Experiment,
@@ -19,7 +18,9 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
-from data_refinery_foreman.foreman.management.commands.run_tximport import run_tximport
+from data_refinery_foreman.foreman.management.commands.run_tximport import (
+    run_tximport_for_all_eligible_experiments,
+)
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
 )
@@ -290,7 +291,7 @@ class FullFlowEndToEndTestCase(TestCase):
         )
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
-        tximport_jobs = run_tximport(dispatch_jobs=False)
+        tximport_jobs = run_tximport_for_all_eligible_experiments(dispatch_jobs=False)
         self.assertEqual(len(tximport_jobs), 1)
 
         self.assertTrue(wait_for_job(tximport_jobs[0]))

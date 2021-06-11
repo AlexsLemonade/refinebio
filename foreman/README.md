@@ -9,7 +9,7 @@ and managing those jobs.
 
 ### Running the surveyor
 
-To run the surveyor in a Docker container just run `./run_surveyor.sh`.
+To run the surveyor in a Docker container just run `./run_management_command.sh`.
 
 You can also start an interactive python interpreter by running `../scripts/run_shell.sh`.
 This interpreter will actually be running within the surveyor Docker container

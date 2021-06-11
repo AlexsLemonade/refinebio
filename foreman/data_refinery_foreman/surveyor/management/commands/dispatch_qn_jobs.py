@@ -23,7 +23,12 @@ class Command(BaseCommand):
         """Dispatch QN_REFERENCE creation jobs for all Organisms with a
         platform with enough processed samples."""
 
-        organisms = Organism.objects.all()
+        # TODO: test this!!!
+        if options["organisms"]:
+            organism_names = options["organisms"].split(",")
+            organisms = Organism.objects.filter(name__in=organism_names)
+        else:
+            organisms = Organism.objects.all()
 
         for organism in organisms:
             samples = Sample.processed_objects.filter(
