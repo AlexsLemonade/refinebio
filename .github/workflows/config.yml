@@ -39,6 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Free up space
+        run: ./.github/scripts/cleanup_instance.sh
+
       - name: Login to Packages Container registry
         uses: docker/login-action@v1
         with:
