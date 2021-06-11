@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
@@ -20,7 +19,7 @@ class SampleAnnotation(models.Model):
     sample = models.ForeignKey("Sample", blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = JSONField(default=dict)
+    data = models.JSONField(default=dict)
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties

@@ -1,4 +1,4 @@
-django==2.2.13
+django>=3.2.4
 requests>=2.23.0
 urllib3>=1.24.2
 psycopg2-binary>=2.8.4
@@ -7,3 +7,5 @@ python-nomad>=1.0.2
 coveralls
 psutil>=5.6.6
 vcrpy
+django-computedfields>=0.1.5
+pyyaml>=5.4

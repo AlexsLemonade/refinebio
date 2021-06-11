@@ -1,6 +1,7 @@
 import json
 from unittest.mock import Mock, patch
 
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -200,6 +201,7 @@ class DatasetTestCase(APITestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        cache.clear()
 
         # Good, except for empty email.
         jdata = json.dumps(
@@ -212,6 +214,7 @@ class DatasetTestCase(APITestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        cache.clear()
 
         # You should not have to provide an email until you set start=True
         jdata = json.dumps({"data": {"GSE123": ["789"]}})
@@ -222,6 +225,7 @@ class DatasetTestCase(APITestCase):
         )
 
         self.assertEqual(response.status_code, 201)
+        cache.clear()
 
         # Good, except for missing email.
         jdata = json.dumps({"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id})
@@ -232,6 +236,7 @@ class DatasetTestCase(APITestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        cache.clear()
 
         # Good, except for invalid email.
         jdata = json.dumps({"email_address": "bad format!", "data": {"A": ["B"]}})
@@ -252,6 +257,7 @@ class DatasetTestCase(APITestCase):
             json.dumps({"is_activated": True}),
             content_type="application/json",
         )
+        cache.clear()
 
         token_id = response.json()["id"]
 
@@ -263,6 +269,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        cache.clear()
 
         data["start"] = True
         response = self.client.put(
@@ -271,6 +278,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+        cache.clear()
 
         # On the other hand, if we add experiments before we start processing, this should be okay
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {}})
@@ -280,6 +288,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        cache.clear()
 
         data = {
             **data,
@@ -322,6 +331,7 @@ class DatasetTestCase(APITestCase):
             "Non-downloadable sample(s) in dataset", response.json()["message"],
         )
         self.assertEqual(response.json()["details"], ["456"])
+        cache.clear()
 
         # Bad, 567 does not exist
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["567"]}})
@@ -334,6 +344,7 @@ class DatasetTestCase(APITestCase):
             "Sample(s) in dataset do not exist on refine", response.json()["message"],
         )
         self.assertEqual(response.status_code, 400)
+        cache.clear()
 
         # Good, 789 is processed
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
@@ -343,6 +354,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        cache.clear()
 
         # Bad, 456 does not have a quant.sf file
         post_data = {"email_address": "baz@gmail.com", "data": {}}
@@ -352,6 +364,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        cache.clear()
 
         put_data = {**post_data, "data": {"GSE123": ["456"]}, "quant_sf_only": True}
         response = self.client.put(
@@ -364,6 +377,7 @@ class DatasetTestCase(APITestCase):
             "Sample(s) in dataset are missing quant.sf files", response.json()["message"],
         )
         self.assertEqual(response.json()["details"], ["456"])
+        cache.clear()
 
         # Bad, none of the samples in GSE123 have a quant.sf file
         response = self.client.post(
@@ -372,6 +386,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        cache.clear()
         response = self.client.put(
             reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
             json.dumps({**put_data, "data": {"GSE123": ["ALL"]}}),
@@ -382,6 +397,7 @@ class DatasetTestCase(APITestCase):
             "Experiment(s) in dataset have zero downloadable samples", response.json()["message"],
         )
         self.assertEqual(response.json()["details"], ["GSE123"])
+        cache.clear()
 
         # Make 456 have a quant.sf file
         result = ComputationalResult()
@@ -407,6 +423,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        cache.clear()
 
         response = self.client.put(
             reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
@@ -414,6 +431,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
+        cache.clear()
 
         # Good, a sample in GSE123 has a quant.sf file
         response = self.client.post(
@@ -421,6 +439,7 @@ class DatasetTestCase(APITestCase):
             json.dumps(post_data),
             content_type="application/json",
         )
+        cache.clear()
         self.assertEqual(response.status_code, 201)
         response = self.client.put(
             reverse("dataset", kwargs={"id": response.json()["id"], "version": API_VERSION}),
@@ -458,6 +477,7 @@ class DatasetTestCase(APITestCase):
         self.assertEqual(response.json()["id"], good_id)
         self.assertEqual(response.json()["data"], json.loads(jdata)["data"])
         self.assertEqual(response.json()["data"]["GSE123"], ["789"])
+        cache.clear()
 
         # Bad (Duplicates)
         jdata = json.dumps(
@@ -468,6 +488,7 @@ class DatasetTestCase(APITestCase):
             jdata,
             content_type="application/json",
         )
+        cache.clear()
 
         self.assertEqual(response.status_code, 400)
 
@@ -478,6 +499,7 @@ class DatasetTestCase(APITestCase):
             jdata,
             content_type="application/json",
         )
+        cache.clear()
 
         self.assertEqual(response.status_code, 400)
 
@@ -493,6 +515,7 @@ class DatasetTestCase(APITestCase):
         # We are not entirely RESTful here, that's okay.
         self.assertNotEqual(response.json()["data"], json.loads(jdata)["data"])
         self.assertEqual(response.json()["data"]["GSE123"], ["789"])
+        cache.clear()
 
         # Update
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}})
@@ -505,6 +528,7 @@ class DatasetTestCase(APITestCase):
         self.assertEqual(response.json()["id"], good_id)
         self.assertEqual(response.json()["data"], json.loads(jdata)["data"])
         self.assertEqual(response.json()["data"]["GSE123"], ["789"])
+        cache.clear()
 
         # Can't update if started
         dataset = Dataset.objects.get(id=good_id)
@@ -519,6 +543,7 @@ class DatasetTestCase(APITestCase):
         # The request should succeed, but the dataset should not be modified
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.json()["data"]["GSE123"], ["123"])
+        cache.clear()
 
         # Bad
         jdata = json.dumps({"email_address": "baz@gmail.com", "data": 123})
@@ -533,6 +558,7 @@ class DatasetTestCase(APITestCase):
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
         dataset.save()
+        cache.clear()
 
         # With bad token first
         jdata = json.dumps(
@@ -549,6 +575,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+        cache.clear()
 
         jdata = json.dumps(
             {
@@ -569,6 +596,7 @@ class DatasetTestCase(APITestCase):
         ds = Dataset.objects.get(id=response.json()["id"])
         self.assertEqual(ds.email_address, "trust@verify.com")
         self.assertTrue(ds.email_ccdl_ok)
+        cache.clear()
 
         # Reset the dataset so we can test providing an API token via
         # HTTP Header.
@@ -598,6 +626,7 @@ class DatasetTestCase(APITestCase):
         ds = Dataset.objects.get(id=response.json()["id"])
         self.assertEqual(ds.email_address, "trust@verify.com")
         self.assertTrue(ds.email_ccdl_ok)
+        cache.clear()
 
         # Test creating and starting a dataset in the same action
         jdata = json.dumps(

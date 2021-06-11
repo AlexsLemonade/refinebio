@@ -48,7 +48,7 @@ class DownloaderJob(models.Model):
     # Tracking
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
-    success = models.NullBooleanField(null=True)
+    success = models.BooleanField(null=True)
     batch_job_id = models.CharField(max_length=256, null=True)
 
     # Resources

@@ -4,48 +4,51 @@
 #
 #    pip-compile requirements.in
 #
-apscheduler==3.6.3        # via -r requirements.in
-boto3==1.16.4             # via -r requirements.in
-botocore==1.19.4          # via boto3, s3transfer
-certifi==2020.6.20        # via requests
-chardet==3.0.4            # via requests
+apscheduler==3.7.0        # via -r requirements.in
+asgiref==3.3.4            # via django
+boto3==1.17.92            # via -r requirements.in
+botocore==1.20.92         # via boto3, s3transfer
+certifi==2021.5.30        # via elasticsearch, requests
+chardet==4.0.0            # via requests
 coreapi==2.3.3            # via -r requirements.in, drf-yasg
 coreschema==0.0.4         # via coreapi, drf-yasg
-coverage==5.3             # via -r requirements.in
-django-computedfields==0.1.3  # via -r requirements.in
-django-cors-headers==3.5.0  # via -r requirements.in
-django-elasticsearch-dsl-drf==0.20.9  # via -r requirements.in
-django-elasticsearch-dsl==6.4.2  # via -r requirements.in, django-elasticsearch-dsl-drf
+coverage==5.5             # via -r requirements.in
+django-computedfields==0.1.5  # via -r requirements.in
+django-cors-headers==3.7.0  # via -r requirements.in
+django-elasticsearch-dsl-drf==0.22.1  # via -r requirements.in
+django-elasticsearch-dsl==6.5.0  # via -r requirements.in, django-elasticsearch-dsl-drf
 django-filter==2.4.0      # via -r requirements.in
 django-hstore==1.4.2      # via djangorestframework-hstore
-django-nine==0.2.3        # via django-elasticsearch-dsl-drf
-django==2.2.13            # via -r requirements.in, django-cors-headers, django-filter, djangorestframework-hstore, drf-yasg
+django-nine==0.2.4        # via django-elasticsearch-dsl-drf
+django==3.2.4             # via -r requirements.in, django-cors-headers, django-filter, django-nine, djangorestframework, djangorestframework-hstore, drf-yasg
 djangorestframework-hstore==1.3  # via -r requirements.in
-djangorestframework==3.9.4  # via -r requirements.in, django-elasticsearch-dsl-drf, djangorestframework-hstore, drf-yasg
-drf_yasg==1.17.1          # via -r requirements.in
-elasticsearch-dsl==6.4.0  # via django-elasticsearch-dsl, django-elasticsearch-dsl-drf
-elasticsearch==6.8.1      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
+djangorestframework==3.12.4  # via -r requirements.in, django-elasticsearch-dsl-drf, djangorestframework-hstore, drf-yasg
+drf-yasg==1.20.0          # via -r requirements.in
+elasticsearch-dsl==7.3.0  # via django-elasticsearch-dsl, django-elasticsearch-dsl-drf
+elasticsearch==7.13.1     # via django-elasticsearch-dsl-drf, elasticsearch-dsl
 idna==2.10                # via requests
 inflection==0.5.1         # via drf-yasg
 itypes==1.2.0             # via coreapi
-jinja2==2.11.2            # via -r requirements.in, coreschema
+jinja2==3.0.1             # via -r requirements.in, coreschema
 jmespath==0.10.0          # via boto3, botocore
-markupsafe==1.1.1         # via -r requirements.in, jinja2
-packaging==20.4           # via drf-yasg
+markupsafe==2.0.1         # via -r requirements.in, jinja2
+packaging==20.9           # via drf-yasg
 psycopg2-binary==2.8.6    # via -r requirements.in
 psycopg2==2.8.6           # via djangorestframework-hstore
 pyparsing==2.4.7          # via packaging
 python-dateutil==2.8.1    # via botocore, elasticsearch-dsl
-pytz==2020.1              # via apscheduler, django, tzlocal
-requests==2.24.0          # via -r requirements.in, coreapi
+pytz==2021.1              # via apscheduler, django, tzlocal
+pyyaml==5.4.1             # via -r requirements.in
+requests==2.25.1          # via -r requirements.in, coreapi
 ruamel.yaml.clib==0.2.2   # via ruamel.yaml
-ruamel.yaml==0.16.12      # via drf-yasg
-s3transfer==0.3.3         # via boto3
-six==1.15.0               # via -r requirements.in, apscheduler, django-elasticsearch-dsl-drf, drf-yasg, elasticsearch-dsl, packaging, python-dateutil
+ruamel.yaml==0.17.9       # via drf-yasg
+s3transfer==0.4.2         # via boto3
+six==1.16.0               # via -r requirements.in, apscheduler, django-elasticsearch-dsl, django-elasticsearch-dsl-drf, elasticsearch-dsl, python-dateutil
 sqlparse==0.4.1           # via django
+typing-extensions==3.10.0.0  # via asgiref
 tzlocal==2.1              # via apscheduler
 uritemplate==3.0.1        # via coreapi, drf-yasg
-urllib3==1.25.11          # via -r requirements.in, botocore, elasticsearch, requests
+urllib3==1.26.5           # via -r requirements.in, botocore, elasticsearch, requests
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

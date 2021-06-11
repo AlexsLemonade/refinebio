@@ -41,6 +41,8 @@ def prepare_job(length):
         "aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
     )
     og_file.is_downloaded = True
+    # We need to add the URL here so that _extract_assembly_information works properly
+    og_file.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/fasta/aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
     og_file.save()
 
     og_file2 = OriginalFile()
@@ -55,6 +57,8 @@ def prepare_job(length):
         "aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
     )
     og_file2.is_downloaded = True
+    # We need to add the URL here so that _extract_assembly_information works properly
+    og_file2.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/gtf/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
     og_file2.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()

@@ -17,6 +17,9 @@ from corsheaders.defaults import default_headers
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
+# https://dev.to/rubyflewtoo/upgrading-to-django-3-2-and-fixing-defaultautofield-warnings-518n
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -171,10 +174,15 @@ ENABLE_SERVER_SIDE_CURSORS = False
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "DEFAULT_PAGINATION_CLASS": "data_refinery_api.pagination.LimitedLimitOffsetPagination",
     "PAGE_SIZE": 25,
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "EXCEPTION_HANDLER": "data_refinery_api.exceptions.custom_exception_handler",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "10/second", "user": "10/second"},
 }
 
 SWAGGER_SETTINGS = {

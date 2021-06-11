@@ -88,7 +88,8 @@ RUN pip3 install numpy scipy matplotlib pandas==0.25.3 scikit-learn sympy nose r
 RUN pip3 install --upgrade setuptools
 
 # Impute-specific requirements
-RUN pip3 install fancyimpute
+# We need to freeze the tensorflow version for fancyimpute
+RUN pip3 install tensorflow==2.4.1 fancyimpute==0.5.5
 # End smasher-specific
 
 COPY config/ config/

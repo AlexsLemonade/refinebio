@@ -173,6 +173,7 @@ class ESTestCases(APITestCase):
             reverse("search", kwargs={"version": API_VERSION}), {"search": "soda"}
         )
         self.assertEqual(response.json()["count"], 1)
+        cache.clear()
 
         # Positive filter result
         response = self.client.get(
@@ -180,6 +181,7 @@ class ESTestCases(APITestCase):
             {"search": "soda", "technology": "microarray"},
         )
         self.assertEqual(response.json()["count"], 1)
+        cache.clear()
 
         # Negative filter result
         response = self.client.get(
@@ -205,6 +207,7 @@ class ESTestCases(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["count"], 1)
+        cache.clear()
 
         # __in filter
         search = {"accession_code__in": ["GSE123-X"]}
@@ -215,6 +218,7 @@ class ESTestCases(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["count"], 1)
+        cache.clear()
 
         # Numeric filter
         search = {"num_downloadable_samples__gt": 0}
@@ -225,6 +229,7 @@ class ESTestCases(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["count"], 1)
+        cache.clear()
 
         # Large query
         search = {"accession_code__in": ["GSE123-X" for _ in range(10000)]}

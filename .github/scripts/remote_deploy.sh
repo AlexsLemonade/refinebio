@@ -19,6 +19,7 @@
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
 
+echo "$INSTANCE_SSH_KEY" > infrastructure/data-refinery-key.pem
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box () {
@@ -38,6 +39,11 @@ export DOCKER_PASSWD='$DOCKER_PASSWD'
 export OPENSSL_KEY='$OPENSSL_KEY'
 export AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'
 export AWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY'
+export TF_VAR_database_password='$DATABASE_PASSWORD'
+export TF_VAR_django_secret_key='$DJANGO_SECRET_KEY'
+export TF_VAR_raven_dsn='$RAVEN_DSN'
+export TF_VAR_raven_dsn_api='$RAVEN_DSN_API'
+export TF_VAR_engagementbot_webhook='$ENGAGEMENTBOT_WEBHOOK'
 EOF
 
 # And checkout the correct tag.
@@ -52,8 +58,10 @@ scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
     -r env_vars ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/env_vars
 
-# Decrypt the secrets in our repo.
-run_on_deploy_box "source env_vars && bash .github/scripts/git_decrypt.sh"
+# Along with the ssh key iself, which the deploy script will use.
+scp -o StrictHostKeyChecking=no \
+    -i infrastructure/data-refinery-key.pem \
+    -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/infrastructure/data-refinery-key.pem
 
 # Output to CircleCI
 echo "Building new images"
@@ -67,12 +75,9 @@ run_on_deploy_box "source env_vars && echo -e '######\nFinished building new ima
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
 source scripts/common.sh
 
-# Circle won't set the branch name for us, so do it ourselves.
-branch=$(get_master_or_dev "$CI_TAG")
-
-if [[ "$branch" == "master" ]]; then
+if [[ "$MASTER_OR_DEV" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ "$branch" == "dev" ]]; then
+elif [[ "$MASTER_OR_DEV" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!?!?"
@@ -105,7 +110,10 @@ run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CI_TAG finishe
 
 ./.github/scripts/slackpost_deploy.sh robots deploybot
 
-if [[ "$branch" == "dev" ]]; then
+if [[ "$MASTER_OR_DEV" == "dev" ]]; then
     run_on_deploy_box "source env_vars && ./foreman/run_end_to_end_tests.sh"
     ./.github/scripts/slackpost_end_to_end.sh robots deploybot
 fi
+
+# Don't leave secrets lying around.
+run_on_deploy_box "git clean -f"

@@ -25,7 +25,7 @@ class SurveyJob(models.Model):
     unqueued_objects = UnqueuedJobsManager()
 
     source_type = models.CharField(max_length=256)
-    success = models.NullBooleanField(null=True)
+    success = models.BooleanField(null=True)
     no_retry = models.BooleanField(default=False)
     batch_job_id = models.CharField(max_length=256, null=True)
 

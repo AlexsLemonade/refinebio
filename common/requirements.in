@@ -1,5 +1,5 @@
 coverage
-django==2.2.13
+django>=3.2.4
 psycopg2-binary>=2.8.4
 boto3>=1.12.21
 requests>=2.23.0
@@ -9,9 +9,9 @@ daiquiri
 raven
 elasticsearch-dsl
 django-elasticsearch-dsl-drf
-# Can't go above 6.4.2 without upgrading elasticsearch
-django-elasticsearch-dsl==6.4.2
-# DRF 3.10 breaks an import.
-djangorestframework==3.9.4
+# Can't go above 6.X without upgrading elasticsearch
+django-elasticsearch-dsl==6.5.0
+djangorestframework>=3.11.2
 vcrpy
-django-computedfields
+django-computedfields>=0.1.5
+pyyaml>=5.4

@@ -1,6 +1,5 @@
 from typing import Set
 
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
@@ -53,7 +52,7 @@ class Sample(models.Model):
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True)  # MICROARRAY, RNA-SEQ
     manufacturer = models.CharField(max_length=256, blank=True)
-    protocol_info = JSONField(default=dict)
+    protocol_info = models.JSONField(default=dict)
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
@@ -88,7 +87,7 @@ class Sample(models.Model):
         self.last_modified = current_time
         return super(Sample, self).save(*args, **kwargs)
 
-    def to_metadata_dict(self):
+    def to_metadata_dict(self, computed_file=None):
         """Render this Sample as a dict."""
         metadata = {}
         metadata["refinebio_title"] = self.title
@@ -113,6 +112,11 @@ class Sample(models.Model):
         metadata["refinebio_annotations"] = [
             data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
+
+        if computed_file and computed_file.result and computed_file.result.processor:
+            metadata["refinebio_processor_id"] = computed_file.result.processor.id
+            metadata["refinebio_processor_name"] = computed_file.result.processor.name
+            metadata["refinebio_processor_version"] = computed_file.result.processor.version
 
         if self.attributes.count() > 0:
             metadata["other_metadata"] = [
