@@ -51,7 +51,7 @@ rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
 sra_name="ERR1562482.sra"
 rna_seq_test_data="$rna_seq_test_raw_dir/$sra_name"
 reference_dir="$volume_directory/reference"
-quant_name="ERR1562482_quant.sf"
+quant_name="ERR1562482_gene_converted_quant.sf"
 rna_seq_ref_data="$reference_dir/$quant_name"
 if [ ! -e "$rna_seq_test_data" ]; then
     mkdir -p "$rna_seq_test_raw_dir"

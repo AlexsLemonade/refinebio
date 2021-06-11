@@ -763,33 +763,42 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
 
             # Make sure that the output file agrees with our reference file
 
-            output_filename = ComputedFile.objects.filter(filename="quant.sf")[0].absolute_file_path
-
-            ref_filename = "/home/user/data_store/reference/ERR1562482_quant.sf"
-
             def squish_duplicates(data: pd.DataFrame) -> pd.DataFrame:
                 return data.groupby(data.index, sort=False).mean()
 
+            # This file has already been gene-converted with the correct version
+            # of the transcriptome index. We do this because the transcript IDs
+            # from Ensembl change over time but the gene IDs themselves do not,
+            # so we use the gene IDs as a common point of comparison.
+            ref_filename = "/home/user/data_store/reference/ERR1562482_gene_converted_quant.sf"
             ref = pd.read_csv(ref_filename, delimiter="\t", index_col=0)
             ref_TPM = squish_duplicates(pd.DataFrame({"reference": ref["TPM"]}))
             ref_NumReads = squish_duplicates(pd.DataFrame({"reference": ref["NumReads"]}))
 
-            out = pd.read_csv(output_filename, delimiter="\t", index_col=0)
+            transcript_to_gene_ids = pd.read_csv(
+                "/home/user/data_store/TRANSCRIPTOME_INDEX/CAENORHABDITIS_ELEGANS/short/genes_to_transcripts.txt",
+                sep="\t",
+                index_col=1,
+                names=["Gene"],
+            )
+
+            def convert_genes(data: pd.DataFrame) -> pd.DataFrame:
+                # Map transcript IDs to gene IDs. We do this because transcript
+                # IDs are not stable from version to version in Ensembl but gene
+                # IDs are.
+                data.index = data.index.to_series().map(
+                    lambda x: transcript_to_gene_ids.loc[x, "Gene"]
+                )
+                return data
+
+            output_filename = ComputedFile.objects.filter(filename="quant.sf")[0].absolute_file_path
+            out = convert_genes(pd.read_csv(output_filename, delimiter="\t", index_col=0))
             out_TPM = squish_duplicates(pd.DataFrame({"actual": out["TPM"]}))
             out_NumReads = squish_duplicates(pd.DataFrame({"actual": out["NumReads"]}))
 
             # Make sure that there is a lot of gene overlap between the
             # reference and the output files. If this fails, it might not be the
             # end of the world but it is a good thing to know about.
-            print(
-                f"""expected - actual:
-{chr(10).join(set(ref_TPM.index) - set(out_TPM.index))}
-actual - expected:
-{chr(10).join(set(out_TPM.index) - set(ref_TPM.index))}"""
-            )
-
-            # XXX: right now this check is failing and I am not sure why. We
-            # might have to normalize the genes first, before joining?
             self.assertGreater(
                 len(set(ref_TPM.index) & set(out_TPM.index)),
                 0.95 * min(len(ref_TPM), len(out_TPM)),
