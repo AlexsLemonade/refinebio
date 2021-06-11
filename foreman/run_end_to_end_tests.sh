@@ -37,5 +37,7 @@ docker run -t \
        --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
        --env JOB_DEFINITION_PREFIX="$USER_$STAGE_" \
        --env REFINEBIO_BASE_URL="http://$API_HOST/v1/" \
+       --env DJANGO_SECRET_KEY="TEST_KEY_FOR_DEV" \
+       --env DATABASE_PASSWORD="TEST_PASSWORD_FOR_DEV" \
        --volume "$volume_directory":/home/user/data_store \
        ccdlstaging/dr_foreman python3 manage.py test --no-input --parallel=2 --testrunner='data_refinery_foreman.test_runner.NoDbTestRunner' data_refinery_foreman.foreman.test_end_to_end

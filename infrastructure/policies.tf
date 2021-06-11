@@ -180,4 +180,37 @@ EOF
     ]
 }
 EOF
+
+  batch_execution_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": [
+        "${aws_secretsmanager_secret.django_secret_key.arn}",
+        "${aws_secretsmanager_secret.database_password.arn}",
+        "${aws_secretsmanager_secret.raven_dsn.arn}",
+        "${aws_secretsmanager_secret.raven_dsn_api.arn}"
+      ]
+    }
+  ]
+}
+EOF
+
 }

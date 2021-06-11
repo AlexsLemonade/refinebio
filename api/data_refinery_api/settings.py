@@ -187,10 +187,15 @@ SWAGGER_SETTINGS = {
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-raven_dsn = get_env_variable_gracefully("RAVEN_DSN_API", False)
-if raven_dsn != "not set":
+RAVEN_DSN = get_env_variable_gracefully("RAVEN_DSN_API", None)
+
+# AWS Secrets manager will not let us store an empty string.
+if RAVEN_DSN == "None":
+    RAVEN_DSN = None
+
+if RAVEN_DSN != "not set":
     RAVEN_CONFIG = {
-        "dsn": raven_dsn,
+        "dsn": RAVEN_DSN,
         # Only send 5% of errors for the API, since we aren't going to
         # be interested in any single one.
         "sampleRate": 0.25,

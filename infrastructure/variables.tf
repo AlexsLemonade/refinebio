@@ -160,12 +160,14 @@ variable "spot_fleet_capacity" {
   default = "0"
 }
 
+# AWS Secrets manager won't allow these to be empty, so we make them
+# "None" and check for that string in the settings,
 variable "raven_dsn" {
-  default = ""
+  default = "None"
 }
 
 variable "raven_dsn_api" {
-  default = ""
+  default = "None"
 }
 
 # API
@@ -260,6 +262,10 @@ output "environment_variables" {
       value = var.django_secret_key
     },
     {
+      name = "DJANGO_SECRET_KEY_ARN"
+      value = aws_secretsmanager_secret.django_secret_key.arn
+    },
+    {
       name = "DATABASE_NAME"
       value = aws_db_instance.postgres_db.name
     },
@@ -284,6 +290,10 @@ output "environment_variables" {
     {
       name = "DATABASE_PASSWORD"
       value = var.database_password
+    },
+    {
+      name = "DATABASE_PASSWORD_ARN"
+      value = aws_secretsmanager_secret.database_password.arn
     },
     {
       name = "DATABASE_PORT"
@@ -328,6 +338,18 @@ output "environment_variables" {
     {
       name = "RAVEN_DSN_API"
       value = var.raven_dsn_api
+    },
+    {
+      name = "RAVEN_DSN_ARN"
+      value = aws_secretsmanager_secret.raven_dsn.arn
+    },
+    {
+      name = "RAVEN_DSN_API_ARN"
+      value = aws_secretsmanager_secret.raven_dsn_api.arn
+    },
+    {
+      name = "BATCH_EXECUTION_ROLE_ARN"
+      value = aws_iam_role.data_refinery_batch_execution.arn
     },
     {
       name = "S3_BUCKET_NAME"

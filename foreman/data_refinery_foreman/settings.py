@@ -148,9 +148,14 @@ CACHES = {
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-raven_dsn = get_env_variable_gracefully("RAVEN_DSN", False)
-if raven_dsn:
-    RAVEN_CONFIG = {"dsn": raven_dsn}
+RAVEN_DSN = get_env_variable_gracefully("RAVEN_DSN", None)
+
+# AWS Secrets manager will not let us store an empty string.
+if RAVEN_DSN == "None":
+    RAVEN_DSN = None
+
+if RAVEN_DSN:
+    RAVEN_CONFIG = {"dsn": RAVEN_DSN}
 else:
     # Preven raven from logging about how it's not configured...
     import logging

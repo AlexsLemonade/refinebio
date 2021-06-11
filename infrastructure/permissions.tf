@@ -74,6 +74,31 @@ EOF
   tags = var.default_tags
 }
 
+resource "aws_iam_role" "data_refinery_batch_execution" {
+  name = "data-refinery-batch-execution-role-${var.user}-${var.stage}"
+
+  # Policy text found at:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
+  # "Service": ["ec2.amazonaws.com", "ecs-tasks.amazonaws.com", "batch.amazonaws.com"]
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+  tags = var.default_tags
+}
+
 resource "aws_iam_role" "data_refinery_spot_fleet" {
   name = "data-refinery-spot-fleet-${var.user}-${var.stage}"
 
@@ -150,6 +175,20 @@ resource "aws_iam_policy" "ses_access_policy" {
 resource "aws_iam_role_policy_attachment" "worker_ses" {
   role = aws_iam_role.data_refinery_worker.name
   policy_arn = aws_iam_policy.ses_access_policy.arn
+}
+
+resource "aws_iam_policy" "batch_execution_policy" {
+  name = "data-refinery-batch-execution-policy-${var.user}-${var.stage}"
+  description = "Allows accessing secrets and other common ECS tasks"
+
+  policy = local.batch_execution_policy
+
+  tags = var.default_tags
+}
+
+resource "aws_iam_role_policy_attachment" "batch_execution" {
+  role = aws_iam_role.data_refinery_batch_execution.name
+  policy_arn = aws_iam_policy.batch_execution_policy.arn
 }
 
 resource "aws_iam_policy" "cloudwatch_policy" {
