@@ -44,8 +44,7 @@ def signal_handler(sig, frame):
 
 
 def prepare_original_files(job_context):
-    """ Provision in the Job context for OriginalFile-driven processors
-    """
+    """Provision in the Job context for OriginalFile-driven processors"""
     job = job_context["job"]
     original_files = job.original_files.all()
 
@@ -101,8 +100,7 @@ def prepare_original_files(job_context):
 
 
 def prepare_dataset(job_context):
-    """ Provision in the Job context for Dataset-driven processors
-    """
+    """Provision in the Job context for Dataset-driven processors"""
     job = job_context["job"]
     job_datasets = job.datasets.all()
 
@@ -304,8 +302,9 @@ def end_job(job_context: Dict, abort=False):
     # different, so leave the original files so that "something
     # different" can use them.
     if (success or job.no_retry) and not abort:
-        # Cleanup Original Files
-        if "original_files" in job_context:
+        # Cleanup Original Files unless "cleanup" is set False. This way we
+        # don't have to keep downloading files in our tests.
+        if "original_files" in job_context and job_context.get("cleanup", True):
             for original_file in job_context["original_files"]:
                 if original_file.needs_processing(job.id):
                     original_file.delete_local_file()
@@ -420,7 +419,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
 
 
 class ProcessorJobError(Exception):
-    """ General processor job error class. """
+    """General processor job error class."""
 
     def __init__(
         self, failure_reason, *, success=None, no_retry=None, retried=None, abort=None, **context
@@ -698,10 +697,10 @@ def handle_processor_exception(job_context, processor_key, ex):
 
 
 def cache_keys(*keys, work_dir_key="work_dir"):
-    """ Decorator to be applied to a pipeline function.
+    """Decorator to be applied to a pipeline function.
     Returns a new function that calls the original one and caches the given
     keys into the `work_dir`. On the next call it will load those keys (if they
-    exist) and add them to the job_context instead of executing the function. """
+    exist) and add them to the job_context instead of executing the function."""
 
     def inner(func):
         # generate a unique name for the cache based on the pipeline name
