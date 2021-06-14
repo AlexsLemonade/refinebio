@@ -228,8 +228,11 @@ def _process_gtf(job_context: Dict) -> Dict:
                     GENE_TO_TRANSCRIPT_TEMPLATE.format(gene_id=gene_id, transcript_id=transcript_id)
                 )
 
-    # Clean up the unfiltered gtf file, which we no longer need.
-    os.remove(job_context["gtf_file_path"])
+    # Clean up the unfiltered gtf file, which we no longer need, unless explicitly told otherwise.
+    # This setting is used in one of the tests where we download an unzipped gtf
+    # from S3 so we don't want to delete it every time.
+    if job_context.get("cleanup_gtf", True):
+        os.remove(job_context["gtf_file_path"])
     job_context["gtf_file_path"] = filtered_gtf_path
     job_context["genes_to_transcripts_path"] = genes_to_transcripts_path
     return job_context
@@ -468,7 +471,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     return job_context
 
 
-def build_transcriptome_index(job_id: int, length="long") -> None:
+def build_transcriptome_index(job_id: int, length="long", cleanup=None) -> None:
     """The main function for the Transcriptome Index Processor.
 
     The steps in this process are as follows:
@@ -480,8 +483,15 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
     to Permanent Storage.
     """
     pipeline = Pipeline(name=PipelineEnum.TX_INDEX.value)
+    initial_job_context = {"job_id": job_id, "length": length, "pipeline": pipeline}
+
+    # When running the tests, don't clean up original files so we don't have to
+    # keep downloading them.
+    if cleanup is not None:
+        initial_job_context["cleanup"] = cleanup
+
     return utils.run_pipeline(
-        {"job_id": job_id, "length": length, "pipeline": pipeline},
+        initial_job_context,
         [
             utils.start_job,
             _compute_paths,

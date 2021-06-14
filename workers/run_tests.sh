@@ -182,6 +182,14 @@ if [ -z "$tag" ] || [ "$tag" = "transcriptome" ]; then
         wget -q -O "$tx_index_test_raw_dir/$gtf_file" \
              "$test_data_repo/$gtf_file"
     fi
+    tx_index_test_raw_dir2="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX/"
+    gtf_file2="Homo_sapiens_testdata.gtf"
+    if [ ! -e "$tx_index_test_raw_dir2/$gtf_file2" ]; then
+        mkdir -p "$tx_index_test_raw_dir2"
+        echo "Downloading second gtf file for Transcriptome Index tests."
+        wget -q -O "$tx_index_test_raw_dir2/$gtf_file2" \
+             "$test_data_repo/$gtf_file2"
+    fi
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "illumina" ]; then
