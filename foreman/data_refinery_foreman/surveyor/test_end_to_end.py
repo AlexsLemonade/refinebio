@@ -766,33 +766,45 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
             def squish_duplicates(data: pd.DataFrame) -> pd.DataFrame:
                 return data.groupby(data.index, sort=False).mean()
 
-            # This file has already been gene-converted with the correct version
-            # of the transcriptome index. We do this because the transcript IDs
-            # from Ensembl change over time but the gene IDs themselves do not,
-            # so we use the gene IDs as a common point of comparison.
-            ref_filename = "/home/user/data_store/reference/ERR1562482_gene_converted_quant.sf"
-            ref = pd.read_csv(ref_filename, delimiter="\t", index_col=0)
+            def remove_versions(data: pd.DataFrame) -> pd.DataFrame:
+                """Remove the version off of a transcript id. We do this
+                because different versions of the worm transcriptome index
+                seem to have different versions for some transcript IDs.
+
+                We can't just do this directly because of transcript ids
+                like B0303.11a.1 & B0303.11a.2 that co-exist in the same
+                transcriptome index, so we only squish the version field
+                when there is exactly one transcript id equal up to version.
+                """
+
+                def remove_version(transcript_id: str) -> str:
+                    split_id = transcript_id.split(".")
+                    if len(split_id) < 3:
+                        return transcript_id
+                    elif len(split_id) > 3:
+                        raise ValueError(
+                            f"Not sure what to do with transcript id {transcript_id} with more than 3 fields"
+                        )
+                    else:
+                        return ".".join(split_id[0:2])
+
+                versionless_ids_count = data.index.to_series().map(remove_version).value_counts()
+
+                data.index = data.index.to_series().map(
+                    lambda x: remove_version(x)
+                    if versionless_ids_count[remove_version(x)] == 1
+                    else x
+                )
+
+                return data
+
+            ref_filename = "/home/user/data_store/reference/ERR1562482_quant.sf"
+            ref = remove_versions(pd.read_csv(ref_filename, delimiter="\t", index_col=0))
             ref_TPM = squish_duplicates(pd.DataFrame({"reference": ref["TPM"]}))
             ref_NumReads = squish_duplicates(pd.DataFrame({"reference": ref["NumReads"]}))
 
-            transcript_to_gene_ids = pd.read_csv(
-                "/home/user/data_store/TRANSCRIPTOME_INDEX/CAENORHABDITIS_ELEGANS/short/genes_to_transcripts.txt",
-                sep="\t",
-                index_col=1,
-                names=["Gene"],
-            )
-
-            def convert_genes(data: pd.DataFrame) -> pd.DataFrame:
-                # Map transcript IDs to gene IDs. We do this because transcript
-                # IDs are not stable from version to version in Ensembl but gene
-                # IDs are.
-                data.index = data.index.to_series().map(
-                    lambda x: transcript_to_gene_ids.loc[x, "Gene"]
-                )
-                return data
-
             output_filename = ComputedFile.objects.filter(filename="quant.sf")[0].absolute_file_path
-            out = convert_genes(pd.read_csv(output_filename, delimiter="\t", index_col=0))
+            out = remove_versions(pd.read_csv(output_filename, delimiter="\t", index_col=0))
             out_TPM = squish_duplicates(pd.DataFrame({"actual": out["TPM"]}))
             out_NumReads = squish_duplicates(pd.DataFrame({"actual": out["NumReads"]}))
 
@@ -803,6 +815,11 @@ class TranscriptomeRedownloadingTestCase(EndToEndTestCase):
                 len(set(ref_TPM.index) & set(out_TPM.index)),
                 0.95 * min(len(ref_TPM), len(out_TPM)),
             )
+
+            # ref_TPM.join(out_TPM, how="outer").to_csv("/home/user/data_store/tpm.csv")
+            # ref_NumReads.join(out_NumReads, how="outer").to_csv(
+            #     "/home/user/data_store/num_reads.csv"
+            # )
 
             (tpm_rho, _) = scipy.stats.spearmanr(ref_TPM.join(out_TPM, how="inner"))
             self.assertGreater(tpm_rho, 0.99)
