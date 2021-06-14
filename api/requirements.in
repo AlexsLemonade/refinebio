@@ -16,6 +16,7 @@ coreapi
 django-elasticsearch-dsl-drf
 # Can't go above 6.X without upgrading elasticsearch
 django-elasticsearch-dsl==6.5.0
+elasticsearch-dsl<7.0.0
 six
 drf_yasg>=1.20.0
 apscheduler
