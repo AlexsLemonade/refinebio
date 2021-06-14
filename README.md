@@ -677,6 +677,35 @@ terraform taint <your-entity-from-state-list>
 And then rerun `deploy.sh` with the same parameters you originally ran it with.
 
 
+### AWS Batch
+
+refine.bio relies on AWS Batch as its job queue and uses it to provision instances.
+AWS Batch has three primary components:
+* Compute Environments:
+  These are what provision EC2 instances for refineb.bio.
+  In this project each Compute Environment can either have one or zero instances.
+  The goal is to have jobs that are run in the same compute environment be run on the same instance, so that data stored on the local disk by a downloader job will be available to the processor job.
+  Only allowing a maximum of one instance per compute environment _almost_ ensures this, however it is possible for an instance to be cycled in between jobs so sometimes the downloader job has to be rerun.
+* Job Queues:
+  These are what track the jobs submitted to AWS Batch and assign them to compute environments.
+  In refine.bio each Job Queue uses a single compute environment, so if two jobs are placed in the same job queue they will be run in the same Compute Environment.
+* Job Definitions:
+  These are what specify the configuration to be used for each job type including what Docker Image will be used, what environment variables will be passed to it, what secrets it can access, and how many vCPUs and RAM it requires.
+
+refine.bio uses three types of job queues:
+* **Compendia Job Queue**:
+  This job queue is for running very large compendia-building jobs that require a large instance. The Compute Environment assigned to this queue is configured to provision very large instances.
+* **Smasher Job Queue**:
+  This job queue is used for running smashing jobs.
+  Having a dedicated queue for smasher jobs is useful because it ensure they won't be blocked by processing jobs and the instance provisioned by its compute environment has enough resources to run of these jobs at a time and no more.
+* **Worker Job Queues**:
+  This is the only job queue with multiple instances.
+  These do the general processing, so if there is a sufficient volume of work to necessitate more than one instance the Foreman will distribute jobs to more and more queues until all the queues are in use.
+  The lowest index queue will be assigned Surveyor and Downloader jobs if it has capacity for them, if not the next lowest index queue with capacity will be chosen.
+  Processor jobs will always be assigned to the same job queue that ran their downloader job.
+
+
+
 ### Running Jobs
 
 Jobs can be submitted by running the following commands on the Foreman instance.
