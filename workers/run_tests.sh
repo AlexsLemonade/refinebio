@@ -481,6 +481,15 @@ if [ -z "$tag" ] || [ "$tag" = "qn" ]; then
         wget -q -O "$qn_test_data_6" \
              "$test_data_repo/$qn_name"
     fi
+    qn_name="7.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_7="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_7" ]; then
+        mkdir -p "$qn_test_raw_dir"
+        echo "Downloading QN for tests."
+        wget -q -O "$qn_test_data_7" \
+             "$test_data_repo/$qn_name"
+    fi
 fi
 if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     # Download RNASEQ and MICROARRAY data from prod S3
