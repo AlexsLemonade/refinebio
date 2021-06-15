@@ -10,6 +10,7 @@ from io import StringIO
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
 
+import pandas as pd
 import vcr
 
 from data_refinery_common.models import (
@@ -45,7 +46,7 @@ def prepare_job():
     result = ComputationalResult()
     result.save()
 
-    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=1001)
+    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS", taxonomy_id=9606)
 
     sample = Sample()
     sample.accession_code = "GSM1237810"
@@ -92,10 +93,8 @@ def prepare_job():
     esa.sample = sample
     esa.save()
 
-    assoc = SampleComputedFileAssociation()
-    assoc.sample = sample
-    assoc.computed_file = computed_file
-    assoc.save()
+    result = ComputationalResult()
+    result.save()
 
     sra = SampleResultAssociation()
     sra.sample = sample
@@ -109,6 +108,11 @@ def prepare_job():
     computed_file.size_in_bytes = 123
     computed_file.is_smashable = True
     computed_file.save()
+
+    assoc = SampleComputedFileAssociation()
+    assoc.sample = sample
+    assoc.computed_file = computed_file
+    assoc.save()
 
     computed_file = ComputedFile()
     computed_file.filename = "GSM1237812_S97-PURE.DAT"
@@ -125,10 +129,9 @@ def prepare_job():
 
     ds = Dataset()
     ds.data = {"GSE51081": ["GSM1237810", "GSM1237812"]}
-    ds.aggregate_by = "EXPERIMENT"  # [ALL or SPECIES or EXPERIMENT]
-    ds.scale_by = "STANDARD"  # [NONE or MINMAX or STANDARD or ROBUST]
+    ds.aggregate_by = "EXPERIMENT"
+    ds.scale_by = "STANDARD"
     ds.email_address = "null@derp.com"
-    # ds.email_address = "miserlou+heyo@gmail.com"
     ds.quantile_normalize = False
     ds.save()
 
@@ -153,7 +156,7 @@ def prepare_dual_tech_job():
     result = ComputationalResult()
     result.save()
 
-    gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS", taxonomy_id=1001)
+    gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS", taxonomy_id=9031)
 
     sample = Sample()
     sample.accession_code = "GSM1487313"
@@ -225,10 +228,12 @@ def prepare_dual_tech_job():
     return pj
 
 
+def _to_accession_code_dict(d):
+    return {k: set(map(lambda x: x.accession_code, v)) for k, v in d.items()}
+
+
 class SmasherTestCase(TransactionTestCase):
-    @tag("smasher")
-    def test_smasher(self):
-        """ Main tester. """
+    def _test_all_scale_types(self, ag_type, ag_specific_tests):
         job = prepare_job()
 
         anno_samp = Sample.objects.get(accession_code="GSM1237810")
@@ -243,152 +248,196 @@ class SmasherTestCase(TransactionTestCase):
         self.assertEqual(len(job_context_check["samples"]), 2)
         self.assertEqual(len(job_context_check["experiments"]), 1)
 
-        # Smoke test while we're here..
-        dataset.get_samples_by_experiment()
-        dataset.get_samples_by_species()
-        dataset.get_aggregated_samples()
-
-        for ag_type in ["ALL", "EXPERIMENT", "SPECIES"]:
-            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
-            dataset.aggregate_by = ag_type
-            dataset.save()
-
-            print("Smashing " + ag_type)
-            final_context = smasher.smash(job.pk, upload=False)
-            # Make sure the file exists and is a valid size
-            self.assertNotEqual(os.path.getsize(final_context["output_file"]), 0)
-            self.assertEqual(final_context["dataset"].is_processed, True)
-
-            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
-            dataset.is_processed = False
-            dataset.save()
-
-            # Cleanup
-            os.remove(final_context["output_file"])
-            job.start_time = None
-            job.end_time = None
-            job.save()
+        print(f"\n######\n### {ag_type}\n######")
 
         for scale_type in ["NONE", "MINMAX", "STANDARD", "ROBUST"]:
             dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
-            dataset.aggregate_by = "EXPERIMENT"
+            dataset.aggregate_by = ag_type
             dataset.scale_by = scale_type
             dataset.save()
 
-            print("Smashing " + scale_type)
+            print(f"\n###### Smashing with scale type {scale_type}\n")
+
             final_context = smasher.smash(job.pk, upload=False)
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context["output_file"]), 0)
             self.assertEqual(final_context["dataset"].is_processed, True)
 
+            final_frame = final_context.get("final_frame")
+
+            # Sanity test that these frames can be computed upon
+            final_frame.mean(axis=1)
+            final_frame.min(axis=1)
+            final_frame.max(axis=1)
+            final_frame.std(axis=1)
+            final_frame.median(axis=1)
+
+            zf = zipfile.ZipFile(final_context["output_file"])
+
+            ag_specific_tests({"final_frame": final_frame, "zipfile": zf})
+
             dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
             dataset.is_processed = False
             dataset.save()
 
-            # Cleanup
             os.remove(final_context["output_file"])
             job.start_time = None
             job.end_time = None
             job.save()
 
-        # Stats
-        for scale_type in ["MINMAX", "STANDARD"]:
-            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
-            dataset.aggregate_by = "EXPERIMENT"
-            dataset.scale_by = scale_type
-            dataset.save()
-
-            print("###")
-            print("# " + scale_type)
-            print("###")
-
-            final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context.get("final_frame")
-
-            # Sanity test that these frames can be computed upon
-            final_frame.mean(axis=1)
-            final_frame.min(axis=1)
-            final_frame.max(axis=1)
-            final_frame.std(axis=1)
-            final_frame.median(axis=1)
-
-            zf = zipfile.ZipFile(final_context["output_file"])
+    @tag("smasher")
+    def test_smasher_experiment_aggregation(self):
+        def experiment_tests(args):
+            final_frame = args["final_frame"]
+            zf = args["zipfile"]
             namelist = zf.namelist()
 
-            self.assertFalse(True in final_frame.index.str.contains("AFFX-"))
-            self.assertTrue("GSE51081/metadata_GSE51081.tsv" in namelist)
-            self.assertTrue("aggregated_metadata.json" in namelist)
-            self.assertTrue("README.md" in namelist)
-            self.assertTrue("LICENSE.TXT" in namelist)
-            self.assertTrue("GSE51081/GSE51081.tsv" in namelist)
+            self.assertNotIn(True, final_frame.index.str.contains("AFFX-"))
+            self.assertIn("GSE51081/metadata_GSE51081.tsv", namelist)
+            self.assertIn("aggregated_metadata.json", namelist)
+            self.assertIn("GSE51081/GSE51081.tsv", namelist)
+            with zf.open("GSE51081/GSE51081.tsv") as f:
+                tsv = pd.read_csv(f, delimiter="\t")
+                # Check that the columns match, and that we filtered one of the files
+                self.assertEqual(list(tsv), ["Gene", "GSM1237810", "GSM1237812"])
 
-            os.remove(final_context["output_file"])
-            job.start_time = None
-            job.end_time = None
-            job.save()
+            self.assertIn("README.md", namelist)
+            with open("/home/user/README_DATASET.md", "r") as ex, zf.open("README.md") as ac:
+                self.assertEqual(ex.read(), ac.read().decode())
 
-        for scale_type in ["MINMAX", "STANDARD"]:
-            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
-            dataset.aggregate_by = "SPECIES"
-            dataset.scale_by = scale_type
-            dataset.save()
+            self.assertIn("LICENSE.TXT", namelist)
+            with open("/home/user/LICENSE_DATASET.txt", "r") as ex, zf.open("LICENSE.TXT") as ac:
+                self.assertEqual(ex.read(), ac.read().decode())
 
-            print("###")
-            print("# " + scale_type)
-            print("###")
+        self._test_all_scale_types("EXPERIMENT", experiment_tests)
 
-            final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context.get("final_frame")
+    @tag("smasher")
+    def test_get_samples_by_experiment(self):
+        job = prepare_job()
+        relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
+        dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
 
-            # Sanity test that these frames can be computed upon
-            final_frame.mean(axis=1)
-            final_frame.min(axis=1)
-            final_frame.max(axis=1)
-            final_frame.std(axis=1)
-            final_frame.median(axis=1)
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_samples_by_experiment()),
+            {"GSE51081": {"GSM1237810", "GSM1237812"}},
+        )
 
-            zf = zipfile.ZipFile(final_context["output_file"])
+        dataset.aggregate_by = "EXPERIMENT"
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_aggregated_samples()),
+            _to_accession_code_dict(dataset.get_samples_by_experiment()),
+        )
+
+        job = prepare_dual_tech_job()
+        dataset = Dataset()
+        dataset.data = {"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]}
+        dataset.aggregate_by = "EXPERIMENT"
+        dataset.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = dataset
+        pjda.save()
+
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_samples_by_experiment()),
+            {"GSE1487313": {"GSM1487313"}, "SRP332914": {"SRR332914"}},
+        )
+
+        dataset.aggregate_by = "EXPERIMENT"
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_aggregated_samples()),
+            _to_accession_code_dict(dataset.get_samples_by_experiment()),
+        )
+
+    @tag("smasher")
+    def test_smasher_species_aggregation(self):
+        def species_tests(args):
+            final_frame = args["final_frame"]
+            zf = args["zipfile"]
             namelist = zf.namelist()
 
-            self.assertTrue("HOMO_SAPIENS/metadata_HOMO_SAPIENS.tsv" in namelist)
-            self.assertTrue("aggregated_metadata.json" in namelist)
-            self.assertTrue("README.md" in namelist)
-            self.assertTrue("LICENSE.TXT" in namelist)
-            self.assertTrue("HOMO_SAPIENS/HOMO_SAPIENS.tsv" in namelist)
+            self.assertIn("HOMO_SAPIENS/metadata_HOMO_SAPIENS.tsv", namelist)
+            self.assertIn("aggregated_metadata.json", namelist)
+            self.assertIn("HOMO_SAPIENS/HOMO_SAPIENS.tsv", namelist)
+            with zf.open("HOMO_SAPIENS/HOMO_SAPIENS.tsv") as f:
+                tsv = pd.read_csv(f, delimiter="\t")
+                # Check that the columns match, and that we filtered one of the files
+                self.assertEqual(list(tsv), ["Gene", "GSM1237810", "GSM1237812"])
 
-            os.remove(final_context["output_file"])
-            job.start_time = None
-            job.end_time = None
-            job.save()
+            self.assertIn("README.md", namelist)
+            with open("/home/user/README_DATASET.md", "r") as ex, zf.open("README.md") as ac:
+                self.assertEqual(ex.read(), ac.read().decode())
 
-        for scale_type in ["MINMAX", "STANDARD"]:
-            dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
-            dataset.aggregate_by = "ALL"
-            dataset.scale_by = scale_type
-            dataset.save()
+            self.assertIn("LICENSE.TXT", namelist)
+            with open("/home/user/LICENSE_DATASET.txt", "r") as ex, zf.open("LICENSE.TXT") as ac:
+                self.assertEqual(ex.read(), ac.read().decode())
 
-            print("###")
-            print("# " + scale_type)
-            print("###")
+        self._test_all_scale_types("SPECIES", species_tests)
 
-            final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context.get("final_frame")
+    @tag("smasher")
+    def test_get_samples_by_species(self):
+        job = prepare_job()
+        relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
+        dataset = Dataset.objects.filter(id__in=relations.values("dataset_id")).first()
+        dataset.aggregate_by = "SPECIES"
+        dataset.save()
 
-            # Sanity test that these frames can be computed upon
-            final_frame.mean(axis=1)
-            final_frame.min(axis=1)
-            final_frame.max(axis=1)
-            final_frame.std(axis=1)
-            final_frame.median(axis=1)
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_samples_by_species()),
+            {"HOMO_SAPIENS": {"GSM1237810", "GSM1237812"}},
+        )
 
-            zf = zipfile.ZipFile(final_context["output_file"])
+        self.assertEqual(dataset.aggregate_by, "SPECIES")
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_aggregated_samples()),
+            _to_accession_code_dict(dataset.get_samples_by_species()),
+        )
+
+        job = prepare_dual_tech_job()
+        dataset = Dataset()
+        dataset.data = {"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]}
+        dataset.aggregate_by = "SPECIES"
+        dataset.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = dataset
+        pjda.save()
+
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_samples_by_species()),
+            {"GALLUS_GALLUS": {"GSM1487313", "SRR332914"}},
+        )
+
+        dataset.aggregate_by = "SPECIES"
+        self.assertEqual(
+            _to_accession_code_dict(dataset.get_aggregated_samples()),
+            _to_accession_code_dict(dataset.get_samples_by_species()),
+        )
+
+    @tag("smasher")
+    def test_smasher_all_aggregation(self):
+        def all_tests(args):
+            final_frame = args["final_frame"]
+            zf = args["zipfile"]
             namelist = zf.namelist()
 
-            self.assertTrue("ALL/metadata_ALL.tsv" in namelist)
-            self.assertTrue("aggregated_metadata.json" in namelist)
-            self.assertTrue("README.md" in namelist)
-            self.assertTrue("LICENSE.TXT" in namelist)
-            self.assertTrue("ALL/ALL.tsv" in namelist)
+            self.assertIn("ALL/metadata_ALL.tsv", namelist)
+            self.assertIn("aggregated_metadata.json", namelist)
+            self.assertIn("ALL/ALL.tsv", namelist)
+            with zf.open("ALL/ALL.tsv") as f:
+                tsv = pd.read_csv(f, delimiter="\t")
+                # Check that the columns match, and that we filtered one of the files
+                self.assertEqual(list(tsv), ["Gene", "GSM1237810", "GSM1237812"])
+
+            self.assertIn("README.md", namelist)
+            with open("/home/user/README_DATASET.md", "r") as ex, zf.open("README.md") as ac:
+                self.assertEqual(ex.read(), ac.read().decode())
+
+            self.assertIn("LICENSE.TXT", namelist)
+            with open("/home/user/LICENSE_DATASET.txt", "r") as ex, zf.open("LICENSE.TXT") as ac:
+                self.assertEqual(ex.read(), ac.read().decode())
 
             with zf.open("aggregated_metadata.json") as aggregated_metadata:
                 metadata_str = aggregated_metadata.read().decode()
@@ -397,14 +446,11 @@ class SmasherTestCase(TransactionTestCase):
                 # should still be providing this value as False
                 self.assertFalse(parsed_metadata["quantile_normalized"])
 
-            os.remove(final_context["output_file"])
-            job.start_time = None
-            job.end_time = None
-            job.save()
+        self._test_all_scale_types("ALL", all_tests)
 
     @tag("smasher")
     def test_get_results(self):
-        """ Test our ability to collect the appropriate samples. """
+        """Test our ability to collect the appropriate samples."""
 
         sample = Sample()
         sample.accession_code = "GSM45588"
@@ -447,7 +493,7 @@ class SmasherTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_fail(self):
-        """ Test our ability to fail """
+        """Test our ability to fail"""
 
         result = ComputationalResult()
         result.save()
@@ -502,7 +548,7 @@ class SmasherTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
-        """ Smashing together with 'ALL' with different species is a really weird behavior.
+        """Smashing together with 'ALL' with different species is a really weird behavior.
         This test isn't really testing a normal case, just make sure that it's marking the
         unsmashable files.
         """
@@ -785,7 +831,7 @@ class SmasherTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_no_smash_dupe_two(self):
-        """ Tests the SRP051449 case, where the titles collide. Also uses a real QN target file."""
+        """Tests the SRP051449 case, where the titles collide. Also uses a real QN target file."""
 
         job = ProcessorJob()
         job.pipeline_applied = "SMASHER"
@@ -1190,7 +1236,7 @@ class SmasherTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_sanity_imports(self):
-        """ Sci imports can be tricky, make sure this works. """
+        """Sci imports can be tricky, make sure this works."""
 
         import numpy  # noqa
         import scipy  # noqa
