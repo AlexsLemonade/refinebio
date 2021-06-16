@@ -103,6 +103,10 @@ ARG SYSTEM_VERSION
 
 ENV SYSTEM_VERSION $SYSTEM_VERSION
 
+RUN add-apt-repository universe
+RUN apt update
+RUN apt-get install -y tree
+
 USER user
 
 COPY workers/ .
