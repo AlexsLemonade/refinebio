@@ -515,6 +515,6 @@ for image in $worker_images; do
                --env AWS_SECRET_ACCESS_KEY \
                --volume "$volume_directory":/home/user/data_store \
                --memory=5G \
-               "$image_name" bash -c "tree /home/user/data_store && $test_command"
+               "$image_name" bash -c "$test_command"
     fi
 done
