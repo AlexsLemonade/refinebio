@@ -349,8 +349,6 @@ jobs:
 
       - name: Run Salmon tests
         run: |
-          sudo rm -rf workers/test_volume
-          mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t salmon
           .github/scripts/upload_test_coverage.sh workers
