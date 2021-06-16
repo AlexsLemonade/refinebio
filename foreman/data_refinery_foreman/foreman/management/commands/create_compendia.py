@@ -137,7 +137,7 @@ def create_job_for_organism(organisms: List[Organism], svd_algorithm="ARPACK"):
     dataset.data = get_dataset(organisms)
     dataset.scale_by = "NONE"
     dataset.aggregate_by = "SPECIES"
-    dataset.quantile_normalize = False
+    dataset.quantile_normalize = True
     dataset.quant_sf_only = False
     dataset.svd_algorithm = svd_algorithm
     dataset.save()

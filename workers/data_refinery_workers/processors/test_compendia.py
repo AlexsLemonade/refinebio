@@ -1,4 +1,6 @@
+import json
 import os
+import zipfile
 
 from django.test import TransactionTestCase, tag
 
@@ -149,7 +151,7 @@ class CompendiaTestCase(TransactionTestCase):
         dset.scale_by = "NONE"
         dset.aggregate_by = "SPECIES"
         dset.svd_algorithm = "ARPACK"
-        dset.quantile_normalize = False
+        dset.quantile_normalize = True
         dset.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -311,7 +313,7 @@ class CompendiaTestCase(TransactionTestCase):
         dset.scale_by = "NONE"
         dset.aggregate_by = "SPECIES"
         dset.svd_algorithm = "ARPACK"
-        dset.quantile_normalize = False
+        dset.quantile_normalize = True
         dset.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -342,3 +344,12 @@ class CompendiaTestCase(TransactionTestCase):
 
         # It's maybe not worth asserting this until we're sure the behavior is correct
         # self.assertEqual(final_context['merged_qn'].shape, (9045, 830))
+
+        zf = zipfile.ZipFile(
+            final_context["compendium_result"].result.computedfile_set.first().absolute_file_path
+        )
+        with zf.open("aggregated_metadata.json") as f:
+            metadata = json.load(f)
+
+            # Make sure the data were quantile normalized
+            self.assertTrue(metadata.get("quantile_normalized"))
