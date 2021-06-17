@@ -42,7 +42,7 @@ class QNRefTestCase(TransactionTestCase):
             sample.accession_code = code
             sample.title = code
             sample.platform_accession_code = "A-MEXP-1171"
-            sample.manufacturer = "SLIPPERY DICK'S DISCOUNT MICROARRAYS"
+            sample.manufacturer = "AFFYMETRIX"
             sample.organism = homo_sapiens
             sample.technology = "MICROARRAY"
             sample.is_processed = True
@@ -134,7 +134,7 @@ class QNRefTestCase(TransactionTestCase):
             sample.accession_code = code
             sample.title = code
             sample.platform_accession_code = "A-MEXP-1171"
-            sample.manufacturer = "SLIPPERY DICK'S DISCOUNT MICROARRAYS"
+            sample.manufacturer = "AFFYMETRIX"
             sample.organism = homo_sapiens
             sample.technology = "MICROARRAY"
             sample.is_processed = True
