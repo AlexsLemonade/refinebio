@@ -519,7 +519,7 @@ If you want to quantile normalize combined outputs, you'll first need to create 
 To create QN targets for all organisms with enough processed samples:
 
 ```bash
-./run_management_command dispatch_qn_jobs
+./run_management_command.sh dispatch_qn_jobs
 ```
 
 This will at some point move to the foreman and then it will take a list of organisms to create QN targets for.
