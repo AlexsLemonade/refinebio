@@ -14,8 +14,7 @@ from data_refinery_common.models import (
 
 logger = get_and_configure_logger(__name__)
 
-# MIN = 100
-MIN = 50
+MIN = 100
 
 
 class Command(BaseCommand):
