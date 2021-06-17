@@ -17,10 +17,15 @@ class ImportTestCase(TestCase):
         import data_refinery_foreman.foreman.management.commands.test_retry_samples
         import data_refinery_foreman.foreman.management.commands.test_run_tximport
         import data_refinery_foreman.foreman.management.commands.test_update_experiment_metadata
-        import data_refinery_foreman.foreman.test_main
+        import data_refinery_foreman.foreman.test_downloader_job_manager
+        import data_refinery_foreman.foreman.test_end_to_end
+        import data_refinery_foreman.foreman.test_job_control
+        import data_refinery_foreman.foreman.test_job_requeuing
+        import data_refinery_foreman.foreman.test_processor_job_manager
+        import data_refinery_foreman.foreman.test_survey_job_manager
+        import data_refinery_foreman.foreman.test_utils
         import data_refinery_foreman.surveyor.management.commands.test_unsurvey
         import data_refinery_foreman.surveyor.test_array_express
-        import data_refinery_foreman.surveyor.test_end_to_end
         import data_refinery_foreman.surveyor.test_external_source
         import data_refinery_foreman.surveyor.test_geo
         import data_refinery_foreman.surveyor.test_harmony
