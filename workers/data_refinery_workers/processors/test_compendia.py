@@ -312,3 +312,104 @@ class CompendiaTestCase(TransactionTestCase):
 
             # Make sure the data were quantile normalized
             self.assertTrue(metadata.get("quantile_normalized"))
+
+    @tag("compendia")
+    def test_create_compendia_microarray_only(self):
+        """
+        Make sure that we can actually create a compendium with just microarray samples.
+        """
+        job = ProcessorJob()
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+        job.save()
+
+        # MICROARRAY TECH
+        experiment = Experiment()
+        experiment.accession_code = "GSE1234"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        qn_target = ComputedFile()
+        qn_target.filename = "danio_target.tsv"
+        qn_target.absolute_file_path = "/home/user/data_store/QN/danio_target.tsv"
+        qn_target.is_qn_target = True
+        qn_target.size_in_bytes = "12345"
+        qn_target.sha1 = "aabbccddeeff"
+        qn_target.result = result
+        qn_target.save()
+
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1, qn_target=result)
+        danio_rerio.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.data = {}
+        cra.data["organism_id"] = danio_rerio.id
+        cra.data["is_qn"] = True
+        cra.result = result
+        cra.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        micros = []
+        for file in os.listdir("/home/user/data_store/raw/TEST/MICROARRAY/"):
+
+            if "microarray.txt" in file:
+                continue
+
+            create_sample_for_experiment(
+                {
+                    "organism": danio_rerio,
+                    "accession_code": file,
+                    "technology": "MICROARRAY",
+                    "filename": file,
+                    "data_dir": "/home/user/data_store/raw/TEST/MICROARRAY/",
+                },
+                experiment,
+            )
+
+            micros.append(file)
+
+        dset = Dataset()
+        dset.data = {"GSE1234": micros}
+        dset.scale_by = "NONE"
+        dset.aggregate_by = "SPECIES"
+        dset.svd_algorithm = "ARPACK"
+        dset.quantile_normalize = True
+        dset.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = dset
+        pjda.save()
+
+        final_context = create_compendia.create_compendia(job.id)
+
+        # Verify result
+        self.assertEqual(final_context["compendium_result"].result.computedfile_set.count(), 1)
+        for file in final_context["compendium_result"].result.computedfile_set.all():
+            self.assertTrue(os.path.exists(file.absolute_file_path))
+
+        # test compendium_result
+        self.assertEqual(final_context["compendium_result"].svd_algorithm, "ARPACK")
+        self.assertEqual(
+            final_context["compendium_result"].primary_organism.name,
+            final_context["organism_name"],
+        )
+        self.assertEqual(final_context["compendium_result"].primary_organism.name, "DANIO_RERIO")
+        self.assertEqual(final_context["compendium_result"].organisms.count(), 1)
+
+        zf = zipfile.ZipFile(
+            final_context["compendium_result"].result.computedfile_set.first().absolute_file_path
+        )
+        with zf.open("aggregated_metadata.json") as f:
+            metadata = json.load(f)
+
+            self.assertFalse(metadata.get("quant_sf_only"))
+            # 420 microarray
+            self.assertEqual(metadata.get("num_samples"), 420)
+            self.assertEqual(metadata.get("num_experiments"), 1)
+
+            # Make sure the data were quantile normalized
+            self.assertTrue(metadata.get("quantile_normalized"))
