@@ -513,7 +513,7 @@ Or for more information run:
 If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism or organisms. This can be done in a production environment by running the following on the Foreman instance:
 
 ```bash
-./run_management_command dispatch_qn_jobs --organisms=DANIO_RERIO,HOMO_SAPIENS
+./run_management_command.sh dispatch_qn_jobs --organisms=DANIO_RERIO,HOMO_SAPIENS
 ```
 
 To create QN targets for all organisms with enough processed samples:
