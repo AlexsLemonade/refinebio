@@ -275,14 +275,30 @@ class CompendiaTestCase(TransactionTestCase):
         self.assertEqual(final_context["compendium_result"].primary_organism.name, "DANIO_RERIO")
         self.assertEqual(final_context["compendium_result"].organisms.count(), 1)
 
+        self.assertEqual(len(final_context["filtered_samples"]), 10)
+
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])
         self.assertEqual(
             final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"], "GSE5678",
         )
+        self.assertIn(
+            "This sample did not have a processed file",
+            final_context["filtered_samples"]["GSM1487222"]["reason"],
+        )
 
-        # It's maybe not worth asserting this until we're sure the behavior is correct
-        # self.assertEqual(final_context['merged_qn'].shape, (9045, 830))
+        # check that the 9 files with lots of missing measurements were filtered
+        self.assertEqual(
+            len(
+                list(
+                    filter(
+                        lambda x: "less than 50% present values" in x["reason"],
+                        final_context["filtered_samples"].values(),
+                    )
+                )
+            ),
+            9,
+        )
 
         zf = zipfile.ZipFile(
             final_context["compendium_result"].result.computedfile_set.first().absolute_file_path
@@ -291,8 +307,11 @@ class CompendiaTestCase(TransactionTestCase):
             metadata = json.load(f)
 
             self.assertFalse(metadata.get("quant_sf_only"))
-            # 420 microarray + 419 RNA seq (+1 that should be filtered)
-            self.assertEqual(metadata.get("num_samples"), 839)
+            # 420 microarray + 420 RNA seq
+            # -1 that is filtered for a missing file
+            # -9 that are filtered for having less than 50% present values
+            self.assertEqual(metadata.get("num_samples"), 830)
+
             self.assertEqual(metadata.get("num_experiments"), 2)
 
             # Make sure the data were quantile normalized
