@@ -1,3 +1,4 @@
+from datetime import timedelta
 from os import path
 from time import sleep
 from unittest import TestCase
@@ -171,6 +172,7 @@ class SmasherEndToEndTestCase(TestCase):
             dataset_path,
             "testendtoend@example.com",
             dataset_dict={"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]},
+            timeout=timedelta(minutes=15),
         )
         self.assertTrue(path.exists(dataset_path))
 
