@@ -20,3 +20,7 @@ for batch_queue_name in AWS_BATCH_QUEUE_ALL_NAMES:
             list_jobs_dict = batch.list_jobs(
                 jobQueue=batch_queue_name, jobStatus=status, nextToken=list_jobs_dict["nextToken"],
             )
+
+            for job in list_jobs_dict["jobSummaryList"]:
+                print("Deleting job: " + job["jobId"])
+                batch.terminate_job(jobId=job["jobId"], reason="kill_all_jobs")
