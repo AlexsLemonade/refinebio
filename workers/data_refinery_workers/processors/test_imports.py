@@ -25,12 +25,12 @@ class ImportTestCase(TestCase):
     @tag("illumina")
     def test_illumina_imports(self):
         # Make sure we can import the illumina tests
-        import data_refinery_workers.processors.test_geo
+        import data_refinery_workers.processors.test_illumina
 
     @tag("agilent")
     def test_agilent_imports(self):
         # Make sure we can import the agilent tests
-        import data_refinery_workers.processors.test_geo
+        import data_refinery_workers.processors.test_agilent
 
     @tag("affymetrix")
     def test_affymetrix_imports(self):
