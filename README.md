@@ -696,7 +696,7 @@ refine.bio uses three types of job queues:
   This job queue is for running very large compendia-building jobs that require a large instance. The Compute Environment assigned to this queue is configured to provision very large instances.
 * **Smasher Job Queue**:
   This job queue is used for running smashing jobs.
-  Having a dedicated queue for smasher jobs is useful because it ensure they won't be blocked by processing jobs and the instance provisioned by its compute environment has enough resources to run of these jobs at a time and no more.
+  Having a dedicated queue for smasher jobs is useful because it ensure they won't be blocked by processing jobs and the instance provisioned by its compute environment has enough resources to run one of these jobs at a time and no more.
 * **Worker Job Queues**:
   This is the only job queue with multiple instances.
   These do the general processing, so if there is a sufficient volume of work to necessitate more than one instance the Foreman will distribute jobs to more and more queues until all the queues are in use.
