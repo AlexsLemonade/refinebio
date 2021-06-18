@@ -193,7 +193,8 @@ variable "smasher_volume_size_in_gb" {
 }
 
 variable "num_workers" {
-  default = 5
+  # For now err on the side of inexpensive
+  default = 1
 }
 
 variable "batch_use_on_demand_instances" {

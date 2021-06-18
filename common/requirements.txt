@@ -5,9 +5,9 @@
 #    pip-compile requirements.in
 #
 asgiref==3.3.4            # via django
-boto3==1.17.92            # via -r requirements.in
-botocore==1.20.92         # via boto3, s3transfer
-certifi==2021.5.30        # via elasticsearch, requests
+boto3==1.17.93            # via -r requirements.in
+botocore==1.20.93         # via boto3, s3transfer
+certifi==2021.5.30        # via requests
 chardet==4.0.0            # via requests
 coverage==5.5             # via -r requirements.in
 daiquiri==3.0.0           # via -r requirements.in
@@ -17,8 +17,8 @@ django-elasticsearch-dsl==6.5.0  # via -r requirements.in, django-elasticsearch-
 django-nine==0.2.4        # via django-elasticsearch-dsl-drf
 django==3.2.4             # via -r requirements.in, django-nine, djangorestframework
 djangorestframework==3.12.4  # via -r requirements.in, django-elasticsearch-dsl-drf
-elasticsearch-dsl==7.3.0  # via -r requirements.in, django-elasticsearch-dsl, django-elasticsearch-dsl-drf
-elasticsearch==7.13.1     # via django-elasticsearch-dsl-drf, elasticsearch-dsl
+elasticsearch-dsl==6.4.0  # via -r requirements.in, django-elasticsearch-dsl, django-elasticsearch-dsl-drf
+elasticsearch==6.8.2      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
 idna==2.10                # via requests, yarl
 jmespath==0.10.0          # via boto3, botocore
 multidict==5.1.0          # via yarl
