@@ -24,21 +24,10 @@ fi
 # move up a level
 cd ..
 
-# Ensure that Nomad is running first
-# The -f option in `pgrep` means that pgrep checks the full command line
-if ! pgrep -f test_nomad > /dev/null; then
-    echo "You must start the nomad test environment first with:" >&2
-    echo "sudo -E ./scripts/run_nomad.sh -e test" >&2
-    exit 1
-# Then ensure postgres is running
-elif ! [ "$(docker ps --filter name=drdb -q)" ]; then
+# First ensure postgres is running
+if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
     echo "./scripts/run_postgres.sh" >&2
-    exit 1
-# Then ensure elasticsearch is running
-elif ! [ "$(docker ps --filter name=dres -q)" ]; then
-    echo "You must start Elasticsearch first with:" >&2
-    echo "./scripts/run_es.sh" >&2
     exit 1
 fi
 
@@ -46,8 +35,6 @@ fi
 
 . ./scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
-ES_HOST_IP=$(get_docker_es_ip_address)
-HOST_IP=$(get_ip_address || echo 127.0.0.1)
 
 # Only run interactively if we are on a TTY
 if [ -t 1 ]; then
@@ -56,8 +43,6 @@ fi
 
 docker run -t $INTERACTIVE \
        --add-host=database:"$DB_HOST_IP" \
-       --add-host=nomad:"$HOST_IP" \
-       --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file foreman/environments/test \
        --volume "$volume_directory":/home/user/data_store \
        ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage --exclude-tag=manual "$@")"

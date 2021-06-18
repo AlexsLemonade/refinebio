@@ -31,7 +31,6 @@ setup(
         "requests>=2.10.1",
         "retrying>=1.3.3",
         "psycopg2-binary>=2.7.5",
-        "python-nomad>=0.9.0",
     ],
     license="BSD License",
     description="Common functionality to be shared between Data Refinery sub-projects.",

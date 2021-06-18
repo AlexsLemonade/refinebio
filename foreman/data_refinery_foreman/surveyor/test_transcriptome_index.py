@@ -12,7 +12,7 @@ from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeInde
 
 class SurveyTestCase(TestCase):
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey.yaml")
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey(self, mock_send_job):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
@@ -152,7 +152,7 @@ class SurveyTestCase(TestCase):
             urllib.request.urlopen(file.source_url)
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey_fungi.yaml")
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey_fungi(self, mock_send_job):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
@@ -183,7 +183,7 @@ class SurveyTestCase(TestCase):
         Organism.objects.get(name="CANDIDA_ALBICANS", taxonomy_id=5476)
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey_bacteria.yaml")
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey_bacteria(self, mock_send_job):
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
@@ -216,7 +216,7 @@ class SurveyTestCase(TestCase):
     @vcr.use_cassette(
         "/home/user/data_store/cassettes/surveyor.transcriptome.survey_bacteria_none.yaml"
     )
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey_bacteria_none(self, mock_send_job):
         """When surveying fungi an organism_name must be supplied."""
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
@@ -238,7 +238,7 @@ class SurveyTestCase(TestCase):
     @vcr.use_cassette(
         "/home/user/data_store/cassettes/surveyor.transcriptome.survey_fungi_none.yaml"
     )
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey_fungi_none(self, mock_send_job):
         """When surveying fungi an organism_name must be supplied."""
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")

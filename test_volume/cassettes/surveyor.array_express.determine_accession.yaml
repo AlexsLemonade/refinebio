@@ -9,7 +9,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/samples
   response:
@@ -67,7 +67,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:28 GMT
+      - Mon, 03 May 2021 16:25:30 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -93,7 +93,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-669/samples
   response:
@@ -268,7 +268,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:30 GMT
+      - Mon, 03 May 2021 16:25:32 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -294,7 +294,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2215/samples
   response:
@@ -355,7 +355,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:31 GMT
+      - Mon, 03 May 2021 16:25:33 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -381,7 +381,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2288/samples
   response:
@@ -567,7 +567,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:32 GMT
+      - Mon, 03 May 2021 16:25:35 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -593,7 +593,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381/samples
   response:
@@ -614,7 +614,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:34 GMT
+      - Mon, 03 May 2021 16:25:36 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -640,7 +640,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-6739/samples
   response:
@@ -719,7 +719,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:34 GMT
+      - Mon, 03 May 2021 16:25:37 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:

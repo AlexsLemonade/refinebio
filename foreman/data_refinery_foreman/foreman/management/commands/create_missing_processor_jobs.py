@@ -13,22 +13,9 @@ from data_refinery_common.job_management import (
     create_processor_jobs_for_original_files,
 )
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import DownloaderJob, ProcessorJob
+from data_refinery_common.models import DownloaderJob
 
 logger = get_and_configure_logger(__name__)
-
-
-def find_volume_index_for_dl_job(job: DownloaderJob) -> int:
-    pjs = ProcessorJob.objects.filter(worker_id=job.worker_id)
-
-    if pjs:
-        return pjs.first().volume_index
-    else:
-        logger.warn(
-            "Could not determine what volume index a downloader job was run on",
-            downloader_job=job.id,
-        )
-        raise ValueError()
 
 
 class Command(BaseCommand):
@@ -55,10 +42,7 @@ class Command(BaseCommand):
                             sample_accession=sample_object.accession_code,
                             sample_id=sample_object.id,
                         )
-                        volume_index = find_volume_index_for_dl_job(dl_job)
-                        create_processor_job_for_original_files(
-                            original_files, dl_job, volume_index
-                        )
+                        create_processor_job_for_original_files(original_files, dl_job)
                     except Exception:
                         # Already logged.
                         pass
@@ -91,10 +75,7 @@ class Command(BaseCommand):
                                     sample_id=sample.id,
                                 )
 
-                                volume_index = find_volume_index_for_dl_job(dl_job)
-                                create_processor_jobs_for_original_files(
-                                    files_for_sample, dl_job, volume_index
-                                )
+                                create_processor_jobs_for_original_files(files_for_sample, dl_job)
                             except Exception:
                                 # Already logged.
                                 pass

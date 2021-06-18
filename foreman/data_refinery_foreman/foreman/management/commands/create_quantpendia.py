@@ -75,6 +75,37 @@ def build_dataset(organism: Organism):
     return data
 
 
+def create_quantpendia(organisms, organisms_exclude):
+    all_organisms = Organism.objects.all()
+    if organisms:
+        organisms = organisms.upper().replace(" ", "_").split(",")
+        all_organisms = all_organisms.filter(name__in=organisms)
+
+    if organisms_exclude:
+        organisms = organisms_exclude.upper().replace(" ", "_").split(",")
+        all_organisms = all_organisms.exclude(name__in=organisms)
+
+    logger.debug("Generating quantpendia for organisms", organisms=all_organisms)
+
+    created_jobs = []
+    for organism in all_organisms:
+        # only generate the quantpendia for organisms that have some samples
+        # with quant.sf files.
+        has_quantsf_files = organism.sample_set.filter(
+            technology="RNA-SEQ", results__computedfile__filename="quant.sf"
+        ).exists()
+        if not has_quantsf_files:
+            continue
+
+        job = create_job_for_organism(organism)
+        logger.info(
+            "Sending compendia job for Organism", job_id=str(job.pk), organism=str(organism)
+        )
+        send_job(ProcessorPipeline.CREATE_QUANTPENDIA, job)
+
+        created_jobs.append(job)
+
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
@@ -89,30 +120,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Create a quantpendia for one or more organisms."""
-        all_organisms = Organism.objects.all()
-        if options["organisms"] is not None:
-            organisms = options["organisms"].upper().replace(" ", "_").split(",")
-            all_organisms = all_organisms.filter(name__in=organisms)
-
-        if options["organisms_exclude"]:
-            organisms = options["organisms_exclude"].upper().replace(" ", "_").split(",")
-            all_organisms = all_organisms.exclude(name__in=organisms)
-
-        logger.debug("Generating quantpendia for organisms", organisms=all_organisms)
-
-        for organism in all_organisms:
-            # only generate the quantpendia for organisms that have some samples
-            # with quant.sf files.
-            has_quantsf_files = organism.sample_set.filter(
-                technology="RNA-SEQ", results__computedfile__filename="quant.sf"
-            ).exists()
-            if not has_quantsf_files:
-                continue
-
-            job = create_job_for_organism(organism)
-            logger.info(
-                "Sending compendia job for Organism", job_id=str(job.pk), organism=str(organism)
-            )
-            send_job(ProcessorPipeline.CREATE_QUANTPENDIA, job)
+        create_quantpendia(options["organisms"], options["organisms_exclude"])
 
         sys.exit(0)

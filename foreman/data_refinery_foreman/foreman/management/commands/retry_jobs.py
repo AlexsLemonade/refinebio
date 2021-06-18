@@ -7,7 +7,7 @@ those jobs it detects as failed.
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_foreman.foreman.main import monitor_jobs
+from data_refinery_foreman.foreman.job_control import monitor_jobs
 
 
 class Command(BaseCommand):

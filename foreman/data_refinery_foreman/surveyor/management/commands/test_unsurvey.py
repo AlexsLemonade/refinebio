@@ -18,7 +18,7 @@ from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_ex
 
 
 class SurveyTestCase(TransactionTestCase):
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_geo_survey_microarray(self, mock_send_task):
         """Test that the unsurveyor works correctly.
 
