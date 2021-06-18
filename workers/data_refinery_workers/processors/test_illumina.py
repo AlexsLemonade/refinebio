@@ -7,13 +7,12 @@ from data_refinery_common.models import (
     Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
-    Processor,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
-    SurveyJob,
 )
+from data_refinery_workers.processors import illumina
 
 
 def prepare_illumina_job(organism):
@@ -76,33 +75,10 @@ def prepare_illumina_job(organism):
     return pj
 
 
-def prepare_agilent_twocolor_job():
-    pj = ProcessorJob()
-    pj.pipeline_applied = "AGILENT_TWOCOLOR_TO_PCL"
-    pj.save()
-
-    og_file = OriginalFile()
-    og_file.source_filename = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE22900&format=file"
-    og_file.filename = "GSM466597_95899_agilent.txt"
-    og_file.absolute_file_path = (
-        "/home/user/data_store/raw/TEST/AGILENT_TWOCOLOR/GSM466597_95899_agilent.txt"
-    )
-    og_file.is_downloaded = True
-    og_file.save()
-
-    assoc1 = ProcessorJobOriginalFileAssociation()
-    assoc1.original_file = og_file
-    assoc1.processor_job = pj
-    assoc1.save()
-
-    return pj
-
-
 class IlluminaToPCLTestCase(TestCase):
     @tag("illumina")
     def test_illumina_to_pcl(self):
-        """ Most basic Illumina to PCL test """
-        from data_refinery_workers.processors import illumina
+        """Most basic Illumina to PCL test"""
 
         organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
@@ -121,8 +97,7 @@ class IlluminaToPCLTestCase(TestCase):
 
     @tag("illumina")
     def test_bad_illumina_detection(self):
-        """ With the wrong species, this will fail the platform detection threshold. """
-        from data_refinery_workers.processors import illumina
+        """With the wrong species, this will fail the platform detection threshold."""
 
         organism = Organism(name="RATTUS_NORVEGICUS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
@@ -136,8 +111,7 @@ class IlluminaToPCLTestCase(TestCase):
 
     @tag("illumina")
     def test_good_detection(self):
-        """GSE54661 appears to be mislabled (illuminaHumanv4) on GEO. Shows our detector works. """
-        from data_refinery_workers.processors import illumina
+        """GSE54661 appears to be mislabled (illuminaHumanv4) on GEO. Shows our detector works."""
 
         pj = ProcessorJob()
         pj.pipeline_applied = "ILLUMINA_TO_PCL"
@@ -193,16 +167,3 @@ class IlluminaToPCLTestCase(TestCase):
 
         # Cleanup after the job since it won't since we aren't running in cloud.
         shutil.rmtree(final_context["work_dir"], ignore_errors=True)
-
-
-class AgilentTwoColorTestCase(TestCase):
-    @tag("agilent")
-    def test_agilent_twocolor(self):
-        """ """
-        from data_refinery_workers.processors import agilent_twocolor
-
-        job = prepare_agilent_twocolor_job()
-        agilent_twocolor.agilent_twocolor_to_pcl(job.pk)
-        self.assertTrue(
-            os.path.isfile("/home/user/data_store/raw/TEST/processed/GSM466597_95899_agilent.PCL")
-        )
