@@ -1,3 +1,4 @@
+from datetime import timedelta
 from os import path
 from time import sleep
 from unittest import TestCase
@@ -8,7 +9,6 @@ import pyrefinebio
 
 from data_refinery_common.models import (
     ComputationalResult,
-    ComputationalResultAnnotation,
     ComputedFile,
     DownloaderJob,
     Experiment,
@@ -19,7 +19,9 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
-from data_refinery_foreman.foreman.management.commands.run_tximport import run_tximport
+from data_refinery_foreman.foreman.management.commands.run_tximport import (
+    run_tximport_for_all_eligible_experiments,
+)
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
 )
@@ -170,6 +172,7 @@ class SmasherEndToEndTestCase(TestCase):
             dataset_path,
             "testendtoend@example.com",
             dataset_dict={"GSE1487313": ["GSM1487313"], "SRP332914": ["SRR332914"]},
+            timeout=timedelta(minutes=15),
         )
         self.assertTrue(path.exists(dataset_path))
 
@@ -290,7 +293,7 @@ class FullFlowEndToEndTestCase(TestCase):
         )
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
-        tximport_jobs = run_tximport(dispatch_jobs=False)
+        tximport_jobs = run_tximport_for_all_eligible_experiments(dispatch_jobs=False)
         self.assertEqual(len(tximport_jobs), 1)
 
         self.assertTrue(wait_for_job(tximport_jobs[0]))

@@ -28,7 +28,6 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Virtual Environment](#virtual-environment)
     - [Services](#services)
       - [Postgres](#postgres)
-      - [Nomad](#nomad)
     - [Common Dependecies](#common-dependecies)
     - [ElasticSearch](#elasticsearch)
   - [Testing](#testing)
@@ -49,7 +48,6 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
   - [Creating Compendia](#creating-compendia)
   - [Running Tximport Early](#running-tximport-early)
-  - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
   - [Docker Images](#docker-images)
@@ -335,19 +333,18 @@ The API can be run with:
 
 ### Surveyor Jobs
 
-Surveyor Jobs discover samples to download/process along with
-recording metadata about the samples. A Surveyor Job should queue
-`Downloader Jobs` to download the data it discovers.
+Surveyor Jobs discover samples to download/process along with recording metadata about the samples.
+A Surveyor Job should queue `Downloader Jobs` to download the data it discovers.
+However, at the moment there is no automated way for the downloader jobs to be run.
+This will be resolved ASAP, see https://github.com/AlexsLemonade/refinebio/issues/2775 for more information.
 
-The Surveyor can be run with the `./foreman/run_surveyor.sh`
-script. The first argument to this script is the type of Surveyor Job
-to run, which will always be `survey_all`.
+The Surveyor can be run with the `./foreman/run_management_command.sh` script.
+The first argument to this script is the type of Surveyor Job to run, which will always be `survey_all`.
 
-Details on these expected arguments can be viewed by
-running:
+Details on these expected arguments can be viewed by running:
 
 ```bash
-./foreman/run_surveyor.sh survey_all -h
+./foreman/run_management_command.sh survey_all -h
 ```
 
 The Surveyor can accept a single accession code from any of the source
@@ -355,33 +352,33 @@ data repositories (e.g., Sequencing Read Archive,
  ArrayExpress, Gene Expression Omnibus):
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
+./foreman/run_management_command.sh survey_all --accession <ACCESSION_CODE>
 ```
 
 Example for a GEO experiment:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession GSE85217
+./foreman/run_management_command.sh survey_all --accession GSE85217
 ```
 
 Example for an ArrayExpress experiment:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050 # AFFY
-./foreman/run_surveyor.sh survey_all --accession E-GEOD-3303 # NO_OP
+./foreman/run_management_command.sh survey_all --accession E-MTAB-3050 # AFFY
+./foreman/run_management_command.sh survey_all --accession E-GEOD-3303 # NO_OP
 ```
 
 Transcriptome indices are a bit special.
 For species within the "main" Ensembl division, the species name can be provided like so:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession "Homo sapiens"
+./foreman/run_management_command.sh survey_all --accession "Homo sapiens"
 ```
 
 However for species that are in other divisions, the division must follow the species name after a comma like so:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
+./foreman/run_management_command.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
 ```
 The possible divisions that can be specified are:
 * Ensembl (this is the "main" division and is the default)
@@ -398,13 +395,13 @@ You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on accession codes like so:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
+./foreman/run_management_command.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
 
 The main foreman job loop can be started with:
 
 ```bash
-./foreman/run_surveyor.sh retry_jobs
+./foreman/run_management_command.sh retry_jobs
 ```
 
 This must actually be running for jobs to move forward through the pipeline.
@@ -418,19 +415,19 @@ codes beginning in `SRR`, `DRR`, or `ERR`) or study accession codes
 Run example (single read):
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession DRR002116
+./foreman/run_management_command.sh survey_all --accession DRR002116
 ```
 
 Run example (paired read):
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession SRR6718414
+./foreman/run_management_command.sh survey_all --accession SRR6718414
 ```
 
 Study example:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession ERP006872
+./foreman/run_management_command.sh survey_all --accession ERP006872
 ```
 
 #### Ensembl Transcriptome Indices
@@ -441,10 +438,10 @@ us to retrieve genome information from
 scientific name in the main Ensembl division as the accession:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession "Homo Sapiens"
+./foreman/run_management_command.sh survey_all --accession "Homo Sapiens"
 ```
 
-TODO: Update once this supports organisms from multiple Ensembl divisions
+See the [Ensembl Transcriptome Index section](#ensembl-transcriptome-indices) for additional usage examples inclduing surveying additional Ensembl divisions.
 
 ### Downloader Jobs
 
@@ -512,16 +509,16 @@ Or for more information run:
 
 ### Creating Quantile Normalization Reference Targets
 
-If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism. This can be done in a production environment with the following:
+If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism or organisms. This can be done in a production environment by running the following on the Foreman instance:
 
 ```bash
-nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
+./run_management_command.sh dispatch_qn_jobs --organisms=DANIO_RERIO,HOMO_SAPIENS
 ```
 
-To create QN targets for all organisms, do so with the dispatcher:
+To create QN targets for all organisms with enough processed samples:
 
 ```bash
-nomad job dispatch QN_DISPATCHER
+./run_management_command.sh dispatch_qn_jobs
 ```
 
 This will at some point move to the foreman and then it will take a list of organisms to create QN targets for.
@@ -564,11 +561,23 @@ At the time of writing, compendia jobs require 180GB of RAM and m5.12xlarge has 
 
 Normally we wait until ever sample in an experiment has had Salmon run on it before we run Tximport.
 However Salmon won't work on every sample, so some experiments are doomed to never make it to 100% completion.
-Tximport can be run on such an experiment with:
+Tximport can be run on such experiments by running the follow on the Foreman instance:
 
+To run tximport on all eligible experiments:
 ```bash
-nomad job dispatch -meta EXPERIMENT_ACCESSION=SRP009841 TXIMPORT
+./run_management_command.sh run_tximport
 ```
+
+To run tximport on a single experiment if it is eligible:
+```bash
+./run_management_command.sh run_tximport --accession-codes=SRP095529
+```
+
+To run tximport on a the eligible experiments in a list:
+```bash
+./run_management_command.sh run_tximport --accession-codes=SRP095529,ERP006872
+```
+
 
 Note that if the experiment does not have at least 25 samples with at least 80% of them processed, this will do nothing.
 
@@ -667,21 +676,56 @@ terraform taint <your-entity-from-state-list>
 And then rerun `deploy.sh` with the same parameters you originally ran it with.
 
 
+### AWS Batch
+
+refine.bio relies on AWS Batch as its job queue and uses it to provision instances.
+AWS Batch has three primary components:
+* Compute Environments:
+  These are what provision EC2 instances for refineb.bio.
+  In this project each Compute Environment can either have one or zero instances.
+  The goal is to have jobs that are run in the same compute environment be run on the same instance, so that data stored on the local disk by a downloader job will be available to the processor job.
+  Only allowing a maximum of one instance per compute environment _almost_ ensures this, however it is possible for an instance to be cycled in between jobs so sometimes the downloader job has to be rerun.
+* Job Queues:
+  These are what track the jobs submitted to AWS Batch and assign them to compute environments.
+  In refine.bio each Job Queue uses a single compute environment, so if two jobs are placed in the same job queue they will be run in the same Compute Environment.
+* Job Definitions:
+  These are what specify the configuration to be used for each job type including what Docker Image will be used, what environment variables will be passed to it, what secrets it can access, and how many vCPUs and RAM it requires.
+
+refine.bio uses three types of job queues:
+* **Compendia Job Queue**:
+  This job queue is for running very large compendia-building jobs that require a large instance. The Compute Environment assigned to this queue is configured to provision very large instances.
+* **Smasher Job Queue**:
+  This job queue is used for running smashing jobs.
+  Having a dedicated queue for smasher jobs is useful because it ensure they won't be blocked by processing jobs and the instance provisioned by its compute environment has enough resources to run one of these jobs at a time and no more.
+* **Worker Job Queues**:
+  This is the only job queue with multiple instances.
+  These do the general processing, so if there is a sufficient volume of work to necessitate more than one instance the Foreman will distribute jobs to more and more queues until all the queues are in use.
+  The lowest index queue will be assigned Surveyor and Downloader jobs if it has capacity for them, if not the next lowest index queue with capacity will be chosen.
+  Processor jobs will always be assigned to the same job queue that ran their downloader job.
+
+
+
 ### Running Jobs
 
-Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress.
+Jobs can be submitted by running the following commands on the Foreman instance.
 
-To start a job with a file located on the foreman docker image:
+To start a job for a single accession code::
 
-```
-nomad job dispatch -meta FILE=NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
+```bash
+./run_management_command.sh survey_all --accession E-GEOD-3303
 ```
 
-or to start a job with a file located in S3:
+You can also supply a newline-deliminated file which resides in S3 to `survey_all` which will
+dispatch survey jobs based on accession codes like so:
 
+```bash
+./run_management_command.sh survey_all --file s3://data-refinery-test-assets/MY_BIG_LIST_OF_CODES.txt
 ```
-nomad job dispatch -meta FILE=s3://data-refinery-test-assets/NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
-```
+
+See the [Running Locally](#running-locally) section for additional examples of survey_all usage.
+
+Note that there is a `run_management_command.sh` included in the foreman directory that is completely different than the one that is created on the Foreman instance.
+These two scripts share a name to make the commands work in either place.
 
 ### Log Consumption
 
