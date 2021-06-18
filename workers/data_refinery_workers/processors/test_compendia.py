@@ -5,6 +5,8 @@ from typing import Dict
 
 from django.test import TransactionTestCase, tag
 
+import pandas as pd
+
 from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.models import (
     ComputationalResult,
@@ -276,7 +278,8 @@ class CompendiaTestCase(TransactionTestCase):
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])
         self.assertEqual(
-            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"], "GSE5678",
+            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"],
+            "GSE5678",
         )
         self.assertIn(
             "This sample did not have a processed file",
@@ -413,3 +416,27 @@ class CompendiaTestCase(TransactionTestCase):
 
             # Make sure the data were quantile normalized
             self.assertTrue(metadata.get("quantile_normalized"))
+
+    @tag("compendia")
+    def test_filter_rnaseq_matrix_drop_row_sums(self):
+        job = ProcessorJob()
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+        job.save()
+
+        samples = list(str(i) for i in range(0, 10))
+        df = pd.DataFrame(columns=samples)
+        for i in range(1, 101):
+            df.loc[str(i)] = {idx: i for idx in samples}
+
+        job_context = {"rnaseq_matrix": df, "job": job}
+
+        final_job_context = create_compendia._filter_rnaseq_matrix(job_context)
+
+        filtered_matrix = final_job_context["filtered_rnaseq_matrix"]
+
+        # Make sure that we are getting rid of intermediate results appropriately
+        self.assertNotIn("rnaseq_matrix", final_job_context.keys())
+
+        # We drop all rows below the 10th percentile in row sum, so we would
+        # expect to drop rows 1 through 10 that we created above
+        self.assertEqual(set(filtered_matrix.index), set(str(i) for i in range(11, 101)))
