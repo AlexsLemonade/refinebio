@@ -33,10 +33,6 @@ def prep_tximport_at_progress_point(
     list. The samples in complete_accessions will be simlulated as
     already having salmon quant run on them. The samples in
     incomplete_accessions won't.
-
-    If the accession_codes parameter is supplied the
-    run_tximport_for_list function will be used, otherwise the
-    run_tximport_for_all_eligible_experiments function will be used.
     """
     # Create the experiment
     experiment_accession = "SRP095529"

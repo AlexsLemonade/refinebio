@@ -333,16 +333,15 @@ The API can be run with:
 
 ### Surveyor Jobs
 
-Surveyor Jobs discover samples to download/process along with
-recording metadata about the samples. A Surveyor Job should queue
-`Downloader Jobs` to download the data it discovers.
+Surveyor Jobs discover samples to download/process along with recording metadata about the samples.
+A Surveyor Job should queue `Downloader Jobs` to download the data it discovers.
+However, at the moment there is no automated way for the downloader jobs to be run.
+This will be resolved ASAP, see https://github.com/AlexsLemonade/refinebio/issues/2775 for more information.
 
-The Surveyor can be run with the `./foreman/run_management_command.sh`
-script. The first argument to this script is the type of Surveyor Job
-to run, which will always be `survey_all`.
+The Surveyor can be run with the `./foreman/run_management_command.sh` script.
+The first argument to this script is the type of Surveyor Job to run, which will always be `survey_all`.
 
-Details on these expected arguments can be viewed by
-running:
+Details on these expected arguments can be viewed by running:
 
 ```bash
 ./foreman/run_management_command.sh survey_all -h
