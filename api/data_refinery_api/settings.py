@@ -195,15 +195,10 @@ SWAGGER_SETTINGS = {
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-RAVEN_DSN = get_env_variable_gracefully("RAVEN_DSN_API", None)
-
-# AWS Secrets manager will not let us store an empty string.
-if RAVEN_DSN == "None":
-    RAVEN_DSN = None
-
-if RAVEN_DSN != "not set":
+raven_dsn = get_env_variable_gracefully("RAVEN_DSN_API", False)
+if raven_dsn != "not set":
     RAVEN_CONFIG = {
-        "dsn": RAVEN_DSN,
+        "dsn": raven_dsn,
         # Only send 5% of errors for the API, since we aren't going to
         # be interested in any single one.
         "sampleRate": 0.25,
@@ -353,15 +348,5 @@ Last Updated: March 2, 2018
 # EngagementBot
 ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
 
-MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
-MAX_DOWNLOADER_JOBS_PER_NODE = int(get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE"))
-
 # For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
-AUTO_DISPATCH_BATCH_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_BATCH_JOBS") != "False"
-
-AWS_BATCH_QUEUE_WORKERS_NAMES = sorted(
-    get_env_variable("REFINEBIO_JOB_QUEUE_WORKERS_NAMES").split(",")
-)
-AWS_BATCH_QUEUE_SMASHER_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_SMASHER_NAME")
-AWS_BATCH_QUEUE_COMPENDIA_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_COMPENDIA_NAME")
-AWS_BATCH_QUEUE_ALL_NAMES = sorted(get_env_variable("REFINEBIO_JOB_QUEUE_ALL_NAMES").split(","))
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

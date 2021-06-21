@@ -63,7 +63,10 @@ class Command(BaseCommand):
 
                     elif experiment.source_database == "GEO":
                         gse = GEOparse.get_GEO(
-                            experiment.accession_code, destdir="/tmp/management", silent=True,
+                            experiment.accession_code,
+                            destdir="/tmp/management",
+                            how="brief",
+                            silent=True,
                         )
 
                         GeoSurveyor._apply_metadata_to_experiment(experiment, gse)

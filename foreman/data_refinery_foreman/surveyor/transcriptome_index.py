@@ -378,7 +378,6 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         except SurveyJobKeyValue.DoesNotExist:
             organism_name = None
 
-        strain_mapping = None
         if ensembl_division in ["EnsemblFungi", "EnsemblBacteria"]:
             if organism_name is None:
                 logger.error(
@@ -388,8 +387,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 )
                 return []
             else:
-                strain_mapping = get_strain_mapping_for_organism(organism_name)
-                if strain_mapping is None:
+                if get_strain_mapping_for_organism(organism_name) is None:
                     logger.error(
                         (
                             "Organism name must be listed in config/organism_strain_"
@@ -414,15 +412,9 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         all_new_species = []
         if organism_name:
-            if strain_mapping:
-                organism_name = organism_name + "_" + strain_mapping["strain"].lower()
-
             for species in specieses:
-                if (
-                    ensembl_division in ["EnsemblFungi", "EnsemblBacteria"]
-                    and organism_name in species["name"]
-                ):
-                    # Fungi and Bacteria have a strain identifier in their
+                if ensembl_division == "EnsemblFungi" and organism_name in species["name"]:
+                    # Fungi have a strain identifier in their
                     # names. This is different than everything else,
                     # so we're going to handle this special case by
                     # just overwriting this. This is okay because we

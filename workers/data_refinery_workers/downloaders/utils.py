@@ -48,7 +48,8 @@ def start_job(job_id: int) -> DownloaderJob:
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
-    # (`docker stop` uses SIGTERM, not SIGINT, but better to catch both.)
+    # (`docker stop` uses SIGTERM, not SIGINT.)
+    # (however, Nomad sends an SIGINT so catch both.)
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 

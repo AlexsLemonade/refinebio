@@ -1,11 +1,10 @@
-from unittest.mock import patch
-
 from django.core.management import call_command
 from django.test import TransactionTestCase
 
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
+    Dataset,
     Experiment,
     ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
@@ -17,11 +16,8 @@ from data_refinery_common.models import (
 )
 
 
-class QuantpendiaCommandTestCase(TransactionTestCase):
-    @patch("data_refinery_foreman.foreman.management.commands.create_quantpendia.send_job")
-    def test_quantpendia_command(self, mock_send_job):
-        mock_send_job.return_value = True
-
+class QuantendiaCommandTestCase(TransactionTestCase):
+    def test_quantpendia_command(self):
         organism = get_organism_with_qn_target()
         make_test_data(organism)
 

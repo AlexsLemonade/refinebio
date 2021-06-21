@@ -75,9 +75,12 @@ run_on_deploy_box "source env_vars && echo -e '######\nFinished building new ima
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
 source scripts/common.sh
 
-if [[ "$MASTER_OR_DEV" == "master" ]]; then
+# Circle won't set the branch name for us, so do it ourselves.
+branch=$(get_master_or_dev "$CI_TAG")
+
+if [[ "$branch" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ "$MASTER_OR_DEV" == "dev" ]]; then
+elif [[ "$branch" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!?!?"
@@ -107,13 +110,6 @@ run_on_deploy_box "source env_vars && echo -e '######\nStarting new deploy for $
 run_on_deploy_box "sudo ./.github/scripts/fix_ca_certs.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
 run_on_deploy_box "source env_vars && ./.github/scripts/run_terraform.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
 run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CI_TAG finished!\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
-
-./.github/scripts/slackpost_deploy.sh robots deploybot
-
-if [[ "$MASTER_OR_DEV" == "dev" ]]; then
-    run_on_deploy_box "source env_vars && ./foreman/run_end_to_end_tests.sh"
-    ./.github/scripts/slackpost_end_to_end.sh robots deploybot
-fi
 
 # Don't leave secrets lying around.
 run_on_deploy_box "git clean -f"

@@ -1,8 +1,7 @@
 import abc
 from typing import List
 
-from data_refinery_common import job_lookup, logging
-from data_refinery_common.message_queue import send_job
+from data_refinery_common import job_lookup, logging, message_queue
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -93,7 +92,7 @@ class ExternalSourceSurveyor:
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id,
                     )
-                    send_job(downloader_task, downloader_job)
+                    message_queue.send_job(downloader_task, downloader_job)
                 except Exception:
                     # If we fail to queue the job, it will be requeued.
                     pass
@@ -152,7 +151,7 @@ class ExternalSourceSurveyor:
                     downloader_job=downloader_job.id,
                     downloaded_urls=downloaded_urls,
                 )
-                send_job(downloader_task, downloader_job)
+                message_queue.send_job(downloader_task, downloader_job)
             except Exception:
                 # If we fail to queue the job, it will be requeued.
                 pass
@@ -162,7 +161,7 @@ class ExternalSourceSurveyor:
 
         Queries the external source's API to discover an experiment
         and its samples, creates database records for them, and queues
-        Batch jobs for them.
+        nomad jobs for them.
         Returns True if successful, False otherwise.
         """
         try:

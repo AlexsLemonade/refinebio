@@ -5,9 +5,13 @@ test_volume
 volume
 .git
 dr_env
+nomad_dir
+nomad_dir_test
+workers-nomad.tar
 volumes_postgres/
+nomad.logs
 env/
 infrastructure/
 terraform/
-*/batch-job-specs
+*/nomad-job-specs
 config/externally_supplied_metadata/metasra/*.sqlite

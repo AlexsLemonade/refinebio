@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "data_refinery_foreman.surveyor",
     "data_refinery_foreman.foreman",
     "raven.contrib.django.raven_compat",
+    "django_elasticsearch_dsl",
     "computedfields",
 ]
 
@@ -151,14 +152,9 @@ CACHES = {
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-RAVEN_DSN = get_env_variable_gracefully("RAVEN_DSN", None)
-
-# AWS Secrets manager will not let us store an empty string.
-if RAVEN_DSN == "None":
-    RAVEN_DSN = None
-
-if RAVEN_DSN:
-    RAVEN_CONFIG = {"dsn": RAVEN_DSN}
+raven_dsn = get_env_variable_gracefully("RAVEN_DSN", False)
+if raven_dsn:
+    RAVEN_CONFIG = {"dsn": raven_dsn}
 else:
     # Preven raven from logging about how it's not configured...
     import logging
@@ -168,15 +164,22 @@ else:
 
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
-MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
-MAX_DOWNLOADER_JOBS_PER_NODE = int(get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE"))
+ELASTICSEARCH_DSL = {
+    "default": {
+        "hosts": get_env_variable("ELASTICSEARCH_HOST")
+        + ":"
+        + get_env_variable("ELASTICSEARCH_PORT")
+    }
+}
+if "test" in sys.argv:
+    ELASTICSEARCH_INDEX_NAMES = {
+        "data_refinery_common.models.documents": "experiments_test",
+    }
+else:
+    ELASTICSEARCH_INDEX_NAMES = {
+        "data_refinery_common.models.documents": "experiments",
+    }
+    ELASTICSEARCH_DSL_AUTOSYNC = False
 
 # For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
-AUTO_DISPATCH_BATCH_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_BATCH_JOBS") != "False"
-
-AWS_BATCH_QUEUE_WORKERS_NAMES = sorted(
-    get_env_variable("REFINEBIO_JOB_QUEUE_WORKERS_NAMES").split(",")
-)
-AWS_BATCH_QUEUE_SMASHER_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_SMASHER_NAME")
-AWS_BATCH_QUEUE_COMPENDIA_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_COMPENDIA_NAME")
-AWS_BATCH_QUEUE_ALL_NAMES = sorted(get_env_variable("REFINEBIO_JOB_QUEUE_ALL_NAMES").split(","))
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

@@ -32,14 +32,7 @@ def prepare_job(length):
     og_file = OriginalFile()
     og_file.source_filename = "aegilops_tauschii_" + length + ".fa.gz"
     og_file.filename = "aegilops_tauschii_" + length + ".fa.gz"
-    og_file.absolute_file_path = (
-        "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/"
-        "AEGILOPS_TAUSCHII/aegilops_tauschii_short.fa.gz"
-    )
-    og_file.source_url = (
-        "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/fasta/"
-        "aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
-    )
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/aegilops_tauschii_short.fa.gz"
     og_file.is_downloaded = True
     # We need to add the URL here so that _extract_assembly_information works properly
     og_file.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/fasta/aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
@@ -48,14 +41,7 @@ def prepare_job(length):
     og_file2 = OriginalFile()
     og_file2.source_filename = "aegilops_tauschii_" + length + ".gtf.gz"
     og_file2.filename = "aegilops_tauschii_" + length + ".gtf.gz"
-    og_file2.absolute_file_path = (
-        "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/"
-        "AEGILOPS_TAUSCHII/aegilops_tauschii_short.gtf.gz"
-    )
-    og_file2.source_url = (
-        "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/gtf/"
-        "aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
-    )
+    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/aegilops_tauschii_short.gtf.gz"
     og_file2.is_downloaded = True
     # We need to add the URL here so that _extract_assembly_information works properly
     og_file2.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/gtf/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
@@ -88,17 +74,11 @@ class TXTestCase(TestCase):
     @tag("transcriptome")
     def test_assembly_information(self):
         og_file = OriginalFile()
-        og_file.source_url = (
-            "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/fasta/"
-            "aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
-        )
+        og_file.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/fasta/aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
         og_file.source_filename = "aegilops_tauschii_short.fa.gz"
 
         og_file2 = OriginalFile()
-        og_file2.source_url = (
-            "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/gtf/"
-            "aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
-        )
+        og_file2.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/gtf/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
         og_file2.source_filename = "aegilops_tauschii_short.gtf.gz"
 
         job_context = {"original_files": [og_file, og_file2], "computed_files": []}
@@ -112,13 +92,11 @@ class TXTestCase(TestCase):
         """ """
         # Make sure the work dirs don't exist cause this will fail the job.
         shutil.rmtree(
-            "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/"
-            "AEGILOPS_TAUSCHII/SHORT/processor_job_1",
+            "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/SHORT/processor_job_1",
             ignore_errors=True,
         )
         shutil.rmtree(
-            "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/"
-            "AEGILOPS_TAUSCHII/LONG/processor_job_2",
+            "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/LONG/processor_job_2",
             ignore_errors=True,
         )
 
