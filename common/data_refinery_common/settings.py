@@ -138,35 +138,5 @@ CACHES = {
     }
 }
 
-# Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
-# following warning:
-# /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
-# UserWarning: Transport selection via DSN is deprecated. You should
-# explicitly pass the transport class to Client() instead.
-RAVEN_DSN = get_env_variable_gracefully("RAVEN_DSN", None)
-
-# AWS Secrets manager will not let us store an empty string.
-if RAVEN_DSN == "None":
-    RAVEN_DSN = None
-
-if RAVEN_DSN != "not set":
-    RAVEN_CONFIG = {"dsn": RAVEN_DSN}
-else:
-    # Preven raven from logging about how it's not configured...
-    import logging
-
-    raven_logger = logging.getLogger("raven.contrib.django.client.DjangoClient")
-    raven_logger.setLevel(logging.CRITICAL)
-
-MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
-MAX_DOWNLOADER_JOBS_PER_NODE = int(get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE"))
-
 # For testing purposes, sometimes we do not want to dispatch jobs unless specifically told to
-AUTO_DISPATCH_BATCH_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_BATCH_JOBS") != "False"
-
-AWS_BATCH_QUEUE_WORKERS_NAMES = sorted(
-    get_env_variable("REFINEBIO_JOB_QUEUE_WORKERS_NAMES").split(",")
-)
-AWS_BATCH_QUEUE_SMASHER_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_SMASHER_NAME")
-AWS_BATCH_QUEUE_COMPENDIA_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_COMPENDIA_NAME")
-AWS_BATCH_QUEUE_ALL_NAMES = sorted(get_env_variable("REFINEBIO_JOB_QUEUE_ALL_NAMES").split(","))
+AUTO_DISPATCH_NOMAD_JOBS = get_env_variable_gracefully("AUTO_DISPATCH_NOMAD_JOBS") != "False"

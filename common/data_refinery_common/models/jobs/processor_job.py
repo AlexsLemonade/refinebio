@@ -3,13 +3,16 @@ from typing import Set
 from django.db import models
 from django.utils import timezone
 
+import nomad
+from nomad import Nomad
+
 from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
     LostJobsManager,
-    UnqueuedJobsManager,
 )
 from data_refinery_common.models.sample import Sample
+from data_refinery_common.utils import get_env_variable
 
 
 class ProcessorJob(models.Model):
@@ -35,7 +38,6 @@ class ProcessorJob(models.Model):
     failed_objects = FailedJobsManager()
     hung_objects = HungJobsManager()
     lost_objects = LostJobsManager()
-    unqueued_objects = UnqueuedJobsManager()
 
     # This field will contain an enumerated value specifying which
     # processor pipeline was applied during the processor job.
@@ -56,14 +58,11 @@ class ProcessorJob(models.Model):
     # bit higher
     volume_index = models.CharField(max_length=25, null=True)
 
-    # Which AWS Batch Job Queue the job was run in.
-    batch_job_queue = models.CharField(max_length=100, null=True)
-
     # Tracking
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.BooleanField(null=True)
-    batch_job_id = models.CharField(max_length=256, null=True)
+    nomad_job_id = models.CharField(max_length=256, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried
@@ -86,11 +85,6 @@ class ProcessorJob(models.Model):
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
 
-    # If the job had data downloaded for it, this is the DownloaderJob that did so.
-    downloader_job = models.ForeignKey(
-        "data_refinery_common.DownloaderJob", on_delete=models.SET_NULL, null=True,
-    )
-
     # If the job is retried, this is the id of the new job
     retried_job = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)
 
@@ -104,6 +98,20 @@ class ProcessorJob(models.Model):
                 samples.add(sample)
 
         return samples
+
+    def kill_nomad_job(self) -> bool:
+        if not self.nomad_job_id:
+            return False
+
+        try:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+            nomad_client.job.deregister_job(self.nomad_job_id)
+        except nomad.api.exceptions.BaseNomadException:
+            return False
+
+        return True
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """

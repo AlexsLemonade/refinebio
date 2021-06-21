@@ -62,8 +62,8 @@ def set_source_type_for_accession(survey_job, accession: str) -> None:
 
 def queue_surveyor_for_accession(accession: str) -> None:
     """Dispatches a surveyor job for the accession code."""
-    # Start at 1GB of RAM for surveyor jobs.
-    survey_job = SurveyJob(ram_amount=1024)
+    # Start at 256MB of RAM for surveyor jobs.
+    survey_job = SurveyJob(ram_amount=256)
     set_source_type_for_accession(survey_job, accession)
 
     key_value_pair = SurveyJobKeyValue(
@@ -73,7 +73,6 @@ def queue_surveyor_for_accession(accession: str) -> None:
 
     # We don't actually send the job here, we just create it.
     # The foreman will pick it up and dispatch it when the time is appropriate.
-    return survey_job
 
 
 class Command(BaseCommand):

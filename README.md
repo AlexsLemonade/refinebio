@@ -28,6 +28,7 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Virtual Environment](#virtual-environment)
     - [Services](#services)
       - [Postgres](#postgres)
+      - [Nomad](#nomad)
     - [Common Dependecies](#common-dependecies)
     - [ElasticSearch](#elasticsearch)
   - [Testing](#testing)
@@ -48,6 +49,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
   - [Creating Compendia](#creating-compendia)
   - [Running Tximport Early](#running-tximport-early)
+  - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
   - [Docker Images](#docker-images)
@@ -102,14 +104,15 @@ The following services will need to be installed:
 [post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./scripts/install_nomad.sh`.
 - [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [black](https://black.readthedocs.io/en/stable/) can be installed on Linux clients with `pip3 install black`
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
 - [shellcheck](https://github.com/koalaman/shellcheck/)
 
-Instructions for installing Docker and Terraform can be found by
-following the link for each service. jq and iproute2 can be installed via
+Instructions for installing Docker, Terraform, and Nomad can be found by
+following the link for each service. jq, and iproute2 can be installed via
 `sudo apt-get install jq iproute2 shellcheck`.
 
 #### Mac (Manual)
@@ -118,6 +121,7 @@ The following services will need to be installed:
 - [Homebrew](https://brew.sh/)
 - [Docker for Mac](https://www.docker.com/docker-mac)
 - [Terraform](https://www.terraform.io/)
+- [Nomad](https://www.nomadproject.io/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
 - [black](https://black.readthedocs.io/en/stable/)
@@ -126,7 +130,7 @@ The following services will need to be installed:
 Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
 on their respective homepages.
 
-Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac terraform jq black shellcheck`.
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac nomad terraform jq black shellcheck`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -143,8 +147,9 @@ containers. When returning to this project you should run
 
 #### Services
 
-`refinebio` also depends on Postgres. Postgres can be
-run in a local Docker container
+`refinebio` also depends on Postgres and Nomad. Postgres can be
+run in a local Docker container, but Nomad must be run on your
+development machine.
 
 ##### Postgres
 
@@ -171,6 +176,25 @@ or if you have `psql` installed this command will give you a better shell experi
 ```
 source scripts/common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_address) -U postgres -d data_refinery
 ```
+
+##### Nomad
+
+Similarly, you will need to run a local [Nomad](https://www.nomadproject.io/) service in development mode.
+
+However if you run Linux and you have followed the [installation instructions](#installation), you
+can run Nomad with:
+
+```bash
+sudo -E ./scripts/run_nomad.sh
+```
+
+(_Note:_ This step may take some time because it downloads lots of files.)
+
+Nomad is an orchestration tool which Refine.bio uses to run
+`Surveyor`, `Downloader`, `Processor` jobs. Jobs are queued by sending a message to
+the Nomad agent, which will then launch a Docker container which runs
+the job. If address conflicts emerge, old Docker containers can be purged
+with `docker container prune -f`.
 
 #### Common Dependecies
 
@@ -205,6 +229,14 @@ And then the ES Indexes (akin to Postgres 'databases') can be created with:
 
 ### Testing
 
+The end to end tests require a separate Nomad client to be running so
+that the tests can be run without interfering with local
+development. The second Nomad client can be started with:
+
+```bash
+sudo -E ./scripts/run_nomad.sh -e test
+```
+
 To run the entire test suite:
 
 ```bash
@@ -212,6 +244,40 @@ To run the entire test suite:
 ```
 
 (_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
+
+You can use the following to get the current status of nomad when running in the test environment.
+
+```
+$ source scripts/common.sh
+$ set_nomad_test_address
+$ nomad status
+```
+
+Running the end to end tests is tricky because Nomad's needs to pull images from docker with our code.
+We have a docker image registry that runs locally, but you'll need to update it with different images in order to make the code run.
+The script `./scripts/prepare_image.sh` can be used to prepare the images before pushing them.
+
+```
+$ ./scripts/prepare_image.sh -i downloaders -d localhost:5000
+$ docker push localhost:5000/dr_downloaders:latest
+
+$ ./scripts/prepare_image.sh -i no_op -d localhost:5000
+$ docker push localhost:5000/dr_no_op:latest
+```
+
+That's for the images `downloaders` and `no_op`, the same need to be executed for the other images: `salmon`, `transcriptome`, `illumina` and `affymetrix`.
+
+If you want to debug the status of a specific nomad job you can use:
+
+```
+$ nomad status NO_OP_0_2048/dispatch-1567796915-3d7c7c87
+$ nomad status f9c1345b
+$ nomad logs f9c1345b
+```
+
+`f9c1345b` is the allocation id that it's returned in `nomad status`.
+
+These tests will also be run continuously for each commit via CircleCI.
 
 For more granular testing, you can just run the tests for specific parts of the system.
 
@@ -318,7 +384,7 @@ For a while we were using r-base, but we switched to r-base-core when we pinned 
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
-the Postgres service running, you're ready to run jobs.
+the Nomad and Postgres services running, you're ready to run jobs.
 To run the API you also need the elasticsearch service running.
 
 There are three kinds of jobs within Refine.bio.
@@ -333,18 +399,19 @@ The API can be run with:
 
 ### Surveyor Jobs
 
-Surveyor Jobs discover samples to download/process along with recording metadata about the samples.
-A Surveyor Job should queue `Downloader Jobs` to download the data it discovers.
-However, at the moment there is no automated way for the downloader jobs to be run.
-This will be resolved ASAP, see https://github.com/AlexsLemonade/refinebio/issues/2775 for more information.
+Surveyor Jobs discover samples to download/process along with
+recording metadata about the samples. A Surveyor Job should queue
+`Downloader Jobs` to download the data it discovers.
 
-The Surveyor can be run with the `./foreman/run_management_command.sh` script.
-The first argument to this script is the type of Surveyor Job to run, which will always be `survey_all`.
+The Surveyor can be run with the `./foreman/run_surveyor.sh`
+script. The first argument to this script is the type of Surveyor Job
+to run, which will always be `survey_all`.
 
-Details on these expected arguments can be viewed by running:
+Details on these expected arguments can be viewed by
+running:
 
 ```bash
-./foreman/run_management_command.sh survey_all -h
+./foreman/run_surveyor.sh survey_all -h
 ```
 
 The Surveyor can accept a single accession code from any of the source
@@ -352,33 +419,33 @@ data repositories (e.g., Sequencing Read Archive,
  ArrayExpress, Gene Expression Omnibus):
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession <ACCESSION_CODE>
+./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
 ```
 
 Example for a GEO experiment:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession GSE85217
+./foreman/run_surveyor.sh survey_all --accession GSE85217
 ```
 
 Example for an ArrayExpress experiment:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession E-MTAB-3050 # AFFY
-./foreman/run_management_command.sh survey_all --accession E-GEOD-3303 # NO_OP
+./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050 # AFFY
+./foreman/run_surveyor.sh survey_all --accession E-GEOD-3303 # NO_OP
 ```
 
 Transcriptome indices are a bit special.
 For species within the "main" Ensembl division, the species name can be provided like so:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession "Homo sapiens"
+./foreman/run_surveyor.sh survey_all --accession "Homo sapiens"
 ```
 
 However for species that are in other divisions, the division must follow the species name after a comma like so:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
+./foreman/run_surveyor.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
 ```
 The possible divisions that can be specified are:
 * Ensembl (this is the "main" division and is the default)
@@ -395,13 +462,13 @@ You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on accession codes like so:
 
 ```bash
-./foreman/run_management_command.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
+./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
 
 The main foreman job loop can be started with:
 
 ```bash
-./foreman/run_management_command.sh retry_jobs
+./foreman/run_surveyor.sh retry_jobs
 ```
 
 This must actually be running for jobs to move forward through the pipeline.
@@ -415,19 +482,19 @@ codes beginning in `SRR`, `DRR`, or `ERR`) or study accession codes
 Run example (single read):
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession DRR002116
+./foreman/run_surveyor.sh survey_all --accession DRR002116
 ```
 
 Run example (paired read):
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession SRR6718414
+./foreman/run_surveyor.sh survey_all --accession SRR6718414
 ```
 
 Study example:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession ERP006872
+./foreman/run_surveyor.sh survey_all --accession ERP006872
 ```
 
 #### Ensembl Transcriptome Indices
@@ -438,10 +505,10 @@ us to retrieve genome information from
 scientific name in the main Ensembl division as the accession:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession "Homo Sapiens"
+./foreman/run_surveyor.sh survey_all --accession "Homo Sapiens"
 ```
 
-See the [Ensembl Transcriptome Index section](#ensembl-transcriptome-indices) for additional usage examples inclduing surveying additional Ensembl divisions.
+TODO: Update once this supports organisms from multiple Ensembl divisions
 
 ### Downloader Jobs
 
@@ -509,16 +576,16 @@ Or for more information run:
 
 ### Creating Quantile Normalization Reference Targets
 
-If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism or organisms. This can be done in a production environment by running the following on the Foreman instance:
+If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism. This can be done in a production environment with the following:
 
 ```bash
-./run_management_command.sh dispatch_qn_jobs --organisms=DANIO_RERIO,HOMO_SAPIENS
+nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
 
-To create QN targets for all organisms with enough processed samples:
+To create QN targets for all organisms, do so with the dispatcher:
 
 ```bash
-./run_management_command.sh dispatch_qn_jobs
+nomad job dispatch QN_DISPATCHER
 ```
 
 This will at some point move to the foreman and then it will take a list of organisms to create QN targets for.
@@ -561,25 +628,78 @@ At the time of writing, compendia jobs require 180GB of RAM and m5.12xlarge has 
 
 Normally we wait until ever sample in an experiment has had Salmon run on it before we run Tximport.
 However Salmon won't work on every sample, so some experiments are doomed to never make it to 100% completion.
-Tximport can be run on such experiments by running the follow on the Foreman instance:
+Tximport can be run on such an experiment with:
 
-To run tximport on all eligible experiments:
 ```bash
-./run_management_command.sh run_tximport
+nomad job dispatch -meta EXPERIMENT_ACCESSION=SRP009841 TXIMPORT
 ```
-
-To run tximport on a single experiment if it is eligible:
-```bash
-./run_management_command.sh run_tximport --accession-codes=SRP095529
-```
-
-To run tximport on a the eligible experiments in a list:
-```bash
-./run_management_command.sh run_tximport --accession-codes=SRP095529,ERP006872
-```
-
 
 Note that if the experiment does not have at least 25 samples with at least 80% of them processed, this will do nothing.
+
+
+### Checking on Local Jobs
+
+_Note:_ The following instructions assume you have set the environment
+variable NOMAD_ADDR to include the IP address of your development
+machine. This can be done with:
+
+```bash
+source ./scripts/common.sh && export NOMAD_ADDR=http://$(get_ip_address):4646
+```
+
+To check on the status of a job, run:
+
+```bash
+nomad status
+```
+
+It should output something like:
+
+```
+ID                                       Type                 Priority  Status   Submit Date
+DOWNLOADER                               batch/parameterized  50        running  01/31/18 18:34:05 EST
+DOWNLOADER/dispatch-1517441663-4b02e7a3  batch                50        dead     01/31/18 18:34:23 EST
+PROCESSOR                                batch/parameterized  50        running  01/31/18 18:34:05 EST
+```
+
+The rows whose `ID`s are `DOWNLOADER` or `PROCESSOR` are the parameterized
+jobs which are waiting to dispatch Refine.bio jobs. If you don't understand
+what that means, don't worry about it. All you really need to do is select
+one of the jobs whose ID contains `dispatch` and whose `Submit Date`
+matches the time when the job you want to check on was run, copy that full ID
+(in this case `DOWNLOADER/dispatch-1517437920-ae8b77a4`), and paste it
+after the previous command, like so:
+
+```bash
+nomad status DOWNLOADER/dispatch-1517441663-4b02e7a3
+```
+
+This will output a lot of information about that `Nomad Dispatch Job`,
+of which we're mostly interested in the section titled **Allocations**.
+Here is an example:
+
+```
+Allocations
+ID        Node ID   Task Group  Version  Desired  Status    Created At
+b30e4edd  fda75a5a  jobs        0        run      complete  01/31/18 18:34:23 EST
+```
+
+If you paste that after the original `nomad status` command, like so:
+
+```bash
+nomad status b30e4edd
+```
+
+you'll see a lot of information about allocation, which probably isn't
+what you're interested in. Instead, you should run:
+
+```bash
+nomad logs -verbose b30e4edd
+```
+
+This command will output both the stderr and stdout logs from the container
+which ran that allocation. The allocation is really a Refine.bio job.
+
 
 ### Development Helpers
 
@@ -649,7 +769,7 @@ The only thing remaining is to copy the RefinebioSSHKey from LastPass and save i
 If you do not have access to this key in LastPass, ask another developer.
 
 The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
-configuration steps, such as setting environment variables, setting up Batch job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
+configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
 
 ```bash
 ./deploy.sh -u myusername -e dev -r us-east-1 -v v1.0.0 -d my-dockerhub-repo
@@ -676,56 +796,21 @@ terraform taint <your-entity-from-state-list>
 And then rerun `deploy.sh` with the same parameters you originally ran it with.
 
 
-### AWS Batch
-
-refine.bio relies on AWS Batch as its job queue and uses it to provision instances.
-AWS Batch has three primary components:
-* Compute Environments:
-  These are what provision EC2 instances for refineb.bio.
-  In this project each Compute Environment can either have one or zero instances.
-  The goal is to have jobs that are run in the same compute environment be run on the same instance, so that data stored on the local disk by a downloader job will be available to the processor job.
-  Only allowing a maximum of one instance per compute environment _almost_ ensures this, however it is possible for an instance to be cycled in between jobs so sometimes the downloader job has to be rerun.
-* Job Queues:
-  These are what track the jobs submitted to AWS Batch and assign them to compute environments.
-  In refine.bio each Job Queue uses a single compute environment, so if two jobs are placed in the same job queue they will be run in the same Compute Environment.
-* Job Definitions:
-  These are what specify the configuration to be used for each job type including what Docker Image will be used, what environment variables will be passed to it, what secrets it can access, and how many vCPUs and RAM it requires.
-
-refine.bio uses three types of job queues:
-* **Compendia Job Queue**:
-  This job queue is for running very large compendia-building jobs that require a large instance. The Compute Environment assigned to this queue is configured to provision very large instances.
-* **Smasher Job Queue**:
-  This job queue is used for running smashing jobs.
-  Having a dedicated queue for smasher jobs is useful because it ensure they won't be blocked by processing jobs and the instance provisioned by its compute environment has enough resources to run one of these jobs at a time and no more.
-* **Worker Job Queues**:
-  This is the only job queue with multiple instances.
-  These do the general processing, so if there is a sufficient volume of work to necessitate more than one instance the Foreman will distribute jobs to more and more queues until all the queues are in use.
-  The lowest index queue will be assigned Surveyor and Downloader jobs if it has capacity for them, if not the next lowest index queue with capacity will be chosen.
-  Processor jobs will always be assigned to the same job queue that ran their downloader job.
-
-
-
 ### Running Jobs
 
-Jobs can be submitted by running the following commands on the Foreman instance.
+Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress.
 
-To start a job for a single accession code::
+To start a job with a file located on the foreman docker image:
 
-```bash
-./run_management_command.sh survey_all --accession E-GEOD-3303
+```
+nomad job dispatch -meta FILE=NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
 ```
 
-You can also supply a newline-deliminated file which resides in S3 to `survey_all` which will
-dispatch survey jobs based on accession codes like so:
+or to start a job with a file located in S3:
 
-```bash
-./run_management_command.sh survey_all --file s3://data-refinery-test-assets/MY_BIG_LIST_OF_CODES.txt
 ```
-
-See the [Running Locally](#running-locally) section for additional examples of survey_all usage.
-
-Note that there is a `run_management_command.sh` included in the foreman directory that is completely different than the one that is created on the Foreman instance.
-These two scripts share a name to make the commands work in either place.
+nomad job dispatch -meta FILE=s3://data-refinery-test-assets/NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
+```
 
 ### Log Consumption
 

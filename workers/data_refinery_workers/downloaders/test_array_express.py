@@ -169,6 +169,7 @@ class DownloadArrayExpressTestCase(TestCase):
         # platforms so we're using a platform that is supported.
         sample.platform_accession_code = "hgu133a"
         sample.save()
+
         OriginalFileSampleAssociation.objects.get_or_create(
             sample=sample, original_file=original_file
         )
