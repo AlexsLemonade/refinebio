@@ -121,6 +121,7 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("organisms", kwargs={"version": API_VERSION}))
         response_json = response.json()["results"]
+        self.assertEqual(2, len(response_json))
 
         response = self.client.get(
             reverse("organisms", kwargs={"version": API_VERSION}), {"has_compendia": True},

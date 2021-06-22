@@ -83,10 +83,16 @@ class DownloadSraTestCase(TestCase):
         result, downloaded_files = sra.download_sra(dlj.pk)
         utils.end_downloader_job(dlj, result)
 
-        # If the FTP server is down, then we expect that the downloader job should have failed
-        ftp_server = "ftp.sra.ebi.ac.uk"
-        ftp = FTP(ftp_server)
-        if ftp.login()[0:3] == "550":
+        # If the FTP server is down or it times out, then we expect that the downloader job should have failed
+        server_failure = False
+        try:
+            ftp_server = "ftp.sra.ebi.ac.uk"
+            ftp = FTP(ftp_server)
+            server_failure = ftp.login()[0:3] == "550"
+        except (TimeoutError, ConnectionResetError):
+            server_failure = True
+
+        if server_failure:
             self.assertFalse(result)
         else:
             self.assertTrue(result)

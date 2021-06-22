@@ -20,9 +20,9 @@ if ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb > /dev/null; then
     exit 1
 fi
 
-# Default to "local" for system version if we're not running in the cloud.
+# Default to "0.0.0.dev" for system version if we're not running in the cloud.
 if [ -z "$SYSTEM_VERSION" ]; then
-    SYSTEM_VERSION="local$(date +%s)"
+    SYSTEM_VERSION="0.0.0.dev$(date +%s)"
     export SYSTEM_VERSION
 fi
 
@@ -32,4 +32,4 @@ echo "$SYSTEM_VERSION" > common/version
 # Ensure there is only one distribution to copy over.
 rm -f common/dist/*
 
-./scripts/make_migrations.sh && cd common && python setup.py sdist
+./scripts/make_migrations.sh && cd common && python3 setup.py sdist
