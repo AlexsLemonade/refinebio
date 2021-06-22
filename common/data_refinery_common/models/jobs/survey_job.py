@@ -3,15 +3,12 @@ from typing import Dict
 from django.db import models
 from django.utils import timezone
 
-import nomad
-from nomad import Nomad
-
 from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
     LostJobsManager,
+    UnqueuedJobsManager,
 )
-from data_refinery_common.utils import get_env_variable
 
 
 class SurveyJob(models.Model):
@@ -25,13 +22,17 @@ class SurveyJob(models.Model):
     failed_objects = FailedJobsManager()
     hung_objects = HungJobsManager()
     lost_objects = LostJobsManager()
+    unqueued_objects = UnqueuedJobsManager()
 
     source_type = models.CharField(max_length=256)
     success = models.BooleanField(null=True)
     no_retry = models.BooleanField(default=False)
-    nomad_job_id = models.CharField(max_length=256, null=True)
+    batch_job_id = models.CharField(max_length=256, null=True)
 
-    ram_amount = models.IntegerField(default=256)
+    # Which AWS Batch Job Queue the job was run in.
+    batch_job_queue = models.CharField(max_length=100, null=True)
+
+    ram_amount = models.IntegerField(default=1024)
 
     # The start time of the job
     start_time = models.DateTimeField(null=True)
@@ -47,6 +48,9 @@ class SurveyJob(models.Model):
     # This field indicates whether or not this job has been retried
     # already or not.
     retried = models.BooleanField(default=False)
+
+    # If the job is retried, this is the id of the new job
+    retried_job = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)
 
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
@@ -73,20 +77,6 @@ class SurveyJob(models.Model):
             return kvp.value
         except Exception:
             return None
-
-    def kill_nomad_job(self) -> bool:
-        if not self.nomad_job_id:
-            return False
-
-        try:
-            nomad_host = get_env_variable("NOMAD_HOST")
-            nomad_port = get_env_variable("NOMAD_PORT", "4646")
-            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-            nomad_client.job.deregister_job(self.nomad_job_id)
-        except nomad.api.exceptions.BaseNomadException:
-            return False
-
-        return True
 
     def __str__(self):
         return "SurveyJob " + str(self.pk) + ": " + str(self.source_type)

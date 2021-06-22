@@ -469,7 +469,6 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
 fi
 
 . scripts/common.sh
-HOST_IP=$(get_ip_address || echo 127.0.0.1)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 # Ensure permissions are set for everything within the test data directory.
@@ -511,7 +510,6 @@ for image in $worker_images; do
         echo "$test_command"
         docker run -t $INTERACTIVE \
                --add-host=database:"$DB_HOST_IP" \
-               --add-host=nomad:"$HOST_IP" \
                --env-file workers/environments/test \
                --env AWS_ACCESS_KEY_ID \
                --env AWS_SECRET_ACCESS_KEY \

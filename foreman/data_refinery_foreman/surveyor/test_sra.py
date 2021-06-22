@@ -67,7 +67,7 @@ class SraSurveyorTestCase(TestCase):
         )
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.srp_survey.yaml")
-    @patch("data_refinery_foreman.surveyor.external_source.message_queue.send_job")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_srp_survey(self, mock_send_task):
         """A slightly harder test of the SRA surveyor.
         """

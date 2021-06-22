@@ -97,15 +97,16 @@ def download_transcriptome(job_id: int) -> None:
     if job.success:
         logger.debug("Files downloaded successfully.", downloader_job=job_id)
 
-        create_long_and_short_processor_jobs(files_to_process)
+        create_long_and_short_processor_jobs(job, files_to_process)
 
     utils.end_downloader_job(job, job.success)
 
 
-def create_long_and_short_processor_jobs(files_to_process):
+def create_long_and_short_processor_jobs(downloader_job, files_to_process):
     """ Creates two processor jobs for the files needed for this transcriptome"""
 
     processor_job_long = ProcessorJob()
+    processor_job_long.downloader_job = downloader_job
     processor_job_long.pipeline_applied = "TRANSCRIPTOME_INDEX_LONG"
     processor_job_long.ram_amount = 4096
     processor_job_long.save()
@@ -121,9 +122,10 @@ def create_long_and_short_processor_jobs(files_to_process):
         send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long)
     except Exception:
         # This is fine, the foreman will requeue these later.
-        pass
+        logger.exception("Problem with submitting a long transcriptome index job.")
 
     processor_job_short = ProcessorJob()
+    processor_job_short.downloader_job = downloader_job
     processor_job_short.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
     processor_job_short.ram_amount = 4096
     processor_job_short.save()
@@ -139,4 +141,4 @@ def create_long_and_short_processor_jobs(files_to_process):
         send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short)
     except Exception:
         # This is fine, the foreman will requeue these later.
-        pass
+        logger.exception("Problem with submitting a long transcriptome index job.")

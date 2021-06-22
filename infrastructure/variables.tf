@@ -2,6 +2,15 @@
 # Only lowercase alphanumeric characters and hyphens allowed!
 # In CI, this can be set with TF_VAR_user, TF_VAR_stage, etc.
 
+variable "default_tags" {
+  default = {
+    team = "engineering"
+    project = "refine.bio"
+  }
+  description = "Default resource tags"
+  type = map(string)
+}
+
 # Annoyingly, TF can't have computed variables (${env.USER})
 # as default values for variables. So `TF_VAR_user=rjones tf plan`, etc.
 # Also, don't use any non-alphanumeric characters here or RDS will whinge.
@@ -10,6 +19,10 @@ variable "user" {
 }
 
 variable "stage" {
+  default = "dev"
+}
+
+variable "environment" {
   default = "dev"
 }
 
@@ -120,7 +133,7 @@ variable "local_root_dir" {
 }
 
 # Instance types / ASG
-variable "nomad_server_instance_type" {
+variable "pg_bouncer_instance_type" {
   default = "t2.medium"
 }
 
@@ -147,12 +160,14 @@ variable "spot_fleet_capacity" {
   default = "0"
 }
 
+# AWS Secrets manager won't allow these to be empty, so we make them
+# "None" and check for that string in the settings,
 variable "raven_dsn" {
-  default = ""
+  default = "None"
 }
 
 variable "raven_dsn_api" {
-  default = ""
+  default = "None"
 }
 
 # API
@@ -168,13 +183,31 @@ variable "foreman_instance_type" {
   default = "m5.2xlarge"
 }
 
+variable "worker_ami" {
+  default = "ami-0f9b369e4ad339b15"
+}
+
 variable "smasher_volume_size_in_gb" {
   # 500 is the smallest for ST1s.
   default = "500"
 }
 
+variable "num_workers" {
+  # For now err on the side of inexpensive
+  default = 1
+}
+
+variable "batch_use_on_demand_instances" {
+  type = bool
+  default = false
+}
+
+variable "max_jobs_per_node" {
+  default = 250
+}
+
 variable "max_downloader_jobs_per_node" {
-  default = 8
+  default = 200
 }
 
 variable "elasticsearch_port" {
@@ -192,12 +225,6 @@ variable "full_stack" {
 
 variable "processing_compendia" {
   default = true
-}
-
-# Configuration
-variable "downloader_space_constraint" {
-  # 600 GB
-  default = "600000000000"
 }
 
 # Output our production environment variables.
@@ -224,12 +251,20 @@ output "environment_variables" {
       value = aws_iam_access_key.data_refinery_user_client_key.secret
     },
     {
+      name = "WORKER_ROLE_ARN"
+      value = aws_iam_role.data_refinery_worker.arn
+    },
+    {
       name = "DJANGO_DEBUG"
       value = var.django_debug
     },
     {
       name = "DJANGO_SECRET_KEY"
       value = var.django_secret_key
+    },
+    {
+      name = "DJANGO_SECRET_KEY_ARN"
+      value = aws_secretsmanager_secret.django_secret_key.arn
     },
     {
       name = "DATABASE_NAME"
@@ -258,6 +293,10 @@ output "environment_variables" {
       value = var.database_password
     },
     {
+      name = "DATABASE_PASSWORD_ARN"
+      value = aws_secretsmanager_secret.database_password.arn
+    },
+    {
       name = "DATABASE_PORT"
       value = var.database_port
     },
@@ -268,6 +307,10 @@ output "environment_variables" {
     {
       name = "DATABASE_TIMEOUT"
       value = var.database_timeout
+    },
+    {
+      name = "API_HOST"
+      value = aws_eip.data_refinery_api_ip.public_ip
     },
     {
       name = "ELASTICSEARCH_HOST"
@@ -296,6 +339,18 @@ output "environment_variables" {
     {
       name = "RAVEN_DSN_API"
       value = var.raven_dsn_api
+    },
+    {
+      name = "RAVEN_DSN_ARN"
+      value = aws_secretsmanager_secret.raven_dsn.arn
+    },
+    {
+      name = "RAVEN_DSN_API_ARN"
+      value = aws_secretsmanager_secret.raven_dsn_api.arn
+    },
+    {
+      name = "BATCH_EXECUTION_ROLE_ARN"
+      value = aws_iam_role.data_refinery_batch_execution.arn
     },
     {
       name = "S3_BUCKET_NAME"
@@ -362,16 +417,8 @@ output "environment_variables" {
       value = var.api_docker_image
     },
     {
-      name = "NOMAD_HOST"
-      value = aws_instance.nomad_server_1.private_ip
-    },
-    {
-      name = "NOMAD_PUBLIC_HOST"
-      value = aws_instance.nomad_server_1.public_ip
-    },
-    {
-      name = "NOMAD_PORT"
-      value = "4646"
+      name = "MAX_JOBS_PER_NODE"
+      value = var.max_jobs_per_node
     },
     {
       name = "MAX_DOWNLOADER_JOBS_PER_NODE"
@@ -382,8 +429,20 @@ output "environment_variables" {
       value = var.engagementbot_webhook
     },
     {
-      name = "DOWNLOADER_SPACE_CONSTRAINT"
-      value = var.downloader_space_constraint
+      name = "REFINEBIO_JOB_QUEUE_WORKERS_NAMES"
+      value = module.batch.data_refinery_workers_queue_names
+    },
+    {
+      name = "REFINEBIO_JOB_QUEUE_SMASHER_NAME"
+      value = module.batch.data_refinery_smasher_queue_name
+    },
+    {
+      name = "REFINEBIO_JOB_QUEUE_COMPENDIA_NAME"
+      value = module.batch.data_refinery_compendia_queue_name
+    },
+    {
+      name = "REFINEBIO_JOB_QUEUE_ALL_NAMES"
+      value = module.batch.data_refinery_all_queue_names
     },
   ]
 }

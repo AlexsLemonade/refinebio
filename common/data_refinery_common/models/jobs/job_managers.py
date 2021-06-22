@@ -25,7 +25,7 @@ class HungJobsManager(models.Manager):
                 no_retry=False,
                 start_time__isnull=False,
                 end_time=None,
-                nomad_job_id__isnull=False,
+                batch_job_id__isnull=False,
             )
         )
 
@@ -39,5 +39,32 @@ class LostJobsManager(models.Manager):
         return (
             super()
             .get_queryset()
-            .filter(success=None, retried=False, no_retry=False, start_time=None, end_time=None,)
+            .filter(
+                success=None,
+                retried=False,
+                no_retry=False,
+                start_time=None,
+                end_time=None,
+                batch_job_id__isnull=False,
+            )
+        )
+
+
+class UnqueuedJobsManager(models.Manager):
+    """
+    Only returns lost jobs
+    """
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                success=None,
+                retried=False,
+                no_retry=False,
+                start_time=None,
+                end_time=None,
+                batch_job_id=None,
+            )
         )

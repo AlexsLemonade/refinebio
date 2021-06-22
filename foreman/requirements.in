@@ -2,16 +2,17 @@ django>=3.2.4
 psycopg2-binary>=2.8.4
 requests>=2.20.0
 retrying
-python-nomad>=1.0.2
 coverage
-GEOparse
+GEOparse>=2.0.3
 python-dateutil
 raven
+pyrefinebio>=0.3.2
+tblib
 djangorestframework>=3.11.2
 # Can't go above 6.X without upgrading elasticsearch
 django-elasticsearch-dsl==6.5.0
 django-elasticsearch-dsl-drf>=0.17.1
-elasticsearch-dsl>=6.1.0
+elasticsearch-dsl>=6.1.0,<7.0.0
 vcrpy
 django-computedfields>=0.1.5
 pyyaml>=5.4
