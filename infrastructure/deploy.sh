@@ -257,17 +257,6 @@ mkdir -p batch-job-templates
 ../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
 ../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
 
-# Re-register Batch jobs (skip those that end in .tpl)
-echo "Registering new job specifications.."
-# SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
-# We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.
-# shellcheck disable=SC2010
-for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
-    aws batch register-job-definition --cli-input-json file://"$batch_job_template" &
-    sleep 1
-done
-echo "Job registrations have been fired off."
-
 # Remove all Batch jobs because it's the only way to be sure we don't
 # have any old ones. Deleting the job queue is the easiest way to do
 # this, and it will be recreated by the following run of terraform
@@ -277,9 +266,20 @@ python3 delete_batch_job_queue.py
 # If we don't deregister these, they'll stick around and accumulate.
 python3 deregister_batch_job_definitions.py
 
+# Re-register Batch jobs (skip those that end in .tpl)
+echo "Registering new job specifications.."
+export AWS_DEFAULT_REGION=$AWS_REGION
+# SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
+# We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.
+# shellcheck disable=SC2010
+for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
+    aws batch register-job-definition --cli-input-json file://"$batch_job_template" &
+    sleep 1
+done
+echo "Job registrations have been fired off."
+
 # Get an image to run the migrations with.
 docker pull "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
-
 
 # Test that the pg_bouncer instance is up. 15 minutes should be more than enough.
 start_time=$(date +%s)
