@@ -65,7 +65,7 @@ apt-get install -y \
         unzip \
         postgresql-client
 
-pip3 install boto3
+pip3 install boto3 awscli
 
 usermod -aG docker ubuntu
 

@@ -241,12 +241,40 @@ rm -f prod_env
 # (cont'd) ..and once again after the update when this is re-run.
 format_environment_variables
 
-python3 delete_batch_job_queue.py
+# Make sure to clear out any old batch job templates since we
+# will register everything in this directory.
+if [ -e batch-job-templates ]; then
+  rm -r batch-job-templates
+fi
+
+# Template the environment variables for production into the Batch Job
+# definitions and API confs.
+mkdir -p batch-job-templates
+../scripts/format_batch_with_env.sh -p workers -e "$env" -o "$(pwd)/batch-job-templates"
+../scripts/format_batch_with_env.sh -p surveyor -e "$env" -o "$(pwd)/batch-job-templates"
+
+# API and foreman aren't run as Batch jobs, but the templater still works.
+../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
+../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
+
+# Re-register Batch jobs (skip those that end in .tpl)
+echo "Registering new job specifications.."
+# SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
+# We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.
+# shellcheck disable=SC2010
+for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
+    aws batch register-job-definition --cli-input-json file://"$batch_job_template" &
+    sleep 1
+done
+echo "Job registrations have been fired off."
 
 # Remove all Batch jobs because it's the only way to be sure we don't
 # have any old ones. Deleting the job queue is the easiest way to do
 # this, and it will be recreated by the following run of terraform
 # anyway.
+python3 delete_batch_job_queue.py
+
+# If we don't deregister these, they'll stick around and accumulate.
 python3 deregister_batch_job_definitions.py
 
 # Get an image to run the migrations with.
@@ -288,33 +316,6 @@ docker run \
        --env RUNNING_IN_CLOUD=False \
        --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
        "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" python3 manage.py createcachetable
-
-# Make sure to clear out any old batch job templates since we
-# will register everything in this directory.
-if [ -e batch-job-templates ]; then
-  rm -r batch-job-templates
-fi
-
-# Template the environment variables for production into the Batch Job
-# definitions and API confs.
-mkdir -p batch-job-templates
-../scripts/format_batch_with_env.sh -p workers -e "$env" -o "$(pwd)/batch-job-templates"
-../scripts/format_batch_with_env.sh -p surveyor -e "$env" -o "$(pwd)/batch-job-templates"
-
-# API and foreman aren't run as Batch jobs, but the templater still works.
-../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
-../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
-
-# Re-register Batch jobs (skip those that end in .tpl)
-echo "Registering new job specifications.."
-# SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
-# We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.
-# shellcheck disable=SC2010
-for batch_job_template in $(ls -1 batch-job-templates/*.json | grep -v .tpl); do
-    aws batch register-job-definition --cli-input-json file://"$batch_job_template" &
-    sleep 1
-done
-echo "Job registrations have been fired off."
 
 # Terraform doesn't manage these well, so they need to be tainted to
 # ensure they won't require manual intervention.
