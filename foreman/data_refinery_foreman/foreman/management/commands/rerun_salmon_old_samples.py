@@ -55,7 +55,7 @@ def update_salmon_versions(experiment: Experiment):
                             no_retry=False,
                             start_time__isnull=False,
                             end_time=None,
-                            nomad_job_id__isnull=False,
+                            batch_job_id__isnull=False,
                         )
                         | Q(
                             success=None,

@@ -158,18 +158,16 @@ def start_job(job_context: Dict):
         return job_context
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
-    # (`docker stop` uses SIGTERM, not SIGINT.)
-    # (however, Nomad sends an SIGINT so catch both.)
+    # (`docker stop` uses SIGTERM, not SIGINT, but better to catch both.)
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-    # This job should not have been started, for some reason Nomad restarts some of our jobs
-    # https://github.com/AlexsLemonade/refinebio/issues/1487
+    # This job should not have been restarted.
     if job.start_time is not None and settings.RUNNING_IN_CLOUD:
         # Let's just log the event and let the job run instead of failing
         # and also reset the endtime and failure reason, since those fields might have been set
         logger.warn(
-            "ProcessorJob was restarted by Nomad. We do not know why this happened",
+            "ProcessorJob was restarted by Batch. We do not know why this happened",
             processor_job=job.id,
             success=job.success,
             failure_reason=job.failure_reason,
@@ -649,7 +647,7 @@ def get_runtime_env(yml_filename):
 
     runtime_env = dict()
     with open(yml_filename) as yml_fh:
-        pkgs = yaml.load(yml_fh)
+        pkgs = yaml.load(yml_fh, Loader=yaml.SafeLoader)
         for pkg_type, pkg_list in pkgs.items():
             if pkg_type == "os_distribution":
                 value = get_os_distro()

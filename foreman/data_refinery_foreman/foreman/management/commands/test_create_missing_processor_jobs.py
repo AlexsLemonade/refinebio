@@ -18,7 +18,7 @@ from data_refinery_foreman.foreman.management.commands.create_missing_processor_
 
 
 class SurveyTestCase(TransactionTestCase):
-    # @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    # @patch('data_refinery_foreman.surveyor.external_source.send_job')
     def test_create_missing_jobs(self):
         """Tests that files which should have processor jobs get them created.
 
@@ -77,6 +77,7 @@ class SurveyTestCase(TransactionTestCase):
         )
 
         ma_processor_job = ProcessorJob()
+        ma_processor_job.downloader_job = ma_dl_job_doesnt_need_processor
         ma_processor_job.success = True
         ma_processor_job.worker_id = "worker_1"
         ma_processor_job.volume_index = "1"
@@ -179,6 +180,7 @@ class SurveyTestCase(TransactionTestCase):
         )
 
         rna_processor_job = ProcessorJob()
+        rna_processor_job.downloader_job = rna_dl_job_doesnt_need_processor
         # Failed ProcessorJobs will be retried, so they still count.
         rna_processor_job.success = False
         rna_processor_job.worker_id = "worker_1"

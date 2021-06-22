@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Usage: slackpost "<channel>" "<username>" "<message>"
-
 if [[ $ENGAGEMENT_WEBHOOK == "" ]]
 then
     echo "No webhook url. Set ENGAGEMENT_WEBHOOK in the environment variables if you want to be notified of deploys on slack"
@@ -39,6 +37,6 @@ text="New deployment! Woo! $CI_USERNAME: $CI_BRANCH $CI_TAG"
 
 escapedText=$(echo "$text" | sed 's/"/\"/g' | sed "s/'/\'/g" )
 
-json="{\"channel\": \"$channel\", \"username\":\"$username\", \"icon_emoji\":\":veerapan:\", \"attachments\":[{\"color\":\"danger\" , \"text\": \"$escapedText\"}]}"
+json="{\"channel\": \"$channel\", \"username\":\"$username\", \"icon_emoji\":\":tada:\", \"attachments\":[{\"color\":\"danger\" , \"text\": \"$escapedText\"}]}"
 
 curl -s -d "payload=$json" "$ENGAGEMENT_WEBHOOK"

@@ -16,14 +16,12 @@ cd ..
 ./scripts/prepare_image.sh -i api_production -s api
 
 . ./scripts/common.sh
-HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 STATIC_VOLUMES=/tmp/volumes_static
 
 docker run \
        --add-host=database:"$DB_HOST_IP" \
-       --add-host=nomad:"$HOST_IP" \
        --env-file api/environments/local \
        --link drdb:postgres \
        -v "$STATIC_VOLUMES":/tmp/www/static \

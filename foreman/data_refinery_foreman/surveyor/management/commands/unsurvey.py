@@ -12,7 +12,24 @@ import boto3
 import botocore
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import *
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputationalResultAnnotation,
+    ComputedFile,
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentSampleAssociation,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+    SampleAnnotation,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
+)
 from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
@@ -43,10 +60,15 @@ def purge_experiment(accession: str) -> None:
     I.e. if a sample is part of two experiments, it won't be removed
     but it will be disassociated from the one being purged.
     """
-    experiment = Experiment.objects.filter(accession_code=accession)[0]
+    experiment = Experiment.objects.filter(accession_code=accession).first()
+
+    if not experiment:
+        logger.info("Experiment with accession %s does not exist.", accession)
+        return
+
     ExperimentAnnotation.objects.filter(experiment=experiment).delete()
 
-    ## Samples
+    # Samples
     experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
     samples = Sample.objects.filter(id__in=experiment_sample_assocs.values("sample_id"))
 
@@ -65,7 +87,7 @@ def purge_experiment(accession: str) -> None:
                 0
             ].delete()
 
-    ## ComputationalResults/ComputedFiles
+    # ComputationalResults/ComputedFiles
     comp_result_sample_assocs = SampleResultAssociation.objects.filter(
         sample_id__in=uniquely_assoced_sample_ids
     )
@@ -132,7 +154,7 @@ def purge_experiment(accession: str) -> None:
     # know the associations need to go.
     og_file_sample_assocs.delete()
 
-    ## DownloaderJobs
+    # DownloaderJobs
     og_file_dj_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
         original_file_id__in=uniquely_assoced_og_file_ids
     )
@@ -154,7 +176,7 @@ def purge_experiment(accession: str) -> None:
     # know the associations need to go.
     og_file_dj_assocs.delete()
 
-    ## ProcessorJobs
+    # ProcessorJobs
     og_file_pj_assocs = ProcessorJobOriginalFileAssociation.objects.filter(
         original_file_id__in=uniquely_assoced_og_file_ids
     )
