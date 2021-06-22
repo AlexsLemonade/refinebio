@@ -296,10 +296,19 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         job_name = JOB_DEFINITION_PREFIX + job_name
 
         # Smasher related and tximport jobs  don't have RAM tiers.
-        if job_type not in SMASHER_JOB_TYPES and job_type is not ProcessorPipeline.TXIMPORT:
+        if job_type not in [
+            *SMASHER_JOB_TYPES,
+            ProcessorPipeline.TXIMPORT,
+            ProcessorPipeline.JANITOR,
+        ]:
             job_name = job_name + "_" + str(job.ram_amount)
 
         job_queue = get_batch_queue_for_job(job_type, job)
+
+        if not job_queue:
+            # There's no capacity for the job. That's okay. The
+            # Foreman will requeue when there is.
+            return False
 
         try:
             batch_response = batch.submit_job(
