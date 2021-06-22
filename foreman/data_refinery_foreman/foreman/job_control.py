@@ -43,9 +43,10 @@ DBCLEAN_TIME = datetime.timedelta(hours=6)
 
 
 def send_janitor_jobs():
-    """Dispatch a Janitor job for each compute environment.
+    """Dispatch a Janitor job for each job queue.
 
-    For now that's just one, but this will eventually need to loop.
+    TODO: make this dispatch janitor jobs for all job queues.
+    https://github.com/AlexsLemonade/refinebio/issues/2789
     """
     new_job = ProcessorJob(num_retries=0, pipeline_applied="JANITOR", ram_amount=2048)
     new_job.save()
