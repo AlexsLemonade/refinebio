@@ -116,14 +116,12 @@ class TXTestCase(TestCase):
             "gtf_file_path": "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_testdata.gtf",
         }
         job_context["output_dir"] = job_context["work_dir"] + "/index"
+        os.makedirs(job_context["output_dir"], exist_ok=True)
 
         job_context = transcriptome_index._process_gtf(job_context)
 
         transcript_to_gene_ids = pd.read_csv(
-            job_context["genes_to_transcripts_path"],
-            sep="\t",
-            index_col=1,
-            names=["Gene"],
+            job_context["genes_to_transcripts_path"], sep="\t", index_col=1, names=["Gene"],
         )["Gene"]
 
         self.assertEqual(transcript_to_gene_ids.get("ENST00000480647", None), "ENSG00000041988")
