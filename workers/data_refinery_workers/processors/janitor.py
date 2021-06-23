@@ -3,7 +3,7 @@ import shutil
 
 import boto3
 
-from data_refinery_common.job_lookup import PipelineEnum
+from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Pipeline, ProcessorJob, Sample
 from data_refinery_common.utils import get_env_variable

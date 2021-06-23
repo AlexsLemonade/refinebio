@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import warnings
 from typing import Dict
@@ -9,7 +7,7 @@ from django.utils import timezone
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
-from data_refinery_common.job_lookup import PipelineEnum
+from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -34,7 +32,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     original_file = job_context["original_files"][0]
     job_context["input_file_path"] = original_file.absolute_file_path
-    # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt into /home/user/data_store/E-GEOD-8607/processed/foo.cel
+    # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt
+    # into /home/user/data_store/E-GEOD-8607/processed/foo.cel
     pre_part = original_file.absolute_file_path.split("/")[:-2]
     end_part = original_file.absolute_file_path.split("/")[-1]
 
@@ -80,8 +79,12 @@ def _run_scan_twocolor(job_context: Dict) -> Dict:
         # There is a bug in Bioconductor that causes this, but it happens
         # _after_ our output file is made and written to disk so..
         # we can ignore it!
-        # See it for yourself here: https://github.com/Miserlou/SCAN.UPC/blob/master/R/TwoColor.R#L122
-        bugstring = 'Error in sampleNames(expressionSet) = sampleNames : \n  could not find function "sampleNames<-"\n'
+        # See it for yourself here:
+        # https://github.com/Miserlou/SCAN.UPC/blob/master/R/TwoColor.R#L122
+        bugstring = (
+            "Error in sampleNames(expressionSet) = sampleNames : \n  "
+            'could not find function "sampleNames<-"\n'
+        )
         if str(e) == bugstring:
             job_context["time_end"] = timezone.now()
             job_context["success"] = True

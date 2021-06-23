@@ -36,7 +36,7 @@ class DownloaderJob(models.Model):
 
     # This field contains a string which corresponds to a valid
     # Downloader Task. Valid values are enumerated in:
-    # data_refinery_common.job_lookup.Downloaders
+    # data_refinery_common.enums.Downloaders
     downloader_task = models.CharField(max_length=256)
     accession_code = models.CharField(max_length=256, blank=True, null=True)
     no_retry = models.BooleanField(default=False)

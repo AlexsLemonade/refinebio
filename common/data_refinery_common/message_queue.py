@@ -11,7 +11,7 @@ from django.utils import timezone
 
 import boto3
 
-from data_refinery_common.job_lookup import (
+from data_refinery_common.enums import (
     SMASHER_JOB_TYPES,
     Downloaders,
     ProcessorPipeline,

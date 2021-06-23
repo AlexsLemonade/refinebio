@@ -2,7 +2,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.enums import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_workers.downloaders.array_express import download_array_express
 from data_refinery_workers.downloaders.geo import download_geo
@@ -17,7 +17,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--job-name",
             type=str,
-            help=("The downloader job's name. Must be enumerated in job_lookup."),
+            help=("The downloader job's name. Must be enumerated in data_refinery_common.enums."),
         )
         parser.add_argument("--job-id", type=int, help=("The downloader job's ID."))
 

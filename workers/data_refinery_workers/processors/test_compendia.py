@@ -2,7 +2,7 @@ import os
 
 from django.test import TransactionTestCase, tag
 
-from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -11,15 +11,11 @@ from data_refinery_common.models import (
     Experiment,
     ExperimentSampleAssociation,
     Organism,
-    OriginalFile,
     ProcessorJob,
     ProcessorJobDatasetAssociation,
-    ProcessorJobOriginalFileAssociation,
     Sample,
-    SampleAnnotation,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    SurveyJob,
 )
 from data_refinery_workers.processors import create_compendia
 
