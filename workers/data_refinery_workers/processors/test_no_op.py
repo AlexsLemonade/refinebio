@@ -36,14 +36,17 @@ def prepare_job(job_info: dict) -> ProcessorJob:
     sample.accession_code = job_info["accession_code"]
     sample.title = job_info["accession_code"]
     sample.platform_accession_code = job_info["platform_accession_code"]
-    man = job_info.get("manufacturer", None)
-    if man is not None:
-        sample.manufacturer = man
+
+    manufacturer = job_info.get("manufacturer", None)
+    if manufacturer is not None:
+        sample.manufacturer = manufacturer
+
     # The illumina samples need the human organism
-    if job_info.get("manufacturer", None) == "ILLUMINA":
+    if manufacturer == "ILLUMINA":
         homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         homo_sapiens.save()
         sample.organism = homo_sapiens
+
     sample.save()
 
     assoc = OriginalFileSampleAssociation()

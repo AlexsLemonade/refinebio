@@ -258,35 +258,23 @@ if [ -z "$tag" ] || [ "$tag" = "no_op" ]; then
         wget -q -O "$no_test_raw_dir/$no_file5" \
              "$test_data_repo/$no_file5"
     fi
+
+    # Reference files
     no_test_exp_dir="$volume_directory/TEST/NO_OP/EXPECTED"
-    no_exp_file1="gene_converted_GSM557500-tbl-1.txt"
-    if [ ! -e "$no_test_exp_dir/$no_exp_file1" ]; then
-        mkdir -p "$no_test_exp_dir"
-        echo "Downloading NOOP expected file1."
-        wget -q -O "$no_test_exp_dir/$no_exp_file1" \
-             "$test_data_repo/$no_exp_file1"
-    fi
-    no_exp_file2="GSM269747.PCL"
-    if [ ! -e "$no_test_exp_dir/$no_exp_file2" ]; then
-        mkdir -p "$no_test_exp_dir"
-        echo "Downloading NOOP expected file2."
-        wget -q -O "$no_test_exp_dir/$no_exp_file2" \
-             "$test_data_repo/$no_exp_file2"
-    fi
-    no_exp_file3="gene_converted_GSM1234847-tbl-1.txt"
-    if [ ! -e "$no_test_exp_dir/$no_exp_file3" ]; then
-        mkdir -p "$no_test_exp_dir"
-        echo "Downloading NOOP expected file3."
-        wget -q -O "$no_test_exp_dir/$no_exp_file3" \
-             "$test_data_repo/$no_exp_file3"
-    fi
-    no_exp_file4="gene_converted_GSM1089291-tbl-1.txt"
-    if [ ! -e "$no_test_exp_dir/$no_exp_file4" ]; then
-        mkdir -p "$no_test_exp_dir"
-        echo "Downloading NOOP expected file4."
-        wget -q -O "$no_test_exp_dir/$no_exp_file4" \
-             "$test_data_repo/$no_exp_file4"
-    fi
+    no_test_exp_files='gene_converted_GSM557500-tbl-1.txt GSM269747.PCL gene_converted_GSM1234847-tbl-1.txt gene_converted_GSM1089291-tbl-1.txt'
+    mkdir -p "$no_test_exp_dir"
+
+    i=1
+    for no_test_exp_file in $no_test_exp_files; do
+        if ! [ -e "$no_test_exp_dir/$no_test_exp_file" ]; then
+            echo "Downloading NOOP expected file$i."
+            wget -O "$no_test_exp_dir/$no_test_exp_file" \
+                 "$test_data_repo/$no_test_exp_file"
+        fi
+
+        i=$(( i + 1 ))
+    done
+    unset i
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
@@ -552,9 +540,9 @@ for image in $worker_images; do
         fi
 
         # Strip out tag argument
-	# shellcheck disable=2001
+        # shellcheck disable=2001
         args_without_tag="$(echo "$@" | sed "s/-t $tag//")"
-	# shellcheck disable=2086
+        # shellcheck disable=2086
         test_command="$(run_tests_with_coverage --tag="$image" $args_without_tag)"
 
         # Only run interactively if we are on a TTY
