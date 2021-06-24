@@ -425,7 +425,7 @@ normData <- normData[probesToKeep,,drop=FALSE]
 
 # Map probes to genes
 probeGene <- as.data.frame(probeGeneRef[mappedkeys(probeGeneRef)])
-rownames(probeGene) <- probeGene$IlluminaID
+rownames(probeGene) <- probeGene$probe_id
 probesToKeep <- sort(intersect(rownames(probeGene), rownames(exprData)))
 probeGene <- probeGene[probesToKeep,]
 
