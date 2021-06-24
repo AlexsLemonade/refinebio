@@ -22,8 +22,7 @@ def parse_args():
 
 def get_job_to_run():
     completed_command = subprocess.run(
-        ["./foreman/run_surveyor.sh", "get_job_to_be_run"],
-        stdout=subprocess.PIPE,  # capture_output=True
+        ["./foreman/run_surveyor.sh", "get_job_to_be_run"], stdout=subprocess.PIPE,
     )
 
     # The JSON output is on the last line of the output, but it has a
@@ -56,30 +55,22 @@ def run_job(job):
         elif job_name == "NO_OP":
             image_name = "no_op"
 
-    completed_command = subprocess.check_call(
+    subprocess.check_call(
         [
             "./workers/run_job.sh",
             "-i",
             image_name,
             subcommand,
             f"--job-name={job_name}",
-            # job_name,
             f"--job-id={job_id}",
-            # str(job_id),
         ]
     )
 
-    if completed_command != 0:
-        print(f"{job_name} Job with id {job_id} failed!")
-
 
 def survey_accession(accession_code):
-    completed_command = subprocess.check_call(
+    subprocess.check_call(
         ["./foreman/run_surveyor.sh", "survey_all", "--accession", accession_code]
     )
-
-    if completed_command != 0:
-        print(f"The Survey Job failed!")
 
 
 def run_full_pipeline(accession_code):

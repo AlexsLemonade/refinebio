@@ -14,7 +14,6 @@ class Command(BaseCommand):
         If there are no unstarted ProcessorJobs, then the most
         recently created unstarted DownloaderJob will be prioritized.
 
-        The dict will have two top level keys: downloader_jobs and processor_jobs.
         The JSON output will be a dict containing the following keys:
         * job_name
         * job_id
