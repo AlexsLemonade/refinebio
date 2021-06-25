@@ -51,23 +51,42 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # Sanitize this file so R doesn't choke.
     # Some have comments, some have non-comment-comments.
-    with open(original_file.absolute_file_path, "r") as file_input:
-        with open(job_context["input_file_path"], "w") as file_output:
-            for line in file_input:
-                if (
-                    "#" not in line
-                    and line.strip() != ""
-                    and line != "\n"
-                    and "\t" in line
-                    and line[0:3].upper() != "GSM"
-                    and line[0] != "'"
-                    and line[0] != '"'
-                    and line[0] != "!"
-                    and line[0] != "/"
-                    and line[0] != "<"
-                    and line[0] != "\t"
-                ):
-                    file_output.write(line)
+    # Also, some files aren't utf-8 encoded
+    encodings = ["utf-8", "latin1"]
+    success = False
+    for encoding in encodings:
+        try:
+            with open(original_file.absolute_file_path, "r", encoding=encoding) as file_input:
+                with open(job_context["input_file_path"], "w", encoding="utf-8") as file_output:
+                    for line in file_input:
+                        if (
+                            "#" not in line
+                            and line.strip() != ""
+                            and line != "\n"
+                            and "\t" in line
+                            and line[0:3].upper() != "GSM"
+                            and line[0] != "'"
+                            and line[0] != '"'
+                            and line[0] != "!"
+                            and line[0] != "/"
+                            and line[0] != "<"
+                            and line[0] != "\t"
+                        ):
+                            file_output.write(line)
+
+            # We've found a good format. Break!
+            success = True
+            break
+        except UnicodeDecodeError:
+            pass
+
+    if not success:
+        logger.error(
+            "Couldn't decode the input file", input_file=original_file.absolute_file_path,
+        )
+        job_context["job"].failure_reason = "Couldn't decode the input file"
+        job_context["success"] = False
+        job_context["job"].no_retry = True
 
     return job_context
 

@@ -4,16 +4,18 @@ from typing import Dict
 
 from django.test import TestCase, tag
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.models import (
     Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
+    Pipeline,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
 )
-from data_refinery_workers.processors import illumina
+from data_refinery_workers.processors import illumina, utils
 
 
 def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
@@ -24,7 +26,7 @@ def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
     og_file = OriginalFile()
     og_file.source_filename = job_info["source_filename"]
     og_file.filename = job_info["filename"]
-    og_file.absolute_file_path = job_info["absolute_file_path"]()
+    og_file.absolute_file_path = job_info["absolute_file_path"]
     og_file.is_downloaded = True
     og_file.save()
 
@@ -64,7 +66,7 @@ def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
 
 # Save this experiment separately (sans organism) because we need it for multiple tests
 GSE22427 = {
-    "source_file_name": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz",
+    "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz",
     "filename": "GSE22427_non-normalized.txt",
     "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt",
     "samples": [
@@ -135,7 +137,7 @@ class IlluminaToPCLTestCase(TestCase):
 
         pj = prepare_illumina_job(
             {
-                "source_file_name": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE54nnn/GSE54661/suppl/GSE54661%5Fnon%5Fnormalized%2Etxt%2Egz",
+                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE54nnn/GSE54661/suppl/GSE54661%5Fnon%5Fnormalized%2Etxt%2Egz",
                 "filename": "GSE54661_non_normalized.txt",
                 "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE54661_non_normalized.txt",
                 "organism": organism,
@@ -154,3 +156,36 @@ class IlluminaToPCLTestCase(TestCase):
 
         # Cleanup after the job since it won't since we aren't running in cloud.
         shutil.rmtree(final_context["work_dir"], ignore_errors=True)
+
+    @tag("illumina")
+    def test_illumina_latin1_input(self):
+        """Test a latin1-encoded Illumina file.
+
+        GSE106321 is encoded in latin1 and uses μ in the title of some
+        columns, so preparing the file would cause a UnicodeParseError. Make
+        sure that doesn't happen any more.
+        """
+
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        pj = prepare_illumina_job(
+            {
+                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE106nnn/GSE106321/suppl/GSE106321_non-normalized.txt.gz",
+                "filename": "GSE106321_non_normalized.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE106321_non-normalized.txt",
+                "organism": organism,
+                # NOTE: this isn't all the samples in the experiment. See below for why this doesn't matter
+                "samples": [("GSM2835933", "A375 24h DMSO treatment")],
+            }
+        )
+
+        # XXX: This experiment currently doesn't succeed processing for other
+        # reasons, but the issue we are testing for only appears in
+        # _prepare_files so we will run the pipeline up to that point.
+        pipeline = Pipeline(name=PipelineEnum.ILLUMINA.value)
+        final_context = utils.run_pipeline(
+            {"job_id": pj.id, "pipeline": pipeline}, [utils.start_job, illumina._prepare_files,],
+        )
+
+        self.assertIsNone(final_context.get("success"))
