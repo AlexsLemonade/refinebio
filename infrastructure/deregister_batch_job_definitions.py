@@ -15,19 +15,12 @@ job_definition_list = list(
     {JOB_DEFINITION_PREFIX + job_def.upper().split(".")[0] for job_def in job_definition_files}
 )
 
-sublists = [job_definition_list[x : x + 100] for x in range(0, len(job_definition_list), 100)]
-for job_definition_sublist in sublists:
-    # If we ever go over 100 definitions we'll have to make more than one call.
+# Have to go one by one because providing a list of job names doesn't work:
+# https://github.com/boto/boto3/issues/2908
+for job_definition in job_definition_list:
     job_definitions = batch.describe_job_definitions(
-        jobDefinitions=job_definition_list, status="ACTIVE"
+        jobDefinitionName=job_definition, status="ACTIVE"
     )
-
-    for job_definition in job_definition_list:
-        job_definitions = batch.describe_job_definitions(
-            jobDefinitionName=job_definition, status="ACTIVE"
-        )
-        # There can be multiple revisions per job deifinition. We want them all gone.
-        for job_definition_revision in job_definitions["jobDefinitions"]:
-            batch.deregister_job_definition(
-                jobDefinition=job_definition_revision["jobDefinitionArn"]
-            )
+    # There can be multiple revisions per job deifinition. We want them all gone.
+    for job_definition_revision in job_definitions["jobDefinitions"]:
+        batch.deregister_job_definition(jobDefinition=job_definition_revision["jobDefinitionArn"])
