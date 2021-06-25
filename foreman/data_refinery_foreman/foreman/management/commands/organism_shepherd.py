@@ -10,7 +10,7 @@ from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_common.job_lookup import Downloaders, ProcessorPipeline
+from data_refinery_common.enums import Downloaders, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import get_capacity_for_jobs, send_job
 from data_refinery_common.models import (

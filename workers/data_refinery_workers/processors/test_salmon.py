@@ -10,7 +10,7 @@ from django.test import TestCase, tag
 import numpy
 import scipy.stats
 
-from data_refinery_common.job_lookup import ProcessorEnum
+from data_refinery_common.enums import ProcessorEnum
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,

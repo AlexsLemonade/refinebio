@@ -40,8 +40,8 @@ while getopts "hi:" opt; do
             echo "     AGILENT_TWOCOLOR_TO_PCL is a special case because it requires the 'affymetrix' image."
             echo ""
             echo "Examples:"
-            echo "    ./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345"
-            echo "    ./workers/tester.sh -i affymetrix run_processor_job --job-name=AGILENT_TWOCOLOR_TO_PCL --job-id=54321"
+            echo "    ./workers/run_job.sh run_downloader_job --job-name=SRA --job-id=12345"
+            echo "    ./workers/run_job.sh -i affymetrix run_processor_job --job-name=AGILENT_TWOCOLOR_TO_PCL --job-id=54321"
             exit 0
             ;;
         \?)
@@ -81,15 +81,16 @@ fi
 
 volume_directory="$script_directory/volume"
 
+if [ ! -d "$volume_directory" ]; then
+    mkdir "$volume_directory"
+    chmod -R a+rwX "$volume_directory"
+fi
+
 source scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 
-AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"
-AWS_SECRET_ACCESS_KEY="$(~/bin/aws configure get default.aws_secret_access_key)"
-export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
-
 docker run \
-	   -it \
+       -it \
        --add-host=database:"$DB_HOST_IP" \
        --env-file workers/environments/local \
        --env AWS_ACCESS_KEY_ID \

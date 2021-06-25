@@ -19,7 +19,7 @@ import requests
 from botocore.exceptions import ClientError
 from sklearn import preprocessing
 
-from data_refinery_common.job_lookup import PipelineEnum
+from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile, Pipeline
 from data_refinery_common.utils import calculate_file_size, calculate_sha1, get_env_variable
