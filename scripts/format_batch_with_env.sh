@@ -171,6 +171,8 @@ if [ "$project" = "workers" ]; then
         FILETYPE=".json"
         OUTPUT_FILE="$OUTPUT_BASE$FILETYPE"
 
+        NO_RAM_JOB_FILES="smasher.json create_qn_target.json create_compendia.json create_quantpendia.json tximport.json qn_dispatcher.json janitor.json"
+
         if [ "$OUTPUT_FILE" = "downloader.json" ]; then
             rams="1024 4096 16384"
             for r in $rams
@@ -185,7 +187,8 @@ if [ "$project" = "workers" ]; then
                 echo "Made $FILEPATH"
             done
             echo "Made $output_dir/$OUTPUT_FILE"
-        elif [ "$OUTPUT_FILE" = "smasher.json" ] || [ "$OUTPUT_FILE" = "create_qn_target.json" ] || [ "$OUTPUT_FILE" = "create_compendia.json" ] || [ "$OUTPUT_FILE" = "create_quantpendia.json" ] || [ "$OUTPUT_FILE" = "tximport.json" ]; then
+        # From https://unix.stackexchange.com/a/111517
+        elif (echo "$NO_RAM_JOB_FILES" | grep -Fqw "$OUTPUT_FILE"); then
             perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                  < "batch-job-templates/$template" \
                  > "$output_dir/$OUTPUT_FILE" \
