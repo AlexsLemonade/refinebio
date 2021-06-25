@@ -21,6 +21,6 @@ for job_definition in job_definition_list:
     job_definitions = batch.describe_job_definitions(
         jobDefinitionName=job_definition, status="ACTIVE"
     )
-    # There can be multiple revisions per job deifinition. We want them all gone.
+    # There can be multiple revisions per job definition. We want them all gone.
     for job_definition_revision in job_definitions["jobDefinitions"]:
         batch.deregister_job_definition(jobDefinition=job_definition_revision["jobDefinitionArn"])
