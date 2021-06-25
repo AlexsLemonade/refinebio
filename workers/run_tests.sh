@@ -160,22 +160,22 @@ if [ -z "$tag" ] || [ "$tag" = "transcriptome" ]; then
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "illumina" ]; then
-    # Illumina test file
-    ilu_file="GSE22427_non-normalized.txt"
     ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
-    if [ ! -e "$ilu_test_raw_dir/$ilu_file" ]; then
-        mkdir -p "$ilu_test_raw_dir"
-        echo "Downloading Illumina file for Illumina tests."
-        wget -q -O "$ilu_test_raw_dir/$ilu_file" \
-             "$test_data_repo/$ilu_file"
-    fi
-    ilu_file2="GSE54661_non_normalized.txt"
-    if [ ! -e "$ilu_test_raw_dir/$ilu_file2" ]; then
-        mkdir -p "$ilu_test_raw_dir"
-        echo "Downloading Illumina file 2 for Illumina tests."
-        wget -q -O "$ilu_test_raw_dir/$ilu_file2" \
-             "$test_data_repo/$ilu_file2"
-    fi
+    ilu_files='GSE22427_non-normalized.txt GSE54661_non_normalized.txt GSE106321_non-normalized.txt'
+    mkdir -p "$ilu_test_raw_dir"
+
+    i=1
+    for ilu_file in $ilu_files; do
+        if [ ! -e "$ilu_test_raw_dir/$ilu_file" ]; then
+            echo "Downloading Illumina file $i for Illumina tests."
+            wget -q -O "$ilu_test_raw_dir/$ilu_file" \
+                "$test_data_repo/$ilu_file"
+        fi
+
+        i=$(( i + 1 ))
+    done
+    unset i
+
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "agilent" ]; then
