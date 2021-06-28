@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Count
 from django.db.models.expressions import Q
 
-from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline
+from data_refinery_common.enums import ProcessorEnum, ProcessorPipeline
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Experiment, ProcessorJob
@@ -55,7 +55,7 @@ def update_salmon_versions(experiment: Experiment):
                             no_retry=False,
                             start_time__isnull=False,
                             end_time=None,
-                            nomad_job_id__isnull=False,
+                            batch_job_id__isnull=False,
                         )
                         | Q(
                             success=None,

@@ -65,6 +65,8 @@ apt-get install -y \
         unzip \
         postgresql-client
 
+pip3 install boto3 awscli
+
 usermod -aG docker ubuntu
 
 touch /var/log/docker_update.log

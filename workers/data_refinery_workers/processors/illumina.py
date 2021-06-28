@@ -10,7 +10,7 @@ from django.utils import timezone
 import numpy as np
 import pandas as pd
 
-from data_refinery_common.job_lookup import PipelineEnum, ProcessorPipeline
+from data_refinery_common.enums import PipelineEnum, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
@@ -284,8 +284,8 @@ def _detect_platform(job_context: Dict) -> Dict:
         logger.info("Match percentage too low, NO_OP'ing and aborting.", job=job_context["job_id"])
 
         processor_job = ProcessorJob()
+        processor_job.downloader_job = job_context["job"].downloader_job
         processor_job.pipeline_applied = "NO_OP"
-        processor_job.volume_index = job_context["job"].volume_index
         processor_job.ram_amount = job_context["job"].ram_amount
         processor_job.save()
 
@@ -297,7 +297,7 @@ def _detect_platform(job_context: Dict) -> Dict:
         try:
             send_job(ProcessorPipeline.NO_OP, processor_job)
         except Exception as e:
-            # Nomad dispatch error, likely during local test.
+            # Batch dispatch error, likely during local test.
             logger.error(e, job=processor_job)
 
         job_context["abort"] = True

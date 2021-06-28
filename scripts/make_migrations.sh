@@ -17,12 +17,10 @@ cd "$script_directory" || exit
 
 . ./common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
-HOST_IP=$(get_ip_address)
 
 docker run \
        --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
        --add-host=database:"$DB_HOST_IP" \
-       --add-host=nomad:"$HOST_IP" \
        --env-file ../common/environments/local \
        --interactive \
        ccdlstaging/dr_migrations python3 manage.py makemigrations data_refinery_common
@@ -30,13 +28,11 @@ docker run \
 docker run \
        --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
        --add-host=database:"$DB_HOST_IP" \
-       --add-host=nomad:"$HOST_IP" \
        --env-file ../common/environments/local \
        ccdlstaging/dr_migrations python3 manage.py migrate
 
 docker run \
        --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
        --add-host=database:"$DB_HOST_IP" \
-       --add-host=nomad:"$HOST_IP" \
        --env-file ../common/environments/local \
        ccdlstaging/dr_migrations python3 manage.py createcachetable

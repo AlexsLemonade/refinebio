@@ -1,25 +1,14 @@
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.test import TestCase, tag
 
 from data_refinery_common.models import (
     ComputationalResult,
-    ComputationalResultAnnotation,
     ComputedFile,
-    Dataset,
-    Experiment,
-    ExperimentSampleAssociation,
-    Organism,
-    OriginalFile,
     ProcessorJob,
-    ProcessorJobDatasetAssociation,
-    ProcessorJobOriginalFileAssociation,
     Sample,
-    SampleAnnotation,
     SampleComputedFileAssociation,
-    SampleResultAssociation,
-    SurveyJob,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import janitor
@@ -31,8 +20,7 @@ JOBS = 10
 def prepare_job():
 
     # Create 10 job directories
-    for i in range(0, JOBS):
-
+    for i in range(JOBS):
         os.makedirs(LOCAL_ROOT_DIR + "/processor_job_" + str(i), exist_ok=True)
 
         # These live on prod volumes at locations such as:
@@ -68,16 +56,16 @@ def prepare_job():
     sample.save()
 
     # Save two jobs so that we trigger two special circumstances, one
-    # where the job is still running and the other where querying
-    # nomad raises an exception.
+    # where the job is still running and the other where the job isn't
+    # in Batch anymore.
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
-    pj.nomad_job_id = "running_job"
+    pj.batch_job_id = "running_job"
     pj.save()
 
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
-    pj.nomad_job_id = "missing_job"
+    pj.batch_job_id = "missing_job"
     pj.save()
 
     pj = ProcessorJob()
@@ -89,28 +77,16 @@ def prepare_job():
 
 class JanitorTestCase(TestCase):
     @tag("janitor")
-    @patch("data_refinery_workers.processors.janitor.Nomad")
-    def test_janitor(self, mock_nomad):
+    @patch("data_refinery_workers.processors.janitor.batch.describe_jobs")
+    def test_janitor(self, mock_describe_jobs):
         """ Main tester. """
-
-        def mock_get_job(job_id: str):
-            if job_id == "running_job":
-                return {"Status": "running"}
-            else:
-                return {"Status": "dead"}
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = mock_get_job
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
         job = prepare_job()
+
+        mock_describe_jobs.return_value = {"jobs": [{"jobId": "running_job", "status": "RUNNING"}]}
+
         final_context = janitor.run_janitor(job.pk)
 
-        for i in range(0, JOBS):
+        for i in range(JOBS):
             # The job with id 1 should appear running.
             if i == 1:
                 self.assertTrue(os.path.exists(LOCAL_ROOT_DIR + "/processor_job_" + str(i)))

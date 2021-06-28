@@ -12,16 +12,18 @@ resource "aws_key_pair" "data_refinery" {
 # Workers
 ##
 
-# This is a security group for Data Refinery Workers, which currently
-# includes the Nomad Server nodes as well.
+# This is a security group for Data Refinery Workers.
 resource "aws_security_group" "data_refinery_worker" {
   name = "data-refinery-worker-${var.user}-${var.stage}"
   description = "data-refinery-worker-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-worker-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-worker-${var.user}-${var.stage}"
+    }
+  )
 }
 
 # Allow HTTP connections from this security group to itself.
@@ -34,84 +36,9 @@ resource "aws_security_group_rule" "data_refinery_worker_custom" {
   security_group_id = aws_security_group.data_refinery_worker.id
 }
 
-# Allow the Nomad HTTP API to be accessible by this security group. See:
-# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
-resource "aws_security_group_rule" "data_refinery_worker_nomad" {
-  type = "ingress"
-  from_port = 4646
-  to_port = 4646
-  protocol = "tcp"
-  self = true
-  security_group_id = aws_security_group.data_refinery_worker.id
-}
 
-# Allow the Nomad HTTP API to be accessible by the Foreman security group. See:
-# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
-resource "aws_security_group_rule" "data_refinery_nomad_from_foreman" {
-  type = "ingress"
-  from_port = 4646
-  to_port = 4646
-  protocol = "tcp"
-  security_group_id = aws_security_group.data_refinery_worker.id
-  source_security_group_id = aws_security_group.data_refinery_foreman.id
-}
-
-# Allow the Nomad HTTP API to be accessible by the API security group. See:
-# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
-resource "aws_security_group_rule" "data_refinery_api_nomad" {
-  type = "ingress"
-  from_port = 4646
-  to_port = 4646
-  protocol = "tcp"
-  security_group_id = aws_security_group.data_refinery_worker.id
-  source_security_group_id = aws_security_group.data_refinery_api.id
-}
-
-# Allow Nomad RPC calls to go through to each other. See:
-# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
-resource "aws_security_group_rule" "data_refinery_worker_nomad_rpc" {
-  type = "ingress"
-  from_port = 4647
-  to_port = 4647
-  protocol = "tcp"
-  self = true
-  security_group_id = aws_security_group.data_refinery_worker.id
-}
-
-# Allow Nomad Servers to gossip with each other over TCP. See:
-# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
-resource "aws_security_group_rule" "data_refinery_worker_nomad_serf_tcp" {
-  type = "ingress"
-  from_port = 4648
-  to_port = 4648
-  protocol = "tcp"
-  self = true
-  security_group_id = aws_security_group.data_refinery_worker.id
-}
-
-# Allow Nomad Servers to gossip with each other over UDP. See:
-# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
-resource "aws_security_group_rule" "data_refinery_worker_nomad_serf_udp" {
-  type = "ingress"
-  from_port = 4648
-  to_port = 4648
-  protocol = "udp"
-  self = true
-  security_group_id = aws_security_group.data_refinery_worker.id
-}
-
-# Allow statsd updates from clients to lead server. See:
-resource "aws_security_group_rule" "data_refinery_statsd" {
-  type = "ingress"
-  from_port = 8125
-  to_port = 8125
-  protocol = "udp"
-  self = true
-  security_group_id = aws_security_group.data_refinery_worker.id
-}
-
-# Allow SSH connections to Nomad instances. This is pretty much the
-# only way to debug issues until we get the Nomad UI up and running.
+# Allow SSH connections to Worker instances. This is insecure, but
+# it's difficult to debug without it.
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
 resource "aws_security_group_rule" "data_refinery_worker_ssh" {
   type = "ingress"
@@ -131,10 +58,8 @@ resource "aws_security_group_rule" "data_refinery_worker_pg" {
   source_security_group_id = aws_security_group.data_refinery_pg.id
 }
 
-# Allow outbound requests from Nomad so they can actually do useful
-# things. Long term we will probably only want to allow these to come
-# from the Nomad Client instances, but we do not yet have separate
-# security groups for servers and clients.
+# Allow outbound requests from the workers so they can actually do useful
+# things.
 resource "aws_security_group_rule" "data_refinery_worker_outbound" {
   type = "egress"
   from_port = 0
@@ -154,9 +79,12 @@ resource "aws_security_group" "data_refinery_db" {
   description = "data_refinery_db-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-db-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-db-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_security_group_rule" "data_refinery_db_outbound" {
@@ -186,9 +114,12 @@ resource "aws_security_group" "data_refinery_pg" {
   description = "data_refinery_pg-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-pg-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-pg-${var.user}-${var.stage}"
+    }
+  )
 }
 
 resource "aws_security_group_rule" "data_refinery_pg_ssh" {
@@ -273,9 +204,12 @@ resource "aws_security_group" "data_refinery_es" {
   description = "data_refinery_es-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-es-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-es-${var.user}-${var.stage}"
+    }
+  )
 
   # Wide open, but inside inside the VPC
   ingress {
@@ -295,9 +229,12 @@ resource "aws_security_group" "data_refinery_api" {
   description = "data-refinery-api-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-api-${var.user}-${var.stage}"
-  }
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-api-${var.user}-${var.stage}"
+    }
+  )
 }
 
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
@@ -356,20 +293,12 @@ resource "aws_security_group" "data_refinery_foreman" {
   description = "data-refinery-foreman-${var.user}-${var.stage}"
   vpc_id = aws_vpc.data_refinery_vpc.id
 
-  tags = {
-    Name = "data-refinery-foreman-${var.user}-${var.stage}"
-  }
-}
-
-# Allow the Nomad HTTP API to be accessible by this security group. See:
-# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
-resource "aws_security_group_rule" "data_refinery_worker_foreman" {
-  type = "ingress"
-  from_port = 4646
-  to_port = 4646
-  protocol = "tcp"
-  self = true
-  security_group_id = aws_security_group.data_refinery_foreman.id
+  tags = merge(
+    var.default_tags,
+    {
+      Name = "data-refinery-foreman-${var.user}-${var.stage}"
+    }
+  )
 }
 
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!

@@ -4,7 +4,7 @@ from typing import Dict
 import boto3
 from botocore.client import Config
 
-from data_refinery_common.job_lookup import PipelineEnum
+from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Pipeline
 from data_refinery_common.utils import get_env_variable

@@ -5,6 +5,7 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.constants import CURRENT_SALMON_VERSION, SYSTEM_VERSION
+from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.managers import PublicObjectsManager
 from data_refinery_common.utils import FileUtils, calculate_file_size, calculate_sha1
@@ -127,18 +128,25 @@ class OriginalFile(models.Model):
         self.save()
 
     def has_blocking_jobs(self, own_processor_id=None) -> bool:
+        # Ignore transcriptome jobs because they always queue two jobs
+        # for the same file.
+        transcriptome_job_types = [
+            ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG.value,
+            ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT.value,
+        ]
+
         # If the file has a processor job that should not have been
         # retried, then it still shouldn't be retried.
         # Exclude the ones that were aborted.
         no_retry_processor_jobs = self.processor_jobs.filter(
             no_retry=True, worker_version=SYSTEM_VERSION
-        ).exclude(abort=True)
+        ).exclude(abort=True, pipeline_applied__in=transcriptome_job_types)
 
         # If the file has a processor job that hasn't even started
         # yet, then it doesn't need another.
         incomplete_processor_jobs = self.processor_jobs.filter(
             end_time__isnull=True, success__isnull=True, retried=False
-        )
+        ).exclude(pipeline_applied__in=transcriptome_job_types)
 
         if own_processor_id:
             incomplete_processor_jobs = incomplete_processor_jobs.exclude(id=own_processor_id)
@@ -158,12 +166,12 @@ class OriginalFile(models.Model):
         that processor jobs can use this function without their job
         being counted as currently processing this file.
         """
+        if self.has_blocking_jobs(own_processor_id):
+            return False
+
         sample = self.samples.first()
         if not sample:
             return True
-
-        if self.has_blocking_jobs(own_processor_id):
-            return False
 
         if sample.source_database == "SRA":
             computed_file = sample.get_most_recent_smashable_result_file()

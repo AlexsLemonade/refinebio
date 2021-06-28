@@ -5,7 +5,7 @@ from typing import Dict, List
 import dateutil.parser
 import GEOparse
 
-from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.enums import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     Experiment,
@@ -74,9 +74,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         platform_accession_code = UNKNOWN
 
-        gpl = GEOparse.get_GEO(
-            external_accession, destdir=self.get_temp_path(), how="brief", silent=True
-        )
+        gpl = GEOparse.get_GEO(external_accession, destdir=self.get_temp_path(), silent=True)
         platform_title = gpl.metadata.get("title", [UNKNOWN])[0]
 
         # Check if this is a supported microarray platform.
@@ -245,9 +243,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         """
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
-        gse = GEOparse.get_GEO(
-            experiment_accession_code, destdir=self.get_temp_path(), how="brief", silent=True
-        )
+        gse = GEOparse.get_GEO(experiment_accession_code, destdir=self.get_temp_path(), silent=True)
         preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
         harmonized_samples = harmony.harmonize(preprocessed_samples)
 

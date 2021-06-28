@@ -14,7 +14,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from data_refinery_api.exceptions import BadRequest, InvalidData
-from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
@@ -144,7 +144,7 @@ def validate_dataset(data):
 
 
 class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
-    """ This serializer contains all of the information about an experiment needed for the download
+    """This serializer contains all of the information about an experiment needed for the download
     page
     """
 
@@ -201,6 +201,7 @@ class DatasetSerializer(serializers.ModelSerializer):
             "has_email",
             "email_address",
             "email_ccdl_ok",
+            "notify_me",
             "expires_on",
             "s3_bucket",
             "s3_key",
@@ -227,6 +228,7 @@ class DatasetSerializer(serializers.ModelSerializer):
             "is_available": {"read_only": True,},
             "email_address": {"required": False, "write_only": True},
             "email_ccdl_ok": {"required": False, "write_only": True},
+            "notify_me": {"required": False, "write_only": True},
             "expires_on": {"read_only": True,},
             "s3_bucket": {"read_only": True,},
             "s3_key": {"read_only": True,},
@@ -328,7 +330,7 @@ class DatasetView(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
-    """ View and modify a single Dataset. """
+    """View and modify a single Dataset."""
 
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
@@ -427,7 +429,7 @@ class DatasetView(
         annotation.save()
 
     def create_or_update(self, serializer):
-        """ If `start` is set, fire off the job. Otherwise just create/update the dataset"""
+        """If `start` is set, fire off the job. Otherwise just create/update the dataset"""
         data = serializer.validated_data
         DatasetView.convert_ALL_to_accessions(data)
 

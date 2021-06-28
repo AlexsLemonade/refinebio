@@ -30,7 +30,6 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
-from data_refinery_common.utils import get_active_volumes, get_nomad_jobs_breakdown
 
 JOB_CREATED_AT_CUTOFF = datetime(2019, 9, 19, tzinfo=timezone.utc)
 
@@ -103,10 +102,8 @@ class Stats(APIView):
             Sample.processed_objects, range_param, "last_modified"
         )
 
-        data["active_volumes"] = list(get_active_volumes())
         data["dataset"] = cls._get_dataset_stats(range_param)
 
-        data.update(get_nomad_jobs_breakdown())
         return data
 
     @classmethod

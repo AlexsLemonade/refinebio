@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 processor_job.num_retries = 0
                 processor_job.retried = False
 
-                # We don't actually have to send this off to Nomad ourselves.
+                # We don't actually have to send this off to Batch ourselves.
                 # The Foreman will find it and requeue it for us!
                 processor_job.save()
 

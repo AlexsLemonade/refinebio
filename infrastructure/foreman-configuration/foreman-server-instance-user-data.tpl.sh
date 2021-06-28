@@ -32,10 +32,7 @@ docker run \\
        -e DATABASE_PASSWORD="${database_password}" \\
        -e ELASTICSEARCH_HOST="${elasticsearch_host}" \\
        -e ELASTICSEARCH_PORT="${elasticsearch_port}" \\
-       -e AWS_ACCESS_KEY_ID="${aws_access_key_id}" \\
-       -e AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}" \\
        -v /tmp:/tmp \\
-       --add-host=nomad:"${nomad_lead_server_ip}" \\
        --log-driver=awslogs \\
        --log-opt awslogs-region="${region}" \\
        --log-opt awslogs-group="${log_group}" \\
@@ -63,15 +60,12 @@ docker run \\
        -e DATABASE_PASSWORD=${database_password} \\
        -e ELASTICSEARCH_HOST=${elasticsearch_host} \\
        -e ELASTICSEARCH_PORT=${elasticsearch_port} \\
-       -e AWS_ACCESS_KEY_ID=${aws_access_key_id} \\
-       -e AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \\
        -v /tmp:/tmp \\
-       --add-host=nomad:${nomad_lead_server_ip} \\
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@
 " >> /home/ubuntu/run_management_command.sh
 chmod +x /home/ubuntu/run_management_command.sh
 
-# Start the Nomad agent in server mode via Monit
+# Use Monit to ensure the Foreman is always running
 apt-get -y update
 apt-get -y install monit htop
 
@@ -107,7 +101,6 @@ docker run \
        -e DATABASE_USER="${database_user}" \
        -e DATABASE_PASSWORD="${database_password}" \
        -v /tmp:/tmp \
-       --add-host=nomad:"${nomad_lead_server_ip}" \
        --log-driver=awslogs \
        --log-opt awslogs-region="${region}" \
        --log-opt awslogs-group="${log_group}" \

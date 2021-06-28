@@ -3,16 +3,13 @@ from typing import Dict, List
 
 from django.test import TestCase
 
-from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
     DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
     Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentResultAssociation,
     ExperimentSampleAssociation,
     Organism,
     OrganismIndex,
@@ -247,7 +244,8 @@ class RerunSalmonTestCase(TestCase):
         setup_experiment(["AA001", "AA002"], [])
         update_salmon_all_experiments()
 
-        # Verify that no jobs were created, because all samples had been processed with the latest version
+        # Verify that no jobs were created, because all samples had
+        # been processed with the latest version
         dl_jobs = DownloaderJob.objects.all()
         self.assertEqual(dl_jobs.count(), 0)
 

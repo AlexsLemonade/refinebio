@@ -121,7 +121,7 @@ class DatasetTestCase(APITestCase):
         download_assoc.downloader_job = downloader_job
         download_assoc.save()
 
-        processor_job = ProcessorJob()
+        processor_job = ProcessorJob(downloader_job=downloader_job)
         processor_job.save()
 
         processor_assoc = ProcessorJobOriginalFileAssociation()
@@ -648,3 +648,52 @@ class DatasetTestCase(APITestCase):
         ds = Dataset.objects.get(id=response.json()["id"])
         self.assertEqual(ds.email_address, "trust@verify.com")
         self.assertTrue(ds.email_ccdl_ok)
+
+    def test_create_dataset_notify_me(self):
+        # Create a token first
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
+            content_type="application/json",
+        )
+        token_id = response.json()["id"]
+
+        # First, just try creating a dataset
+        jdata = {"email_address": "baz@gmail.com", "data": {"GSE123": ["789"]}}
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(jdata),
+            content_type="application/json",
+        )
+        dataset_id = response.json()["id"]
+
+        self.assertEqual(response.status_code, 201)
+        ds = Dataset.objects.get(id=response.json()["id"])
+        # By default, creators of datasets should get notified
+        self.assertTrue(ds.notify_me)
+
+        # Now try explicitly setting notify_me true
+        jdata["notify_me"] = True
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": dataset_id, "version": API_VERSION}),
+            json.dumps(jdata),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], dataset_id)
+
+        ds.refresh_from_db()
+        self.assertTrue(ds.notify_me)
+
+        # Now try explicitly setting notify_me false
+        jdata["notify_me"] = False
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": dataset_id, "version": API_VERSION}),
+            json.dumps(jdata),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], dataset_id)
+
+        ds.refresh_from_db()
+        self.assertFalse(ds.notify_me)

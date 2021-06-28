@@ -9,7 +9,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381
   response:
@@ -34,7 +34,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:48 GMT
+      - Mon, 03 May 2021 16:26:00 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -60,7 +60,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-MEXP-2381/E-MEXP-2381.idf.txt
   response:
@@ -114,7 +114,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 18:55:48 GMT
+      - Mon, 03 May 2021 16:26:01 GMT
       ETag:
       - E-MEXP-2381.idf.txt_2790_1464780736000
       Last-Modified:
@@ -136,7 +136,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381/protocols
   response:
@@ -174,7 +174,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:49 GMT
+      - Mon, 03 May 2021 16:26:02 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -200,7 +200,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381/samples
   response:
@@ -221,7 +221,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:50 GMT
+      - Mon, 03 May 2021 16:26:03 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -247,7 +247,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-MEXP-2381/E-MEXP-2381.sdrf.txt
   response:
@@ -281,7 +281,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Tue, 18 Feb 2020 18:55:50 GMT
+      - Mon, 03 May 2021 16:26:03 GMT
       ETag:
       - E-MEXP-2381.sdrf.txt_1569_1324803913000
       Last-Modified:
@@ -303,9 +303,9 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.20.0
+      - python-requests/2.24.0
     method: GET
-    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09&field=scin&db=taxonomy&term=DANIO_RERIO
+    uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=taxonomy&field=scin&term=DANIO_RERIO&api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09
   response:
     body:
       string: !!binary |
@@ -319,6 +319,8 @@ interactions:
     headers:
       Access-Control-Allow-Origin:
       - '*'
+      Access-Control-Expose-Headers:
+      - X-RateLimit-Limit,X-RateLimit-Remaining
       Cache-Control:
       - private
       Connection:
@@ -328,18 +330,18 @@ interactions:
       Content-Type:
       - text/xml; charset=UTF-8
       Date:
-      - Tue, 18 Feb 2020 18:55:51 GMT
+      - Mon, 03 May 2021 16:26:03 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - 322C67DEB8AD64F500005BE7E2F7C03D.1.1.m_1
+      - D0BD7F6575731E55000040C2F9076DB8.1.1.m_1
       NCBI-SID:
-      - 7EB9D4F40E1245F7_6481SID
+      - 5D534A81888AC62D_8994SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=7EB9D4F40E1245F7_6481SID; domain=.nih.gov; path=/; expires=Thu, 18
-        Feb 2021 18:55:51 GMT
+      - ncbi_sid=5D534A81888AC62D_8994SID; domain=.nih.gov; path=/; expires=Tue, 03
+        May 2022 16:26:04 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -358,42 +360,51 @@ interactions:
       code: 200
       message: OK
 - request:
-    body: '{"Payload": null, "Meta": {"JOB_NAME": "ARRAY_EXPRESS", "JOB_ID": "10305"}}'
+    body: '{"jobName": "DOWNLOADER_1024_23", "jobQueue": "", "jobDefinition": "DOWNLOADER_1024",
+      "parameters": {"job_name": "ARRAY_EXPRESS", "job_id": "23"}}'
     headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
+      Authorization:
+      - !!binary |
+        QVdTNC1ITUFDLVNIQTI1NiBDcmVkZW50aWFsPUZPTy8yMDIxMDUwMy91cy1lYXN0LTEvYmF0Y2gv
+        YXdzNF9yZXF1ZXN0LCBTaWduZWRIZWFkZXJzPWhvc3Q7eC1hbXotZGF0ZSwgU2lnbmF0dXJlPTZj
+        MzU5Yjc5NTQ4YzBiZjY2ZmZlM2ExNmIyMTk2ODgyZTVkYjkwOGI5ZWU4ZTYxNThmOGEyYWU2MWM4
+        Yjk1NjA=
+      Content-Length:
+      - '146'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4xNy42MiBQeXRob24vMy42LjkgTGludXgvNC4xNS4wLTE0Mi1nZW5lcmljIEJvdG9j
+        b3JlLzEuMjAuNjI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyMTA1MDNUMTYyNjA0Wg==
+    method: POST
+    uri: https://batch.us-east-1.amazonaws.com/v1/submitjob
+  response:
+    body:
+      string: '{"message":"The security token included in the request is invalid."}'
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - X-amzn-errortype,X-amzn-requestid,X-amzn-errormessage,X-amzn-trace-id,X-amz-apigw-id,date
       Connection:
       - keep-alive
       Content-Length:
-      - '75'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - python-requests/2.20.0
-    method: POST
-    uri: http://nomad:5646/v1/job/DOWNLOADER_0_1024/dispatch
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAA/1zMwarCMBCF4XeZdcOdpElz7U5MFy1iwY3LMpMZURArWkQQ311QF+L2cP7vDml/
-        OdGUdyrdyG2CGlK/WS37eWrWAw4Wnf+Tz8fY8O8wOBus4dL7ytkMBTRXOizOSpO2R9Eb1N6F9/ry
-        iCtXid8aQZmZnEmMRkQTNZOWMTALQgHfbTfyD+gfzwAAAP//N2uVVqsAAAA=
-    headers:
-      Content-Encoding:
-      - gzip
-      Content-Length:
-      - '158'
+      - '68'
       Content-Type:
       - application/json
       Date:
-      - Tue, 18 Feb 2020 18:55:51 GMT
-      Vary:
-      - Accept-Encoding
-      X-Nomad-Index:
-      - '425'
+      - Mon, 03 May 2021 16:26:04 GMT
+      X-Amzn-Trace-Id:
+      - Root=1-6090241c-257dc05465ed869f760152bb
+      x-amz-apigw-id:
+      - ewqUeHO8IAMF5pg=
+      x-amzn-ErrorType:
+      - UnrecognizedClientException
+      x-amzn-RequestId:
+      - cea52197-0c53-427a-b5a6-eafb78cb2be2
     status:
-      code: 200
-      message: OK
+      code: 403
+      message: Forbidden
 version: 1

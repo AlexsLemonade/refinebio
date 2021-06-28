@@ -2,7 +2,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--job-name",
             type=str,
-            help=("The processor job's name. Must be enumerated in job_lookup."),
+            help=("The processor job's name. Must be enumerated in data_refinery_common.enums."),
         )
         parser.add_argument("--job-id", type=int, help=("The processor job's ID."))
 
