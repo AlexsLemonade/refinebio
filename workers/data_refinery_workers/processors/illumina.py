@@ -10,7 +10,7 @@ from django.utils import timezone
 import numpy as np
 import pandas as pd
 
-from data_refinery_common.job_lookup import PipelineEnum, ProcessorPipeline
+from data_refinery_common.enums import PipelineEnum, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (

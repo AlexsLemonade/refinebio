@@ -62,3 +62,6 @@ if [[ -z $TF_VAR_region ]]; then
 fi
 
 terraform destroy -var-file="environments/$env.tfvars"
+
+# These aren't managed by terraform so we have to deregistr them manually..
+python3 deregister_batch_job_definitions.py

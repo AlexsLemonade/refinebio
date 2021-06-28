@@ -4,7 +4,7 @@ import time
 from django.conf import settings
 from django.utils import timezone
 
-from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import ComputedFile, ProcessorJob
@@ -43,9 +43,10 @@ DBCLEAN_TIME = datetime.timedelta(hours=6)
 
 
 def send_janitor_jobs():
-    """Dispatch a Janitor job for each compute environment.
+    """Dispatch a Janitor job for each job queue.
 
-    For now that's just one, but this will eventually need to loop.
+    TODO: make this dispatch janitor jobs for all job queues.
+    https://github.com/AlexsLemonade/refinebio/issues/2789
     """
     new_job = ProcessorJob(num_retries=0, pipeline_applied="JANITOR", ram_amount=2048)
     new_job.save()

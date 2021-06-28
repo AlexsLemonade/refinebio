@@ -88,7 +88,7 @@ from data_refinery_common.models.jobs.downloader_job import DownloaderJob
 from django.utils import timezone
 from datetime import datetime
 
-JOB_CREATED_AT_CUTOFF = datetime(2019, 9, 19, tzinfo=timezone.utc)
+JOB_CREATED_AT_CUTOFF = datetime(2021, 6, 23, tzinfo=timezone.utc)
 
 ProcessorJob.failed_objects.filter(created_at__gt=JOB_CREATED_AT_CUTOFF).exclude(
     pipeline_applied="JANITOR"

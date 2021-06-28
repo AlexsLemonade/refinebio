@@ -1,11 +1,10 @@
 import csv
 import re
-import shutil
 import urllib
 from abc import ABC
 from typing import Dict, List
 
-from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.enums import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Organism, OriginalFile, SurveyJobKeyValue
 from data_refinery_foreman.surveyor import utils

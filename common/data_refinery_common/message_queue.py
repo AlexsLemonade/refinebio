@@ -11,7 +11,7 @@ from django.utils import timezone
 
 import boto3
 
-from data_refinery_common.job_lookup import (
+from data_refinery_common.enums import (
     SMASHER_JOB_TYPES,
     Downloaders,
     ProcessorPipeline,
@@ -280,13 +280,17 @@ def is_job_processor(job_type):
 
 
 def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
+    # There's no Batch to dispatch jobs to locally, so don't even try.
+    if not settings.RUNNING_IN_CLOUD:
+        return False
+
     job_name = get_job_name(job_type, job.id)
     is_processor = is_job_processor(job_type)
 
     if settings.AUTO_DISPATCH_BATCH_JOBS:
         # We only want to dispatch processor jobs directly.
         # Everything else will be handled by the Foreman, which will increment the retry counter.
-        should_dispatch = is_processor or is_dispatch or (not settings.RUNNING_IN_CLOUD)
+        should_dispatch = is_processor or is_dispatch
     else:
         should_dispatch = is_dispatch  # only dispatch when specifically requested to
 
@@ -296,10 +300,19 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         job_name = JOB_DEFINITION_PREFIX + job_name
 
         # Smasher related and tximport jobs  don't have RAM tiers.
-        if job_type not in SMASHER_JOB_TYPES and job_type is not ProcessorPipeline.TXIMPORT:
+        if job_type not in [
+            *SMASHER_JOB_TYPES,
+            ProcessorPipeline.TXIMPORT,
+            ProcessorPipeline.JANITOR,
+        ]:
             job_name = job_name + "_" + str(job.ram_amount)
 
         job_queue = get_batch_queue_for_job(job_type, job)
+
+        if not job_queue:
+            # There's no capacity for the job. That's okay. The
+            # Foreman will requeue when there is.
+            return False
 
         try:
             batch_response = batch.submit_job(
@@ -325,8 +338,5 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
                 reason=str(e),
             )
             raise
-    else:
-        job.num_retries = job.num_retries - 1
-        job.save()
 
     return True

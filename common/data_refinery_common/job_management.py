@@ -1,8 +1,8 @@
 from typing import List
 
-from data_refinery_common import job_lookup
+from data_refinery_common.enums import Downloaders, ProcessorPipeline
 from data_refinery_common.job_lookup import (
-    ProcessorPipeline,
+    determine_downloader_task,
     determine_processor_pipeline,
     determine_ram_amount,
 )
@@ -72,9 +72,9 @@ def create_downloader_job(
     if not original_downloader_job:
         sample_object = list(undownloaded_files)[0].samples.first()
         if sample_object:
-            downloader_task = job_lookup.determine_downloader_task(sample_object)
+            downloader_task = determine_downloader_task(sample_object)
 
-            if downloader_task == job_lookup.Downloaders.NONE:
+            if downloader_task == Downloaders.NONE:
                 logger.warn(
                     (
                         "No valid downloader task found for sample, which is weird"

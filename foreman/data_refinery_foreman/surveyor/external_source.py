@@ -1,7 +1,9 @@
 import abc
 from typing import List
 
-from data_refinery_common import job_lookup, logging
+from data_refinery_common import logging
+from data_refinery_common.enums import Downloaders
+from data_refinery_common.job_lookup import determine_downloader_task
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     DownloaderJob,
@@ -67,9 +69,9 @@ class ExternalSourceSurveyor:
                 continue
 
             sample_object = original_file.samples.first()
-            downloader_task = job_lookup.determine_downloader_task(sample_object)
+            downloader_task = determine_downloader_task(sample_object)
 
-            if downloader_task == job_lookup.Downloaders.NONE:
+            if downloader_task == Downloaders.NONE:
                 logger.info(
                     "No valid downloader task found for sample.",
                     sample=sample_object.id,
@@ -109,7 +111,7 @@ class ExternalSourceSurveyor:
         # Transcriptome is a special case because there's no sample_object.
         # It's alright to re-process transcriptome indices.
         if is_transcriptome:
-            downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX
+            downloader_task = Downloaders.TRANSCRIPTOME_INDEX
         else:
             source_urls = [original_file.source_url for original_file in original_files]
             # There is already a downloader job associated with this file.
@@ -123,9 +125,9 @@ class ExternalSourceSurveyor:
                 return False
 
             sample_object = original_files[0].samples.first()
-            downloader_task = job_lookup.determine_downloader_task(sample_object)
+            downloader_task = determine_downloader_task(sample_object)
 
-        if downloader_task == job_lookup.Downloaders.NONE:
+        if downloader_task == Downloaders.NONE:
             logger.info(
                 "No valid downloader task found for sample.",
                 sample=sample_object.id,

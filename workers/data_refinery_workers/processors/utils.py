@@ -15,7 +15,7 @@ from django.utils import timezone
 import pandas as pd
 import yaml
 
-from data_refinery_common.job_lookup import SMASHER_JOB_TYPES, ProcessorEnum, ProcessorPipeline
+from data_refinery_common.enums import SMASHER_JOB_TYPES, ProcessorEnum, ProcessorPipeline
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Processor, ProcessorJob, Sample

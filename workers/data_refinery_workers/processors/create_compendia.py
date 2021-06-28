@@ -13,7 +13,7 @@ import pandas as pd
 import psutil
 from fancyimpute import IterativeSVD
 
-from data_refinery_common.job_lookup import PipelineEnum
+from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     CompendiumResult,
