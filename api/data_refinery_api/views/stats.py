@@ -200,7 +200,7 @@ class Stats(APIView):
             )
         ]
     )
-    # @method_decorator(cache_page(CACHE_TIME_SECONDS))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop("range", None)
         is_dashboard = request.query_params.dict().pop("dashboard", False)
@@ -403,7 +403,7 @@ class FailedDownloaderJobStats(APIView):
             )
         ]
     )
-    # @method_decorator(cache_page(CACHE_TIME_SECONDS))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop("range", "day")
         start_date = get_start_date(range_param)
@@ -437,7 +437,7 @@ class FailedProcessorJobStats(APIView):
             )
         ]
     )
-    # @method_decorator(cache_page(CACHE_TIME_SECONDS))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop("range", "day")
         start_date = get_start_date(range_param)
@@ -462,7 +462,7 @@ class FailedProcessorJobStats(APIView):
 class AboutStats(APIView):
     """Returns general stats for the site, used in the about page"""
 
-    # @method_decorator(cache_page(CACHE_TIME_SECONDS))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         # static values for now
         dummy = request.query_params.dict().pop("dummy", None)
