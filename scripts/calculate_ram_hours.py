@@ -46,11 +46,7 @@ def parse_args():
 
 
 def calculate_ram_hours_for_job(job):
-    print("Hi")
     if not (job.start_time and job.end_time and job.ram_amount):
-        print(job.start_time)
-        print(job.end_time)
-        print(job.ram_amount)
         return 0
 
     run_time = job.end_time - job.start_time
@@ -75,18 +71,14 @@ def calculate_ram_hours(accession_code, start_date):
         original_file = pyrefinebio.OriginalFile.get(original_file_id)
 
         for downloader_job in original_file.downloader_jobs:
-            print(downloader_job.start_time)
             if downloader_job.start_time and downloader_job.start_time > utc_start_date:
                 ram_hours += calculate_ram_hours_for_job(downloader_job)
 
         for processor_job in original_file.processor_jobs:
-            print(processor_job.start_time)
             if processor_job.start_time and processor_job.start_time > utc_start_date:
                 ram_hours += calculate_ram_hours_for_job(processor_job)
 
     return ram_hours
-    # print(accession_code)
-    # print(start_date)
 
 
 if __name__ == "__main__":
