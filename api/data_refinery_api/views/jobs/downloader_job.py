@@ -12,8 +12,11 @@ from drf_yasg.utils import swagger_auto_schema
 
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_api.utils import check_filters
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import DownloaderJob
 from data_refinery_common.utils import get_env_variable
+
+logger = get_and_configure_logger(__name__)
 
 AWS_REGION = get_env_variable(
     "AWS_REGION", "us-east-1"
@@ -83,10 +86,13 @@ class DownloaderJobListView(generics.ListAPIView):
         batch_job_ids = [job["batch_job_id"] for job in results if job.get("batch_job_id", None)]
         running_job_ids = set()
         if batch_job_ids:
-            described_jobs = batch.describe_jobs(jobs=batch_job_ids)
-            for job in described_jobs["jobs"]:
-                if job["status"] in ["SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING"]:
-                    running_job_ids.add(job["jobId"])
+            try:
+                described_jobs = batch.describe_jobs(jobs=batch_job_ids)
+                for job in described_jobs["jobs"]:
+                    if job["status"] in ["SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING"]:
+                        running_job_ids.add(job["jobId"])
+            except Exception as e:
+                logger.exception(f"Failure to query about batch_job_ids.")
 
         for result in results:
             batch_job_id = result.get("batch_job_id", None)
@@ -123,14 +129,20 @@ class DownloaderJobDetailView(generics.RetrieveAPIView):
         response = super(DownloaderJobDetailView, self).get(request, args, kwargs)
 
         if "batch_job_id" in response.data and response.data["batch_job_id"]:
-            described_jobs = batch.describe_jobs(jobs=[response.data["batch_job_id"]])
-            response.data["is_queued"] = described_jobs["jobs"][0] in [
-                "SUBMITTED",
-                "PENDING",
-                "RUNNABLE",
-                "STARTING",
-                "RUNNING",
-            ]
+            try:
+                described_jobs = batch.describe_jobs(jobs=[response.data["batch_job_id"]])
+                response.data["is_queued"] = described_jobs["jobs"][0]["status"] in [
+                    "SUBMITTED",
+                    "PENDING",
+                    "RUNNABLE",
+                    "STARTING",
+                    "RUNNING",
+                ]
+            except Exception as e:
+                logger.exception(
+                    f"Failure to query about batch_job_id.",
+                    batch_job_id=response.data["batch_job_id"],
+                )
         else:
             response.data["is_queued"] = False
 
