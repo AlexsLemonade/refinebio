@@ -32,6 +32,8 @@ class SurveyJobSerializer(serializers.ModelSerializer):
             "id",
             "source_type",
             "success",
+            "batch_job_id",
+            "batch_job_queue",
             "start_time",
             "end_time",
             "created_at",

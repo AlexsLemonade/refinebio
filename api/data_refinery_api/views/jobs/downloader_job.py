@@ -40,6 +40,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
             "worker_id",
             "worker_version",
             "batch_job_id",
+            "batch_job_queue",
             "failure_reason",
             "success",
             "original_files",
