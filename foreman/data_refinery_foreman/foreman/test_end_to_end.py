@@ -5,8 +5,11 @@ from unittest import TestCase
 
 from django.test import tag
 
+import pandas as pd
 import pyrefinebio
+import scipy.stats
 
+from data_refinery_common.enums import ProcessorEnum
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
@@ -302,3 +305,58 @@ class FullFlowEndToEndTestCase(TestCase):
         self.assertEqual(
             Sample.processed_objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 154
         )
+
+        # Make sure that a processed file using our new transcriptome index is
+        # similar enough to a reference file
+        print("Now we are going to verify that the outputs look okay")
+
+        sample = Sample.objects.get(accession_code="SRR5085168")
+
+        # First, sanity check that the genome build hasn't changed. If it
+        # changes, all bets are off when comparing quant.sf files.
+        self.assertEqual(
+            sample.results.all()
+            .filter(processor__name=ProcessorEnum.SALMON_QUANT.value["name"])
+            .first()
+            .organism_index.assembly_name,
+            "R64-1-1",
+        )
+        # Note that the reference file was processed using version 96
+        self.assertEqual(
+            sample.results.all()
+            .filter(processor__name=ProcessorEnum.SALMON_QUANT.value["name"])
+            .first()
+            .organism_index.release_version,
+            "104",
+        )
+
+        # The `quant.sf` file is not directly associated with the sample, so we
+        # need to find it this way
+        quant_result = sample.results.get(processor__name="Salmon Quant")
+        quant_file = quant_result.computedfile_set.get(filename="quant.sf")
+        output_filename = quant_file.sync_from_s3(force=True)
+
+        ref_filename = "/home/user/data_store/reference/SRR5085168_quant.sf"
+
+        def squish_duplicates(data: pd.DataFrame) -> pd.DataFrame:
+            return data.groupby(data.index, sort=False).mean()
+
+        ref = pd.read_csv(ref_filename, delimiter="\t", index_col=0)
+        ref_TPM = squish_duplicates(pd.DataFrame({"reference": ref["TPM"]}))
+        ref_NumReads = squish_duplicates(pd.DataFrame({"reference": ref["NumReads"]}))
+
+        out = pd.read_csv(output_filename, delimiter="\t", index_col=0)
+        out_TPM = squish_duplicates(pd.DataFrame({"actual": out["TPM"]}))
+        out_NumReads = squish_duplicates(pd.DataFrame({"actual": out["NumReads"]}))
+
+        # Make sure that there is a lot of gene overlap between the
+        # reference and the output files using a Jaccard index test.
+        intersection = len(set(ref_TPM.index) & set(out_TPM.index))
+        union = len(set(ref_TPM.index) | set(out_TPM.index))
+        jaccard_index = intersection / union
+        self.assertGreater(jaccard_index, 0.95)
+
+        (tpm_rho, _) = scipy.stats.spearmanr(ref_TPM.join(out_TPM, how="inner"))
+        self.assertGreater(tpm_rho, 0.99)
+        (num_reads_rho, _) = scipy.stats.spearmanr(ref_NumReads.join(out_NumReads, how="inner"))
+        self.assertGreater(num_reads_rho, 0.99)
