@@ -11,7 +11,6 @@ aspera*
 common/version
 
 # Project-specific Batch related files
-infrastructure/batch-job-specs/
 workers/batch-job-specs/*
 !workers/batch-job-specs/*.tpl
 foreman/batch-job-specs/*
@@ -23,6 +22,12 @@ ami/.terraform/
 .circleci/s3_tfstate/.terraform
 infrastructure/api-configuration/environment
 infrastructure/foreman-configuration/environment
+
+# Files that are created during deploys
+infrastructure/batch-job-templates/
+infrastructure/ci_ingress.tf
+infrastructure/data-refinery-key.pem
+infrastructure/prod_env
 
 # We download a lot of files into the test_volume directory when
 # running tests, which we don't need to track.
