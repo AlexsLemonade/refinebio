@@ -55,11 +55,9 @@ def calculate_ram_hours_for_job(job):
 
     run_time = job.end_time - job.start_time
     hours = run_time.total_seconds() / 60 / 60
-    print(f"Job took {hours} hours to run.")
 
     # RAM is stored in MB so convert to GB
     gigabytes_of_RAM = job.ram_amount / 1024
-    print(f"Job took {gigabytes_of_RAM} GB to run.")
 
     return hours * gigabytes_of_RAM
 
@@ -76,13 +74,11 @@ def calculate_ram_hours(accession_code, start_date):
     for original_file_id in sample.original_files:
         original_file = pyrefinebio.OriginalFile.get(original_file_id)
 
-        print(original_file.downloader_jobs)
         for downloader_job in original_file.downloader_jobs:
             print(downloader_job.start_time)
             if downloader_job.start_time and downloader_job.start_time > utc_start_date:
                 ram_hours += calculate_ram_hours_for_job(downloader_job)
 
-        print(original_file.processor_jobs)
         for processor_job in original_file.processor_jobs:
             print(processor_job.start_time)
             if processor_job.start_time and processor_job.start_time > utc_start_date:
