@@ -34,6 +34,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "downloader_task",
+            "ram_amount",
             "num_retries",
             "retried",
             "was_recreated",
