@@ -321,14 +321,6 @@ class FullFlowEndToEndTestCase(TestCase):
             .organism_index.assembly_name,
             "R64-1-1",
         )
-        # Note that the reference file was processed using version 96
-        self.assertEqual(
-            sample.results.all()
-            .filter(processor__name=ProcessorEnum.SALMON_QUANT.value["name"])
-            .first()
-            .organism_index.release_version,
-            "104",
-        )
 
         # The `quant.sf` file is not directly associated with the sample, so we
         # need to find it this way
