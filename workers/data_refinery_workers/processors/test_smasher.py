@@ -6,6 +6,7 @@ import os
 import sys
 import zipfile
 from io import StringIO
+from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.test import TransactionTestCase, tag
@@ -1277,7 +1278,13 @@ class SmasherTestCase(TransactionTestCase):
         self.assertTrue(os.path.exists(afp))
 
     @tag("smasher")
-    def test_notify(self):
+    @patch("boto3.client")
+    # We need to patch RUNNING_IN_CLOUD to get the smasher to attempt to send an email
+    @patch("data_refinery_workers.processors.smasher.settings.RUNNING_IN_CLOUD", new=True)
+    @patch("data_refinery_workers.processors.smasher.AWS_REGION", new="dummy region")
+    def test_notify(self, mock_boto_client):
+        ses_client_mock = MagicMock()
+        mock_boto_client.return_value = ses_client_mock
 
         ds = Dataset()
         ds.data = {"GSM1487313": ["GSM1487313"], "SRS332914": ["SRS332914"]}
@@ -1306,6 +1313,34 @@ class SmasherTestCase(TransactionTestCase):
 
         final_context = smasher._notify(job_context)
         self.assertTrue(final_context.get("success", True))
+        mock_boto_client.assert_called_once_with("ses", region_name="dummy region")
+        ses_client_mock.send_email.assert_called_once()
+
+        # Now try explicitly setting notify_me true
+        ses_client_mock.reset_mock()
+        mock_boto_client.reset_mock()
+
+        ds.notify_me = True
+        ds.save()
+
+        final_context = smasher._notify(job_context)
+
+        self.assertTrue(final_context.get("success", True))
+        mock_boto_client.assert_called_once_with("ses", region_name="dummy region")
+        ses_client_mock.send_email.assert_called_once()
+
+        # Now try explicitly setting notify_me false
+        mock_boto_client.reset_mock()
+        ses_client_mock.send_email.reset_mock()
+
+        ds.notify_me = False
+        ds.save()
+
+        final_context = smasher._notify(job_context)
+
+        self.assertTrue(final_context.get("success", True))
+        mock_boto_client.assert_not_called()
+        ses_client_mock.send_email.assert_not_called()
 
 
 class CompendiaTestCase(TransactionTestCase):

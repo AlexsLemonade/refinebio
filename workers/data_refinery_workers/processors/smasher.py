@@ -270,8 +270,7 @@ def _smash_key(job_context: Dict, key: str, input_files: List[ComputedFile]) -> 
 
 
 def _smash_all(job_context: Dict) -> Dict:
-    """Perform smashing on all species/experiments in the dataset.
-    """
+    """Perform smashing on all species/experiments in the dataset."""
     start_smash = log_state("start smash", job_context["job"].id)
 
     job_context["unsmashable_files"] = []
@@ -317,7 +316,7 @@ def _smash_all(job_context: Dict) -> Dict:
 
 
 def _upload(job_context: Dict) -> Dict:
-    """ Uploads the result file to S3 and notifies user. """
+    """Uploads the result file to S3 and notifies user."""
     if not job_context.get("upload", True) or not settings.RUNNING_IN_CLOUD:
         return job_context
 
@@ -348,7 +347,7 @@ def _upload(job_context: Dict) -> Dict:
 
 
 def _notify(job_context: Dict) -> Dict:
-    """ Use AWS SES to notify a user of a smash result.. """
+    """Use AWS SES to notify a user of a smash result.."""
 
     if not job_context.get("upload", True) or not settings.RUNNING_IN_CLOUD:
         return job_context
@@ -360,8 +359,8 @@ def _notify(job_context: Dict) -> Dict:
         except Exception as e:
             logger.warn(e)  # It doesn't really matter if this didn't work
 
-    # Don't send an email if we don't have address.
-    if job_context["dataset"].email_address:
+    # Don't send an email if we don't have address or the user doesn't want an email.
+    if job_context["dataset"].email_address and job_context["dataset"].notify_me:
         # Try to send the email.
         try:
             _notify_send_email(job_context)
@@ -390,7 +389,7 @@ def _notify(job_context: Dict) -> Dict:
 
 
 def _notify_slack_failed_dataset(job_context: Dict):
-    """ Send a slack notification when a dataset fails to smash """
+    """Send a slack notification when a dataset fails to smash"""
 
     # Link to the dataset page, where the user can re-try the download job
     dataset_url = "https://www.refine.bio/dataset/" + str(job_context["dataset"].id)
@@ -430,7 +429,7 @@ def _notify_slack_failed_dataset(job_context: Dict):
 
 
 def _notify_send_email(job_context):
-    """ Send email notification to the user if the dataset succeded or failed. """
+    """Send email notification to the user if the dataset succeded or failed."""
     dataset_url = "https://www.refine.bio/dataset/" + str(job_context["dataset"].id)
 
     SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
@@ -527,7 +526,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
 
 
 def smash(job_id: int, upload=True) -> None:
-    """ Main Smasher interface """
+    """Main Smasher interface"""
     pipeline = Pipeline(name=PipelineEnum.SMASHER.value)
     job_context = utils.run_pipeline(
         {"job_id": job_id, "upload": upload, "pipeline": pipeline},
