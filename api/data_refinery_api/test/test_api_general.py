@@ -256,19 +256,19 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("survey_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["results"][0]["isQueued"])
+        self.assertFalse(response.data["results"][0]["is_queued"])
         cache.clear()
 
         response = self.client.get(
             reverse("survey_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["isQueued"])
+        self.assertFalse(response.data["is_queued"])
         cache.clear()
 
         response = self.client.get(reverse("downloader_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["results"][0]["isQueued"])
+        self.assertFalse(response.data["results"][0]["is_queued"])
         cache.clear()
 
         # Don't know the best way to deal with this, but since the
@@ -280,19 +280,19 @@ class APITestCases(APITestCase):
             reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["isQueued"])
+        self.assertFalse(response.data["is_queued"])
         cache.clear()
 
         response = self.client.get(reverse("processor_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["results"][0]["isQueued"])
+        self.assertFalse(response.data["results"][0]["is_queued"])
         cache.clear()
 
         response = self.client.get(
             reverse("processor_jobs", kwargs={"version": API_VERSION}) + "1/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["isQueued"])
+        self.assertFalse(response.data["is_queued"])
         cache.clear()
 
         response = self.client.get(reverse("stats", kwargs={"version": API_VERSION}))

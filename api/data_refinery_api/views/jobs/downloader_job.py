@@ -90,7 +90,7 @@ class DownloaderJobListView(generics.ListAPIView):
 
         for result in results:
             batch_job_id = result.get("batch_job_id", None)
-            result["isQueued"] = bool(batch_job_id and batch_job_id in running_job_ids)
+            result["is_queued"] = bool(batch_job_id and batch_job_id in running_job_ids)
 
         return response
 
@@ -124,7 +124,7 @@ class DownloaderJobDetailView(generics.RetrieveAPIView):
 
         if "batch_job_id" in response.data and response.data["batch_job_id"]:
             described_jobs = batch.describe_jobs(jobs=[response.data["batch_job_id"]])
-            response.data["isQueued"] = described_jobs["jobs"][0] in [
+            response.data["is_queued"] = described_jobs["jobs"][0] in [
                 "SUBMITTED",
                 "PENDING",
                 "RUNNABLE",
@@ -132,6 +132,6 @@ class DownloaderJobDetailView(generics.RetrieveAPIView):
                 "RUNNING",
             ]
         else:
-            response.data["isQueued"] = False
+            response.data["is_queued"] = False
 
         return response
