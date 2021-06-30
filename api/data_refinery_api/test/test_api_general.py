@@ -343,9 +343,7 @@ class APITestCases(APITestCase):
         # Tenth call since reset_cache() should be throttled, three have happened.
         # Make more than necessary to ensure we get the throttle.
         for i in range(15):
-            response = self.client.get(
-                reverse("transcriptome_indices", kwargs={"version": API_VERSION})
-            )
+            response = self.client.get(reverse("survey_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
     def test_experiment_multiple_accessions(self):
