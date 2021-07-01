@@ -2,8 +2,12 @@
 # Contains the views Stats, FailedDownloaderJobStats, FailedProcessorJobStats, and AboutStats
 ##
 
+import functools
+import itertools
 from datetime import datetime, timedelta
 
+from django.conf import settings
+from django.core.cache import cache
 from django.db.models import Count, DateTimeField
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
@@ -16,9 +20,11 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+import boto3
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputedFile,
     Dataset,
@@ -30,8 +36,15 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
+from data_refinery_common.utils import get_env_variable
+
+logger = get_and_configure_logger(__name__)
 
 JOB_CREATED_AT_CUTOFF = datetime(2019, 9, 19, tzinfo=timezone.utc)
+
+# We want to cache all stats pages for 10 minutes to reduce the load on our
+# servers, because computing all of the stats is really expensive
+CACHE_TIME_SECONDS = 10 * 60
 
 
 def get_start_date(range_param):
@@ -58,8 +71,119 @@ def paginate_queryset_response(queryset, request):
     )
 
 
+AWS_REGION = get_env_variable(
+    "AWS_REGION", "us-east-1"
+)  # Default to us-east-1 if the region variable can't be found
+batch = boto3.client("batch", region_name=AWS_REGION)
+
+
+PENDING_STATUSES = [
+    "SUBMITTED",
+    "PENDING",
+    "RUNNABLE",
+    "STARTING",
+]
+
+
+def add_type(job_json: dict) -> dict:
+    """Get the type for a job based on its name and add that to the job dict."""
+    # A job name is user_stage_NAME_GOES_HERE_..., so we need to
+    # remove the first two underscore-delimited fields, and then what
+    # comes after depends on the name
+    split_name = job_json["jobName"].split("_")[2:]
+
+    # The last field of a job name is always an ID, so strip that
+    split_name = split_name[:-1]
+
+    # If the new last field is numeric, then it must be a RAM amount, so
+    # strip that too. Otherwise, the last field will be part of the job
+    # name for jobs without RAM amounts, so we want to keep it.
+    if split_name[-1].isnumeric():
+        split_name = split_name[:-1]
+
+    job_json["type"] = "_".join(split_name)
+    return job_json
+
+
+def get_jobs_in_queue(batch_job_queue: str) -> list:
+    """Gets all of the information for the jobs in a batch queue."""
+    jobs = []
+    # AWS Batch only returns one status at a time and doesn't provide a `count` or `total`.
+    for status in [*PENDING_STATUSES, "RUNNING"]:
+        list_jobs_dict = batch.list_jobs(jobQueue=batch_job_queue, jobStatus=status)
+
+        jobs.extend(list_jobs_dict["jobSummaryList"])
+
+        while "nextToken" in list_jobs_dict and list_jobs_dict["nextToken"]:
+            list_jobs_dict = batch.list_jobs(
+                jobQueue=batch_job_queue, jobStatus=status, nextToken=list_jobs_dict["nextToken"],
+            )
+            jobs.extend(list_jobs_dict["jobSummaryList"])
+
+    return jobs
+
+
+def get_batch_jobs_breakdown(force=False):
+    data = {}
+
+    if not settings.RUNNING_IN_CLOUD and not force:
+        return data
+
+    job_queue_lists = {}
+    for queue_name in settings.AWS_BATCH_QUEUE_ALL_NAMES:
+        try:
+            job_queue_lists[queue_name] = list(map(add_type, get_jobs_in_queue(queue_name)))
+        except Exception:
+            logger.exception(f"Could not get jobs for queue {queue_name}")
+            raise
+
+    all_jobs = functools.reduce(lambda acc, x: acc + x, job_queue_lists.values(), [])
+
+    def is_pending(job):
+        return job["status"] in PENDING_STATUSES
+
+    def is_running(job):
+        return job["status"] == "RUNNING"
+
+    def count_occurrences(pred, it):
+        return functools.reduce(lambda acc, x: acc + 1 if pred(x) else acc, it, 0)
+
+    data["pending_jobs"] = count_occurrences(is_pending, all_jobs)
+    data["running_jobs"] = count_occurrences(is_running, all_jobs)
+
+    def get_job_type(job):
+        return job["type"]
+
+    # groupby must be executed on a sorted iterable
+    # ref: https://docs.python.org/3.8/library/itertools.html#itertools.groupby
+    sorted_jobs_by_type = sorted(all_jobs, key=get_job_type)
+    # We turn this into a dict because we need to iterate it more than once
+    aggregated_jobs_by_type = {
+        k: list(v) for k, v in itertools.groupby(sorted_jobs_by_type, get_job_type)
+    }
+
+    data["pending_jobs_by_type"] = {
+        k: count_occurrences(is_pending, v) for k, v in aggregated_jobs_by_type.items()
+    }
+    data["running_jobs_by_type"] = {
+        k: count_occurrences(is_running, v) for k, v in aggregated_jobs_by_type.items()
+    }
+
+    # Our original data is already aggregated by queue, so we don't need to
+    # re-aggregate here.
+
+    data["pending_jobs_by_queue"] = {
+        k: count_occurrences(is_pending, v) for k, v in job_queue_lists.items()
+    }
+    data["running_jobs_by_queue"] = {
+        k: count_occurrences(is_running, v) for k, v in job_queue_lists.items()
+    }
+
+    return data
+
+
 class Stats(APIView):
-    """ Statistics about the health of the system. """
+    """Statistics about the health of the system."""
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -72,19 +196,20 @@ class Stats(APIView):
             )
         ]
     )
-    @method_decorator(cache_page(10 * 60))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop("range", None)
         is_dashboard = request.query_params.dict().pop("dashboard", False)
         if is_dashboard:
-            cached_stats = Stats.calculate_dashboard_stats(range_param)
+            stats = Stats.calculate_dashboard_stats(range_param)
         else:
-            cached_stats = Stats.calculate_stats(range_param)
-        return Response(cached_stats)
+            stats = Stats.calculate_stats(range_param)
+
+        return Response(stats)
 
     @classmethod
     def calculate_dashboard_stats(cls, range_param):
-        """ The dashboard doesn't need all of the stats, and we can
+        """The dashboard doesn't need all of the stats, and we can
         significantly reduce the request time by only crunching the stats the
         dashboard cares about"""
         data = {}
@@ -103,6 +228,8 @@ class Stats(APIView):
         )
 
         data["dataset"] = cls._get_dataset_stats(range_param)
+
+        data.update(get_batch_jobs_breakdown())
 
         return data
 
@@ -133,6 +260,8 @@ class Stats(APIView):
         if range_param:
             data["input_data_size"] = cls._get_input_data_size()
             data["output_data_size"] = cls._get_output_data_size()
+
+        data.update(get_batch_jobs_breakdown())
 
         return data
 
@@ -270,7 +399,7 @@ class FailedDownloaderJobStats(APIView):
             )
         ]
     )
-    @method_decorator(cache_page(10 * 60))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop("range", "day")
         start_date = get_start_date(range_param)
@@ -304,7 +433,7 @@ class FailedProcessorJobStats(APIView):
             )
         ]
     )
-    @method_decorator(cache_page(10 * 60))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop("range", "day")
         start_date = get_start_date(range_param)
@@ -327,9 +456,9 @@ class FailedProcessorJobStats(APIView):
 
 
 class AboutStats(APIView):
-    """ Returns general stats for the site, used in the about page """
+    """Returns general stats for the site, used in the about page"""
 
-    @method_decorator(cache_page(10 * 60))
+    @method_decorator(cache_page(CACHE_TIME_SECONDS))
     def get(self, request, version, format=None):
         # static values for now
         dummy = request.query_params.dict().pop("dummy", None)
@@ -354,7 +483,7 @@ class AboutStats(APIView):
         return Response(result)
 
     def _get_experiments_processed(self):
-        """ total experiments with at least one sample processed """
+        """total experiments with at least one sample processed"""
         experiments_with_sample_processed = (
             Experiment.objects.annotate(
                 processed_samples_count=Count("samples", filter=Q(samples__is_processed=True)),
@@ -371,7 +500,7 @@ class AboutStats(APIView):
         return experiments_with_sample_processed + experiments_with_sample_quant
 
     def _get_supported_organisms(self):
-        """ count organisms with qn targets or that have at least one sample with quant files """
+        """count organisms with qn targets or that have at least one sample with quant files"""
         organisms_with_qn_targets = Organism.objects.filter(qn_target__isnull=False).count()
         organisms_without_qn_targets = (
             Organism.objects.filter(
@@ -386,7 +515,7 @@ class AboutStats(APIView):
         return organisms_with_qn_targets + organisms_without_qn_targets
 
     def _get_samples_available(self):
-        """ count the total number of samples that are processed or that have a quant.sf file associated with them """
+        """count the total number of samples that are processed or that have a quant.sf file associated with them"""
         processed_samples = Sample.objects.filter(is_processed=True).count()
         unprocessed_samples_with_quant = (
             Sample.objects.filter(
