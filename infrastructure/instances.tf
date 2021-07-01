@@ -131,6 +131,8 @@ resource "aws_instance" "pg_bouncer" {
   root_block_device {
     volume_type = "gp2"
     volume_size = 100
+
+    tags = var.default_tags
   }
 }
 
@@ -306,6 +308,8 @@ resource "aws_instance" "api_server_1" {
   root_block_device {
     volume_type = "gp2"
     volume_size = 100
+
+    tags = var.default_tags
   }
 }
 
@@ -374,6 +378,8 @@ resource "aws_instance" "foreman_server_1" {
   root_block_device {
     volume_type = "gp2"
     volume_size = 100
+
+    tags = var.default_tags
   }
 }
 

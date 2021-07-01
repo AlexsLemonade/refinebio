@@ -1,26 +1,18 @@
 import json
-from unittest.mock import Mock, patch
 
 from django.core.cache import cache
-from django.core.exceptions import TooManyFieldsSent
-from django.core.management import call_command
-from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.views import DatasetView, ExperimentListView
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
-    ComputedFile,
     Contribution,
-    Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     Experiment,
     ExperimentAnnotation,
-    ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
     OntologyTerm,
     Organism,
@@ -34,8 +26,8 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SampleKeyword,
     SampleResultAssociation,
+    SurveyJob,
 )
-from data_refinery_common.models.documents import ExperimentDocument
 from data_refinery_common.utils import get_env_variable
 
 API_VERSION = "v1"
@@ -71,7 +63,11 @@ class APITestCases(APITestCase):
         experiment_annotation.experiment = experiment
         experiment_annotation.save()
 
-        # Create 26 test organisms numbered 0-25 for pagination test, so there should be 29 organisms total (with the 3 others below)
+        SurveyJob().save()
+
+        # Create 26 test organisms numbered 0-25 for pagination test,
+        # so there should be 29 organisms total (with the 3 others
+        # below)
         for i in range(26):
             Organism(name=("TEST_ORGANISM_{}".format(i)), taxonomy_id=(1234 + i)).save()
 
@@ -260,30 +256,43 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("survey_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["results"][0]["is_queued"])
+        cache.clear()
+
+        response = self.client.get(
+            reverse("survey_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["is_queued"])
         cache.clear()
 
         response = self.client.get(reverse("downloader_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["results"][0]["is_queued"])
         cache.clear()
 
-        # Don't know the best way to deal with this, but since the other tests in different files
-        # create objects which are then deleted, the new objects from these tests will have different
-        # IDs. In this case, since this file is ran first, the IDs are 1, but this may be a problem
-        # in the future.
+        # Don't know the best way to deal with this, but since the
+        # other tests in different files create objects which are then
+        # deleted, the new objects from these tests will have
+        # different IDs. In this case, since this file is ran first,
+        # the IDs are 1, but this may be a problem in the future.
         response = self.client.get(
             reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["is_queued"])
         cache.clear()
 
         response = self.client.get(reverse("processor_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["results"][0]["is_queued"])
         cache.clear()
 
         response = self.client.get(
             reverse("processor_jobs", kwargs={"version": API_VERSION}) + "1/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["is_queued"])
         cache.clear()
 
         response = self.client.get(reverse("stats", kwargs={"version": API_VERSION}))
@@ -332,10 +341,9 @@ class APITestCases(APITestCase):
         self.assertListEqual(response.json()["details"], ["foo"])
 
         # Tenth call since reset_cache() should be throttled, three have happened.
-        for i in range(8):
-            response = self.client.get(
-                reverse("transcriptome_indices", kwargs={"version": API_VERSION})
-            )
+        # Make more than necessary to ensure we get the throttle.
+        for i in range(15):
+            response = self.client.get(reverse("survey_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
     def test_experiment_multiple_accessions(self):
@@ -424,7 +432,9 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["results"]), 25)
 
-        # First organism on second page should be TEST_ORGANISM_25, and since 29 organisms have been created, there should be 4 on the 2nd page
+        # First organism on second page should be TEST_ORGANISM_25,
+        # and since 29 organisms have been created, there should be 4
+        # on the 2nd page
         response = self.client.get(
             reverse("organisms", kwargs={"version": API_VERSION}), {"offset": 25}
         )
