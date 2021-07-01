@@ -608,3 +608,6 @@ jobs:
 
       - name: Deploy
         run: ./.github/scripts/remote_deploy.sh
+
+      - name: Cleanup deploy
+        run: ./.github/scripts/post_deploy_cleanup.sh
