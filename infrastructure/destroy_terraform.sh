@@ -1,5 +1,12 @@
 #!/bin/bash -e
 
+# This script should always run as if it were being called from
+# the directory it lives in.
+script_directory="$(perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
+
 print_description() {
     echo 'This script can be used to destroy an infrastructure stack that was created with deploy.sh.'
 }
@@ -64,4 +71,7 @@ fi
 terraform destroy -var-file="environments/$env.tfvars"
 
 # These aren't managed by terraform so we have to deregistr them manually..
+export USER="$TF_VAR_user"
+export STAGE="$TF_VAR_stage"
+export AWS_REGION="$TF_VAR_region"
 python3 deregister_batch_job_definitions.py
