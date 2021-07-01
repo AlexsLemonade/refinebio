@@ -217,7 +217,9 @@ def _detect_columns(job_context: Dict) -> Dict:
 
         job_context["columnIds"] = ",".join(map(lambda id: str(id), column_ids))
     except Exception as e:
-        job_context["job"].failure_reason = str(e)
+        job_context[
+            "job"
+        ].failure_reason = f"failure to extract columns in {job_context['input_file_path']}: {e}"
         job_context["success"] = False
         logger.exception(
             "Failed to extract columns in " + job_context["input_file_path"], exception=str(e)
