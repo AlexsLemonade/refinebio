@@ -43,6 +43,19 @@ def _prepare_files(job_context: Dict) -> Dict:
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     original_file = job_context["original_files"][0]
+
+    # XXX: I'm not sure why the surveyor passes us files that aren't in the
+    # right format, but here we are.
+    if not original_file.absolute_file_path.endswith(".txt"):
+        logger.error(
+            "Input file doesn't have a suffix we recognize, probably an invalid format",
+            input_file=original_file.absolute_file_path,
+        )
+        job_context["job"].failure_reason = "Couldn't recognize the input file format"
+        job_context["success"] = False
+        job_context["job"].no_retry = True
+        return job_context
+
     sanitized_filename = original_file.absolute_file_path.split("/")[-1] + ".sanitized"
     job_context["input_file_path"] = job_context["work_dir"] + sanitized_filename
 
