@@ -1,7 +1,7 @@
 from typing import List
 
 import data_refinery_foreman.foreman.utils as utils
-from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.enums import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import get_capacity_for_downloader_jobs, send_job
 from data_refinery_common.models import DownloaderJob

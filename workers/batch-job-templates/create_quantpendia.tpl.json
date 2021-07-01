@@ -1,5 +1,5 @@
 {
-    "jobDefinitionName": "${{USER}}_${{STAGE}}_CREATE_QUANTPENDIA_${{RAM}}",
+    "jobDefinitionName": "${{USER}}_${{STAGE}}_CREATE_QUANTPENDIA",
     "type": "container",
     "parameters": {
         "job_name": "",
@@ -9,7 +9,7 @@
         "executionRoleArn": "${{BATCH_EXECUTION_ROLE_ARN}}",
         "image": "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}",
         "vcpus": 1,
-        "memory": ${{RAM}},
+        "memory": 4000,
         "command": [
             "python3",
             "manage.py",

@@ -447,26 +447,26 @@ See the [Ensembl Transcriptome Index section](#ensembl-transcriptome-indices) fo
 
 Downloader Jobs will be queued automatically when `Surveyor Jobs`
 discover new samples. However, if you just want to queue a `Downloader Job`
-yourself rather than having the Surveyor do it for you, you can use the `./workers/tester.sh`
+yourself rather than having the Surveyor do it for you, you can use the `./workers/run_job.sh`
 script:
 ```bash
-./workers/tester.sh run_downloader_job --job-name=<EXTERNAL_SOURCE> --job-id=<JOB_ID>
+./workers/run_job.sh run_downloader_job --job-name=<EXTERNAL_SOURCE> --job-id=<JOB_ID>
 ```
 
 For example:
 ```bash
-./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
+./workers/run_job.sh run_downloader_job --job-name=SRA --job-id=12345
 ```
 
 or
 
 ```bash
-./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+./workers/run_job.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
 ```
 
 Or for more information run:
 ```bash
-./workers/tester.sh -h
+./workers/run_job.sh -h
 ```
 
 ### Processor Jobs
@@ -476,35 +476,35 @@ However, if you just want to run a `Processor Job` without yourself without havi
 a `Downloader Job` do it for you, the following command will do so:
 
 ```bash
-./workers/tester.sh -i <IMAGE_NAME> run_processor_job --job-name=<JOB_NAME> --job-id=<JOB_ID>
+./workers/run_job.sh -i <IMAGE_NAME> run_processor_job --job-name=<JOB_NAME> --job-id=<JOB_ID>
 ```
 
 For example
 ```bash
-./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+./workers/run_job.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
 ```
 
 or
 
 ```bash
-./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
+./workers/run_job.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
 or
 
 ```bash
-./workers/tester.sh -i salmon run_processor_job --job-name=SALMON --job-id=1
+./workers/run_job.sh -i salmon run_processor_job --job-name=SALMON --job-id=1
 ```
 
 or
 
 ```bash
-./workers/tester.sh -i transcriptome run_processor_job --job-name=TRANSCRIPTOME_INDEX_LONG --job-id=1
+./workers/run_job.sh -i transcriptome run_processor_job --job-name=TRANSCRIPTOME_INDEX_LONG --job-id=1
 ```
 
 Or for more information run:
 ```bash
-./workers/tester.sh -h
+./workers/run_job.sh -h
 ```
 
 ### Creating Quantile Normalization Reference Targets

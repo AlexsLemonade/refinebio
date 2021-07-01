@@ -55,7 +55,7 @@ class ProcessedFilteredDatasets(models.Manager):
 
 
 class Dataset(models.Model):
-    """ A Dataset is a desired set of experiments/samples to smash and download """
+    """A Dataset is a desired set of experiments/samples to smash and download"""
 
     class Meta:
         base_manager_name = "objects"
@@ -146,6 +146,7 @@ class Dataset(models.Model):
     # Delivery properties
     email_address = models.EmailField(max_length=255, blank=True, null=True)
     email_ccdl_ok = models.BooleanField(default=False)
+    notify_me = models.BooleanField(default=True)
     expires_on = models.DateTimeField(blank=True, null=True)
 
     # Deliverables
@@ -165,7 +166,7 @@ class Dataset(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -173,7 +174,7 @@ class Dataset(models.Model):
         return super(Dataset, self).save(*args, **kwargs)
 
     def get_samples(self):
-        """ Retuns all of the Sample objects in this Dataset """
+        """Retuns all of the Sample objects in this Dataset"""
         all_samples = []
         for sample_list in self.data.values():
             all_samples = all_samples + sample_list
@@ -182,8 +183,8 @@ class Dataset(models.Model):
         return Sample.objects.filter(accession_code__in=all_samples)
 
     def get_total_samples(self):
-        """ Returns the total number of samples, this counts the number of unique
-        accession codes in `data`. """
+        """Returns the total number of samples, this counts the number of unique
+        accession codes in `data`."""
         return len(
             set(
                 [
@@ -195,12 +196,12 @@ class Dataset(models.Model):
         )
 
     def get_experiments(self):
-        """ Retuns all of the Experiments objects in this Dataset """
+        """Retuns all of the Experiments objects in this Dataset"""
         all_experiments = self.data.keys()
         return Experiment.objects.filter(accession_code__in=all_experiments)
 
     def get_samples_by_experiment(self):
-        """ Returns a dict of sample QuerySets, for samples grouped by experiment. """
+        """Returns a dict of sample QuerySets, for samples grouped by experiment."""
         all_samples = {}
 
         for experiment, samples in self.data.items():
@@ -209,7 +210,7 @@ class Dataset(models.Model):
         return all_samples
 
     def get_samples_by_species(self):
-        """ Returns a dict of sample QuerySets, for samples grouped by species. """
+        """Returns a dict of sample QuerySets, for samples grouped by species."""
 
         by_species = {}
         all_samples = self.get_samples()
@@ -222,7 +223,7 @@ class Dataset(models.Model):
         return by_species
 
     def get_aggregated_samples(self):
-        """ Uses aggregate_by to return a smasher-ready sample dict. """
+        """Uses aggregate_by to return a smasher-ready sample dict."""
 
         if self.aggregate_by == "ALL":
             return {"ALL": self.get_samples()}
@@ -232,7 +233,7 @@ class Dataset(models.Model):
             return self.get_samples_by_species()
 
     def is_cross_technology(self):
-        """ Determine if this involves both Microarray + RNASeq"""
+        """Determine if this involves both Microarray + RNASeq"""
 
         if len(self.get_samples().values("technology").distinct()) > 1:
             return True
@@ -241,11 +242,11 @@ class Dataset(models.Model):
 
     @property
     def download_url(self):
-        """ A temporary URL from which the file can be downloaded. """
+        """A temporary URL from which the file can be downloaded."""
         return self.create_download_url()
 
     def create_download_url(self):
-        """ Create a temporary URL from which the file can be downloaded."""
+        """Create a temporary URL from which the file can be downloaded."""
         if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
             return S3.generate_presigned_url(
                 ClientMethod="get_object",
@@ -256,7 +257,7 @@ class Dataset(models.Model):
             return None
 
     def s3_url(self):
-        """ Render the resulting S3 URL """
+        """Render the resulting S3 URL"""
         if (self.s3_key) and (self.s3_bucket):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
         else:
@@ -264,5 +265,5 @@ class Dataset(models.Model):
 
     @property
     def has_email(self):
-        """ Returns if the email is set or not """
+        """Returns if the email is set or not"""
         return bool(self.email_address)
