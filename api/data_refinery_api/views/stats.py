@@ -127,8 +127,6 @@ def get_batch_jobs_breakdown(force=False):
     data = {}
 
     if not settings.RUNNING_IN_CLOUD and not force:
-        # XXX: is this the right move here? What *should* we return if we aren't
-        # running in the cloud? Does this break things?
         return data
 
     job_queue_lists = {}
@@ -158,8 +156,6 @@ def get_batch_jobs_breakdown(force=False):
 
     # groupby must be executed on a sorted iterable
     # ref: https://docs.python.org/3.8/library/itertools.html#itertools.groupby
-    # XXX: in the old code this was filtered by if the job had the key
-    # "ParameterizedJob". Does Batch have an equivalent?
     sorted_jobs_by_type = sorted(all_jobs, key=get_job_type)
     # We turn this into a dict because we need to iterate it more than once
     aggregated_jobs_by_type = {
