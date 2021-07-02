@@ -1,5 +1,6 @@
 {
     "jobDefinitionName": "${{USER}}_${{STAGE}}_CREATE_QN_TARGET",
+    "timeout": {"attemptDurationSeconds": 10800},
     "type": "container",
     "parameters": {
         "job_name": "",
