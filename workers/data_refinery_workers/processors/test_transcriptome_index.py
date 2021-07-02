@@ -6,7 +6,7 @@ from django.test import TestCase, tag
 
 import pandas as pd
 
-from data_refinery_common.job_lookup import ProcessorEnum
+from data_refinery_common.enums import ProcessorEnum
 from data_refinery_common.models import (
     Organism,
     OriginalFile,
