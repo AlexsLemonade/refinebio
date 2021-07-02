@@ -67,10 +67,10 @@ def calculate_ram_hours(accession_code, start_date):
         return 0
 
     ram_hours = 0
+    seen_downloader_job_ids = set()
+    seen_processor_job_ids = set()
     for original_file_id in sample.original_files:
         original_file = pyrefinebio.OriginalFile.get(original_file_id)
-
-        seen_downloader_job_ids = set()
         for downloader_job in original_file.downloader_jobs:
             if (
                 downloader_job.id not in seen_downloader_job_ids
@@ -79,8 +79,6 @@ def calculate_ram_hours(accession_code, start_date):
             ):
                 ram_hours += calculate_ram_hours_for_job(downloader_job)
                 seen_downloader_job_ids.add(downloader_job.id)
-
-        seen_processor_job_ids = set()
         for processor_job in original_file.processor_jobs:
             if (
                 processor_job.id not in seen_processor_job_ids
