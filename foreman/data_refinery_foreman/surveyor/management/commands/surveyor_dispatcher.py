@@ -119,6 +119,7 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                     continue
                 accession = accession.strip()
                 try:
+                    logger.info(f"Queuing surveyor job for {accession}.")
                     queue_surveyor_for_accession(accession)
 
                     # Sleep for 30 seconds so all surveyor jobs don't

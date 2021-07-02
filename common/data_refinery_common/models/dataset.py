@@ -29,7 +29,7 @@ EMAIL_USERNAME_BLACKLIST = [
     "miserlou",
 ]
 
-EMAIL_DOMAIN_BLACKLIST = ["@alexslemonade.org", "@ccdatalab.org"]
+EMAIL_DOMAIN_BLACKLIST = ["@alexslemonade.org", "@ccdatalab.org", "@example.com"]
 
 
 class ProcessedFilteredDatasets(models.Manager):

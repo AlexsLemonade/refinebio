@@ -247,7 +247,14 @@ class FullFlowEndToEndTestCase(TestCase):
         for survey_job in survey_jobs:
             self.assertTrue(wait_for_job(survey_job))
 
-        self.assertEqual(Sample.objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 155)
+        # We need to ignore a lot of samples in staging that aren't
+        # related to these experiments.
+        # sample_id_list = Experiment.objects.filter(accession_code__in=EXPERIMENT_ACCESSION_CODES)
+        sample_id_list = Sample.objects.filter(
+            experiment__accession_code__in=EXPERIMENT_ACCESSION_CODES
+        ).values_list("id")
+
+        self.assertEqual(Sample.objects.filter(id__in=sample_id_list).count(), 155)
 
         samples = []
         for accession_code in EXPERIMENT_ACCESSION_CODES:
@@ -291,9 +298,7 @@ class FullFlowEndToEndTestCase(TestCase):
             self.assertTrue(wait_for_job(processor_job))
 
         # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
-        self.assertEqual(
-            Sample.processed_objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 129
-        )
+        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 129)
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
         tximport_jobs = run_tximport_for_all_eligible_experiments(dispatch_jobs=False)
@@ -302,9 +307,7 @@ class FullFlowEndToEndTestCase(TestCase):
         self.assertTrue(wait_for_job(tximport_jobs[0]))
 
         # This is the full total of jobs minus one.
-        self.assertEqual(
-            Sample.processed_objects.exclude(accession_code__in=SMASHER_SAMPLES).count(), 154
-        )
+        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 154)
 
         # Make sure that a processed file using our new transcriptome index is
         # similar enough to a reference file
