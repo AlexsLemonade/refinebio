@@ -73,6 +73,8 @@ resource "aws_db_parameter_group" "postgres_parameter_group" {
     name = "statement_timeout"
     value = "60000" # 60000ms = 60s
   }
+
+  tags = var.default_tags
 }
 
 resource "aws_db_instance" "postgres_db" {
@@ -103,6 +105,8 @@ resource "aws_db_instance" "postgres_db" {
   publicly_accessible = true
 
   backup_retention_period = var.stage == "prod" ? "7" : "0"
+
+  tags = var.default_tags
 }
 
 resource "aws_instance" "pg_bouncer" {
