@@ -42,6 +42,10 @@ def parse_args():
         help=start_date_help_text,
     )
 
+    sample_help_text = """If supplied only calculate RAM-hours for a sample rather than an experiment.
+    If this is supplied then the accession code provided should be a sample accession code."""
+    parser.add_argument("--sample", help=sample_help_text, action="store_true")
+
     return parser.parse_args()
 
 
@@ -58,7 +62,7 @@ def calculate_ram_hours_for_job(job):
     return hours * gigabytes_of_RAM
 
 
-def calculate_ram_hours(accession_code, start_date):
+def calculate_ram_hours_for_sample(accession_code, start_date):
     utc_start_date = pytz.utc.localize(start_date)
     sample = pyrefinebio.Sample.get(accession_code)
 
@@ -66,7 +70,8 @@ def calculate_ram_hours(accession_code, start_date):
         print(f"Found no original files for sample {accession_code}")
         return 0
 
-    ram_hours = 0
+    downloader_ram_hours = 0
+    processor_ram_hours = 0
     seen_downloader_job_ids = set()
     seen_processor_job_ids = set()
     for original_file_id in sample.original_files:
@@ -77,7 +82,7 @@ def calculate_ram_hours(accession_code, start_date):
                 and downloader_job.start_time
                 and downloader_job.start_time > utc_start_date
             ):
-                ram_hours += calculate_ram_hours_for_job(downloader_job)
+                downloader_ram_hours += calculate_ram_hours_for_job(downloader_job)
                 seen_downloader_job_ids.add(downloader_job.id)
         for processor_job in original_file.processor_jobs:
             if (
@@ -85,15 +90,36 @@ def calculate_ram_hours(accession_code, start_date):
                 and processor_job.start_time
                 and processor_job.start_time > utc_start_date
             ):
-                ram_hours += calculate_ram_hours_for_job(processor_job)
+                processor_ram_hours += calculate_ram_hours_for_job(processor_job)
                 seen_processor_job_ids.add(processor_job.id)
 
-    return ram_hours
+    total_ram_hours = downloader_ram_hours + processor_ram_hours
+    return [accession_code, downloader_ram_hours, processor_ram_hours, total_ram_hours]
+
+
+def calculate_ram_hours_for_experiment(accession_code, start_date):
+    sample_data = []
+    experiment = pyrefinebio.Experiment.get(accession_code)
+    for sample in experiment.samples:
+        sample_data.append(calculate_ram_hours_for_sample(sample.accession_code, start_date))
+
+    return sample_data
 
 
 if __name__ == "__main__":
     args = parse_args()
 
-    ram_hours = calculate_ram_hours(args.accession_code, args.start_date)
+    print(
+        ", ".join(
+            ["accession_code", "downloader_ram_hours", "processor_ram_hours", "total_ram_hours"]
+        )
+    )
+    if args.sample:
+        sample_data = calculate_ram_hours_for_sample(args.accession_code, args.start_date)
+        print(", ".join(list(map(str, sample_data))))
+    else:
+        all_sample_data = calculate_ram_hours_for_experiment(args.accession_code, args.start_date)
+        for sample_data in all_sample_data:
+            print(", ".join(list(map(str, sample_data))))
 
-    print(f"Sample {args.accession_code} took {ram_hours} RAM-hours to process.")
+    # print(f"Sample {args.accession_code} took {ram_hours} RAM-hours to process.")
