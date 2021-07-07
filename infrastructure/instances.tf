@@ -91,6 +91,8 @@ resource "aws_db_instance" "postgres_db" {
   username = var.database_user
   password = var.database_password
 
+  apply_immediately = true
+
   db_subnet_group_name = aws_db_subnet_group.data_refinery.name
   parameter_group_name = aws_db_parameter_group.postgres_parameters.name
 
