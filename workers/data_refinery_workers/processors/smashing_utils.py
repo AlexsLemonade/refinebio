@@ -157,11 +157,7 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
     #       7__3016__AT5G35080.1;db=core)
     data.index = data.index.str.replace(r"(\.[^.]*)$", "")
 
-    # Squish duplicated rows together.
-    # XXX/TODO: Is mean the appropriate method here?
-    #           We can make this an option in future.
-    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
-    data = data.groupby(data.index, sort=False).mean()
+    data = utils.squish_duplicates(data)
 
     return data
 
