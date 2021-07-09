@@ -1,5 +1,7 @@
 import os
+import os.path
 import shutil
+import tempfile
 from typing import Dict
 
 from django.test import TestCase, tag
@@ -15,7 +17,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
 )
-from data_refinery_workers.processors import illumina, utils
+from data_refinery_workers.processors import illumina, testing_utils, utils
 
 
 def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
@@ -38,11 +40,16 @@ def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
     for s in job_info["samples"]:
         # For convenience, if you give a list of strings we'll just use the
         # strings as both titles and accessions.
+        annotation = None
         if type(s) == str:
             accession_code = s
             title = s
-        else:
+        elif type(s) == tuple and list(map(type, s)) == [str, str]:
             accession_code, title = s
+        elif type(s) == tuple and list(map(type, s)) == [str, str, dict]:
+            accession_code, title, annotation = s
+        else:
+            raise ValueError(f"Invalid sample type for sample {s}")
 
         sample = Sample()
         sample.accession_code = accession_code
@@ -52,7 +59,7 @@ def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
 
         sa = SampleAnnotation()
         sa.sample = sample
-        sa.data = {"description": [title]}
+        sa.data = annotation if annotation is not None else {"description": [title]}
         sa.is_ccdl = False
         sa.save()
 
@@ -64,29 +71,33 @@ def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
     return pj
 
 
-# Save this experiment separately (sans organism) because we need it for multiple tests
-GSE22427 = {
-    "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz",
-    "filename": "GSE22427_non-normalized.txt",
-    "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt",
-    "samples": [
-        "LV-C&si-Control-1",
-        "LV-C&si-Control-2",
-        "LV-C&si-Control-3",
-        "LV-C&si-EZH2-1",
-        "LV-C&si-EZH2-2",
-        "LV-C&si-EZH2-3",
-        "LV-EZH2&si-EZH2-1",
-        "LV-EZH2&si-EZH2-2",
-        "LV-EZH2&si-EZH2-3",
-        "LV-T350A&si-EZH2-1",
-        "LV-T350A&si-EZH2-2",
-        "LV-T350A&si-EZH2-3",
-    ],
-}
+def _make_original_file_with_contents(contents: str) -> OriginalFile:
+    _, path = tempfile.mkstemp(suffix=".txt")
+    with open(path, "w") as f:
+        f.write(contents)
+
+    og_file = OriginalFile()
+    og_file.source_filename = path
+    og_file.filename = os.path.basename(path)
+    og_file.absolute_file_path = os.path.realpath(path)
+    og_file.is_downloaded = True
+    og_file.save()
+
+    return og_file
 
 
-class IlluminaToPCLTestCase(TestCase):
+def _try_sanitizing_file(file: str) -> str:
+    pj = ProcessorJob()
+    pj.pipeline_applied = "ILLUMINA_TO_PCL"
+    pj.save()
+
+    og_file = _make_original_file_with_contents(file)
+
+    job_context = illumina._prepare_files({"job_id": pj.pk, "original_files": [og_file], "job": pj})
+    return illumina._sanitize_input_file(job_context)
+
+
+class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
     def assertFailedInIlluminaR(self, pj):
         """XXX: remove this before merging to prod.
 
@@ -100,6 +111,7 @@ class IlluminaToPCLTestCase(TestCase):
         if (
             not pj.success
             and "Encountered error in R code while running illumina.R" not in pj.failure_reason
+            and "Exception raised while running illumina.R" not in pj.failure_reason
         ):
             raise AssertionError(f"\033[1;31mjob did not succeed:\033[0m {pj.failure_reason}")
 
@@ -218,3 +230,261 @@ class IlluminaToPCLTestCase(TestCase):
 
         final_context = illumina.illumina_to_pcl(pj.pk)
         self.assertFailedInIlluminaR(pj)
+
+    @tag("illumina")
+    def test_illumina_rows_starting_with_whitespace(self):
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        pj = prepare_illumina_job(
+            {
+                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE112nnn/GSE112517/suppl/GSE112517_non-normalized.txt.gz",
+                "filename": "GSE112517_non-normalized.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE112517_non-normalized.txt",
+                "organism": organism,
+                "samples": [
+                    (
+                        "GSM3071991",
+                        "MCF-7 KLHDC7B siRNA knockdown control",
+                        {"description": "SAMPLE 1",},
+                    ),
+                    ("GSM3071992", "MCF-7 KLHDC7B siRNA knockdown", {"description": "SAMPLE 2",},),
+                ],
+            }
+        )
+
+        final_context = illumina.illumina_to_pcl(pj.pk)
+        self.assertFailedInIlluminaR(pj)
+
+    @tag("illumina")
+    def test_illumina_space_separated(self):
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        pj = prepare_illumina_job(
+            {
+                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE48nnn/GSE48023/suppl/GSE48023%5Fnon%2Dnormalized%2Etxt%2Egz",
+                # Some of the rows and columns are trimmed to save space and time
+                "filename": "GSE48023_trimmed_non-normalized.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE48023_trimmed_non-normalized.txt",
+                "organism": organism,
+                "samples": [
+                    ("GSM1165512", "WholeBloodRNA_IN0242_Day0"),
+                    ("GSM1165513", "WholeBloodRNA_IN0242_Day1"),
+                    ("GSM1165514", "WholeBloodRNA_IN0242_Day14"),
+                    ("GSM1165515", "WholeBloodRNA_IN0242_Day3"),
+                    ("GSM1165516", "WholeBloodRNA_IN0243_Day0"),
+                ],
+            }
+        )
+
+        final_context = illumina.illumina_to_pcl(pj.pk)
+
+        # TODO: assert that the sanitized file is tab-separated and has an extra ID_REF header
+        self.assertFailedInIlluminaR(pj)
+
+    @tag("illumina")
+    def test_illumina_comma_separated(self):
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        pj = prepare_illumina_job(
+            {
+                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE20nnn/GSE20161/suppl/GSE20161%5FmRNA%5Fsamples1%2D90%5Fnon%2Dnormalized%2Etxt%2Egz",
+                # Some of the rows are trimmed to save space
+                "filename": "GSE20161_mRNA_samples1-90_trimmed_non-normalized.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE20161_mRNA_samples1-90_trimmed_non-normalized.txt",
+                "organism": organism,
+                "samples": [
+                    ("GSM370000", "EBV transformed lymphoblastoid cell line (mRNA, Sample 5)")
+                ],
+            }
+        )
+
+        final_context = illumina.illumina_to_pcl(pj.pk)
+
+        # TODO: assert that the sanitized file is tab-separated
+        self.assertFailedInIlluminaR(pj)
+
+    @tag("illumina")
+    def test_illumina_no_pvalue(self):
+        """This experiment should fail because it has no p-value columns, so
+        make sure it fails at that stage of the processing"""
+
+        # GSE41355
+        pass
+
+    @tag("illumina")
+    def test_sanitize_file_hash_header(self):
+        contents = """
+# The identifiers in the ID_REF column must match the identifiers in the ID column of the referenced platform (GPLxxxx).
+# The Matrix table should include normalized (scaled) signal count data and detection p-value
+"# Values that should be disregarded may either be left blank or labeled as ""null""."
+Index	Data
+"""
+        results = _try_sanitizing_file(contents)
+
+        with open(results["sanitized_file_path"], "r") as f:
+            self.assertEqual(f.read(), "Index	Data\n")
+
+        os.remove(results["sanitized_file_path"])
+
+    @tag("illumina")
+    def test_sanitize_file_GSM_footer(self):
+        """Some samples have this weird footer that we want to filter out"""
+        contents = """
+Index	Data
+GSM674408	1523532074_A
+GSM674409	1523532074_B
+GSM674410	1523532074_C
+GSM674411	1523532074_D
+GSM674412	1523532074_E
+GSM674413	1523532074_F
+"""
+        results = _try_sanitizing_file(contents)
+
+        with open(results["sanitized_file_path"], "r") as f:
+            self.assertEqual(f.read(), "Index	Data\n")
+
+        os.remove(results["sanitized_file_path"])
+
+    @tag("illumina")
+    def test_sanitize_file_soft_example(self):
+        # Example file from https://www.ncbi.nlm.nih.gov/geo/info/soft.html#examples
+        contents = """
+^SAMPLE = Control Embyronic Stem Cell Replicate 1
+!Sample_title = Control Embyronic Stem Cell Replicate 1
+!Sample_supplementary_file = file1.gpr
+!Sample_source_name_ch1 = Total RNA from murine ES-D3 embryonic stem cells labeled with Cyanine-5 (red).
+!Sample_organism_ch1 = Mus musculus
+!Sample_characteristics_ch1 = Cell line: ES-D3 (CRL-1934)
+!Sample_characteristics_ch1 = Passages: 4
+!Sample_characteristics_ch1 = Cell type: embryonic stem cells derived from blastocysts
+!Sample_characteristics_ch1 = Strain: 129Sv
+!Sample_growth_protocol_ch1 = ES cells were kept in an undifferentiated, pluripotent state by using 1000 IU/ml leukemia inhibitory factor (LIF; Chemicon, ESGRO, ESG1107), and grown on top of murine embryonic fibroblasts feeder layer inactivated by 10 ug/ml of mitomycin C (Sigma, St. Louis). ES cells were cultured on 0.1% gelatin-coated plastic dishes in ES medium containing Dulbecco modified Eagle medium supplemented with 15% fetal calf serum, 0.1 mM beta-mercaptoethanol, 2 mM glutamine, and 0.1 mN non-essential amino acids.
+!Sample_extract_protocol_ch1 = TriZol procedure
+!Sample_molecule_ch1 = total RNA
+!Sample_label_ch1 = Cy5
+!Sample_label_protocol_ch1 = 10 痢 of total RNA were primed with 2 痞 of 100 然 T16N2 DNA primer at 70蚓 for 10 min, then reversed transcribed at 42蚓 for 1 h in the presence of 400 U SuperScript II RTase (Invitrogen), and 100 然 each dATP, dTTP, dGTP, with 25 然 dCTP, 25 然 Cy5-labeled dCTP (NEN Life Science, Boston, MA), and RNase inhibitor (Invitrogen). RNA was then degraded with RNase A, and labeled cDNAs were purified using QIAquick PCR columns (Qiagen).
+!Sample_source_name_ch2 = Total RNA from pooled whole mouse embryos e17.5, labeled with Cyanine-3 (green).
+!Sample_organism_ch2 = Mus musculus
+!Sample_characteristics_ch2 = Strain: C57BL/6
+!Sample_characteristics_ch2 = Age: E17.5 d
+!Sample_characteristics_ch2 = Tissue: whole embryo
+!Sample_extract_protocol_ch2 = TriZol procedure
+!Sample_molecule_ch2 = total RNA
+!Sample_label_ch2 = Cy3
+!Sample_label_protocol_ch2 = 10 痢 of total RNA were primed with 2 痞 of 100 然 T16N2 DNA primer at 70蚓 for 10 min, then reversed transcribed at 42蚓 for 1 h in the presence of 400 U SuperScript II RTase (Invitrogen), and 100 然 each dATP, dTTP, dGTP, with 25 然 dCTP, 25 然 Cy5-labeled dCTP (NEN Life Science, Boston, MA), and RNase inhibitor (Invitrogen). RNA was then degraded with RNase A, and labeled cDNAs were purified using QIAquick PCR columns (Qiagen).
+!Sample_hyb_protocol = Oligoarray control targets and hybridization buffer (Agilent In Situ Hybridization Kit Plus) were added, and samples were applied to microarrays enclosed in Agilent SureHyb-enabled hybridization chambers. After hybridization, slides were washed sequentially with 6x SSC/0.005% Triton X-102 and 0.1x SSC/0.005% Triton X-102 before scanning. Slides were hybridized for 17 h at 60蚓 in a rotating oven, and washed.
+!Sample_scan_protocol = Scanned on an Agilent G2565AA scanner.
+!Sample_scan_protocol = Images were quantified using Agilent Feature Extraction Software (version A.7.5).
+!Sample_description = Biological replicate 1 of 4. Control embryonic stem cells, untreated, harvested after several passages.
+!Sample_data_processing = LOWESS normalized, background subtracted VALUE data obtained from log of processed Red signal/processed Green signal.
+!Sample_platform_id = GPL3759
+#ID_REF =
+#VALUE = log2(REDsignal/GREENsignal) per feature (processed signals used).
+#LogRatioError = error of the log ratio calculated according to the error model chosen.
+#PValueLogRatio = Significance level of the Log Ratio computed for a feature.
+#gProcessedSignal = Dye-normalized signal after surrogate "algorithm," green "channel," used for computation of log ratio.
+#rProcessedSignal = Dye-normalized signal after surrogate "algorithm," red "channel," used for computation of log ratio.
+!sample_table_begin
+ID_REF	VALUE	LogRatioError	PValueLogRatio	gProcessedSignal	rProcessedSignal
+1	-1.6274758	1.36E-01	6.41E-33	9.13E+03	2.15E+02
+2	0.1412248	1.34E+00	1.00E+00	4.14E+01	5.72E+01
+"""
+
+        results = _try_sanitizing_file(contents)
+
+        with open(results["sanitized_file_path"], "r") as f:
+            self.assertEqual(f.read().strip(), "\n".join(contents.splitlines()[-3:]))
+
+        os.remove(results["sanitized_file_path"])
+
+    @tag("illumina")
+    def test_detect_columns(self):
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        job = prepare_illumina_job({**GSE22427, "organism": organism})
+
+        pipeline = Pipeline(name=PipelineEnum.ILLUMINA.value)
+
+        final_context = utils.run_pipeline(
+            {"job_id": job.id, "pipeline": pipeline},
+            [
+                utils.start_job,
+                illumina._prepare_files,
+                illumina._sanitize_input_file,
+                illumina._convert_sanitized_to_tsv,
+                illumina._detect_columns,
+            ],
+        )
+
+        self.assertNotEqual(final_context.get("success"), False)
+
+        # For this experiment, the probe ID is the first column
+        self.assertEqual(final_context.get("probeId"), GSE22427_HEADER[0])
+
+        expected_column_ids = ",".join(
+            map(
+                lambda t: str(t[0]),
+                filter(
+                    # For this header file, the samples all have the prefix LV-
+                    lambda t: t[1].startswith("LV-"),
+                    # We use start=1 here because the column IDs are formatted
+                    # for R code so they treat the header as a 1-indexed list
+                    enumerate(GSE22427_HEADER, start=1),
+                ),
+            )
+        )
+        self.assertEqual(final_context.get("columnIds"), expected_column_ids)
+
+
+# Save this experiment separately (sans organism) because we need it for multiple tests
+GSE22427 = {
+    "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz",
+    "filename": "GSE22427_non-normalized.txt",
+    "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt",
+    "samples": [
+        "LV-C&si-Control-1",
+        "LV-C&si-Control-2",
+        "LV-C&si-Control-3",
+        "LV-C&si-EZH2-1",
+        "LV-C&si-EZH2-2",
+        "LV-C&si-EZH2-3",
+        "LV-EZH2&si-EZH2-1",
+        "LV-EZH2&si-EZH2-2",
+        "LV-EZH2&si-EZH2-3",
+        "LV-T350A&si-EZH2-1",
+        "LV-T350A&si-EZH2-2",
+        "LV-T350A&si-EZH2-3",
+    ],
+}
+
+GSE22427_HEADER = [
+    "ID_REF",
+    "LV-C&si-Control-1",
+    "Detection Pval",
+    "LV-C&si-Control-2",
+    "Detection Pval",
+    "LV-C&si-Control-3",
+    "Detection Pval",
+    "LV-C&si-EZH2-1",
+    "Detection Pval",
+    "LV-C&si-EZH2-2",
+    "Detection Pval",
+    "LV-C&si-EZH2-3",
+    "Detection Pval",
+    "LV-EZH2&si-EZH2-1",
+    "Detection Pval",
+    "LV-EZH2&si-EZH2-2",
+    "Detection Pval",
+    "LV-EZH2&si- EZH2-3",
+    "Detection Pval",
+    "LV-T350A&si-EZH2-1",
+    "Detection Pval",
+    "LV- T350A&si-EZH2-2",
+    "Detection Pval",
+    "LV-T350A&si-EZH2-3",
+    "Detection Pval",
+]

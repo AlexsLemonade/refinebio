@@ -162,7 +162,8 @@ fi
 if [ -z "$tag" ] || [ "$tag" = "illumina" ]; then
     ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
     ilu_files='GSE22427_non-normalized.txt GSE54661_non_normalized.txt GSE106321_non-normalized.txt
-GSE33814_non-normalized.txt'
+GSE33814_non-normalized.txt GSE112517_non-normalized.txt GSE48023_trimmed_non-normalized.txt
+GSE20161_mRNA_samples1-90_trimmed_non-normalized.txt'
     mkdir -p "$ilu_test_raw_dir"
 
     i=1
@@ -177,6 +178,15 @@ GSE33814_non-normalized.txt'
     done
     unset i
 
+
+    ilu_test_ref_dir="$volume_directory/raw/TEST/ILLUMINA/reference"
+    ilu_ref_file="Ad-Cre-2.AVG_Signal.tsv"
+    if [ ! -e "$ilu_test_ref_dir/$ilu_ref_file" ]; then
+        mkdir -p "$ilu_test_ref_dir"
+        echo "Downloading Illumin reference file for Illumina tests."
+        wget -q -O "$ilu_test_ref_dir/$ilu_ref_file" \
+             "$test_data_repo/$ilu_ref_file"
+    fi
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "agilent" ]; then

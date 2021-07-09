@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import re
 import subprocess
+import tempfile
 from typing import Dict
 
 from django.utils import timezone
@@ -33,7 +34,7 @@ logger = get_and_configure_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Adds the keys "input_file_path" and "output_file_path" to
+    """Adds the keys "sanitized_file_path" and "output_file_path" to
     job_context so everything is prepared for processing.
     """
     # All files for the job are in the same directory.
@@ -43,10 +44,11 @@ def _prepare_files(job_context: Dict) -> Dict:
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     original_file = job_context["original_files"][0]
+    job_context["input_file_path"] = original_file.absolute_file_path
 
     # XXX: I'm not sure why the surveyor passes us files that aren't in the
-    # right format, but here we are.
-    if not original_file.absolute_file_path.endswith(".txt"):
+    # right format, but here we are. I need to look into this
+    if not job_context["input_file_path"].endswith(".txt"):
         logger.error(
             "Input file doesn't have a suffix we recognize, probably an invalid format",
             input_file=original_file.absolute_file_path,
@@ -56,50 +58,109 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context["job"].no_retry = True
         return job_context
 
-    sanitized_filename = original_file.absolute_file_path.split("/")[-1] + ".sanitized"
-    job_context["input_file_path"] = job_context["work_dir"] + sanitized_filename
+    sanitized_filename = job_context["input_file_path"].split("/")[-1] + ".sanitized"
+    job_context["sanitized_file_path"] = job_context["work_dir"] + sanitized_filename
 
     new_filename = original_file.absolute_file_path.split("/")[-1].replace(".txt", ".PCL")
     job_context["output_file_path"] = job_context["work_dir"] + new_filename
 
-    # Sanitize this file so R doesn't choke.
-    # Some have comments, some have non-comment-comments.
+    return job_context
+
+
+def _sanitize_input_file(job_context: Dict) -> Dict:
+    # Remove all of the SOFT-specific extensions in the original file
+    # See https://www.ncbi.nlm.nih.gov/geo/info/soft.html
+    # plus some extra things we found that make R choke
     # Also, some files aren't utf-8 encoded
     encodings = ["utf-8", "latin1"]
-    success = False
+    wrote_a_line = False
     for encoding in encodings:
         try:
-            with open(original_file.absolute_file_path, "r", encoding=encoding) as file_input:
-                with open(job_context["input_file_path"], "w", encoding="utf-8") as file_output:
+            with open(job_context["input_file_path"], "r", encoding=encoding) as file_input:
+                with open(job_context["sanitized_file_path"], "w", encoding="utf-8") as file_output:
                     for line in file_input:
-                        if (
-                            "#" not in line
-                            and line.strip() != ""
-                            and line != "\n"
-                            and "\t" in line
-                            and line[0:3].upper() != "GSM"
-                            and line[0] != "'"
-                            and line[0] != '"'
-                            and line[0] != "!"
-                            and line[0] != "/"
-                            and line[0] != "<"
-                            and line[0] != "\t"
-                        ):
+                        HEADER_CHARS = ["#", "!", "^"]
+                        # Sometimes we have a quoted header, so we need to check both
+                        is_header = line[0] in HEADER_CHARS or (
+                            line[0] in ["'", '"'] and line[1] in HEADER_CHARS
+                        )
+                        is_empty = line.strip() == ""
+                        # There are some weird lines that start with accession
+                        # codes that don't hold gene measurements
+                        is_accession_line = line[0:3].upper() == "GSM"
+
+                        if not is_header and not is_empty and not is_accession_line:
                             file_output.write(line)
+                            wrote_a_line = True
 
             # We've found a good format. Break!
-            success = True
             break
         except UnicodeDecodeError:
+            wrote_a_line = False
             pass
-
-    if not success:
-        logger.error(
-            "Couldn't decode the input file", input_file=original_file.absolute_file_path,
-        )
+    else:
+        # I don't think this will happen unless we get smarter about detecting
+        # encodings, because latin1 covers every possible sequence of bytes.
+        # Unfortunately, this means that if we start seeing things like UTF-16,
+        # they will look like mangled latin1 until we catch them.
+        logger.error("Couldn't decode the input file", input_file=job_context["input_file_path"])
         job_context["job"].failure_reason = "Couldn't decode the input file"
         job_context["success"] = False
         job_context["job"].no_retry = True
+
+        # XXX: remove me
+        job_context["job"].no_retry = False
+        job_context["abort"] = True
+
+    if not wrote_a_line:
+        logger.error(
+            "Filtered every line out of the input file", input_file=job_context["input_file_path"]
+        )
+        job_context["job"].failure_reason = "No valid rows detected in the input file"
+        job_context["success"] = False
+        job_context["job"].no_retry = True
+
+        # XXX: remove me
+        job_context["job"].no_retry = False
+        job_context["abort"] = True
+
+    return job_context
+
+
+def _convert_sanitized_to_tsv(job_context: Dict) -> Dict:
+    # Now we want to normalize the tmpfile to be a tsv file. We also want to
+    # sanity check that this is actually a TSV file
+
+    # TODO: sanity check that we have written a valid CSV/TSV/Space-SV/etc., and
+    # maybe rewrite as a TSV if that is what illumina.R is expecting
+    # Here we also want to check to make sure that each line has the same number of rows
+    _, tmpfile = tempfile.mkstemp(
+        suffix=".txt", dir=os.path.dirname(job_context["sanitized_file_path"])
+    )
+    with open(job_context["sanitized_file_path"], "r") as file_input:
+        with open(tmpfile, "w") as file_output:
+            dialect = csv.Sniffer().sniff(file_input.read(16384), delimiters="\t ,")
+            file_input.seek(0)
+            reader = csv.reader(file_input, dialect=dialect)
+            writer = csv.writer(file_output, delimiter="\t")
+
+            reader_iter = iter(reader)
+
+            headers = next(reader)
+            first_content = next(reader)
+
+            # Sometimes the first row will have a "blank" header, which we interpret as one less header
+            if len(headers) == len(first_content) - 1:
+                headers = ["ID_REF", *headers]
+
+            writer.writerow(headers)
+            writer.writerow(first_content)
+
+            for row in reader_iter:
+                # TODO: filter out short rows
+                writer.writerow(row)
+
+    os.rename(tmpfile, job_context["sanitized_file_path"])
 
     return job_context
 
@@ -131,7 +192,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         detectionPval: a string which identifies Pvalue columns
     """
     try:
-        input_file = job_context["input_file_path"]
+        input_file = job_context["sanitized_file_path"]
         headers = None
         with open(input_file, "r") as tsv_in:
             tsv_in = csv.reader(tsv_in, delimiter="\t")
@@ -141,11 +202,25 @@ def _detect_columns(job_context: Dict) -> Dict:
 
         # Ex GSE45331_non-normalized.txt
         predicted_header = 0
-        if headers[0].upper() in ["TARGETID", "TARGET_ID"]:
-            predicted_header = 1
+
+        # Some files start with blank columns, so let's skip past those
+        while headers[predicted_header] == "":
+            predicted_header += 1
+
+        if headers[predicted_header].upper() in ["TARGETID", "TARGET_ID"]:
+            predicted_header += 1
 
         # First the probe ID column
-        if headers[predicted_header].upper() not in [
+        if headers[predicted_header].upper() == "ILLUMICODE":
+            logger.error(
+                "Tried to process a beadTypeFile.txt, which we don't support",
+                input_file=job_context["sanitized_file_path"],
+            )
+            job_context["job"].failure_reason = "Unsupported filetype 'beadTypeFile.txt'"
+            job_context["success"] = False
+            job_context["job"].no_retry = True
+            return job_context
+        elif headers[predicted_header].upper() not in [
             "ID_REF",
             "PROBE_ID",
             "IDREF",
@@ -159,7 +234,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                 "Could not find any ID column in headers "
                 + str(headers)
                 + " for file "
-                + job_context["input_file_path"]
+                + job_context["sanitized_file_path"]
             )
             job_context["success"] = False
             return job_context
@@ -169,8 +244,8 @@ def _detect_columns(job_context: Dict) -> Dict:
         # Then check to make sure a detection pvalue exists, which is always(?) some form of
         # 'Detection Pval'
         for header in headers:
-            # check if header contains something like "detection pval"
-            pvalue_header = re.search(r"(detection)(\W?)(pval\w*)", header, re.IGNORECASE)
+            # check if header contains something like "detection pval" or "detection_pval"
+            pvalue_header = re.search(r"(detection)([\W_]?)(pval\w*)", header, re.IGNORECASE)
             if pvalue_header:
                 break
         else:
@@ -214,7 +289,10 @@ def _detect_columns(job_context: Dict) -> Dict:
                     continue
 
                 if (
-                    sample.title.upper() in header.upper()
+                    (
+                        sample.title.upper() in header.upper()
+                        or header.upper() in sample.title.upper()
+                    )
                     and "BEAD" not in header.upper()
                     and "NARRAYS" not in header.upper()
                     and "ARRAY_STDEV" not in header.upper()
@@ -228,14 +306,25 @@ def _detect_columns(job_context: Dict) -> Dict:
                 column_ids.add(offset)
                 continue
 
+        if len(column_ids) == 0:
+            job_context[
+                "job"
+            ].failure_reason = f"could not find columns ids in {job_context['sanitized_file_path']}"
+            job_context["success"] = False
+            logger.error("Could not find columns ids in " + job_context["sanitized_file_path"])
+            job_context["job"].no_retry = True
+            return job_context
+
         job_context["columnIds"] = ",".join(map(lambda id: str(id), column_ids))
     except Exception as e:
         job_context[
             "job"
-        ].failure_reason = f"failure to extract columns in {job_context['input_file_path']}: {e}"
+        ].failure_reason = (
+            f"failure to extract columns in {job_context['sanitized_file_path']}: {e}"
+        )
         job_context["success"] = False
         logger.exception(
-            "Failed to extract columns in " + job_context["input_file_path"], exception=str(e)
+            "Failed to extract columns in " + job_context["sanitized_file_path"], exception=str(e)
         )
         job_context["job"].no_retry = True
         return job_context
@@ -279,7 +368,7 @@ def _detect_platform(job_context: Dict) -> Dict:
                     "--platform",
                     platform,
                     "--inputFile",
-                    job_context["input_file_path"],
+                    job_context["sanitized_file_path"],
                     "--column",
                     job_context["probeId"],
                 ]
@@ -360,27 +449,36 @@ def _run_illumina(job_context: Dict) -> Dict:
             "--platform",
             job_context["platform"],
             "--inputFile",
-            job_context["input_file_path"],
+            job_context["sanitized_file_path"],
             "--outputFile",
             job_context["output_file_path"],
             "--cores",
             str(multiprocessing.cpu_count()),
         ]
 
-        subprocess.check_output(formatted_command)
+        output = subprocess.check_output(formatted_command).decode()
+        logger.debug(f"illumina.R ran successfully with output '{output}'")
 
         job_context["formatted_command"] = " ".join(formatted_command)
 
         job_context["time_end"] = timezone.now()
 
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         error_template = (
             "Encountered error in R code while running illumina.R"
             " pipeline during processing of {0}: {1}"
         )
-        error_message = error_template.format(job_context["input_file_path"], str(e))
+        error_message = error_template.format(job_context["sanitized_file_path"], str(e))
         logger.error(error_message, processor_job=job_context["job_id"])
+        logger.debug(f"illumina.R failed with output '{e.output.decode()}'")
         job_context["job"].failure_reason = error_message
+        job_context["success"] = False
+
+    except Exception as e:
+        logger.exception(
+            "Exception raised while running illumina.R", processor_job=job_context["job_id"]
+        )
+        job_context["job"].failure_reason = f"Exception raised while running illumina.R: '{e}'"
         job_context["success"] = False
 
     return job_context
@@ -390,6 +488,11 @@ def _get_sample_for_column(column: str, job_context: Dict) -> Sample:
     # First of all check if the title is the column name
     try:
         return job_context["samples"].get(title=column)
+    except Sample.DoesNotExist:
+        pass
+    # Or maybe they named their samples with a common prefix
+    try:
+        return job_context["samples"].get(title__iendswith=column)
     except Sample.DoesNotExist:
         pass
 
@@ -489,13 +592,22 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 
-def illumina_to_pcl(job_id: int) -> None:
+def illumina_to_pcl(job_id: int, cleanup=None) -> None:
     pipeline = Pipeline(name=PipelineEnum.ILLUMINA.value)
+    initial_job_context = {"job_id": job_id, "pipeline": pipeline}
+
+    # When running the tests, don't clean up original files so we don't have to
+    # keep downloading them.
+    if cleanup is not None:
+        initial_job_context["cleanup"] = cleanup
+
     return utils.run_pipeline(
-        {"job_id": job_id, "pipeline": pipeline},
+        initial_job_context,
         [
             utils.start_job,
             _prepare_files,
+            _sanitize_input_file,
+            _convert_sanitized_to_tsv,
             _detect_columns,
             _detect_platform,
             _run_illumina,

@@ -322,7 +322,7 @@ option_list = list(
               help="Probe ID", metavar="character"),
   make_option(c("-e", "--expression"), type="character", default=".AVG_Signal",
               help="expression", metavar="character"),
-  make_option(c("-d", "--detection"), type="character", default="Detection Pval",
+  make_option(c("-d", "--detection"), type="character", default="Detection[ _]Pval",
               help="Detection Pval", metavar="character"),
   make_option(c("-l", "--platform"), type="character", default="illuminaHumanv4",
               help="Platform", metavar="character"),
@@ -378,7 +378,7 @@ exprData <- as.matrix(data[,exprColumns,drop=FALSE])
 rownames(exprData) <- probeIDs
 
 if (detectionPValueColumnPattern == "")
-  detectionPValueColumnPattern <- "Detection Pval"
+  detectionPValueColumnPattern <- "Detection[ _]Pval"
 pValueColumns <- grep(detectionPValueColumnPattern, colnames(data), ignore.case=TRUE)
 
 if (length(pValueColumns) == 0)
@@ -425,13 +425,24 @@ normData <- normData[probesToKeep,,drop=FALSE]
 
 # Map probes to genes
 probeGene <- as.data.frame(probeGeneRef[mappedkeys(probeGeneRef)])
+# There might be a more efficient way to do this, but we are doing it this way
+# because we need to filter the probes *before* setting the rownames. This is
+# because some probes are associated with multiple genes, but not to a
+# high-enough quality.
+# write.csv(probeQuality, "/home/user/data_store/probeQuality.csv")
+# write.csv(probesToKeep, "/home/user/data_store/probesToKeep.csv")
+# write.csv(probeGene$probe_id, "/home/user/data_store/probe_id.csv")
+# print(head(probeGene$probe_id %in% probesToKeep, 100))
+probeGene <- probeGene[which(probeGene$probe_id %in% probesToKeep),]
+# write.csv(probeGene, "/home/user/data_store/probeGene.csv")
 rownames(probeGene) <- probeGene$probe_id
-probesToKeep <- sort(intersect(rownames(probeGene), rownames(exprData)))
-probeGene <- probeGene[probesToKeep,]
+
+print(head(probeGene, 100))
 
 normData <- merge(probeGene, as.data.frame(normData), by=0, sort=FALSE)
 normData <- normData[,-c(1,2)]
 colnames(normData)[1] <- "GeneID"
+print(head(normData, 100))
 
 # Save to output file
 write.table(normData, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
