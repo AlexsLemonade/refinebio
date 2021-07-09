@@ -206,7 +206,26 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
                 "filename": "GSE106321_non_normalized.txt",
                 "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE106321_non-normalized.txt",
                 "organism": organism,
-                "samples": [("GSM2835933", "A375 24h DMSO treatment")],
+                "samples": [
+                    (
+                        "GSM2835938",
+                        "A375 + 24h vem (3µM) 2",
+                        {"description": ["A375 + 24h vem (3µM) 2"]},
+                    ),
+                    (
+                        "GSM2835937",
+                        "A375 + 24h vem (3µM) 1",
+                        {"description": ["A375 + 24h vem (3µM) 1"]},
+                    ),
+                    (
+                        "GSM2835936",
+                        "A375 + 24h vem (3µM)",
+                        {"description": ["A375 + 24h vem (3µM)"]},
+                    ),
+                    ("GSM2835935", "A375 + 24h DMSO 2", {"description": ["A375 + 24h DMSO 2"]}),
+                    ("GSM2835934", "A375+ 24h DMSO 1", {"description": ["A375+ 24h DMSO 1"]}),
+                    ("GSM2835933", "A375 + 24h DMSO", {"description": ["A375 + 24h DMSO"]}),
+                ],
             }
         )
 

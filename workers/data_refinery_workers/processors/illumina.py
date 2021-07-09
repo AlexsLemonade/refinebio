@@ -289,9 +289,10 @@ def _detect_columns(job_context: Dict) -> Dict:
                     continue
 
                 if (
-                    (
+                    header != ""
+                    and (
                         sample.title.upper() in header.upper()
-                        or header.upper() in sample.title.upper()
+                        or sample.title.upper().endswith("_" + header.upper())
                     )
                     and "BEAD" not in header.upper()
                     and "NARRAYS" not in header.upper()
@@ -492,7 +493,7 @@ def _get_sample_for_column(column: str, job_context: Dict) -> Sample:
         pass
     # Or maybe they named their samples with a common prefix
     try:
-        return job_context["samples"].get(title__iendswith=column)
+        return job_context["samples"].get(title__iendswith="_" + column)
     except Sample.DoesNotExist:
         pass
 

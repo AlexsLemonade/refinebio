@@ -355,7 +355,7 @@ suppressPackageStartupMessages(library(paste(platform, ".db", sep=""), character
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
+suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings=c("", "NA"), showProgress=FALSE))
 
 # Check input paramters and parse out data we need
 if (probeIDColumn == ""){
@@ -376,6 +376,9 @@ if (length(exprColumns) == 0)
 
 exprData <- as.matrix(data[,exprColumns,drop=FALSE])
 rownames(exprData) <- probeIDs
+
+# Throw out NA rows
+exprData <- na.omit(exprData)
 
 if (detectionPValueColumnPattern == "")
   detectionPValueColumnPattern <- "Detection[ _]Pval"
