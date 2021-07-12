@@ -108,10 +108,6 @@ def _sanitize_input_file(job_context: Dict) -> Dict:
         job_context["success"] = False
         job_context["job"].no_retry = True
 
-        # XXX: remove me
-        job_context["job"].no_retry = False
-        job_context["abort"] = True
-
     if not wrote_a_line:
         logger.error(
             "Filtered every line out of the input file", input_file=job_context["input_file_path"]
@@ -119,10 +115,6 @@ def _sanitize_input_file(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = "No valid rows detected in the input file"
         job_context["success"] = False
         job_context["job"].no_retry = True
-
-        # XXX: remove me
-        job_context["job"].no_retry = False
-        job_context["abort"] = True
 
     return job_context
 
