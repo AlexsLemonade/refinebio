@@ -303,35 +303,25 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         self.assertFailedInIlluminaR(pj)
 
     @tag("illumina")
-    def test_illumina_comma_separated(self):
+    def test_illumina_no_pvalue(self):
+        """This experiment should fail because it has no p-value columns, so
+        make sure it fails at that stage of the processing"""
         organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
 
         pj = prepare_illumina_job(
             {
-                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE20nnn/GSE20161/suppl/GSE20161%5FmRNA%5Fsamples1%2D90%5Fnon%2Dnormalized%2Etxt%2Egz",
-                # Some of the rows are trimmed to save space
-                "filename": "GSE20161_mRNA_samples1-90_trimmed_non-normalized.txt",
-                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE20161_mRNA_samples1-90_trimmed_non-normalized.txt",
+                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE41nnn/GSE41355/suppl/GSE41355%5Fnon%2Dnormalized%2Etxt%2Egz",
+                "filename": "GSE41355_non-normalized.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE41355_non-normalized.txt",
                 "organism": organism,
-                "samples": [
-                    ("GSM370000", "EBV transformed lymphoblastoid cell line (mRNA, Sample 5)")
-                ],
+                "samples": [("GSM1015436", "IRF3/7 DKO 2"),],
             }
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
 
-        # TODO: assert that the sanitized file is tab-separated
-        self.assertFailedInIlluminaR(pj)
-
-    @tag("illumina")
-    def test_illumina_no_pvalue(self):
-        """This experiment should fail because it has no p-value columns, so
-        make sure it fails at that stage of the processing"""
-
-        # GSE41355
-        pass
+        self.assertFailed(pj, "Could not detect PValue column!")
 
     @tag("illumina")
     def test_sanitize_file_hash_header(self):

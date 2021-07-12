@@ -12,10 +12,16 @@ class ProcessorJobTestCaseMixin:
 
         raise self.failureException(msg)
 
-    def assertFailed(self, pj):
+    def assertFailed(self, pj, expected_reason=""):
         pj.refresh_from_db()
 
-        if not pj.success:
+        if not pj.success and expected_reason in pj.failure_reason:
             return
 
-        raise self.failureException("Expected processor job to fail, but it succeeded")
+        if pj.success:
+            raise self.failureException("Expected processor job to fail, but it succeeded")
+
+        raise self.failureException(
+            "Processor job failed, but for an incorrect reason.\n"
+            + f"We expected the reason to contain '{expected_reason}' but the actual reason was '{pj.failure_reason}'"
+        )
