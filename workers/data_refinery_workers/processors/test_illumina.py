@@ -233,6 +233,40 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         final_context = illumina.illumina_to_pcl(pj.pk)
         self.assertFailedInIlluminaR(pj)
 
+        # Make sure that the input is now utf-8 encoded and has the right headers.
+
+        # Trying to open a latin1 file as utf-8 would cause an
+        # exception to be thrown, so if opening succeeds we can assume the encoding succeeded.
+        with open(final_context["sanitized_file_path"], "r", encoding="utf-8") as f:
+            reader = csv.reader(f, delimiter="\t")
+
+            # Check the headers to make sure that the mu was correctly re-encoded
+            headers = next(reader)
+            self.assertEqual(
+                headers,
+                [
+                    "ID_REF",
+                    "A375 + 24h DMSO",
+                    "Detection Pval",
+                    "A375+ 24h DMSO 1",
+                    "Detection Pval",
+                    "A375 + 24h DMSO 2",
+                    "Detection Pval",
+                    "A375 + 24h vem (3µM)",
+                    "Detection Pval",
+                    "A375 + 24h vem (3µM) 1",
+                    "Detection Pval",
+                    "A375 + 24h vem (3µM) 2",
+                    "Detection Pval",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                ],
+            )
+
     @tag("illumina")
     def test_illumina_quoted_row_names(self):
         organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)

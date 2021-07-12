@@ -71,42 +71,53 @@ def _sanitize_input_file(job_context: Dict) -> Dict:
     # Remove all of the SOFT-specific extensions in the original file
     # See https://www.ncbi.nlm.nih.gov/geo/info/soft.html
     # plus some extra things we found that make R choke
-    # Also, some files aren't utf-8 encoded
-    encodings = ["utf-8", "latin1"]
-    wrote_a_line = False
-    for encoding in encodings:
-        try:
-            with open(job_context["input_file_path"], "r", encoding=encoding) as file_input:
-                with open(job_context["sanitized_file_path"], "w", encoding="utf-8") as file_output:
-                    for line in file_input:
-                        HEADER_CHARS = ["#", "!", "^"]
-                        # Sometimes we have a quoted header, so we need to check both
-                        is_header = line[0] in HEADER_CHARS or (
-                            line[0] in ["'", '"'] and line[1] in HEADER_CHARS
-                        )
-                        is_empty = line.strip() == ""
-                        # There are some weird lines that start with accession
-                        # codes that don't hold gene measurements
-                        is_accession_line = line[0:3].upper() == "GSM"
+    # Also, some files aren't utf-8 encoded, so we will re-encode them into utf-8
 
-                        if not is_header and not is_empty and not is_accession_line:
-                            file_output.write(line)
-                            wrote_a_line = True
-
-            # We've found a good format. Break!
-            break
-        except UnicodeDecodeError:
-            wrote_a_line = False
-            pass
-    else:
-        # I don't think this will happen unless we get smarter about detecting
-        # encodings, because latin1 covers every possible sequence of bytes.
-        # Unfortunately, this means that if we start seeing things like UTF-16,
-        # they will look like mangled latin1 until we catch them.
-        logger.error("Couldn't decode the input file", input_file=job_context["input_file_path"])
-        job_context["job"].failure_reason = "Couldn't decode the input file"
+    # First, detect the file's encoding
+    try:
+        encoding = result = subprocess.check_output(
+            ["file", "--brief", "--mime-encoding", job_context["input_file_path"],],
+            encoding="utf-8",
+        ).strip()
+    except subprocess.CalledProcessError as e:
+        logger.exception(
+            "Failed to detect the input file's encoding",
+            processor_job=job_context["job_id"],
+            input_file=job_context["input_file_path"],
+        )
+        job_context["job"].failure_reason = "Failed to detect the input file's encoding"
         job_context["success"] = False
         job_context["job"].no_retry = True
+
+    if encoding not in ["us-ascii", "utf-8", "iso-8859-1"]:
+        logger.error(
+            "Input file has unrecognized encoding",
+            input_file=job_context["input_file_path"],
+            encoding=encoding,
+        )
+        job_context["job"].failure_reason = f"Input file has unrecognized encoding {encoding}"
+        job_context["success"] = False
+        job_context["job"].no_retry = True
+
+    # Now, open the file using that encoding and remove all of the SOFT_specific extensions
+    with open(job_context["input_file_path"], "r", encoding=encoding) as file_input:
+        with open(job_context["sanitized_file_path"], "w", encoding="utf-8") as file_output:
+            for line in file_input:
+                HEADER_CHARS = ["#", "!", "^"]
+
+                # Sometimes we have a quoted header, so we need to check both
+                is_header = line[0] in HEADER_CHARS or (
+                    line[0] in ["'", '"'] and line[1] in HEADER_CHARS
+                )
+                is_empty = line.strip() == ""
+
+                # There are some weird lines that start with accession
+                # codes that don't hold gene measurements
+                is_accession_line = line[0:3].upper() == "GSM"
+
+                if not is_header and not is_empty and not is_accession_line:
+                    file_output.write(line)
+                    wrote_a_line = True
 
     if not wrote_a_line:
         logger.error(
