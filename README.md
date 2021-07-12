@@ -644,8 +644,23 @@ It's not recommended to build the image with less than 60GB of free space on the
 
 ### Terraform
 
-Once you have Terraform installed and your AWS account credentials installed, you're almost ready to deploy a dev stack.
-The only thing remaining is to copy the RefinebioSSHKey from LastPass and save it to the file: `infrastructure/data-refinery-key.pem`.
+There are a few extra things that you need to install before deploying the stack:
+
+- [Terraform](https://www.terraform.io/), if you haven't already installed it
+- [awscli](https://aws.amazon.com/cli/), for interacting with AWS
+- [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html), which is necessary for some of our deployment scripts
+- [PostgreSQL](https://www.postgresql.org/), which is necessary for some of our deployment scripts
+
+The easiest way to install Terraform is by running `./scripts/install_all.sh`, or you can also install it manually by following the directions on the website. We currently use version 0.13.5.
+
+For awscli and boto3, _you need to install them using `pip3 install awscli boto3`_. Ubuntu's repositories contain outdated versions of both packages which do not work with our deploy script.
+
+Postgres can be installed using either `apt install psql` or `brew install postgresql` as appropriate.
+
+Once you have all of the dependencies installed, you're almost ready to deploy a dev stack.
+The only thing remaining is to make sure that you can authenticate properly.
+To authenticate awscli, you need to run `awscli configure` and follow the directions.
+For ssh access to the servers, which is used during the deploy, copy the RefinebioSSHKey from LastPass and save it to the file: `infrastructure/data-refinery-key.pem`.
 If you do not have access to this key in LastPass, ask another developer.
 
 The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional

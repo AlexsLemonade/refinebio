@@ -191,7 +191,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
 
 def _create_result_objects(job_context: Dict) -> Dict:
-    """ Create the ComputationalResult objects after a Scan run is complete """
+    """Create the ComputationalResult objects after a Scan run is complete"""
 
     result = ComputationalResult()
     result.commands.append("SCAN.UPC::SCANfast")
@@ -237,9 +237,9 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 
-def affy_to_pcl(job_id: int) -> None:
+def affy_to_pcl(job_id: int) -> Dict:
     pipeline = Pipeline(name=PipelineEnum.ARRAY_EXPRESS.value)
-    utils.run_pipeline(
+    return utils.run_pipeline(
         {"job_id": job_id, "pipeline": pipeline},
         [
             utils.start_job,
