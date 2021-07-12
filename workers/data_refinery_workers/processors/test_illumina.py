@@ -1,3 +1,4 @@
+import csv
 import os
 import os.path
 import shutil
@@ -203,7 +204,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         pj = prepare_illumina_job(
             {
                 "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE106nnn/GSE106321/suppl/GSE106321_non-normalized.txt.gz",
-                "filename": "GSE106321_non_normalized.txt",
+                "filename": "GSE106321_non-normalized.txt",
                 "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE106321_non-normalized.txt",
                 "organism": organism,
                 "samples": [
@@ -240,15 +241,32 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         pj = prepare_illumina_job(
             {
                 "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE33nnn/GSE33814/suppl/GSE33814%5Fnon%2Dnormalized%2Etxt%2Egz",
-                "filename": "GSE33814_non_normalized.txt",
-                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE33814_non-normalized.txt",
+                # Some of the columns are trimmed to save space and time
+                "filename": "GSE33814_trimmed_non-normalized.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE33814_trimmed_non-normalized.txt",
                 "organism": organism,
-                "samples": [("GSM836254", "IMGUS_40")],
+                "samples": [("GSM836222", "IMGUS_32"), ("GSM836223", "IMGUS_33"),],
             }
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
         self.assertFailedInIlluminaR(pj)
+
+        # Make sure that the row names are no longer quoted after sanitizing the file
+        def assertNotQuoted(string: str):
+            self.assertNotEqual(string[0], '"')
+            self.assertNotEqual(string[-1], '"')
+
+        with open(final_context["sanitized_file_path"], "r") as f:
+            reader = csv.reader(f, delimiter="\t")
+
+            headers = next(reader)
+            for header in headers:
+                assertNotQuoted(header)
+
+            # Also make sure the probe IDs aren't qutoed
+            first_row = next(reader)
+            assertNotQuoted(first_row[0])
 
     @tag("illumina")
     def test_illumina_rows_starting_with_whitespace(self):
@@ -265,9 +283,13 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
                     (
                         "GSM3071991",
                         "MCF-7 KLHDC7B siRNA knockdown control",
-                        {"description": "SAMPLE 1",},
+                        {"description": ["SAMPLE 1"],},
                     ),
-                    ("GSM3071992", "MCF-7 KLHDC7B siRNA knockdown", {"description": "SAMPLE 2",},),
+                    (
+                        "GSM3071992",
+                        "MCF-7 KLHDC7B siRNA knockdown",
+                        {"description": ["SAMPLE 2"],},
+                    ),
                 ],
             }
         )
@@ -283,7 +305,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         pj = prepare_illumina_job(
             {
                 "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE48nnn/GSE48023/suppl/GSE48023%5Fnon%2Dnormalized%2Etxt%2Egz",
-                # Some of the rows and columns are trimmed to save space and time
+                # Some of the columns are trimmed to save space and time
                 "filename": "GSE48023_trimmed_non-normalized.txt",
                 "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE48023_trimmed_non-normalized.txt",
                 "organism": organism,
@@ -298,9 +320,18 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-
-        # TODO: assert that the sanitized file is tab-separated and has an extra ID_REF header
         self.assertFailedInIlluminaR(pj)
+
+        # Assert that the sanitized file is tab-separated (by reading it as a
+        # TSV and making sure it has 11 headers) and has an extra ID_REF header
+        with open(final_context["sanitized_file_path"], "r") as f:
+            reader = csv.reader(f, delimiter="\t")
+
+            headers = next(reader)
+
+            # ID_REF + 5 observations + 5 p-values
+            self.assertEqual(len(headers), 11)
+            self.assertEqual(headers[0], "ID_REF")
 
     @tag("illumina")
     def test_illumina_no_pvalue(self):

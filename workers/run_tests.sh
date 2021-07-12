@@ -162,6 +162,7 @@ fi
 if [ -z "$tag" ] || [ "$tag" = "illumina" ]; then
     ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
     ilu_files='GSE22427_non-normalized.txt GSE54661_non_normalized.txt GSE106321_non-normalized.txt
+GSE33814_trimmed_non-normalized.txt GSE112517_non-normalized.txt GSE48023_trimmed_non-normalized.txt
 GSE41355_non-normalized.txt'
     mkdir -p "$ilu_test_raw_dir"
 
