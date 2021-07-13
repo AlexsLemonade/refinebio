@@ -117,10 +117,17 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
     cel_name="GSM1426071_CD_colon_active_1.CEL"
     cel_name2="GSM45588.CEL"
     cel_name3="GSM1364667_U_110208_7-02-10_S2.CEL"
+    pcl_name="GSM1426071_CD_colon_active_1.PCL"
+    pcl_name2="GSM45588.PCL"
+    pcl_name3="GSM1364667_U_110208_7-02-10_S2.PCL"
     cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
     cel_test_data_1="$cel_test_raw_dir/$cel_name"
     cel_test_data_2="$cel_test_raw_dir/$cel_name2"
     cel_test_data_3="$cel_test_raw_dir/$cel_name3"
+    pcl_test_dir="$volume_directory/TEST/PCL"
+    pcl_test_data_1="$pcl_test_dir/$pcl_name"
+    pcl_test_data_2="$pcl_test_dir/$pcl_name2"
+    pcl_test_data_3="$pcl_test_dir/$pcl_name3"
     if [ ! -e "$cel_test_data_1" ]; then
         mkdir -p "$cel_test_raw_dir"
         echo "Downloading CEL for tests."
@@ -136,6 +143,24 @@ if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
         echo "Downloading Huex Brain Array CEL for tests."
         wget -q -O "$cel_test_data_3" \
              "$test_data_repo/$cel_name3"
+    fi
+    if [ ! -e "$pcl_test_data_1" ]; then
+        mkdir -p "$pcl_test_dir"
+        echo "Downloading pre-computed PCL for tests."
+        wget -q -O "$pcl_test_data_1" \
+             "$test_data_repo/$pcl_name"
+    fi
+    if [ ! -e "$pcl_test_data_2" ]; then
+        mkdir -p "$pcl_test_dir"
+        echo "Downloading pre-computed Non-Brainarray PCL for tests."
+        wget -q -O "$pcl_test_data_2" \
+             "$test_data_repo/$pcl_name2"
+    fi
+    if [ ! -e "$pcl_test_data_3" ]; then
+        mkdir -p "$pcl_test_dir"
+        echo "Downloading pre-computed Huex Brain Array PCL for tests."
+        wget -q -O "$pcl_test_data_3" \
+             "$test_data_repo/$pcl_name3"
     fi
 
 fi
@@ -156,6 +181,14 @@ if [ -z "$tag" ] || [ "$tag" = "transcriptome" ]; then
         echo "Downloading gtf file for Transcriptome Index tests."
         wget -q -O "$tx_index_test_raw_dir/$gtf_file" \
              "$test_data_repo/$gtf_file"
+    fi
+    tx_index_test_raw_dir2="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX/"
+    gtf_file2="Homo_sapiens_testdata.gtf"
+    if [ ! -e "$tx_index_test_raw_dir2/$gtf_file2" ]; then
+        mkdir -p "$tx_index_test_raw_dir2"
+        echo "Downloading second gtf file for Transcriptome Index tests."
+        wget -q -O "$tx_index_test_raw_dir2/$gtf_file2" \
+             "$test_data_repo/$gtf_file2"
     fi
 fi
 
@@ -201,56 +234,58 @@ if [ -z "$tag" ] || [ "$tag" = "agilent" ]; then
     fi
 fi
 if [ -z "$tag" ] || [ "$tag" = "no_op" ]; then
-    no_file="GSM269747-tbl-1.txt"
     no_test_raw_dir="$volume_directory/raw/TEST/NO_OP"
-    if [ ! -e "$no_test_raw_dir/$no_file" ]; then
+    no_file1="GSM557500-tbl-1.txt"
+    if [ ! -e "$no_test_raw_dir/$no_file1" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file1."
-        wget -q -O "$no_test_raw_dir/$no_file" \
-             "$test_data_repo/$no_file"
+        wget -q -O "$no_test_raw_dir/$no_file1" \
+             "$test_data_repo/$no_file1"
     fi
-    no_file2="GSM269747-tbl-1.txt"
+    no_file2="GSM1234847_sample_table.txt"
     if [ ! -e "$no_test_raw_dir/$no_file2" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file2."
         wget -q -O "$no_test_raw_dir/$no_file2" \
              "$test_data_repo/$no_file2"
     fi
-    no_file3="GSM557500_sample_table.txt"
+    no_file3="GSM1234847_sample_table_headerless.txt"
     if [ ! -e "$no_test_raw_dir/$no_file3" ]; then
         mkdir -p "$no_test_raw_dir"
-        echo "Downloading NOOP file3."
-        wget -q -O "$no_test_raw_dir/$no_file3" \
-             "$test_data_repo/$no_file3"
+        echo "Processing NOOP file3."
+        tail -n +2 "$no_test_raw_dir/$no_file2" > "$no_test_raw_dir/$no_file3"
     fi
-    no_file4="GSM269747-tbl-1.txt"
+    no_file4="GSM1089291-tbl-1.txt"
     if [ ! -e "$no_test_raw_dir/$no_file4" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file4."
         wget -q -O "$no_test_raw_dir/$no_file4" \
              "$test_data_repo/$no_file4"
     fi
-    no_file5="GSM1234847_sample_table.txt"
+    no_file5="GSM1089291-tbl-1-modified.txt"
     if [ ! -e "$no_test_raw_dir/$no_file5" ]; then
         mkdir -p "$no_test_raw_dir"
         echo "Downloading NOOP file5."
         wget -q -O "$no_test_raw_dir/$no_file5" \
              "$test_data_repo/$no_file5"
     fi
-    no_file6="GSM1089291-tbl-1.txt"
-    if [ ! -e "$no_test_raw_dir/$no_file6" ]; then
-        mkdir -p "$no_test_raw_dir"
-        echo "Downloading NOOP file6."
-        wget -q -O "$no_test_raw_dir/$no_file6" \
-             "$test_data_repo/$no_file6"
-    fi
-    no_file7="GSM1089291-tbl-1-modified.txt"
-    if [ ! -e "$no_test_raw_dir/$no_file7" ]; then
-        mkdir -p "$no_test_raw_dir"
-        echo "Downloading NOOP file7."
-        wget -q -O "$no_test_raw_dir/$no_file7" \
-             "$test_data_repo/$no_file7"
-    fi
+
+    # Reference files
+    no_test_exp_dir="$volume_directory/TEST/NO_OP/EXPECTED"
+    no_test_exp_files='gene_converted_GSM557500-tbl-1.txt GSM269747.PCL gene_converted_GSM1234847-tbl-1.txt gene_converted_GSM1089291-tbl-1.txt'
+    mkdir -p "$no_test_exp_dir"
+
+    i=1
+    for no_test_exp_file in $no_test_exp_files; do
+        if ! [ -e "$no_test_exp_dir/$no_test_exp_file" ]; then
+            echo "Downloading NOOP expected file$i."
+            wget -O "$no_test_exp_dir/$no_test_exp_file" \
+                 "$test_data_repo/$no_test_exp_file"
+        fi
+
+        i=$(( i + 1 ))
+    done
+    unset i
 fi
 
 if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
@@ -445,6 +480,15 @@ if [ -z "$tag" ] || [ "$tag" = "qn" ]; then
         wget -q -O "$qn_test_data_6" \
              "$test_data_repo/$qn_name"
     fi
+    qn_name="7.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_7="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_7" ]; then
+        mkdir -p "$qn_test_raw_dir"
+        echo "Downloading QN for tests."
+        wget -q -O "$qn_test_data_7" \
+             "$test_data_repo/$qn_name"
+    fi
 fi
 if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     # Download RNASEQ and MICROARRAY data from prod S3
@@ -507,9 +551,9 @@ for image in $worker_images; do
         fi
 
         # Strip out tag argument
-	# shellcheck disable=2001
+        # shellcheck disable=2001
         args_without_tag="$(echo "$@" | sed "s/-t $tag//")"
-	# shellcheck disable=2086
+        # shellcheck disable=2086
         test_command="$(run_tests_with_coverage --tag="$image" $args_without_tag)"
 
         # Only run interactively if we are on a TTY

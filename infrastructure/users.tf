@@ -6,20 +6,12 @@ resource "aws_iam_access_key" "data_refinery_user_client_key" {
   user = aws_iam_user.data_refinery_user_client.name
 }
 
-resource "aws_iam_access_key" "data-refinery-deployer-access-key" {
-  user = aws_iam_user.data-refinery-deployer.name
-}
-
 ##
 # Users
 ##
 
 resource "aws_iam_user" "data_refinery_user_client" {
   name = "data-refinery-user-client-${var.user}-${var.stage}"
-}
-
-resource "aws_iam_user" "data-refinery-deployer" {
-  name = "data-refinery-deployer-${var.user}-${var.stage}"
 }
 
 ##
@@ -34,8 +26,7 @@ resource "aws_iam_group_membership" "data_refinery_group_membership" {
   name = "data-refinery-user-group-membership-${var.user}-${var.stage}"
 
   users = [
-    aws_iam_user.data_refinery_user_client.name,
-    aws_iam_user.data-refinery-deployer.name,
+    aws_iam_user.data_refinery_user_client.name
   ]
 
   group = aws_iam_group.data_refinery_group.name
@@ -271,10 +262,4 @@ data "aws_iam_policy_document" "data-refinery-deployment" {
       "arn:aws:s3:::${aws_s3_bucket.data-refinery-static.id}",
     ]
   }
-}
-
-resource "aws_iam_user_policy" "data-refinery-deployer" {
-  name = "data-refinery-deployer-${var.user}-${var.stage}"
-  user = aws_iam_user.data-refinery-deployer.name
-  policy = data.aws_iam_policy_document.data-refinery-deployment.json
 }

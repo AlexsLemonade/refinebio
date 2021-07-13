@@ -1,5 +1,6 @@
 {
     "jobDefinitionName": "${{USER}}_${{STAGE}}_TRANSCRIPTOME_INDEX_${{RAM}}",
+    "timeout": {"attemptDurationSeconds": 10800},
     "type": "container",
     "parameters": {
         "job_name": "",

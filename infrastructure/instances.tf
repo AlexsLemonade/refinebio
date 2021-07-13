@@ -73,6 +73,8 @@ resource "aws_db_parameter_group" "postgres_parameter_group" {
     name = "statement_timeout"
     value = "60000" # 60000ms = 60s
   }
+
+  tags = var.default_tags
 }
 
 resource "aws_db_instance" "postgres_db" {
@@ -89,6 +91,8 @@ resource "aws_db_instance" "postgres_db" {
   username = var.database_user
   password = var.database_password
 
+  apply_immediately = true
+
   db_subnet_group_name = aws_db_subnet_group.data_refinery.name
   parameter_group_name = aws_db_parameter_group.postgres_parameters.name
 
@@ -103,6 +107,8 @@ resource "aws_db_instance" "postgres_db" {
   publicly_accessible = true
 
   backup_retention_period = var.stage == "prod" ? "7" : "0"
+
+  tags = var.default_tags
 }
 
 resource "aws_instance" "pg_bouncer" {

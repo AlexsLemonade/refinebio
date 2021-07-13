@@ -5,6 +5,9 @@ from pathlib import Path
 
 from django.test import TestCase, tag
 
+import pandas as pd
+import scipy.stats
+
 from data_refinery_common.models import (
     Organism,
     OriginalFile,
@@ -14,6 +17,65 @@ from data_refinery_common.models import (
     Sample,
 )
 from data_refinery_workers.processors import no_op
+from data_refinery_workers.processors.testing_utils import assertMostlyAgrees
+
+
+def prepare_job(job_info: dict) -> ProcessorJob:
+    job = ProcessorJob()
+    job.pipeline_applied = "NO_OP"
+    job.save()
+
+    og_file = OriginalFile()
+    og_file.source_filename = job_info["source_filename"]
+    og_file.filename = job_info["filename"]
+    og_file.absolute_file_path = job_info["absolute_file_path"]
+    og_file.is_downloaded = True
+    og_file.save()
+
+    sample = Sample()
+    sample.accession_code = job_info["accession_code"]
+    sample.title = job_info["accession_code"]
+    sample.platform_accession_code = job_info["platform_accession_code"]
+
+    manufacturer = job_info.get("manufacturer", None)
+    if manufacturer is not None:
+        sample.manufacturer = manufacturer
+
+    # The illumina samples need the human organism
+    if manufacturer == "ILLUMINA":
+        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        homo_sapiens.save()
+        sample.organism = homo_sapiens
+
+    sample.save()
+
+    assoc = OriginalFileSampleAssociation()
+    assoc.original_file = og_file
+    assoc.sample = sample
+    assoc.save()
+
+    assoc1 = ProcessorJobOriginalFileAssociation()
+    assoc1.original_file = og_file
+    assoc1.processor_job = job
+    assoc1.save()
+
+    return job
+
+
+def assertRunsSuccessfully(test_case: TestCase, job: ProcessorJob) -> dict:
+    final_context = no_op.no_op_processor(job.pk)
+    test_case.assertTrue(final_context["success"])
+    test_case.assertTrue(os.path.exists(final_context["output_file_path"]))
+
+    test_case.assertEqual(len(final_context["samples"]), 1)
+    test_case.assertEqual(len(final_context["computed_files"]), 1)
+
+    for sample in final_context["samples"]:
+        for cf in final_context["computed_files"]:
+            test_case.assertTrue(cf in sample.computed_files.all())
+
+    # Return final_context so we can perform additional checks manually
+    return final_context
 
 
 class NOOPTestCase(TestCase):
@@ -24,181 +86,127 @@ class NOOPTestCase(TestCase):
             shutil.rmtree(str(job_dir), ignore_errors=True)
 
     @tag("no_op")
-    def test_convert_simple_pcl(self):
-        """ """
-
-        job = ProcessorJob()
-        job.pipeline_applied = "NO_OP"
-        job.save()
-
-        # ID_REF, VALUE
-        og_file = OriginalFile()
-        og_file.source_filename = "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/"
-        og_file.filename = "GSM1234847_sample_table.txt"
-        og_file.absolute_file_path = (
-            "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table.txt"
+    def test_convert_simple_pcl_with_header(self):
+        """PCL with header
+        > ID_REF, VALUE
+        """
+        job = prepare_job(
+            {
+                "accession_code": "GSM1234847",
+                "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/",
+                "filename": "GSM1234847_sample_table.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table.txt",
+                "platform_accession_code": "A-AFFY-38",
+            }
         )
-        og_file.is_downloaded = True
-        og_file.save()
+        final_context = assertRunsSuccessfully(self, job)
 
-        sample = Sample()
-        sample.accession_code = "GSM1234847"
-        sample.title = "GSM1234847"
-        sample.platform_accession_code = "A-AFFY-38"
-        sample.save()
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/gene_converted_GSM1234847-tbl-1.txt",
+            sep="\t",
+            index_col=0,
+        )["VALUE"]
+        actual_data = pd.read_csv(final_context["output_file_path"], sep="\t", index_col=0)["VALUE"]
 
-        assoc = OriginalFileSampleAssociation()
-        assoc.original_file = og_file
-        assoc.sample = sample
-        assoc.save()
+        assertMostlyAgrees(self, expected_data, actual_data)
 
-        assoc1 = ProcessorJobOriginalFileAssociation()
-        assoc1.original_file = og_file
-        assoc1.processor_job = job
-        assoc1.save()
-
-        final_context = no_op.no_op_processor(job.pk)
-
-        # No header - ex
-        # AFFX-BioB-3_at  0.74218756
-        og_file = OriginalFile()
-        og_file.source_filename = (
-            "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10188/miniml/GSE10188_family.xml.tgz"
+    @tag("no_op")
+    def test_convert_simple_pcl_with_no_header(self):
+        """PCL with no header, ex:
+        > AFFX-BioB-3_at  0.74218756
+        """
+        job = prepare_job(
+            {
+                "accession_code": "GSM1234847",
+                "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/",
+                "filename": "GSM1234847_sample_table.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table_headerless.txt",
+                "platform_accession_code": "A-AFFY-38",
+            }
         )
-        og_file.filename = "GSM269747-tbl-1.txt"
-        og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM269747-tbl-1.txt"
-        og_file.is_downloaded = True
-        og_file.save()
+        final_context = assertRunsSuccessfully(self, job)
 
-        sample = Sample()
-        sample.accession_code = "GSM269747"
-        sample.title = "GSM269747"
-        sample.platform_accession_code = "GPL1319"
-        sample.save()
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/gene_converted_GSM1234847-tbl-1.txt",
+            sep="\t",
+            index_col=0,
+        )["VALUE"]
+        actual_data = pd.read_csv(final_context["output_file_path"], sep="\t", index_col=0)["VALUE"]
 
-        assoc = OriginalFileSampleAssociation()
-        assoc.original_file = og_file
-        assoc.sample = sample
-        assoc.save()
-
-        job = ProcessorJob()
-        job.pipeline_applied = "NO_OP"
-        job.save()
-
-        assoc1 = ProcessorJobOriginalFileAssociation()
-        assoc1.original_file = og_file
-        assoc1.processor_job = job
-        assoc1.save()
-
-        final_context = no_op.no_op_processor(job.pk)
-        self.assertTrue(final_context["success"])
-        self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        # Check that filesizes are with 5% of what we'd expect as they vary slightly each run.
-        self.assertTrue(
-            math.isclose(os.path.getsize(final_context["output_file_path"]), 346535, rel_tol=0.05)
-        )
+        assertMostlyAgrees(self, expected_data, actual_data)
 
     @tag("no_op")
     def test_convert_processed_illumina(self):
-        job = ProcessorJob()
-        job.pipeline_applied = "NO_OP"
-        job.save()
-
-        # ex:
-        # Reporter Identifier VALUE   Detection Pval
-        # ILMN_1343291    14.943602   0
-        # ILMN_1343295    13.528082   0
-        og_file = OriginalFile()
-        og_file.source_filename = "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22433/"
-        og_file.filename = "GSM557500_sample_table.txt"
-        og_file.absolute_file_path = (
-            "/home/user/data_store/raw/TEST/NO_OP/GSM557500_sample_table.txt"
+        """Illumina file with header, ex:
+        > Reporter Identifier VALUE   Detection Pval
+        > ILMN_1343291    14.943602   0
+        > ILMN_1343295    13.528082   0
+        """
+        job = prepare_job(
+            {
+                "accession_code": "GSM557500",
+                "source_filename": "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22433/",
+                "filename": "GSM557500-tbl-1.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM557500-tbl-1.txt",
+                "platform_accession_code": "A-MEXP-1171",
+                "manufacturer": "ILLUMINA",
+            }
         )
-        og_file.is_downloaded = True
-        og_file.save()
+        final_context = assertRunsSuccessfully(self, job)
 
-        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-        homo_sapiens.save()
-
-        sample = Sample()
-        sample.accession_code = "GSM557500"
-        sample.title = "GSM557500"
-        sample.platform_accession_code = "A-MEXP-1171"
-        sample.manufacturer = "ILLUMINA"
-        sample.organism = homo_sapiens
-        sample.save()
-
-        assoc = OriginalFileSampleAssociation()
-        assoc.original_file = og_file
-        assoc.sample = sample
-        assoc.save()
-
-        assoc1 = ProcessorJobOriginalFileAssociation()
-        assoc1.original_file = og_file
-        assoc1.processor_job = job
-        assoc1.save()
+        self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
 
         # To:
         # ENSG00000156508 14.943602
         # ENSG00000111640 13.528082
-        final_context = no_op.no_op_processor(job.pk)
-        self.assertTrue(final_context["success"])
-        self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertTrue(
-            math.isclose(os.path.getsize(final_context["output_file_path"]), 924426, rel_tol=0.05)
-        )
-        self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/gene_converted_GSM557500-tbl-1.txt",
+            sep="\t",
+            names=["", "VALUE"],
+            index_col=0,
+        )["VALUE"]
+        actual_data = pd.read_csv(
+            final_context["output_file_path"], sep="\t", names=["", "VALUE"], index_col=0
+        )["VALUE"]
+
+        assertMostlyAgrees(self, expected_data, actual_data)
 
     @tag("no_op")
     def test_convert_illumina_no_header(self):
-        job = ProcessorJob()
-        job.pipeline_applied = "NO_OP"
-        job.save()
-
-        # ex:
-        # ILMN_1885639    10.0000 0.7931
-        # ILMN_2209417    10.0000 0.2029
-        # ILMN_1765401    152.0873    0.0000
-        og_file = OriginalFile()
-        og_file.source_filename = (
-            "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1.txt"
+        """Illumina file without header, ex:
+        > ILMN_1885639    10.0000   0.7931
+        > ILMN_2209417    10.0000   0.2029
+        > ILMN_1765401    152.0873  0.0000
+        """
+        job = prepare_job(
+            {
+                "accession_code": "GSM1089291",
+                "source_filename": "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1.txt",
+                "filename": "GSM1089291-tbl-1.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1.txt",
+                "platform_accession_code": "A-MEXP-1171",
+                "manufacturer": "ILLUMINA",
+            }
         )
-        og_file.filename = "GSM1089291-tbl-1.txt"
-        og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1.txt"
-        og_file.is_downloaded = True
-        og_file.save()
+        final_context = assertRunsSuccessfully(self, job)
 
-        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-        homo_sapiens.save()
-
-        sample = Sample()
-        sample.accession_code = "GSM557500"
-        sample.title = "GSM557500"
-        sample.platform_accession_code = "A-MEXP-1171"
-        sample.manufacturer = "ILLUMINA"
-        sample.organism = homo_sapiens
-        sample.save()
-
-        assoc = OriginalFileSampleAssociation()
-        assoc.original_file = og_file
-        assoc.sample = sample
-        assoc.save()
-
-        assoc1 = ProcessorJobOriginalFileAssociation()
-        assoc1.original_file = og_file
-        assoc1.processor_job = job
-        assoc1.save()
+        self.assertTrue(no_op.check_output_quality(final_context["output_file_path"]))
 
         # To:
         # ENSG00000105675 10
         # ENSG00000085721 152.0873
         # ENSG00000278494 152.0873
-        final_context = no_op.no_op_processor(job.pk)
-        self.assertTrue(final_context["success"])
-        self.assertTrue(os.path.exists(final_context["output_file_path"]))
-        self.assertTrue(
-            math.isclose(os.path.getsize(final_context["output_file_path"]), 789756, rel_tol=0.05)
-        )
+        expected_data = pd.read_csv(
+            "/home/user/data_store/TEST/NO_OP/EXPECTED/gene_converted_GSM1089291-tbl-1.txt",
+            sep="\t",
+            names=["", "VALUE"],
+            index_col=0,
+        )["VALUE"]
+        actual_data = pd.read_csv(
+            final_context["output_file_path"], sep="\t", names=["", "VALUE"], index_col=0
+        )["VALUE"]
+
+        assertMostlyAgrees(self, expected_data, actual_data)
 
     @tag("no_op")
     def test_convert_illumina_bad_cols(self):

@@ -4,7 +4,7 @@
 set -e
 
 # Config variables
-TERRAFORM_VERSION="0.12.3"
+TERRAFORM_VERSION="0.13.5"
 
 # This script should always run as if it were being called from
 # the directory it lives in.

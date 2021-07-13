@@ -171,6 +171,13 @@ fi
 # Always init terraform first, especially since we're using a remote backend.
 ./init_terraform.sh
 
+# Temporary taint to cylce AWS credentials:
+terraform taint aws_iam_access_key.data_refinery_user_client_key || true
+
+# And to update the authorized_key files on the instances:
+terraform taint aws_instance.pg_bouncer || true
+terraform taint aws_instance.api_server_1 || true
+terraform taint aws_instance.foreman_server_1 || true
 
 # Terraform doesn't manage these well, so they need to be tainted if
 # they exist to ensure they won't require manual intervention.
