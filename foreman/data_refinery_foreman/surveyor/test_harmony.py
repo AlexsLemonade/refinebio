@@ -8,7 +8,7 @@ from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.array_express import SAMPLES_URL
 from data_refinery_foreman.surveyor.harmony import (
     extract_title,
-    harmonize,
+    harmonize_all_samples,
     parse_sdrf,
     preprocess_geo,
 )
@@ -31,7 +31,7 @@ class HarmonyTestCase(TestCase):
         metadata = parse_sdrf(
             "https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt"
         )
-        harmonized = harmonize(metadata)
+        harmonized = harmonize_all_samples(metadata)
 
         title = "donor A islets RNA"
         self.assertTrue(title in harmonized.keys())
@@ -204,7 +204,7 @@ class HarmonyTestCase(TestCase):
             )
             if not metadata:
                 continue
-            harmonized = harmonize(metadata)
+            harmonized = harmonize_all_samples(metadata)
             self.assertIsNotNone(harmonized)
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sra_harmony.yaml")
@@ -214,7 +214,7 @@ class HarmonyTestCase(TestCase):
         """
 
         metadata = SraSurveyor.gather_all_metadata("SRR1533126")
-        harmonized = harmonize([metadata])
+        harmonized = harmonize_all_samples([metadata])
 
         title = "Phosphaturic mesenchymal tumour (PMT) case 2 of NTUH"
         self.assertTrue(title in harmonized.keys())
@@ -262,7 +262,7 @@ class HarmonyTestCase(TestCase):
         for accession in lots:
             try:
                 metadata = SraSurveyor.gather_all_metadata(accession)
-                harmonized = harmonize([metadata])
+                harmonized = harmonize_all_samples([metadata])
                 self.assertIsNotNone(harmonized)
             except UnsupportedDataTypeError:
                 continue
@@ -281,7 +281,7 @@ class HarmonyTestCase(TestCase):
 
         # GEO requires a small amount of preprocessing
         preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize(preprocessed_samples)
+        harmonized = harmonize_all_samples(preprocessed_samples)
 
         title = "SCC_P-57"
         self.assertTrue(title in harmonized.keys())
@@ -293,11 +293,11 @@ class HarmonyTestCase(TestCase):
         # Agilent Two Color
         gse = GEOparse.get_GEO("GSE93857", destdir="/tmp", silent=True)
         preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize(preprocessed_samples)
+        harmonized = harmonize_all_samples(preprocessed_samples)
 
         gse = GEOparse.get_GEO("GSE103060", destdir="/tmp", silent=True)
         preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize(preprocessed_samples)
+        harmonized = harmonize_all_samples(preprocessed_samples)
 
     def test_geo_leg_cancer(self):
         """ Related: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-383969447 """
@@ -306,7 +306,7 @@ class HarmonyTestCase(TestCase):
 
         # GEO requires a small amount of preprocessing
         preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize(preprocessed_samples)
+        harmonized = harmonize_all_samples(preprocessed_samples)
 
         title = "SCC_P-57"
         self.assertTrue(title in harmonized.keys())
@@ -329,7 +329,7 @@ class HarmonyTestCase(TestCase):
 
         SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
         sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
-        sdrf_samples = harmonize(parse_sdrf(sdrf_url))
+        sdrf_samples = harmonize_all_samples(parse_sdrf(sdrf_url))
 
         # The titles won't match up if the order of the sample dicts
         # isn't corrected for, resulting in a KeyError being raised.

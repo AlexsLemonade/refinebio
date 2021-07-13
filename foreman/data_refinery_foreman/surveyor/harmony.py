@@ -288,7 +288,7 @@ def parse_sdrf(sdrf_url: str) -> List:
         sample = {}
         for col, value in enumerate(sample_values):
             key = keys[col]
-            sample[key] = value
+            sample[key.strip().lower()] = value
         samples.append(sample)
 
     return samples
@@ -310,12 +310,12 @@ def preprocess_geo(items: List) -> List:
                     # a malformed response from the server.
                     if ":" in pair:
                         split = pair.split(":", 1)
-                        new_sample[split[0].strip()] = split[1].strip()
+                        new_sample[split[0].strip().lower()] = split[1].strip()
                 continue
 
             # Probably won't be a list with length greater than one,
             # but maybe?
-            new_sample[key.lower()] = " ".join(value)
+            new_sample[key.strip().lower()] = " ".join(value)
         preprocessed_samples.append(new_sample)
     return preprocessed_samples
 
@@ -333,8 +333,8 @@ def extract_title(sample: Dict) -> str:
         "sample title",
         "title",
         "subject number",
-        "labeled extract name",
         "extract name",
+        "labeled extract name",
     ]
     title_fields = create_variants(title_fields)
 
@@ -562,7 +562,7 @@ class Harmonizer:
         ]
         self.time_fields = create_variants(self.time_fields)
 
-    def harmonize_value(field_name, value):
+    def harmonize_value(self, field_name: str, value):
         if field_name == "age":
             try:
                 return float(value)
@@ -582,7 +582,7 @@ class Harmonizer:
         else:
             return value.lower().strip()
 
-    def harmonize_field(self, sample_metadata, harmonized_sample, field):
+    def harmonize_field(self, sample_metadata: Dict, harmonized_sample: Dict, field: str):
         field_name = field.split("_fields")[0]
 
         for key, value in sample_metadata.items():
@@ -612,8 +612,24 @@ class Harmonizer:
             "time_fields",
         ]
 
-        harmonized_sample = sample_metadata.copy()
+        harmonized_sample = {}
+        harmonized_sample["title"] = extract_title(sample_metadata)
         for field in fields:
             self.harmonize_field(sample_metadata, harmonized_sample, field)
 
         return harmonized_sample
+
+
+def harmonize_all_samples(sample_metadata: List[Dict]) -> Dict:
+    """Returns a mapping of sample title to harmonized sample metadata.
+
+    See docstring at top of file for further clarfication of what "harmonized" means."""
+    harmonizer = Harmonizer()
+
+    harmonized_samples = {}
+    for sample in sample_metadata:
+        harmonized_sample = harmonizer.harmonize_sample(sample)
+        title = harmonized_sample["title"]
+        harmonized_samples[title] = harmonized_sample
+
+    return harmonized_samples

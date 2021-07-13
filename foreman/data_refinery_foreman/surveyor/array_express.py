@@ -426,7 +426,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
         sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment.accession_code)
         sdrf_samples = harmony.parse_sdrf(sdrf_url)
-        harmonized_samples = harmony.harmonize(sdrf_samples)
+
+        harmonized_samples = harmony.harmonize_all_samples(sdrf_samples)
 
         # An experiment can have many samples
         for sample_data in samples:

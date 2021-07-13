@@ -245,7 +245,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(experiment_accession_code, destdir=self.get_temp_path(), silent=True)
         preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
-        harmonized_samples = harmony.harmonize(preprocessed_samples)
+        harmonized_samples = harmony.harmonize_all_samples(preprocessed_samples)
 
         # Create the experiment object
         try:
