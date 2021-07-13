@@ -95,6 +95,7 @@ def _try_sanitizing_file(file: str) -> str:
     og_file = _make_original_file_with_contents(file)
 
     job_context = illumina._prepare_files({"job_id": pj.pk, "original_files": [og_file], "job": pj})
+    job_context = illumina._detect_encoding(job_context)
     return illumina._sanitize_input_file(job_context)
 
 

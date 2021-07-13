@@ -67,15 +67,12 @@ def _prepare_files(job_context: Dict) -> Dict:
     return job_context
 
 
-def _sanitize_input_file(job_context: Dict) -> Dict:
-    # Remove all of the SOFT-specific extensions in the original file
-    # See https://www.ncbi.nlm.nih.gov/geo/info/soft.html
-    # plus some extra things we found that make R choke
-    # Also, some files aren't utf-8 encoded, so we will re-encode them into utf-8
+def _detect_encoding(job_context: Dict) -> Dict:
+    """Some Illumina files are not encoded using utf-8, so we need to use
+    `file` to detect their encoding"""
 
-    # First, detect the file's encoding
     try:
-        encoding = result = subprocess.check_output(
+        encoding = subprocess.check_output(
             ["file", "--brief", "--mime-encoding", job_context["input_file_path"],],
             encoding="utf-8",
         ).strip()
@@ -99,8 +96,18 @@ def _sanitize_input_file(job_context: Dict) -> Dict:
         job_context["success"] = False
         job_context["job"].no_retry = True
 
-    # Now, open the file using that encoding and remove all of the SOFT_specific extensions
-    with open(job_context["input_file_path"], "r", encoding=encoding) as file_input:
+    job_context["encoding"] = encoding
+
+    return job_context
+
+
+def _sanitize_input_file(job_context: Dict) -> Dict:
+    """Remove all of the SOFT-specific extensions in the original file (see
+    https://www.ncbi.nlm.nih.gov/geo/info/soft.html) plus some extra things we
+    found that make R choke.  Also, some files aren't utf-8 encoded, so we will
+    re-encode them into utf-8."""
+
+    with open(job_context["input_file_path"], "r", encoding=job_context["encoding"]) as file_input:
         with open(job_context["sanitized_file_path"], "w", encoding="utf-8") as file_output:
             for line in file_input:
                 HEADER_CHARS = ["#", "!", "^"]
@@ -131,12 +138,11 @@ def _sanitize_input_file(job_context: Dict) -> Dict:
 
 
 def _convert_sanitized_to_tsv(job_context: Dict) -> Dict:
-    # Now we want to normalize the tmpfile to be a tsv file. We also want to
-    # sanity check that this is actually a TSV file
+    """Now that we have removed all of the SOFT-specific extensions, we are left
+    with some kind of csv/tsv/ssv that may or may not have quoted strings. To
+    make things easier to parse in R, we will try to sniff these features and
+    output a uniform format for the R code to read"""
 
-    # TODO: sanity check that we have written a valid CSV/TSV/Space-SV/etc., and
-    # maybe rewrite as a TSV if that is what illumina.R is expecting
-    # Here we also want to check to make sure that each line has the same number of rows
     _, tmpfile = tempfile.mkstemp(
         suffix=".txt", dir=os.path.dirname(job_context["sanitized_file_path"])
     )
@@ -152,7 +158,10 @@ def _convert_sanitized_to_tsv(job_context: Dict) -> Dict:
             headers = next(reader)
             first_content = next(reader)
 
-            # Sometimes the first row will have a "blank" header, which we interpret as one less header
+            # Sometimes input files have one less header than they have rows,
+            # which means that we should interpret the first column as ID_REF.
+            # The rest of our code expects this explicit header, though, so we
+            # will insert it here.
             if len(headers) == len(first_content) - 1:
                 headers = ["ID_REF", *headers]
 
@@ -160,7 +169,6 @@ def _convert_sanitized_to_tsv(job_context: Dict) -> Dict:
             writer.writerow(first_content)
 
             for row in reader_iter:
-                # TODO: filter out short rows
                 writer.writerow(row)
 
     os.rename(tmpfile, job_context["sanitized_file_path"])
@@ -610,6 +618,7 @@ def illumina_to_pcl(job_id: int, cleanup=None) -> None:
         [
             utils.start_job,
             _prepare_files,
+            _detect_encoding,
             _sanitize_input_file,
             _convert_sanitized_to_tsv,
             _detect_columns,
