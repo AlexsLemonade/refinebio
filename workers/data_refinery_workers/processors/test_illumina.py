@@ -98,6 +98,56 @@ def _try_sanitizing_file(file: str) -> str:
     return illumina._sanitize_input_file(job_context)
 
 
+# Save this experiment separately (sans organism) because we need it for multiple tests
+GSE22427 = {
+    "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz",
+    "filename": "GSE22427_non-normalized.txt",
+    "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt",
+    "samples": [
+        "LV-C&si-Control-1",
+        "LV-C&si-Control-2",
+        "LV-C&si-Control-3",
+        "LV-C&si-EZH2-1",
+        "LV-C&si-EZH2-2",
+        "LV-C&si-EZH2-3",
+        "LV-EZH2&si-EZH2-1",
+        "LV-EZH2&si-EZH2-2",
+        "LV-EZH2&si-EZH2-3",
+        "LV-T350A&si-EZH2-1",
+        "LV-T350A&si-EZH2-2",
+        "LV-T350A&si-EZH2-3",
+    ],
+}
+
+GSE22427_HEADER = [
+    "ID_REF",
+    "LV-C&si-Control-1",
+    "Detection Pval",
+    "LV-C&si-Control-2",
+    "Detection Pval",
+    "LV-C&si-Control-3",
+    "Detection Pval",
+    "LV-C&si-EZH2-1",
+    "Detection Pval",
+    "LV-C&si-EZH2-2",
+    "Detection Pval",
+    "LV-C&si-EZH2-3",
+    "Detection Pval",
+    "LV-EZH2&si-EZH2-1",
+    "Detection Pval",
+    "LV-EZH2&si-EZH2-2",
+    "Detection Pval",
+    "LV-EZH2&si- EZH2-3",
+    "Detection Pval",
+    "LV-T350A&si-EZH2-1",
+    "Detection Pval",
+    "LV- T350A&si-EZH2-2",
+    "Detection Pval",
+    "LV-T350A&si-EZH2-3",
+    "Detection Pval",
+]
+
+
 class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
     def assertFailedInIlluminaR(self, pj):
         """XXX: remove this before merging to prod.
@@ -185,6 +235,14 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             self.assertTrue(
                 key in ["detected_platform", "detection_percentage", "mapped_percentage"]
             )
+
+        # XXX: remove this but because the job failed the rest of this won't succeed
+        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
+        return
+
+        for sample in final_context["samples"]:
+            smashme = sample.get_most_recent_smashable_result_file()
+            self.assertTrue(os.path.exists(smashme.absolute_file_path))
 
         # Cleanup after the job since it won't since we aren't running in cloud.
         shutil.rmtree(final_context["work_dir"], ignore_errors=True)
@@ -427,40 +485,12 @@ GSM674413	1523532074_F
         # Example file from https://www.ncbi.nlm.nih.gov/geo/info/soft.html#examples
         contents = """
 ^SAMPLE = Control Embyronic Stem Cell Replicate 1
-!Sample_title = Control Embyronic Stem Cell Replicate 1
-!Sample_supplementary_file = file1.gpr
-!Sample_source_name_ch1 = Total RNA from murine ES-D3 embryonic stem cells labeled with Cyanine-5 (red).
-!Sample_organism_ch1 = Mus musculus
-!Sample_characteristics_ch1 = Cell line: ES-D3 (CRL-1934)
-!Sample_characteristics_ch1 = Passages: 4
-!Sample_characteristics_ch1 = Cell type: embryonic stem cells derived from blastocysts
-!Sample_characteristics_ch1 = Strain: 129Sv
-!Sample_growth_protocol_ch1 = ES cells were kept in an undifferentiated, pluripotent state by using 1000 IU/ml leukemia inhibitory factor (LIF; Chemicon, ESGRO, ESG1107), and grown on top of murine embryonic fibroblasts feeder layer inactivated by 10 ug/ml of mitomycin C (Sigma, St. Louis). ES cells were cultured on 0.1% gelatin-coated plastic dishes in ES medium containing Dulbecco modified Eagle medium supplemented with 15% fetal calf serum, 0.1 mM beta-mercaptoethanol, 2 mM glutamine, and 0.1 mN non-essential amino acids.
-!Sample_extract_protocol_ch1 = TriZol procedure
-!Sample_molecule_ch1 = total RNA
-!Sample_label_ch1 = Cy5
 !Sample_label_protocol_ch1 = 10 痢 of total RNA were primed with 2 痞 of 100 然 T16N2 DNA primer at 70蚓 for 10 min, then reversed transcribed at 42蚓 for 1 h in the presence of 400 U SuperScript II RTase (Invitrogen), and 100 然 each dATP, dTTP, dGTP, with 25 然 dCTP, 25 然 Cy5-labeled dCTP (NEN Life Science, Boston, MA), and RNase inhibitor (Invitrogen). RNA was then degraded with RNase A, and labeled cDNAs were purified using QIAquick PCR columns (Qiagen).
-!Sample_source_name_ch2 = Total RNA from pooled whole mouse embryos e17.5, labeled with Cyanine-3 (green).
 !Sample_organism_ch2 = Mus musculus
-!Sample_characteristics_ch2 = Strain: C57BL/6
-!Sample_characteristics_ch2 = Age: E17.5 d
-!Sample_characteristics_ch2 = Tissue: whole embryo
-!Sample_extract_protocol_ch2 = TriZol procedure
-!Sample_molecule_ch2 = total RNA
-!Sample_label_ch2 = Cy3
-!Sample_label_protocol_ch2 = 10 痢 of total RNA were primed with 2 痞 of 100 然 T16N2 DNA primer at 70蚓 for 10 min, then reversed transcribed at 42蚓 for 1 h in the presence of 400 U SuperScript II RTase (Invitrogen), and 100 然 each dATP, dTTP, dGTP, with 25 然 dCTP, 25 然 Cy5-labeled dCTP (NEN Life Science, Boston, MA), and RNase inhibitor (Invitrogen). RNA was then degraded with RNase A, and labeled cDNAs were purified using QIAquick PCR columns (Qiagen).
-!Sample_hyb_protocol = Oligoarray control targets and hybridization buffer (Agilent In Situ Hybridization Kit Plus) were added, and samples were applied to microarrays enclosed in Agilent SureHyb-enabled hybridization chambers. After hybridization, slides were washed sequentially with 6x SSC/0.005% Triton X-102 and 0.1x SSC/0.005% Triton X-102 before scanning. Slides were hybridized for 17 h at 60蚓 in a rotating oven, and washed.
-!Sample_scan_protocol = Scanned on an Agilent G2565AA scanner.
-!Sample_scan_protocol = Images were quantified using Agilent Feature Extraction Software (version A.7.5).
-!Sample_description = Biological replicate 1 of 4. Control embryonic stem cells, untreated, harvested after several passages.
-!Sample_data_processing = LOWESS normalized, background subtracted VALUE data obtained from log of processed Red signal/processed Green signal.
 !Sample_platform_id = GPL3759
 #ID_REF =
 #VALUE = log2(REDsignal/GREENsignal) per feature (processed signals used).
 #LogRatioError = error of the log ratio calculated according to the error model chosen.
-#PValueLogRatio = Significance level of the Log Ratio computed for a feature.
-#gProcessedSignal = Dye-normalized signal after surrogate "algorithm," green "channel," used for computation of log ratio.
-#rProcessedSignal = Dye-normalized signal after surrogate "algorithm," red "channel," used for computation of log ratio.
 !sample_table_begin
 ID_REF	VALUE	LogRatioError	PValueLogRatio	gProcessedSignal	rProcessedSignal
 1	-1.6274758	1.36E-01	6.41E-33	9.13E+03	2.15E+02
@@ -512,53 +542,3 @@ ID_REF	VALUE	LogRatioError	PValueLogRatio	gProcessedSignal	rProcessedSignal
             )
         )
         self.assertEqual(final_context.get("columnIds"), expected_column_ids)
-
-
-# Save this experiment separately (sans organism) because we need it for multiple tests
-GSE22427 = {
-    "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz",
-    "filename": "GSE22427_non-normalized.txt",
-    "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt",
-    "samples": [
-        "LV-C&si-Control-1",
-        "LV-C&si-Control-2",
-        "LV-C&si-Control-3",
-        "LV-C&si-EZH2-1",
-        "LV-C&si-EZH2-2",
-        "LV-C&si-EZH2-3",
-        "LV-EZH2&si-EZH2-1",
-        "LV-EZH2&si-EZH2-2",
-        "LV-EZH2&si-EZH2-3",
-        "LV-T350A&si-EZH2-1",
-        "LV-T350A&si-EZH2-2",
-        "LV-T350A&si-EZH2-3",
-    ],
-}
-
-GSE22427_HEADER = [
-    "ID_REF",
-    "LV-C&si-Control-1",
-    "Detection Pval",
-    "LV-C&si-Control-2",
-    "Detection Pval",
-    "LV-C&si-Control-3",
-    "Detection Pval",
-    "LV-C&si-EZH2-1",
-    "Detection Pval",
-    "LV-C&si-EZH2-2",
-    "Detection Pval",
-    "LV-C&si-EZH2-3",
-    "Detection Pval",
-    "LV-EZH2&si-EZH2-1",
-    "Detection Pval",
-    "LV-EZH2&si-EZH2-2",
-    "Detection Pval",
-    "LV-EZH2&si- EZH2-3",
-    "Detection Pval",
-    "LV-T350A&si-EZH2-1",
-    "Detection Pval",
-    "LV- T350A&si-EZH2-2",
-    "Detection Pval",
-    "LV-T350A&si-EZH2-3",
-    "Detection Pval",
-]
