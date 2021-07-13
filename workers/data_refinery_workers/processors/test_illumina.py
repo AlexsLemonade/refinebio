@@ -519,6 +519,7 @@ ID_REF	VALUE	LogRatioError	PValueLogRatio	gProcessedSignal	rProcessedSignal
             [
                 utils.start_job,
                 illumina._prepare_files,
+                illumina._detect_encoding,
                 illumina._sanitize_input_file,
                 illumina._convert_sanitized_to_tsv,
                 illumina._detect_columns,
