@@ -7,6 +7,7 @@ from data_refinery_common.models import Sample
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.array_express import SAMPLES_URL
 from data_refinery_foreman.surveyor.harmony import (
+    determine_title_field,
     extract_title,
     harmonize_all_samples,
     parse_sdrf,
@@ -300,8 +301,9 @@ class HarmonyTestCase(TestCase):
         harmonized = harmonize_all_samples(preprocessed_samples)
 
     def test_geo_leg_cancer(self):
-        """ Related: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-383969447 """
-
+        """Related:
+        https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-383969447
+        """
         gse = GEOparse.get_GEO("GSE32628", destdir="/tmp/GSE32628/", silent=True)
 
         # GEO requires a small amount of preprocessing
@@ -325,11 +327,17 @@ class HarmonyTestCase(TestCase):
         samples_endpoint = SAMPLES_URL.format(experiment_accession_code)
         r = utils.requests_retry_session().get(samples_endpoint, timeout=60)
         json_samples = r.json()["experiment"]["sample"]
-        json_titles = [extract_title(utils.flatten(json_sample)) for json_sample in json_samples]
+        flattened_json_samples = [utils.flatten(json_sample) for json_sample in json_samples]
 
         SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
         sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
-        sdrf_samples = harmonize_all_samples(parse_sdrf(sdrf_url))
+        parsed_samples = parse_sdrf(sdrf_url)
+
+        title_field = determine_title_field(parsed_samples, flattened_json_samples)
+        sdrf_samples = harmonize_all_samples(parsed_samples, title_field)
+        json_titles = [
+            extract_title(json_sample, title_field) for json_sample in flattened_json_samples
+        ]
 
         # The titles won't match up if the order of the sample dicts
         # isn't corrected for, resulting in a KeyError being raised.

@@ -254,6 +254,75 @@ from data_refinery_foreman.surveyor.utils import requests_retry_session
 logger = get_and_configure_logger(__name__)
 
 
+TITLE_FIELDS = [
+    "sample name",
+    "sample title",
+    "title",
+    "subject number",
+    "extract name",
+    "labeled extract name",
+]
+
+
+def extract_title(sample: Dict, priority_field: str = None) -> str:
+    """ Given a flat sample dictionary, find the title """
+    if priority_field:
+        title_fields = [priority_field] + [tf for tf in TITLE_FIELDS if tf != priority_field]
+    else:
+        title_fields = TITLE_FIELDS
+
+    # Specifically look up for imported, non-SDRF AE samples
+    for comment in sample.get("source_comment", []):
+        if "title" in comment.get("name", ""):
+            return comment["value"]
+
+    expanded_title_fields = create_variants(title_fields)
+
+    for title_field in expanded_title_fields:
+        if title_field in sample:
+            return sample[title_field]
+
+    # If we can't even find a unique title for this sample
+    # something has gone horribly wrong.
+    return None
+
+
+def create_variants(fields_list: List):
+    """ Given a list of strings, create variations likely to give metadata hits.
+
+    Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well.
+    """
+    variants = []
+
+    for field in fields_list:
+        space_variants = [field]
+        # Variate forms of multi-word strings
+        if " " in field:
+            space_variants.append(field.replace(" ", "_"))
+            space_variants.append(field.replace(" ", "-"))
+            space_variants.append(field.replace(" ", ""))
+
+        for space_variant in space_variants:
+            variants.append(space_variant)
+            variants.append("characteristic [" + space_variant + "]")
+            variants.append("characteristic[" + space_variant + "]")
+            variants.append("characteristics [" + space_variant + "]")
+            variants.append("characteristics[" + space_variant + "]")
+            variants.append("comment [" + space_variant + "]")
+            variants.append("comment[" + space_variant + "]")
+            variants.append("comments [" + space_variant + "]")
+            variants.append("comments[" + space_variant + "]")
+            variants.append("factorvalue[" + space_variant + "]")
+            variants.append("factor value[" + space_variant + "]")
+            variants.append("factorvalue [" + space_variant + "]")
+            variants.append("factor value [" + space_variant + "]")
+            variants.append("sample_" + space_variant)
+            variants.append("sample_host" + space_variant)
+            variants.append("sample_sample_" + space_variant)  # Yes, seriously.
+
+    return variants
+
+
 def parse_sdrf(sdrf_url: str) -> List:
     """ Given a URL to an SDRF file, download parses it into JSON. """
 
@@ -318,69 +387,6 @@ def preprocess_geo(items: List) -> List:
             new_sample[key.strip().lower()] = " ".join(value)
         preprocessed_samples.append(new_sample)
     return preprocessed_samples
-
-
-def extract_title(sample: Dict) -> str:
-    """ Given a flat sample dictionary, find the title """
-
-    # Specifically look up for imported, non-SDRF AE samples
-    for comment in sample.get("source_comment", []):
-        if "title" in comment.get("name", ""):
-            return comment["value"]
-
-    title_fields = [
-        "sample name",
-        "sample title",
-        "title",
-        "subject number",
-        "extract name",
-        "labeled extract name",
-    ]
-    title_fields = create_variants(title_fields)
-
-    for title_field in title_fields:
-        if title_field in sample:
-            return sample[title_field]
-
-    # If we can't even find a unique title for this sample
-    # something has gone horribly wrong.
-    return None
-
-
-def create_variants(fields_list: List):
-    """ Given a list of strings, create variations likely to give metadata hits.
-
-    Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well.
-    """
-    variants = []
-
-    for field in fields_list:
-        space_variants = [field]
-        # Variate forms of multi-word strings
-        if " " in field:
-            space_variants.append(field.replace(" ", "_"))
-            space_variants.append(field.replace(" ", "-"))
-            space_variants.append(field.replace(" ", ""))
-
-        for space_variant in space_variants:
-            variants.append(space_variant)
-            variants.append("characteristic [" + space_variant + "]")
-            variants.append("characteristic[" + space_variant + "]")
-            variants.append("characteristics [" + space_variant + "]")
-            variants.append("characteristics[" + space_variant + "]")
-            variants.append("comment [" + space_variant + "]")
-            variants.append("comment[" + space_variant + "]")
-            variants.append("comments [" + space_variant + "]")
-            variants.append("comments[" + space_variant + "]")
-            variants.append("factorvalue[" + space_variant + "]")
-            variants.append("factor value[" + space_variant + "]")
-            variants.append("factorvalue [" + space_variant + "]")
-            variants.append("factor value [" + space_variant + "]")
-            variants.append("sample_" + space_variant)
-            variants.append("sample_host" + space_variant)
-            variants.append("sample_sample_" + space_variant)  # Yes, seriously.
-
-    return variants
 
 
 class Harmonizer:
@@ -595,7 +601,7 @@ class Harmonizer:
                     harmonized_sample[field_name] = harmonized_value
                     break
 
-    def harmonize_sample(self, sample_metadata: Dict) -> Dict:
+    def harmonize_sample(self, sample_metadata: Dict, title_field: str = None) -> Dict:
         fields = [
             "sex_fields",
             "age_fields",
@@ -613,14 +619,34 @@ class Harmonizer:
         ]
 
         harmonized_sample = {}
-        harmonized_sample["title"] = extract_title(sample_metadata)
+        harmonized_sample["title"] = extract_title(sample_metadata, title_field)
         for field in fields:
             self.harmonize_field(sample_metadata, harmonized_sample, field)
 
         return harmonized_sample
 
 
-def harmonize_all_samples(sample_metadata: List[Dict]) -> Dict:
+def determine_title_field(a_samples: List[Dict], b_samples: List[Dict]) -> str:
+    """Determines which field should be used for the title of the sample.
+
+    Sometimes there is more metadata than actual samples, so we just
+    take the field with the largest number of matching values.
+    """
+    max_title_field = ""
+    max_matching_titles = 0
+    for title_field in TITLE_FIELDS:
+        a_titles = {extract_title(sample, title_field) for sample in a_samples}
+        b_titles = {extract_title(sample, title_field) for sample in b_samples}
+
+        if a_titles == b_titles:
+            max_title_field = title_field
+            max_matching_titles = len(a_titles)
+
+    if max_matching_titles > 0:
+        return max_title_field
+
+
+def harmonize_all_samples(sample_metadata: List[Dict], title_field: str = None) -> Dict:
     """Returns a mapping of sample title to harmonized sample metadata.
 
     See docstring at top of file for further clarfication of what "harmonized" means."""
@@ -628,7 +654,7 @@ def harmonize_all_samples(sample_metadata: List[Dict]) -> Dict:
 
     harmonized_samples = {}
     for sample in sample_metadata:
-        harmonized_sample = harmonizer.harmonize_sample(sample)
+        harmonized_sample = harmonizer.harmonize_sample(sample, title_field)
         title = harmonized_sample["title"]
         harmonized_samples[title] = harmonized_sample
 
