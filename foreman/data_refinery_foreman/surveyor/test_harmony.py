@@ -7,11 +7,12 @@ from data_refinery_common.models import Sample
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.array_express import SAMPLES_URL
 from data_refinery_foreman.surveyor.harmony import (
+    Harmonizer,
     determine_title_field,
     extract_title,
     harmonize_all_samples,
     parse_sdrf,
-    preprocess_geo,
+    preprocess_geo_sample,
 )
 from data_refinery_foreman.surveyor.sra import SraSurveyor, UnsupportedDataTypeError
 
@@ -19,6 +20,14 @@ GEOparse.logger.set_verbosity("WARN")
 
 
 class HarmonyTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._harmonizer = Harmonizer()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._harmonizer = None
+
     def setUp(self):
         self.sample = Sample()
         self.sample.save()
@@ -215,18 +224,17 @@ class HarmonyTestCase(TestCase):
         """
 
         metadata = SraSurveyor.gather_all_metadata("SRR1533126")
-        harmonized = harmonize_all_samples([metadata])
-
+        harmonized_sample = self._harmonizer.harmonize_sample(metadata)
         title = "Phosphaturic mesenchymal tumour (PMT) case 2 of NTUH"
-        self.assertTrue(title in harmonized.keys())
-        self.assertTrue("sex" in harmonized[title].keys())
-        self.assertEqual("female", harmonized[title]["sex"])
+        self.assertEqual(title, harmonized_sample["title"])
+        self.assertTrue("sex" in harmonized_sample.keys())
+        self.assertEqual("female", harmonized_sample["sex"])
 
-        self.assertTrue("age" in harmonized[title].keys())
-        self.assertEqual(57.0, harmonized[title]["age"])
+        self.assertTrue("age" in harmonized_sample.keys())
+        self.assertEqual(57.0, harmonized_sample["age"])
 
-        self.assertTrue("specimen_part" in harmonized[title].keys())
-        self.assertTrue("disease" in harmonized[title].keys())
+        self.assertTrue("specimen_part" in harmonized_sample.keys())
+        self.assertTrue("disease" in harmonized_sample.keys())
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sra_lots.yaml")
     @tag("slow")
@@ -272,33 +280,47 @@ class HarmonyTestCase(TestCase):
         """
         Thoroughly tests a specific GEO harmonization
         """
-
         # Weird ones caused bugs
         gse = GEOparse.get_GEO("GSE94532", destdir="/tmp/GSE94532/", silent=True)
-        preprocessed_samples = preprocess_geo(gse.gsms.items())
+        for _, sample in gse.gsms.items():
+            preprocess_geo_sample(sample)
 
         # Illumina
         gse = GEOparse.get_GEO("GSE32628", destdir="/tmp/GSE32628/", silent=True)
 
-        # GEO requires a small amount of preprocessing
-        preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize_all_samples(preprocessed_samples)
-
         title = "SCC_P-57"
-        self.assertTrue(title in harmonized.keys())
-        self.assertTrue("sex" in harmonized[title].keys())
-        self.assertTrue("age" in harmonized[title].keys())
-        self.assertTrue("specimen_part" in harmonized[title].keys())
-        self.assertTrue("subject" in harmonized[title].keys())
+        test_sample = None
+        for _, sample in gse.gsms.items():
+            preprocessed_sample = preprocess_geo_sample(sample)
+            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
+
+            if sample.metadata["title"][0] == title:
+                test_sample = harmonized_sample
+
+        self.assertEqual(title, test_sample["title"])
+        self.assertIn("sex", test_sample.keys())
+        self.assertIn("age", test_sample.keys())
+        self.assertIn("specimen_part", test_sample.keys())
+        self.assertIn("subject", test_sample.keys())
 
         # Agilent Two Color
         gse = GEOparse.get_GEO("GSE93857", destdir="/tmp", silent=True)
-        preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize_all_samples(preprocessed_samples)
+        for _, sample in gse.gsms.items():
+            preprocessed_sample = preprocess_geo_sample(sample)
+            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
+
+        self.assertIn("title", harmonized_sample.keys())
+        self.assertIn("treatment", harmonized_sample.keys())
+        self.assertIn("specimen_part", harmonized_sample.keys())
+        self.assertIn("time", harmonized_sample.keys())
 
         gse = GEOparse.get_GEO("GSE103060", destdir="/tmp", silent=True)
-        preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize_all_samples(preprocessed_samples)
+        for _, sample in gse.gsms.items():
+            preprocessed_sample = preprocess_geo_sample(sample)
+            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
+
+        self.assertIn("title", harmonized_sample.keys())
+        self.assertIn("specimen_part", harmonized_sample.keys())
 
     def test_geo_leg_cancer(self):
         """Related:
@@ -306,15 +328,19 @@ class HarmonyTestCase(TestCase):
         """
         gse = GEOparse.get_GEO("GSE32628", destdir="/tmp/GSE32628/", silent=True)
 
-        # GEO requires a small amount of preprocessing
-        preprocessed_samples = preprocess_geo(gse.gsms.items())
-        harmonized = harmonize_all_samples(preprocessed_samples)
-
         title = "SCC_P-57"
-        self.assertTrue(title in harmonized.keys())
-        self.assertTrue("keratinocyte" == harmonized[title]["specimen_part"])
-        self.assertTrue("squamous cell carcinoma" == harmonized[title]["disease"])
-        self.assertTrue("azathioprine + prednison" == harmonized[title]["compound"])
+        test_sample = None
+        for _, sample in gse.gsms.items():
+            preprocessed_sample = preprocess_geo_sample(sample)
+            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
+
+            if sample.metadata["title"][0] == title:
+                test_sample = harmonized_sample
+
+        self.assertEqual(title, test_sample["title"])
+        self.assertTrue("keratinocyte" == test_sample["specimen_part"])
+        self.assertTrue("squamous cell carcinoma" == test_sample["disease"])
+        self.assertTrue("azathioprine + prednison" == test_sample["compound"])
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.ordering_mismatch.yaml")
     def test_ordering_mismatch(self):

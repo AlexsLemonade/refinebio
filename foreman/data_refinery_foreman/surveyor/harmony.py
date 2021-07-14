@@ -363,35 +363,33 @@ def parse_sdrf(sdrf_url: str) -> List:
     return samples
 
 
-def preprocess_geo(items: List) -> List:
+def preprocess_geo_sample(sample) -> List:
     """
     Prepares items from GEO for harmonization
     """
-    preprocessed_samples = []
-    for sample_id, sample in items:
-        new_sample = {}
-        for key, value in sample.metadata.items():
+    new_sample = {}
+    for key, value in sample.metadata.items():
 
-            if key == "characteristics_ch1":
-                for pair in value:
+        if key == "characteristics_ch1":
+            for pair in value:
 
-                    # This will almost always happen, except if we get
-                    # a malformed response from the server.
-                    if ":" in pair:
-                        split = pair.split(":", 1)
-                        new_sample[split[0].strip().lower()] = split[1].strip()
-                continue
+                # This will almost always happen, except if we get
+                # a malformed response from the server.
+                if ":" in pair:
+                    split = pair.split(":", 1)
+                    new_sample[split[0].strip().lower()] = split[1].strip()
+            continue
 
-            # Probably won't be a list with length greater than one,
-            # but maybe?
-            new_sample[key.strip().lower()] = " ".join(value)
-        preprocessed_samples.append(new_sample)
-    return preprocessed_samples
+        # Probably won't be a list with length greater than one,
+        # but maybe?
+        new_sample[key.strip().lower()] = " ".join(value)
+
+    return new_sample
 
 
 class Harmonizer:
     def __init__(self):
-        self.sex_fields = [
+        sex_fields = [
             "sex",
             "gender",
             "subject gender",
@@ -401,9 +399,9 @@ class Harmonizer:
             "characteristic [sex]",
             "characteristics [sex]",
         ]
-        self.sex_fields = create_variants(self.sex_fields)
+        self.sex_fields = create_variants(sex_fields)
 
-        self.age_fields = [
+        age_fields = [
             "age",
             "patient age",
             "age of patient",
@@ -420,9 +418,9 @@ class Harmonizer:
             "characteristic [age]",
             "characteristics [age]",
         ]
-        self.age_fields = create_variants(self.age_fields)
+        self.age_fields = create_variants(age_fields)
 
-        self.specimen_part_fields = [
+        specimen_part_fields = [
             # AE
             "organism part",
             "cell type",
@@ -452,9 +450,9 @@ class Harmonizer:
             "tissue sampled",
             "cell description",
         ]
-        self.specimen_part_fields = create_variants(self.specimen_part_fields)
+        self.specimen_part_fields = create_variants(specimen_part_fields)
 
-        self.genetic_information_fields = [
+        genetic_information_fields = [
             "strain/background",
             "strain",
             "strain or line",
@@ -467,9 +465,9 @@ class Harmonizer:
             "cultivar",
             "strain/genotype",
         ]
-        self.genetic_information_fields = create_variants(self.genetic_information_fields)
+        self.genetic_information_fields = create_variants(genetic_information_fields)
 
-        self.disease_fields = [
+        disease_fields = [
             "disease",
             "disease state",
             "disease status",
@@ -478,9 +476,9 @@ class Harmonizer:
             "infection with",
             "sample type",
         ]
-        self.disease_fields = create_variants(self.disease_fields)
+        self.disease_fields = create_variants(disease_fields)
 
-        self.disease_stage_fields = [
+        disease_stage_fields = [
             "disease state",
             "disease staging",
             "disease stage",
@@ -492,31 +490,31 @@ class Harmonizer:
             "disease outcome",
             "subject status",
         ]
-        self.disease_stage_fields = create_variants(self.disease_stage_fields)
+        self.disease_stage_fields = create_variants(disease_stage_fields)
 
-        self.cell_line_fields = [
+        cell_line_fields = [
             "cell line",
             "sample strain",
         ]
-        self.cell_line_fields = create_variants(self.cell_line_fields)
+        self.cell_line_fields = create_variants(cell_line_fields)
 
-        self.treatment_fields = [
+        treatment_fields = [
             "treatment",
             "treatment group",
             "treatment protocol",
             "drug treatment",
             "clinical treatment",
         ]
-        self.treatment_fields = create_variants(self.treatment_fields)
+        self.treatment_fields = create_variants(treatment_fields)
 
-        self.race_fields = [
+        race_fields = [
             "race",
             "ethnicity",
             "race/ethnicity",
         ]
-        self.race_fields = create_variants(self.race_fields)
+        self.race_fields = create_variants(race_fields)
 
-        self.subject_fields = [
+        subject_fields = [
             # AE
             "subject",
             "subject id",
@@ -536,16 +534,16 @@ class Harmonizer:
             # SRA
             "sample_source_name",
         ]
-        self.subject_fields = create_variants(self.subject_fields)
+        self.subject_fields = create_variants(subject_fields)
 
-        self.development_stage_fields = [
+        developmental_stage_fields = [
             "developmental stage",
             "development stage",
             "development stages",
         ]
-        self.development_stage_fields = create_variants(self.development_stage_fields)
+        self.developmental_stage_fields = create_variants(developmental_stage_fields)
 
-        self.compound_fields = [
+        compound_fields = [
             "compound",
             "compound1",
             "compound2",
@@ -554,9 +552,9 @@ class Harmonizer:
             "drugs",
             "immunosuppressive drugs",
         ]
-        self.compound_fields = create_variants(self.compound_fields)
+        self.compound_fields = create_variants(compound_fields)
 
-        self.time_fields = [
+        time_fields = [
             "time",
             "initial time point",
             "start time",
@@ -566,7 +564,7 @@ class Harmonizer:
             "sampling time",
             "time post infection",
         ]
-        self.time_fields = create_variants(self.time_fields)
+        self.time_fields = create_variants(time_fields)
 
     def harmonize_value(self, field_name: str, value):
         if field_name == "age":
@@ -613,7 +611,7 @@ class Harmonizer:
             "treatment_fields",
             "race_fields",
             "subject_fields",
-            "development_stage_fields",
+            "developmental_stage_fields",
             "compound_fields",
             "time_fields",
         ]
