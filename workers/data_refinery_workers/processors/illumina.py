@@ -46,8 +46,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     original_file = job_context["original_files"][0]
     job_context["input_file_path"] = original_file.absolute_file_path
 
-    # XXX: I'm not sure why the surveyor passes us files that aren't in the
-    # right format, but here we are. I need to look into this
+    # This should not happen, but if it does I would rather know about it here,
+    # whereas before we would get random failures later down the pipeline
     if not job_context["input_file_path"].endswith(".txt"):
         logger.error(
             "Input file doesn't have a suffix we recognize, probably an invalid format",
