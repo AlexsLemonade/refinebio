@@ -26,7 +26,7 @@ DESCRIBE_JOBS_PAGE_SIZE = 100
 
 # Setting this to a recent date will prevent the Foreman from queuing/requeuing
 # jobs created before this cutoff.
-JOB_CREATED_AT_CUTOFF = datetime.datetime(2021, 7, 15, tzinfo=timezone.utc)
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2021, 7, 14, tzinfo=timezone.utc)
 
 
 def handle_repeated_failure(job) -> None:

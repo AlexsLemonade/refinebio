@@ -22,7 +22,7 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     def handle(self, *args, **options):
         for dl_job in DownloaderJob.objects.filter(
-            success="t", end_time__gt=JOB_CREATED_AT_CUTOFF
+            success="t", created_at__gt=JOB_CREATED_AT_CUTOFF
         ).all():
             original_files = dl_job.original_files.all()
 
