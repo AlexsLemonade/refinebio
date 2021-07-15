@@ -36,6 +36,9 @@ class OriginalFile(models.Model):
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
     size_in_bytes = models.BigIntegerField(blank=True, null=True)
     sha1 = models.CharField(max_length=64)
+    md5 = models.CharField(null=True, max_length=32)
+    expected_md5 = models.CharField(null=True, max_length=32)
+    expected_size_in_bytes = models.BigIntegerField(blank=True, null=True)
 
     # AWS
     s3_bucket = models.CharField(max_length=255, blank=True, null=True)

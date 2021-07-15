@@ -301,19 +301,6 @@ def download_sra(job_id: int) -> None:
     downloaded_files = []
     success = None
 
-    # Try accessing FTP server, see if that was successful
-    try:
-        if _has_unmated_reads(sample.accession_code, job):
-            original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
-    except ftplib.all_errors:
-        logger.exception(
-            "Failed to connect to ENA server.", downloader_job=job.id,
-        )
-        job.failure_reason = "Failed to connect to ENA server."
-        success = False
-        utils.end_downloader_job(job, success)
-        return success, downloaded_files
-
     for original_file in original_files:
         exp_path = LOCAL_ROOT_DIR + "/" + job.accession_code
         samp_path = exp_path + "/" + sample.accession_code
