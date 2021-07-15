@@ -472,7 +472,6 @@ class Harmonizer:
             "disease state",
             "disease status",
             "diagnosis",
-            "disease",
             "infection with",
             "sample type",
         ]
