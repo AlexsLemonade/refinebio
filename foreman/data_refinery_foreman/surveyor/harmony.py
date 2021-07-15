@@ -632,7 +632,10 @@ def determine_title_field(a_samples: List[Dict], b_samples: List[Dict]) -> str:
     """
     max_title_field = ""
     max_matching_titles = 0
-    for title_field in TITLE_FIELDS:
+
+    # Reverse the order so if there's a tie for number of matches
+    # we'll prioritize the fields at the front of the list.
+    for title_field in TITLE_FIELDS.reverse():
         a_titles = {extract_title(sample, title_field) for sample in a_samples}
         b_titles = {extract_title(sample, title_field) for sample in b_samples}
 

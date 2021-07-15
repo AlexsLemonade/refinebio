@@ -283,7 +283,11 @@ class HarmonyTestCase(TestCase):
         # Weird ones caused bugs
         gse = GEOparse.get_GEO("GSE94532", destdir="/tmp/GSE94532/", silent=True)
         for _, sample in gse.gsms.items():
-            preprocess_geo_sample(sample)
+            preprocessed_sample = preprocess_geo_sample(sample)
+
+            self.assertGreater(len(preprocessed_sample.keys()), 30)
+            for value in preprocessed_sample.values():
+                self.assertNotIsInstance(value, dict)
 
         # Illumina
         gse = GEOparse.get_GEO("GSE32628", destdir="/tmp/GSE32628/", silent=True)
