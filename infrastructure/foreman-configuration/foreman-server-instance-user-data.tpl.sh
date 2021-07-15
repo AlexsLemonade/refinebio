@@ -58,8 +58,6 @@ docker run \\
        -e DATABASE_NAME=${database_name} \\
        -e DATABASE_USER=${database_user} \\
        -e DATABASE_PASSWORD=${database_password} \\
-       -e ELASTICSEARCH_HOST=${elasticsearch_host} \\
-       -e ELASTICSEARCH_PORT=${elasticsearch_port} \\
        -v /tmp:/tmp \\
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@
 " >> /home/ubuntu/run_management_command.sh
@@ -94,21 +92,20 @@ set daemon 900
 
 service monit restart
 
-# This seems to be repeatedly requeuing the same jobs at the moment.
-# https://github.com/AlexsLemonade/refinebio/issues/2823
-# docker run \
-#        --env-file /home/ubuntu/environment \
-#        -e DATABASE_HOST="${database_host}" \
-#        -e DATABASE_NAME="${database_name}" \
-#        -e DATABASE_USER="${database_user}" \
-#        -e DATABASE_PASSWORD="${database_password}" \
-#        -v /tmp:/tmp \
-#        --log-driver=awslogs \
-#        --log-opt awslogs-region="${region}" \
-#        --log-opt awslogs-group="${log_group}" \
-#        --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \
-#        --name=job_filler \
-#        -it -d "${dockerhub_repo}/${foreman_docker_image}" python3 manage.py create_missing_processor_jobs
+# Make sure every downloader job has a processor job!
+docker run \
+       --env-file /home/ubuntu/environment \
+       -e DATABASE_HOST="${database_host}" \
+       -e DATABASE_NAME="${database_name}" \
+       -e DATABASE_USER="${database_user}" \
+       -e DATABASE_PASSWORD="${database_password}" \
+       -v /tmp:/tmp \
+       --log-driver=awslogs \
+       --log-opt awslogs-region="${region}" \
+       --log-opt awslogs-group="${log_group}" \
+       --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \
+       --name=job_filler \
+       -it -d "${dockerhub_repo}/${foreman_docker_image}" python3 manage.py create_missing_processor_jobs
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}
