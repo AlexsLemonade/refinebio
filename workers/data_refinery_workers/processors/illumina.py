@@ -222,7 +222,7 @@ def _detect_columns(job_context: Dict) -> Dict:
             predicted_header += 1
 
         # First the probe ID column
-        if headers[predicted_header].upper() == "ILLUMICODE":
+        if headers[predicted_header].upper().strip() == "ILLUMICODE":
             logger.error(
                 "Tried to process a beadTypeFile.txt, which we don't support",
                 input_file=job_context["sanitized_file_path"],
@@ -231,7 +231,7 @@ def _detect_columns(job_context: Dict) -> Dict:
             job_context["success"] = False
             job_context["job"].no_retry = True
             return job_context
-        elif headers[predicted_header].upper() not in [
+        elif headers[predicted_header].upper().strip() not in [
             "ID_REF",
             "PROBE_ID",
             "IDREF",
@@ -382,7 +382,8 @@ def _detect_platform(job_context: Dict) -> Dict:
                     "--inputFile",
                     job_context["sanitized_file_path"],
                     "--column",
-                    job_context["probeId"],
+                    # R strips column names, so we have to too
+                    job_context["probeId"].strip(),
                 ]
             )
 
@@ -455,7 +456,8 @@ def _run_illumina(job_context: Dict) -> Dict:
             "--vanilla",
             "/home/user/data_refinery_workers/processors/illumina.R",
             "--probeId",
-            job_context["probeId"],
+            # R strips column names, so we have to too
+            job_context["probeId"].strip(),
             "--expression",
             job_context["columnIds"],
             "--platform",

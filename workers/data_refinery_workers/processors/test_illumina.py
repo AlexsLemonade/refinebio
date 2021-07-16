@@ -448,6 +448,31 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         self.assertFailed(pj, "Could not detect PValue column!")
 
     @tag("illumina")
+    def test_illumina_id_ref_column_with_whitespace(self):
+        """This test case tests the issue brought up in
+        https://github.com/alexslemonade/refinebio/issues/1560
+        where an ID_REF column would not be detected because the column name had a trailing space
+        """
+
+        organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        pj = prepare_illumina_job(
+            {
+                "source_filename": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE100nnn/GSE100301/suppl/GSE100301%5Fnon%2Dnormalized%2Etxt%2Egz",
+                "filename": "GSE100301_non-normalized.txt",
+                "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE100301_non-normalized.txt",
+                "organism": organism,
+                "samples": [
+                    ("GSM2677583", "22Rv1-tetO-Gal4, replicate 1", {"description": ["SAMPLE 1"],},),
+                ],
+            }
+        )
+
+        final_context = illumina.illumina_to_pcl(pj.pk)
+        self.assertFailedInIlluminaR(pj)
+
+    @tag("illumina")
     def test_sanitize_file_hash_header(self):
         contents = """
 # The identifiers in the ID_REF column must match the identifiers in the ID column of the referenced platform (GPLxxxx).
