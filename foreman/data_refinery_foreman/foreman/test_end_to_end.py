@@ -351,7 +351,7 @@ class FullFlowEndToEndTestCase(TestCase):
         ref_TPM = squish_duplicates(pd.DataFrame({"reference": ref["TPM"]}))
         ref_NumReads = squish_duplicates(pd.DataFrame({"reference": ref["NumReads"]}))
 
-        with zipfile.Zipfile(dataset_path) as zf:
+        with zipfile.ZipFile(dataset_path) as zf:
             with zf.open("SRP094706/SRR5085168_quant.sf", "r") as out_file:
                 out = pd.read_csv(out_file, delimiter="\t", index_col=0)
         out_TPM = squish_duplicates(pd.DataFrame({"actual": out["TPM"]}))
