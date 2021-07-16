@@ -171,15 +171,14 @@ class SmasherEndToEndTestCase(TestCase):
         prepare_computed_files()
 
         # The API sometimes takes a bit to come back up.
-        stop = False
         start_time = timezone.now()
-        while not stop:
+        while True:
             try:
                 pyrefinebio.create_token(agree_to_terms=True, save_token=False)
-                stop = True
+                break
             except pyrefinebio.ServerError:
                 if timezone.now() - start_time > timedelta(minutes=15):
-                    stop = True
+                    break
                 else:
                     sleep(30)
 
