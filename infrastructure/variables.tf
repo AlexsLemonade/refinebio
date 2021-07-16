@@ -152,10 +152,6 @@ variable "smasher_instance_type" {
   # default = "x1.16xlarge"
 }
 
-variable "spot_price" {
-  default = "4.10"
-}
-
 variable "spot_fleet_capacity" {
   default = "0"
 }

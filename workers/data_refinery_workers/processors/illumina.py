@@ -73,7 +73,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
 
 def _detect_columns(job_context: Dict) -> Dict:
-    """ Detect which columns match to which inputs.
+    """Detect which columns match to which inputs.
 
     Related: https://github.com/AlexsLemonade/refinebio/issues/86#issuecomment-379308817
 
@@ -178,7 +178,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                     continue
 
                 if header.upper().replace(" ", "_") == "RAW_VALUE":
-                    columns_ids.add(offset)
+                    column_ids.add(offset)
                     continue
 
                 if (
@@ -385,7 +385,7 @@ def _get_sample_for_column(column: str, job_context: Dict) -> Sample:
 
 
 def _create_result_objects(job_context: Dict) -> Dict:
-    """ Create the ComputationalResult objects after a Scan run is complete """
+    """Create the ComputationalResult objects after a Scan run is complete"""
 
     result = ComputationalResult()
     result.commands.append(job_context["formatted_command"])

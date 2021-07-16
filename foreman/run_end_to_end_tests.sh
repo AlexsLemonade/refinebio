@@ -20,6 +20,16 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX "$volume_directory"
 fi
 
+test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
+reference_file_dir="$volume_directory/reference/"
+quant_file="SRR5085168_quant.sf"
+if [ ! -e "$reference_file_dir/$quant_file" ]; then
+    mkdir -p "$reference_file_dir"
+    echo "Downloading quant file for Transcriptome Index validation tests."
+    wget -q -O "$reference_file_dir/$quant_file" \
+            "$test_data_repo/$quant_file"
+fi
+
 # temp for testing locally.
 ../scripts/prepare_image.sh -i foreman -s foreman
 
@@ -30,7 +40,10 @@ while read -r row; do
     export "${row}"
 done < ../infrastructure/prod_env
 
-# Hardcode ccdlstaging because this should only ever be run in staging.
+
+# Hardcode ccdlstaging because this should only ever be run in staging or
+# locally, and when running locally `prepare_image.sh` makes the forman
+# ccdlstaging/dr_foreman.
 docker run -t \
        --env-file ../infrastructure/prod_env \
        --env RUNNING_IN_CLOUD=False \
@@ -40,4 +53,5 @@ docker run -t \
        --env DJANGO_SECRET_KEY="TEST_KEY_FOR_DEV" \
        --env DATABASE_PASSWORD="TEST_PASSWORD_FOR_DEV" \
        --volume "$volume_directory":/home/user/data_store \
+       --volume "$HOME/.aws":/home/user/.aws \
        ccdlstaging/dr_foreman python3 manage.py test --no-input --parallel=2 --testrunner='data_refinery_foreman.test_runner.NoDbTestRunner' data_refinery_foreman.foreman.test_end_to_end
