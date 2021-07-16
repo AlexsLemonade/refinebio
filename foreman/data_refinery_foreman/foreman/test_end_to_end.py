@@ -178,7 +178,7 @@ class SmasherEndToEndTestCase(TestCase):
                 break
             except pyrefinebio.ServerError:
                 if timezone.now() - start_time > timedelta(minutes=15):
-                    break
+                    raise AssertionError("Server not up after 15 minutes")
                 else:
                     sleep(30)
 
