@@ -153,7 +153,7 @@ class Sample(models.Model):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         try:
             latest_computed_file = self.computed_files.filter(
-                is_public=True, is_smashable=True,
+                is_public=True, is_smashable=True, s3_bucket__isnull=False, s3_key__isnull=False
             ).latest()
             return latest_computed_file
         except ComputedFile.DoesNotExist as e:
