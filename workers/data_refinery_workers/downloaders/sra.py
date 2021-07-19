@@ -3,8 +3,6 @@ import os
 import shutil
 import subprocess
 import time
-import urllib.request
-from contextlib import closing
 from ftplib import FTP
 from typing import List
 
@@ -29,20 +27,17 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CHUNK_SIZE = 1024 * 256
 
 
-def _download_file(
-    download_url: str, downloader_job: DownloaderJob, target_file_path: str, force_ftp: bool = False
-) -> bool:
-    """ Download file dispatcher. Dispatches to the FTP or Aspera downloader """
-
+def _download_file(download_url: str, downloader_job: DownloaderJob, target_file_path: str) -> bool:
+    """ Download file dispatcher. Dispatches to the HTTP or Aspera downloader
+    """
     # SRA files have Apsera downloads.
-    if "ftp.sra.ebi.ac.uk" in download_url and not force_ftp:
-        # From: ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz
-        # To: era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz
-        download_url = download_url.replace("ftp://", "era-fasp@")
-        download_url = download_url.replace("ftp", "fasp")
+    if "ftp.sra.ebi.ac.uk" in download_url:
+        # From: ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
+        # To: era-fasp@fasp.sra.ebi.ac.uk:vol1/fastq//SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
+        download_url = download_url.replace("ftp", "era-fasp@fasp")
         download_url = download_url.replace(".uk/", ".uk:/")
         return _download_file_aspera(download_url, downloader_job, target_file_path, source="ENA")
-    elif "ncbi.nlm.nih.gov" in download_url and not force_ftp:
+    elif "ncbi.nlm.nih.gov" in download_url:
         # Try to convert old-style endpoints into new-style endpoints if possible
         try:
             if "anonftp" in download_url or "dbtest" in download_url:
@@ -54,38 +49,7 @@ def _download_file(
             pass
         return _download_file_http(download_url, downloader_job, target_file_path)
     else:
-        return _download_file_ftp(download_url, downloader_job, target_file_path)
-
-
-def _download_file_ftp(
-    download_url: str, downloader_job: DownloaderJob, target_file_path: str
-) -> bool:
-    """ Download a file to a location using FTP via urllib. """
-    try:
-        logger.debug(
-            "Downloading file from %s to %s via FTP.",
-            download_url,
-            target_file_path,
-            downloader_job=downloader_job.id,
-        )
-
-        # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
-        urllib.request.urlcleanup()
-
-        with closing(urllib.request.urlopen(download_url)) as request:
-            with open(target_file_path, "wb") as target_file:
-                shutil.copyfileobj(request, target_file, CHUNK_SIZE)
-
-        urllib.request.urlcleanup()
-    except Exception:
-        logger.exception(
-            "Exception caught while downloading file from the URL via FTP: %s",
-            download_url,
-            downloader_job=downloader_job.id,
-        )
-        downloader_job.failure_reason = (
-            "Exception caught while downloading " "file from the URL via FTP: {}"
-        ).format(download_url)
+        downloader_job.failure_reason = ("Unrecognized URL pattern: {}").format(download_url)
         return False
 
     return True
@@ -136,7 +100,7 @@ def _download_file_aspera(
             # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
             # We are also NOT using encryption (-T) to avoid slowdown,
             # and we are not using any kind of rate limiting.
-            command_str = ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            command_str = ".aspera/cli/bin/ascp -QT -l 300m -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
             formatted_command = command_str.format(src=download_url, dest=target_file_path)
             completed_command = subprocess.run(
                 formatted_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE

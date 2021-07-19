@@ -1,6 +1,4 @@
-import ftplib
 import os
-from ftplib import FTP
 from unittest.mock import patch
 
 from django.test import TestCase, tag
@@ -10,7 +8,6 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     OriginalFile,
     OriginalFileSampleAssociation,
-    ProcessorJob,
     Sample,
     SurveyJob,
 )
@@ -26,37 +23,38 @@ class DownloadSraTestCase(TestCase):
     def insert_objects(self):
         return
 
-    # @tag('downloaders')
-    # @tag('downloaders_sra')
-    # @patch('data_refinery_workers.downloaders.utils.send_job')
-    # def test_download_file(self, mock_send_job):
-    #     mock_send_job.return_value = None
+    @tag("downloaders")
+    @tag("downloaders_sra")
+    def test_download_file(self):
+        dlj = DownloaderJob()
+        dlj.accession_code = "ERR036"
+        dlj.save()
 
-    #     dlj = DownloaderJob()
-    #     dlj.accession_code = "ERR036"
-    #     dlj.save()
+        og = OriginalFile()
+        og.source_filename = "ERR036000.fastq.gz"
+        og.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
+        og.is_archive = True
+        og.save()
 
-    #     og = OriginalFile()
-    #     og.source_filename = "ERR036000.fastq.gz"
-    #     og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
-    #     og.is_archive = True
-    #     og.save()
+        sample = Sample()
+        sample.accession_code = "ERR036000"
+        sample.save()
 
-    #     sample = Sample()
-    #     sample.accession_code = 'ERR036000'
-    #     sample.save()
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = sample
+        assoc.original_file = og
+        assoc.save()
 
-    #     assoc = OriginalFileSampleAssociation()
-    #     assoc.sample = sample
-    #     assoc.original_file = og
-    #     assoc.save()
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = dlj
+        assoc.original_file = og
+        assoc.save()
 
-    #     assoc = DownloaderJobOriginalFileAssociation()
-    #     assoc.downloader_job = dlj
-    #     assoc.original_file = og
-    #     assoc.save()
+        result, downloaded_files = sra.download_sra(dlj.pk)
 
-    #     success = sra.download_sra(dlj.pk)
+        self.assertTrue(result)
+        self.assertEqual(downloaded_files[0].sha1, "1dfe5460a4101fe87feeffec0cb2e053f6695961")
+        self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
 
     @tag("downloaders")
     @tag("downloaders_sra")
@@ -83,50 +81,9 @@ class DownloadSraTestCase(TestCase):
         result, downloaded_files = sra.download_sra(dlj.pk)
         utils.end_downloader_job(dlj, result)
 
-        # If the FTP server is down or it times out, then we expect that the downloader job should have failed
-        server_failure = False
-        try:
-            ftp_server = "ftp.sra.ebi.ac.uk"
-            ftp = FTP(ftp_server)
-            server_failure = ftp.login()[0:3] == "550"
-        except (TimeoutError, ConnectionResetError):
-            server_failure = True
-
-        if server_failure:
-            self.assertFalse(result)
-        else:
-            self.assertTrue(result)
-            self.assertEqual(downloaded_files[0].sha1, "e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc")
-            self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
-
-    @tag("downloaders")
-    @tag("downloaders_sra")
-    @patch.object(ftplib.FTP, "login", side_effect=ftplib.error_perm)
-    def test_ftp_server_down(self, mock_ftp):
-        dlj = DownloaderJob()
-        dlj.accession_code = "SRR9117853"
-        dlj.save()
-        og = OriginalFile()
-        og.source_filename = "SRR9117853.sra"
-        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/SRR/SRR9117/SRR9117853/SRR9117853.sra"
-        og.is_archive = True
-        og.save()
-        sample = Sample()
-        sample.accession_code = "SRR9117853"
-        sample.save()
-        assoc = OriginalFileSampleAssociation()
-        assoc.sample = sample
-        assoc.original_file = og
-        assoc.save()
-        assoc = DownloaderJobOriginalFileAssociation()
-        assoc.downloader_job = dlj
-        assoc.original_file = og
-        assoc.save()
-        result, downloaded_files = sra.download_sra(dlj.pk)
-        dlj.refresh_from_db()
-        utils.end_downloader_job(dlj, result)
-        self.assertFalse(result)
-        self.assertEqual(dlj.failure_reason, "Failed to connect to ENA server.")
+        self.assertTrue(result)
+        self.assertEqual(downloaded_files[0].sha1, "e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc")
+        self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
 
     @tag("downloaders")
     @tag("downloaders_sra")
@@ -150,5 +107,47 @@ class DownloadSraTestCase(TestCase):
         assoc.downloader_job = dlj
         assoc.original_file = og
         assoc.save()
-        result = sra._download_file(og.source_url, dlj, "/tmp/doomed", force_ftp=False)
+        result = sra._download_file(og.source_url, dlj, "/tmp/doomed")
         self.assertTrue(result)
+
+    @tag("downloaders")
+    @tag("downloaders_sra")
+    def test_download_file_unmated_reads(self):
+        dlj = DownloaderJob()
+        dlj.accession_code = "SRR7353755"
+        dlj.save()
+        og_1 = OriginalFile()
+        og_1.source_filename = "SRR7353755_1.fastq.gz"
+        og_1.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz"
+        og_1.is_archive = True
+        og_1.save()
+        og_2 = OriginalFile()
+        og_2.source_filename = "SRR7353755_2.fastq.gz"
+        og_2.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz"
+        og_2.is_archive = True
+        og_2.save()
+        sample = Sample()
+        sample.accession_code = "SRR7353755"
+        sample.save()
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = sample
+        assoc.original_file = og_1
+        assoc.save()
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = dlj
+        assoc.original_file = og_1
+        assoc.save()
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = sample
+        assoc.original_file = og_2
+        assoc.save()
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = dlj
+        assoc.original_file = og_2
+        assoc.save()
+        result, downloaded_files = sra.download_sra(dlj.pk)
+        utils.end_downloader_job(dlj, result)
+
+        self.assertTrue(result)
+        self.assertEqual(downloaded_files[0].sha1, "b5e227344deefad96dcc9ea209e5f6cc33be0b46")
+        self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))

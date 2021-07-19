@@ -557,16 +557,24 @@ class SraSurveyor(ExternalSourceSurveyor):
                 # file_urls to be the ENA FTP URLs.
                 for file_report in file_reports:
                     file_url = file_report["fastq_ftp"]
-                    original_file = OriginalFile.objects.get_or_create(
-                        source_url=file_url,
-                        source_filename=file_url.split("/")[-1],
-                        has_raw=True,
-                        expected_bytes=file_report["fastq_bytes"],
-                        expected_md5=file_report["fastq_md5"],
-                    )[0]
-                    OriginalFileSampleAssociation.objects.get_or_create(
-                        original_file=original_file, sample=sample_object
-                    )
+
+                    # Skip the one for unmated reads: the unmated
+                    # reads file lacks a _X postfix. It's be better if
+                    # it was clearly labelled, but it seems to be
+                    # consistent. The unmated reads file also seems to
+                    # be the smallest by far, but I'm unsure how
+                    # reliable that is.
+                    if file_url in ["_1.fastq.gz", "_2.fastq.gz"]:
+                        original_file = OriginalFile.objects.get_or_create(
+                            source_url=file_url,
+                            source_filename=file_url.split("/")[-1],
+                            has_raw=True,
+                            expected_bytes=file_report["fastq_bytes"],
+                            expected_md5=file_report["fastq_md5"],
+                        )[0]
+                        OriginalFileSampleAssociation.objects.get_or_create(
+                            original_file=original_file, sample=sample_object
+                        )
 
         # Create associations if they don't already exist
         ExperimentSampleAssociation.objects.get_or_create(
