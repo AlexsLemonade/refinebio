@@ -351,6 +351,7 @@ suppressPackageStartupMessages(library(oligo))
 suppressPackageStartupMessages(library(doParallel))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(lazyeval))
+suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(paste(platform, ".db", sep=""), character.only=TRUE))
 
 # Read the data file
@@ -427,7 +428,26 @@ probesToKeep <- intersect(probesToKeep, rownames(normData))
 normData <- normData[probesToKeep,,drop=FALSE]
 
 # Map probes to genes
-probeGene <- as.data.frame(probeGeneRef[mappedkeys(probeGeneRef)])
+probe_map <- read.csv(paste0("/home/user/probe_maps/", platform, ".tsv"), sep="\t", na.strings=c(""))
+rownames(probe_map) <- probe_map$probe_id
+
+choose_gene = function(probe_id, ensembl_ids) {
+  probe_id <- probe_id[1]
+  if (length(ensembl_ids) == 1) {
+    return(ensembl_ids[1])
+  }
+
+  # TODO: emit some kind of warning. Also, we need to decide what to do about NAs
+  probe_map[probe_id,"ensembl_id"][1]
+}
+
+probeGene <- as.data.frame(probeGeneRef[mappedkeys(probeGeneRef)]) %>%
+  dplyr::group_by(probe_id) %>%
+  dplyr::summarize(ensembl_id = choose_gene(probe_id, ensembl_id)) %>%
+  dplyr::filter(!is.na(ensembl_id)) %>%
+  # Convert back to a data frame so we can have our rownames
+  as.data.frame()
+
 rownames(probeGene) <- probeGene$probe_id
 probesToKeep <- sort(intersect(rownames(probeGene), rownames(exprData)))
 probeGene <- probeGene[probesToKeep,]
