@@ -150,23 +150,6 @@ GSE22427_HEADER = [
 
 
 class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
-    def assertFailedInIlluminaR(self, pj):
-        """XXX: remove this before merging to prod.
-
-        Check if the sample makes it to illumina.R, because right now I am
-        investigating samples that fail before even reaching illumina.R. Since
-        illumina.R always fails right now, just asserting success leads to
-        failures that I'm not looking for"""
-
-        pj.refresh_from_db()
-
-        if (
-            not pj.success
-            and "Encountered error in R code while running illumina.R" not in pj.failure_reason
-            and "Exception raised while running illumina.R" not in pj.failure_reason
-        ):
-            raise AssertionError(f"\033[1;31mjob did not succeed:\033[0m {pj.failure_reason}")
-
     @tag("illumina")
     def test_illumina_to_pcl(self):
         """Most basic Illumina to PCL test"""
@@ -184,7 +167,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         sample.save()
 
         final_context = illumina.illumina_to_pcl(job.pk)
-        self.assertFailedInIlluminaR(job)
+        self.assertSucceeded(job)
         # XXX: remove this but because the job failed the rest of this won't succeed
         shutil.rmtree(final_context["work_dir"], ignore_errors=True)
         return
@@ -229,7 +212,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-        self.assertFailedInIlluminaR(pj)
+        self.assertSucceeded(pj)
         self.assertEqual(final_context["platform"], "illuminaHumanv3")
 
         for key in final_context["samples"][0].sampleannotation_set.all()[0].data.keys():
@@ -290,7 +273,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-        self.assertFailedInIlluminaR(pj)
+        self.assertSucceeded(pj)
 
         # Make sure that the input is now utf-8 encoded and has the right headers.
 
@@ -343,7 +326,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-        self.assertFailedInIlluminaR(pj)
+        self.assertSucceeded(pj)
 
         # Make sure that the row names are no longer quoted after sanitizing the file
         def assertNotQuoted(string: str):
@@ -388,7 +371,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-        self.assertFailedInIlluminaR(pj)
+        self.assertSucceeded(pj)
 
     @tag("illumina")
     def test_illumina_space_separated(self):
@@ -413,7 +396,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-        self.assertFailedInIlluminaR(pj)
+        self.assertSucceeded(pj)
 
         # Assert that the sanitized file is tab-separated (by reading it as a
         # TSV and making sure it has 11 headers) and has an extra ID_REF header
@@ -470,7 +453,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-        self.assertFailedInIlluminaR(pj)
+        self.assertSucceeded(pj)
 
     @tag("illumina")
     def test_sanitize_file_hash_header(self):
