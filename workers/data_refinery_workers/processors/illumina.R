@@ -432,13 +432,20 @@ probe_map <- read.csv(paste0("/home/user/probe_maps/", platform, ".tsv"), sep="\
 rownames(probe_map) <- probe_map$probe_id
 
 choose_gene = function(probe_id, ensembl_ids) {
+  # Extract the probe ID from the vector. Because we group by probe ID before
+  # summarizing using this, all the probe IDs in the vector will be the same, so
+  # we can just grab the first one.
   probe_id <- probe_id[1]
+
+  # If there is one ensembl ID, just use that
   if (length(ensembl_ids) == 1) {
     return(ensembl_ids[1])
   }
 
   # TODO: emit some kind of warning. Also, we need to decide what to do about NAs
-  probe_map[probe_id,"ensembl_id"][1]
+
+  # Otherwise, use the ensembl ID that we picked in the Illumina refinery
+  probe_map[probe_id,"ensembl_id"]
 }
 
 probeGene <- as.data.frame(probeGeneRef[mappedkeys(probeGeneRef)]) %>%
