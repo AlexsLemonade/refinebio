@@ -9,49 +9,19 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.24.0
+      - python-requests/2.25.1
     method: GET
-    uri: https://www.ebi.ac.uk/ena/data/view/ERP006216&display=xml
+    uri: https://www.ebi.ac.uk/ena/browser/api/xml/ERP006216
   response:
     body:
-      string: ''
-    headers:
-      Content-Length:
-      - '0'
-      Date:
-      - Mon, 03 May 2021 16:47:24 GMT
-      Location:
-      - https://www.ebi.ac.uk/ena/browser/api/xml/ERP006216?display=xml
-      Server:
-      - Apache-Coyote/1.1
-      Strict-Transport-Security:
-      - max-age=0
-    status:
-      code: 301
-      message: Moved Permanently
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python-requests/2.24.0
-    method: GET
-    uri: https://www.ebi.ac.uk/ena/browser/api/xml/ERP006216?display=xml
-  response:
-    body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ErrorDetails>\n  <timestamp>1620060444274</timestamp>\n\
-        \  <status>404</status>\n  <error>Not Found</error>\n  <message>ERP006216\
-        \ not found.</message>\n  <path>/ena/browser/api/xml/ERP006216</path>\n</ErrorDetails>\n"
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ErrorDetails>\n  <timestamp>1626893010544</timestamp>\n
+        \ <status>404</status>\n  <error>Not Found</error>\n  <message>ERP006216 not
+        found.</message>\n  <path>/ena/browser/api/xml/ERP006216</path>\n</ErrorDetails>\n"
     headers:
       Content-Type:
       - application/xml
       Date:
-      - Mon, 03 May 2021 16:47:24 GMT
+      - Wed, 21 Jul 2021 18:43:30 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
