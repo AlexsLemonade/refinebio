@@ -42,7 +42,7 @@ scanNorm <- function(signalExprData, signalProbeSequences, controlExprData=NULL,
 
   exprData <- doLog2(signalExprData)
 
-  if (all(signalExprData > 0)) { # No background subtraction has been performed
+  if (all(signalExprData > 0, na.rm = TRUE)) { # No background subtraction has been performed
     if (is.null(controlExprData)) {
       if (!is.null(signalPValueData))
         exprData <- nec(x = doLog2(signalExprData), detection.p = signalPValueData)
@@ -136,7 +136,7 @@ scanNormVector <- function(description, my, mx, convThreshold, intervalN, binsiz
 doLog2 <- function(x)
 {
   # This is a semi-crude way of checking whether the values were not previously log-transformed
-  if (max(x) > 100)
+  if (max(x, na.rm = TRUE) > 100)
     x <- log2(x)
 
   return(x)
@@ -377,9 +377,6 @@ if (length(exprColumns) == 0)
 
 exprData <- as.matrix(data[,exprColumns,drop=FALSE])
 rownames(exprData) <- probeIDs
-
-# Throw out NA rows
-exprData <- na.omit(exprData)
 
 if (detectionPValueColumnPattern == "")
   detectionPValueColumnPattern <- "Detection[ _]Pval"
