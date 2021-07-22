@@ -153,5 +153,5 @@ class DownloadSraTestCase(TestCase):
         utils.end_downloader_job(dlj, result)
 
         self.assertTrue(result)
-        self.assertEqual(downloaded_files[0].sha1, "b5e227344deefad96dcc9ea209e5f6cc33be0b46")
+        self.assertEqual(downloaded_files[0].sha1, "52bf22472069d04fa7767429f6ab78ebd10c0152")
         self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))

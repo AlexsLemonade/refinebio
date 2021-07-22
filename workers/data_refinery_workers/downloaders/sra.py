@@ -41,7 +41,7 @@ def _download_file(
         download_url = download_url.replace(".uk/", ".uk:/")
         original_file.source_url = download_url
         return _download_file_aspera(
-            download_url, downloader_job, target_file_path, original_file, source="ENA"
+            download_url, downloader_job, target_file_path, 0, original_file, source="ENA"
         )
     elif "ncbi.nlm.nih.gov" in download_url:
         # Try to convert old-style endpoints into new-style endpoints if possible
@@ -288,8 +288,6 @@ def download_sra(job_id: int) -> None:
         success = _download_file(original_file, job, dl_file_path)
 
         if success:
-            # TODO: Check md5 and size_in_bytes here, if they're set.
-            # If they aren't set, do we retry the download right here right now?
             original_file.set_downloaded(dl_file_path)
 
             # ENA's file-report endpoint only reports on .fastq files,
