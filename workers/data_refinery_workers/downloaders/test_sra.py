@@ -118,12 +118,16 @@ class DownloadSraTestCase(TestCase):
         dlj.save()
         og_1 = OriginalFile()
         og_1.source_filename = "SRR1603661_1.fastq.gz"
-        og_1.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz"
+        og_1.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR160/001/SRR1603661/SRR1603661_1.fastq.gz"
+        og_1.expected_md5 = "502a9a482bfa5aa75865ccc0105ad13c"
+        og_1.expected_size_in_bytes = 6751980628
         og_1.is_archive = True
         og_1.save()
         og_2 = OriginalFile()
         og_2.source_filename = "SRR1603661_2.fastq.gz"
-        og_2.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz"
+        og_2.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR160/001/SRR1603661/SRR1603661_2.fastq.gz"
+        og_1.expected_md5 = "fffd24457418d255991f54ec82a39d57"
+        og_1.expected_size_in_bytes = 6949912932
         og_2.is_archive = True
         og_2.save()
         sample = Sample()

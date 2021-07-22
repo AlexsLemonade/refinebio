@@ -138,9 +138,9 @@ class SraSurveyorTestCase(TestCase):
                 for original_file in sample.original_files.all():
                     if original_file.source_filename == "SRR1603661_1.fastq.gz":
                         self.assertEqual(
-                            original_file.expected_md5, "fffd24457418d255991f54ec82a39d57"
+                            original_file.expected_md5, "502a9a482bfa5aa75865ccc0105ad13c"
                         )
-                        self.assertEqual(sample.expected_size_in_bytes, 6949912932)
+                        self.assertEqual(original_file.expected_size_in_bytes, 6751980628)
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_nonexistant.yaml")
     def test_nonexistant_srp_survey(self):
