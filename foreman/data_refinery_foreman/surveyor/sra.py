@@ -27,8 +27,8 @@ logger = get_and_configure_logger(__name__)
 
 
 DOWNLOAD_SOURCE = "NCBI"  # or "ENA". Change this to download from NCBI (US) or ENA (UK).
-ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}"
-ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
+ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/browser/view/{}"
+ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/browser/api/xml/{}"
 ENA_FILE_REPORT_URL_TEMPLATE = (
     "https://www.ebi.ac.uk/ena/portal/api/filereport?accession={accession}&result=read_run"
 )
@@ -337,7 +337,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def _build_ncbi_file_url(run_accession: str):
-        """ Build the path to the hypothetical .sra file we want """
+        """Build the path to the hypothetical .sra file we want"""
         accession = run_accession
         first_three = accession[:3]
         first_six = accession[:6]

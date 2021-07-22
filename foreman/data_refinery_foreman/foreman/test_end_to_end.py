@@ -4,6 +4,7 @@ from time import sleep
 from unittest import TestCase
 
 from django.test import tag
+from django.utils import timezone
 
 import pandas as pd
 import pyrefinebio
@@ -168,7 +169,18 @@ class SmasherEndToEndTestCase(TestCase):
             purge_experiment(accession_code)
 
         prepare_computed_files()
-        pyrefinebio.create_token(agree_to_terms=True, save_token=False)
+
+        # The API sometimes takes a bit to come back up.
+        start_time = timezone.now()
+        while True:
+            try:
+                pyrefinebio.create_token(agree_to_terms=True, save_token=False)
+                break
+            except pyrefinebio.ServerError:
+                if timezone.now() - start_time > timedelta(minutes=15):
+                    raise AssertionError("Server not up after 15 minutes")
+                else:
+                    sleep(30)
 
         dataset_path = "end_to_end_test_dataset"
         pyrefinebio.download_dataset(
