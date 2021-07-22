@@ -8,7 +8,7 @@ from data_refinery_common.constants import CURRENT_SALMON_VERSION, SYSTEM_VERSIO
 from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.managers import PublicObjectsManager
-from data_refinery_common.utils import FileUtils, calculate_file_size, calculate_sha1
+from data_refinery_common.utils import FileUtils, calculate_file_size, calculate_md5, calculate_sha1
 
 logger = get_and_configure_logger(__name__)
 
@@ -86,6 +86,7 @@ class OriginalFile(models.Model):
         self.filename = filename if filename else os.path.basename(absolute_file_path)
         self.calculate_size()
         self.calculate_sha1()
+        self.calculate_md5()
         self.save()
 
     def calculate_sha1(self) -> None:
@@ -93,6 +94,12 @@ class OriginalFile(models.Model):
         """
         self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
+
+    def calculate_md5(self) -> None:
+        """ Calculate the SHA1 value of a given file.
+        """
+        self.md5 = calculate_md5(self.absolute_file_path)
+        return self.md5
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.

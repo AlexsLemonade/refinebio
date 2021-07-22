@@ -27,16 +27,22 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CHUNK_SIZE = 1024 * 256
 
 
-def _download_file(download_url: str, downloader_job: DownloaderJob, target_file_path: str) -> bool:
+def _download_file(
+    original_file: OriginalFile, downloader_job: DownloaderJob, target_file_path: str
+) -> bool:
     """ Download file dispatcher. Dispatches to the HTTP or Aspera downloader
     """
+    download_url = original_file.source_url
     # SRA files have Apsera downloads.
     if "ftp.sra.ebi.ac.uk" in download_url:
         # From: ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
         # To: era-fasp@fasp.sra.ebi.ac.uk:vol1/fastq//SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
         download_url = download_url.replace("ftp", "era-fasp@fasp")
         download_url = download_url.replace(".uk/", ".uk:/")
-        return _download_file_aspera(download_url, downloader_job, target_file_path, source="ENA")
+        original_file.source_url = download_url
+        return _download_file_aspera(
+            download_url, downloader_job, target_file_path, original_file, source="ENA"
+        )
     elif "ncbi.nlm.nih.gov" in download_url:
         # Try to convert old-style endpoints into new-style endpoints if possible
         try:
@@ -84,6 +90,7 @@ def _download_file_aspera(
     downloader_job: DownloaderJob,
     target_file_path: str,
     attempt: int = 0,
+    original_file=None,
     source="NCBI",
 ) -> bool:
     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
@@ -100,15 +107,22 @@ def _download_file_aspera(
             # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
             # We are also NOT using encryption (-T) to avoid slowdown,
             # and we are not using any kind of rate limiting.
-            command_str = ".aspera/cli/bin/ascp -QT -l 300m -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            command_str = (
+                ".aspera/cli/bin/ascp -QT -l 300m -P33001"
+                " -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            )
             formatted_command = command_str.format(src=download_url, dest=target_file_path)
             completed_command = subprocess.run(
                 formatted_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
         else:
-            # NCBI requires encryption and recommends -k1 resume, as well as the 450m limit and -Q (play fair).
+            # NCBI requires encryption and recommends -k1 resume, as
+            # well as the 450m limit and -Q (play fair).
             # ex: https://github.com/AlexsLemonade/refinebio/pull/1189#issuecomment-478018580
-            command_str = ".aspera/cli/bin/ascp -p -Q -T -k1 -l 450m -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            command_str = (
+                ".aspera/cli/bin/ascp -p -Q -T -k1 -l 450m"
+                " -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            )
             formatted_command = command_str.format(src=download_url, dest=target_file_path)
             logger.info("Starting NCBI ascp", time=str(timezone.now()))
             completed_command = subprocess.run(
@@ -271,10 +285,37 @@ def download_sra(job_id: int) -> None:
         os.makedirs(exp_path, exist_ok=True)
         os.makedirs(samp_path, exist_ok=True)
         dl_file_path = samp_path + "/" + original_file.source_filename
-        success = _download_file(original_file.source_url, job, dl_file_path)
+        success = _download_file(original_file, job, dl_file_path)
 
         if success:
+            # TODO: Check md5 and size_in_bytes here, if they're set.
+            # If they aren't set, do we retry the download right here right now?
             original_file.set_downloaded(dl_file_path)
+
+            # ENA's file-report endpoint only reports on .fastq files,
+            # so we can only check expected md5/size_in_bytes for
+            # those files.
+            if ".fastq" in original_file.source_filename:
+                md5_mismatch = (
+                    original_file.expected_md5 and original_file.md5 != original_file.expected_md5
+                )
+                size_in_bytes_mismatch = (
+                    original_file.expected_size_in_bytes
+                    and original_file.size_in_bytes != original_file.expected_size_in_bytes
+                )
+
+                if md5_mismatch or size_in_bytes_mismatch:
+                    success = False
+                    job.failure_reason = "md5 or size_in_bytes didn't match"
+                    logger.error(
+                        job.failure_reason,
+                        expected_md5=original_file.expected_md5,
+                        actual_md5=original_file.md5,
+                        expected_size_in_bytes=original_file.expected_size_in_bytes,
+                        actual_size_in_bytes=original_file.size_in_bytes,
+                    )
+                    break
+
             downloaded_files.append(original_file)
         else:
             break

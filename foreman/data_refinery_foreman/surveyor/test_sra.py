@@ -68,7 +68,7 @@ class SraSurveyorTestCase(TestCase):
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.srp_survey.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
-    def test_srp_survey(self, mock_send_task):
+    def test_srp_survey(self, mock_send_job):
         """A slightly harder test of the SRA surveyor.
         """
         survey_job = SurveyJob(source_type="SRA")
@@ -111,6 +111,36 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.accession_code, "DRP003977")
         self.assertEqual(experiment.alternate_accession_code, None)
         self.assertEqual(len(samples), 9)
+
+    @vcr.use_cassette(
+        "/home/user/data_store/cassettes/surveyor.sra.survey_file_report.yaml", record_mode="all"
+    )
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
+    def test_survey_file_report(self, mock_send_job):
+        """A slightly harder test of the SRA surveyor.
+        """
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+        key_value_pair = SurveyJobKeyValue(
+            survey_job=survey_job, key="experiment_accession_code", value="SRP048683"
+        )
+        key_value_pair.save()
+
+        sra_surveyor = SraSurveyor(survey_job)
+        experiment, samples = sra_surveyor.discover_experiment_and_samples()
+
+        self.assertEqual(experiment.accession_code, "SRP048683")
+        self.assertEqual(len(samples), 12)
+
+        # Just check one file for one sample's expected file size/md5
+        for sample in samples:
+            if sample.accession_code == "SRR1603661":
+                for original_file in sample.original_files.all():
+                    if original_file.source_filename == "SRR1603661_1.fastq.gz":
+                        self.assertEqual(
+                            original_file.expected_md5, "fffd24457418d255991f54ec82a39d57"
+                        )
+                        self.assertEqual(sample.expected_size_in_bytes, 6949912932)
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_nonexistant.yaml")
     def test_nonexistant_srp_survey(self):

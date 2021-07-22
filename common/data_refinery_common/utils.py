@@ -262,6 +262,13 @@ def calculate_sha1(absolute_file_path):
         for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b""):
             hash_object.update(buf)
 
+
+def calculate_md5(absolute_file_path):
+    hash_object = hashlib.md5()
+    with open(absolute_file_path, mode="rb") as open_file:
+        for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b""):
+            hash_object.update(buf)
+
     return hash_object.hexdigest()
 
 

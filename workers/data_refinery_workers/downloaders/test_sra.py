@@ -107,27 +107,27 @@ class DownloadSraTestCase(TestCase):
         assoc.downloader_job = dlj
         assoc.original_file = og
         assoc.save()
-        result = sra._download_file(og.source_url, dlj, "/tmp/doomed")
+        result = sra._download_file(og, dlj, "/tmp/doomed")
         self.assertTrue(result)
 
     @tag("downloaders")
     @tag("downloaders_sra")
     def test_download_file_unmated_reads(self):
         dlj = DownloaderJob()
-        dlj.accession_code = "SRR7353755"
+        dlj.accession_code = "SRR1603661"
         dlj.save()
         og_1 = OriginalFile()
-        og_1.source_filename = "SRR7353755_1.fastq.gz"
+        og_1.source_filename = "SRR1603661_1.fastq.gz"
         og_1.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz"
         og_1.is_archive = True
         og_1.save()
         og_2 = OriginalFile()
-        og_2.source_filename = "SRR7353755_2.fastq.gz"
+        og_2.source_filename = "SRR1603661_2.fastq.gz"
         og_2.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz"
         og_2.is_archive = True
         og_2.save()
         sample = Sample()
-        sample.accession_code = "SRR7353755"
+        sample.accession_code = "SRR1603661"
         sample.save()
         assoc = OriginalFileSampleAssociation()
         assoc.sample = sample
