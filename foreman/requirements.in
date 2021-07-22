@@ -6,7 +6,7 @@ coverage
 GEOparse>=2.0.3
 python-dateutil
 raven
-pyrefinebio>=0.3.2
+pyrefinebio>=0.4.2
 tblib
 djangorestframework>=3.11.2
 # Can't go above 6.X without upgrading elasticsearch
