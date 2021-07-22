@@ -2,12 +2,11 @@
 # Contains the views Stats, FailedDownloaderJobStats, FailedProcessorJobStats, and AboutStats
 ##
 
+import datetime
 import functools
 import itertools
-from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db.models import Count, DateTimeField
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
@@ -40,7 +39,7 @@ from data_refinery_common.utils import get_env_variable
 
 logger = get_and_configure_logger(__name__)
 
-JOB_CREATED_AT_CUTOFF = datetime(2019, 9, 19, tzinfo=timezone.utc)
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 9, 19, tzinfo=timezone.utc)
 
 # We want to cache all stats pages for 10 minutes to reduce the load on our
 # servers, because computing all of the stats is really expensive
@@ -50,10 +49,10 @@ CACHE_TIME_SECONDS = 10 * 60
 def get_start_date(range_param):
     current_date = datetime.now(tz=timezone.utc)
     return {
-        "day": current_date - timedelta(days=1),
-        "week": current_date - timedelta(weeks=1),
-        "month": current_date - timedelta(days=30),
-        "year": current_date - timedelta(days=365),
+        "day": current_date - datetime.timedelta(days=1),
+        "week": current_date - datetime.timedelta(weeks=1),
+        "month": current_date - datetime.timedelta(days=30),
+        "year": current_date - datetime.timedelta(days=365),
     }.get(range_param)
 
 
@@ -289,7 +288,7 @@ class Stats(APIView):
     @classmethod
     def _samples_processed_last_hour(cls):
         current_date = datetime.now(tz=timezone.utc)
-        start = current_date - timedelta(hours=1)
+        start = current_date - datetime.timedelta(hours=1)
         return Sample.processed_objects.filter(last_modified__range=(start, current_date)).count()
 
     @classmethod
