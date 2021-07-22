@@ -112,9 +112,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.alternate_accession_code, None)
         self.assertEqual(len(samples), 9)
 
-    @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.sra.survey_file_report.yaml", record_mode="all"
-    )
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_file_report.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey_file_report(self, mock_send_job):
         """A slightly harder test of the SRA surveyor.
