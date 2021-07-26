@@ -59,7 +59,11 @@ class OntologyTerm(models.Model):
     @staticmethod
     def import_entire_ontology(ontology_prefix: str) -> int:
         """Given an ontology prefix, download the entire ontology and import it"""
-        response = requests.get(ONTOLOGY_URL_TEMPLATE.format(ontology_prefix.lower()))
+
+        # Normalize ontology prefixes to be stored in lowercase
+        ontology_prefix = ontology_prefix.lower()
+
+        response = requests.get(ONTOLOGY_URL_TEMPLATE.format(ontology_prefix))
         ontology_xml = ET.fromstring(response.text)
 
         namespace = {
