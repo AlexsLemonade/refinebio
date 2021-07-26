@@ -80,8 +80,9 @@ class OntologyTerm(models.Model):
                 term.human_readable_name = human_readable_name
                 term.save()
 
-        # The other way is <rdf:Description> tags with an <rdfs:label> child
-        for child in ontology_xml.findall("rdf:Description/[rdfs:label]", namespace):
+        # The other way is <rdf:Description> tags with an rdf:about attribute
+        # and a <rdfs:label> child
+        for child in ontology_xml.findall("rdf:Description[@rdf:about]/[rdfs:label]", namespace):
             about = child.attrib.get("{" + namespace["rdf"] + "}about")
             ontology_term = about.split("/")[-1].replace("_", ":")
             human_readable_name = child.find("rdfs:label", namespace).text

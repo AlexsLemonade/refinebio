@@ -57,3 +57,24 @@ class TestOntologyTerm(TestCase):
         )
 
         mock_api_call.assert_not_called()
+
+    @vcr.use_cassette("/home/user/data_store/cassettes/common.ontology_term.import_cl.yaml")
+    @patch("data_refinery_common.models.ontology_term.get_human_readable_name_from_api")
+    def test_import_cl(self, mock_api_call):
+        """Try importing the CL ontology, which was updated at some point and
+        broke the original parsing code"""
+
+        # We shouldn't be hitting the API at all here, because we should have
+        # the ontology already imported
+        mock_api_call.return_value = "The wrong answer"
+
+        OntologyTerm.import_entire_ontology("cl")
+
+        self.assertGreater(OntologyTerm.objects.all().count(), 0)
+
+        self.assertEqual(
+            "hematopoietic cell",
+            OntologyTerm.get_or_create_from_api("CL:0000988").human_readable_name,
+        )
+
+        mock_api_call.assert_not_called()
