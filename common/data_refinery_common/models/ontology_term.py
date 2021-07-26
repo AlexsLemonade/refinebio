@@ -57,8 +57,8 @@ class OntologyTerm(models.Model):
         return ontology_term.split(":")[0].lower()
 
     @staticmethod
-    def import_entire_ontology(ontology_prefix: str):
-        """ Given an ontology prefix, download the entire ontology and import it """
+    def import_entire_ontology(ontology_prefix: str) -> int:
+        """Given an ontology prefix, download the entire ontology and import it"""
         response = requests.get(ONTOLOGY_URL_TEMPLATE.format(ontology_prefix.lower()))
         ontology_xml = ET.fromstring(response.text)
 
@@ -68,6 +68,8 @@ class OntologyTerm(models.Model):
             "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
         }
 
+        new_terms = 0
+
         # For some reason, there are two ways to find ontology terms in OWL files.
         # The first is <owl:Class> tags with an <rdfs:label> child
         for child in ontology_xml.findall("owl:Class/[rdfs:label]", namespace):
@@ -76,9 +78,11 @@ class OntologyTerm(models.Model):
             human_readable_name = child.find("rdfs:label", namespace).text
 
             if OntologyTerm._get_ontology_prefix(ontology_term) == ontology_prefix:
-                term, _ = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
+                term, created = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
                 term.human_readable_name = human_readable_name
                 term.save()
+
+                new_terms += 1 if created else 0
 
         # The other way is <rdf:Description> tags with an rdf:about attribute
         # and a <rdfs:label> child
@@ -88,9 +92,13 @@ class OntologyTerm(models.Model):
             human_readable_name = child.find("rdfs:label", namespace).text
 
             if OntologyTerm._get_ontology_prefix(ontology_term) == ontology_prefix:
-                term, _ = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
+                term, created = OntologyTerm.objects.get_or_create(ontology_term=ontology_term)
                 term.human_readable_name = human_readable_name
                 term.save()
+
+                new_terms += 1 if created else 0
+
+        return new_terms
 
     @staticmethod
     def _create_from_api(ontology_term: str) -> "OntologyTerm":

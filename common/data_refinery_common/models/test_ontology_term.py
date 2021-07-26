@@ -48,9 +48,13 @@ class TestOntologyTerm(TestCase):
 
         # I used the UO ontology here because it is much smaller than other important
         # ontologies like EFO, which could take upwards of a minute to download and parse
-        OntologyTerm.import_entire_ontology("uo")
+        created_terms = OntologyTerm.import_entire_ontology("uo")
 
-        self.assertGreater(OntologyTerm.objects.all().count(), 0)
+        self.assertEqual(
+            OntologyTerm.objects.all().count(),
+            543,  # Since we are using a VCR this number should not change
+        )
+        self.assertEqual(OntologyTerm.objects.all().count(), created_terms)
 
         self.assertEqual(
             "month", OntologyTerm.get_or_create_from_api("UO:0000035").human_readable_name
@@ -68,9 +72,13 @@ class TestOntologyTerm(TestCase):
         # the ontology already imported
         mock_api_call.return_value = "The wrong answer"
 
-        OntologyTerm.import_entire_ontology("cl")
+        created_terms = OntologyTerm.import_entire_ontology("cl")
 
-        self.assertGreater(OntologyTerm.objects.all().count(), 0)
+        self.assertEqual(
+            OntologyTerm.objects.all().count(),
+            2493,  # Since we are using a VCR this number should not change
+        )
+        self.assertEqual(OntologyTerm.objects.all().count(), created_terms)
 
         self.assertEqual(
             "hematopoietic cell",
