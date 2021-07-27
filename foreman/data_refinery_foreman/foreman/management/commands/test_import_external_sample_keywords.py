@@ -146,7 +146,10 @@ class ImportExternalSampleAttributesTestCase(TestCase):
                     "carcinoma",
                     "disease",
                     "disease of cellular proliferation",
-                    "cell line",
+                    # EFO:0000322 is now obsolete according to the OLS
+                    # https://www.ebi.ac.uk/ols/ontologies/efo/terms?iri=http%3A%2F%2Fwww.ebi.ac.uk%2Fefo%2FEFO_0000322
+                    # so its human-readable name gets prefixed by them with "obsolete_"
+                    "obsolete_cell line",
                     "cultured cell",
                 ]
             ),
