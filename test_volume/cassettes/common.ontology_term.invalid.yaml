@@ -9,7 +9,68 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.23.0
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ols/api/ontologies/uo
+  response:
+    body:
+      string: "{\n  \"ontologyId\" : \"uo\",\n  \"loaded\" : \"2021-04-13T03:57:31.575+0000\",\n
+        \ \"updated\" : \"2021-07-27T00:21:16.504+0000\",\n  \"status\" : \"LOADED\",\n
+        \ \"message\" : \"\",\n  \"version\" : null,\n  \"fileHash\" : \"fa7b064a0d16bcd649b84681a6f459f63e29e1e0\",\n
+        \ \"loadAttempts\" : 0,\n  \"numberOfTerms\" : 607,\n  \"numberOfProperties\"
+        : 6,\n  \"numberOfIndividuals\" : 270,\n  \"config\" : {\n    \"id\" : \"http://purl.obolibrary.org/obo/uo.owl\",\n
+        \   \"versionIri\" : \"http://purl.obolibrary.org/obo/uo/releases/2020-03-10/uo.owl\",\n
+        \   \"title\" : \"Units of measurement ontology\",\n    \"namespace\" : \"uo\",\n
+        \   \"preferredPrefix\" : \"UO\",\n    \"description\" : \"Metrical units
+        for use in conjunction with PATO\",\n    \"homepage\" : \"https://github.com/bio-ontology-research-group/unit-ontology\",\n
+        \   \"version\" : \"2020-03-10\",\n    \"mailingList\" : null,\n    \"tracker\"
+        : \"https://github.com/bio-ontology-research-group/unit-ontology/issues\",\n
+        \   \"logo\" : null,\n    \"creators\" : [ ],\n    \"annotations\" : {\n      \"date\"
+        : [ \"09:04:2014 13:37\" ],\n      \"saved-by\" : [ \"gkoutos\" ],\n      \"default-namespace\"
+        : [ \"quality\" ],\n      \"namespace-id-rule\" : [ \"* UO:$sequence(7,0,9999999)$\"
+        ],\n      \"has_obo_format_version\" : [ \"1.2\" ],\n      \"auto-generated-by\"
+        : [ \"OBO-Edit 2.1-beta19\" ],\n      \"comment\" : [ \"Filtered by Ancestor
+        ID equals \\\"UO:0000000\\\"\" ]\n    },\n    \"fileLocation\" : \"http://purl.obolibrary.org/obo/uo.owl\",\n
+        \   \"reasonerType\" : \"NONE\",\n    \"oboSlims\" : true,\n    \"labelProperty\"
+        : \"http://www.w3.org/2000/01/rdf-schema#label\",\n    \"definitionProperties\"
+        : [ \"http://purl.obolibrary.org/obo/IAO_0000115\" ],\n    \"synonymProperties\"
+        : [ \"http://www.geneontology.org/formats/oboInOwl#hasExactSynonym\" ],\n
+        \   \"hierarchicalProperties\" : [ \"http://purl.obolibrary.org/obo/BFO_0000050\"
+        ],\n    \"baseUris\" : [ \"http://purl.obolibrary.org/obo/UO_\" ],\n    \"hiddenProperties\"
+        : [ ],\n    \"preferredRootTerms\" : [ ],\n    \"allowDownload\" : true,\n
+        \   \"internalMetadataProperties\" : [ ],\n    \"skos\" : false\n  },\n  \"_links\"
+        : {\n    \"self\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo\"\n
+        \   },\n    \"terms\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/terms\"\n
+        \   },\n    \"properties\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/properties\"\n
+        \   },\n    \"individuals\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/ontologies/uo/individuals\"\n
+        \   }\n  }\n}"
+    headers:
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Tue, 27 Jul 2021 13:58:30 GMT
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Application-Context:
+      - application:8080
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
     method: GET
     uri: http://www.ebi.ac.uk/ols/api/terms?id=UO:9999999
   response:
@@ -23,7 +84,7 @@ interactions:
       Content-Type:
       - text/html
       Date:
-      - Fri, 07 Aug 2020 18:33:05 GMT
+      - Tue, 27 Jul 2021 13:58:31 GMT
       Location:
       - https://www.ebi.ac.uk/ols/api/terms?id=UO:9999999
     status:
@@ -39,19 +100,19 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.23.0
+      - python-requests/2.25.1
     method: GET
     uri: https://www.ebi.ac.uk/ols/api/terms?id=UO:9999999
   response:
     body:
-      string: "{\n  \"_links\" : {\n    \"self\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms\"\
-        \n    }\n  },\n  \"page\" : {\n    \"size\" : 20,\n    \"totalElements\" :\
-        \ 0,\n    \"totalPages\" : 0,\n    \"number\" : 0\n  }\n}"
+      string: "{\n  \"_links\" : {\n    \"self\" : {\n      \"href\" : \"https://www.ebi.ac.uk/ols/api/terms\"\n
+        \   }\n  },\n  \"page\" : {\n    \"size\" : 20,\n    \"totalElements\" : 0,\n
+        \   \"totalPages\" : 0,\n    \"number\" : 0\n  }\n}"
     headers:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Fri, 07 Aug 2020 18:33:06 GMT
+      - Tue, 27 Jul 2021 13:58:30 GMT
       Server:
       - Apache-Coyote/1.1
       Strict-Transport-Security:
