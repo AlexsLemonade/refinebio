@@ -69,7 +69,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:40 GMT
+      - Wed, 28 Jul 2021 19:40:58 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -128,7 +128,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:40 GMT
+      - Wed, 28 Jul 2021 19:40:58 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -210,7 +210,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:41 GMT
+      - Wed, 28 Jul 2021 19:40:59 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -294,7 +294,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:42 GMT
+      - Wed, 28 Jul 2021 19:40:59 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -372,7 +372,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:43 GMT
+      - Wed, 28 Jul 2021 19:41:00 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -426,7 +426,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:43 GMT
+      - Wed, 28 Jul 2021 19:41:00 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -467,20 +467,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:41:44 GMT
+      - Wed, 28 Jul 2021 19:41:01 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956A000F86A6810000000000000001.m_1
+      - CC95EE27101B2CD10000000000000001.m_1
       NCBI-SID:
-      - CC956A000F86A681_0000SID
+      - CC95EE27101B2CD1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956A000F86A681_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:41:44 GMT
+      - ncbi_sid=CC95EE27101B2CD1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:01 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -491,6 +491,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534072&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534072\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/002/ERR2534072/ERR2534072.fastq.gz\t1342496804\t060aa7646a7caa6b7db9e9b5126efd99\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534072/G144_KO8_RNAseq_DMSO1.fastq.gz\t1397343408\t6f75b7add12efbe0413473419ed2f51b\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:02 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -547,7 +589,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:44 GMT
+      - Wed, 28 Jul 2021 19:41:03 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -629,7 +671,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:44 GMT
+      - Wed, 28 Jul 2021 19:41:03 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -713,7 +755,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:45 GMT
+      - Wed, 28 Jul 2021 19:41:04 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -791,7 +833,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:46 GMT
+      - Wed, 28 Jul 2021 19:41:05 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -845,7 +887,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:46 GMT
+      - Wed, 28 Jul 2021 19:41:05 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -886,20 +928,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:41:47 GMT
+      - Wed, 28 Jul 2021 19:41:06 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A486BD0F86A6B10000000000000001.m_1
+      - CC95EE67101B2D210000000000000001.m_1
       NCBI-SID:
-      - C7A486BD0F86A6B1_0000SID
+      - CC95EE67101B2D21_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A486BD0F86A6B1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:41:47 GMT
+      - ncbi_sid=CC95EE67101B2D21_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:06 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -910,6 +952,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534073&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534073\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/003/ERR2534073/ERR2534073.fastq.gz\t1156190981\td46334eb88f03b4c0713c7ed8abc231c\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534073/G144_KO8_RNAseq_DMSO2.fastq.gz\t1203618482\td2b9ae59efaa7491eac26723ce6022e7\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:06 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -966,7 +1050,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:48 GMT
+      - Wed, 28 Jul 2021 19:41:07 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1048,7 +1132,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:48 GMT
+      - Wed, 28 Jul 2021 19:41:07 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1132,7 +1216,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:49 GMT
+      - Wed, 28 Jul 2021 19:41:08 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1210,7 +1294,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:49 GMT
+      - Wed, 28 Jul 2021 19:41:09 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1264,7 +1348,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:50 GMT
+      - Wed, 28 Jul 2021 19:41:10 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1305,20 +1389,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:41:51 GMT
+      - Wed, 28 Jul 2021 19:41:10 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A486DA0F86A6F10000000000000001.m_1
+      - C7A41D9A101B2D610000000000000001.m_1
       NCBI-SID:
-      - C7A486DA0F86A6F1_0000SID
+      - C7A41D9A101B2D61_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A486DA0F86A6F1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:41:51 GMT
+      - ncbi_sid=C7A41D9A101B2D61_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:10 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -1329,6 +1413,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534074&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534074\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/004/ERR2534074/ERR2534074.fastq.gz\t1100830559\t895a107af87e643e80f1aa33dda08a18\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534074/G144_KO9_RNAseq_DMSO1.fastq.gz\t1145761230\ta75ea41c5c7c576caa5200cf820ee65c\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:10 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -1385,7 +1511,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:51 GMT
+      - Wed, 28 Jul 2021 19:41:11 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1467,7 +1593,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:53 GMT
+      - Wed, 28 Jul 2021 19:41:11 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1551,7 +1677,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:53 GMT
+      - Wed, 28 Jul 2021 19:41:13 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1629,7 +1755,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:54 GMT
+      - Wed, 28 Jul 2021 19:41:14 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1683,7 +1809,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:54 GMT
+      - Wed, 28 Jul 2021 19:41:14 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1724,20 +1850,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:41:55 GMT
+      - Wed, 28 Jul 2021 19:41:14 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A487070F86A7310000000000000001.m_1
+      - C7A41DAB101B2DA10000000000000001.m_1
       NCBI-SID:
-      - C7A487070F86A731_0000SID
+      - C7A41DAB101B2DA1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A487070F86A731_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:41:55 GMT
+      - ncbi_sid=C7A41DAB101B2DA1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:14 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -1748,6 +1874,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534075&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534075\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/005/ERR2534075/ERR2534075.fastq.gz\t988527951\td8909dd7d2ebe993b6a0136f1fdbbbdf\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534075/G144_KO9_RNAseq_DMSO2.fastq.gz\t1028859346\tac67f56d04d171f4848bd680f7bc0948\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:15 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -1804,7 +1972,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:55 GMT
+      - Wed, 28 Jul 2021 19:41:15 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1890,7 +2058,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:55 GMT
+      - Wed, 28 Jul 2021 19:41:16 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -1974,7 +2142,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:56 GMT
+      - Wed, 28 Jul 2021 19:41:16 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2052,7 +2220,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:57 GMT
+      - Wed, 28 Jul 2021 19:41:17 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2106,7 +2274,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:57 GMT
+      - Wed, 28 Jul 2021 19:41:19 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2147,20 +2315,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:41:57 GMT
+      - Wed, 28 Jul 2021 19:41:19 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956AC90F86A7510000000000000001.m_1
+      - C7A41DBE101B2DF10000000000000001.m_1
       NCBI-SID:
-      - CC956AC90F86A751_0000SID
+      - C7A41DBE101B2DF1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956AC90F86A751_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:41:57 GMT
+      - ncbi_sid=C7A41DBE101B2DF1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:19 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -2171,6 +2339,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534076&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534076\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/006/ERR2534076/ERR2534076.fastq.gz\t1282020356\t40598b820ef337261d26b6135301d8ad\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534076/G144_KO8_RNAseq_24h_1.fastq.gz\t1336023529\t87ef33d7d33e0eb591e1d11482e7f961\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:19 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -2227,7 +2437,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:58 GMT
+      - Wed, 28 Jul 2021 19:41:20 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2313,7 +2523,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:58 GMT
+      - Wed, 28 Jul 2021 19:41:20 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2397,7 +2607,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:59 GMT
+      - Wed, 28 Jul 2021 19:41:21 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2475,7 +2685,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:41:59 GMT
+      - Wed, 28 Jul 2021 19:41:25 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2529,7 +2739,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:00 GMT
+      - Wed, 28 Jul 2021 19:41:26 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2570,20 +2780,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:01 GMT
+      - Wed, 28 Jul 2021 19:41:26 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A4872E0F86A7910000000000000001.m_1
+      - C7A41DDD101B2E610000000000000001.m_1
       NCBI-SID:
-      - C7A4872E0F86A791_0000SID
+      - C7A41DDD101B2E61_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A4872E0F86A791_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:01 GMT
+      - ncbi_sid=C7A41DDD101B2E61_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:26 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -2594,6 +2804,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534077&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534077\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/007/ERR2534077/ERR2534077.fastq.gz\t1150096005\t5a6030091948ae27ec5bc5a1ccb14001\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534077/G144_KO8_RNAseq_24h_2.fastq.gz\t1197876304\t4890986fa779d752b6c3fd4f08c6104f\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:26 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -2650,7 +2902,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:00 GMT
+      - Wed, 28 Jul 2021 19:41:27 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2736,7 +2988,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:02 GMT
+      - Wed, 28 Jul 2021 19:41:29 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2820,7 +3072,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:03 GMT
+      - Wed, 28 Jul 2021 19:41:29 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2898,7 +3150,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:04 GMT
+      - Wed, 28 Jul 2021 19:41:30 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2952,7 +3204,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:04 GMT
+      - Wed, 28 Jul 2021 19:41:30 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -2993,20 +3245,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:05 GMT
+      - Wed, 28 Jul 2021 19:41:31 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A487960F86A7D10000000000000001.m_1
+      - C7A41DF7101B2EB10000000000000001.m_1
       NCBI-SID:
-      - C7A487960F86A7D1_0000SID
+      - C7A41DF7101B2EB1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A487960F86A7D1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:05 GMT
+      - ncbi_sid=C7A41DF7101B2EB1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:31 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -3017,6 +3269,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534078&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534078\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/008/ERR2534078/ERR2534078.fastq.gz\t1536621662\taec2ace3d7e6c37ea2cc645fec91b508\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534078/G144_KO8_RNAseq_4h_1.fastq.gz\t1600009820\tf013cfe299039a31f0c60f89c94bddf5\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:32 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -3073,7 +3367,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:05 GMT
+      - Wed, 28 Jul 2021 19:41:32 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3159,7 +3453,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:06 GMT
+      - Wed, 28 Jul 2021 19:41:32 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3243,7 +3537,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:06 GMT
+      - Wed, 28 Jul 2021 19:41:33 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3321,7 +3615,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:07 GMT
+      - Wed, 28 Jul 2021 19:41:34 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3375,7 +3669,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:08 GMT
+      - Wed, 28 Jul 2021 19:41:34 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3416,20 +3710,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:08 GMT
+      - Wed, 28 Jul 2021 19:41:35 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956C630F86A8010000000000000001.m_1
+      - CC95EF24101B2EF10000000000000001.m_1
       NCBI-SID:
-      - CC956C630F86A801_0000SID
+      - CC95EF24101B2EF1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956C630F86A801_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:08 GMT
+      - ncbi_sid=CC95EF24101B2EF1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:35 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -3440,6 +3734,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534079&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534079\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/009/ERR2534079/ERR2534079.fastq.gz\t1132203170\t429470250bf1e5e7ab6fbb7fd7f1087f\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534079/G144_KO8_RNAseq_4h_2.fastq.gz\t1178873511\t24f54a4b765784df91b47d5ed39eb311\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:35 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -3496,7 +3832,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:09 GMT
+      - Wed, 28 Jul 2021 19:41:35 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3582,7 +3918,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:10 GMT
+      - Wed, 28 Jul 2021 19:41:36 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3666,7 +4002,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:10 GMT
+      - Wed, 28 Jul 2021 19:41:37 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3744,7 +4080,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:11 GMT
+      - Wed, 28 Jul 2021 19:41:38 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3798,7 +4134,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:12 GMT
+      - Wed, 28 Jul 2021 19:41:39 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -3839,20 +4175,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:12 GMT
+      - Wed, 28 Jul 2021 19:41:39 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A487C50F86A8410000000000000001.m_1
+      - CC95EF3E101B2F310000000000000001.m_1
       NCBI-SID:
-      - C7A487C50F86A841_0000SID
+      - CC95EF3E101B2F31_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A487C50F86A841_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:12 GMT
+      - ncbi_sid=CC95EF3E101B2F31_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:39 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -3863,6 +4199,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534080&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534080\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/000/ERR2534080/ERR2534080.fastq.gz\t1333847546\t831e6a1e98dca3e530e1409e73bac1ef\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534080/G144_KO9_RNAseq_24h_1.fastq.gz\t1388655605\t1cafe0e6f1cb09d106bd723397442c86\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:40 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -3919,7 +4297,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:13 GMT
+      - Wed, 28 Jul 2021 19:41:40 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4005,7 +4383,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:14 GMT
+      - Wed, 28 Jul 2021 19:41:40 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4089,7 +4467,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:15 GMT
+      - Wed, 28 Jul 2021 19:41:41 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4167,7 +4545,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:15 GMT
+      - Wed, 28 Jul 2021 19:41:41 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4221,7 +4599,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:15 GMT
+      - Wed, 28 Jul 2021 19:41:42 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4262,20 +4640,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:16 GMT
+      - Wed, 28 Jul 2021 19:41:43 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956D2F0F86A8810000000000000001.m_1
+      - C7A41E75101B2F710000000000000001.m_1
       NCBI-SID:
-      - CC956D2F0F86A881_0000SID
+      - C7A41E75101B2F71_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956D2F0F86A881_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:16 GMT
+      - ncbi_sid=C7A41E75101B2F71_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:43 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -4286,6 +4664,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534081&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534081\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/001/ERR2534081/ERR2534081.fastq.gz\t1446750089\t788fc2528be1fba017c3e3256d283a6b\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534081/G144_KO9_RNAseq_24h_2.fastq.gz\t1505999963\t7d8548778e311bb0dcc7eee2583dcedd\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:44 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -4342,7 +4762,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:16 GMT
+      - Wed, 28 Jul 2021 19:41:43 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4428,7 +4848,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:16 GMT
+      - Wed, 28 Jul 2021 19:41:44 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4512,7 +4932,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:18 GMT
+      - Wed, 28 Jul 2021 19:41:44 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4590,7 +5010,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:19 GMT
+      - Wed, 28 Jul 2021 19:41:45 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4644,7 +5064,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:19 GMT
+      - Wed, 28 Jul 2021 19:41:46 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4685,20 +5105,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:20 GMT
+      - Wed, 28 Jul 2021 19:41:47 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A487ED0F86A8C10000000000000001.m_1
+      - C7A41EA2101B2FB10000000000000001.m_1
       NCBI-SID:
-      - C7A487ED0F86A8C1_0000SID
+      - C7A41EA2101B2FB1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A487ED0F86A8C1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:20 GMT
+      - ncbi_sid=C7A41EA2101B2FB1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:47 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -4709,6 +5129,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534082&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534082\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/002/ERR2534082/ERR2534082.fastq.gz\t1810089565\t7b93d8c5e3baaead488b919819d1f8b7\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534082/G144_KO9_RNAseq_4h_1.fastq.gz\t1914915905\t0050389f2fbb6b230a0adf29580c38df\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:48 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -4765,7 +5227,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:20 GMT
+      - Wed, 28 Jul 2021 19:41:49 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4851,7 +5313,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:20 GMT
+      - Wed, 28 Jul 2021 19:41:49 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -4935,7 +5397,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:22 GMT
+      - Wed, 28 Jul 2021 19:41:50 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5013,7 +5475,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:22 GMT
+      - Wed, 28 Jul 2021 19:41:51 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5067,7 +5529,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:23 GMT
+      - Wed, 28 Jul 2021 19:41:51 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5108,20 +5570,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:24 GMT
+      - Wed, 28 Jul 2021 19:41:52 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956D470F86A9010000000000000001.m_1
+      - C7A41EC6101B30010000000000000001.m_1
       NCBI-SID:
-      - CC956D470F86A901_0000SID
+      - C7A41EC6101B3001_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956D470F86A901_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:24 GMT
+      - ncbi_sid=C7A41EC6101B3001_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:52 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -5132,6 +5594,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534083&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534083\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/003/ERR2534083/ERR2534083.fastq.gz\t1364338778\t5d9c21fcdbf30929dd54fe64a2858096\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534083/G144_KO9_RNAseq_4h_2.fastq.gz\t1476580896\tb175da8f8c4548f974ca380386daa3b9\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:52 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -5189,7 +5693,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:25 GMT
+      - Wed, 28 Jul 2021 19:41:53 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5271,7 +5775,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:25 GMT
+      - Wed, 28 Jul 2021 19:41:53 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5354,7 +5858,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:26 GMT
+      - Wed, 28 Jul 2021 19:41:54 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5432,7 +5936,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:26 GMT
+      - Wed, 28 Jul 2021 19:41:54 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5486,7 +5990,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:27 GMT
+      - Wed, 28 Jul 2021 19:41:55 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5527,20 +6031,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:29 GMT
+      - Wed, 28 Jul 2021 19:41:56 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A488080F86A9510000000000000001.m_1
+      - CC95EFB4101B30410000000000000001.m_1
       NCBI-SID:
-      - C7A488080F86A951_0000SID
+      - CC95EFB4101B3041_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A488080F86A951_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:29 GMT
+      - ncbi_sid=CC95EFB4101B3041_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:41:56 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -5551,6 +6055,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534084&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534084\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/004/ERR2534084/ERR2534084.fastq.gz\t1246412999\t66ea10048085214a1d6a2164fad08440\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534084/G144_Parental_RNAseq_DMSO1.fastq.gz\t1298135488\ta174bf37dd39e1848734eebd87555d64\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:41:57 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -5608,7 +6154,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:28 GMT
+      - Wed, 28 Jul 2021 19:41:57 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5690,7 +6236,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:29 GMT
+      - Wed, 28 Jul 2021 19:41:58 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5773,7 +6319,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:30 GMT
+      - Wed, 28 Jul 2021 19:41:59 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5851,7 +6397,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:32 GMT
+      - Wed, 28 Jul 2021 19:42:00 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5905,7 +6451,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:32 GMT
+      - Wed, 28 Jul 2021 19:42:00 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -5946,20 +6492,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:32 GMT
+      - Wed, 28 Jul 2021 19:42:00 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956D7D0F86A9810000000000000001.m_1
+      - CC95EFE5101B30810000000000000001.m_1
       NCBI-SID:
-      - CC956D7D0F86A981_0000SID
+      - CC95EFE5101B3081_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956D7D0F86A981_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:32 GMT
+      - ncbi_sid=CC95EFE5101B3081_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:00 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -5970,6 +6516,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534085&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534085\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/005/ERR2534085/ERR2534085.fastq.gz\t986001790\t4921d2019bec9d2eb3746caca23307b2\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534085/G144_Parental_RNAseq_DMSO2.fastq.gz\t1027314622\t20fc8816e51bd3da97def0ead2a60b0b\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:01 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -6027,7 +6615,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:33 GMT
+      - Wed, 28 Jul 2021 19:42:01 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6109,7 +6697,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:34 GMT
+      - Wed, 28 Jul 2021 19:42:02 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6192,7 +6780,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:35 GMT
+      - Wed, 28 Jul 2021 19:42:02 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6270,7 +6858,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:35 GMT
+      - Wed, 28 Jul 2021 19:42:03 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6324,7 +6912,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:36 GMT
+      - Wed, 28 Jul 2021 19:42:04 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6365,20 +6953,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:37 GMT
+      - Wed, 28 Jul 2021 19:42:04 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956D970F86A9D10000000000000001.m_1
+      - C7A41F5B101B30C10000000000000001.m_1
       NCBI-SID:
-      - CC956D970F86A9D1_0000SID
+      - C7A41F5B101B30C1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956D970F86A9D1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:37 GMT
+      - ncbi_sid=C7A41F5B101B30C1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:04 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -6389,6 +6977,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534086&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534086\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/006/ERR2534086/ERR2534086.fastq.gz\t935756969\tf60033d4f40591a93092b83ad0a487f1\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534086/G144_Parental_RNAseq_DMSO3.fastq.gz\t974487429\t7d15b05abbea7e4f253dbe1311c983ee\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:05 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -6446,7 +7076,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:37 GMT
+      - Wed, 28 Jul 2021 19:42:06 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6528,7 +7158,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:39 GMT
+      - Wed, 28 Jul 2021 19:42:06 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6611,7 +7241,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:39 GMT
+      - Wed, 28 Jul 2021 19:42:07 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6689,7 +7319,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:39 GMT
+      - Wed, 28 Jul 2021 19:42:08 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6743,7 +7373,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:40 GMT
+      - Wed, 28 Jul 2021 19:42:08 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6784,20 +7414,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:41 GMT
+      - Wed, 28 Jul 2021 19:42:08 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A488730F86AA110000000000000001.m_1
+      - C7A42023101B31110000000000000001.m_1
       NCBI-SID:
-      - C7A488730F86AA11_0000SID
+      - C7A42023101B3111_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A488730F86AA11_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:41 GMT
+      - ncbi_sid=C7A42023101B3111_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:09 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -6808,6 +7438,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534087&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534087\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/007/ERR2534087/ERR2534087.fastq.gz\t1222071540\t70a8511739490d8e3694c82dabf027d1\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534087/G144_WTclone_RNAseq_DMSO1.fastq.gz\t1272114070\t836d2e5186e468db4640ac7731e36f59\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:09 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -6865,7 +7537,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:41 GMT
+      - Wed, 28 Jul 2021 19:42:10 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -6947,7 +7619,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:42 GMT
+      - Wed, 28 Jul 2021 19:42:10 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7030,7 +7702,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:42 GMT
+      - Wed, 28 Jul 2021 19:42:11 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7108,7 +7780,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:43 GMT
+      - Wed, 28 Jul 2021 19:42:12 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7162,7 +7834,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:43 GMT
+      - Wed, 28 Jul 2021 19:42:12 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7203,20 +7875,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:44 GMT
+      - Wed, 28 Jul 2021 19:42:13 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A4889C0F86AA410000000000000001.m_1
+      - CC95F187101B31510000000000000001.m_1
       NCBI-SID:
-      - C7A4889C0F86AA41_0000SID
+      - CC95F187101B3151_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A4889C0F86AA41_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:44 GMT
+      - ncbi_sid=CC95F187101B3151_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:13 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -7227,6 +7899,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534088&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534088\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/008/ERR2534088/ERR2534088.fastq.gz\t1054521498\tab57f3177e3796fa02fa9c921ad187d2\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534088/G144_WTclone_RNAseq_DMSO2.fastq.gz\t1099839401\tc5d2613fe09ae1bbc2ace0892b8ce3ec\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:13 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -7284,7 +7998,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:44 GMT
+      - Wed, 28 Jul 2021 19:42:14 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7370,7 +8084,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:45 GMT
+      - Wed, 28 Jul 2021 19:42:14 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7453,7 +8167,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:46 GMT
+      - Wed, 28 Jul 2021 19:42:15 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7531,7 +8245,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:48 GMT
+      - Wed, 28 Jul 2021 19:42:16 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7585,7 +8299,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:48 GMT
+      - Wed, 28 Jul 2021 19:42:16 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7626,20 +8340,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:49 GMT
+      - Wed, 28 Jul 2021 19:42:17 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956DED0F86AA910000000000000001.m_1
+      - CC95F218101B31910000000000000001.m_1
       NCBI-SID:
-      - CC956DED0F86AA91_0000SID
+      - CC95F218101B3191_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956DED0F86AA91_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:49 GMT
+      - ncbi_sid=CC95F218101B3191_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:17 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -7650,6 +8364,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534089&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534089\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/009/ERR2534089/ERR2534089.fastq.gz\t936697735\t61cddd1766f5e4757fefd4a99865d3e0\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534089/G144_Parental_RNAseq_24h_1.fastq.gz\t975986547\ta1cd512c64c06f21259ee1c41beb2a5a\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:18 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -7707,7 +8463,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:50 GMT
+      - Wed, 28 Jul 2021 19:42:18 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7793,7 +8549,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:50 GMT
+      - Wed, 28 Jul 2021 19:42:18 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7876,7 +8632,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:51 GMT
+      - Wed, 28 Jul 2021 19:42:19 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -7954,7 +8710,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:52 GMT
+      - Wed, 28 Jul 2021 19:42:21 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8008,7 +8764,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:52 GMT
+      - Wed, 28 Jul 2021 19:42:21 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8049,20 +8805,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:54 GMT
+      - Wed, 28 Jul 2021 19:42:21 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956E100F86AAE10000000000000001.m_1
+      - C7A42111101B31D10000000000000001.m_1
       NCBI-SID:
-      - CC956E100F86AAE1_0000SID
+      - C7A42111101B31D1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956E100F86AAE1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:54 GMT
+      - ncbi_sid=C7A42111101B31D1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:21 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -8073,6 +8829,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534090&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534090\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/000/ERR2534090/ERR2534090.fastq.gz\t1061721210\tb6f84a04edb37b59613dc8d59e9647ce\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534090/G144_Parental_RNAseq_24h_2.fastq.gz\t1106158490\t50a58f0d2237a1bd2453da5df48228a8\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:27 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -8130,7 +8928,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:54 GMT
+      - Wed, 28 Jul 2021 19:42:27 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8216,7 +9014,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:56 GMT
+      - Wed, 28 Jul 2021 19:42:28 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8299,7 +9097,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:56 GMT
+      - Wed, 28 Jul 2021 19:42:29 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8377,7 +9175,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:57 GMT
+      - Wed, 28 Jul 2021 19:42:29 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8431,7 +9229,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:57 GMT
+      - Wed, 28 Jul 2021 19:42:31 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8472,20 +9270,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:42:58 GMT
+      - Wed, 28 Jul 2021 19:42:31 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956E3A0F86AB210000000000000001.m_1
+      - CC95F25B101B32710000000000000001.m_1
       NCBI-SID:
-      - CC956E3A0F86AB21_0000SID
+      - CC95F25B101B3271_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956E3A0F86AB21_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:42:58 GMT
+      - ncbi_sid=CC95F25B101B3271_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:31 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -8496,6 +9294,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534091&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534091\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/001/ERR2534091/ERR2534091.fastq.gz\t989268235\t0802cce838493fc43f1633340c764b14\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534091/G144_Parental_RNAseq_24h_3.fastq.gz\t1030713695\tde063ac40bec17deefda44342353dd0d\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:31 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -8553,7 +9393,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:58 GMT
+      - Wed, 28 Jul 2021 19:42:33 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8639,7 +9479,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:58 GMT
+      - Wed, 28 Jul 2021 19:42:33 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8722,7 +9562,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:42:59 GMT
+      - Wed, 28 Jul 2021 19:42:34 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8800,7 +9640,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:00 GMT
+      - Wed, 28 Jul 2021 19:42:35 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8854,7 +9694,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:00 GMT
+      - Wed, 28 Jul 2021 19:42:35 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -8895,20 +9735,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:01 GMT
+      - Wed, 28 Jul 2021 19:42:36 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956E9C0F86AB510000000000000001.m_1
+      - C7A42164101B32C10000000000000001.m_1
       NCBI-SID:
-      - CC956E9C0F86AB51_0000SID
+      - C7A42164101B32C1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956E9C0F86AB51_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:01 GMT
+      - ncbi_sid=C7A42164101B32C1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:36 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -8919,6 +9759,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534092&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534092\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/002/ERR2534092/ERR2534092.fastq.gz\t1032472887\t653c55e458a2554089c39a4e18d70927\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534092/G144_Parental_RNAseq_4h_1.fastq.gz\t1075913209\t6d410b59ed993b1c515ec502cad05534\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:42 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -8976,7 +9858,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:02 GMT
+      - Wed, 28 Jul 2021 19:42:42 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9062,7 +9944,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:03 GMT
+      - Wed, 28 Jul 2021 19:42:43 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9145,7 +10027,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:03 GMT
+      - Wed, 28 Jul 2021 19:42:43 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9223,7 +10105,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:05 GMT
+      - Wed, 28 Jul 2021 19:42:43 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9277,7 +10159,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:05 GMT
+      - Wed, 28 Jul 2021 19:42:44 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9318,20 +10200,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:06 GMT
+      - Wed, 28 Jul 2021 19:42:45 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956EE30F86ABA10000000000000001.m_1
+      - C7A421B2101B33510000000000000001.m_1
       NCBI-SID:
-      - CC956EE30F86ABA1_0000SID
+      - C7A421B2101B3351_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956EE30F86ABA1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:06 GMT
+      - ncbi_sid=C7A421B2101B3351_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:45 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -9342,6 +10224,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534093&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534093\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/003/ERR2534093/ERR2534093.fastq.gz\t961178965\t6e274ff76681397696f3da627dabb387\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534093/G144_Parental_RNAseq_4h_2.fastq.gz\t1001231193\t1d9adb545303b3a0d7e9f20ca98f45d7\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:46 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -9399,7 +10323,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:06 GMT
+      - Wed, 28 Jul 2021 19:42:46 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9485,7 +10409,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:06 GMT
+      - Wed, 28 Jul 2021 19:42:47 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9568,7 +10492,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:07 GMT
+      - Wed, 28 Jul 2021 19:42:48 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9646,7 +10570,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:08 GMT
+      - Wed, 28 Jul 2021 19:42:48 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9700,7 +10624,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:09 GMT
+      - Wed, 28 Jul 2021 19:42:48 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9741,20 +10665,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:09 GMT
+      - Wed, 28 Jul 2021 19:42:49 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956F1A0F86ABD10000000000000001.m_1
+      - CC95F2CE101B33910000000000000001.m_1
       NCBI-SID:
-      - CC956F1A0F86ABD1_0000SID
+      - CC95F2CE101B3391_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956F1A0F86ABD1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:09 GMT
+      - ncbi_sid=CC95F2CE101B3391_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:49 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -9765,6 +10689,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534094&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534094\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/004/ERR2534094/ERR2534094.fastq.gz\t1013301291\ta4f593c11cf4db4f5a141897ad94274c\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534094/G144_Parental_RNAseq_4h_3.fastq.gz\t1055226153\t3dad11032609517b430aab1d1df2835c\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:50 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -9822,7 +10788,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:10 GMT
+      - Wed, 28 Jul 2021 19:42:51 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9908,7 +10874,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:10 GMT
+      - Wed, 28 Jul 2021 19:42:52 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -9991,7 +10957,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:11 GMT
+      - Wed, 28 Jul 2021 19:42:53 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10069,7 +11035,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:12 GMT
+      - Wed, 28 Jul 2021 19:42:53 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10123,7 +11089,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:13 GMT
+      - Wed, 28 Jul 2021 19:42:54 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10164,20 +11130,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:14 GMT
+      - Wed, 28 Jul 2021 19:42:54 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956F5F0F86AC210000000000000001.m_1
+      - C7A421F0101B33E10000000000000001.m_1
       NCBI-SID:
-      - CC956F5F0F86AC21_0000SID
+      - C7A421F0101B33E1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956F5F0F86AC21_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:14 GMT
+      - ncbi_sid=C7A421F0101B33E1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:54 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -10188,6 +11154,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534095&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534095\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/005/ERR2534095/ERR2534095.fastq.gz\t1071271905\tf7df87aa02b5689dae89556042df7223\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534095/G144_WTclone_RNAseq_24h_1.fastq.gz\t1116056605\tc410683ea6b481add8548e826b53091d\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:55 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -10245,7 +11253,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:14 GMT
+      - Wed, 28 Jul 2021 19:42:56 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10331,7 +11339,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:15 GMT
+      - Wed, 28 Jul 2021 19:42:56 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10414,7 +11422,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:16 GMT
+      - Wed, 28 Jul 2021 19:42:57 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10492,7 +11500,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:17 GMT
+      - Wed, 28 Jul 2021 19:42:58 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10546,7 +11554,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:17 GMT
+      - Wed, 28 Jul 2021 19:42:58 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10587,20 +11595,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:18 GMT
+      - Wed, 28 Jul 2021 19:42:59 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC956F960F86AC610000000000000001.m_1
+      - C7A42211101B34310000000000000001.m_1
       NCBI-SID:
-      - CC956F960F86AC61_0000SID
+      - C7A42211101B3431_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC956F960F86AC61_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:18 GMT
+      - ncbi_sid=C7A42211101B3431_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:42:59 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -10611,6 +11619,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534096&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534096\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/006/ERR2534096/ERR2534096.fastq.gz\t1042880074\tec7e2a6c4f5a25107d99a50c115d4f7c\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534096/G144_WTclone_RNAseq_24h_2.fastq.gz\t1086208196\teb01cfdff7dfd39cfd30e5a6be2045ef\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:42:59 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -10668,7 +11718,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:18 GMT
+      - Wed, 28 Jul 2021 19:43:00 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10754,7 +11804,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:19 GMT
+      - Wed, 28 Jul 2021 19:43:01 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10837,7 +11887,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:19 GMT
+      - Wed, 28 Jul 2021 19:43:02 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10915,7 +11965,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:20 GMT
+      - Wed, 28 Jul 2021 19:43:02 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -10969,7 +12019,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:21 GMT
+      - Wed, 28 Jul 2021 19:43:03 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -11010,20 +12060,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:22 GMT
+      - Wed, 28 Jul 2021 19:43:04 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - C7A48B090F86ACA10000000000000001.m_1
+      - CC95F426101B34810000000000000001.m_1
       NCBI-SID:
-      - C7A48B090F86ACA1_0000SID
+      - CC95F426101B3481_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=C7A48B090F86ACA1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:22 GMT
+      - ncbi_sid=CC95F426101B3481_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:43:04 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -11034,6 +12084,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534097&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534097\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/007/ERR2534097/ERR2534097.fastq.gz\t1263173701\t131910cd72175e2b1218785a96cf6eff\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534097/G144_WTclone_RNAseq_4h_1.fastq.gz\t1316839373\ta47d39765d40e29c4806c97d6c1b7e8a\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:43:04 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
@@ -11091,7 +12183,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:22 GMT
+      - Wed, 28 Jul 2021 19:43:06 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -11177,7 +12269,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:22 GMT
+      - Wed, 28 Jul 2021 19:43:06 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -11260,7 +12352,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:23 GMT
+      - Wed, 28 Jul 2021 19:43:07 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -11338,7 +12430,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:23 GMT
+      - Wed, 28 Jul 2021 19:43:07 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -11392,7 +12484,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:25 GMT
+      - Wed, 28 Jul 2021 19:43:08 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -11433,20 +12525,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:26 GMT
+      - Wed, 28 Jul 2021 19:43:08 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC9570060F86ACE10000000000000001.m_1
+      - CC95F471101B34C10000000000000001.m_1
       NCBI-SID:
-      - CC9570060F86ACE1_0000SID
+      - CC95F471101B34C1_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC9570060F86ACE1_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:26 GMT
+      - ncbi_sid=CC95F471101B34C1_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:43:08 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:
@@ -11457,6 +12549,48 @@ interactions:
       - Accept-Encoding
       X-UA-Compatible:
       - IE=Edge
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERR2534098&result=read_run
+  response:
+    body:
+      string: "run_accession\tfastq_ftp\tfastq_bytes\tfastq_md5\tsubmitted_ftp\tsubmitted_bytes\tsubmitted_md5\tsra_ftp\tsra_bytes\tsra_md5\nERR2534098\tftp.sra.ebi.ac.uk/vol1/fastq/ERR253/008/ERR2534098/ERR2534098.fastq.gz\t1145401804\t911c351cdd7ab7c10a10d06f0bc3e3ea\tftp.sra.ebi.ac.uk/vol1/run/ERR253/ERR2534098/G144_WTclone_RNAseq_4h_2.fastq.gz\t1192847608\t01566d01b53ff691ae40cb37416c8335\t\t\t\n"
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - text/plain
+      Date:
+      - Wed, 28 Jul 2021 19:43:09 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - Apache-Coyote/1.1
+      Strict-Transport-Security:
+      - max-age=0
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
       X-XSS-Protection:
       - 1; mode=block
     status:
