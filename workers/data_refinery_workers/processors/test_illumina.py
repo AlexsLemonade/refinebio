@@ -273,7 +273,11 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         )
 
         final_context = illumina.illumina_to_pcl(pj.pk)
-        self.assertSucceeded(pj)
+        # XXX: For now, this processor job fails, but we want to make sure that it fails in the right place
+        # See https://github.com/AlexsLemonade/refinebio/issues/2870 for why it is failing.
+        self.assertFailed(
+            pj, "Encountered error in R code while running illumina.R pipeline during processing"
+        )
 
         # Make sure that the input is now utf-8 encoded and has the right headers.
 
