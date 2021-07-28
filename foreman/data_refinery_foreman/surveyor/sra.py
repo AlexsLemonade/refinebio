@@ -27,8 +27,8 @@ logger = get_and_configure_logger(__name__)
 
 
 DOWNLOAD_SOURCE = "NCBI"  # or "ENA". Change this to download from NCBI (US) or ENA (UK).
-ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}"
-ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
+ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/browser/view/{}"
+ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/browser/api/xml/{}"
 NCBI_DOWNLOAD_URL_TEMPLATE = (
     "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
     "{first_three}/{first_six}/{accession}/{accession}.sra"
@@ -307,7 +307,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def _build_ncbi_file_url(run_accession: str):
-        """ Build the path to the hypothetical .sra file we want """
+        """Build the path to the hypothetical .sra file we want"""
         accession = run_accession
         first_three = accession[:3]
         first_six = accession[:6]
@@ -331,9 +331,9 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def _apply_harmonized_metadata_to_sample(sample: Sample, metadata: dict):
         """Harmonizes the metadata and applies it to `sample`"""
-        sample.title = harmony.extract_title(metadata)
-        harmonized_sample = harmony.harmonize([metadata])
-        for key, value in harmonized_sample[sample.title].items():
+        harmonizer = harmony.Harmonizer()
+        harmonized_sample = harmonizer.harmonize_sample(metadata)
+        for key, value in harmonized_sample.items():
             setattr(sample, key, value)
 
     @staticmethod
