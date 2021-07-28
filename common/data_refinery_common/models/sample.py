@@ -1,5 +1,6 @@
 from typing import Set
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -152,9 +153,15 @@ class Sample(models.Model):
     def get_most_recent_smashable_result_file(self):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         try:
-            latest_computed_file = self.computed_files.filter(
-                is_public=True, is_smashable=True,
-            ).latest()
+            if settings.RUNNING_IN_CLOUD:
+                latest_computed_file = self.computed_files.filter(
+                    is_public=True, is_smashable=True, s3_bucket__isnull=False, s3_key__isnull=False
+                ).latest()
+            else:
+                latest_computed_file = self.computed_files.filter(
+                    is_public=True, is_smashable=True,
+                ).latest()
+
             return latest_computed_file
         except ComputedFile.DoesNotExist as e:
             # This sample has no smashable files yet.
