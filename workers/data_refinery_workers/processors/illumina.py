@@ -112,17 +112,23 @@ def _sanitize_input_file(job_context: Dict) -> Dict:
             for line in file_input:
                 HEADER_CHARS = ["#", "!", "^"]
 
+                stripped_line = line.strip()
+
+                if stripped_line == "":
+                    continue
+
                 # Sometimes we have a quoted header, so we need to check both
-                is_header = line[0] in HEADER_CHARS or (
-                    line[0] in ["'", '"'] and line[1] in HEADER_CHARS
+                is_header = stripped_line[0] in HEADER_CHARS or (
+                    len(stripped_line) > 1
+                    and stripped_line[0] in ["'", '"']
+                    and stripped_line[1] in HEADER_CHARS
                 )
-                is_empty = line.strip() == ""
 
                 # There are some weird lines that start with accession
                 # codes that don't hold gene measurements
-                is_accession_line = line[0:3].upper() == "GSM"
+                is_accession_line = stripped_line[0:3].upper() == "GSM"
 
-                if not is_header and not is_empty and not is_accession_line:
+                if not is_header and not is_accession_line:
                     file_output.write(line)
                     wrote_a_line = True
 

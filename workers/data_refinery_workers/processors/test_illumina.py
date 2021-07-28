@@ -327,6 +327,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
 
         # Make sure that the row names are no longer quoted after sanitizing the file
         def assertNotQuoted(string: str):
+            string = string.strip()
             self.assertNotEqual(string[0], '"')
             self.assertNotEqual(string[-1], '"')
 
