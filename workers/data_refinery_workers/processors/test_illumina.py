@@ -166,7 +166,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         sample.accession_code = "ignoreme_for_description"
         sample.save()
 
-        final_context = illumina.illumina_to_pcl(job.pk)
+        final_context = illumina.illumina_to_pcl(job.pk, cleanup=False)
         self.assertSucceeded(job)
 
         for sample in final_context["samples"]:
@@ -185,7 +185,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
         organism.save()
 
         job = prepare_illumina_job({**GSE22427, "organism": organism})
-        final_context = illumina.illumina_to_pcl(job.pk)
+        final_context = illumina.illumina_to_pcl(job.pk, cleanup=False)
         self.assertTrue(final_context["abort"])
 
         # Cleanup after the job since it won't since we aren't running in cloud.
@@ -208,7 +208,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             }
         )
 
-        final_context = illumina.illumina_to_pcl(pj.pk)
+        final_context = illumina.illumina_to_pcl(pj.pk, cleanup=False)
         self.assertSucceeded(pj)
         self.assertEqual(final_context["platform"], "illuminaHumanv3")
 
@@ -265,7 +265,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             }
         )
 
-        final_context = illumina.illumina_to_pcl(pj.pk)
+        final_context = illumina.illumina_to_pcl(pj.pk, cleanup=False)
         # XXX: For now, this processor job fails, but we want to make sure that it fails in the right place
         # See https://github.com/AlexsLemonade/refinebio/issues/2870 for why it is failing.
         self.assertFailed(
@@ -322,7 +322,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             }
         )
 
-        final_context = illumina.illumina_to_pcl(pj.pk)
+        final_context = illumina.illumina_to_pcl(pj.pk, cleanup=False)
         self.assertSucceeded(pj)
 
         # Make sure that the row names are no longer quoted after sanitizing the file
@@ -367,7 +367,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             }
         )
 
-        final_context = illumina.illumina_to_pcl(pj.pk)
+        final_context = illumina.illumina_to_pcl(pj.pk, cleanup=False)
         self.assertSucceeded(pj)
 
     @tag("illumina")
@@ -392,7 +392,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             }
         )
 
-        final_context = illumina.illumina_to_pcl(pj.pk)
+        final_context = illumina.illumina_to_pcl(pj.pk, cleanup=False)
         self.assertSucceeded(pj)
 
         # Assert that the sanitized file is tab-separated (by reading it as a
@@ -423,7 +423,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             }
         )
 
-        final_context = illumina.illumina_to_pcl(pj.pk)
+        final_context = illumina.illumina_to_pcl(pj.pk, cleanup=False)
 
         self.assertFailed(pj, "Could not detect PValue column!")
 
@@ -449,7 +449,7 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             }
         )
 
-        final_context = illumina.illumina_to_pcl(pj.pk)
+        final_context = illumina.illumina_to_pcl(pj.pk, cleanup=False)
         self.assertSucceeded(pj)
 
     @tag("illumina")
