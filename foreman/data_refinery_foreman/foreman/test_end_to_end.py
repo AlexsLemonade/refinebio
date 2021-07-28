@@ -1,3 +1,4 @@
+import zipfile
 from datetime import timedelta
 from os import path
 from time import sleep
@@ -337,22 +338,34 @@ class FullFlowEndToEndTestCase(TestCase):
             "R64-1-1",
         )
 
-        # The `quant.sf` file is not directly associated with the sample, so we
-        # need to find it this way
-        quant_result = sample.results.get(processor__name="Salmon Quant")
-        quant_file = quant_result.computedfile_set.get(filename="quant.sf")
-        output_filename = quant_file.sync_from_s3(force=True)
+        # We are now going to download the `quant.sf` file by making a
+        # quant-only smasher job. We need to do this because the results bucket
+        # was locked down, so we can't access it without agreeing to the terms
+        # first.
+        pyrefinebio.create_token(agree_to_terms=True, save_token=False)
 
-        ref_filename = "/home/user/data_store/reference/SRR5085168_quant.sf"
+        dataset_path = "end_to_end_quant_dataset.zip"
+        pyrefinebio.download_dataset(
+            dataset_path,
+            "testendtoend@example.com",
+            dataset_dict={"SRP094706": ["SRR5085168"]},
+            quant_sf_only=True,
+            aggregation="EXPERIMENT",
+            timeout=timedelta(minutes=15),
+        )
+        self.assertTrue(path.exists(dataset_path))
 
         def squish_duplicates(data: pd.DataFrame) -> pd.DataFrame:
             return data.groupby(data.index, sort=False).mean()
 
+        ref_filename = "/home/user/data_store/reference/SRR5085168_quant.sf"
         ref = pd.read_csv(ref_filename, delimiter="\t", index_col=0)
         ref_TPM = squish_duplicates(pd.DataFrame({"reference": ref["TPM"]}))
         ref_NumReads = squish_duplicates(pd.DataFrame({"reference": ref["NumReads"]}))
 
-        out = pd.read_csv(output_filename, delimiter="\t", index_col=0)
+        with zipfile.ZipFile(dataset_path) as zf:
+            with zf.open("SRP094706/SRR5085168_quant.sf", "r") as out_file:
+                out = pd.read_csv(out_file, delimiter="\t", index_col=0)
         out_TPM = squish_duplicates(pd.DataFrame({"actual": out["TPM"]}))
         out_NumReads = squish_duplicates(pd.DataFrame({"actual": out["NumReads"]}))
 
