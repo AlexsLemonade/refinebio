@@ -1,0 +1,775 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.25.1
+    method: GET
+    uri: https://ftp.expasy.org/databases/cellosaurus/cellosaurus.xml
+  response:
+    body:
+      string: "<Cellosaurus>\r\n<header>\r\n  <terminology-name>Cellosaurus</terminology-name>\r\n
+        \ <description>Cellosaurus: a controlled vocabulary of cell lines</description>\r\n
+        \ <release version=\"38.0\" updated=\"2021-05-20\" nb-cell-lines=\"128806\"
+        nb-publications=\"21875\"/>\r\n  <terminology-list>\r\n    <terminology name=\"NCBI-Taxonomy\"
+        source=\"National Center for Biotechnology Information\" description=\"Taxonomy
+        database of organisms\">\r\n      <url>https://www.ncbi.nlm.nih.gov/taxonomy</url>\r\n
+        \   </terminology>\r\n    <terminology name=\"NCIt\" source=\"National Cancer
+        Institute\" description=\"Terminology of biomedical concepts\">\r\n      <url>https://ncit.nci.nih.gov</url>\r\n
+        \   </terminology>\r\n    <terminology name=\"ORDO\" source=\"Orphanet\" description=\"Rare
+        diseases ontology\">\r\n      <url>https://www.ebi.ac.uk/ols/ontologies/ordo</url>\r\n
+        \   </terminology>\r\n    <terminology name=\"ChEBI\" source=\"European Molecular
+        Biology Laboratory\" description=\"Chemical Entities of Biological Interest\">\r\n
+        \     <url>https://www.ebi.ac.uk/chebi/</url>\r\n    </terminology>\r\n    <terminology
+        name=\"PubChem\" source=\"National Center for Biotechnology Information\"
+        description=\"Public repository for information on chemical substances and
+        their biological activities\">\r\n      <url>https://pubchem.ncbi.nlm.nih.gov/</url>\r\n
+        \   </terminology>\r\n    <terminology name=\"DrugBank\" source=\"Wishart's
+        group\" description=\"DrugBank database\">\r\n      <url>https://www.drugbank.ca/</url>\r\n
+        \   </terminology>\r\n  </terminology-list>\r\n</header>\r\n<cell-line-list>\r\n<cell-line
+        category=\"Transformed cell line\" created=\"2012-10-22\" last_updated=\"2021-05-20\"
+        entry_version=\"14\" sex=\"Female\" age=\"Age unspecified\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_E548</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">#15310-LN</name>\r\n    <name
+        type=\"synonym\">15310-LN</name>\r\n    <name type=\"synonym\">TER461</name>\r\n
+        \   <name type=\"synonym\">TER-461</name>\r\n    <name type=\"synonym\">Ter
+        461</name>\r\n    <name type=\"synonym\">TER479</name>\r\n    <name type=\"synonym\">TER-479</name>\r\n
+        \   <name type=\"synonym\">Ter 479</name>\r\n    <name type=\"synonym\">Extract
+        519</name>\r\n  </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived
+        from sampling site\"> Peripheral blood </comment>\r\n    <comment category=\"Transformant\">\r\n
+        \     <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10376\">Epstein-Barr
+        virus (EBV)</cv-term>\r\n    </comment>\r\n    <comment category=\"Part of\">
+        12th International Histocompatibility Workshop (12IHW) cell line panel </comment>\r\n
+        \ </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <web-page-list>\r\n
+        \   <url><![CDATA[http://pathology.ucla.edu/workfiles/360cx.pdf]]></url>\r\n
+        \   <url><![CDATA[http://pathology.ucla.edu/workfiles/370cx.pdf]]></url>\r\n
+        \ </web-page-list>\r\n  <hla-lists>\r\n    <hla-list>\r\n      <hla-gene id=\"A*\">\r\n
+        \       <alleles>03,25</alleles>\r\n      </hla-gene>\r\n      <hla-gene id=\"B*\">\r\n
+        \       <alleles>37:01:01:01,47:01:01:03</alleles>\r\n      </hla-gene>\r\n
+        \     <hla-gene id=\"C*\">\r\n        <alleles>06</alleles>\r\n      </hla-gene>\r\n
+        \     <hla-gene id=\"DPA1*\">\r\n        <alleles>01</alleles>\r\n      </hla-gene>\r\n
+        \     <hla-gene id=\"DPB1*\">\r\n        <alleles>04:01:01</alleles>\r\n      </hla-gene>\r\n
+        \     <hla-gene id=\"DQA1*\">\r\n        <alleles>01:01:01:01,01:03:01</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DQB1*\">\r\n        <alleles>05:01:01;06:03:01:02</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DRB1*\">\r\n        <alleles>01:01:01,14:17</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DRB3*\">\r\n        <alleles>01:01</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-list-source>\r\n        <source>IPD-IMGT/HLA;
+        10074</source>\r\n      </hla-list-source>\r\n    </hla-list>\r\n  </hla-lists>\r\n
+        \ <xref-list>\r\n    <xref database=\"dbMHC\" category=\"Cell line databases/resources\"
+        accession=\"48439\"> </xref>\r\n    <xref database=\"ECACC\" category=\"Cell
+        line collections\" accession=\"94050311\">\r\n      <url><![CDATA[https://www.phe-culturecollections.org.uk/products/celllines/generalcell/detail.jsp?refId=94050311&collection=ecacc_gc]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"IHW\" category=\"Cell line databases/resources\"
+        accession=\"IHW09326\"> </xref>\r\n    <xref database=\"IPD-IMGT/HLA\" category=\"Cell
+        line databases/resources\" accession=\"10074\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/cgi-bin/imgt/hla/fetch_cell.cgi?10074]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54398957\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54398957]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Hybridoma\" created=\"2017-08-22\"
+        last_updated=\"2018-09-07\" entry_version=\"2\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_KA96</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">#16-15</name>\r\n  </name-list>\r\n
+        \ <comment-list>\r\n    <comment category=\"Monoclonal antibody target\">\r\n
+        \     <xref-list>\r\n        <xref database=\"UniProtKB\" category=\"Sequence
+        databases\" accession=\"Q5T5X7\">\r\n          <property-list>\r\n            <property
+        name=\"gene/protein designation\" value=\"Human BEND3\"/>\r\n          </property-list>\r\n
+        \         <url><![CDATA[https://www.uniprot.org/uniprot/Q5T5X7]]></url>\r\n
+        \       </xref>\r\n      </xref-list>\r\n    </comment>\r\n    <comment category=\"Monoclonal
+        antibody isotype\"> IgM </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10116\">Rattus norvegicus</cv-term>\r\n
+        \ </species-list>\r\n  <derived-from>\r\n    <cv-term terminology=\"Cellosaurus\"
+        accession=\"CVCL_4032\">P3X63Ag8.653</cv-term>\r\n  </derived-from>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"PubMed=25400923\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"RCB\" category=\"Cell line collections\"
+        accession=\"RCB4635\">\r\n      <url><![CDATA[http://cellbank.brc.riken.jp/cell_bank/CellInfo/?cellNo=RCB4635&lang=En]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54422067\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54422067]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Cancer cell line\"
+        created=\"2017-05-15\" last_updated=\"2020-07-02\" entry_version=\"3\" sex=\"Male\"
+        age=\"1-2M\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_IW91</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">#40a</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Breed/subspecies\">
+        C57BL/6 </comment>\r\n    <comment category=\"Derived from metastatic site\">
+        Peritoneum </comment>\r\n    <comment category=\"Transformant\">\r\n      <cv-term
+        terminology=\"ChEBI\" accession=\"CHEBI:46666\">Crocidolite asbestos</cv-term>\r\n
+        \   </comment>\r\n    <comment category=\"Characteristics\"> Established from
+        parent cell line after two passages in the peritoneal cavity of C57BL/6 mice
+        (PubMed=28159921) </comment>\r\n  </comment-list>\r\n  <disease-list>\r\n
+        \   <cv-term terminology=\"NCIt\" accession=\"C21619\">Mouse mesothelioma</cv-term>\r\n
+        \ </disease-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"10090\">Mus musculus</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_IW90\">40</cv-term>\r\n
+        \ </derived-from>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=28159921\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\"
+        accession=\"Q54422071\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q54422071]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Hybridoma\"
+        created=\"2012-06-06\" last_updated=\"2020-03-12\" entry_version=\"6\">\r\n
+        \ <accession-list>\r\n    <accession type=\"primary\">CVCL_B375</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">#490</name>\r\n
+        \   <name type=\"synonym\">490</name>\r\n    <name type=\"synonym\">Mab 7</name>\r\n
+        \   <name type=\"synonym\">Mab7</name>\r\n  </name-list>\r\n  <comment-list>\r\n
+        \   <comment category=\"Monoclonal antibody target\"> Cronartium ribicola
+        antigens </comment>\r\n    <comment category=\"Monoclonal antibody isotype\">
+        IgM, kappa </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term
+        terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \ </species-list>\r\n  <derived-from>\r\n    <cv-term terminology=\"Cellosaurus\"
+        accession=\"CVCL_4032\">P3X63Ag8.653</cv-term>\r\n  </derived-from>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"Patent=US5616470\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"CLO\" category=\"Ontologies\" accession=\"CLO_0001018\">\r\n
+        \     <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001018]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"HB-12029\">\r\n      <url><![CDATA[https://www.atcc.org/Products/All/HB-12029.aspx]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54422073\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54422073]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Hybridoma\" created=\"2014-07-17\"
+        last_updated=\"2020-03-12\" entry_version=\"5\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_X345</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">#822</name>\r\n    <name type=\"synonym\">822</name>\r\n
+        \   <name type=\"synonym\">Mab 13</name>\r\n    <name type=\"synonym\">Mab13</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Monoclonal antibody
+        target\"> Cronartium ribicola antigens </comment>\r\n    <comment category=\"Monoclonal
+        antibody isotype\"> IgM, kappa </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \ </species-list>\r\n  <derived-from>\r\n    <cv-term terminology=\"Cellosaurus\"
+        accession=\"CVCL_4032\">P3X63Ag8.653</cv-term>\r\n  </derived-from>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"Patent=US5616470\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"HB-12030\">\r\n      <url><![CDATA[https://www.atcc.org/Products/All/HB-12030.aspx]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54422076\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54422076]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Transformed cell line\"
+        created=\"2012-10-22\" last_updated=\"2021-05-20\" entry_version=\"13\" sex=\"Sex
+        unspecified\" age=\"Age unspecified\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_E549</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">#W7079</name>\r\n    <name type=\"synonym\">#W7079
+        REM</name>\r\n    <name type=\"synonym\">REMUS</name>\r\n    <name type=\"synonym\">W7079</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Peripheral blood </comment>\r\n    <comment category=\"Transformant\">\r\n
+        \     <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10376\">Epstein-Barr
+        virus (EBV)</cv-term>\r\n    </comment>\r\n    <comment category=\"Part of\">
+        12th International Histocompatibility Workshop (12IHW) cell line panel </comment>\r\n
+        \ </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"PubMed=30844424\"/>\r\n  </reference-list>\r\n
+        \ <hla-lists>\r\n    <hla-list>\r\n      <hla-gene id=\"A*\">\r\n        <alleles>02:01,02:06</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"B*\">\r\n        <alleles>40:01:02:01,67:01:01</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"C*\">\r\n        <alleles>03,07</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DPB1*\">\r\n        <alleles>04:01,05:01</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-list-source>\r\n        <source>IPD-IMGT/HLA;
+        11548</source>\r\n      </hla-list-source>\r\n    </hla-list>\r\n  </hla-lists>\r\n
+        \ <xref-list>\r\n    <xref database=\"dbMHC\" category=\"Cell line databases/resources\"
+        accession=\"48440\"> </xref>\r\n    <xref database=\"ECACC\" category=\"Cell
+        line collections\" accession=\"94022552\">\r\n      <url><![CDATA[https://www.phe-culturecollections.org.uk/products/celllines/generalcell/detail.jsp?refId=94022552&collection=ecacc_gc]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"IHW\" category=\"Cell line databases/resources\"
+        accession=\"IHW09223\"> </xref>\r\n    <xref database=\"IPD-IMGT/HLA\" category=\"Cell
+        line databases/resources\" accession=\"11548\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/cgi-bin/imgt/hla/fetch_cell.cgi?11548]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54480892\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54480892]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Hybridoma\" created=\"2013-02-11\"
+        last_updated=\"2019-05-24\" entry_version=\"5\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_G217</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">(BF1) 8A3.31</name>\r\n  </name-list>\r\n
+        \ <comment-list>\r\n    <comment category=\"Monoclonal antibody target\">\r\n
+        \     <xref-list>\r\n        <xref database=\"UniProtKB\" category=\"Sequence
+        databases\" accession=\"P05067\">\r\n          <property-list>\r\n            <property
+        name=\"gene/protein designation\" value=\"Human APP (binds to APP42)\"/>\r\n
+        \         </property-list>\r\n          <url><![CDATA[https://www.uniprot.org/uniprot/P05067]]></url>\r\n
+        \       </xref>\r\n      </xref-list>\r\n    </comment>\r\n    <comment category=\"Monoclonal
+        antibody isotype\"> IgG1 </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \ </species-list>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"Patent=US4845026\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"CLO\" category=\"Ontologies\"
+        accession=\"CLO_0001019\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001019]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"HB-9283\">\r\n      <url><![CDATA[https://www.atcc.org/Products/All/HB-9283.aspx]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54422077\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54422077]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Cancer cell line\"
+        created=\"2018-05-14\" last_updated=\"2021-01-12\" entry_version=\"3\" sex=\"Sex
+        unspecified\" age=\"Age unspecified\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_VG99</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">(L)PC6</name>\r\n  </name-list>\r\n  <str-list>\r\n
+        \   <source-list>\r\n      <source>TKG</source>\r\n    </source-list>\r\n
+        \   <marker-list>\r\n      <marker id=\"vWA\" conflict=\"false\">\r\n        <marker-data-list>\r\n
+        \         <marker-data>\r\n            <alleles>16,18</alleles>\r\n          </marker-data>\r\n
+        \       </marker-data-list>\r\n      </marker>\r\n      <marker id=\"TPOX\"
+        conflict=\"false\">\r\n        <marker-data-list>\r\n          <marker-data>\r\n
+        \           <alleles>8,11</alleles>\r\n          </marker-data>\r\n        </marker-data-list>\r\n
+        \     </marker>\r\n      <marker id=\"TH01\" conflict=\"false\">\r\n        <marker-data-list>\r\n
+        \         <marker-data>\r\n            <alleles>6</alleles>\r\n          </marker-data>\r\n
+        \       </marker-data-list>\r\n      </marker>\r\n      <marker id=\"D7S820\"
+        conflict=\"false\">\r\n        <marker-data-list>\r\n          <marker-data>\r\n
+        \           <alleles>8,12</alleles>\r\n          </marker-data>\r\n        </marker-data-list>\r\n
+        \     </marker>\r\n      <marker id=\"D5S818\" conflict=\"false\">\r\n        <marker-data-list>\r\n
+        \         <marker-data>\r\n            <alleles>11,12</alleles>\r\n          </marker-data>\r\n
+        \       </marker-data-list>\r\n      </marker>\r\n      <marker id=\"D16S539\"
+        conflict=\"false\">\r\n        <marker-data-list>\r\n          <marker-data>\r\n
+        \           <alleles>9,11</alleles>\r\n          </marker-data>\r\n        </marker-data-list>\r\n
+        \     </marker>\r\n      <marker id=\"D13S317\" conflict=\"false\">\r\n        <marker-data-list>\r\n
+        \         <marker-data>\r\n            <alleles>11</alleles>\r\n          </marker-data>\r\n
+        \       </marker-data-list>\r\n      </marker>\r\n      <marker id=\"CSF1PO\"
+        conflict=\"false\">\r\n        <marker-data-list>\r\n          <marker-data>\r\n
+        \           <alleles>12</alleles>\r\n          </marker-data>\r\n        </marker-data-list>\r\n
+        \     </marker>\r\n      <marker id=\"Amelogenin\" conflict=\"false\">\r\n
+        \       <marker-data-list>\r\n          <marker-data>\r\n            <alleles>X</alleles>\r\n
+        \         </marker-data>\r\n        </marker-data-list>\r\n      </marker>\r\n
+        \   </marker-list>\r\n  </str-list>\r\n  <disease-list>\r\n    <cv-term terminology=\"NCIt\"
+        accession=\"C4878\">Lung carcinoma</cv-term>\r\n  </disease-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo sapiens</cv-term>\r\n
+        \ </species-list>\r\n  <xref-list>\r\n    <xref database=\"TKG\" category=\"Cell
+        line collections\" accession=\"TKG 0732\">\r\n      <url><![CDATA[http://www2.idac.tohoku.ac.jp/dep/ccr/TKGdate/TKGvo107/0732.html]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q53869506\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q53869506]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite cell line\"
+        created=\"2012-04-04\" last_updated=\"2021-05-20\" entry_version=\"8\" sex=\"Sex
+        unspecified\" age=\"Embryo\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_6479</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">+/+
+        (A)</name>\r\n  </name-list>\r\n  <comment-list>\r\n    <comment category=\"Breed/subspecies\">
+        HRS/J </comment>\r\n    <comment category=\"Part of\"> Naval Biosciences Laboratory
+        (NBL) collection (transferred to ATCC in 1982) </comment>\r\n  </comment-list>\r\n
+        \ <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus
+        musculus</cv-term>\r\n  </species-list>\r\n  <xref-list>\r\n    <xref database=\"CLO\"
+        category=\"Ontologies\" accession=\"CLO_0001020\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001020]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"CRL-6470\">\r\n      <property-list>\r\n        <property name=\"Discontinued\"
+        value=\"true\"/>\r\n      </property-list>\r\n    </xref>\r\n    <xref database=\"Wikidata\"
+        category=\"Other\" accession=\"Q54481857\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q54481857]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite
+        cell line\" created=\"2012-04-04\" last_updated=\"2021-05-20\" entry_version=\"8\"
+        sex=\"Sex unspecified\" age=\"Embryo\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_6480</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">+/+ (B)</name>\r\n  </name-list>\r\n  <comment-list>\r\n
+        \   <comment category=\"Breed/subspecies\"> HRS/J </comment>\r\n    <comment
+        category=\"Part of\"> Naval Biosciences Laboratory (NBL) collection (transferred
+        to ATCC in 1982) </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term
+        terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \ </species-list>\r\n  <xref-list>\r\n    <xref database=\"CLO\" category=\"Ontologies\"
+        accession=\"CLO_0001021\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001021]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"CRL-6471\">\r\n      <property-list>\r\n        <property name=\"Discontinued\"
+        value=\"true\"/>\r\n      </property-list>\r\n    </xref>\r\n    <xref database=\"Wikidata\"
+        category=\"Other\" accession=\"Q54481859\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q54481859]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite
+        cell line\" created=\"2013-11-05\" last_updated=\"2021-05-20\" entry_version=\"6\"
+        sex=\"Sex unspecified\" age=\"Embryo\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_S361</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">+/+ (C)</name>\r\n  </name-list>\r\n  <comment-list>\r\n
+        \   <comment category=\"Breed/subspecies\"> HRS/J </comment>\r\n    <comment
+        category=\"Part of\"> Naval Biosciences Laboratory (NBL) collection (transferred
+        to ATCC in 1982) </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term
+        terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \ </species-list>\r\n  <xref-list>\r\n    <xref database=\"ATCC\" category=\"Cell
+        line collections\" accession=\"CRL-6472\">\r\n      <property-list>\r\n        <property
+        name=\"Discontinued\" value=\"true\"/>\r\n      </property-list>\r\n    </xref>\r\n
+        \   <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54481860\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54481860]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite cell line\"
+        created=\"2012-04-04\" last_updated=\"2021-05-20\" entry_version=\"10\" sex=\"Sex
+        unspecified\" age=\"14FD\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_4977</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">+/+
+        Li</name>\r\n  </name-list>\r\n  <comment-list>\r\n    <comment category=\"Breed/subspecies\">
+        HRS/J </comment>\r\n    <comment category=\"Derived from sampling site\">
+        Fetal liver </comment>\r\n    <comment category=\"Part of\"> Naval Biosciences
+        Laboratory (NBL) collection (transferred to ATCC in 1982) </comment>\r\n  </comment-list>\r\n
+        \ <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus
+        musculus</cv-term>\r\n  </species-list>\r\n  <web-page-list>\r\n    <url><![CDATA[https://www.thermofisher.com/ch/en/home/technical-resources/cell-lines/c/cell-lines-detail-340.html]]></url>\r\n
+        \ </web-page-list>\r\n  <xref-list>\r\n    <xref database=\"CLO\" category=\"Ontologies\"
+        accession=\"CLO_0001022\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001022]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"CRL-6467\">\r\n      <property-list>\r\n        <property name=\"Discontinued\"
+        value=\"true\"/>\r\n      </property-list>\r\n    </xref>\r\n    <xref database=\"Wikidata\"
+        category=\"Other\" accession=\"Q54481861\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q54481861]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Cancer
+        cell line\" created=\"2012-04-04\" last_updated=\"2021-05-20\" entry_version=\"7\"
+        sex=\"Female\" age=\"Adult\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_3627</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">+/+
+        MGT</name>\r\n  </name-list>\r\n  <comment-list>\r\n    <comment category=\"Breed/subspecies\">
+        HRS/J </comment>\r\n    <comment category=\"Derived from sampling site\">
+        Mammary gland </comment>\r\n    <comment category=\"Part of\"> Naval Biosciences
+        Laboratory (NBL) collection (transferred to ATCC in 1982) </comment>\r\n  </comment-list>\r\n
+        \ <disease-list>\r\n    <cv-term terminology=\"NCIt\" accession=\"C21678\">Malignant
+        neoplasms of the mouse mammary gland</cv-term>\r\n  </disease-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \ </species-list>\r\n  <xref-list>\r\n    <xref database=\"CLO\" category=\"Ontologies\"
+        accession=\"CLO_0001023\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001023]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"CRL-6468\">\r\n      <url><![CDATA[https://www.atcc.org/Products/All/CRL-6468.aspx]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54399824\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54399824]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Cancer cell line\"
+        created=\"2012-04-04\" last_updated=\"2021-05-20\" entry_version=\"8\" sex=\"Sex
+        unspecified\" age=\"&lt;1D\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_3628</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">+/+
+        SCT</name>\r\n  </name-list>\r\n  <comment-list>\r\n    <comment category=\"Breed/subspecies\">
+        HRS/J </comment>\r\n    <comment category=\"Part of\"> Naval Biosciences Laboratory
+        (NBL) collection (transferred to ATCC in 1982) </comment>\r\n  </comment-list>\r\n
+        \ <disease-list>\r\n    <cv-term terminology=\"NCIt\" accession=\"C23988\">Mouse
+        neoplasms</cv-term>\r\n  </disease-list>\r\n  <species-list>\r\n    <cv-term
+        terminology=\"NCBI-Taxonomy\" accession=\"10090\">Mus musculus</cv-term>\r\n
+        \ </species-list>\r\n  <xref-list>\r\n    <xref database=\"CLO\" category=\"Ontologies\"
+        accession=\"CLO_0001024\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001024]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"CRL-6469\">\r\n      <url><![CDATA[https://www.atcc.org/Products/All/CRL-6469.aspx]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54481866\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54481866]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Spontaneously immortalized
+        cell line\" created=\"2019-05-24\" last_updated=\"2020-07-02\" entry_version=\"2\"
+        sex=\"Male\" age=\"Embryonic stage\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_WM09</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">0.57</name>\r\n  </name-list>\r\n  <comment-list>\r\n
+        \   <comment category=\"Group\"> Insect cell line </comment>\r\n  </comment-list>\r\n
+        \ <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\" accession=\"7227\">Drosophila
+        melanogaster</cv-term>\r\n  </species-list>\r\n  <reference-list>\r\n    <reference
+        resource-internal-ref=\"CelloPub=CLPUB00496\"/>\r\n    <reference resource-internal-ref=\"DOI=10.1016/B978-012229460-0/50004-X\"/>\r\n
+        \   <reference resource-internal-ref=\"PubMed=821777\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q93293951\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q93293951]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Transformed cell line\"
+        created=\"2012-10-22\" last_updated=\"2021-05-20\" entry_version=\"12\" sex=\"Sex
+        unspecified\" age=\"Age unspecified\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_E557</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">00136</name>\r\n    <name type=\"synonym\">136</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Peripheral blood </comment>\r\n    <comment category=\"Transformant\">\r\n
+        \     <cv-term terminology=\"NCBI-Taxonomy\" accession=\"10376\">Epstein-Barr
+        virus (EBV)</cv-term>\r\n    </comment>\r\n    <comment category=\"Population\">
+        Native North American </comment>\r\n    <comment category=\"Part of\"> 12th
+        International Histocompatibility Workshop (12IHW) cell line panel </comment>\r\n
+        \ </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <hla-lists>\r\n
+        \   <hla-list>\r\n      <hla-gene id=\"A*\">\r\n        <alleles>02</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"B*\">\r\n        <alleles>40:05,48:01</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"C*\">\r\n        <alleles>03:04,08</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DPB1*\">\r\n        <alleles>04:01,14:01</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DQB1*\">\r\n        <alleles>03;04:02</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DRB1*\">\r\n        <alleles>04:10,14:06</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-gene id=\"DRB3*\">\r\n        <alleles>01,01</alleles>\r\n
+        \     </hla-gene>\r\n      <hla-list-source>\r\n        <source>IPD-IMGT/HLA;
+        10002</source>\r\n      </hla-list-source>\r\n    </hla-list>\r\n  </hla-lists>\r\n
+        \ <xref-list>\r\n    <xref database=\"dbMHC\" category=\"Cell line databases/resources\"
+        accession=\"48441\"> </xref>\r\n    <xref database=\"ECACC\" category=\"Cell
+        line collections\" accession=\"94071418\">\r\n      <url><![CDATA[https://www.phe-culturecollections.org.uk/products/celllines/generalcell/detail.jsp?refId=94071418&collection=ecacc_gc]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"IHW\" category=\"Cell line databases/resources\"
+        accession=\"IHW09279\"> </xref>\r\n    <xref database=\"IPD-IMGT/HLA\" category=\"Cell
+        line databases/resources\" accession=\"10002\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/cgi-bin/imgt/hla/fetch_cell.cgi?10002]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54481868\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54481868]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced pluripotent
+        stem cell\" created=\"2020-07-02\" last_updated=\"2020-10-29\" entry_version=\"2\"
+        sex=\"Female\" age=\"39Y\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_ZB51</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">0138F-1</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Skin </comment>\r\n    <comment category=\"Group\"> Non-human
+        primate cell line </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"9598\">Pan troglodytes</cv-term>\r\n
+        \ </species-list>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=32151953\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\"
+        accession=\"Q98110377\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q98110377]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2018-05-14\" last_updated=\"2020-10-29\"
+        entry_version=\"3\" sex=\"Female\" age=\"15Y\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_VG31</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">0162D</name>\r\n  </name-list>\r\n
+        \ <comment-list>\r\n    <comment category=\"Derived from sampling site\">
+        Skin </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"PubMed=26740656\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"SKIP\" category=\"Cell line databases/resources\"
+        accession=\"SKIP001331\">\r\n      <url><![CDATA[https://skip.stemcellinformatics.org/SKIPSearch/cell_line_detail?accession=SKIP001331]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54399825\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54399825]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced pluripotent
+        stem cell\" created=\"2018-05-14\" last_updated=\"2020-10-29\" entry_version=\"3\"
+        sex=\"Female\" age=\"12Y\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_VG32</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">0165D</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Skin </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo sapiens</cv-term>\r\n
+        \ </species-list>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=26740656\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"SKIP\" category=\"Cell
+        line databases/resources\" accession=\"SKIP001332\">\r\n      <url><![CDATA[https://skip.stemcellinformatics.org/SKIPSearch/cell_line_detail?accession=SKIP001332]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q54399827\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q54399827]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite cell line\"
+        created=\"2020-10-29\" last_updated=\"2021-01-12\" entry_version=\"2\" sex=\"Female\"
+        age=\"Blastocyst stage\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_ZW87</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">017-PC-A</name>\r\n
+        \   <name type=\"synonym\">PC-A</name>\r\n  </name-list>\r\n  <comment-list>\r\n
+        \   <comment category=\"Characteristics\"> hESC-derived mesenchymal progenitor
+        </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_B854\">ESI-017</cv-term>\r\n
+        \ </derived-from>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=27109637\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\"
+        accession=\"Q102111939\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q102111939]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite
+        cell line\" created=\"2020-10-29\" last_updated=\"2021-01-12\" entry_version=\"2\"
+        sex=\"Female\" age=\"Blastocyst stage\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_ZW88</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">017-PC-M</name>\r\n    <name type=\"synonym\">PC-M</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Characteristics\">
+        hESC-derived pericyte-like cell </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo sapiens</cv-term>\r\n
+        \ </species-list>\r\n  <derived-from>\r\n    <cv-term terminology=\"Cellosaurus\"
+        accession=\"CVCL_ZW87\">017-PC-A</cv-term>\r\n  </derived-from>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"PubMed=27109637\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q102111940\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q102111940]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite
+        cell line\" created=\"2020-10-29\" last_updated=\"2021-01-12\" entry_version=\"2\"
+        sex=\"Female\" age=\"Blastocyst stage\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_ZW89</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">017-PC-O</name>\r\n    <name type=\"synonym\">PC-O</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Characteristics\">
+        hESC-derived osteogenic progenitor </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo sapiens</cv-term>\r\n
+        \ </species-list>\r\n  <derived-from>\r\n    <cv-term terminology=\"Cellosaurus\"
+        accession=\"CVCL_ZW87\">017-PC-A</cv-term>\r\n  </derived-from>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"PubMed=27109637\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q102111941\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q102111941]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Cancer
+        cell line\" created=\"2019-09-06\" last_updated=\"2021-05-20\" entry_version=\"3\"
+        sex=\"Male\" age=\"68Y\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_XB90</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">0225-02Sp</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Doubling time\">
+        40.32 hours (Patent=CN102433305B) </comment>\r\n    <comment category=\"Population\">
+        Chinese </comment>\r\n  </comment-list>\r\n  <disease-list>\r\n    <cv-term
+        terminology=\"NCIt\" accession=\"C3493\">Lung squamous cell carcinoma</cv-term>\r\n
+        \ </disease-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <reference-list>\r\n
+        \   <reference resource-internal-ref=\"Patent=CN102433305B\"/>\r\n  </reference-list>\r\n
+        \ <registration-list>\r\n    <registration registry=\"International Depositary
+        Authority, China Center for Type Culture Collection\" registration_number=\"CCTCC
+        C201028\"/>\r\n  </registration-list>\r\n  <xref-list>\r\n    <xref database=\"CCRID\"
+        category=\"Cell line databases/resources\" accession=\"3142C0001000000748\">\r\n
+        \     <url><![CDATA[http://www.cellresource.cn/cellsearch.aspx?sc=1&where=3142C0001000000748]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q93293979\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q93293979]]></url>\r\n    </xref>\r\n
+        \ </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Cancer cell line\"
+        created=\"2012-04-04\" last_updated=\"2018-09-07\" entry_version=\"6\" sex=\"Female\">\r\n
+        \ <accession-list>\r\n    <accession type=\"primary\">CVCL_6494</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">022HU-NSO</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Breed/subspecies\">
+        BALB/c </comment>\r\n  </comment-list>\r\n  <disease-list>\r\n    <cv-term
+        terminology=\"NCIt\" accession=\"C125417\">Mouse plasma cell myeloma</cv-term>\r\n
+        \ </disease-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"10090\">Mus musculus</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_3940\">NS0</cv-term>\r\n
+        \ </derived-from>\r\n  <xref-list>\r\n    <xref database=\"CLO\" category=\"Ontologies\"
+        accession=\"CLO_0001025\">\r\n      <url><![CDATA[https://www.ebi.ac.uk/ols/ontologies/clo/terms?iri=http://purl.obolibrary.org/obo/CLO_0001025]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"ATCC\" category=\"Cell line collections\"
+        accession=\"CRL-11177\">\r\n      <property-list>\r\n        <property name=\"Discontinued\"
+        value=\"probable\"/>\r\n      </property-list>\r\n    </xref>\r\n    <xref
+        database=\"Wikidata\" category=\"Other\" accession=\"Q54399830\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q54399830]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2020-07-02\" last_updated=\"2020-10-29\"
+        entry_version=\"2\" sex=\"Female\" age=\"39Y\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_ZB52</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">0274F-1</name>\r\n  </name-list>\r\n
+        \ <comment-list>\r\n    <comment category=\"Derived from sampling site\">
+        Skin </comment>\r\n    <comment category=\"Group\"> Non-human primate cell
+        line </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9598\">Pan troglodytes</cv-term>\r\n  </species-list>\r\n  <same-origin-as>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_ZB53\">0274F-2</cv-term>\r\n
+        \ </same-origin-as>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=32151953\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\"
+        accession=\"Q98110378\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q98110378]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2020-07-02\" last_updated=\"2020-10-29\"
+        entry_version=\"2\" sex=\"Female\" age=\"39Y\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_ZB53</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">0274F-2</name>\r\n  </name-list>\r\n
+        \ <comment-list>\r\n    <comment category=\"Derived from sampling site\">
+        Skin </comment>\r\n    <comment category=\"Group\"> Non-human primate cell
+        line </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9598\">Pan troglodytes</cv-term>\r\n  </species-list>\r\n  <same-origin-as>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_ZB52\">0274F-1</cv-term>\r\n
+        \ </same-origin-as>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=32151953\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"Wikidata\" category=\"Other\"
+        accession=\"Q98110379\">\r\n      <url><![CDATA[https://www.wikidata.org/wiki/Q98110379]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite
+        cell line\" created=\"2021-01-12\" last_updated=\"2021-05-20\" entry_version=\"2\"
+        sex=\"Male\" age=\"43Y\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_A2TJ</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">03-01
+        fibroblast</name>\r\n  </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived
+        from sampling site\"> Arm; skin </comment>\r\n    <comment category=\"Omics\">
+        Genome sequenced </comment>\r\n    <comment category=\"Omics\"> Deep RNAseq
+        analysis </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term
+        terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo sapiens</cv-term>\r\n
+        \ </species-list>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \   <reference resource-internal-ref=\"PubMed=26186191\"/>\r\n    <reference
+        resource-internal-ref=\"PubMed=28235832\"/>\r\n  </reference-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505720\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505720]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2021-01-12\" last_updated=\"2021-05-20\"
+        entry_version=\"2\" sex=\"Male\" age=\"43Y\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_A2UI</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">03-01 iPS #2</name>\r\n    <name type=\"synonym\">03-01#2</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Arm; skin </comment>\r\n    <comment category=\"Omics\">
+        Transcriptome analysis </comment>\r\n    <comment category=\"Omics\"> Genome
+        sequenced </comment>\r\n    <comment category=\"Omics\"> Deep RNAseq analysis
+        </comment>\r\n    <comment category=\"Omics\"> Array-based CGH </comment>\r\n
+        \ </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_A2TJ\">03-01 fibroblast</cv-term>\r\n
+        \ </derived-from>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \   <reference resource-internal-ref=\"PubMed=28235832\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"GEO\" category=\"Gene expression databases\"
+        accession=\"GSM1019353\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1019353]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505724\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505724]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2021-01-12\" last_updated=\"2021-05-20\"
+        entry_version=\"2\" sex=\"Male\" age=\"43Y\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_A2UJ</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">03-01 iPS #3</name>\r\n    <name type=\"synonym\">03-01#3</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Arm; skin </comment>\r\n    <comment category=\"Omics\">
+        Transcriptome analysis </comment>\r\n    <comment category=\"Omics\"> Genome
+        sequenced </comment>\r\n    <comment category=\"Omics\"> Deep RNAseq analysis
+        </comment>\r\n    <comment category=\"Omics\"> Array-based CGH </comment>\r\n
+        \ </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_A2TJ\">03-01 fibroblast</cv-term>\r\n
+        \ </derived-from>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \   <reference resource-internal-ref=\"PubMed=28235832\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"GEO\" category=\"Gene expression databases\"
+        accession=\"GSM1019354\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1019354]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505726\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505726]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2021-01-12\" last_updated=\"2021-05-20\"
+        entry_version=\"2\" sex=\"Male\" age=\"43Y\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_A2UK</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">03-01 iPS #4</name>\r\n    <name type=\"synonym\">03-01#4</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Arm; skin </comment>\r\n    <comment category=\"Omics\">
+        Transcriptome analysis </comment>\r\n  </comment-list>\r\n  <species-list>\r\n
+        \   <cv-term terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo sapiens</cv-term>\r\n
+        \ </species-list>\r\n  <derived-from>\r\n    <cv-term terminology=\"Cellosaurus\"
+        accession=\"CVCL_A2TJ\">03-01 fibroblast</cv-term>\r\n  </derived-from>\r\n
+        \ <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"GEO\" category=\"Gene
+        expression databases\" accession=\"GSM1019355\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1019355]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505729\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505729]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2021-01-12\" last_updated=\"2021-05-20\"
+        entry_version=\"2\" sex=\"Male\" age=\"43Y\">\r\n  <accession-list>\r\n    <accession
+        type=\"primary\">CVCL_A2UL</accession>\r\n  </accession-list>\r\n  <name-list>\r\n
+        \   <name type=\"identifier\">03-01 iPS #9</name>\r\n    <name type=\"synonym\">03-01#9</name>\r\n
+        \ </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived from
+        sampling site\"> Arm; skin </comment>\r\n    <comment category=\"Omics\">
+        Transcriptome analysis </comment>\r\n    <comment category=\"Omics\"> Genome
+        sequenced </comment>\r\n    <comment category=\"Omics\"> Deep RNAseq analysis
+        </comment>\r\n    <comment category=\"Omics\"> Array-based CGH </comment>\r\n
+        \ </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_A2TJ\">03-01 fibroblast</cv-term>\r\n
+        \ </derived-from>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \   <reference resource-internal-ref=\"PubMed=28235832\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"GEO\" category=\"Gene expression databases\"
+        accession=\"GSM1019356\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1019356]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505734\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505734]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Finite
+        cell line\" created=\"2021-01-12\" last_updated=\"2021-05-20\" entry_version=\"2\"
+        sex=\"Female\" age=\"43Y\">\r\n  <accession-list>\r\n    <accession type=\"primary\">CVCL_A2TK</accession>\r\n
+        \ </accession-list>\r\n  <name-list>\r\n    <name type=\"identifier\">03-02
+        fibroblast</name>\r\n  </name-list>\r\n  <comment-list>\r\n    <comment category=\"Derived
+        from sampling site\"> Arm; skin </comment>\r\n    <comment category=\"Omics\">
+        Genome sequenced </comment>\r\n    <comment category=\"Omics\"> Deep RNAseq
+        analysis </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term
+        terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo sapiens</cv-term>\r\n
+        \ </species-list>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \   <reference resource-internal-ref=\"PubMed=26186191\"/>\r\n    <reference
+        resource-internal-ref=\"PubMed=28235832\"/>\r\n  </reference-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505737\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505737]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2021-01-12\" last_updated=\"2021-05-20\"
+        entry_version=\"2\" sex=\"Female\" age=\"43Y\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_A2UM</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">03-02 iPS #2B</name>\r\n    <name
+        type=\"synonym\">03-02#2B</name>\r\n  </name-list>\r\n  <comment-list>\r\n
+        \   <comment category=\"Derived from sampling site\"> Arm; skin </comment>\r\n
+        \   <comment category=\"Omics\"> Transcriptome analysis </comment>\r\n  </comment-list>\r\n
+        \ <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\" accession=\"9606\">Homo
+        sapiens</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n    <cv-term
+        terminology=\"Cellosaurus\" accession=\"CVCL_A2TK\">03-02 fibroblast</cv-term>\r\n
+        \ </derived-from>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \ </reference-list>\r\n  <xref-list>\r\n    <xref database=\"GEO\" category=\"Gene
+        expression databases\" accession=\"GSM1019360\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1019360]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505740\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505740]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n<cell-line category=\"Induced
+        pluripotent stem cell\" created=\"2021-01-12\" last_updated=\"2021-05-20\"
+        entry_version=\"2\" sex=\"Female\" age=\"43Y\">\r\n  <accession-list>\r\n
+        \   <accession type=\"primary\">CVCL_A2UN</accession>\r\n  </accession-list>\r\n
+        \ <name-list>\r\n    <name type=\"identifier\">03-02 iPS #5</name>\r\n    <name
+        type=\"synonym\">03-02#5</name>\r\n  </name-list>\r\n  <comment-list>\r\n
+        \   <comment category=\"Derived from sampling site\"> Arm; skin </comment>\r\n
+        \   <comment category=\"Omics\"> Transcriptome analysis </comment>\r\n    <comment
+        category=\"Omics\"> Genome sequenced </comment>\r\n    <comment category=\"Omics\">
+        Deep RNAseq analysis </comment>\r\n    <comment category=\"Omics\"> Array-based
+        CGH </comment>\r\n  </comment-list>\r\n  <species-list>\r\n    <cv-term terminology=\"NCBI-Taxonomy\"
+        accession=\"9606\">Homo sapiens</cv-term>\r\n  </species-list>\r\n  <derived-from>\r\n
+        \   <cv-term terminology=\"Cellosaurus\" accession=\"CVCL_A2TK\">03-02 fibroblast</cv-term>\r\n
+        \ </derived-from>\r\n  <reference-list>\r\n    <reference resource-internal-ref=\"PubMed=23160490\"/>\r\n
+        \   <reference resource-internal-ref=\"PubMed=28235832\"/>\r\n  </reference-list>\r\n
+        \ <xref-list>\r\n    <xref database=\"GEO\" category=\"Gene expression databases\"
+        accession=\"GSM1019358\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1019358]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"Wikidata\" category=\"Other\" accession=\"Q105505744\">\r\n
+        \     <url><![CDATA[https://www.wikidata.org/wiki/Q105505744]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</cell-line>\r\n</cell-line-list>\r\n<publication-list>\r\n<publication
+        date=\"2005\" type=\"article\" name=\"AAPS J.\" volume=\"7\" firstpage=\"E6\"
+        lastpage=\"E13\" internal-id=\"PubMed=16146350\">\r\n  <title><![CDATA[A simultaneous
+        assessment of CYP3A4 metabolism and induction in the DPX-2 cell line.]]></title>\r\n
+        \ <author-list>\r\n    <person name=\"Trubetskoy O.\"/>\r\n    <person name=\"Marks
+        B.\"/>\r\n    <person name=\"Zielinski T.\"/>\r\n    <person name=\"Yueh M.-F.\"/>\r\n
+        \   <person name=\"Raucy J.L.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"DOI\" category=\"Reference resources\" accession=\"10.1208/aapsj070102\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1208/aapsj070102]]></url>\r\n    </xref>\r\n
+        \   <xref database=\"PubMed\" category=\"Reference resources\" accession=\"16146350\">\r\n
+        \     <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/16146350]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2011\"
+        type=\"article\" name=\"AAPS J.\" volume=\"13\" firstpage=\"323\" lastpage=\"327\"
+        internal-id=\"PubMed=21607810\">\r\n  <title><![CDATA[Hidalgo, I.J., Raub,
+        T.J., and Borchardt, R.T.: Characterization of the human colon carcinoma cell
+        line (Caco-2) as a model system for intestinal epithelial permeability, Gastroenterology,
+        96, 736-749, 1989 -- the backstory.]]></title>\r\n  <author-list>\r\n    <person
+        name=\"Borchardt R.T.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n    <xref
+        database=\"DOI\" category=\"Reference resources\" accession=\"10.1208/s12248-011-9283-8\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1208/s12248-011-9283-8]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"PubMed\" category=\"Reference resources\"
+        accession=\"21607810\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/21607810]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2016\"
+        type=\"article\" name=\"AAPS J.\" volume=\"18\" firstpage=\"465\" lastpage=\"475\"
+        internal-id=\"PubMed=26821801\">\r\n  <title><![CDATA[A human renal proximal
+        tubule cell line with stable organic anion transporter 1 and 3 expression
+        predictive for antiviral-induced toxicity.]]></title>\r\n  <author-list>\r\n
+        \   <person name=\"Nieskens T.T.G.\"/>\r\n    <person name=\"Peters J.G.P.\"/>\r\n
+        \   <person name=\"Schreurs M.J.\"/>\r\n    <person name=\"Smits N.\"/>\r\n
+        \   <person name=\"Woestenenk R.\"/>\r\n    <person name=\"Jansen K.\"/>\r\n
+        \   <person name=\"van der Made T.K.\"/>\r\n    <person name=\"Roring M.\"/>\r\n
+        \   <person name=\"Hilgendorf C.\"/>\r\n    <person name=\"Wilmer M.J.\"/>\r\n
+        \   <person name=\"Masereeuw R.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"DOI\" category=\"Reference resources\" accession=\"10.1208/s12248-016-9871-8\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1208/s12248-016-9871-8]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"PubMed\" category=\"Reference resources\"
+        accession=\"26821801\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/26821801]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2000\"
+        type=\"article\" name=\"AAPS PharmSci\" volume=\"2\" firstpage=\"E27.1\" lastpage=\"E27.11\"
+        internal-id=\"PubMed=11741243\">\r\n  <title><![CDATA[Conditionally immortalized
+        brain capillary endothelial cell lines established from a transgenic mouse
+        harboring temperature-sensitive simian virus 40 large T-antigen gene.]]></title>\r\n
+        \ <author-list>\r\n    <person name=\"Hosoya K.-I.\"/>\r\n    <person name=\"Tetsuka
+        K.\"/>\r\n    <person name=\"Nagase K.\"/>\r\n    <person name=\"Tomi M.\"/>\r\n
+        \   <person name=\"Saeki S.\"/>\r\n    <person name=\"Ohtsuki S.\"/>\r\n    <person
+        name=\"Takanaga H.\"/>\r\n    <person name=\"Yanai N.\"/>\r\n    <person name=\"Obinata
+        M.\"/>\r\n    <person name=\"Kikuchi A.\"/>\r\n    <person name=\"Okano T.\"/>\r\n
+        \   <person name=\"Terasaki T.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"DOI\" category=\"Reference resources\" accession=\"10.1208/ps020328\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1208/ps020328]]></url>\r\n    </xref>\r\n
+        \   <xref database=\"PubMed\" category=\"Reference resources\" accession=\"11741243\">\r\n
+        \     <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/11741243]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2008\"
+        type=\"article\" name=\"ACS Chem. Biol.\" volume=\"3\" firstpage=\"373\" lastpage=\"382\"
+        internal-id=\"PubMed=18533659\">\r\n  <title><![CDATA[HaloTag: a novel protein
+        labeling technology for cell imaging and protein analysis.]]></title>\r\n
+        \ <author-list>\r\n    <person name=\"Los G.V.\"/>\r\n    <person name=\"Encell
+        L.P.\"/>\r\n    <person name=\"McDougall M.G.\"/>\r\n    <person name=\"Hartzell
+        D.D.\"/>\r\n    <person name=\"Karassina N.\"/>\r\n    <person name=\"Zimprich
+        C.\"/>\r\n    <person name=\"Wood M.G.\"/>\r\n    <person name=\"Learish R.\"/>\r\n
+        \   <person name=\"Ohana R.F.\"/>\r\n    <person name=\"Urh M.\"/>\r\n    <person
+        name=\"Simpson D.\"/>\r\n    <person name=\"Mendez J.\"/>\r\n    <person name=\"Zimmerman
+        K.\"/>\r\n    <person name=\"Otto P.\"/>\r\n    <person name=\"Vidugiris G.\"/>\r\n
+        \   <person name=\"Zhu J.\"/>\r\n    <person name=\"Darzins A.\"/>\r\n    <person
+        name=\"Klaubert D.H.\"/>\r\n    <person name=\"Bulleit R.F.\"/>\r\n    <person
+        name=\"Wood K.V.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n    <xref database=\"DOI\"
+        category=\"Reference resources\" accession=\"10.1021/cb800025k\">\r\n      <url><![CDATA[https://dx.doi.org/10.1021/cb800025k]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"PubMed\" category=\"Reference resources\"
+        accession=\"18533659\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/18533659]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2014\"
+        type=\"article\" name=\"ACS Chem. Biol.\" volume=\"9\" firstpage=\"1490\"
+        lastpage=\"1498\" internal-id=\"PubMed=24804581\">\r\n  <title><![CDATA[Evaluating
+        the promiscuous nature of tyrosine kinase inhibitors assessed in A431 epidermoid
+        carcinoma cells by both chemical- and phosphoproteomics.]]></title>\r\n  <author-list>\r\n
+        \   <person name=\"Giansanti P.\"/>\r\n    <person name=\"Preisinger C.\"/>\r\n
+        \   <person name=\"Huber K.V.M.\"/>\r\n    <person name=\"Gridling M.\"/>\r\n
+        \   <person name=\"Superti-Furga G.\"/>\r\n    <person name=\"Bennett K.L.\"/>\r\n
+        \   <person name=\"Heck A.J.R.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"DOI\" category=\"Reference resources\" accession=\"10.1021/cb500116c\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1021/cb500116c]]></url>\r\n    </xref>\r\n
+        \   <xref database=\"PubMed\" category=\"Reference resources\" accession=\"24804581\">\r\n
+        \     <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/24804581]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2018\"
+        type=\"article\" name=\"ACS Infect. Dis.\" volume=\"4\" firstpage=\"46\" lastpage=\"52\"
+        internal-id=\"PubMed=29094594\">\r\n  <title><![CDATA[Nonsteroidal anti-inflammatory
+        drug-induced leaky gut modeled using polarized monolayers of primary human
+        intestinal epithelial cells.]]></title>\r\n  <author-list>\r\n    <person
+        name=\"Bhatt A.P.\"/>\r\n    <person name=\"Gunasekara D.B.\"/>\r\n    <person
+        name=\"Speer J.\"/>\r\n    <person name=\"Reed M.I.\"/>\r\n    <person name=\"Pena
+        A.N.\"/>\r\n    <person name=\"Midkiff B.R.\"/>\r\n    <person name=\"Magness
+        S.T.\"/>\r\n    <person name=\"Bultman S.J.\"/>\r\n    <person name=\"Allbritton
+        N.L.\"/>\r\n    <person name=\"Redinbo M.R.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"DOI\" category=\"Reference resources\" accession=\"10.1021/acsinfecdis.7b00139\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1021/acsinfecdis.7b00139]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"PubMed\" category=\"Reference resources\"
+        accession=\"29094594\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/29094594]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2017\"
+        type=\"article\" name=\"ACS Synth. Biol.\" volume=\"6\" firstpage=\"301\"
+        lastpage=\"310\" internal-id=\"PubMed=27696824\">\r\n  <title><![CDATA[Maintenance
+        and function of a plant chromosome in human cells.]]></title>\r\n  <author-list>\r\n
+        \   <person name=\"Wada N.\"/>\r\n    <person name=\"Kazuki Y.\"/>\r\n    <person
+        name=\"Kazuki K.\"/>\r\n    <person name=\"Inoue T.\"/>\r\n    <person name=\"Fukui
+        K.\"/>\r\n    <person name=\"Oshimura M.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n
+        \   <xref database=\"DOI\" category=\"Reference resources\" accession=\"10.1021/acssynbio.6b00180\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1021/acssynbio.6b00180]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"PubMed\" category=\"Reference resources\"
+        accession=\"27696824\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/27696824]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n<publication date=\"2001\"
+        type=\"article\" name=\"Acta Astronaut.\" volume=\"49\" firstpage=\"399\"
+        lastpage=\"418\" internal-id=\"PubMed=11669127\">\r\n  <title><![CDATA[Spaceflight
+        and clinorotation cause cytoskeleton and mitochondria changes and increases
+        in apoptosis in cultured cells.]]></title>\r\n  <author-list>\r\n    <person
+        name=\"Schatten H.\"/>\r\n    <person name=\"Lewis M.L.\"/>\r\n    <person
+        name=\"Chakrabarti A.\"/>\r\n  </author-list>\r\n  <xref-list>\r\n    <xref
+        database=\"DOI\" category=\"Reference resources\" accession=\"10.1016/S0094-5765(01)00116-3\">\r\n
+        \     <url><![CDATA[https://dx.doi.org/10.1016/S0094-5765(01)00116-3]]></url>\r\n
+        \   </xref>\r\n    <xref database=\"PubMed\" category=\"Reference resources\"
+        accession=\"11669127\">\r\n      <url><![CDATA[https://www.ncbi.nlm.nih.gov/pubmed/11669127]]></url>\r\n
+        \   </xref>\r\n  </xref-list>\r\n</publication>\r\n</publication-list>\r\n<copyright>
+        Copyrighted by the SIB Swiss Institute of Bioinformatics. Distributed under
+        the Creative Commons Attribution 4.0 International (CC BY 4.0) license - see
+        http://creativecommons.org/licenses/by/4.0/ </copyright>\r\n</Cellosaurus>\r\n"
+    headers:
+      Accept-Ranges:
+      - bytes
+      Connection:
+      - close
+      Content-Length:
+      - '59742'
+      Content-Type:
+      - text/xml
+      Date:
+      - Tue, 27 Jul 2021 14:15:15 GMT
+      ETag:
+      - '"1592035b-1096c8f8-5c2bd4226cd80"'
+      Last-Modified:
+      - Thu, 20 May 2021 06:43:18 GMT
+      Server:
+      - Apache
+    status:
+      code: 200
+      message: OK
+version: 1
