@@ -168,9 +168,6 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
 
         final_context = illumina.illumina_to_pcl(job.pk)
         self.assertSucceeded(job)
-        # XXX: remove this but because the job failed the rest of this won't succeed
-        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
-        return
 
         for sample in final_context["samples"]:
             smashme = sample.get_most_recent_smashable_result_file()
@@ -219,10 +216,6 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
             self.assertTrue(
                 key in ["detected_platform", "detection_percentage", "mapped_percentage"]
             )
-
-        # XXX: remove this but because the job failed the rest of this won't succeed
-        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
-        return
 
         for sample in final_context["samples"]:
             smashme = sample.get_most_recent_smashable_result_file()
