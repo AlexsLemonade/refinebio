@@ -36,7 +36,7 @@ def _download_file(
     # SRA files have Apsera downloads.
     if "ftp.sra.ebi.ac.uk" in download_url:
         # From: ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
-        # To: era-fasp@fasp.sra.ebi.ac.uk:vol1/fastq//SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
+        # To: era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
         download_url = download_url.replace("ftp", "era-fasp@fasp")
         download_url = download_url.replace(".uk/", ".uk:/")
         original_file.source_url = download_url
