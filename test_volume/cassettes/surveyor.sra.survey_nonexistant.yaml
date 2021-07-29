@@ -14,14 +14,14 @@ interactions:
     uri: https://www.ebi.ac.uk/ena/browser/api/xml/ERP006216
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ErrorDetails>\n  <timestamp>1626893010544</timestamp>\n
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ErrorDetails>\n  <timestamp>1627501393717</timestamp>\n
         \ <status>404</status>\n  <error>Not Found</error>\n  <message>ERP006216 not
         found.</message>\n  <path>/ena/browser/api/xml/ERP006216</path>\n</ErrorDetails>\n"
     headers:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:30 GMT
+      - Wed, 28 Jul 2021 19:43:13 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:

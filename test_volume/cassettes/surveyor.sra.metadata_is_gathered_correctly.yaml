@@ -42,7 +42,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:26 GMT
+      - Wed, 28 Jul 2021 19:43:10 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -116,7 +116,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:26 GMT
+      - Wed, 28 Jul 2021 19:43:10 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -175,7 +175,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:27 GMT
+      - Wed, 28 Jul 2021 19:43:10 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -236,7 +236,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:29 GMT
+      - Wed, 28 Jul 2021 19:43:11 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -293,7 +293,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 21 Jul 2021 18:43:29 GMT
+      - Wed, 28 Jul 2021 19:43:13 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -334,20 +334,20 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 21 Jul 2021 18:43:30 GMT
+      - Wed, 28 Jul 2021 19:43:13 GMT
       Keep-Alive:
       - timeout=1, max=10
       NCBI-PHID:
-      - CC9570470F86AD210000000000000001.m_1
+      - C7A422B4101B35110000000000000001.m_1
       NCBI-SID:
-      - CC9570470F86AD21_0000SID
+      - C7A422B4101B3511_0000SID
       Referrer-Policy:
       - origin-when-cross-origin
       Server:
       - Apache
       Set-Cookie:
-      - ncbi_sid=CC9570470F86AD21_0000SID; domain=.nih.gov; path=/; expires=Thu, 21
-        Jul 2022 18:43:30 GMT
+      - ncbi_sid=C7A422B4101B3511_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
+        Jul 2022 19:43:13 GMT
       SraNameServerOutputVersion:
       - '2.0'
       Strict-Transport-Security:

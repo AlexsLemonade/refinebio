@@ -608,6 +608,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 )
 
                 sample_annotation = SampleAnnotation()
+                sample_annotation.name = "raw_metadata"
                 sample_annotation.data = sample_data
                 sample_annotation.sample = sample_object
                 sample_annotation.is_ccdl = False

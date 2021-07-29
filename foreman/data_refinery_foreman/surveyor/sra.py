@@ -29,6 +29,9 @@ logger = get_and_configure_logger(__name__)
 DOWNLOAD_SOURCE = "NCBI"  # or "ENA". Change this to download from NCBI (US) or ENA (UK).
 ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/browser/view/{}"
 ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/browser/api/xml/{}"
+ENA_FILE_REPORT_URL_TEMPLATE = (
+    "https://www.ebi.ac.uk/ena/portal/api/filereport?accession={accession}&result=read_run"
+)
 NCBI_DOWNLOAD_URL_TEMPLATE = (
     "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
     "{first_three}/{first_six}/{accession}/{accession}.sra"
@@ -180,6 +183,33 @@ class SraSurveyor(ExternalSourceSurveyor):
                 value = child.text
 
         return (key, value)
+
+    @staticmethod
+    def gather_file_report(run_accession: str) -> List[Dict]:
+        """Get stats about files and check for unmated reads.
+
+        This endpoint returns a weird format, so some custom parsing is required:
+        run_accession	fastq_ftp	fastq_bytes	fastq_md5	submitted_ftp	submitted_bytes	submitted_md5	sra_ftp	sra_bytes	sra_md5
+        SRR7353755	ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz	25176;2856704;3140575	7ef1ba010dcb679217112efa380798b2;6bc5651b7103306d4d65018180ab8d0d;3856c14164612d9879d576a046a9879f	"""
+        response = utils.requests_retry_session().get(
+            ENA_FILE_REPORT_URL_TEMPLATE.format(accession=run_accession)
+        )
+
+        lines = response.text.split("\n")
+        split_lines = [line.split("\t") for line in lines]
+        header_row = split_lines[0]
+        sample_row = split_lines[1]
+
+        file_info = []
+        for i, key in enumerate(header_row):
+            if key in ["fastq_ftp", "fastq_bytes", "fastq_md5"]:
+                for i, value in enumerate(sample_row[i].split(";")):
+                    if i >= len(file_info):
+                        file_info.append({key: value})
+                    else:
+                        file_info[i][key] = value
+
+        return file_info
 
     @staticmethod
     def gather_run_metadata(run_accession: str) -> Dict:
@@ -510,13 +540,41 @@ class SraSurveyor(ExternalSourceSurveyor):
 
             sample_object.save()
 
-            for file_url in files_urls:
-                original_file = OriginalFile.objects.get_or_create(
-                    source_url=file_url, source_filename=file_url.split("/")[-1], has_raw=True
-                )[0]
-                OriginalFileSampleAssociation.objects.get_or_create(
-                    original_file=original_file, sample=sample_object
-                )
+            file_reports = SraSurveyor.gather_file_report(sample_accession_code)
+
+            if len(file_reports) < 3:
+                for file_url in files_urls:
+                    original_file = OriginalFile.objects.get_or_create(
+                        source_url=file_url, source_filename=file_url.split("/")[-1], has_raw=True
+                    )[0]
+                    OriginalFileSampleAssociation.objects.get_or_create(
+                        original_file=original_file, sample=sample_object
+                    )
+            else:
+                # If there's 3 fastq files in ENA's FTP server that's
+                # because one is the unmated reads and we can't
+                # reliably convert from the .SRA. Therefore set the
+                # file_urls to be the ENA FTP URLs.
+                for file_report in file_reports:
+                    file_url = file_report["fastq_ftp"]
+
+                    # Skip the one for unmated reads: the unmated
+                    # reads file lacks a _X postfix. It's be better if
+                    # it was clearly labeled, but it seems to be
+                    # consistent. The unmated reads file also seems to
+                    # be the smallest by far, but I'm unsure how
+                    # reliable that is.
+                    if "_1.fastq.gz" in file_url or "_2.fastq.gz" in file_url:
+                        original_file = OriginalFile.objects.get_or_create(
+                            source_url=file_url,
+                            source_filename=file_url.split("/")[-1],
+                            has_raw=True,
+                            expected_size_in_bytes=file_report["fastq_bytes"],
+                            expected_md5=file_report["fastq_md5"],
+                        )[0]
+                        OriginalFileSampleAssociation.objects.get_or_create(
+                            original_file=original_file, sample=sample_object
+                        )
 
         # Create associations if they don't already exist
         ExperimentSampleAssociation.objects.get_or_create(
