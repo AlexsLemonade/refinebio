@@ -259,6 +259,9 @@ class CompendiaTestCase(TransactionTestCase):
 
         final_context = create_compendia.create_compendia(job.id)
 
+        job.refresh_from_db()
+        self.assertTrue(job.success)
+
         # Verify result
         self.assertEqual(final_context["compendium_result"].result.computedfile_set.count(), 1)
         for file in final_context["compendium_result"].result.computedfile_set.all():
@@ -278,8 +281,7 @@ class CompendiaTestCase(TransactionTestCase):
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])
         self.assertEqual(
-            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"],
-            "GSE5678",
+            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"], "GSE5678",
         )
         self.assertIn(
             "This sample did not have a processed file",
@@ -389,6 +391,9 @@ class CompendiaTestCase(TransactionTestCase):
 
         final_context = create_compendia.create_compendia(job.id)
 
+        job.refresh_from_db()
+        self.assertTrue(job.success)
+
         # Verify result
         self.assertEqual(final_context["compendium_result"].result.computedfile_set.count(), 1)
         for file in final_context["compendium_result"].result.computedfile_set.all():
@@ -434,9 +439,78 @@ class CompendiaTestCase(TransactionTestCase):
 
         filtered_matrix = final_job_context["filtered_rnaseq_matrix"]
 
-        # Make sure that we are getting rid of intermediate results appropriately
+        # Make sure that we are getting rid of intermediate results
+        # appropriately. Because these matrices can be pretty heavy, the input
+        # should not stick around in the job context like this.
         self.assertNotIn("rnaseq_matrix", final_job_context.keys())
 
         # We drop all rows below the 10th percentile in row sum, so we would
         # expect to drop rows 1 through 10 that we created above
         self.assertEqual(set(filtered_matrix.index), set(str(i) for i in range(11, 101)))
+
+    @tag("compendia")
+    def test_drop_samples(self):
+        """Make sure that we drop samples with >50% missing values"""
+        job = ProcessorJob()
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+        job.save()
+
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1)
+        danio_rerio.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE1234"
+        experiment.save()
+
+        samples = list(str(i) for i in range(0, 10))
+        for i in samples:
+            create_sample_for_experiment(
+                {"organism": danio_rerio, "accession_code": i, "technology": "MICROARRAY",},
+                experiment,
+            )
+
+        dset = Dataset()
+        dset.data = {"GSE1234": "ALL"}
+        dset.scale_by = "NONE"
+        dset.aggregate_by = "SPECIES"
+        dset.svd_algorithm = "ARPACK"
+        dset.quantile_normalize = True
+        dset.save()
+
+        df = pd.DataFrame(columns=samples)
+        for i in range(1, 101):
+            row_i = {idx: i for idx in samples}
+
+            if i % 3 != 0 and i % 3 != 1:
+                del row_i["0"]
+
+            if i % 2 != 0:
+                del row_i["1"]
+
+            if i % 3 != 0:
+                del row_i["2"]
+
+            if i % 4 != 0:
+                del row_i["3"]
+
+            df.loc[str(i)] = row_i
+
+        job_context = {
+            "microarray_matrix": df,
+            "job": job,
+            "dataset": dset,
+            # This key is added in the setup code, so we need to add it ourselves here
+            "filtered_samples": {},
+        }
+
+        job_context = create_compendia._full_outer_join_gene_matrices(job_context)
+        final_job_context = create_compendia._filter_rows_and_columns(job_context)
+
+        filtered_matrix = final_job_context["row_col_filtered_matrix"]
+
+        # Columns 0 and 1 have missing data, but they should still have >= 50%.
+        # Columns 2 and 3 are both missing >50% though, so they should be filtered.
+        self.assertEqual(set(filtered_matrix.columns), {"0", "1"} | {str(i) for i in range(4, 10)})
+        self.assertEqual(set(final_job_context["filtered_samples"].keys()), {"2", "3"})
+        for v in final_job_context["filtered_samples"].values():
+            self.assertIn("less than 50% present", v["reason"])
