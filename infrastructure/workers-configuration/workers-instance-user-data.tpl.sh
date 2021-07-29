@@ -26,7 +26,6 @@ cat instance-ecs-agent.config >> /etc/ecs/ecs.config
 rm instance-ecs-agent.config
 
 systemctl restart docker --no-block
-# systemctl start ecs
 
 # Configure and mount the EBS volume
 mkdir -p /var/ebs/

@@ -265,6 +265,27 @@ def calculate_sha1(absolute_file_path):
     return hash_object.hexdigest()
 
 
+def calculate_md5(absolute_file_path):
+    hash_object = hashlib.md5()
+    with open(absolute_file_path, mode="rb") as open_file:
+        for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b""):
+            hash_object.update(buf)
+
+    return hash_object.hexdigest()
+
+
+def calculate_sha1_and_md5(absolute_file_path):
+    """No need to read the file twice if we want both."""
+    sha1_hash_object = hashlib.sha1()
+    md5_hash_object = hashlib.md5()
+    with open(absolute_file_path, mode="rb") as open_file:
+        for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b""):
+            sha1_hash_object.update(buf)
+            md5_hash_object.update(buf)
+
+    return sha1_hash_object.hexdigest(), md5_hash_object.hexdigest()
+
+
 def get_sra_download_url(run_accession, protocol="fasp"):
     """Try getting the sra-download URL from CGI endpoint"""
     # Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" \

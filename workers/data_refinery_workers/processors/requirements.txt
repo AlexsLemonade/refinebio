@@ -56,11 +56,10 @@ psycopg2-binary==2.8.6    # via -r requirements.in
 pyct==0.4.8               # via colorcet, datashader, panel
 pyparsing==2.4.7          # via matplotlib, packaging
 python-dateutil==2.8.1    # via bokeh, botocore, datashape, matplotlib, pandas
-python-nomad==1.2.1       # via -r requirements.in
 pytz==2021.1              # via django, pandas
 pyviz-comms==2.0.2        # via holoviews, panel
 pyyaml==5.4.1             # via -r requirements.in, bokeh, dask, distributed, vcrpy
-requests==2.25.1          # via -r requirements.in, coveralls, panel, python-nomad
+requests==2.25.1          # via -r requirements.in, coveralls, panel
 retrying==1.3.3           # via -r requirements.in
 s3transfer==0.4.2         # via boto3
 scikit-learn==0.24.2      # via -r requirements.in

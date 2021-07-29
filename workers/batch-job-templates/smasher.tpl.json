@@ -35,6 +35,7 @@
             {"name": "DATABASE_PORT", "value": "${{DATABASE_PORT}}"},
             {"name": "DATABASE_TIMEOUT", "value": "${{DATABASE_TIMEOUT}}"},
             {"name": "RUNNING_IN_CLOUD", "value": "${{RUNNING_IN_CLOUD}}"},
+            {"name": "ENGAGEMENTBOT_WEBHOOK", "value": "${{ENGAGEMENTBOT_WEBHOOK}}"},
             {"name": "USE_S3", "value": "${{USE_S3}}"},
             {"name": "S3_BUCKET_NAME", "value": "${{S3_BUCKET_NAME}}"},
             {"name": "S3_RESULTS_BUCKET_NAME", "value": "${{S3_RESULTS_BUCKET_NAME}}"},
