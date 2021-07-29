@@ -112,7 +112,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.alternate_accession_code, None)
         self.assertEqual(len(samples), 9)
 
-    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_file_report.yaml")
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_unmated_reads.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_survey_unmated_reads(self, mock_send_job):
         """Test an experiment with unmated reads.
@@ -132,15 +132,19 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.accession_code, "SRP048683")
         self.assertEqual(len(samples), 12)
 
+        expected_file_names = set()
         # Just check one file for one sample's expected file size/md5
         for sample in samples:
             if sample.accession_code == "SRR1603661":
                 for original_file in sample.original_files.all():
+                    expected_file_names.add(original_file.source_filename)
                     if original_file.source_filename == "SRR1603661_1.fastq.gz":
                         self.assertEqual(
                             original_file.expected_md5, "502a9a482bfa5aa75865ccc0105ad13c"
                         )
                         self.assertEqual(original_file.expected_size_in_bytes, 6751980628)
+
+        self.assertEqual({"SRR1603661_1.fastq.gz", "SRR1603661_2.fastq.gz"}, expected_file_names)
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_nonexistant.yaml")
     def test_nonexistant_srp_survey(self):

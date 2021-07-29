@@ -1,6 +1,5 @@
 import ftplib
 import os
-import shutil
 import subprocess
 import time
 from ftplib import FTP
