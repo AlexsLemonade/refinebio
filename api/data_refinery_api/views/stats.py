@@ -192,7 +192,7 @@ class Stats(APIView):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 description="Specify a range from which to calculate the possible options",
-                enum=("day", "week", "month", "year",),
+                enum=("day", "week", "month", "year"),
             )
         ]
     )
@@ -336,12 +336,16 @@ class Stats(APIView):
                     created_at__gt=JOB_CREATED_AT_CUTOFF,
                 ),
             ),
-        )
-        # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
-        result["average_time"] = (
-            jobs.filter(start_filter)
-            .filter(start_time__isnull=False, end_time__isnull=False, success=True)
-            .aggregate(average_time=Avg(F("end_time") - F("start_time")))["average_time"]
+            # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
+            average_time=Avg(
+                F("end_time") - F("start_time"),
+                filter=Q(
+                    start_time__isnull=False,
+                    end_time__isnull=False,
+                    success=True,
+                    created_at__gt=JOB_CREATED_AT_CUTOFF,
+                ),
+            ),
         )
 
         if not result["average_time"]:
@@ -395,7 +399,7 @@ class FailedDownloaderJobStats(APIView):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 description="Specify a range from which to calculate the possible options",
-                enum=("day", "week", "month", "year",),
+                enum=("day", "week", "month", "year"),
             )
         ]
     )
@@ -429,7 +433,7 @@ class FailedProcessorJobStats(APIView):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 description="Specify a range from which to calculate the possible options",
-                enum=("day", "week", "month", "year",),
+                enum=("day", "week", "month", "year"),
             )
         ]
     )
