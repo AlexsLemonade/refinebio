@@ -298,12 +298,12 @@ def _filter_rows_and_columns(job_context: Dict) -> Dict:
     # Remove samples (columns) with <50% present values in combined_matrix
     # XXX: Find better test data for this!
     col_thresh = row_filtered_matrix.shape[0] * 0.5
-    row_col_filtered_matrix_samples = row_filtered_matrix.dropna(axis="columns", thresh=col_thresh)
-    row_col_filtered_matrix_samples_index = row_col_filtered_matrix_samples.index
-    row_col_filtered_matrix_samples_columns = row_col_filtered_matrix_samples.columns
+    row_col_filtered_matrix = row_filtered_matrix.dropna(axis="columns", thresh=col_thresh)
+    row_col_filtered_matrix_index = row_col_filtered_matrix.index
+    row_col_filtered_matrix_columns = row_col_filtered_matrix.columns
 
     for sample_accession_code in row_filtered_matrix.columns:
-        if sample_accession_code not in row_col_filtered_matrix_samples_columns:
+        if sample_accession_code not in row_col_filtered_matrix_columns:
             sample = Sample.objects.get(accession_code=sample_accession_code)
             sample_metadata = sample.to_metadata_dict()
             job_context["filtered_samples"][sample_accession_code] = {
@@ -316,9 +316,9 @@ def _filter_rows_and_columns(job_context: Dict) -> Dict:
 
     log_state("end drop NA genes", job_context["job"].id, drop_na_samples_start)
 
-    job_context["row_col_filtered_matrix_samples"] = row_col_filtered_matrix_samples
-    job_context["row_col_filtered_matrix_samples_index"] = row_col_filtered_matrix_samples_index
-    job_context["row_col_filtered_matrix_samples_columns"] = row_col_filtered_matrix_samples_columns
+    job_context["row_col_filtered_matrix"] = row_col_filtered_matrix
+    job_context["row_col_filtered_matrix_index"] = row_col_filtered_matrix_index
+    job_context["row_col_filtered_matrix_columns"] = row_col_filtered_matrix_columns
 
     return job_context
 
@@ -331,14 +331,14 @@ def _reset_zero_values(job_context: Dict) -> Dict:
 
     replace_zeroes_start = log_state("start replace zeroes", job_context["job"].id)
 
-    row_col_filtered_matrix_samples = job_context.pop("row_col_filtered_matrix_samples")
+    row_col_filtered_matrix = job_context.pop("row_col_filtered_matrix")
     # We don't pop this one out of `job_context` because we need it again later
-    row_col_filtered_matrix_samples_index = job_context.get("row_col_filtered_matrix_samples_index")
+    row_col_filtered_matrix_index = job_context.get("row_col_filtered_matrix_index")
     cached_zeroes = job_context.pop("cached_zeroes")
 
     # # Visualize Row and Column Filtered
     # output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
-    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_matrix_samples.copy(),
+    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_matrix.copy(),
     #                                               output_path)
 
     # "Reset" zero values that were set to NA in RNA-seq samples
@@ -347,17 +347,17 @@ def _reset_zero_values(job_context: Dict) -> Dict:
         zeroes = cached_zeroes[column]
 
         # Skip purged columns
-        if column not in row_col_filtered_matrix_samples:
+        if column not in row_col_filtered_matrix:
             continue
 
         # Place the zero
         try:
             # This generates a warning, so use loc[] instead
-            # row_col_filtered_matrix_samples[column].replace(zeroes, 0.0, inplace=True)
+            # row_col_filtered_matrix[column].replace(zeroes, 0.0, inplace=True)
             zeroes_list = zeroes.tolist()
-            new_index_list = row_col_filtered_matrix_samples_index.tolist()
+            new_index_list = row_col_filtered_matrix_index.tolist()
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
-            row_col_filtered_matrix_samples[column].loc[new_zeroes] = 0.0
+            row_col_filtered_matrix[column].loc[new_zeroes] = 0.0
         except Exception:
             logger.warn("Error when replacing zero")
             continue
@@ -365,7 +365,7 @@ def _reset_zero_values(job_context: Dict) -> Dict:
     log_state("end replace zeroes", job_context["job"].id, replace_zeroes_start)
 
     # Label our new replaced data
-    job_context["combined_matrix_zero"] = row_col_filtered_matrix_samples
+    job_context["combined_matrix_zero"] = row_col_filtered_matrix
 
     return job_context
 
@@ -383,10 +383,8 @@ def _run_iterativesvd(job_context: Dict) -> Dict:
 
     # Label our new replaced data
     combined_matrix_zero = job_context.pop("combined_matrix_zero")
-    row_col_filtered_matrix_samples_index = job_context.pop("row_col_filtered_matrix_samples_index")
-    row_col_filtered_matrix_samples_columns = job_context.pop(
-        "row_col_filtered_matrix_samples_columns"
-    )
+    row_col_filtered_matrix_index = job_context.pop("row_col_filtered_matrix_index")
+    row_col_filtered_matrix_columns = job_context.pop("row_col_filtered_matrix_columns")
 
     transposed_matrix_with_zeros = combined_matrix_zero.T
     del combined_matrix_zero
@@ -431,11 +429,11 @@ def _run_iterativesvd(job_context: Dict) -> Dict:
 
     # Convert back to Pandas
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
-    untransposed_imputed_matrix_df.index = row_col_filtered_matrix_samples_index
-    untransposed_imputed_matrix_df.columns = row_col_filtered_matrix_samples_columns
+    untransposed_imputed_matrix_df.index = row_col_filtered_matrix_index
+    untransposed_imputed_matrix_df.columns = row_col_filtered_matrix_columns
     del untransposed_imputed_matrix
-    del row_col_filtered_matrix_samples_index
-    del row_col_filtered_matrix_samples_columns
+    del row_col_filtered_matrix_index
+    del row_col_filtered_matrix_columns
 
     job_context["merged_no_qn"] = untransposed_imputed_matrix_df
     # output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
