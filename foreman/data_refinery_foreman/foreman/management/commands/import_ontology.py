@@ -25,9 +25,4 @@ class Command(BaseCommand):
             logger.error("You must provide an ontology term with --ontology")
             sys.exit(1)
 
-        num_created = OntologyTerm.import_entire_ontology(options["ontology"])
-
-        if num_created > 0:
-            print(f"Imported {num_created} new ontology terms!")
-        else:
-            print("No new ontology terms imported :(")
+        OntologyTerm.import_entire_ontology(options["ontology"])

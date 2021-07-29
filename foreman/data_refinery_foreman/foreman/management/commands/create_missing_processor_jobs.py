@@ -14,16 +14,13 @@ from data_refinery_common.job_management import (
 )
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import DownloaderJob
-from data_refinery_foreman.foreman.utils import JOB_CREATED_AT_CUTOFF
 
 logger = get_and_configure_logger(__name__)
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        for dl_job in DownloaderJob.objects.filter(
-            success="t", created_at__gt=JOB_CREATED_AT_CUTOFF
-        ).all():
+        for dl_job in DownloaderJob.objects.filter(success="t").all():
             original_files = dl_job.original_files.all()
 
             if original_files.count() > 0:

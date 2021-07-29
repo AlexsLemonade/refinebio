@@ -426,9 +426,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
         sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment.accession_code)
         sdrf_samples = harmony.parse_sdrf(sdrf_url)
-
-        title_field = harmony.determine_title_field(sdrf_samples, samples)
-        harmonized_samples = harmony.harmonize_all_samples(sdrf_samples, title_field)
+        harmonized_samples = harmony.harmonize(sdrf_samples)
 
         # An experiment can have many samples
         for sample_data in samples:
@@ -439,7 +437,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             # Each sample is given an experimenatlly-unique title.
             flat_sample = utils.flatten(sample_data)
-            title = harmony.extract_title(flat_sample, title_field)
+            title = harmony.extract_title(flat_sample)
 
             # A sample may actually have many sub files.
             # If there is raw data, take that.
@@ -608,7 +606,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 )
 
                 sample_annotation = SampleAnnotation()
-                sample_annotation.name = "raw_metadata"
                 sample_annotation.data = sample_data
                 sample_annotation.sample = sample_object
                 sample_annotation.is_ccdl = False

@@ -9,7 +9,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381
   response:
@@ -34,7 +34,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Wed, 28 Jul 2021 19:24:45 GMT
+      - Mon, 03 May 2021 16:26:00 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -60,43 +60,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-MEXP-2381/E-MEXP-2381.idf.txt
   response:
     body:
-      string: "Investigation Title\tTranscription profiling of Danio rerio (zebrafish)
-        RPL11 mutant vs siblings\t\nComment[Submitted Name]\tRPL11 mutant expression\t\nExperimental
-        Design\tindividual_genetic_characteristics_design\tin_vivo_design\tco-expression_design\ttranscription
-        profiling by array\ttranscription profiling by array\t\nExperimental Design
-        Term Source REF\t\t\tThe MGED Ontology\tEFO\tEFO\t\nComment[AEMIAMESCORE]\t4\t\nComment[SecondaryAccession]\t\t\nComment[ArrayExpressReleaseDate]\t2010-01-01\t\nComment[ArrayExpressAccession]\tE-MEXP-2381\t\nComment[MAGETAB
-        TimeStamp_Version]\t2010-08-10 12:15:20 Last Changed Rev: 13058\t\nExperimental
-        Factor Name\tGENOTYPE\t\nExperimental Factor Type\tgenotype\t\nExperimental
-        Factor Term Source REF\t\nPerson Last Name\tDanilova\t\nPerson First Name\tNadia\t\nPerson
-        Mid Initials\t\nPerson Email\tndanilova@ucla.edu\t\nPerson Phone\t1-310-267-4972\t\nPerson
-        Fax\t\nPerson Address\tMCDB, 621 Charles E Young Dr, Los Angeles, CA, 90095,
-        USA\t\nPerson Affiliation\tUCLA\t\nPerson Roles\tsubmitter\t\nPerson Roles
-        Term Source REF\tThe MGED Ontology\t\nQuality Control Type\t\nQuality Control
-        Term Source REF\t\nReplicate Type\t\nReplicate Term Source REF\t\nNormalization
-        Type\t\nNormalization Term Source REF\t\nDate of Experiment\t\nPublic Release
-        Date\t2010-01-01\t\nPubMed ID\t\nPublication DOI\t\nPublication Author List\t\nPublication
-        Title\t\nPublication Status\t\nPublication Status Term Source REF\t\nExperiment
-        Description\tTranscriptional profile of RPL11 zebrafish mutant in comparison
-        to siblings\t\nProtocol Name\tP-MTAB-5485\tP-AFFY-2\tAffymetrix:Protocol:Hybridization-Unknown\tP-NGEN-13\t\nProtocol
-        Type\tnucleic_acid_extraction\tlabeling\thybridization\tfeature_extraction\t\nProtocol
-        Description\tRNA was extracted from a pool of 60 zebrafish embryos 48 hours
-        post fertilization using Trizol (Gibco BRL) according to the manufacturers
-        instructions. It was purified with an RNeasy Mini Kit (Qiagen, Hilden, Germany).
-        \ Biotinilated cRNA was prepared from 2 microg of total RNA using GeneChip
-        IVT Labeling kit (Affimetrix). <br>(Parameters: Extracted product = total_RNA,
-        Amplification = none)\tTitle: Affymetrix in vitro transcription. Description:
-        \tTitle: Affymetrix Generic Hybridization. Description: \tTitle: NimbleGen
-        One-Color Array Scanning (Expression) v1.0. Description: \t\nProtocol Parameters\t\nProtocol
-        Hardware\t\nProtocol Software\t\t\tMicroArraySuite 5.0\t\nProtocol Contact\t\nProtocol
-        Term Source REF\t\t\tmo\tThe MGED Ontology\t\nSDRF File\tE-MEXP-2381.sdrf.txt\t\nTerm
-        Source Name\tNCI_thesaurus\t\tThe MGED Ontology\tArrayExpress\tThe MGED Ontology\tEFO\tmo\t\nTerm
-        Source File\tncithesaurus.obo.alt\t\thttp://mged.sourceforge.net/ontologies/MGEDontology.php\thttp://www.ebi.ac.uk/arrayexpress\thttp://mged.sourceforge.net/ontologies/MGEDontology.php\thttp://www.ebi.ac.uk/efo/\thttp://mged.sourceforge.net/ontologies/MGEDontology.php\t\nTerm
-        Source Version\t\t\t\t\t\t\t\t\n"
+      string: "Investigation Title\tTranscription profiling of Danio rerio (zebrafish)\
+        \ RPL11 mutant vs siblings\t\nComment[Submitted Name]\tRPL11 mutant expression\t\
+        \nExperimental Design\tindividual_genetic_characteristics_design\tin_vivo_design\t\
+        co-expression_design\ttranscription profiling by array\ttranscription profiling\
+        \ by array\t\nExperimental Design Term Source REF\t\t\tThe MGED Ontology\t\
+        EFO\tEFO\t\nComment[AEMIAMESCORE]\t4\t\nComment[SecondaryAccession]\t\t\n\
+        Comment[ArrayExpressReleaseDate]\t2010-01-01\t\nComment[ArrayExpressAccession]\t\
+        E-MEXP-2381\t\nComment[MAGETAB TimeStamp_Version]\t2010-08-10 12:15:20 Last\
+        \ Changed Rev: 13058\t\nExperimental Factor Name\tGENOTYPE\t\nExperimental\
+        \ Factor Type\tgenotype\t\nExperimental Factor Term Source REF\t\nPerson Last\
+        \ Name\tDanilova\t\nPerson First Name\tNadia\t\nPerson Mid Initials\t\nPerson\
+        \ Email\tndanilova@ucla.edu\t\nPerson Phone\t1-310-267-4972\t\nPerson Fax\t\
+        \nPerson Address\tMCDB, 621 Charles E Young Dr, Los Angeles, CA, 90095, USA\t\
+        \nPerson Affiliation\tUCLA\t\nPerson Roles\tsubmitter\t\nPerson Roles Term\
+        \ Source REF\tThe MGED Ontology\t\nQuality Control Type\t\nQuality Control\
+        \ Term Source REF\t\nReplicate Type\t\nReplicate Term Source REF\t\nNormalization\
+        \ Type\t\nNormalization Term Source REF\t\nDate of Experiment\t\nPublic Release\
+        \ Date\t2010-01-01\t\nPubMed ID\t\nPublication DOI\t\nPublication Author List\t\
+        \nPublication Title\t\nPublication Status\t\nPublication Status Term Source\
+        \ REF\t\nExperiment Description\tTranscriptional profile of RPL11 zebrafish\
+        \ mutant in comparison to siblings\t\nProtocol Name\tP-MTAB-5485\tP-AFFY-2\t\
+        Affymetrix:Protocol:Hybridization-Unknown\tP-NGEN-13\t\nProtocol Type\tnucleic_acid_extraction\t\
+        labeling\thybridization\tfeature_extraction\t\nProtocol Description\tRNA was\
+        \ extracted from a pool of 60 zebrafish embryos 48 hours post fertilization\
+        \ using Trizol (Gibco BRL) according to the manufacturers instructions. It\
+        \ was purified with an RNeasy Mini Kit (Qiagen, Hilden, Germany).  Biotinilated\
+        \ cRNA was prepared from 2 microg of total RNA using GeneChip IVT Labeling\
+        \ kit (Affimetrix). <br>(Parameters: Extracted product = total_RNA, Amplification\
+        \ = none)\tTitle: Affymetrix in vitro transcription. Description: \tTitle:\
+        \ Affymetrix Generic Hybridization. Description: \tTitle: NimbleGen One-Color\
+        \ Array Scanning (Expression) v1.0. Description: \t\nProtocol Parameters\t\
+        \nProtocol Hardware\t\nProtocol Software\t\t\tMicroArraySuite 5.0\t\nProtocol\
+        \ Contact\t\nProtocol Term Source REF\t\t\tmo\tThe MGED Ontology\t\nSDRF File\t\
+        E-MEXP-2381.sdrf.txt\t\nTerm Source Name\tNCI_thesaurus\t\tThe MGED Ontology\t\
+        ArrayExpress\tThe MGED Ontology\tEFO\tmo\t\nTerm Source File\tncithesaurus.obo.alt\t\
+        \thttp://mged.sourceforge.net/ontologies/MGEDontology.php\thttp://www.ebi.ac.uk/arrayexpress\t\
+        http://mged.sourceforge.net/ontologies/MGEDontology.php\thttp://www.ebi.ac.uk/efo/\t\
+        http://mged.sourceforge.net/ontologies/MGEDontology.php\t\nTerm Source Version\t\
+        \t\t\t\t\t\t\t\n"
     headers:
       Accept-Ranges:
       - bytes
@@ -107,7 +114,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 28 Jul 2021 19:24:45 GMT
+      - Mon, 03 May 2021 16:26:01 GMT
       ETag:
       - E-MEXP-2381.idf.txt_2790_1464780736000
       Last-Modified:
@@ -129,27 +136,37 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381/protocols
   response:
     body:
-      string: "{\"protocols\":{\"api-version\":3,\"api-revision\":\"091015\",\"version\":1.0,\"revision\":\"091015\",\"total-protocols\":5,\"protocol\":[{\"id\":62,\"accession\":\"Affymetrix:Protocol:Hybridization-Unknown\",\"name\":\"Affymetrix:Protocol:Hybridization-Unknown\",\"text\":\"Affymetrix
-        Generic Hybridization\",\"type\":\"hybridization protocol\",\"performer\":null,\"hardware\":null,\"software\":\"MicroArraySuite
-        5.0\",\"standardpublicprotocol\":1},{\"id\":77,\"accession\":\"P-AFFY-2\",\"name\":\"P-AFFY-2\",\"text\":\"Affymetrix
-        in vitro transcription.\",\"type\":\"labeling\",\"performer\":null,\"hardware\":null,\"software\":null,\"standardpublicprotocol\":1,\"parameter\":\"Quantity
-        of starting RNA (ug)\"},{\"id\":85170,\"accession\":\"P-MTAB-5485\",\"name\":\"P-MTAB-5485\",\"text\":[\"RNA
-        was extracted from a pool of 60 zebrafish embryos 48 hours post fertilization
-        using Trizol (Gibco BRL) according to the manufacturers instructions. It was
-        purified with an RNeasy Mini Kit (Qiagen, Hilden, Germany).  Biotinilated
-        cRNA was prepared from 2 microg of total RNA using GeneChip IVT Labeling kit
-        (Affimetrix). \",{\"br\":null},\"(Parameters: Extracted product = total_RNA,
-        Amplification = none)\"],\"type\":\"nucleic_acid_extraction\",\"performer\":null,\"hardware\":null,\"software\":null,\"standardpublicprotocol\":0},{\"id\":480516,\"accession\":\"P-MTAB-5514\",\"name\":\"AWI
-        Agilent two-colour scanning\",\"text\":[\"Microarrays were imaged using an
-        Agilent microarray scanner in XDR (eXtended Dynamic Range function) mode and
-        a scan resolution of 5 \xB5m.\",{\"br\":null},\"(Parameters: Scanning hardware
-        = DNA Microarray Scanner BA [Agilent Technologies], Scanning software = Feature
-        Extraction Software [Agilent])\"],\"type\":\"image_acquisition\",\"performer\":null,\"hardware\":null,\"software\":null,\"standardpublicprotocol\":0},{\"id\":78798,\"accession\":\"P-NGEN-13\",\"name\":\"P-NGEN-13\",\"type\":\"image_acquisition\",\"performer\":null,\"hardware\":null,\"software\":null,\"standardpublicprotocol\":1}]}}"
+      string: "{\"protocols\":{\"api-version\":3,\"api-revision\":\"091015\",\"version\"\
+        :1.0,\"revision\":\"091015\",\"total-protocols\":5,\"protocol\":[{\"id\":62,\"\
+        accession\":\"Affymetrix:Protocol:Hybridization-Unknown\",\"name\":\"Affymetrix:Protocol:Hybridization-Unknown\"\
+        ,\"text\":\"Affymetrix Generic Hybridization\",\"type\":\"hybridization protocol\"\
+        ,\"performer\":null,\"hardware\":null,\"software\":\"MicroArraySuite 5.0\"\
+        ,\"standardpublicprotocol\":1},{\"id\":77,\"accession\":\"P-AFFY-2\",\"name\"\
+        :\"P-AFFY-2\",\"text\":\"Affymetrix in vitro transcription.\",\"type\":\"\
+        labeling\",\"performer\":null,\"hardware\":null,\"software\":null,\"standardpublicprotocol\"\
+        :1,\"parameter\":\"Quantity of starting RNA (ug)\"},{\"id\":85170,\"accession\"\
+        :\"P-MTAB-5485\",\"name\":\"P-MTAB-5485\",\"text\":[\"RNA was extracted from\
+        \ a pool of 60 zebrafish embryos 48 hours post fertilization using Trizol\
+        \ (Gibco BRL) according to the manufacturers instructions. It was purified\
+        \ with an RNeasy Mini Kit (Qiagen, Hilden, Germany).  Biotinilated cRNA was\
+        \ prepared from 2 microg of total RNA using GeneChip IVT Labeling kit (Affimetrix).\
+        \ \",{\"br\":null},\"(Parameters: Extracted product = total_RNA, Amplification\
+        \ = none)\"],\"type\":\"nucleic_acid_extraction\",\"performer\":null,\"hardware\"\
+        :null,\"software\":null,\"standardpublicprotocol\":0},{\"id\":480516,\"accession\"\
+        :\"P-MTAB-5514\",\"name\":\"AWI Agilent two-colour scanning\",\"text\":[\"\
+        Microarrays were imaged using an Agilent microarray scanner in XDR (eXtended\
+        \ Dynamic Range function) mode and a scan resolution of 5 \xB5m.\",{\"br\"\
+        :null},\"(Parameters: Scanning hardware = DNA Microarray Scanner BA [Agilent\
+        \ Technologies], Scanning software = Feature Extraction Software [Agilent])\"\
+        ],\"type\":\"image_acquisition\",\"performer\":null,\"hardware\":null,\"software\"\
+        :null,\"standardpublicprotocol\":0},{\"id\":78798,\"accession\":\"P-NGEN-13\"\
+        ,\"name\":\"P-NGEN-13\",\"type\":\"image_acquisition\",\"performer\":null,\"\
+        hardware\":null,\"software\":null,\"standardpublicprotocol\":1}]}}"
     headers:
       Cache-Control:
       - no-cache
@@ -157,7 +174,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Wed, 28 Jul 2021 19:24:46 GMT
+      - Mon, 03 May 2021 16:26:02 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -183,7 +200,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MEXP-2381/samples
   response:
@@ -204,7 +221,7 @@ interactions:
       Content-Type:
       - application/json;charset=UTF-8
       Date:
-      - Wed, 28 Jul 2021 19:24:46 GMT
+      - Mon, 03 May 2021 16:26:03 GMT
       Expires:
       - Fri, 16 May 2008 10:00:00 GMT
       Pragma:
@@ -230,23 +247,30 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.24.0
     method: GET
     uri: https://www.ebi.ac.uk/arrayexpress/files/E-MEXP-2381/E-MEXP-2381.sdrf.txt
   response:
     body:
-      string: "Source Name\tCharacteristics [Age]\tCharacteristics [GeneticModification]\tCharacteristics
-        [Organism]\tTerm Source REF\tTerm Accession Number\tCharacteristics [BioSourceType]\tCharacteristics
-        [Genotype]\tTerm Source REF\tTerm Accession Number\tCharacteristics [DevelopmentalStage]\tTerm
-        Source REF\tTerm Accession Number\tProtocol REF\tExtract Name\tMaterial Type\tProtocol
-        REF\tLabeled Extract Name\tLabel\tMaterial Type\tProtocol REF\tHybridization
-        Name\tArray Design REF\tProtocol REF\tFactor Value [GENOTYPE]\tTerm Source
-        REF\tTerm Accession Number\tScan Name\tArray Data File\tComment [ArrayExpress
-        FTP file]\nSAMPLE229091SUB6092\t48 hours\tinduced_mutation\tDanio rerio\tEFO\thttp://purl.org/obo/owl/NCBITaxon#NCBITaxon_7955\tfresh_sample\tRPL11
-        mutation\t  \t  \tembryo\tEFO\tEFO_0001367\tP-MTAB-5485\tSAMPLE229091SUB6092\ttotal_RNA\tP-AFFY-2\tSAMPLE229091SUB6092\tbiotin\tunknown\tAffymetrix:Protocol:Hybridization-Unknown\tSAMPLE229091SUB6092\tA-AFFY-38\tP-NGEN-13\tRPL11
-        mutation\t  \t  \t135354-135352_ExpPt1.CEL\t135354-135352_ExpPt1.CEL\tftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MEXP/E-MEXP-2381/E-MEXP-2381.raw.1.zip\nSAMPLE229092SUB6092\t48
-        hours\t  \tDanio rerio\tEFO\thttp://purl.org/obo/owl/NCBITaxon#NCBITaxon_7955\t
-        \ \tcontrol\tEFO\tEFO_0001461\t  \t  \t  \tP-MTAB-5485\tSAMPLE229092SUB6092\ttotal_RNA\tP-AFFY-2\tSAMPLE229092SUB6092\tbiotin\tunknown\tAffymetrix:Protocol:Hybridization-Unknown\tSAMPLE229092SUB6092\tA-AFFY-38\tP-NGEN-13\tcontrol\tEFO\tEFO_0001461\t135353-135351_CtrlPt1.CEL\t135353-135351_CtrlPt1.CEL\tftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MEXP/E-MEXP-2381/E-MEXP-2381.raw.1.zip\n"
+      string: "Source Name\tCharacteristics [Age]\tCharacteristics [GeneticModification]\t\
+        Characteristics [Organism]\tTerm Source REF\tTerm Accession Number\tCharacteristics\
+        \ [BioSourceType]\tCharacteristics [Genotype]\tTerm Source REF\tTerm Accession\
+        \ Number\tCharacteristics [DevelopmentalStage]\tTerm Source REF\tTerm Accession\
+        \ Number\tProtocol REF\tExtract Name\tMaterial Type\tProtocol REF\tLabeled\
+        \ Extract Name\tLabel\tMaterial Type\tProtocol REF\tHybridization Name\tArray\
+        \ Design REF\tProtocol REF\tFactor Value [GENOTYPE]\tTerm Source REF\tTerm\
+        \ Accession Number\tScan Name\tArray Data File\tComment [ArrayExpress FTP\
+        \ file]\nSAMPLE229091SUB6092\t48 hours\tinduced_mutation\tDanio rerio\tEFO\t\
+        http://purl.org/obo/owl/NCBITaxon#NCBITaxon_7955\tfresh_sample\tRPL11 mutation\t\
+        \  \t  \tembryo\tEFO\tEFO_0001367\tP-MTAB-5485\tSAMPLE229091SUB6092\ttotal_RNA\t\
+        P-AFFY-2\tSAMPLE229091SUB6092\tbiotin\tunknown\tAffymetrix:Protocol:Hybridization-Unknown\t\
+        SAMPLE229091SUB6092\tA-AFFY-38\tP-NGEN-13\tRPL11 mutation\t  \t  \t135354-135352_ExpPt1.CEL\t\
+        135354-135352_ExpPt1.CEL\tftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MEXP/E-MEXP-2381/E-MEXP-2381.raw.1.zip\n\
+        SAMPLE229092SUB6092\t48 hours\t  \tDanio rerio\tEFO\thttp://purl.org/obo/owl/NCBITaxon#NCBITaxon_7955\t\
+        \  \tcontrol\tEFO\tEFO_0001461\t  \t  \t  \tP-MTAB-5485\tSAMPLE229092SUB6092\t\
+        total_RNA\tP-AFFY-2\tSAMPLE229092SUB6092\tbiotin\tunknown\tAffymetrix:Protocol:Hybridization-Unknown\t\
+        SAMPLE229092SUB6092\tA-AFFY-38\tP-NGEN-13\tcontrol\tEFO\tEFO_0001461\t135353-135351_CtrlPt1.CEL\t\
+        135353-135351_CtrlPt1.CEL\tftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MEXP/E-MEXP-2381/E-MEXP-2381.raw.1.zip\n"
     headers:
       Accept-Ranges:
       - bytes
@@ -257,7 +281,7 @@ interactions:
       Content-Type:
       - text/plain
       Date:
-      - Wed, 28 Jul 2021 19:24:48 GMT
+      - Mon, 03 May 2021 16:26:03 GMT
       ETag:
       - E-MEXP-2381.sdrf.txt_1569_1324803913000
       Last-Modified:
@@ -279,7 +303,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.24.0
     method: GET
     uri: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=taxonomy&field=scin&term=DANIO_RERIO&api_key=3a1f8d818b0aa05d1aa3c334fa2cc9a17e09
   response:
@@ -306,18 +330,18 @@ interactions:
       Content-Type:
       - text/xml; charset=UTF-8
       Date:
-      - Wed, 28 Jul 2021 19:24:47 GMT
+      - Mon, 03 May 2021 16:26:03 GMT
       Keep-Alive:
       - timeout=4, max=40
       NCBI-PHID:
-      - 939B88E7102B03E5000025013B227420.1.1.m_1
+      - D0BD7F6575731E55000040C2F9076DB8.1.1.m_1
       NCBI-SID:
-      - 3DA9BDBF693B4E37_9802SID
+      - 5D534A81888AC62D_8994SID
       Server:
       - Finatra
       Set-Cookie:
-      - ncbi_sid=3DA9BDBF693B4E37_9802SID; domain=.nih.gov; path=/; expires=Thu, 28
-        Jul 2022 19:24:48 GMT
+      - ncbi_sid=5D534A81888AC62D_8994SID; domain=.nih.gov; path=/; expires=Tue, 03
+        May 2022 16:26:04 GMT
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -335,4 +359,52 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"jobName": "DOWNLOADER_1024_23", "jobQueue": "", "jobDefinition": "DOWNLOADER_1024",
+      "parameters": {"job_name": "ARRAY_EXPRESS", "job_id": "23"}}'
+    headers:
+      Authorization:
+      - !!binary |
+        QVdTNC1ITUFDLVNIQTI1NiBDcmVkZW50aWFsPUZPTy8yMDIxMDUwMy91cy1lYXN0LTEvYmF0Y2gv
+        YXdzNF9yZXF1ZXN0LCBTaWduZWRIZWFkZXJzPWhvc3Q7eC1hbXotZGF0ZSwgU2lnbmF0dXJlPTZj
+        MzU5Yjc5NTQ4YzBiZjY2ZmZlM2ExNmIyMTk2ODgyZTVkYjkwOGI5ZWU4ZTYxNThmOGEyYWU2MWM4
+        Yjk1NjA=
+      Content-Length:
+      - '146'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4xNy42MiBQeXRob24vMy42LjkgTGludXgvNC4xNS4wLTE0Mi1nZW5lcmljIEJvdG9j
+        b3JlLzEuMjAuNjI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyMTA1MDNUMTYyNjA0Wg==
+    method: POST
+    uri: https://batch.us-east-1.amazonaws.com/v1/submitjob
+  response:
+    body:
+      string: '{"message":"The security token included in the request is invalid."}'
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - X-amzn-errortype,X-amzn-requestid,X-amzn-errormessage,X-amzn-trace-id,X-amz-apigw-id,date
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '68'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 03 May 2021 16:26:04 GMT
+      X-Amzn-Trace-Id:
+      - Root=1-6090241c-257dc05465ed869f760152bb
+      x-amz-apigw-id:
+      - ewqUeHO8IAMF5pg=
+      x-amzn-ErrorType:
+      - UnrecognizedClientException
+      x-amzn-RequestId:
+      - cea52197-0c53-427a-b5a6-eafb78cb2be2
+    status:
+      code: 403
+      message: Forbidden
 version: 1

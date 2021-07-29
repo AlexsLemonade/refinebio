@@ -7,12 +7,10 @@ from data_refinery_common.models import Sample
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.array_express import SAMPLES_URL
 from data_refinery_foreman.surveyor.harmony import (
-    Harmonizer,
-    determine_title_field,
     extract_title,
-    harmonize_all_samples,
+    harmonize,
     parse_sdrf,
-    preprocess_geo_sample,
+    preprocess_geo,
 )
 from data_refinery_foreman.surveyor.sra import SraSurveyor, UnsupportedDataTypeError
 
@@ -20,14 +18,6 @@ GEOparse.logger.set_verbosity("WARN")
 
 
 class HarmonyTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls._harmonizer = Harmonizer()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._harmonizer = None
-
     def setUp(self):
         self.sample = Sample()
         self.sample.save()
@@ -41,7 +31,7 @@ class HarmonyTestCase(TestCase):
         metadata = parse_sdrf(
             "https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt"
         )
-        harmonized = harmonize_all_samples(metadata)
+        harmonized = harmonize(metadata)
 
         title = "donor A islets RNA"
         self.assertTrue(title in harmonized.keys())
@@ -214,7 +204,7 @@ class HarmonyTestCase(TestCase):
             )
             if not metadata:
                 continue
-            harmonized = harmonize_all_samples(metadata)
+            harmonized = harmonize(metadata)
             self.assertIsNotNone(harmonized)
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sra_harmony.yaml")
@@ -224,17 +214,18 @@ class HarmonyTestCase(TestCase):
         """
 
         metadata = SraSurveyor.gather_all_metadata("SRR1533126")
-        harmonized_sample = self._harmonizer.harmonize_sample(metadata)
+        harmonized = harmonize([metadata])
+
         title = "Phosphaturic mesenchymal tumour (PMT) case 2 of NTUH"
-        self.assertEqual(title, harmonized_sample["title"])
-        self.assertTrue("sex" in harmonized_sample.keys())
-        self.assertEqual("female", harmonized_sample["sex"])
+        self.assertTrue(title in harmonized.keys())
+        self.assertTrue("sex" in harmonized[title].keys())
+        self.assertEqual("female", harmonized[title]["sex"])
 
-        self.assertTrue("age" in harmonized_sample.keys())
-        self.assertEqual(57.0, harmonized_sample["age"])
+        self.assertTrue("age" in harmonized[title].keys())
+        self.assertEqual(57.0, harmonized[title]["age"])
 
-        self.assertTrue("specimen_part" in harmonized_sample.keys())
-        self.assertTrue("disease" in harmonized_sample.keys())
+        self.assertTrue("specimen_part" in harmonized[title].keys())
+        self.assertTrue("disease" in harmonized[title].keys())
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sra_lots.yaml")
     @tag("slow")
@@ -271,7 +262,7 @@ class HarmonyTestCase(TestCase):
         for accession in lots:
             try:
                 metadata = SraSurveyor.gather_all_metadata(accession)
-                harmonized = harmonize_all_samples([metadata])
+                harmonized = harmonize([metadata])
                 self.assertIsNotNone(harmonized)
             except UnsupportedDataTypeError:
                 continue
@@ -280,71 +271,48 @@ class HarmonyTestCase(TestCase):
         """
         Thoroughly tests a specific GEO harmonization
         """
+
         # Weird ones caused bugs
         gse = GEOparse.get_GEO("GSE94532", destdir="/tmp/GSE94532/", silent=True)
-        for _, sample in gse.gsms.items():
-            preprocessed_sample = preprocess_geo_sample(sample)
-
-            self.assertGreater(len(preprocessed_sample.keys()), 30)
-            for value in preprocessed_sample.values():
-                self.assertNotIsInstance(value, dict)
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
 
         # Illumina
         gse = GEOparse.get_GEO("GSE32628", destdir="/tmp/GSE32628/", silent=True)
 
+        # GEO requires a small amount of preprocessing
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
+        harmonized = harmonize(preprocessed_samples)
+
         title = "SCC_P-57"
-        test_sample = None
-        for _, sample in gse.gsms.items():
-            preprocessed_sample = preprocess_geo_sample(sample)
-            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
-
-            if sample.metadata["title"][0] == title:
-                test_sample = harmonized_sample
-
-        self.assertEqual(title, test_sample["title"])
-        self.assertIn("sex", test_sample.keys())
-        self.assertIn("age", test_sample.keys())
-        self.assertIn("specimen_part", test_sample.keys())
-        self.assertIn("subject", test_sample.keys())
+        self.assertTrue(title in harmonized.keys())
+        self.assertTrue("sex" in harmonized[title].keys())
+        self.assertTrue("age" in harmonized[title].keys())
+        self.assertTrue("specimen_part" in harmonized[title].keys())
+        self.assertTrue("subject" in harmonized[title].keys())
 
         # Agilent Two Color
         gse = GEOparse.get_GEO("GSE93857", destdir="/tmp", silent=True)
-        for _, sample in gse.gsms.items():
-            preprocessed_sample = preprocess_geo_sample(sample)
-            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
-
-        self.assertIn("title", harmonized_sample.keys())
-        self.assertIn("treatment", harmonized_sample.keys())
-        self.assertIn("specimen_part", harmonized_sample.keys())
-        self.assertIn("time", harmonized_sample.keys())
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
+        harmonized = harmonize(preprocessed_samples)
 
         gse = GEOparse.get_GEO("GSE103060", destdir="/tmp", silent=True)
-        for _, sample in gse.gsms.items():
-            preprocessed_sample = preprocess_geo_sample(sample)
-            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
-
-        self.assertIn("title", harmonized_sample.keys())
-        self.assertIn("specimen_part", harmonized_sample.keys())
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
+        harmonized = harmonize(preprocessed_samples)
 
     def test_geo_leg_cancer(self):
-        """Related:
-        https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-383969447
-        """
+        """ Related: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-383969447 """
+
         gse = GEOparse.get_GEO("GSE32628", destdir="/tmp/GSE32628/", silent=True)
 
+        # GEO requires a small amount of preprocessing
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
+        harmonized = harmonize(preprocessed_samples)
+
         title = "SCC_P-57"
-        test_sample = None
-        for _, sample in gse.gsms.items():
-            preprocessed_sample = preprocess_geo_sample(sample)
-            harmonized_sample = self._harmonizer.harmonize_sample(preprocessed_sample)
-
-            if sample.metadata["title"][0] == title:
-                test_sample = harmonized_sample
-
-        self.assertEqual(title, test_sample["title"])
-        self.assertTrue("keratinocyte" == test_sample["specimen_part"])
-        self.assertTrue("squamous cell carcinoma" == test_sample["disease"])
-        self.assertTrue("azathioprine + prednison" == test_sample["compound"])
+        self.assertTrue(title in harmonized.keys())
+        self.assertTrue("keratinocyte" == harmonized[title]["specimen_part"])
+        self.assertTrue("squamous cell carcinoma" == harmonized[title]["disease"])
+        self.assertTrue("azathioprine + prednison" == harmonized[title]["compound"])
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.ordering_mismatch.yaml")
     def test_ordering_mismatch(self):
@@ -357,17 +325,11 @@ class HarmonyTestCase(TestCase):
         samples_endpoint = SAMPLES_URL.format(experiment_accession_code)
         r = utils.requests_retry_session().get(samples_endpoint, timeout=60)
         json_samples = r.json()["experiment"]["sample"]
-        flattened_json_samples = [utils.flatten(json_sample) for json_sample in json_samples]
+        json_titles = [extract_title(utils.flatten(json_sample)) for json_sample in json_samples]
 
         SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
         sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
-        parsed_samples = parse_sdrf(sdrf_url)
-
-        title_field = determine_title_field(parsed_samples, flattened_json_samples)
-        sdrf_samples = harmonize_all_samples(parsed_samples, title_field)
-        json_titles = [
-            extract_title(json_sample, title_field) for json_sample in flattened_json_samples
-        ]
+        sdrf_samples = harmonize(parse_sdrf(sdrf_url))
 
         # The titles won't match up if the order of the sample dicts
         # isn't corrected for, resulting in a KeyError being raised.
