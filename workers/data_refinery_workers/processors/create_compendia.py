@@ -436,32 +436,13 @@ def _run_iterativesvd(job_context: Dict) -> Dict:
     del untransposed_imputed_matrix
     del row_col_filtered_matrix_samples_index
     del row_col_filtered_matrix_samples_columns
-    # Quantile normalize imputed_matrix where genes are rows and samples are columns
-    job_context["organism"] = Organism.get_object_for_name(job_context["organism_name"])
+
     job_context["merged_no_qn"] = untransposed_imputed_matrix_df
     # output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
     # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(),
     #                                               output_path)
 
     log_state("end untranspose", job_context["job"].id, untranspose_start)
-
-    return job_context
-
-
-def _quantile_normalize(job_context: Dict) -> Dict:
-    """
-    - Quantile normalize imputed_matrix where genes are rows and samples are columns
-    """
-    quantile_start = log_state("start quantile normalize", job_context["job"].id)
-
-    # Perform the Quantile Normalization
-    job_context = smashing_utils.quantile_normalize(job_context, ks_check=False)
-
-    log_state("end quantile normalize", job_context["job"].id, quantile_start)
-
-    # Visualize Final Compendia
-    # output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
-    # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
     return job_context
 
@@ -490,7 +471,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
        the transposed_matrix; imputed_matrix
         -- with specified svd algorithm or skip
      - Untranspose imputed_matrix (genes are now rows, samples are now columns)
-     - Quantile normalize imputed_matrix where genes are rows and samples are columns
     """
     imputation_start = log_state("start perform imputation", job_context["job"].id)
     job_context["time_start"] = timezone.now()
@@ -505,13 +485,31 @@ def _perform_imputation(job_context: Dict) -> Dict:
             _filter_rows_and_columns,
             _reset_zero_values,
             _run_iterativesvd,
-            _quantile_normalize,
         ],
     )
 
     job_context["time_end"] = timezone.now()
     job_context["formatted_command"] = ["create_compendia.py"]
     log_state("end perform imputation", job_context["job"].id, imputation_start)
+
+    return job_context
+
+
+def _quantile_normalize(job_context: Dict) -> Dict:
+    """
+    - Quantile normalize imputed_matrix where genes are rows and samples are columns
+    """
+    quantile_start = log_state("start quantile normalize", job_context["job"].id)
+
+    # Perform the Quantile Normalization
+    job_context["organism"] = Organism.get_object_for_name(job_context["organism_name"])
+    job_context = smashing_utils.quantile_normalize(job_context, ks_check=False)
+
+    log_state("end quantile normalize", job_context["job"].id, quantile_start)
+
+    # Visualize Final Compendia
+    # output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
+    # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
     return job_context
 
@@ -650,6 +648,7 @@ def create_compendia(job_id: int) -> None:
             _prepare_input,
             _prepare_frames,
             _perform_imputation,
+            _quantile_normalize,
             smashing_utils.write_non_data_files,
             _create_result_objects,
             utils.end_job,
