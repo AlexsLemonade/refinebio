@@ -114,8 +114,10 @@ class SraSurveyorTestCase(TestCase):
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_file_report.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
-    def test_survey_file_report(self, mock_send_job):
-        """A slightly harder test of the SRA surveyor.
+    def test_survey_unmated_reads(self, mock_send_job):
+        """Test an experiment with unmated reads.
+
+        Also make sure the file report endpoint's properties are recorded.
         """
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
