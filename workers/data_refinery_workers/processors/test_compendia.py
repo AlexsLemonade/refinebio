@@ -23,6 +23,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_workers.processors import create_compendia
+from data_refinery_workers.processors.testing_utils import ProcessorJobTestCaseMixin
 
 
 def create_sample_for_experiment(sample_info: Dict, experiment: Experiment) -> Sample:
@@ -63,7 +64,7 @@ def create_sample_for_experiment(sample_info: Dict, experiment: Experiment) -> S
     return sample
 
 
-class CompendiaTestCase(TransactionTestCase):
+class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
     @tag("compendia")
     def test_create_compendia(self):
         DATA_DIR = "/home/user/data_store/PCL/"
@@ -139,10 +140,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         # Because one of the samples is filtered out, there will be too few
         # remaining samples to smash together, so we expect this job to fail.
-        job.refresh_from_db()
-        self.assertFalse(job.success)
-        self.assertIsNotNone(job.failure_reason)
-        self.assertIn("k must be between 1 and min(A.shape)", job.failure_reason)
+        self.assertFailed(job, "k must be between 1 and min(A.shape)")
 
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])
@@ -259,8 +257,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         final_context = create_compendia.create_compendia(job.id)
 
-        job.refresh_from_db()
-        self.assertTrue(job.success)
+        self.assertSucceeded(job)
 
         # Verify result
         self.assertEqual(final_context["compendium_result"].result.computedfile_set.count(), 1)
@@ -391,8 +388,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         final_context = create_compendia.create_compendia(job.id)
 
-        job.refresh_from_db()
-        self.assertTrue(job.success)
+        self.assertSucceeded(job)
 
         # Verify result
         self.assertEqual(final_context["compendium_result"].result.computedfile_set.count(), 1)
