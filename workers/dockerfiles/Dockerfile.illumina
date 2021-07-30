@@ -67,6 +67,8 @@ RUN pip3 install --upgrade pip
 COPY config/ config/
 COPY .boto .boto
 
+COPY workers/illumina_probe_maps/ probe_maps/
+
 COPY workers/data_refinery_workers/processors/requirements.txt .
 
 RUN  pip3 install -r requirements.txt
