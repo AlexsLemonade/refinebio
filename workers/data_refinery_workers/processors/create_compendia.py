@@ -637,19 +637,19 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 
+COMPENDIA_PIPELINE = [
+    utils.start_job,
+    _prepare_input,
+    _prepare_frames,
+    _perform_imputation,
+    _quantile_normalize,
+    smashing_utils.write_non_data_files,
+    _create_result_objects,
+    utils.end_job,
+]
+
+
 def create_compendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_COMPENDIA.value)
-    job_context = utils.run_pipeline(
-        {"job_id": job_id, "pipeline": pipeline},
-        [
-            utils.start_job,
-            _prepare_input,
-            _prepare_frames,
-            _perform_imputation,
-            _quantile_normalize,
-            smashing_utils.write_non_data_files,
-            _create_result_objects,
-            utils.end_job,
-        ],
-    )
+    job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline}, COMPENDIA_PIPELINE)
     return job_context

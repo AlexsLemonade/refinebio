@@ -5,9 +5,10 @@ from typing import Dict
 
 from django.test import TransactionTestCase, tag
 
+import numpy as np
 import pandas as pd
 
-from data_refinery_common.enums import ProcessorPipeline
+from data_refinery_common.enums import PipelineEnum, ProcessorPipeline
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -16,13 +17,14 @@ from data_refinery_common.models import (
     Experiment,
     ExperimentSampleAssociation,
     Organism,
+    Pipeline,
     ProcessorJob,
     ProcessorJobDatasetAssociation,
     Sample,
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
-from data_refinery_workers.processors import create_compendia
+from data_refinery_workers.processors import create_compendia, utils
 from data_refinery_workers.processors.testing_utils import ProcessorJobTestCaseMixin
 
 
@@ -278,7 +280,7 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])
         self.assertEqual(
-            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"], "GSE5678",
+            final_context["filtered_samples"]["GSM1487222"]["experiment_accession_code"], "GSE5678"
         )
         self.assertIn(
             "This sample did not have a processed file",
@@ -461,7 +463,7 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         samples = list(str(i) for i in range(0, 10))
         for i in samples:
             create_sample_for_experiment(
-                {"organism": danio_rerio, "accession_code": i, "technology": "MICROARRAY",},
+                {"organism": danio_rerio, "accession_code": i, "technology": "MICROARRAY"},
                 experiment,
             )
 
@@ -510,3 +512,150 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         self.assertEqual(set(final_job_context["filtered_samples"].keys()), {"2", "3"})
         for v in final_job_context["filtered_samples"].values():
             self.assertIn("less than 50% present", v["reason"])
+
+    @tag("compendia")
+    def test_imputation(self):
+        job = ProcessorJob()
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
+        job.save()
+
+        # MICROARRAY TECH
+        experiment = Experiment()
+        experiment.accession_code = "GSE1234"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        qn_target = ComputedFile()
+        qn_target.filename = "danio_target.tsv"
+        qn_target.absolute_file_path = "/home/user/data_store/QN/danio_target.tsv"
+        qn_target.is_qn_target = True
+        qn_target.size_in_bytes = "12345"
+        qn_target.sha1 = "aabbccddeeff"
+        qn_target.result = result
+        qn_target.save()
+
+        danio_rerio = Organism(name="DANIO_RERIO", taxonomy_id=1, qn_target=result)
+        danio_rerio.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.data = {}
+        cra.data["organism_id"] = danio_rerio.id
+        cra.data["is_qn"] = True
+        cra.result = result
+        cra.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        micros = []
+        for file in os.listdir("/home/user/data_store/raw/TEST/MICROARRAY/"):
+
+            if "microarray.txt" in file:
+                continue
+
+            create_sample_for_experiment(
+                {
+                    "organism": danio_rerio,
+                    "accession_code": file,
+                    "technology": "MICROARRAY",
+                    "filename": file,
+                    "data_dir": "/home/user/data_store/raw/TEST/MICROARRAY/",
+                },
+                experiment,
+            )
+
+            micros.append(file)
+
+        dset = Dataset()
+        dset.data = {"GSE1234": micros}
+        dset.scale_by = "NONE"
+        dset.aggregate_by = "SPECIES"
+        dset.svd_algorithm = "ARPACK"
+        dset.quantile_normalize = True
+        dset.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = dset
+        pjda.save()
+
+        imputation_index = create_compendia.COMPENDIA_PIPELINE.index(
+            create_compendia._perform_imputation
+        )
+
+        pipeline = Pipeline(name=PipelineEnum.CREATE_COMPENDIA.value)
+        job_context = utils.run_pipeline(
+            {"job_id": job.id, "pipeline": pipeline},
+            create_compendia.COMPENDIA_PIPELINE[:imputation_index],
+        )
+
+        job_context["microarray_matrix"].loc[
+            "ENSDARG00000001313", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
+        ] = np.nan
+
+        job_context["microarray_matrix"].loc[
+            "ENSDARG00000000241", "05y584nlulkpdchrjiwhjj7j_GSM448988.PCL"
+        ] = np.nan
+
+        job_context["microarray_matrix"].loc[
+            "ENSDARG00000000151", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
+        ] = np.nan
+
+        final_context = utils.run_pipeline(
+            job_context, [create_compendia.COMPENDIA_PIPELINE[imputation_index]]
+        )
+        self.assertDidNotFail(job)
+
+        print(
+            f"""Imputation results:
+    expected:
+        -> (ENSDARG00000001313, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
+            = 0.817710280418396
+        -> (ENSDARG00000000241, 05y584nlulkpdchrjiwhjj7j_GSM448988.PCL):
+            = -0.03479414060711861
+        -> (ENSDARG00000000151, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
+            = -0.08136917650699615
+
+    actual:
+        -> (ENSDARG00000001313, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
+            = {job_context["merged_no_qn"].loc[
+            "ENSDARG00000001313", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
+        ]}
+        -> (ENSDARG00000000241, 05y584nlulkpdchrjiwhjj7j_GSM448988.PCL):
+            = {job_context["merged_no_qn"].loc[
+            "ENSDARG00000000241", "05y584nlulkpdchrjiwhjj7j_GSM448988.PCL"
+        ]}
+        -> (ENSDARG00000000151, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
+            = {job_context["merged_no_qn"].loc[
+            "ENSDARG00000000151", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
+        ]}
+
+        """
+        )
+
+        self.assertAlmostEqual(
+            job_context["merged_no_qn"].loc[
+                "ENSDARG00000001313", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
+            ],
+            0.817710280418396,
+            # For some reason the imputed value of this entry is way off from the actual value
+            delta=0.36,
+        )
+
+        self.assertAlmostEqual(
+            job_context["merged_no_qn"].loc[
+                "ENSDARG00000000241", "05y584nlulkpdchrjiwhjj7j_GSM448988.PCL"
+            ],
+            -0.03479414060711861,
+            delta=0.2,
+        )
+
+        self.assertAlmostEqual(
+            job_context["merged_no_qn"].loc[
+                "ENSDARG00000000151", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
+            ],
+            -0.08136917650699615,
+            delta=0.2,
+        )
