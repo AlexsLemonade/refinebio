@@ -439,8 +439,6 @@ choose_gene = function(probe_id, ensembl_ids) {
     return(ensembl_ids[1])
   }
 
-  # TODO: emit some kind of warning. Also, we need to decide what to do about NAs
-
   # Otherwise, use the ensembl ID that we picked in the Illumina refinery
   probe_map[probe_id,"ensembl_id"]
 }
