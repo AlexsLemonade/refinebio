@@ -106,10 +106,10 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": ("django.contrib.auth.password_validation" + ".UserAttributeSimilarityValidator"),},
-    {"NAME": ("django.contrib.auth.password_validation." + "MinimumLengthValidator"),},
-    {"NAME": ("django.contrib.auth.password_validation" + ".CommonPasswordValidator"),},
-    {"NAME": ("django.contrib.auth.password_validation" + ".NumericPasswordValidator"),},
+    {"NAME": ("django.contrib.auth.password_validation" + ".UserAttributeSimilarityValidator")},
+    {"NAME": ("django.contrib.auth.password_validation." + "MinimumLengthValidator")},
+    {"NAME": ("django.contrib.auth.password_validation" + ".CommonPasswordValidator")},
+    {"NAME": ("django.contrib.auth.password_validation" + ".NumericPasswordValidator")},
 ]
 
 # Internationalization
@@ -169,3 +169,6 @@ AWS_BATCH_QUEUE_WORKERS_NAMES = sorted(
 AWS_BATCH_QUEUE_SMASHER_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_SMASHER_NAME")
 AWS_BATCH_QUEUE_COMPENDIA_NAME = get_env_variable("REFINEBIO_JOB_QUEUE_COMPENDIA_NAME")
 AWS_BATCH_QUEUE_ALL_NAMES = sorted(get_env_variable("REFINEBIO_JOB_QUEUE_ALL_NAMES").split(","))
+
+USER = get_env_variable_gracefully("USER", "local")
+STAGE = get_env_variable_gracefully("STAGE", "dev")
