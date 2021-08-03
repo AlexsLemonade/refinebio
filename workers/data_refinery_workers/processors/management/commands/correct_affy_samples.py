@@ -19,7 +19,7 @@ from typing import Dict
 from django.core.management.base import BaseCommand
 
 import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
+from rpy2.rinterface_lib.embedded import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import *
@@ -30,8 +30,7 @@ CHUNK_SIZE = 1024 * 256  # chunk_size is in bytes
 
 
 def _download_file(download_url: str, file_path: str) -> None:
-    """Download a file from GEO.
-    """
+    """Download a file from GEO."""
 
     try:
         logger.debug("Downloading file from %s to %s.", download_url, file_path)
@@ -56,8 +55,7 @@ def _download_file(download_url: str, file_path: str) -> None:
 
 
 def _determine_brainarray_package(input_file: str) -> Dict:
-    """Uses the R package affy.io to read the .CEL file and determine its platform.
-    """
+    """Uses the R package affy.io to read the .CEL file and determine its platform."""
     try:
         header = ro.r["::"]("affyio", "read.celfile.header")(input_file)
     except RRuntimeError as e:

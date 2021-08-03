@@ -5,7 +5,7 @@ from typing import Dict
 from django.utils import timezone
 
 import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
+from rpy2.rinterface_lib.embedded import RRuntimeError
 
 from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -103,7 +103,7 @@ def _run_scan_twocolor(job_context: Dict) -> Dict:
 
 
 def _create_result_objects(job_context: Dict) -> Dict:
-    """ Create the ComputationalResult objects after a Scan run is complete """
+    """Create the ComputationalResult objects after a Scan run is complete"""
 
     result = ComputationalResult()
     result.commands.append("SCAN.UPC::SCAN_TwoColor")
