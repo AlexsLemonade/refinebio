@@ -608,33 +608,6 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         )
         self.assertDidNotFail(job)
 
-        print(
-            f"""Imputation results:
-    expected:
-        -> (ENSDARG00000001313, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
-            = 0.817710280418396
-        -> (ENSDARG00000000241, 05y584nlulkpdchrjiwhjj7j_GSM448988.PCL):
-            = -0.03479414060711861
-        -> (ENSDARG00000000151, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
-            = -0.08136917650699615
-
-    actual:
-        -> (ENSDARG00000001313, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
-            = {job_context["merged_no_qn"].loc[
-            "ENSDARG00000001313", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
-        ]}
-        -> (ENSDARG00000000241, 05y584nlulkpdchrjiwhjj7j_GSM448988.PCL):
-            = {job_context["merged_no_qn"].loc[
-            "ENSDARG00000000241", "05y584nlulkpdchrjiwhjj7j_GSM448988.PCL"
-        ]}
-        -> (ENSDARG00000000151, 02c3v1urzlq9o499ye6315v3_GSM396530.PCL):
-            = {job_context["merged_no_qn"].loc[
-            "ENSDARG00000000151", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
-        ]}
-
-        """
-        )
-
         self.assertAlmostEqual(
             job_context["merged_no_qn"].loc[
                 "ENSDARG00000001313", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
