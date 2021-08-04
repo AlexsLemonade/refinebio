@@ -132,6 +132,7 @@ def _filter_rnaseq_matrix(job_context: Dict) -> Dict:
     - Calculate the sum of the lengthScaledTPM values for each row (gene) of
       the rnaseq_expression_matrix (rnaseq_row_sums).
     - Calculate the 10th percentile of rnaseq_row_sums
+    - Drop any columns (genes) that are entirely NA
     - Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of
       rnaseq_row_sums; this is now filtered_rnaseq_matrix
     """
