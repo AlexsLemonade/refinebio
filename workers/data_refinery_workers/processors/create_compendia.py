@@ -88,9 +88,9 @@ def _prepare_frames(job_context: Dict) -> Dict:
     """
     Takes the inputs and places them into matrices
      - Combine all microarray samples with a full join to form a
-       microarray_expression_matrix (this may end up being a DataFrame).
+       DataFrame `microarray_expression_matrix`.
      - Combine all RNA-seq samples (lengthScaledTPM) with a full outer join
-       to form a rnaseq_expression_matrix.
+       to form a DataFrame `rnaseq_expression_matrix`.
      - Adds unsmashable files to `job_context["unsmashable_files"]`
     """
     start_prepare_frames = log_state("start _prepare_frames", job_context["job"].id)
