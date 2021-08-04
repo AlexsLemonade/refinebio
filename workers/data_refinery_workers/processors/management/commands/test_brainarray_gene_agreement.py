@@ -168,4 +168,23 @@ def check_brainarray_gene_agreement():
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        check_brainarray_gene_agreement()
+        try:
+            check_brainarray_gene_agreement()
+        except Exception as e:
+            requests.post(
+                settings.ENGAGEMENTBOT_WEBHOOK,
+                json={
+                    "attachments": [
+                        {
+                            "fallback": "Exception raised during Brainarray Test",
+                            "title": "Exception raised during Brainarray Test",
+                            "color": "#db3b28",
+                            "text": f"```\n{str(e)}\n```",
+                            "footer": "Refine.bio",
+                            "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
+                        }
+                    ],
+                },
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+            )
