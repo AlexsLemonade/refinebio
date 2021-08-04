@@ -36,7 +36,7 @@ def _prepare_input(job_context: Dict) -> Dict:
 
 
 def _build_qn_target(job_context: Dict) -> Dict:
-    """ Iteratively creates a QN target file, method described here:
+    """Iteratively creates a QN target file, method described here:
     https://github.com/AlexsLemonade/refinebio/pull/1013
     """
     job_context["time_start"] = timezone.now()
@@ -121,8 +121,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
 
 
 def _quantile_normalize(job_context: Dict) -> Dict:
-    """Run the R script we have to create the reference for QN.
-    """
+    """Run the R script we have to create the reference for QN."""
     try:
         job_context["time_start"] = timezone.now()
 
@@ -154,6 +153,8 @@ def _quantile_normalize(job_context: Dict) -> Dict:
 
 
 def _create_result_objects(job_context: Dict) -> Dict:
+    if not job_context["create_results"]:
+        return job_context
 
     result = ComputationalResult()
     result.commands.append(" ".join(job_context["formatted_command"]))
@@ -198,8 +199,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
 
 def _update_caches(job_context: Dict) -> Dict:
-    """ Experiments have a cached value with the number of samples that have QN targets
-        generated, this value should be updated after generating new QN targets. """
+    """Experiments have a cached value with the number of samples that have QN targets
+    generated, this value should be updated after generating new QN targets."""
+    if not job_context["create_results"]:
+        # No new results were created, so there's no point in updating the cache
+        return job_context
+
     organism = job_context["samples"]["ALL"][0].organism
 
     if job_context["result"]:
@@ -215,10 +220,10 @@ def _update_caches(job_context: Dict) -> Dict:
     return job_context
 
 
-def create_qn_reference(job_id: int) -> None:
+def create_qn_reference(job_id: int, create_results=True) -> None:
     pipeline = Pipeline(name=PipelineEnum.QN_REFERENCE.value)
     job_context = utils.run_pipeline(
-        {"job_id": job_id, "pipeline": pipeline},
+        {"job_id": job_id, "pipeline": pipeline, "create_results": create_results},
         [
             utils.start_job,
             _prepare_input,
