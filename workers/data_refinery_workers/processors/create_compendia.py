@@ -248,19 +248,19 @@ def _full_outer_join_gene_matrices(job_context: Dict) -> Dict:
     # compendia, so we need to provide a default
     log2_rnaseq_matrix = job_context.pop("log2_rnaseq_matrix", None)
 
-    outer_merge_start = log_state("start outer merge", job_context["job"].id)
-
     # Perform a full outer join of microarray_matrix and
     # log2_rnaseq_matrix; combined_matrix
     if log2_rnaseq_matrix is not None:
+        outer_merge_start = log_state("start outer merge", job_context["job"].id)
+
         job_context["combined_matrix"] = job_context.pop("microarray_matrix").merge(
             log2_rnaseq_matrix, how="outer", left_index=True, right_index=True
         )
+
+        log_state("end outer merge", job_context["job"].id, outer_merge_start)
     else:
         logger.info("Building compendia with only microarray data.", job_id=job_context["job"].id)
         job_context["combined_matrix"] = job_context.pop("microarray_matrix")
-
-    log_state("end outer merge", job_context["job"].id, outer_merge_start)
 
     return job_context
 
