@@ -108,13 +108,13 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
 
         # RNASEQ TECH
         experiment2 = Experiment()
-        experiment2.accession_code = "SRS332914"
+        experiment2.accession_code = "SRP149598"
         experiment2.save()
 
         create_sample_for_experiment(
             {
                 "organism": gallus_gallus,
-                "accession_code": "SRS332914",
+                "accession_code": "SRR7250867",
                 "technology": "RNA-SEQ",
                 "filename": "SRP149598_gene_lengthScaledTPM.tsv",
                 "data_dir": DATA_DIR,
@@ -125,7 +125,7 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         dset = Dataset()
         dset.data = {
             "GSE1487313": ["GSM1487313", "GSM1487222"],
-            "SRX332914": ["SRS332914"],
+            "SRP149598": ["SRR7250867"],
         }
         dset.scale_by = "NONE"
         dset.aggregate_by = "SPECIES"
