@@ -94,7 +94,7 @@ def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions
         return {sample.id for sample in result.samples.all()}
 
     latest_results = set()
-    for k, group in groupby(sorted(list(all_results), get_sample_id_set), get_sample_id_set):
+    for k, group in groupby(sorted(list(all_results), key=get_sample_id_set), get_sample_id_set):
         latest_result = None
         for result in group:
             if not latest_result:
