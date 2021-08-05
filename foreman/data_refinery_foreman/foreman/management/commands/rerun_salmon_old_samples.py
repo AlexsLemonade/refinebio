@@ -44,7 +44,7 @@ def update_salmon_versions(experiment: Experiment):
             for sample in quant_result.samples.all():
                 original_files = list(sample.original_files.all())
 
-                if not original_files.count():
+                if not len(original_files):
                     continue
 
                 # Ensure that there's no processor jobs for these original files that the foreman

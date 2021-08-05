@@ -631,7 +631,9 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
             # hasn't been set on the job context because we don't have
             # a raw file to run it on. Therefore pull it from one of
             # the result annotations.
-            index_length = salmon_quant_results[0].get_index_length()
+
+            # Can't just do salmon_quant_results[0] because it's a set.
+            index_length = next(iter(salmon_quant_results)).get_index_length()
             if index_length:
                 job_context["index_length"] = index_length
             elif "index_length" not in job_context:
