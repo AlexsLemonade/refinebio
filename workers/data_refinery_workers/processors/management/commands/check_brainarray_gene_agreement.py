@@ -108,7 +108,9 @@ def upload_new_platform_genes(platform, platform_genes):
         S3.put_object(Body=json.dumps(platform_genes), Bucket=S3_BUCKET, Key=key)
 
     except Exception:
-        logger.exception("Error uploading computed file to S3", s3_key=key, s3_bucket=S3_BUCKET)
+        logger.exception(
+            "Error uploading new platform genes to S3", s3_key=key, s3_bucket=S3_BUCKET
+        )
         raise
     pass
 
