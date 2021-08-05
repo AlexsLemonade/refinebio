@@ -202,7 +202,8 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
             try:
                 job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]["average"])
             except Exception:
-                # sra-stat will sometimes put warnings in the XML stream, so we end up with nothing valid to parse.
+                # sra-stat will sometimes put warnings in the XML
+                # stream, so we end up with nothing valid to parse.
                 # https://github.com/ncbi/sra-tools/issues/192
                 logger.error(
                     "Unable to determine index length! Defaulting to small",
@@ -471,7 +472,8 @@ def _run_tximport_for_experiment(
             # and we need those names so that we can reassociate withe samples later.
             # ex., a file with absolute_file_path: /processor_job_1/SRR123_output/quant.sf
             # downloads to: /processor_job_2/SRR123_output/quant.sf
-            # So the result file has frame "SRR123_output", which we can associate with sample SRR123
+            # So the result file has frame "SRR123_output",
+            # which we can associate with sample SRR123
             sample_output = (
                 job_context["work_dir"] + str(quant_file.absolute_file_path.split("/")[-2]) + "/"
             )
@@ -624,18 +626,20 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
         salmon_quant_results = get_quant_results_for_experiment(experiment)
         is_tximport_job = "is_tximport_only" in job_context and job_context["is_tximport_only"]
 
-        first_salmon_quant_result = salmon_quant_results.first()
-        if is_tximport_job and first_salmon_quant_result:
+        if is_tximport_job and len(salmon_quant_results):
             # If the job is only running tximport, then index_length
             # hasn't been set on the job context because we don't have
             # a raw file to run it on. Therefore pull it from one of
             # the result annotations.
-            index_length = first_salmon_quant_result.get_index_length()
+            index_length = salmon_quant_results[0].get_index_length()
             if index_length:
                 job_context["index_length"] = index_length
-            elif not "index_length" in job_context:
+            elif "index_length" not in job_context:
                 raise utils.ProcessorJobError(
-                    "Found quant result without an annotation specifying its index length. Why did this happen?!?",
+                    (
+                        "Found quant result without an annotation specifying its index length."
+                        " Why did this happen?!?"
+                    ),
                     success=False,
                     no_retry=True,
                 )
@@ -707,15 +711,21 @@ def _run_salmon(job_context: Dict) -> Dict:
         # Paired are trickier
         else:
 
-            # Okay, for some reason I can't explain, this only works in the temp directory,
-            # otherwise the `tee` part will only output to one or the other of the streams (non-deterministically),
-            # but not both. This doesn't appear to happen if the fifos are in tmp.
+            # Okay, for some reason I can't explain, this only works
+            # in the temp directory, otherwise the `tee` part will
+            # only output to one or the other of the streams
+            # (non-deterministically), but not both. This doesn't
+            # appear to happen if the fifos are in tmp.
             alpha = "/tmp/alpha"
             os.mkfifo(alpha)
             beta = "/tmp/beta"
             os.mkfifo(beta)
 
-            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
+            dump_str = (
+                "fastq-dump --stdout --split-files -I {input_sra_file}"
+                "| tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) "
+                ">(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
+            )
             formatted_dump_command = dump_str.format(
                 input_sra_file=job_context["sra_input_file_path"], fifo_alpha=alpha, fifo_beta=beta
             )
@@ -729,7 +739,8 @@ def _run_salmon(job_context: Dict) -> Dict:
 
             command_str = (
                 "salmon --no-version-check quant -l A -i {index} "
-                "-1 {fifo_alpha} -2 {fifo_beta} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
+                "-1 {fifo_alpha} -2 {fifo_beta} -p 16 -o {output_directory} "
+                "--seqBias --dumpEq --writeUnmappedNames"
             )
             formatted_command = command_str.format(
                 index=job_context["index_directory"],
@@ -743,7 +754,9 @@ def _run_salmon(job_context: Dict) -> Dict:
         if "input_file_path_2" in job_context:
             second_read_str = " -2 {}".format(job_context["input_file_path_2"])
 
-            # Rob recommends 16 threads/process, which fits snugly on an x1 at 8GB RAM per Salmon container:
+            # Rob recommends 16 threads/process, which fits snugly on
+            # an x1 at 8GB RAM per Salmon container:
+
             # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/8GB) = ~17
             command_str = (
                 "salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
