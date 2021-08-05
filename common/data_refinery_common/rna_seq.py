@@ -1,9 +1,6 @@
 from itertools import groupby
 from typing import List
 
-from django.db.models import OuterRef, Subquery
-
-from data_refinery_common.enums import ProcessorEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputationalResult, Experiment, OrganismIndex
 from data_refinery_common.utils import get_env_variable
@@ -35,7 +32,7 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
     """ Returns whether or not the experiment is eligible to have tximport
     run on it.
 
-    results is a queryset of ComputationalResults for the samples that had salmon quant run on them.
+    results is a set of ComputationalResults for the samples that had salmon quant run on them.
     """
     num_quantified = len(results)
     if num_quantified == 0:
@@ -43,7 +40,8 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
 
     salmon_versions = set()
     for result in results:
-        salmon_versions.add(result.organism_index.salmon_version)
+        if result.organism_index.salmon_version:
+            salmon_versions.add(result.organism_index.salmon_version)
 
     if len(salmon_versions) > 1:
         # Tximport requires that all samples are processed with the same salmon version
@@ -74,7 +72,7 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
 
 
 def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions=True):
-    """Returns a queryset of salmon quant results from `experiment`."""
+    """Returns a set of salmon quant results from `experiment`."""
     # Subquery to calculate quant results
     # https://docs.djangoproject.com/en/2.2/ref/models/expressions/#subquery-expressions
     all_results = ComputationalResult.objects.filter(sample__in=experiment.samples.all())
@@ -88,15 +86,15 @@ def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions
         )
         all_results.filter(organism_index__id__in=organism_indices.values("id"))
 
-        all_results.select_related("computedfile").filter(
-            computedfile__s3_bucket__isnull=False, computedfile__s3_key__isnull=False
-        )
+    all_results.select_related("computedfile").filter(
+        computedfile__s3_bucket__isnull=False, computedfile__s3_key__isnull=False
+    )
 
     def get_sample_id_set(result):
         return {sample.id for sample in result.samples.all()}
 
     latest_results = set()
-    for k, group in groupby(all_results, get_sample_id_set):
+    for k, group in groupby(sorted(list(all_results), get_sample_id_set), get_sample_id_set):
         latest_result = None
         for result in group:
             if not latest_result:

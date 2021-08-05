@@ -34,11 +34,7 @@ def update_salmon_versions(experiment: Experiment):
 
     total_samples_queued = 0
     for quant_result in quant_results:
-        if not latest_salmon_version:
-            # we can safely ignore the latest salmon version, that will be the first
-            # quant result. Note we are ordering by -organism_index__created_at
-            latest_salmon_version = quant_result.organism_index.salmon_version
-        elif latest_salmon_version != quant_result.organism_index.salmon_version:
+        if latest_salmon_version != quant_result.organism_index.salmon_version:
             # we found a quant result associated with an experiment where we need to run salmon
             # hopefully each computational result is associated with a single sample
             for sample in quant_result.samples.all():
