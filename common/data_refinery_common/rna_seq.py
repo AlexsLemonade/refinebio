@@ -84,7 +84,7 @@ def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions
         organism_indices = OrganismIndex.objects.filter(
             salmon_version=current_salmon_version, organism__in=organisms
         )
-        all_results.filter(organism_index__id__in=organism_indices.values("id"))
+        all_results = all_results.filter(organism_index__id__in=organism_indices.values("id"))
 
     all_results = all_results.prefetch_related("computedfile_set").filter(
         computedfile__s3_bucket__isnull=False, computedfile__s3_key__isnull=False
