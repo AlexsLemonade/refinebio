@@ -59,7 +59,7 @@ docker run \\
        -e DATABASE_USER=${database_user} \\
        -e DATABASE_PASSWORD=${database_password} \\
        -v /tmp:/tmp \\
-       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@
+       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \"\$@\"
 " >> /home/ubuntu/run_management_command.sh
 chmod +x /home/ubuntu/run_management_command.sh
 
