@@ -156,6 +156,8 @@ RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
 # EngagementBot
 ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
+if ENGAGEMENTBOT_WEBHOOK == "DEFAULT":
+    ENGAGEMENTBOT_WEBHOOK = None
 
 MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
 MAX_DOWNLOADER_JOBS_PER_NODE = int(get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE"))
