@@ -66,7 +66,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Install this rpy2 here instead of via requirements.txt because
 # pip-compile throws an error for it.
-RUN pip3 install rpy2==2.9.5
+RUN pip3 install rpy2==3.4.5
 
 COPY common/ .
 
