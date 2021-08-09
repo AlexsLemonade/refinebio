@@ -63,6 +63,23 @@ docker run \\
 " >> /home/ubuntu/run_management_command.sh
 chmod +x /home/ubuntu/run_management_command.sh
 
+echo "
+#!/bin/sh
+
+# This script should be used by passing an image as
+# the first argument followed by the management command to run.
+
+docker run \\
+       --env-file /home/ubuntu/environment \\
+       -e DATABASE_HOST=${database_host} \\
+       -e DATABASE_NAME=${database_name} \\
+       -e DATABASE_USER=${database_user} \\
+       -e DATABASE_PASSWORD=${database_password} \\
+       -v /tmp:/tmp \\
+       -it ${dockerhub_repo}/dr_\"\$1\" python3 manage.py \"\$2\"
+" >> /home/ubuntu/run_cron_job_test.sh
+chmod +x /home/ubuntu/run_cron_job_test.sh
+
 # Use Monit to ensure the Foreman is always running
 apt-get -y update
 apt-get -y install monit htop
