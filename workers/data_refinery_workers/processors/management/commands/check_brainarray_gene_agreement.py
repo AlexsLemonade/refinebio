@@ -1,4 +1,5 @@
 import csv
+import io
 import json
 from typing import Iterator, List, Tuple
 
@@ -6,9 +7,11 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 import boto3
+import botocore
 import requests
 import rpy2.robjects as ro
 from botocore.client import Config
+from botocore.exceptions import ClientError
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 
@@ -19,7 +22,7 @@ logger = get_and_configure_logger(__name__)
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
 S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
-S3_BUCKET = "data-refinery-test-assets"
+S3_BUCKET = f"data-refinery-s3-{settings.USER}-{settings.STAGE}"
 
 
 def brainarray_platforms() -> Iterator[Tuple[str, str]]:
@@ -72,7 +75,7 @@ def get_genes_for_package(package: str) -> List[str]:
 
 
 def get_s3_key(platform):
-    return f"/brainarray-test-{settings.USER}-{settings.STAGE}-{platform}.json"
+    return f"brainarray-test/{platform}.json"
 
 
 def get_old_platform_genes(platform):
@@ -83,10 +86,14 @@ def get_old_platform_genes(platform):
     key = get_s3_key(platform)
     try:
         response = S3.get_object(Bucket=S3_BUCKET, Key=key)
+        return set(json.loads(response["Body"].read()))
 
-        return json.loads(response["Body"].read())
+    except S3.exceptions.NoSuchKey:
+        return None
 
-    except boto3.S3.Client.exceptions.NoSuchKey:
+    # For some reason, with our current authentication scheme this gets thrown
+    # instead of NoSuchKey when the key doesn't exist.
+    except botocore.exceptions.ClientError:
         return None
 
     except Exception:
@@ -94,8 +101,6 @@ def get_old_platform_genes(platform):
             "Error downloading previous test run from S3", s3_key=key, s3_bucket=S3_BUCKET
         )
         raise
-
-    return None
 
 
 def upload_new_platform_genes(platform, platform_genes):
@@ -105,7 +110,8 @@ def upload_new_platform_genes(platform, platform_genes):
 
     key = get_s3_key(platform)
     try:
-        S3.put_object(Body=json.dumps(platform_genes), Bucket=S3_BUCKET, Key=key)
+        data = json.dumps(list(platform_genes))
+        S3.upload_fileobj(io.BytesIO(data.encode()), S3_BUCKET, key)
 
     except Exception:
         logger.exception(
@@ -116,11 +122,11 @@ def upload_new_platform_genes(platform, platform_genes):
 
 
 def signal_failure(bad_platforms):
-    if not settings.RUNNING_IN_CLOUD:
-        logger.error("Cannot message Slack when we are not running in the cloud")
-        return
-    elif not settings.ENGAGEMENTBOT_WEBHOOK:
-        logger.error("Cannot message slack because we don't have a valid webhook")
+    if not settings.RUNNING_IN_CLOUD or not settings.ENGAGEMENTBOT_WEBHOOK:
+        logger.info(
+            "Some Brainarray platforms did not have enough overlap with the previous run",
+            bad_platforms=bad_platforms,
+        )
         return
 
     requests.post(
@@ -147,11 +153,11 @@ def check_brainarray_gene_agreement():
     bad_platforms = []
 
     for platform, package in brainarray_platforms():
-        logger.debug(f"Checking platform {platform}...")
+        logger.info(f"Checking platform {platform}...")
 
         platform_genes = get_genes_for_package(package)
 
-        old_platform_genes = get_old_platform_genes(package)
+        old_platform_genes = get_old_platform_genes(platform)
         if old_platform_genes is None:
             logger.info(f"Skipping jaccard index test for {platform} because there is no old data")
         else:
@@ -160,7 +166,15 @@ def check_brainarray_gene_agreement():
             )
 
             if jaccard_index < 0.95:
+                logger.error(
+                    "Found a platform with bad overlap", platform=platform, overlap=jaccard_index
+                )
                 bad_platforms.append(platform)
+
+                # Don't overwrite the old data if we have bad overlap, so we can run this again
+                continue
+            else:
+                logger.info("Good overlap", platform=platform, overlap=jaccard_index)
 
         upload_new_platform_genes(platform, platform_genes)
 
@@ -173,20 +187,23 @@ class Command(BaseCommand):
         try:
             check_brainarray_gene_agreement()
         except Exception as e:
-            requests.post(
-                settings.ENGAGEMENTBOT_WEBHOOK,
-                json={
-                    "attachments": [
-                        {
-                            "fallback": "Exception raised during Brainarray Test",
-                            "title": "Exception raised during Brainarray Test",
-                            "color": "#db3b28",
-                            "text": f"```\n{str(e)}\n```",
-                            "footer": "Refine.bio",
-                            "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
-                        }
-                    ],
-                },
-                headers={"Content-Type": "application/json"},
-                timeout=10,
-            )
+            if settings.ENGAGEMENTBOT_WEBHOOK:
+                requests.post(
+                    settings.ENGAGEMENTBOT_WEBHOOK,
+                    json={
+                        "attachments": [
+                            {
+                                "fallback": "Exception raised during Brainarray Test",
+                                "title": "Exception raised during Brainarray Test",
+                                "color": "#db3b28",
+                                "text": f"```\n{str(e)}\n```",
+                                "footer": "Refine.bio",
+                                "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
+                            }
+                        ],
+                    },
+                    headers={"Content-Type": "application/json"},
+                    timeout=10,
+                )
+            else:
+                logger.exception("Exception was raised during Brainarray Test")

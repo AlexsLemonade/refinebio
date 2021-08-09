@@ -1,4 +1,5 @@
 import csv
+import io
 import itertools
 import json
 import os.path
@@ -8,6 +9,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 import boto3
+import botocore
 import requests
 from botocore.client import Config
 
@@ -19,11 +21,11 @@ logger = get_and_configure_logger(__name__)
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
 S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
-S3_BUCKET = "data-refinery-test-assets"
+S3_BUCKET = f"data-refinery-s3-{settings.USER}-{settings.STAGE}"
 
 
 def get_s3_key(organism, index_type):
-    return f"/tx-index-test-{settings.USER}-{settings.STAGE}-{organism.name}-{index_type}.json"
+    return f"tx-index-test/{organism.name}-{index_type}.json"
 
 
 def get_old_transcripts(organism, index_type):
@@ -37,7 +39,12 @@ def get_old_transcripts(organism, index_type):
 
         return set(json.loads(response["Body"].read()))
 
-    except boto3.S3.Client.exceptions.NoSuchKey:
+    except S3.exceptions.NoSuchKey:
+        return None
+
+    # For some reason, with our current authentication scheme this gets thrown
+    # instead of NoSuchKey when the key doesn't exist.
+    except botocore.exceptions.ClientError:
         return None
 
     except Exception:
@@ -56,7 +63,8 @@ def upload_new_transcripts(organism, index_type, transcripts):
 
     key = get_s3_key(organism, index_type)
     try:
-        S3.put_object(Body=json.dumps(list(transcripts)), Bucket=S3_BUCKET, Key=key)
+        data = json.dumps(list(transcripts))
+        S3.upload_fileobj(io.BytesIO(data.encode()), S3_BUCKET, key)
 
     except Exception:
         logger.exception("Error uploading new transcripts to S3", s3_key=key, s3_bucket=S3_BUCKET)
@@ -65,11 +73,11 @@ def upload_new_transcripts(organism, index_type, transcripts):
 
 
 def signal_failure(bad_indices):
-    if not settings.RUNNING_IN_CLOUD:
-        logger.error("Cannot message Slack when we are not running in the cloud")
-        return
-    elif not settings.ENGAGEMENTBOT_WEBHOOK:
-        logger.error("Cannot message slack because we don't have a valid webhook")
+    if not settings.RUNNING_IN_CLOUD or not settings.ENGAGEMENTBOT_WEBHOOK:
+        logger.info(
+            "Some transcriptome indices did not have enough overlap with the previous run",
+            bad_indices=bad_indices,
+        )
         return
 
     requests.post(
@@ -99,7 +107,9 @@ def signal_failure(bad_indices):
 
 def get_current_transcripts(organism, index_type):
     index_object = (
-        OrganismIndex.objects.filter(organism=organism, index_type=index_type)
+        OrganismIndex.objects.filter(
+            organism__name=organism.name, index_type=f"TRANSCRIPTOME_{index_type.upper()}"
+        )
         .order_by("-created_at")
         .first()
     )
@@ -109,11 +119,11 @@ def get_current_transcripts(organism, index_type):
     index_tarball = index_object.get_computed_file().sync_from_s3()
 
     with tarfile.open(index_tarball, "r:gz") as index_archive:
-        with index_archive.open("genes_to_transcripts.txt", "r") as f:
-            reader = csv.reader(f, delimiter="\t")
+        with index_archive.extractfile("genes_to_transcripts.txt") as f:
+            reader = csv.reader(io.TextIOWrapper(f, encoding="utf-8"), delimiter="\t")
             transcripts = {t for _, t in reader}
 
-    os.path.remove(index_tarball)
+    os.remove(index_tarball)
     return transcripts
 
 
@@ -121,8 +131,10 @@ def check_tx_index_transcript_agreement():
     bad_indices = []
 
     for organism, index_type in itertools.product(Organism.objects.all(), ["short", "long"]):
+        logger.info(f"Investigating {organism.name} {index_type}")
         current_transcripts = get_current_transcripts(organism, index_type)
         if current_transcripts is None:
+            logger.info("No current transcripts", organism=organism.name, index_type=index_type)
             continue
 
         old_transcripts = get_old_transcripts(organism, index_type)
@@ -136,7 +148,23 @@ def check_tx_index_transcript_agreement():
             )
 
             if jaccard_index < 0.95:
+                logger.error(
+                    "Found an index with bad overlap",
+                    organism=organism.name,
+                    index_type=index_type,
+                    overlap=jaccard_index,
+                )
                 bad_indices.append((organism, index_type))
+
+                # Don't overwrite the old data if we have bad overlap, so we can run this again
+                continue
+            else:
+                logger.info(
+                    "Good overlap",
+                    organism=organism.name,
+                    index_type=index_type,
+                    overlap=jaccard_index,
+                )
 
         upload_new_transcripts(organism, index_type, current_transcripts)
 
@@ -149,20 +177,23 @@ class Command(BaseCommand):
         try:
             check_tx_index_transcript_agreement()
         except Exception as e:
-            requests.post(
-                settings.ENGAGEMENTBOT_WEBHOOK,
-                json={
-                    "attachments": [
-                        {
-                            "fallback": "Exception raised during Transcriptome Index Test",
-                            "title": "Exception raised during Transcriptome Index Test",
-                            "color": "#db3b28",
-                            "text": f"```\n{str(e)}\n```",
-                            "footer": "Refine.bio",
-                            "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
-                        }
-                    ],
-                },
-                headers={"Content-Type": "application/json"},
-                timeout=10,
-            )
+            if settings.ENGAGEMENTBOT_WEBHOOK:
+                requests.post(
+                    settings.ENGAGEMENTBOT_WEBHOOK,
+                    json={
+                        "attachments": [
+                            {
+                                "fallback": "Exception raised during Transcriptome Index Test",
+                                "title": "Exception raised during Transcriptome Index Test",
+                                "color": "#db3b28",
+                                "text": f"```\n{str(e)}\n```",
+                                "footer": "Refine.bio",
+                                "footer_icon": "https://s3.amazonaws.com/refinebio-email/logo-2x.png",
+                            }
+                        ],
+                    },
+                    headers={"Content-Type": "application/json"},
+                    timeout=10,
+                )
+            else:
+                logger.exception("Exception raised during Transcriptome Index Test")
