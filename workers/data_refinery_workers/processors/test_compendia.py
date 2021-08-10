@@ -1,5 +1,9 @@
+import copy
+import itertools
 import json
+import math
 import os
+import random
 import zipfile
 from typing import Dict
 
@@ -568,8 +572,46 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
 
             micros.append(file)
 
+        experiment = Experiment()
+        experiment.accession_code = "GSE5678"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+        rnas = []
+        for file in os.listdir("/home/user/data_store/raw/TEST/RNASEQ/"):
+
+            if "rnaseq.txt" in file:
+                continue
+
+            create_sample_for_experiment(
+                {
+                    "organism": danio_rerio,
+                    "accession_code": file,
+                    "technology": "RNA-SEQ",
+                    "filename": file,
+                    "data_dir": "/home/user/data_store/raw/TEST/RNASEQ/",
+                },
+                experiment,
+            )
+
+            rnas.append(file)
+
+        # Missing sample that will be filtered
+        sample = create_sample_for_experiment(
+            {
+                "organism": danio_rerio,
+                "accession_code": "GSM1487222",
+                "title": "this sample will be filtered",
+                "technology": "RNA-SEQ",
+                "filename": None,
+            },
+            experiment,
+        )
+        rnas.append(sample.accession_code)
+
         dset = Dataset()
-        dset.data = {"GSE1234": micros}
+        dset.data = {"GSE1234": micros, "GSE5678": rnas}
         dset.scale_by = "NONE"
         dset.aggregate_by = "SPECIES"
         dset.svd_algorithm = "ARPACK"
@@ -591,44 +633,68 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
             create_compendia.COMPENDIA_PIPELINE[:imputation_index],
         )
 
-        job_context["microarray_matrix"].loc[
-            "ENSDARG00000001313", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
-        ] = np.nan
+        # First, run the imputation step without removing anything to get a baseline
+        expected_context = utils.run_pipeline(
+            job_context.copy(), [create_compendia.COMPENDIA_PIPELINE[imputation_index]]
+        )
 
-        job_context["microarray_matrix"].loc[
-            "ENSDARG00000000241", "05y584nlulkpdchrjiwhjj7j_GSM448988.PCL"
-        ] = np.nan
+        # Now pick some rows to remove according to the instructions from
+        # https://github.com/AlexsLemonade/refinebio/pull/2879#issuecomment-895143336
 
-        job_context["microarray_matrix"].loc[
-            "ENSDARG00000000151", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
-        ] = np.nan
+        random.seed(42)
+
+        # Select some rows randomly and mask ~30% of the values
+        rare_rows = random.sample(list(job_context["microarray_matrix"].index), k=25)
+        rare_genes = {}
+        for row in rare_rows:
+            cols = random.sample(list(job_context["microarray_matrix"].columns), k=110)
+            rare_genes[row] = cols
+            for col in cols:
+                job_context["microarray_matrix"].loc[row, col] = np.nan
+
+        # Now some entries from the other rows to mask completely at random
+        individual_indices = random.sample(
+            list(
+                itertools.product(
+                    set(job_context["microarray_matrix"].index) - set(rare_rows),
+                    job_context["microarray_matrix"].columns,
+                )
+            ),
+            k=1000,
+        )
+        for row, col in individual_indices:
+            job_context["microarray_matrix"].loc[row, col] = np.nan
 
         final_context = utils.run_pipeline(
             job_context, [create_compendia.COMPENDIA_PIPELINE[imputation_index]]
         )
         self.assertDidNotFail(job)
 
-        self.assertAlmostEqual(
-            job_context["merged_no_qn"].loc[
-                "ENSDARG00000001313", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
-            ],
-            0.817710280418396,
-            # For some reason the imputed value of this entry is way off from the actual value
-            delta=0.36,
+        index = set(final_context["merged_no_qn"].index) & set(
+            expected_context["merged_no_qn"].index
+        )
+        columns = set(final_context["merged_no_qn"].columns) & set(
+            expected_context["merged_no_qn"].columns
         )
 
-        self.assertAlmostEqual(
-            job_context["merged_no_qn"].loc[
-                "ENSDARG00000000241", "05y584nlulkpdchrjiwhjj7j_GSM448988.PCL"
-            ],
-            -0.03479414060711861,
-            delta=0.2,
-        )
+        N = 0
+        se = 0
+        affected_entries = {
+            *individual_indices,
+            *((row, col) for row, cols in rare_genes.items() for col in cols),
+        }
+        for row, col in affected_entries:
+            if row in index and col in columns:
+                actual = final_context["merged_no_qn"].loc[row, col]
+                expected = expected_context["merged_no_qn"].loc[row, col]
 
-        self.assertAlmostEqual(
-            job_context["merged_no_qn"].loc[
-                "ENSDARG00000000151", "02c3v1urzlq9o499ye6315v3_GSM396530.PCL"
-            ],
-            -0.08136917650699615,
-            delta=0.2,
+                N += 1
+                se += (actual - expected) ** 2
+
+        rmse = math.sqrt(se / N)
+
+        self.assertLess(
+            rmse,
+            # The results of a previous run plus a little bit of leeway
+            0.2868600293662542 + 0.05,
         )
