@@ -109,6 +109,16 @@ set daemon 900
 
 service monit restart
 
+# Install the cron job tests
+crontab -l > tempcron
+cat <<EOF >> tempcron
+0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_brainarray_gene_agreement >> /var/log/cron_job_tests.log 2>&1
+0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_tx_index_transcript_agreement >> /var/log/cron_job_tests.log 2>&1
+EOF
+# install new cron file
+crontab tempcron
+rm tempcron
+
 # Make sure every downloader job has a processor job!
 docker run \
        --env-file /home/ubuntu/environment \
