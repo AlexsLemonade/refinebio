@@ -643,16 +643,21 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
 
         random.seed(42)
 
-        # Select some rows randomly and mask ~30% of the values
+        # Select some rows randomly and mask a little bit less than 30% of the values
         rare_rows = random.sample(list(job_context["microarray_matrix"].index), k=25)
         rare_genes = {}
         for row in rare_rows:
-            cols = random.sample(list(job_context["microarray_matrix"].columns), k=110)
+            cols = random.sample(
+                list(job_context["microarray_matrix"].columns),
+                # There are around 840 samples, and we want to pick a little bit
+                # less than 30% of them
+                k=0.28 * 840,
+            )
             rare_genes[row] = cols
             for col in cols:
                 job_context["microarray_matrix"].loc[row, col] = np.nan
 
-        # Now some entries from the other rows to mask completely at random
+        # Now randomly select some entries from the other rows to mask
         individual_indices = random.sample(
             list(
                 itertools.product(
@@ -677,8 +682,12 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
             expected_context["merged_no_qn"].columns
         )
 
+        # Calculate the Root-Mean-Square Error (RMSE) of the imputed values.
+        # See https://en.wikipedia.org/wiki/Root-mean-square_deviation
+        # for a description of the formula.
+
         N = 0
-        se = 0
+        squared_error = 0
         affected_entries = {
             *individual_indices,
             *((row, col) for row, cols in rare_genes.items() for col in cols),
@@ -689,9 +698,9 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
                 expected = expected_context["merged_no_qn"].loc[row, col]
 
                 N += 1
-                se += (actual - expected) ** 2
+                squared_error += (actual - expected) ** 2
 
-        rmse = math.sqrt(se / N)
+        rmse = math.sqrt(squared_error / N)
 
         self.assertLess(
             rmse,
