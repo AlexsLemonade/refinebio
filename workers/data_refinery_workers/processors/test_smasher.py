@@ -33,6 +33,7 @@ from data_refinery_common.models import (
     SurveyJob,
 )
 from data_refinery_workers.processors import smasher, smashing_utils
+from data_refinery_workers.processors.testing_utils import ProcessorJobTestCaseMixin
 
 
 def prepare_job():
@@ -233,7 +234,7 @@ def _to_accession_code_dict(d):
     return {k: set(map(lambda x: x.accession_code, v)) for k, v in d.items()}
 
 
-class SmasherTestCase(TransactionTestCase):
+class SmasherTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
     def _test_all_scale_types(self, ag_type, ag_specific_tests):
         job = prepare_job()
 
@@ -944,7 +945,7 @@ class SmasherTestCase(TransactionTestCase):
         danio_rerio.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-        self.assertTrue(final_context["success"])
+        self.assertSucceeded(job)
 
         # Test single file smash
 
@@ -966,7 +967,7 @@ class SmasherTestCase(TransactionTestCase):
         pjda.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-        self.assertTrue(final_context["success"])
+        self.assertSucceeded(job)
 
         zf = zipfile.ZipFile(final_context["output_file"])
 
@@ -1067,7 +1068,7 @@ class SmasherTestCase(TransactionTestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
 
-        self.assertTrue(final_context["success"])
+        self.assertSucceeded(pj)
 
     @tag("smasher")
     def test_dualtech_smash(self):
