@@ -696,5 +696,5 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         self.assertLess(
             rmse,
             # The results of a previous run plus a little bit of leeway
-            0.2868600293662542 + 0.05,
+            0.2868600293662542 + 0.01,
         )
