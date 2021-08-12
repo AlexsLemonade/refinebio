@@ -79,17 +79,7 @@ ENV LANG C.UTF-8
 RUN pip3 install --upgrade pip
 
 # Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.25.3 scikit-learn sympy nose rpy2===2.9.5 tzlocal
-# End smasher-specific
-
-# Some combination of pip and setuptools versions makes this bug appear:
-# https://github.com/pypa/setuptools/issues/1694
-# Upgrading setuptools fixes it though!
-RUN pip3 install --upgrade setuptools
-
-# Impute-specific requirements
-# We need to freeze the tensorflow version for fancyimpute
-RUN pip3 install tensorflow==2.4.1 fancyimpute==0.5.5
+RUN pip3 install numpy scipy matplotlib pandas==0.25.3 scikit-learn sympy nose rpy2===2.9.5 tzlocal fancySVD
 # End smasher-specific
 
 COPY config/ config/
