@@ -651,7 +651,7 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
                 list(job_context["microarray_matrix"].columns),
                 # There are around 840 samples, and we want to pick a little bit
                 # less than 30% of them
-                k=0.28 * 840,
+                k=int(0.28 * 840),
             )
             rare_genes[row] = cols
             for col in cols:
