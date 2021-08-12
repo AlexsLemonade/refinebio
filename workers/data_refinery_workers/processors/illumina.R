@@ -42,7 +42,7 @@ scanNorm <- function(signalExprData, signalProbeSequences, controlExprData=NULL,
 
   exprData <- doLog2(signalExprData)
 
-  if (all(signalExprData > 0)) { # No background subtraction has been performed
+  if (all(signalExprData > 0, na.rm = TRUE)) { # No background subtraction has been performed
     if (is.null(controlExprData)) {
       if (!is.null(signalPValueData))
         exprData <- nec(x = doLog2(signalExprData), detection.p = signalPValueData)
@@ -136,7 +136,7 @@ scanNormVector <- function(description, my, mx, convThreshold, intervalN, binsiz
 doLog2 <- function(x)
 {
   # This is a semi-crude way of checking whether the values were not previously log-transformed
-  if (max(x) > 100)
+  if (max(x, na.rm = TRUE) > 100)
     x <- log2(x)
 
   return(x)
@@ -322,7 +322,7 @@ option_list = list(
               help="Probe ID", metavar="character"),
   make_option(c("-e", "--expression"), type="character", default=".AVG_Signal",
               help="expression", metavar="character"),
-  make_option(c("-d", "--detection"), type="character", default="Detection Pval",
+  make_option(c("-d", "--detection"), type="character", default="Detection[ _]Pval",
               help="Detection Pval", metavar="character"),
   make_option(c("-l", "--platform"), type="character", default="illuminaHumanv4",
               help="Platform", metavar="character"),
@@ -351,11 +351,12 @@ suppressPackageStartupMessages(library(oligo))
 suppressPackageStartupMessages(library(doParallel))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(lazyeval))
+suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(paste(platform, ".db", sep=""), character.only=TRUE))
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
+suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings=c("", "NA"), showProgress=FALSE))
 
 # Check input paramters and parse out data we need
 if (probeIDColumn == ""){
@@ -378,7 +379,7 @@ exprData <- as.matrix(data[,exprColumns,drop=FALSE])
 rownames(exprData) <- probeIDs
 
 if (detectionPValueColumnPattern == "")
-  detectionPValueColumnPattern <- "Detection Pval"
+  detectionPValueColumnPattern <- "Detection[ _]Pval"
 pValueColumns <- grep(detectionPValueColumnPattern, colnames(data), ignore.case=TRUE)
 
 if (length(pValueColumns) == 0)
@@ -424,8 +425,32 @@ probesToKeep <- intersect(probesToKeep, rownames(normData))
 normData <- normData[probesToKeep,,drop=FALSE]
 
 # Map probes to genes
-probeGene <- as.data.frame(probeGeneRef[mappedkeys(probeGeneRef)])
-rownames(probeGene) <- probeGene$IlluminaID
+probe_map <- read.csv(paste0("/home/user/probe_maps/", platform, ".tsv"), sep="\t", na.strings=c(""))
+rownames(probe_map) <- probe_map$probe_id
+
+choose_gene = function(probe_id, ensembl_ids) {
+  # Extract the probe ID from the vector. Because we group by probe ID before
+  # summarizing using this, all the probe IDs in the vector will be the same, so
+  # we can just grab the first one.
+  probe_id <- probe_id[1]
+
+  # If there is one ensembl ID, just use that
+  if (length(ensembl_ids) == 1) {
+    return(ensembl_ids[1])
+  }
+
+  # Otherwise, use the ensembl ID that we picked in the Illumina refinery
+  probe_map[probe_id,"ensembl_id"]
+}
+
+probeGene <- as.data.frame(probeGeneRef[mappedkeys(probeGeneRef)]) %>%
+  dplyr::group_by(probe_id) %>%
+  dplyr::summarize(ensembl_id = choose_gene(probe_id, ensembl_id)) %>%
+  dplyr::filter(!is.na(ensembl_id)) %>%
+  # Convert back to a data frame so we can have our rownames
+  as.data.frame()
+
+rownames(probeGene) <- probeGene$probe_id
 probesToKeep <- sort(intersect(rownames(probeGene), rownames(exprData)))
 probeGene <- probeGene[probesToKeep,]
 

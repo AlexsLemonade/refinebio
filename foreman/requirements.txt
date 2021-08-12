@@ -24,8 +24,9 @@ multidict==5.1.0          # via yarl
 numpy==1.19.5             # via -r requirements.in, geoparse, pandas, scipy
 pandas==1.1.5             # via geoparse
 psycopg2-binary==2.8.6    # via -r requirements.in
-pyrefinebio==0.4.2        # via -r requirements.in
+pyrefinebio==0.4.3        # via -r requirements.in
 python-dateutil==2.8.1    # via -r requirements.in, elasticsearch-dsl, pandas, pyrefinebio
+pytimeparse==1.1.8        # via pyrefinebio
 pytz==2021.1              # via django, pandas
 pyyaml==5.4.1             # via -r requirements.in, pyrefinebio, vcrpy
 raven==6.10.0             # via -r requirements.in
