@@ -120,38 +120,6 @@ def _build_qn_target(job_context: Dict) -> Dict:
     return job_context
 
 
-# def _quantile_normalize(job_context: Dict) -> Dict:
-#     """Run the R script we have to create the reference for QN."""
-#     try:
-#         job_context["time_start"] = timezone.now()
-
-#         job_context["formatted_command"] = [
-#             "/usr/bin/Rscript",
-#             "--vanilla",
-#             "/home/user/data_refinery_workers/processors/qn_reference.R",
-#             "--inputFile",
-#             job_context["smashed_file"],
-#             "--outputFile",
-#             job_context["target_file"],
-#         ]
-
-#         subprocess.check_output(job_context["formatted_command"])
-
-#         job_context["time_end"] = timezone.now()
-
-#     except Exception as e:
-#         error_template = (
-#             "Encountered error in R code while running qn_reference.R"
-#             " pipeline during processing of {0}: {1}"
-#         )
-#         error_message = error_template.format(job_context["smashed_file"], str(e))
-#         logger.warn(error_message, processor_job=job_context["job_id"])
-#         job_context["job"].failure_reason = error_message
-#         job_context["success"] = False
-
-#     return job_context
-
-
 def _create_result_objects(job_context: Dict) -> Dict:
     if not job_context["create_results"]:
         return job_context
