@@ -255,7 +255,9 @@ class QNRefTestCase(TestCase):
 
     @tag("qn")
     def test_qn_target_without_updating_organism(self):
-        """In the cron job tests, we want to create a new QN target without
+        """Test that create_results=False will not update the experiment.
+        
+        This is because in the cron job tests, we want to create a new QN target without
         actually setting it as the new default for the experiment."""
 
         # Prepare some samples
