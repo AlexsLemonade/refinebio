@@ -1,4 +1,6 @@
+import json
 import os
+import zipfile
 
 from django.test import TransactionTestCase, tag
 
@@ -113,12 +115,19 @@ class QuantpendiaTestCase(TransactionTestCase):
         self.assertTrue(os.path.exists(final_context["output_dir"] + "/LICENSE.TXT"))
         self.assertTrue(os.path.exists(final_context["output_dir"] + "/aggregated_metadata.json"))
 
-        self.assertTrue(final_context["metadata"]["quant_sf_only"])
-        self.assertEqual(final_context["metadata"]["num_samples"], 1)
-        self.assertEqual(final_context["metadata"]["num_experiments"], 1)
-
         # test that archive exists
         quantpendia_file = ComputedFile.objects.filter(
             is_compendia=True, quant_sf_only=True
         ).latest()
         self.assertTrue(os.path.exists(quantpendia_file.absolute_file_path))
+
+        zf = zipfile.ZipFile(quantpendia_file.absolute_file_path)
+        with zf.open("aggregated_metadata.json") as f:
+            metadata = json.load(f)
+
+            self.assertTrue(metadata.get("quant_sf_only"))
+            self.assertEqual(metadata.get("num_samples"), 1)
+            self.assertEqual(metadata.get("num_experiments"), 1)
+
+            # Make sure the data were not quantile normalized
+            self.assertFalse(metadata.get("quantile_normalized"))

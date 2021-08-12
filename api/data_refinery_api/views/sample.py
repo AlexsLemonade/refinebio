@@ -177,13 +177,19 @@ class SampleListView(generics.ListAPIView):
             raise InvalidFilters(invalid_filters=invalid_filters)
 
         queryset = (
-            Sample.public_objects.prefetch_related("organism")
+            Sample.public_objects.select_related("organism")
+            .prefetch_related("experiments")
             .prefetch_related(
-                Prefetch("results", queryset=ComputationalResult.objects.order_by("time_start"))
+                Prefetch(
+                    "results",
+                    queryset=ComputationalResult.objects.select_related("processor")
+                    .select_related("organism_index")
+                    .order_by("time_start"),
+                )
             )
-            .prefetch_related("results__processor")
-            .prefetch_related("results__computationalresultannotation_set")
-            .prefetch_related("results__computedfile_set")
+            .prefetch_related("sampleannotation_set")
+            .prefetch_related("original_files")
+            .prefetch_related("computed_files")
             .filter(**self.get_query_params_filters())
         )
 
