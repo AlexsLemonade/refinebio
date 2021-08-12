@@ -11,7 +11,7 @@ from django.utils import timezone
 import numpy as np
 import pandas as pd
 import psutil
-from fancyimpute import IterativeSVD
+from fancySVD import IterativeSVD
 
 from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger

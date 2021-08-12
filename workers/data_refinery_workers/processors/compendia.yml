@@ -14,4 +14,4 @@ python:
   - data-refinery-common
   - pandas
   - numpy
-  - fancyimpute
+  - fancySVD
