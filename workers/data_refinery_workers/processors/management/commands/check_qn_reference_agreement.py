@@ -74,15 +74,20 @@ def check_qn_reference_agreement():
         # We don't want this file hanging around on the foreman for too long
         existing_target_computedfile.delete_local_file()
 
-        _, pvalue = scipy.stats.ks_2samp(new_target, existing_target)
+        ks_statistic, pvalue = scipy.stats.ks_2samp(new_target, existing_target)
 
         if pvalue < 0.05:
             logger.error(
-                "Found an organism with a bad reference", organism=organism.name, pvalue=pvalue
+                "Found an organism with a bad reference",
+                organism=organism.name,
+                pvalue=pvalue,
+                ks_statistic=ks_statistic,
             )
             bad_organisms.append(organism)
         else:
-            logger.info("Good reference", organism=organism.name, pvalue=pvalue)
+            logger.info(
+                "Good reference", organism=organism.name, pvalue=pvalue, ks_statistic=ks_statistic
+            )
 
     if len(bad_organisms) != 0:
         signal_failure(bad_organisms)
