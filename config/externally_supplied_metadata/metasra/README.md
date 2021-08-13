@@ -1,5 +1,7 @@
 # Generating new metadata
 
+To generate new metadata, it should be as simple as changing the URL in `translate.sh` to point to the new version of the MetaSRA JSON file and then re-running `translate.sh`. After this is done, upload `metasra_translated.json` and `metasra_keywords.json` to the `data-refinery-test-assets` S3 bucket so that we can use them to ingest new metadata.
+
 # Importing metadata
 
 Once you have uploaded the new metadata, you can import it with the following commands on the foreman instance:
