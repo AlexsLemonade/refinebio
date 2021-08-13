@@ -593,13 +593,6 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     # And add the quantile normalized matrix to job_context.
     job_context["merged_qn"] = new_merged
 
-    # For now, don't test the QN for mouse/human. This never fails on
-    # smasher jobs and is OOM-killing our very large compendia
-    # jobs. Let's run this manually after we have a compendia job
-    # actually finish.
-    if organism.name in ["MUS_MUSCULUS", "HOMO_SAPIENS"]:
-        return job_context
-
     ks_res = _test_qn(new_merged)
     if ks_res:
         for (statistic, pvalue) in ks_res:
