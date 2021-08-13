@@ -167,14 +167,16 @@ def check_brainarray_gene_agreement():
 
             if jaccard_index < 0.95:
                 logger.error(
-                    "Found a platform with bad overlap", platform=platform, overlap=jaccard_index
+                    "Found a platform with bad overlap",
+                    platform=platform,
+                    jaccard_index=jaccard_index,
                 )
                 bad_platforms.append(platform)
 
                 # Don't overwrite the old data if we have bad overlap, so we can run this again
                 continue
             else:
-                logger.info("Good overlap", platform=platform, overlap=jaccard_index)
+                logger.info("Good overlap", platform=platform, jaccard_index=jaccard_index)
 
         upload_new_platform_genes(platform, platform_genes)
 

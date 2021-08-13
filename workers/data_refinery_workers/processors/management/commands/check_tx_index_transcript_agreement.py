@@ -152,7 +152,7 @@ def check_tx_index_transcript_agreement():
                     "Found an index with bad overlap",
                     organism=organism.name,
                     index_type=index_type,
-                    overlap=jaccard_index,
+                    jaccard_index=jaccard_index,
                 )
                 bad_indices.append((organism, index_type))
 
@@ -163,7 +163,7 @@ def check_tx_index_transcript_agreement():
                     "Good overlap",
                     organism=organism.name,
                     index_type=index_type,
-                    overlap=jaccard_index,
+                    jaccard_index=jaccard_index,
                 )
 
         upload_new_transcripts(organism, index_type, current_transcripts)
