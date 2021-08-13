@@ -28,7 +28,7 @@ if ! [ -e "$PROCESSED_ACCESSIONS_FILE" ]; then
     awk -f filter_accessions.awk "$ACCESSIONS_FILE" > "$PROCESSED_ACCESSIONS_FILE"
 
     # Clean up this big file once we've extracted the information we need
-    rm "$PROCESSED_ACCESSIONS_FILE"
+    rm "$ACCESSIONS_FILE"
 fi
 
 python3 translate.py "$JSON_FILE" "$PROCESSED_ACCESSIONS_FILE"
