@@ -116,7 +116,7 @@ def prepare_files(job_context: Dict) -> Dict:
 
 
 def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
-    """ Read and sanitize a computed file """
+    """Read and sanitize a computed file"""
 
     data = pd.read_csv(
         computed_file_path,
@@ -163,8 +163,8 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
 
 
 def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) -> pd.DataFrame:
-    """ Downloads the computed file from S3 and tries to see if it's smashable.
-    Returns a data frame if the file can be processed or False otherwise. """
+    """Downloads the computed file from S3 and tries to see if it's smashable.
+    Returns a data frame if the file can be processed or False otherwise."""
 
     try:
         # Download the file to a job-specific location so it
@@ -505,8 +505,8 @@ def _quantile_normalize_matrix(target_vector, original_matrix):
 
 
 def _test_qn(merged_matrix):
-    """ Selects a list of 100 random pairs of columns and performs the KS Test on them.
-    Returns a list of tuples with the results of the KN test (statistic, pvalue) """
+    """Selects a list of 100 random pairs of columns and performs the KS Test on them.
+    Returns a list of tuples with the results of the KN test (statistic, pvalue)"""
     # Verify this QN, related:
     # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
     data_matrix = rlang("data.matrix")
@@ -876,6 +876,29 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                         row_data, annotation_key, annotation_value, sample_accession_code
                     )
 
+        for attribute in Sample.objects.get(accession_code=sample_accession_code).attributes.all():
+            attribute_key = f"{attribute.source.source_name}_{attribute.name.human_readable_name}"
+            attribute_value = attribute.get_value()
+            _add_annotation_value(row_data, attribute_key, attribute_value, sample_accession_code)
+
+            if attribute.unit is not None:
+                attribute_key = (
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.unit"
+                )
+                attribute_value = attribute.unit.human_readable_name
+                _add_annotation_value(
+                    row_data, attribute_key, attribute_value, sample_accession_code
+                )
+
+            if attribute.probability is not None:
+                attribute_key = (
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.confidence",
+                )
+                attribute_value = attribute.probability
+                _add_annotation_value(
+                    row_data, attribute_key, attribute_value, sample_accession_code
+                )
+
     row_data["experiment_accession"] = get_experiment_accession(sample_accession_code, dataset_data)
 
     return row_data
@@ -937,6 +960,24 @@ def get_tsv_columns(samples_metadata):
                     else:
                         _add_annotation_column(annotation_columns, annotation_key)
 
+        for attribute in Sample.objects.get(
+            accession_code=sample_metadata["refinebio_accession_code"]
+        ).attributes.all():
+            _add_annotation_column(
+                annotation_columns,
+                f"{attribute.source.source_name}_{attribute.name.human_readable_name}",
+            )
+            if attribute.unit is not None:
+                _add_annotation_column(
+                    annotation_columns,
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.unit",
+                )
+            if attribute.probability is not None:
+                _add_annotation_column(
+                    annotation_columns,
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.confidence",
+                )
+
     # Return sorted columns, in which "refinebio_accession_code" and "experiment_accession" are
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
@@ -996,6 +1037,24 @@ def write_tsv_json(job_context):
                     if sample_metadata.get("refinebio_organism", "") == species:
                         row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
+
+                        contributions = set()
+                        for attribute in Sample.objects.get(
+                            accession_code=sample_metadata["refinebio_accession_code"]
+                        ).attributes.all():
+                            sample_metadata[
+                                f"{attribute.source.source_name}_{attribute.name.human_readable_name}"
+                            ] = attribute.to_dict()
+
+                            contributions.add(attribute.source)
+
+                        if len(contributions) != 0:
+                            sample_metadata["methods"] = {}
+                            for contribution in contributions:
+                                sample_metadata["methods"][
+                                    contribution.source_name
+                                ] = contribution.methods_url
+
                         samples_in_species.append(sample_metadata)
 
                     i = i + 1
@@ -1030,10 +1089,10 @@ def write_tsv_json(job_context):
 
 
 def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> Tuple[Sample, str]:
-    """ this function downloads the latest computed file and then returns the
+    """this function downloads the latest computed file and then returns the
     failure reason as a string, if there was one. Receives a tuple with the
     computed file and the path where it needs to be downloaded This is used to
-    parallelize downloading quantsf files. """
+    parallelize downloading quantsf files."""
     (sample, latest_computed_file, output_file_path) = download_tuple
     try:
         latest_computed_file.get_synced_file_path(path=output_file_path)
@@ -1066,9 +1125,9 @@ def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> Tup
 
 
 def sync_quant_files(output_path, samples: List[Sample], filtered_samples: Dict):
-    """ Takes a list of ComputedFiles and copies the ones that are quant files
+    """Takes a list of ComputedFiles and copies the ones that are quant files
     to the provided directory.  Returns the total number of samples that were
-    included, and adds those that were not included to `filtered_samples` """
+    included, and adds those that were not included to `filtered_samples`"""
     num_samples = 0
 
     page_size = 100

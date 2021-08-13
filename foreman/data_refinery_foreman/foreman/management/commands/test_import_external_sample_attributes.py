@@ -103,14 +103,11 @@ class ImportExternalSampleAttributesTestCase(TestCase):
 
         self.assertEqual(SampleAttribute.objects.all().count(), 1)
 
-        metadata = Sample.objects.get(accession_code="SRR123").to_metadata_dict()
-        self.assertIsNotNone(metadata.get("other_metadata", None))
-        self.assertEqual(len(metadata["other_metadata"]), 1)
-        self.assertEqual(metadata["other_metadata"][0]["name"]["term"], "PATO:0000122")
-        self.assertEqual(metadata["other_metadata"][0]["name"]["name"], "length")
-        self.assertEqual(metadata["other_metadata"][0]["unit"]["term"], "UO:0010012")
-        self.assertEqual(metadata["other_metadata"][0]["unit"]["name"], "thou")
-        self.assertEqual(metadata["other_metadata"][0]["value"], 25)
+        contributed_metadata = Sample.objects.get(accession_code="SRR123").contributed_metadata
+        self.assertEqual(
+            contributed_metadata[self.contribution.source_name]["length"],
+            {"unit": "thou", "value": 25},
+        )
 
     #
     # Test import_metadata()
@@ -128,15 +125,11 @@ class ImportExternalSampleAttributesTestCase(TestCase):
 
         self.assertEqual(SampleAttribute.objects.all().count(), 1)
 
-        metadata = Sample.objects.get(accession_code="SRR123").to_metadata_dict()
-        self.assertIsNotNone(metadata.get("other_metadata", None))
-        self.assertEqual(len(metadata["other_metadata"]), 1)
-        self.assertEqual(metadata["other_metadata"][0]["name"]["term"], "PATO:0000122")
-        self.assertEqual(metadata["other_metadata"][0]["name"]["name"], "length")
-        self.assertEqual(metadata["other_metadata"][0]["unit"]["term"], "UO:0010012")
-        self.assertEqual(metadata["other_metadata"][0]["unit"]["name"], "thou")
-        self.assertEqual(metadata["other_metadata"][0]["value"], 25)
-        self.assertEqual(metadata["other_metadata"][0]["probability"], "unknown")
+        contributed_metadata = Sample.objects.get(accession_code="SRR123").contributed_metadata
+        self.assertEqual(
+            contributed_metadata[self.contribution.source_name]["length"],
+            {"unit": "thou", "value": 25},
+        )
 
     #
     # End-to-end test
@@ -151,18 +144,21 @@ class ImportExternalSampleAttributesTestCase(TestCase):
         sample.save()
 
         command = Command()
-        command.handle(
-            file=TEST_METADATA, source_name="refinebio_tests", methods_url="ccdatalab.org"
-        )
+        SOURCE_NAME = "refinebio_tests"
+        command.handle(file=TEST_METADATA, source_name=SOURCE_NAME, methods_url="ccdatalab.org")
 
         self.assertEqual(SampleAttribute.objects.all().count(), 1)
 
-        metadata = sample.to_metadata_dict()
-        self.assertIsNotNone(metadata.get("other_metadata", None))
-        self.assertEqual(len(metadata["other_metadata"]), 1)
-        # Make sure everything matches what was in TEST_METADATA
-        self.assertEqual(metadata["other_metadata"][0]["name"]["term"], "PATO:0000047")
-        self.assertEqual(metadata["other_metadata"][0]["name"]["name"], "biological sex")
-        self.assertEqual(metadata["other_metadata"][0]["value"]["term"], "PATO:0000383")
-        self.assertEqual(metadata["other_metadata"][0]["value"]["name"], "female")
-        self.assertAlmostEqual(metadata["other_metadata"][0]["probability"], 0.7856624891880539)
+        contributed_metadata = sample.contributed_metadata
+        self.assertEqual(
+            set(contributed_metadata[SOURCE_NAME]["biological sex"].keys()),
+            {"value", "confidence"},
+        )
+        self.assertEqual(
+            contributed_metadata[SOURCE_NAME]["biological sex"]["value"].human_readable_name,
+            "female",
+        )
+
+        self.assertAlmostEqual(
+            contributed_metadata[SOURCE_NAME]["biological sex"]["confidence"], 0.7856624891880539
+        )

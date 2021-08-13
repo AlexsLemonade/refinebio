@@ -33,13 +33,15 @@ class AbstractAttribute(models.Model):
 
     def to_dict(self):
         rendered = {
-            "name": self.name.to_dict(),
-            "unit": None if self.unit is None else self.unit.to_dict(),
-            "probability": "unknown" if self.probability is None else self.probability,
-            "source": self.source.source_name,
-            "methods": self.source.methods_url,
+            "name_ontology_term": self.name.human_readable_name,
             "value": self.get_value(),
         }
+
+        if self.probability is not None:
+            rendered["confidence"] = self.probability
+
+        if self.unit is not None:
+            rendered["unit"] = self.unit.to_dict()
 
         if self.value_type == ONTOLOGY_TERM:
             rendered["value"] = rendered["value"].to_dict()
