@@ -85,6 +85,14 @@ def _prepare_input(job_context: Dict) -> Dict:
 
 
 def _prepare_frames(job_context: Dict) -> Dict:
+    """
+    Takes the inputs and places them into matrices
+     - Combine all microarray samples with a full join to form a
+       DataFrame `microarray_expression_matrix`.
+     - Combine all RNA-seq samples (lengthScaledTPM) with a full outer join
+       to form a DataFrame `rnaseq_expression_matrix`.
+     - Adds unsmashable files to `job_context["unsmashable_files"]`
+    """
     start_prepare_frames = log_state("start _prepare_frames", job_context["job"].id)
 
     job_context["unsmashable_files"] = []
@@ -119,131 +127,164 @@ def _prepare_frames(job_context: Dict) -> Dict:
     return job_context
 
 
-def _perform_imputation(job_context: Dict) -> Dict:
+def _filter_rnaseq_matrix(job_context: Dict) -> Dict:
+    """
+    - Calculate the sum of the lengthScaledTPM values for each row (gene) of
+      the rnaseq_expression_matrix (rnaseq_row_sums).
+    - Calculate the 10th percentile of rnaseq_row_sums
+    - Drop any columns (genes) that are entirely NA
+    - Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of
+      rnaseq_row_sums; this is now filtered_rnaseq_matrix
     """
 
-    Take the inputs and perform the primary imputation.
+    if job_context.get("rnaseq_matrix") is None:
+        log_state(
+            "no rnaseq samples found, skipping rnaseq matrix processing", job_context["job"].id
+        )
+        return job_context
 
-    Via https://github.com/AlexsLemonade/refinebio/issues/508#issuecomment-435879283:
-     - Combine all microarray samples with a full join to form a
-       microarray_expression_matrix (this may end up being a DataFrame).
-     - Combine all RNA-seq samples (lengthScaledTPM) with a full outer join
-       to form a rnaseq_expression_matrix.
-     - Calculate the sum of the lengthScaledTPM values for each row (gene) of
-       the rnaseq_expression_matrix (rnaseq_row_sums).
-     - Calculate the 10th percentile of rnaseq_row_sums
-     - Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of
-       rnaseq_row_sums; this is now filtered_rnaseq_matrix
-     - log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
-     - Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of
-       where these zeroes are
-     - Perform a full outer join of microarray_expression_matrix and
-       log2_rnaseq_matrix; combined_matrix
-     - Remove genes (rows) with >30% missing values in combined_matrix
-     - Remove samples (columns) with >50% missing values in combined_matrix
-     - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero
-       again) in combined_matrix
-     - Transpose combined_matrix; transposed_matrix
-     - Perform imputation of missing values with IterativeSVD (rank=10) on
-       the transposed_matrix; imputed_matrix
-        -- with specified svd algorithm or skip
-     - Untranspose imputed_matrix (genes are now rows, samples are now columns)
-     - Quantile normalize imputed_matrix where genes are rows and samples are columns
-
-    """
-    imputation_start = log_state("start perform imputation", job_context["job"].id)
-    job_context["time_start"] = timezone.now()
     rnaseq_row_sums_start = log_state("start rnaseq row sums", job_context["job"].id)
 
-    # We potentially can have a microarray-only compendia but not a RNASeq-only compendia
-    log2_rnaseq_matrix = None
-    if job_context["rnaseq_matrix"] is not None:
-        # Drop any genes that are entirely NULL in the RNA-Seq matrix
-        job_context["rnaseq_matrix"] = job_context["rnaseq_matrix"].dropna(
-            axis="columns", how="all"
-        )
+    rnaseq_matrix = job_context.pop("rnaseq_matrix")
 
-        # Calculate the sum of the lengthScaledTPM values for each row
-        # (gene) of the rnaseq_matrix (rnaseq_row_sums)
-        rnaseq_row_sums = np.sum(job_context["rnaseq_matrix"], axis=1)
+    # Drop any genes that are entirely NULL in the RNA-Seq matrix
+    rnaseq_matrix = rnaseq_matrix.dropna(axis="columns", how="all")
 
-        log_state("end rnaseq row sums", job_context["job"].id, rnaseq_row_sums_start)
-        rnaseq_decile_start = log_state("start rnaseq decile", job_context["job"].id)
+    # Calculate the sum of the lengthScaledTPM values for each row
+    # (gene) of the rnaseq_matrix (rnaseq_row_sums)
+    rnaseq_row_sums = np.sum(rnaseq_matrix, axis=1)
 
-        # Calculate the 10th percentile of rnaseq_row_sums
-        rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
+    log_state("end rnaseq row sums", job_context["job"].id, rnaseq_row_sums_start)
+    rnaseq_decile_start = log_state("start rnaseq decile", job_context["job"].id)
 
-        log_state("end rnaseq decile", job_context["job"].id, rnaseq_decile_start)
-        drop_start = log_state("drop all rows", job_context["job"].id)
-        # Drop all rows in rnaseq_matrix with a row sum < 10th
-        # percentile of rnaseq_row_sums; this is now
-        # filtered_rnaseq_matrix
-        # TODO: This is probably a better way to do this with `np.where`
-        rows_to_filter = []
-        for (x, sum_val) in rnaseq_row_sums.items():
-            if sum_val < rnaseq_tenth_percentile:
-                rows_to_filter.append(x)
+    # Calculate the 10th percentile of rnaseq_row_sums
+    rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
 
-        del rnaseq_row_sums
+    log_state("end rnaseq decile", job_context["job"].id, rnaseq_decile_start)
+    drop_start = log_state("drop all rows", job_context["job"].id)
+    # Drop all rows in rnaseq_matrix with a row sum < 10th
+    # percentile of rnaseq_row_sums; this is now
+    # filtered_rnaseq_matrix
+    # TODO: This is probably a better way to do this with `np.where`
+    rows_to_filter = []
+    for (x, sum_val) in rnaseq_row_sums.items():
+        if sum_val < rnaseq_tenth_percentile:
+            rows_to_filter.append(x)
 
-        log_state("actually calling drop()", job_context["job"].id)
+    del rnaseq_row_sums
 
-        filtered_rnaseq_matrix = job_context.pop("rnaseq_matrix").drop(rows_to_filter)
+    log_state("actually calling drop()", job_context["job"].id)
 
-        del rows_to_filter
+    filtered_rnaseq_matrix = rnaseq_matrix.drop(rows_to_filter)
 
-        log_state("end drop all rows", job_context["job"].id, drop_start)
-        log2_start = log_state("start log2", job_context["job"].id)
+    log_state("end drop all rows", job_context["job"].id, drop_start)
 
-        # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
-        filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
-        log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
-        del filtered_rnaseq_matrix_plus_one
-        del filtered_rnaseq_matrix
+    job_context["filtered_rnaseq_matrix"] = filtered_rnaseq_matrix
 
-        log_state("end log2", job_context["job"].id, log2_start)
-        cache_start = log_state("start caching zeroes", job_context["job"].id)
+    return job_context
 
-        # Cache our RNA-Seq zero values
-        cached_zeroes = {}
-        for column in log2_rnaseq_matrix.columns:
-            cached_zeroes[column] = log2_rnaseq_matrix.index[
-                np.where(log2_rnaseq_matrix[column] == 0)
-            ]
 
-        # Set all zero values in log2_rnaseq_matrix to NA, but make sure
-        # to keep track of where these zeroes are
-        log2_rnaseq_matrix[log2_rnaseq_matrix == 0] = np.nan
+def _log2_transform_matrix(job_context: Dict) -> Dict:
+    """
+    - log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
+    """
 
-        log_state("end caching zeroes", job_context["job"].id, cache_start)
+    if job_context.get("filtered_rnaseq_matrix") is None:
+        # Then we don't have any RNA-SEQ samples, so just move on
+        return job_context
 
-    outer_merge_start = log_state("start outer merge", job_context["job"].id)
+    filtered_rnaseq_matrix = job_context.pop("filtered_rnaseq_matrix")
+
+    log2_start = log_state("start log2", job_context["job"].id)
+
+    # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
+    filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
+    log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
+
+    log_state("end log2", job_context["job"].id, log2_start)
+
+    job_context["log2_rnaseq_matrix"] = log2_rnaseq_matrix
+
+    return job_context
+
+
+def _cached_remove_zeroes(job_context: Dict) -> Dict:
+    """
+    - Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of
+      where these zeroes are
+    """
+
+    if job_context.get("log2_rnaseq_matrix") is None:
+        job_context["cached_zeroes"] = {}
+        return job_context
+
+    cache_start = log_state("start caching zeroes", job_context["job"].id)
+
+    # Cache our RNA-Seq zero values
+    cached_zeroes = {}
+    for column in job_context["log2_rnaseq_matrix"].columns:
+        cached_zeroes[column] = job_context["log2_rnaseq_matrix"].index[
+            np.where(job_context["log2_rnaseq_matrix"][column] == 0)
+        ]
+
+    # Set all zero values in log2_rnaseq_matrix to NA, but make sure
+    # to keep track of where these zeroes are
+    job_context["log2_rnaseq_matrix"][job_context["log2_rnaseq_matrix"] == 0] = np.nan
+
+    log_state("end caching zeroes", job_context["job"].id, cache_start)
+
+    job_context["cached_zeroes"] = cached_zeroes
+
+    return job_context
+
+
+def _full_outer_join_gene_matrices(job_context: Dict) -> Dict:
+    """
+    - Perform a full outer join of microarray_expression_matrix and
+      log2_rnaseq_matrix; combined_matrix
+    """
+
+    # We potentially can have a microarray-only compendia but not a RNASeq-only
+    # compendia, so we need to provide a default
+    log2_rnaseq_matrix = job_context.pop("log2_rnaseq_matrix", None)
 
     # Perform a full outer join of microarray_matrix and
     # log2_rnaseq_matrix; combined_matrix
     if log2_rnaseq_matrix is not None:
-        combined_matrix = job_context.pop("microarray_matrix").merge(
+        outer_merge_start = log_state("start outer merge", job_context["job"].id)
+
+        job_context["combined_matrix"] = job_context.pop("microarray_matrix").merge(
             log2_rnaseq_matrix, how="outer", left_index=True, right_index=True
         )
+
+        log_state("end outer merge", job_context["job"].id, outer_merge_start)
     else:
         logger.info("Building compendia with only microarray data.", job_id=job_context["job"].id)
-        combined_matrix = job_context.pop("microarray_matrix")
+        job_context["combined_matrix"] = job_context.pop("microarray_matrix")
 
-    log_state("ran outer merge, now deleteing log2_rnaseq_matrix", job_context["job"].id)
+    return job_context
 
-    del log2_rnaseq_matrix
 
-    log_state("end outer merge", job_context["job"].id, outer_merge_start)
+def _filter_rows_and_columns(job_context: Dict) -> Dict:
+    """
+    - Remove genes (rows) with >30% missing values in combined_matrix
+    - Remove samples (columns) with >50% missing values in combined_matrix
+    """
+
     drop_na_genes_start = log_state("start drop NA genes", job_context["job"].id)
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
     # visualized_prefilter = visualize.visualize(combined_matrix.copy(), output_path)
 
+    combined_matrix = job_context.pop("combined_matrix")
+
     # Remove genes (rows) with <=70% present values in combined_matrix
     thresh = combined_matrix.shape[1] * 0.7  # (Rows, Columns)
     # Everything below `thresh` is dropped
     row_filtered_matrix = combined_matrix.dropna(axis="index", thresh=thresh)
+
+    job_context["row_filtered_matrix"] = row_filtered_matrix
 
     del combined_matrix
     del thresh
@@ -258,15 +299,12 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Remove samples (columns) with <50% present values in combined_matrix
     # XXX: Find better test data for this!
     col_thresh = row_filtered_matrix.shape[0] * 0.5
-    row_col_filtered_matrix_samples = row_filtered_matrix.dropna(axis="columns", thresh=col_thresh)
-    row_col_filtered_matrix_samples_index = row_col_filtered_matrix_samples.index
-    row_col_filtered_matrix_samples_columns = row_col_filtered_matrix_samples.columns
-
-    log_state("end drop NA genes", job_context["job"].id, drop_na_samples_start)
-    replace_zeroes_start = log_state("start replace zeroes", job_context["job"].id)
+    row_col_filtered_matrix = row_filtered_matrix.dropna(axis="columns", thresh=col_thresh)
+    row_col_filtered_matrix_index = row_col_filtered_matrix.index
+    row_col_filtered_matrix_columns = row_col_filtered_matrix.columns
 
     for sample_accession_code in row_filtered_matrix.columns:
-        if sample_accession_code not in row_col_filtered_matrix_samples_columns:
+        if sample_accession_code not in row_col_filtered_matrix_columns:
             sample = Sample.objects.get(accession_code=sample_accession_code)
             sample_metadata = sample.to_metadata_dict()
             job_context["filtered_samples"][sample_accession_code] = {
@@ -277,11 +315,31 @@ def _perform_imputation(job_context: Dict) -> Dict:
                 ),
             }
 
-    del row_filtered_matrix
+    log_state("end drop NA genes", job_context["job"].id, drop_na_samples_start)
+
+    job_context["row_col_filtered_matrix"] = row_col_filtered_matrix
+    job_context["row_col_filtered_matrix_index"] = row_col_filtered_matrix_index
+    job_context["row_col_filtered_matrix_columns"] = row_col_filtered_matrix_columns
+
+    return job_context
+
+
+def _reset_zero_values(job_context: Dict) -> Dict:
+    """
+    - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero
+      again) in combined_matrix
+    """
+
+    replace_zeroes_start = log_state("start replace zeroes", job_context["job"].id)
+
+    row_col_filtered_matrix = job_context.pop("row_col_filtered_matrix")
+    # We don't pop this one out of `job_context` because we need it again later
+    row_col_filtered_matrix_index = job_context.get("row_col_filtered_matrix_index")
+    cached_zeroes = job_context.pop("cached_zeroes")
 
     # # Visualize Row and Column Filtered
     # output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
-    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_matrix_samples.copy(),
+    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_matrix.copy(),
     #                                               output_path)
 
     # "Reset" zero values that were set to NA in RNA-seq samples
@@ -290,27 +348,44 @@ def _perform_imputation(job_context: Dict) -> Dict:
         zeroes = cached_zeroes[column]
 
         # Skip purged columns
-        if column not in row_col_filtered_matrix_samples:
+        if column not in row_col_filtered_matrix:
             continue
 
         # Place the zero
         try:
             # This generates a warning, so use loc[] instead
-            # row_col_filtered_matrix_samples[column].replace(zeroes, 0.0, inplace=True)
+            # row_col_filtered_matrix[column].replace(zeroes, 0.0, inplace=True)
             zeroes_list = zeroes.tolist()
-            new_index_list = row_col_filtered_matrix_samples_index.tolist()
+            new_index_list = row_col_filtered_matrix_index.tolist()
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
-            row_col_filtered_matrix_samples[column].loc[new_zeroes] = 0.0
+            row_col_filtered_matrix[column].loc[new_zeroes] = 0.0
         except Exception:
             logger.warn("Error when replacing zero")
             continue
 
     log_state("end replace zeroes", job_context["job"].id, replace_zeroes_start)
+
+    # Label our new replaced data
+    job_context["combined_matrix_zero"] = row_col_filtered_matrix
+
+    return job_context
+
+
+def _run_iterativesvd(job_context: Dict) -> Dict:
+    """
+    - Transpose combined_matrix; transposed_matrix
+    - Perform imputation of missing values with IterativeSVD (rank=10) on
+      the transposed_matrix; imputed_matrix
+       -- with specified svd algorithm or skip
+    - Untranspose imputed_matrix (genes are now rows, samples are now columns)
+    """
+
     transposed_zeroes_start = log_state("start replacing transposed zeroes", job_context["job"].id)
 
     # Label our new replaced data
-    combined_matrix_zero = row_col_filtered_matrix_samples
-    del row_col_filtered_matrix_samples
+    combined_matrix_zero = job_context.pop("combined_matrix_zero")
+    row_col_filtered_matrix_index = job_context.pop("row_col_filtered_matrix_index")
+    row_col_filtered_matrix_columns = job_context.pop("row_col_filtered_matrix_columns")
 
     transposed_matrix_with_zeros = combined_matrix_zero.T
     del combined_matrix_zero
@@ -355,22 +430,78 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Convert back to Pandas
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
-    untransposed_imputed_matrix_df.index = row_col_filtered_matrix_samples_index
-    untransposed_imputed_matrix_df.columns = row_col_filtered_matrix_samples_columns
+    untransposed_imputed_matrix_df.index = row_col_filtered_matrix_index
+    untransposed_imputed_matrix_df.columns = row_col_filtered_matrix_columns
     del untransposed_imputed_matrix
-    del row_col_filtered_matrix_samples_index
-    del row_col_filtered_matrix_samples_columns
-    # Quantile normalize imputed_matrix where genes are rows and samples are columns
-    job_context["organism"] = Organism.get_object_for_name(job_context["organism_name"])
+    del row_col_filtered_matrix_index
+    del row_col_filtered_matrix_columns
+
     job_context["merged_no_qn"] = untransposed_imputed_matrix_df
     # output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
     # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(),
     #                                               output_path)
 
     log_state("end untranspose", job_context["job"].id, untranspose_start)
+
+    return job_context
+
+
+def _perform_imputation(job_context: Dict) -> Dict:
+    """
+    Take the inputs and perform the primary imputation.
+
+    Via https://github.com/AlexsLemonade/refinebio/issues/508#issuecomment-435879283:
+     - Calculate the sum of the lengthScaledTPM values for each row (gene) of
+       the rnaseq_expression_matrix (rnaseq_row_sums).
+     - Calculate the 10th percentile of rnaseq_row_sums
+     - Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of
+       rnaseq_row_sums; this is now filtered_rnaseq_matrix
+     - log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
+     - Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of
+       where these zeroes are
+     - Perform a full outer join of microarray_expression_matrix and
+       log2_rnaseq_matrix; combined_matrix
+     - Remove genes (rows) with >30% missing values in combined_matrix
+     - Remove samples (columns) with >50% missing values in combined_matrix
+     - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero
+       again) in combined_matrix
+     - Transpose combined_matrix; transposed_matrix
+     - Perform imputation of missing values with IterativeSVD (rank=10) on
+       the transposed_matrix; imputed_matrix
+        -- with specified svd algorithm or skip
+     - Untranspose imputed_matrix (genes are now rows, samples are now columns)
+    """
+    imputation_start = log_state("start perform imputation", job_context["job"].id)
+    job_context["time_start"] = timezone.now()
+
+    job_context = utils.run_pipeline(
+        job_context,
+        [
+            _filter_rnaseq_matrix,
+            _log2_transform_matrix,
+            _cached_remove_zeroes,
+            _full_outer_join_gene_matrices,
+            _filter_rows_and_columns,
+            _reset_zero_values,
+            _run_iterativesvd,
+        ],
+    )
+
+    job_context["time_end"] = timezone.now()
+    job_context["formatted_command"] = ["create_compendia.py"]
+    log_state("end perform imputation", job_context["job"].id, imputation_start)
+
+    return job_context
+
+
+def _quantile_normalize(job_context: Dict) -> Dict:
+    """
+    - Quantile normalize imputed_matrix where genes are rows and samples are columns
+    """
     quantile_start = log_state("start quantile normalize", job_context["job"].id)
 
     # Perform the Quantile Normalization
+    job_context["organism"] = Organism.get_object_for_name(job_context["organism_name"])
     job_context = smashing_utils.quantile_normalize(job_context, ks_check=False)
 
     log_state("end quantile normalize", job_context["job"].id, quantile_start)
@@ -379,9 +510,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
     # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
-    job_context["time_end"] = timezone.now()
-    job_context["formatted_command"] = ["create_compendia.py"]
-    log_state("end prepare imputation", job_context["job"].id, imputation_start)
     return job_context
 
 
@@ -510,18 +638,19 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 
+COMPENDIA_PIPELINE = [
+    utils.start_job,
+    _prepare_input,
+    _prepare_frames,
+    _perform_imputation,
+    _quantile_normalize,
+    smashing_utils.write_non_data_files,
+    _create_result_objects,
+    utils.end_job,
+]
+
+
 def create_compendia(job_id: int) -> None:
     pipeline = Pipeline(name=PipelineEnum.CREATE_COMPENDIA.value)
-    job_context = utils.run_pipeline(
-        {"job_id": job_id, "pipeline": pipeline},
-        [
-            utils.start_job,
-            _prepare_input,
-            _prepare_frames,
-            _perform_imputation,
-            smashing_utils.write_non_data_files,
-            _create_result_objects,
-            utils.end_job,
-        ],
-    )
+    job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline}, COMPENDIA_PIPELINE)
     return job_context
