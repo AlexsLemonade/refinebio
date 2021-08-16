@@ -81,7 +81,7 @@ class Sample(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -142,11 +142,11 @@ class Sample(models.Model):
         return downloader_jobs
 
     def get_result_files(self):
-        """ Get all of the ComputedFile objects associated with this Sample """
+        """Get all of the ComputedFile objects associated with this Sample"""
         return self.computed_files.all()
 
     def get_most_recent_smashable_result_file(self):
-        """ Get the most recent of the ComputedFile objects associated with this Sample """
+        """Get the most recent of the ComputedFile objects associated with this Sample"""
         try:
             if settings.RUNNING_IN_CLOUD:
                 latest_computed_file = self.computed_files.filter(
@@ -154,7 +154,7 @@ class Sample(models.Model):
                 ).latest()
             else:
                 latest_computed_file = self.computed_files.filter(
-                    is_public=True, is_smashable=True,
+                    is_public=True, is_smashable=True
                 ).latest()
 
             return latest_computed_file
@@ -163,9 +163,9 @@ class Sample(models.Model):
             return None
 
     def get_most_recent_quant_sf_file(self):
-        """ Returns the latest quant.sf file that was generated for this sample.
+        """Returns the latest quant.sf file that was generated for this sample.
         Note: We don't associate that file to the computed_files of this sample, that's
-        why we have to go through the computational results. """
+        why we have to go through the computational results."""
         return (
             ComputedFile.objects.filter(
                 result__in=self.results.all(),
@@ -179,7 +179,7 @@ class Sample(models.Model):
 
     @property
     def pretty_platform(self):
-        """ Turns
+        """Turns
 
         [HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
 
@@ -197,3 +197,32 @@ class Sample(models.Model):
     @property
     def experiment_accession_codes(self):
         return [e.accession_code for e in self.experiments.all()]
+
+    @property
+    def contributed_metadata(self):
+        out = {}
+        for attrib in self.attributes.all():
+            val = {"value": attrib.get_value()}
+
+            if attrib.unit is not None:
+                val["unit"] = attrib.unit.human_readable_name
+            if attrib.probability is not None:
+                val["confidence"] = attrib.probability
+
+            try:
+                out[attrib.source.source_name][attrib.name.human_readable_name] = val
+            except KeyError:
+                out[attrib.source.source_name] = {attrib.name.human_readable_name: val}
+
+        return out
+
+    @property
+    def contributed_keywords(self):
+        out = {}
+        for kw in self.keywords.all():
+            try:
+                out[kw.source.source_name].append(kw.name.human_readable_name)
+            except KeyError:
+                out[kw.source.source_name] = [kw.name.human_readable_name]
+
+        return out
