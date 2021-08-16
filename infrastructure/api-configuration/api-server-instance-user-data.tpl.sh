@@ -27,8 +27,9 @@ if [[ "${stage}" == "staging" || "${stage}" == "prod" ]]; then
     # Create and install SSL Certificate for the API.
     # Only necessary on staging and prod.
     # We cannot use ACM for this because *.bio is not a Top Level Domain that Route53 supports.
-    apt-get install -y software-properties-common
-    add-apt-repository ppa:certbot/certbot
+    snap install core
+    snap refresh core
+    snap install --classic certbot
     apt-get update
     apt-get install -y python-certbot-nginx
 
