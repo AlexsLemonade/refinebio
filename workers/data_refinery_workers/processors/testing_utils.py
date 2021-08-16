@@ -56,3 +56,20 @@ class ProcessorJobTestCaseMixin:
             "Processor job failed, but for an incorrect reason.\n"
             + f"We expected the reason to contain '{expected_reason}' but the actual reason was '{pj.failure_reason}'"
         )
+
+    def assertDidNotFail(self, pj):
+        """Sometimes when testing a pipeline we don't get all the way through,
+        so the processor job doesn't succeed, but we still want to make sure
+        that it did not fail"""
+
+        pj.refresh_from_db()
+
+        if pj.success is not False:
+            return
+
+        if pj.failure_reason is not None:
+            msg = f"Processor job failed with reason '{pj.failure_reason}'"
+        else:
+            msg = f"Processor job failed without a given reason"
+
+        raise self.failureException(msg)
