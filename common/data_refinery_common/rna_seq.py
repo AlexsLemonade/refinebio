@@ -1,10 +1,8 @@
+from itertools import groupby
 from typing import List
 
-from django.db.models import OuterRef, Subquery
-
-from data_refinery_common.enums import ProcessorEnum
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, Experiment
+from data_refinery_common.models import ComputationalResult, Experiment, OrganismIndex
 from data_refinery_common.utils import get_env_variable
 
 logger = get_and_configure_logger(__name__)
@@ -34,19 +32,18 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
     """ Returns whether or not the experiment is eligible to have tximport
     run on it.
 
-    results is a queryset of ComputationalResults for the samples that had salmon quant run on them.
+    results is a set of ComputationalResults for the samples that had salmon quant run on them.
     """
-    num_quantified = results.count()
+    num_quantified = len(results)
     if num_quantified == 0:
         return False
 
-    num_salmon_versions = (
-        results.filter(organism_index__salmon_version__isnull=False)
-        .values_list("organism_index__salmon_version")
-        .distinct()
-        .count()
-    )
-    if num_salmon_versions > 1:
+    salmon_versions = set()
+    for result in results:
+        if result.organism_index.salmon_version:
+            salmon_versions.add(result.organism_index.salmon_version)
+
+    if len(salmon_versions) > 1:
         # Tximport requires that all samples are processed with the same salmon version
         # https://github.com/AlexsLemonade/refinebio/issues/1496
         return False
@@ -75,43 +72,40 @@ def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
 
 
 def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions=True):
-    """Returns a queryset of salmon quant results from `experiment`."""
+    """Returns a set of salmon quant results from `experiment`."""
     # Subquery to calculate quant results
     # https://docs.djangoproject.com/en/2.2/ref/models/expressions/#subquery-expressions
-
-    # Salmon version gets saved as what salmon outputs, which includes this prefix.
-    current_salmon_version = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
+    all_results = ComputationalResult.objects.filter(sample__in=experiment.samples.all())
 
     if filter_old_versions:
-        eligible_results = ComputationalResult.objects.prefetch_related("organism_index").filter(
-            organism_index__salmon_version=current_salmon_version
+        # Salmon version gets saved as what salmon outputs, which includes this prefix.
+        current_salmon_version = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
+        organisms = experiment.organisms.all()
+        organism_indices = OrganismIndex.objects.filter(
+            salmon_version=current_salmon_version, organism__in=organisms
         )
-    else:
-        eligible_results = ComputationalResult.objects.all()
+        all_results = all_results.filter(organism_index__id__in=organism_indices.values("id"))
 
-    # A result is only eligible to be used if it actually got uploaded.
-    eligible_results = eligible_results.select_related("computedfile").filter(
+    all_results = all_results.prefetch_related("computedfile_set").filter(
         computedfile__s3_bucket__isnull=False, computedfile__s3_key__isnull=False
     )
 
-    # Calculate the computational results sorted that are associated with a given sample (
-    # referenced from the top query)
-    newest_computational_results = eligible_results.filter(
-        samples=OuterRef("id"), processor__name=ProcessorEnum.SALMON_QUANT.value["name"],
-    ).order_by("-created_at")
+    def get_sample_id_set(result):
+        return {sample.id for sample in result.samples.all()}
 
-    # Annotate each sample in the experiment with the id of the most recent computational result
-    computational_results_ids = (
-        experiment.samples.all()
-        .annotate(
-            latest_computational_result_id=Subquery(newest_computational_results.values("id")[:1])
-        )
-        .filter(latest_computational_result_id__isnull=False)
-        .values_list("latest_computational_result_id", flat=True)
-    )
+    latest_results = set()
+    for k, group in groupby(sorted(all_results, key=get_sample_id_set), get_sample_id_set):
+        latest_result = None
+        for result in group:
+            if not latest_result:
+                latest_result = result
+            else:
+                if result.created_at > latest_result.created_at:
+                    latest_result = result
 
-    # return the computational results that match those ids
-    return ComputationalResult.objects.all().filter(id__in=computational_results_ids)
+        latest_results.add(latest_result)
+
+    return latest_results
 
 
 def get_quant_files_for_results(results: List[ComputationalResult]):
