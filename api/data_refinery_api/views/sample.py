@@ -94,6 +94,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             "last_modified",
             "original_files",
             "computed_files",
+            "contributed_metadata",
+            "contributed_keywords",
             "experiment_accession_codes",
         )
         read_only_fields = fields
@@ -125,7 +127,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
     ),
 )
 class SampleListView(generics.ListAPIView):
-    """ Returns detailed information about Samples """
+    """Returns detailed information about Samples"""
 
     model = Sample
     serializer_class = DetailedSampleSerializer
@@ -254,7 +256,7 @@ class SampleListView(generics.ListAPIView):
 
 
 class SampleDetailView(generics.RetrieveAPIView):
-    """ Retrieve the details for a Sample given its accession code """
+    """Retrieve the details for a Sample given its accession code"""
 
     lookup_field = "accession_code"
     queryset = Sample.public_objects.all()

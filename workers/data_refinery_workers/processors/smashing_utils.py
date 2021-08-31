@@ -787,7 +787,10 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                 ):
                     for pair_dict in annotation_value:
                         if "category" in pair_dict and "value" in pair_dict:
-                            col_name, col_value = pair_dict["category"], pair_dict["value"]
+                            col_name, col_value = (
+                                "characteristic_" + pair_dict["category"],
+                                pair_dict["value"],
+                            )
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
                             )
@@ -798,7 +801,10 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                 ):
                     for pair_dict in annotation_value:
                         if "name" in pair_dict and "value" in pair_dict:
-                            col_name, col_value = pair_dict["name"], pair_dict["value"]
+                            col_name, col_value = (
+                                "variable_" + pair_dict["name"],
+                                pair_dict["value"],
+                            )
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
                             )
@@ -816,6 +822,7 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                     for pair_str in annotation_value:
                         if ":" in pair_str:
                             col_name, col_value = pair_str.split(":", 1)
+                            col_name = "characteristics_ch1_" + col_name
                             col_value = col_value.strip()
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
@@ -871,7 +878,9 @@ def get_tsv_columns(samples_metadata):
                     ):
                         for pair_dict in annotation_value:
                             if "category" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(annotation_columns, pair_dict["category"])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristic_" + pair_dict["category"]
+                                )
                     # For ArrayExpress samples, also take out the fields
                     # nested in "variable" as separate columns.
                     elif (
@@ -880,7 +889,9 @@ def get_tsv_columns(samples_metadata):
                     ):
                         for pair_dict in annotation_value:
                             if "name" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(annotation_columns, pair_dict["name"])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristic_" + pair_dict["name"]
+                                )
                     # For ArrayExpress samples, skip "source" field
                     elif (
                         sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
@@ -896,7 +907,9 @@ def get_tsv_columns(samples_metadata):
                         for pair_str in annotation_value:
                             if ":" in pair_str:
                                 tokens = pair_str.split(":", 1)
-                                _add_annotation_column(annotation_columns, tokens[0])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristics_ch1_" + tokens[0]
+                                )
                     # Saves all other annotation fields in separate columns
                     else:
                         _add_annotation_column(annotation_columns, annotation_key)
