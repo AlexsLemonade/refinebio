@@ -734,8 +734,10 @@ You can also supply a newline-deliminated file which resides in S3 to `survey_al
 dispatch survey jobs based on accession codes like so:
 
 ```bash
-./run_management_command.sh survey_all --file s3://data-refinery-test-assets/MY_BIG_LIST_OF_CODES.txt
+./run_management_command.sh surveyor_dispatcher --file s3://data-refinery-test-assets/MY_BIG_LIST_OF_CODES.txt
 ```
+
+The `surveyor_dispatcher` command will submit SurveyJobs to the AWS Batch queue, so it's more appropriate for running a large number of survey jobs in production.
 
 See the [Running Locally](#running-locally) section for additional examples of survey_all usage.
 

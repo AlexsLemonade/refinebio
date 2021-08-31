@@ -309,6 +309,7 @@ class SalmonTestCase(TestCase):
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
         c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
+        experiment.organisms.add(c_elegans)
 
         # test_sample record
         sample_accession = "test_sample"
@@ -380,6 +381,7 @@ class SalmonTestCase(TestCase):
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
         c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
+        experiment.organisms.add(c_elegans)
 
         ## Sample 1
         sample1_accession = "SRR1206053"
@@ -504,6 +506,7 @@ class SalmonTestCase(TestCase):
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
         c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS", taxonomy_id=9606)
+        experiment.organisms.add(c_elegans)
 
         ## Sample 1
         sample1_accession = "SRR1206053"
@@ -823,6 +826,7 @@ def create_tximport_job_context(
     experiment = Experiment.objects.create(accession_code=experiment_accession)
 
     zebrafish = Organism.get_object_for_name("DANIO_RERIO", taxonomy_id=9606)
+    experiment.organisms.add(zebrafish)
 
     # This is a lie, but this image doesn't have the dependencies for TRANSCRIPTOME_INDEX
     computational_result_short = ComputationalResult(processor=utils.find_processor("SALMON_QUANT"))
