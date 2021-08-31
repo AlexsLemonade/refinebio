@@ -519,7 +519,6 @@ def _test_qn(merged_matrix):
         return None
 
     if num_columns <= 200:
-        # Convert to NP, Shuffle, Return to R
         pairings = [[i for i in j] for j in itertools.combinations(range(num_columns), 2)]
         combos = np.array(pairings)
         np.random.shuffle(np.transpose(combos))
