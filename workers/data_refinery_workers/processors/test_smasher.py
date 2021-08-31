@@ -1531,15 +1531,19 @@ class AggregationTestCase(TransactionTestCase):
             reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
                 if row["refinebio_accession_code"] == "E-GEOD-44719-GSM1089311":
-                    self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
-                    self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                    self.assertEqual(
+                        row["characteristic_cell population"], "IFNa DC"
+                    )  # ArrayExpress specific
+                    self.assertEqual(row["characteristic_dose"], "1 mL")  # ArrayExpress specific
                     self.assertFalse("source" in row)  # ArrayExpress specific
                     self.assertEqual(row["detection_percentage"], "98.44078")
                     self.assertEqual(row["extract"], "GSM1089311 extract 1")
                     self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
                     self.assertEqual(row["MetaSRA_age"], "3.0")
                 elif row["refinebio_accession_code"] == "GSM1361050":
-                    self.assertEqual(row["tissue"], "Bone Marrow")  # GEO specific
+                    self.assertEqual(
+                        row["characteristics_ch1_tissue"], "Bone Marrow"
+                    )  # GEO specific
                     self.assertEqual(row["refinebio_organism"], "homo_sapiens")
                     self.assertEqual(row["contact_address"], "Crown Street")
                     self.assertEqual(row["experiment_accession"], "GSE56409")
@@ -1573,8 +1577,10 @@ class AggregationTestCase(TransactionTestCase):
             for row_num, row in enumerate(reader):
                 self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
-                self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                self.assertEqual(
+                    row["characteristic_cell population"], "IFNa DC"
+                )  # ArrayExpress specific
+                self.assertEqual(row["characteristic_dose"], "1 mL")  # ArrayExpress specific
                 self.assertEqual(row["detection_percentage"], "98.44078")
                 self.assertEqual(row["MetaSRA_age"], "3.0")
 
@@ -1691,7 +1697,7 @@ class AggregationTestCase(TransactionTestCase):
             for row_num, row in enumerate(reader):
                 self.assertEqual(row["refinebio_accession_code"], "GSM1361050")
                 self.assertEqual(row["experiment_accession"], "GSE56409")
-                self.assertEqual(row["tissue"], "Bone Marrow")  # GEO specific
+                self.assertEqual(row["characteristics_ch1_tissue"], "Bone Marrow")  # GEO specific
                 self.assertEqual(row["refinebio_organism"], "homo_sapiens")
 
         self.assertEqual(row_num, 0)  # only one data row in tsv file
@@ -1715,8 +1721,10 @@ class AggregationTestCase(TransactionTestCase):
             for row_num, row in enumerate(reader):
                 self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
-                self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                self.assertEqual(
+                    row["characteristic_cell population"], "IFNa DC"
+                )  # ArrayExpress specific
+                self.assertEqual(row["characteristic_dose"], "1 mL")  # ArrayExpress specific
                 self.assertEqual(row["detection_percentage"], "98.44078")
                 self.assertEqual(row["MetaSRA_age"], "3.0")
 

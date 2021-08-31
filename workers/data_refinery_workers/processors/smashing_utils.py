@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import csv
+import itertools
 import logging
 import math
 import multiprocessing
 import os
+import random
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -16,7 +18,7 @@ from django.utils import timezone
 import numpy as np
 import pandas as pd
 import psutil
-import rpy2.robjects as ro
+import scipy
 import simplejson as json
 from rpy2.robjects import pandas2ri, r as rlang
 from rpy2.robjects.packages import importr
@@ -509,52 +511,32 @@ def _test_qn(merged_matrix):
     Returns a list of tuples with the results of the KN test (statistic, pvalue)"""
     # Verify this QN, related:
     # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-    data_matrix = rlang("data.matrix")
-    as_numeric = rlang("as.numeric")
-    set_seed = rlang("set.seed")
-    combn = rlang("combn")
-    ncol = rlang("ncol")
-    ks_test = rlang("ks.test")
-    which = rlang("which")
 
-    merged_R_matrix = data_matrix(merged_matrix)
-
-    set_seed(123)
-
-    n = ncol(merged_R_matrix)[0]
-    m = 2
-
+    random.seed(123)
+    num_columns = merged_matrix.shape[1]
     # Not enough columns to perform KS test - either bad smash or single sample smash.
-    if n < m:
+    if num_columns < 2:
         return None
 
-    # This wont work with larger matricies
-    # https://github.com/AlexsLemonade/refinebio/issues/1860
-    ncolumns = ncol(merged_R_matrix)
-
-    if ncolumns[0] <= 200:
-        # Convert to NP, Shuffle, Return to R
-        combos = combn(ncolumns, 2)
-        ar = np.array(combos)
-        np.random.shuffle(np.transpose(ar))
+    if num_columns <= 200:
+        pairings = [[i for i in j] for j in itertools.combinations(range(num_columns), 2)]
+        combos = np.array(pairings)
+        np.random.shuffle(np.transpose(combos))
     else:
-        indexes = [*range(ncolumns[0])]
+        indexes = [*range(num_columns)]
         np.random.shuffle(indexes)
-        ar = np.array([*zip(indexes[0:100], indexes[100:200])])
-
-    nr, nc = ar.shape
-    combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+        combos = np.array([*zip(indexes[0:100], indexes[100:200])])
 
     result = []
     # adapted from
     # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
     # apply KS test to randomly selected pairs of columns (samples)
-    for i in range(1, min(ncol(combos)[0], 100)):
-        value1 = combos.rx(1, i)[0]
-        value2 = combos.rx(2, i)[0]
+    for i in range(min(combos.shape[0], 100)):
+        column_a_index = combos[i][0]
+        column_b_index = combos[i][1]
 
-        test_a = merged_R_matrix.rx(True, value1)
-        test_b = merged_R_matrix.rx(True, value2)
+        column_a = merged_matrix.iloc[:, column_a_index]
+        column_b = merged_matrix.iloc[:, column_b_index]
 
         # RNA-seq has a lot of zeroes in it, which
         # breaks the ks_test. Therefore we want to
@@ -563,26 +545,14 @@ def _test_qn(merged_matrix):
         # still zeroes in there, then that's
         # probably too many zeroes so it's okay to
         # fail.
-        median_a = np.median(test_a)
-        median_b = np.median(test_b)
+        median_a = np.median(column_a)
+        median_b = np.median(column_b)
+        test_a = [column_a[i] for i in range(len(column_a)) if column_a[i] > median_a]
+        test_b = [column_b[i] for i in range(len(column_b)) if column_b[i] > median_b]
 
-        # `which` returns indices which are
-        # 1-indexed. Python accesses lists with
-        # zero-indexes, even if that list is
-        # actually an R vector. Therefore subtract
-        # 1 to account for the difference.
-        test_a = [test_a[i - 1] for i in which(test_a > median_a)]
-        test_b = [test_b[i - 1] for i in which(test_b > median_b)]
-
-        # The python list comprehension gives us a
-        # python list, but ks_test wants an R
-        # vector so let's go back.
-        test_a = as_numeric(test_a)
-        test_b = as_numeric(test_b)
-
-        ks_res = ks_test(test_a, test_b)
-        statistic = ks_res.rx("statistic")[0][0]
-        pvalue = ks_res.rx("p.value")[0][0]
+        ks_res = scipy.stats.kstest(test_a, test_b)
+        statistic = ks_res.statistic
+        pvalue = ks_res.pvalue
 
         result.append((statistic, pvalue))
 
@@ -621,13 +591,6 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
 
     # And add the quantile normalized matrix to job_context.
     job_context["merged_qn"] = new_merged
-
-    # For now, don't test the QN for mouse/human. This never fails on
-    # smasher jobs and is OOM-killing our very large compendia
-    # jobs. Let's run this manually after we have a compendia job
-    # actually finish.
-    if organism.name in ["MUS_MUSCULUS", "HOMO_SAPIENS"]:
-        return job_context
 
     ks_res = _test_qn(new_merged)
     if ks_res:
@@ -823,7 +786,10 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                 ):
                     for pair_dict in annotation_value:
                         if "category" in pair_dict and "value" in pair_dict:
-                            col_name, col_value = pair_dict["category"], pair_dict["value"]
+                            col_name, col_value = (
+                                "characteristic_" + pair_dict["category"],
+                                pair_dict["value"],
+                            )
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
                             )
@@ -834,7 +800,10 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                 ):
                     for pair_dict in annotation_value:
                         if "name" in pair_dict and "value" in pair_dict:
-                            col_name, col_value = pair_dict["name"], pair_dict["value"]
+                            col_name, col_value = (
+                                "variable_" + pair_dict["name"],
+                                pair_dict["value"],
+                            )
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
                             )
@@ -852,6 +821,7 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                     for pair_str in annotation_value:
                         if ":" in pair_str:
                             col_name, col_value = pair_str.split(":", 1)
+                            col_name = "characteristics_ch1_" + col_name
                             col_value = col_value.strip()
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
@@ -930,7 +900,9 @@ def get_tsv_columns(samples_metadata):
                     ):
                         for pair_dict in annotation_value:
                             if "category" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(annotation_columns, pair_dict["category"])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristic_" + pair_dict["category"]
+                                )
                     # For ArrayExpress samples, also take out the fields
                     # nested in "variable" as separate columns.
                     elif (
@@ -939,7 +911,9 @@ def get_tsv_columns(samples_metadata):
                     ):
                         for pair_dict in annotation_value:
                             if "name" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(annotation_columns, pair_dict["name"])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristic_" + pair_dict["name"]
+                                )
                     # For ArrayExpress samples, skip "source" field
                     elif (
                         sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
@@ -955,7 +929,9 @@ def get_tsv_columns(samples_metadata):
                         for pair_str in annotation_value:
                             if ":" in pair_str:
                                 tokens = pair_str.split(":", 1)
-                                _add_annotation_column(annotation_columns, tokens[0])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristics_ch1_" + tokens[0]
+                                )
                     # Saves all other annotation fields in separate columns
                     else:
                         _add_annotation_column(annotation_columns, annotation_key)

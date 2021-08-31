@@ -321,6 +321,10 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
             # Make sure the data were quantile normalized
             self.assertTrue(metadata.get("quantile_normalized"))
 
+        self.assertIn("ks_statistic", final_context)
+        self.assertIn("ks_pvalue", final_context)
+        self.assertEqual(final_context["ks_pvalue"], 1.0)
+
     @tag("compendia")
     def test_create_compendia_microarray_only(self):
         """
@@ -423,6 +427,10 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
 
             # Make sure the data were quantile normalized
             self.assertTrue(metadata.get("quantile_normalized"))
+
+        self.assertIn("ks_statistic", final_context)
+        self.assertIn("ks_pvalue", final_context)
+        self.assertEqual(final_context["ks_pvalue"], 1.0)
 
     @tag("compendia")
     def test_filter_rnaseq_matrix_drop_row_sums(self):

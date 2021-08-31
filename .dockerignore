@@ -10,4 +10,6 @@ env/
 infrastructure/
 terraform/
 */batch-job-specs
-config/externally_supplied_metadata/metasra/*.sqlite
+config/externally_supplied_metadata/metasra/metasra_translated.json
+config/externally_supplied_metadata/metasra/metasra_keywords.json
+config/externally_supplied_metadata/metasra/*.tab
