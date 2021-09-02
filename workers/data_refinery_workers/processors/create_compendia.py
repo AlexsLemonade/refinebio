@@ -502,7 +502,7 @@ def _quantile_normalize(job_context: Dict) -> Dict:
 
     # Perform the Quantile Normalization
     job_context["organism"] = Organism.get_object_for_name(job_context["organism_name"])
-    job_context = smashing_utils.quantile_normalize(job_context, ks_check=False)
+    job_context = smashing_utils.quantile_normalize(job_context)
 
     log_state("end quantile normalize", job_context["job"].id, quantile_start)
 
@@ -521,8 +521,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result = ComputationalResult()
     result.commands.append(" ".join(job_context["formatted_command"]))
     result.is_ccdl = True
-    # Temporary until we re-enable the QN test step.
-    result.is_public = False
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]
     try:
