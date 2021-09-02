@@ -559,7 +559,7 @@ def _test_qn(merged_matrix):
     return result
 
 
-def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
+def quantile_normalize(job_context: Dict, ks_stat=0.001) -> Dict:
     """
     Apply quantile normalization.
     """
@@ -601,7 +601,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
             # We're unsure of how strigent to be about
             # the pvalue just yet, so we're extra lax
             # rather than failing tons of tests. This may need tuning.
-            if ks_check and (statistic > ks_stat or pvalue < 0.8):
+            if statistic > ks_stat or pvalue < 0.8:
                 job_context["ks_warning"] = (
                     "Failed Kolmogorov Smirnov test! Stat: "
                     + str(statistic)
