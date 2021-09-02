@@ -13,3 +13,4 @@ terraform/
 config/externally_supplied_metadata/metasra/metasra_translated.json
 config/externally_supplied_metadata/metasra/metasra_keywords.json
 config/externally_supplied_metadata/metasra/*.tab
+config/externally_supplied_metadata/metasra/SRAmetadb.sqlite
