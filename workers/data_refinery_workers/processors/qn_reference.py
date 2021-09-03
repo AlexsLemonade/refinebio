@@ -111,11 +111,9 @@ def _build_qn_target(job_context: Dict) -> Dict:
     job_context["num_valid_inputs"] = num_valid_inputs
     job_context["geneset"] = list(geneset)
 
-    # Write the file
-    if job_context["create_results"]:
-        sum_frame.to_csv(
-            job_context["target_file"], index=False, header=False, sep="\t", encoding="utf-8"
-        )
+    sum_frame.to_csv(
+        job_context["target_file"], index=False, header=False, sep="\t", encoding="utf-8"
+    )
     job_context["formatted_command"] = "qn_reference.py"
 
     return job_context
