@@ -410,7 +410,7 @@ class FullFlowEndToEndTestCase(TestCase):
     def create_compendia(self):
         """Create both a compendium and a quantpendium"""
         compendia_jobs = create_compendia(None, "SACCHAROMYCES_CEREVISIAE")
-        quantpendia_jobs = create_quantpendia("SACCHAROMYCES_CEREVISIAE")
+        quantpendia_jobs = create_quantpendia("SACCHAROMYCES_CEREVISIAE", None)
 
         for job in compendia_jobs + quantpendia_jobs:
             self.assertTrue(wait_for_job(job))
