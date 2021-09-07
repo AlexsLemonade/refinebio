@@ -56,7 +56,7 @@ psycopg2-binary==2.8.6    # via -r requirements.in
 pyct==0.4.8               # via colorcet, datashader, panel
 pyparsing==2.4.7          # via matplotlib, packaging
 python-dateutil==2.8.1    # via bokeh, botocore, datashape, matplotlib, pandas
-pytz==2021.1              # via django, pandas
+pytz==2021.1              # via django, pandas, tzlocal
 pyviz-comms==2.0.2        # via holoviews, panel
 pyyaml==5.4.1             # via -r requirements.in, bokeh, dask, distributed, vcrpy
 requests==2.25.1          # via -r requirements.in, coveralls, panel
@@ -76,6 +76,7 @@ toolz==0.11.1             # via dask, distributed, partd
 tornado==6.1              # via bokeh, distributed
 tqdm==4.61.0              # via panel
 typing-extensions==3.10.0.0  # via asgiref, bokeh, importlib-metadata, yarl
+tzlocal==2.1              # via -r requirements.in
 unicodecsv==0.14.1        # via -r requirements.in
 untangle==1.1.1           # via -r requirements.in
 urllib3==1.26.5           # via botocore, requests, selenium
