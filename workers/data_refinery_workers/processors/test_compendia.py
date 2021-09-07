@@ -710,8 +710,5 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
 
         rmse = math.sqrt(squared_error / N)
 
-        self.assertLess(
-            rmse,
-            # The results of a previous run plus a little bit of leeway
-            0.2868600293662542 + 0.01,
-        )
+        # The results of a previous run plus a little bit of leeway
+        self.assertLess(abs(rmse, 0.2868600293662542), 0.01)
