@@ -208,8 +208,8 @@ class FullFlowEndToEndTestCase(TestCase):
     This includes, in order:
       * Purging previously surveyed experiments.
       * Surveying experiments which will trigger:
-        * An array_express downloader job triggering a affymetrix processor job.
-        * A GEO downloader job triggering a affymetrix processor job.
+        * 3 GEO downloader job triggering affymetrix processor jobs, for a total
+          greater than 100 samples on a single platform.
         * A GEO downloader job triggering a NO_OP processor job.
       * Creating a transcriptome index for SACCHAROMYCES_CEREVISIAE.
       * Surveying experiments which will trigger:
