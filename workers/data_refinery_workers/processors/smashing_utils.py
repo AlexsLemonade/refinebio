@@ -18,6 +18,7 @@ from django.utils import timezone
 import numpy as np
 import pandas as pd
 import psutil
+import rpy2.robjects as ro
 import scipy
 import simplejson as json
 from rpy2.robjects import pandas2ri, r as rlang
@@ -474,11 +475,10 @@ def _split_dataframe_columns(dataframe, chunk_size):
 
 def _quantile_normalize_matrix(target_vector, original_matrix):
     preprocessCore = importr("preprocessCore")
-    as_numeric = rlang("as.numeric")
     data_matrix = rlang("data.matrix")
 
     # Convert the smashed frames to an R numeric Matrix
-    target_vector = as_numeric(target_vector)
+    target_vector = ro.vectors.FloatVector(target_vector)
 
     # Do so in chunks if the matrix is too large.
     if original_matrix.shape[1] <= QN_CHUNK_SIZE:

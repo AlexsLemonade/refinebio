@@ -59,9 +59,26 @@ docker run \\
        -e DATABASE_USER=${database_user} \\
        -e DATABASE_PASSWORD=${database_password} \\
        -v /tmp:/tmp \\
-       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@
+       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \"\$@\"
 " >> /home/ubuntu/run_management_command.sh
 chmod +x /home/ubuntu/run_management_command.sh
+
+echo "
+#!/bin/sh
+
+# This script should be used by passing an image as
+# the first argument followed by the management command to run.
+
+docker run \\
+       --env-file /home/ubuntu/environment \\
+       -e DATABASE_HOST=${database_host} \\
+       -e DATABASE_NAME=${database_name} \\
+       -e DATABASE_USER=${database_user} \\
+       -e DATABASE_PASSWORD=${database_password} \\
+       -v /tmp:/tmp \\
+       -it ${dockerhub_repo}/dr_\"\$1\" python3 manage.py \"\$2\"
+" >> /home/ubuntu/run_cron_job_test.sh
+chmod +x /home/ubuntu/run_cron_job_test.sh
 
 # Use Monit to ensure the Foreman is always running
 apt-get -y update
@@ -91,6 +108,16 @@ set daemon 900
 ' >> /etc/monit/monitrc
 
 service monit restart
+
+# Install the cron job tests
+crontab -l > tempcron
+cat <<EOF >> tempcron
+0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_brainarray_gene_agreement >> /var/log/cron_job_tests.log 2>&1
+0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_tx_index_transcript_agreement >> /var/log/cron_job_tests.log 2>&1
+EOF
+# install new cron file
+crontab tempcron
+rm tempcron
 
 # Make sure every downloader job has a processor job!
 docker run \
