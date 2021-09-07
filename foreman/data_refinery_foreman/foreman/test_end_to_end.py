@@ -41,6 +41,7 @@ SMASHER_SAMPLES = ["GSM1487313", "SRR332914"]
 SMASHER_EXPERIMENTS = ["GSE1487313", "SRP332914"]
 
 MICROARRAY_ACCESSION_CODES = [
+    "E-TABM-496",  # 39 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE94793",  # 24 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE80822",  # 12 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE96849",  # 68 samples of SACCHAROMYCES_CEREVISIAE microarray data
@@ -208,6 +209,7 @@ class FullFlowEndToEndTestCase(TestCase):
     This includes, in order:
       * Purging previously surveyed experiments.
       * Surveying experiments which will trigger:
+        * An array_express downloader job triggering a affymetrix processor job.
         * 3 GEO downloader job triggering affymetrix processor jobs, for a total
           greater than 100 samples on a single platform.
         * A GEO downloader job triggering a NO_OP processor job.
