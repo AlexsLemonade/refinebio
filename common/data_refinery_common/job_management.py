@@ -199,7 +199,7 @@ def create_processor_job_for_original_files(
         processor_job = ProcessorJob()
         processor_job.downloader_job = downloader_job
         processor_job.pipeline_applied = pipeline_to_apply.value
-        processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
+        processor_job.ram_amount = determine_ram_amount(processor_job, sample_object)
 
         processor_job.save()
 

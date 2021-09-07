@@ -24,8 +24,13 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
+from data_refinery_foreman.foreman.management.commands.create_compendia import create_compendia
+from data_refinery_foreman.foreman.management.commands.create_quantpendia import create_quantpendia
 from data_refinery_foreman.foreman.management.commands.run_tximport import (
     run_tximport_for_all_eligible_experiments,
+)
+from data_refinery_foreman.surveyor.management.commands.dispatch_qn_jobs import (
+    dispatch_qn_job_if_eligible,
 )
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import (
     queue_surveyor_for_accession,
@@ -36,7 +41,8 @@ SMASHER_SAMPLES = ["GSM1487313", "SRR332914"]
 SMASHER_EXPERIMENTS = ["GSE1487313", "SRP332914"]
 
 MICROARRAY_ACCESSION_CODES = [
-    "E-TABM-496",  # 39 samples of SACCHAROMYCES_CEREVISIAE microarray data
+    "GSE94793",  # 24 samples of SACCHAROMYCES_CEREVISIAE microarray data
+    "GSE80822",  # 12 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE96849",  # 68 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE41094",  # 18 samples of SACCHAROMYCES_CEREVISIAE submitter processed data
 ]
@@ -207,15 +213,14 @@ class FullFlowEndToEndTestCase(TestCase):
         * A GEO downloader job triggering a NO_OP processor job.
       * Creating a transcriptome index for SACCHAROMYCES_CEREVISIAE.
       * Surveying experiments which will trigger:
-        * A SRA downloader job triggering a salmon processor job for 21 samples.
-          (TODO: fail one of the jobs and run a tximport job to finish the experiment.)
+        * A SRA downloader job triggering a salmon processor job for 26 samples.
+          (One of which will fail, requiring a run_tximport job.)
         * A SRA downloader job triggering a salmon processor job for 4 samples.
           (This should be fully processed without intervention.)
-    TODO:
+      * Running tximport to process the experiment that had one bad sample.
       * Creating a QN Target for SACCHAROMYCES_CEREVISIAE.
       * Creating a Compendium for SACCHAROMYCES_CEREVISIAE.
       * Creating a Quantpendium for SACCHAROMYCES_CEREVISIAE.
-      * Downloading a dataset aggregated by species.
     """
 
     @tag("end_to_end")
@@ -223,6 +228,15 @@ class FullFlowEndToEndTestCase(TestCase):
         for accession_code in EXPERIMENT_ACCESSION_CODES:
             purge_experiment(accession_code)
 
+        self.process_experiments()
+
+        self.check_transcriptome_index()
+
+        self.create_qn_reference()
+
+        self.create_compendia()
+
+    def process_experiments(self):
         survey_jobs = []
         # Kick off microarray jobs first because downloading the
         # affymetrix image takes a long time.
@@ -267,7 +281,7 @@ class FullFlowEndToEndTestCase(TestCase):
             experiment__accession_code__in=EXPERIMENT_ACCESSION_CODES
         ).values_list("id")
 
-        self.assertEqual(Sample.objects.filter(id__in=sample_id_list).count(), 155)
+        self.assertEqual(Sample.objects.filter(id__in=sample_id_list).count(), 152)
 
         samples = []
         for accession_code in EXPERIMENT_ACCESSION_CODES:
@@ -311,7 +325,7 @@ class FullFlowEndToEndTestCase(TestCase):
             self.assertTrue(wait_for_job(processor_job))
 
         # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
-        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 129)
+        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 126)
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
         tximport_jobs = run_tximport_for_all_eligible_experiments(dispatch_jobs=False)
@@ -320,11 +334,15 @@ class FullFlowEndToEndTestCase(TestCase):
         self.assertTrue(wait_for_job(tximport_jobs[0]))
 
         # This is the full total of jobs minus one.
-        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 154)
+        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 151)
 
+    def check_transcriptome_index(self):
         # Make sure that a processed file using our new transcriptome index is
         # similar enough to a reference file
-        print("Now we are going to verify that the outputs look okay")
+        print(
+            "Now we are going to verify that the outputs of salmon look okay with"
+            "the transcriptome index we generated."
+        )
 
         sample = Sample.objects.get(accession_code="SRR5085168")
 
@@ -380,3 +398,19 @@ class FullFlowEndToEndTestCase(TestCase):
         self.assertGreater(tpm_rho, 0.99)
         (num_reads_rho, _) = scipy.stats.spearmanr(ref_NumReads.join(out_NumReads, how="inner"))
         self.assertGreater(num_reads_rho, 0.99)
+
+    def create_qn_reference(self):
+        organism = Organism.objects.get(name="SACCHAROMYCES_CEREVISIAE")
+
+        qn_job = dispatch_qn_job_if_eligible(organism)
+        self.assertIsNotNone(qn_job)
+
+        self.assertTrue(wait_for_job(qn_job))
+
+    def create_compendia(self):
+        """Create both a compendium and a quantpendium"""
+        compendia_jobs = create_compendia(None, "SACCHAROMYCES_CEREVISIAE")
+        quantpendia_jobs = create_quantpendia("SACCHAROMYCES_CEREVISIAE")
+
+        for job in compendia_jobs + quantpendia_jobs:
+            self.assertTrue(wait_for_job(job))

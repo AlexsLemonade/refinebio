@@ -156,7 +156,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
     return ProcessorPipeline.NONE
 
 
-def determine_ram_amount(sample: Sample, job) -> int:
+def determine_ram_amount(job, sample: Sample = None) -> int:
     """
     Determines the amount of RAM in MB required for a given ProcessorJob
     """
@@ -183,6 +183,24 @@ def determine_ram_amount(sample: Sample, job) -> int:
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.SALMON.value:
         return 12288
+    elif job.pipeline_applied == ProcessorPipeline.CREATE_COMPENDIA.value:
+        # Both the datasets and the organisms for it should be
+        # singular, but this isn't the right place to validate that.
+        organism = list(job.datasets.first().get_samples_by_species().keys())[0]
+        if organism in ["HOMO_SAPIENS", "MUS_MUSCULUS"]:
+            return 950000
+        else:
+            return 30000
+    elif job.pipeline_applied == ProcessorPipeline.CREATE_QUANTPENDIA.value:
+        # Both the datasets and the organisms for it should be
+        # singular, but this isn't the right place to validate that.
+        organism = list(job.datasets.first().get_samples_by_species().keys())[0]
+        if organism in ["HOMO_SAPIENS", "MUS_MUSCULUS"]:
+            return 131000
+        else:
+            return 30000
+    elif job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value:
+        return 4096
     elif job.pipeline_applied == ProcessorPipeline.NONE.value:
         return 1024
     else:
