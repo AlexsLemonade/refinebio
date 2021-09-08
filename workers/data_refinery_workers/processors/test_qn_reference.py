@@ -22,6 +22,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.models.organism import Organism
 from data_refinery_workers.processors import qn_reference, smasher
+from data_refinery_workers.processors.management.commands import create_qn_target
 
 
 def prepare_experiment(ids: List[int]) -> Experiment:
@@ -241,7 +242,7 @@ class QNRefTestCase(TestCase):
 
         out = StringIO()
         try:
-            call_command("create_qn_target", organism="homo_sapiens", min=1, stdout=out)
+            call_command("create_qn_target", organism="homo_sapiens", min=10, stdout=out)
         except SystemExit as e:  # this is okay!
             pass
 
@@ -251,3 +252,34 @@ class QNRefTestCase(TestCase):
         # There's not enough samples available in this scenario so we
         # shouldn't have even made a processor job.
         self.assertEqual(ProcessorJob.objects.count(), 0)
+
+    @tag("qn")
+    def test_qn_target_without_updating_organism(self):
+        """Test that create_results=False will not update the experiment.
+
+        This is because in the cron job tests, we want to create a new QN target without
+        actually setting it as the new default for the experiment."""
+
+        # Prepare some samples
+        experiment = prepare_experiment(range(1, 7))
+        # 6 results should be created as part of preparing the experiment
+        self.assertEqual(ComputationalResult.objects.all().count(), 6)
+
+        homo_sapiens = Organism.objects.get(name="HOMO_SAPIENS", taxonomy_id=9606)
+
+        final_context = create_qn_target.create_qn_target(
+            homo_sapiens,
+            platform=create_qn_target.get_biggest_platform(homo_sapiens),
+            create_results=False,
+        )
+
+        # Make sure that nothing in our DB was updated after creating this QN target
+        # We already have 6 results from above, so there should still be 6
+        self.assertEqual(ComputationalResult.objects.all().count(), 6)
+        # We also want to make sure that the organism's QN target was not set
+        homo_sapiens.refresh_from_db()
+        self.assertIsNone(homo_sapiens.qn_target)
+
+        # Make sure that the target file was still written, even though there
+        # were not any results created
+        self.assertTrue(os.path.exists(final_context["target_file"]))
