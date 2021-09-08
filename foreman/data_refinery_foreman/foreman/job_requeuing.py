@@ -143,15 +143,15 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT.value,
             ProcessorPipeline.QN_REFERENCE.value,
         ]:
-            if new_ram_amount == 4096:
+            if last_job.ram_amount == 4096:
                 new_ram_amount = 8192
-            if new_ram_amount == 8192:
+            if last_job.ram_amount == 8192:
                 new_ram_amount = 12288
-            elif new_ram_amount == 12288:
+            elif last_job.ram_amount == 12288:
                 new_ram_amount = 16384
-            elif new_ram_amount == 16384:
+            elif last_job.ram_amount == 16384:
                 new_ram_amount = 32768
-            elif new_ram_amount == 32768:
+            elif last_job.ram_amount == 32768:
                 new_ram_amount = 65536
         # The AFFY pipeline is somewhat RAM-sensitive.
         # Also NO_OP can fail and be retried, so we want to attempt ramping up ram.
@@ -160,19 +160,19 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             last_job.pipeline_applied == ProcessorPipeline.AFFY_TO_PCL.value
             or last_job.pipeline_applied == ProcessorPipeline.NO_OP.value
         ):
-            if new_ram_amount == 2048:
+            if last_job.ram_amount == 2048:
                 new_ram_amount = 4096
-            elif new_ram_amount == 4096:
+            elif last_job.ram_amount == 4096:
                 new_ram_amount = 8192
-            elif new_ram_amount == 8192:
+            elif last_job.ram_amount == 8192:
                 new_ram_amount = 32768
         elif (
             last_job.pipeline_applied == ProcessorPipeline.ILLUMINA_TO_PCL.value
             and "non-zero exit status -9" in last_job.failure_reason
         ):
-            if new_ram_amount == 2048:
+            if last_job.ram_amount == 2048:
                 new_ram_amount = 4096
-            elif new_ram_amount == 4096:
+            elif last_job.ram_amount == 4096:
                 new_ram_amount = 8192
 
     new_job = ProcessorJob(
