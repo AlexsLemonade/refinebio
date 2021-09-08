@@ -119,11 +119,6 @@ class Sample(models.Model):
             metadata["refinebio_processor_name"] = computed_file.result.processor.name
             metadata["refinebio_processor_version"] = computed_file.result.processor.version
 
-        if self.attributes.count() > 0:
-            metadata["other_metadata"] = [
-                attribute.to_dict() for attribute in self.attributes.all()
-            ]
-
         return metadata
 
     # Returns a set of ProcessorJob objects but we cannot specify
