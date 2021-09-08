@@ -327,7 +327,7 @@ class FullFlowEndToEndTestCase(TestCase):
             self.assertTrue(wait_for_job(processor_job))
 
         # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
-        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 157)
+        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 165)
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
         tximport_jobs = run_tximport_for_all_eligible_experiments(dispatch_jobs=False)
