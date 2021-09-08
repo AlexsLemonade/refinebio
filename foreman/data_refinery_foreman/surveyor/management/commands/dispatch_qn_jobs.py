@@ -86,6 +86,8 @@ def dispatch_qn_job_if_eligible(organism: Organism) -> None:
     logger.info("Sending QN_REFERENCE for Organism", job_id=str(job.pk), organism=str(organism))
     send_job(ProcessorPipeline.QN_REFERENCE, job)
 
+    return job
+
 
 class Command(BaseCommand):
     def add_arguments(self, parser):

@@ -199,10 +199,18 @@ def get_batch_queue_for_job(job_type, job):
     if job_type is ProcessorPipeline.SMASHER:
         return settings.AWS_BATCH_QUEUE_SMASHER_NAME
     elif job_type in [ProcessorPipeline.CREATE_COMPENDIA, ProcessorPipeline.CREATE_QUANTPENDIA]:
-        # This should probably use the workers' queue for everything
-        # but human/mouse.
-        # https://github.com/AlexsLemonade/refinebio/issues/2744
-        return settings.AWS_BATCH_QUEUE_COMPENDIA_NAME
+        # Both the datasets and the organisms for it should be
+        # singular, but this isn't the right place to validate that.
+        organism = list(job.datasets.first().get_samples_by_species().keys())[0]
+
+        # Human and mouse require significantly more RAM than other
+        # organisms due their large number of samples. Therefore we
+        # have a separate Batch queue that has a very powerful
+        # instance to process them.
+        if organism in ["HOMO_SAPIENS", "MUS_MUSCULUS"]:
+            return settings.AWS_BATCH_QUEUE_COMPENDIA_NAME
+        else:
+            return get_first_job_queue_with_capacity()
     elif job_type in list(Downloaders):
         return get_batch_queue_for_downloader_job()
     elif job_type in list(ProcessorPipeline):
@@ -299,9 +307,9 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
 
         job_name = JOB_DEFINITION_PREFIX + job_name
 
-        # Smasher related and tximport jobs  don't have RAM tiers.
+        # Smasher, tximport, and janitor jobs  don't have RAM tiers.
         if job_type not in [
-            *SMASHER_JOB_TYPES,
+            ProcessorPipeline.SMASHER,
             ProcessorPipeline.TXIMPORT,
             ProcessorPipeline.JANITOR,
         ]:

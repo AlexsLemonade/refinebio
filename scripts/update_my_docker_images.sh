@@ -76,7 +76,7 @@ if [ -z "$SYSTEM_VERSION" ]; then
 fi
 
 # Intentionally omit affymetrix unless specifically requested since it is so intense to build.
-CCDL_WORKER_IMGS="salmon transcriptome no_op downloaders illumina smasher"
+CCDL_WORKER_IMGS="salmon transcriptome no_op downloaders illumina smasher compendia"
 if [ "$AFFYMETRIX" ]; then
     CCDL_WORKER_IMGS="$CCDL_WORKER_IMGS affymetrix"
 fi

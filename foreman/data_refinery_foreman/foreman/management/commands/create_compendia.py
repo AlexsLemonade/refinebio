@@ -5,6 +5,7 @@ from django.db.models.aggregates import Count
 from django.db.models.expressions import Q
 
 from data_refinery_common.enums import ProcessorPipeline
+from data_refinery_common.job_lookup import determine_ram_amount
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
@@ -154,6 +155,11 @@ def create_job_for_organism(organisms: List[Organism], svd_algorithm="ARPACK"):
     pjda.processor_job = job
     pjda.dataset = dataset
     pjda.save()
+
+    # Have to call this after setting the dataset since it's used in
+    # the caclulation.
+    job.ram_amount = determine_ram_amount(job)
+    job.save()
 
     return job
 
