@@ -205,7 +205,10 @@ resource "aws_acm_certificate" "ssl-cert" {
   # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
   count = var.stage == "dev" ? 0 : 1
 
-  domain_name = "${var.stage == "prod" ? "www." : local.stage_with_dot}refine.bio"
+  # If staging: only staging.refine.bio
+  # if prod: refine.bio and www.refine.bio
+  domain_name = "${var.stage == "prod" ? "" : local.stage_with_dot}refine.bio"
+  subject_alternative_names = ${var.stage == "prod" ? ["www.refine.bio"] : []}
   validation_method = "DNS"
 
   tags = merge(
