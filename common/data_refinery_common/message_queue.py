@@ -214,11 +214,6 @@ def get_batch_queue_for_job(job_type, job):
     elif job_type in list(Downloaders):
         return get_batch_queue_for_downloader_job()
     elif job_type in list(ProcessorPipeline):
-        log_str = f"The downloader job is {job.downloader_job}."
-        if job.downloader_job:
-            log_str = log_str + f", it's queue is {job.downloader_job.batch_job_queue}"
-
-        logger.info(log_str, job_type=job_type)
         # Queue it in the same queue as the downloader job as long as
         # that is set and still available.
         if (
