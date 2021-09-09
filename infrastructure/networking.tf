@@ -208,7 +208,7 @@ resource "aws_acm_certificate" "ssl-cert" {
   # If staging: only staging.refine.bio
   # if prod: refine.bio and www.refine.bio
   domain_name = "${var.stage == "prod" ? "" : local.stage_with_dot}refine.bio"
-  subject_alternative_names = ${var.stage == "prod" ? ["www.refine.bio"] : []}
+  subject_alternative_names = var.stage == "prod" ? ["www.refine.bio"] : []
   validation_method = "DNS"
 
   tags = merge(
