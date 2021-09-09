@@ -86,8 +86,15 @@ def dispatch_qn_job_if_eligible(organism: Organism) -> None:
     logger.info("Sending QN_REFERENCE for Organism", job_id=str(job.pk), organism=str(organism))
     send_job(ProcessorPipeline.QN_REFERENCE, job)
 
+    return job
+
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--organisms", type=str, help=("Names of organisms separated by commas")
+        )
+
     def handle(self, *args, **options):
         """Dispatch QN_REFERENCE creation jobs for all Organisms with a
         platform with enough processed samples."""

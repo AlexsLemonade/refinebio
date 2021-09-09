@@ -18,9 +18,11 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
+    Contribution,
     Dataset,
     Experiment,
     ExperimentSampleAssociation,
+    OntologyTerm,
     Organism,
     OriginalFile,
     ProcessorJob,
@@ -28,11 +30,13 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
+    SampleAttribute,
     SampleComputedFileAssociation,
     SampleResultAssociation,
     SurveyJob,
 )
 from data_refinery_workers.processors import smasher, smashing_utils
+from data_refinery_workers.processors.testing_utils import ProcessorJobTestCaseMixin
 
 
 def prepare_job():
@@ -233,7 +237,7 @@ def _to_accession_code_dict(d):
     return {k: set(map(lambda x: x.accession_code, v)) for k, v in d.items()}
 
 
-class SmasherTestCase(TransactionTestCase):
+class SmasherTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
     def _test_all_scale_types(self, ag_type, ag_specific_tests):
         job = prepare_job()
 
@@ -944,7 +948,7 @@ class SmasherTestCase(TransactionTestCase):
         danio_rerio.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-        self.assertTrue(final_context["success"])
+        self.assertSucceeded(job)
 
         # Test single file smash
 
@@ -966,7 +970,7 @@ class SmasherTestCase(TransactionTestCase):
         pjda.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-        self.assertTrue(final_context["success"])
+        self.assertSucceeded(job)
 
         zf = zipfile.ZipFile(final_context["output_file"])
 
@@ -1067,7 +1071,7 @@ class SmasherTestCase(TransactionTestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
 
-        self.assertTrue(final_context["success"])
+        self.assertSucceeded(pj)
 
     @tag("smasher")
     def test_dualtech_smash(self):
@@ -1463,6 +1467,27 @@ class AggregationTestCase(TransactionTestCase):
             },  # end of "samples"
         }
 
+        # Create a sample attribute to check for
+        contribution, _ = Contribution.objects.get_or_create(
+            source_name="MetaSRA", methods_url="https://pubmed.ncbi.nlm.nih.gov/28535296/"
+        )
+
+        s1 = Sample()
+        s1.accession_code = "E-GEOD-44719-GSM1089311"
+        s1.save()
+
+        s2 = Sample()
+        s2.accession_code = "GSM1361050"
+        s2.save()
+
+        age, _ = OntologyTerm.objects.get_or_create(
+            ontology_term="EFO:0000246", human_readable_name="age"
+        )
+
+        attrib, _ = SampleAttribute.objects.get_or_create(name=age, source=contribution, sample=s1)
+        attrib.set_value(3.0)
+        attrib.save()
+
         self.smash_path = "/tmp/"
 
     @tag("smasher")
@@ -1474,13 +1499,14 @@ class AggregationTestCase(TransactionTestCase):
         job_context = {"job": pj}
 
         columns = smashing_utils.get_tsv_columns(self.metadata["samples"])
-        self.assertEqual(len(columns), 22)
+        self.assertEqual(len(columns), 23)
         self.assertEqual(columns[0], "refinebio_accession_code")
         self.assertTrue("refinebio_accession_code" in columns)
-        self.assertTrue("cell population" in columns)
-        self.assertTrue("dose" in columns)
-        self.assertTrue("stimulation" in columns)
-        self.assertTrue("serum" in columns)
+        self.assertTrue("characteristic_cell population" in columns)
+        self.assertTrue("characteristic_dose" in columns)
+        self.assertTrue("characteristic_stimulation" in columns)
+        self.assertTrue("characteristics_ch1_serum" in columns)
+        self.assertTrue("MetaSRA_age" in columns)
 
     @tag("smasher")
     def test_all_samples(self):
@@ -1506,14 +1532,19 @@ class AggregationTestCase(TransactionTestCase):
             reader = csv.DictReader(tsv_file, delimiter="\t")
             for row_num, row in enumerate(reader):
                 if row["refinebio_accession_code"] == "E-GEOD-44719-GSM1089311":
-                    self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
-                    self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                    self.assertEqual(
+                        row["characteristic_cell population"], "IFNa DC"
+                    )  # ArrayExpress specific
+                    self.assertEqual(row["characteristic_dose"], "1 mL")  # ArrayExpress specific
                     self.assertFalse("source" in row)  # ArrayExpress specific
                     self.assertEqual(row["detection_percentage"], "98.44078")
                     self.assertEqual(row["extract"], "GSM1089311 extract 1")
                     self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
+                    self.assertEqual(row["MetaSRA_age"], "3.0")
                 elif row["refinebio_accession_code"] == "GSM1361050":
-                    self.assertEqual(row["tissue"], "Bone Marrow")  # GEO specific
+                    self.assertEqual(
+                        row["characteristics_ch1_tissue"], "Bone Marrow"
+                    )  # GEO specific
                     self.assertEqual(row["refinebio_organism"], "homo_sapiens")
                     self.assertEqual(row["contact_address"], "Crown Street")
                     self.assertEqual(row["experiment_accession"], "GSE56409")
@@ -1547,9 +1578,12 @@ class AggregationTestCase(TransactionTestCase):
             for row_num, row in enumerate(reader):
                 self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
-                self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                self.assertEqual(
+                    row["characteristic_cell population"], "IFNa DC"
+                )  # ArrayExpress specific
+                self.assertEqual(row["characteristic_dose"], "1 mL")  # ArrayExpress specific
                 self.assertEqual(row["detection_percentage"], "98.44078")
+                self.assertEqual(row["MetaSRA_age"], "3.0")
 
         self.assertEqual(row_num, 0)  # only one data row in tsv file
         os.remove(tsv_filename)
@@ -1575,6 +1609,8 @@ class AggregationTestCase(TransactionTestCase):
             },  # end of "samples"
         }
         self.smash_path = "/tmp/"
+
+        s = Sample.objects.create(accession_code="eyy")
 
         pj = ProcessorJob()
         pj.pipeline_applied = "SMASHER"
@@ -1662,7 +1698,7 @@ class AggregationTestCase(TransactionTestCase):
             for row_num, row in enumerate(reader):
                 self.assertEqual(row["refinebio_accession_code"], "GSM1361050")
                 self.assertEqual(row["experiment_accession"], "GSE56409")
-                self.assertEqual(row["tissue"], "Bone Marrow")  # GEO specific
+                self.assertEqual(row["characteristics_ch1_tissue"], "Bone Marrow")  # GEO specific
                 self.assertEqual(row["refinebio_organism"], "homo_sapiens")
 
         self.assertEqual(row_num, 0)  # only one data row in tsv file
@@ -1686,9 +1722,12 @@ class AggregationTestCase(TransactionTestCase):
             for row_num, row in enumerate(reader):
                 self.assertEqual(row["refinebio_accession_code"], "E-GEOD-44719-GSM1089311")
                 self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
-                self.assertEqual(row["cell population"], "IFNa DC")  # ArrayExpress specific
-                self.assertEqual(row["dose"], "1 mL")  # ArrayExpress specific
+                self.assertEqual(
+                    row["characteristic_cell population"], "IFNa DC"
+                )  # ArrayExpress specific
+                self.assertEqual(row["characteristic_dose"], "1 mL")  # ArrayExpress specific
                 self.assertEqual(row["detection_percentage"], "98.44078")
+                self.assertEqual(row["MetaSRA_age"], "3.0")
 
         self.assertEqual(row_num, 0)  # only one data row in tsv file
         os.remove(tsv_filename)
@@ -1704,6 +1743,7 @@ class AggregationTestCase(TransactionTestCase):
         self.assertEqual(
             species_metadada["samples"][0]["refinebio_accession_code"], "E-GEOD-44719-GSM1089311"
         )
+        self.assertEqual(species_metadada["samples"][0]["MetaSRA_age"]["value"], 3.0)
         os.remove(json_filename)
 
     @tag("smasher")

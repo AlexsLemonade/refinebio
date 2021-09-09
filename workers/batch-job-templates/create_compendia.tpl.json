@@ -1,5 +1,5 @@
 {
-    "jobDefinitionName": "${{USER}}_${{STAGE}}_CREATE_COMPENDIA",
+    "jobDefinitionName": "${{USER}}_${{STAGE}}_CREATE_COMPENDIA_${{RAM}}",
     "timeout": {"attemptDurationSeconds": 10800},
     "type": "container",
     "parameters": {

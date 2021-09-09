@@ -134,39 +134,45 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     # increase the RAM amount.
     if last_job.start_time:
         # There's only one size of tximport jobs.
-        if last_job.pipeline_applied == "TXIMPORT":
+        if last_job.pipeline_applied == ProcessorPipeline.TXIMPORT.value:
             new_ram_amount = 32768
         # These initial values are set in common/job_lookup.py:determine_ram_amount
-        elif last_job.pipeline_applied == "SALMON" or last_job.pipeline_applied.startswith(
-            "TRANSCRIPTOME"
-        ):
-            if new_ram_amount == 4096:
+        elif last_job.pipeline_applied in [
+            ProcessorPipeline.SALMON.value,
+            ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG.value,
+            ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT.value,
+            ProcessorPipeline.QN_REFERENCE.value,
+        ]:
+            if last_job.ram_amount == 4096:
                 new_ram_amount = 8192
-            if new_ram_amount == 8192:
+            if last_job.ram_amount == 8192:
                 new_ram_amount = 12288
-            elif new_ram_amount == 12288:
+            elif last_job.ram_amount == 12288:
                 new_ram_amount = 16384
-            elif new_ram_amount == 16384:
+            elif last_job.ram_amount == 16384:
                 new_ram_amount = 32768
-            elif new_ram_amount == 32768:
+            elif last_job.ram_amount == 32768:
                 new_ram_amount = 65536
         # The AFFY pipeline is somewhat RAM-sensitive.
         # Also NO_OP can fail and be retried, so we want to attempt ramping up ram.
         # Try it again with an increased RAM amount, if possible.
-        elif last_job.pipeline_applied == "AFFY_TO_PCL" or last_job.pipeline_applied == "NO_OP":
-            if new_ram_amount == 2048:
+        elif (
+            last_job.pipeline_applied == ProcessorPipeline.AFFY_TO_PCL.value
+            or last_job.pipeline_applied == ProcessorPipeline.NO_OP.value
+        ):
+            if last_job.ram_amount == 2048:
                 new_ram_amount = 4096
-            elif new_ram_amount == 4096:
+            elif last_job.ram_amount == 4096:
                 new_ram_amount = 8192
-            elif new_ram_amount == 8192:
+            elif last_job.ram_amount == 8192:
                 new_ram_amount = 32768
         elif (
-            last_job.pipeline_applied == "ILLUMINA_TO_PCL"
+            last_job.pipeline_applied == ProcessorPipeline.ILLUMINA_TO_PCL.value
             and "non-zero exit status -9" in last_job.failure_reason
         ):
-            if new_ram_amount == 2048:
+            if last_job.ram_amount == 2048:
                 new_ram_amount = 4096
-            elif new_ram_amount == 4096:
+            elif last_job.ram_amount == 4096:
                 new_ram_amount = 8192
 
     new_job = ProcessorJob(

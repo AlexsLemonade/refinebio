@@ -4,6 +4,7 @@ import time
 from django.core.management.base import BaseCommand
 
 from data_refinery_common.enums import ProcessorPipeline
+from data_refinery_common.job_lookup import determine_ram_amount
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
@@ -37,6 +38,11 @@ def create_job_for_organism(organism: Organism):
     pjda.processor_job = job
     pjda.dataset = dset
     pjda.save()
+
+    # Have to call this after setting the dataset since it's used in
+    # the caclulation.
+    job.ram_amount = determine_ram_amount(job)
+    job.save()
 
     return job
 
@@ -104,6 +110,8 @@ def create_quantpendia(organisms, organisms_exclude):
         send_job(ProcessorPipeline.CREATE_QUANTPENDIA, job)
 
         created_jobs.append(job)
+
+    return created_jobs
 
 
 class Command(BaseCommand):

@@ -18,21 +18,23 @@ logger = get_and_configure_logger(__name__)
 
 
 def update_salmon_versions(experiment: Experiment):
-    quant_results = (
-        get_quant_results_for_experiment(experiment, filter_old_versions=False)
-        .order_by("-organism_index__created_at")
-        .prefetch_related("organism_index")
-        .prefetch_related("samples__original_files")
-    )
+    quant_results = get_quant_results_for_experiment(experiment, filter_old_versions=False)
+
+    # We first need to find the last created result and get its salmon version.
+    # get_quant_results_for_experiment returns a set, not a queryset.
+    last_created = None
+    for quant_result in quant_results:
+        if not last_created:
+            last_created = quant_result
+        else:
+            if quant_result.created_at > last_created.created_at:
+                last_created = quant_result
+
+    latest_salmon_version = last_created.organism_index.salmon_version
 
     total_samples_queued = 0
-    latest_salmon_version = None
     for quant_result in quant_results:
-        if not latest_salmon_version:
-            # we can safely ignore the latest salmon version, that will be the first
-            # quant result. Note we are ordering by -organism_index__created_at
-            latest_salmon_version = quant_result.organism_index.salmon_version
-        elif latest_salmon_version != quant_result.organism_index.salmon_version:
+        if latest_salmon_version != quant_result.organism_index.salmon_version:
             # we found a quant result associated with an experiment where we need to run salmon
             # hopefully each computational result is associated with a single sample
             for sample in quant_result.samples.all():

@@ -171,7 +171,7 @@ if [ "$project" = "workers" ]; then
         FILETYPE=".json"
         OUTPUT_FILE="$OUTPUT_BASE$FILETYPE"
 
-        NO_RAM_JOB_FILES="smasher.json create_qn_target.json create_compendia.json create_quantpendia.json tximport.json qn_dispatcher.json janitor.json"
+        NO_RAM_JOB_FILES="smasher.json tximport.json qn_dispatcher.json janitor.json"
 
         if [ "$OUTPUT_FILE" = "downloader.json" ]; then
             rams="1024 4096 16384"
@@ -180,6 +180,36 @@ if [ "$project" = "workers" ]; then
                 export RAM_POSTFIX="_$r"
                 export RAM="$r"
                 FILEPATH="$output_dir/downloader$RAM_POSTFIX$FILETYPE"
+                perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                     < "batch-job-templates/$template" \
+                     > "$FILEPATH" \
+                     2> /dev/null
+                echo "Made $FILEPATH"
+            done
+            echo "Made $output_dir/$OUTPUT_FILE"
+
+        elif [ "$OUTPUT_FILE" = "create_compendia.json" ]; then
+            rams="30000 950000"
+            for r in $rams
+            do
+                export RAM_POSTFIX="_$r"
+                export RAM="$r"
+                FILEPATH="$output_dir/$OUTPUT_BASE$RAM_POSTFIX$FILETYPE"
+                perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                     < "batch-job-templates/$template" \
+                     > "$FILEPATH" \
+                     2> /dev/null
+                echo "Made $FILEPATH"
+            done
+            echo "Made $output_dir/$OUTPUT_FILE"
+
+        elif [ "$OUTPUT_FILE" = "create_quantpendia.json" ]; then
+            rams="30000 131000"
+            for r in $rams
+            do
+                export RAM_POSTFIX="_$r"
+                export RAM="$r"
+                FILEPATH="$output_dir/$OUTPUT_BASE$RAM_POSTFIX$FILETYPE"
                 perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                      < "batch-job-templates/$template" \
                      > "$FILEPATH" \

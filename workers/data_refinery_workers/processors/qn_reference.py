@@ -36,7 +36,7 @@ def _prepare_input(job_context: Dict) -> Dict:
 
 
 def _build_qn_target(job_context: Dict) -> Dict:
-    """ Iteratively creates a QN target file, method described here:
+    """Iteratively creates a QN target file, method described here:
     https://github.com/AlexsLemonade/refinebio/pull/1013
     """
     job_context["time_start"] = timezone.now()
@@ -111,7 +111,6 @@ def _build_qn_target(job_context: Dict) -> Dict:
     job_context["num_valid_inputs"] = num_valid_inputs
     job_context["geneset"] = list(geneset)
 
-    # Write the file
     sum_frame.to_csv(
         job_context["target_file"], index=False, header=False, sep="\t", encoding="utf-8"
     )
@@ -120,40 +119,9 @@ def _build_qn_target(job_context: Dict) -> Dict:
     return job_context
 
 
-def _quantile_normalize(job_context: Dict) -> Dict:
-    """Run the R script we have to create the reference for QN.
-    """
-    try:
-        job_context["time_start"] = timezone.now()
-
-        job_context["formatted_command"] = [
-            "/usr/bin/Rscript",
-            "--vanilla",
-            "/home/user/data_refinery_workers/processors/qn_reference.R",
-            "--inputFile",
-            job_context["smashed_file"],
-            "--outputFile",
-            job_context["target_file"],
-        ]
-
-        subprocess.check_output(job_context["formatted_command"])
-
-        job_context["time_end"] = timezone.now()
-
-    except Exception as e:
-        error_template = (
-            "Encountered error in R code while running qn_reference.R"
-            " pipeline during processing of {0}: {1}"
-        )
-        error_message = error_template.format(job_context["smashed_file"], str(e))
-        logger.warn(error_message, processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-
-    return job_context
-
-
 def _create_result_objects(job_context: Dict) -> Dict:
+    if not job_context["create_results"]:
+        return job_context
 
     result = ComputationalResult()
     result.commands.append(" ".join(job_context["formatted_command"]))
@@ -198,8 +166,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
 
 def _update_caches(job_context: Dict) -> Dict:
-    """ Experiments have a cached value with the number of samples that have QN targets
-        generated, this value should be updated after generating new QN targets. """
+    """Experiments have a cached value with the number of samples that have QN targets
+    generated, this value should be updated after generating new QN targets."""
+    if not job_context["create_results"]:
+        # No new results were created, so there's no point in updating the cache
+        return job_context
+
     organism = job_context["samples"]["ALL"][0].organism
 
     if job_context["result"]:
@@ -215,10 +187,10 @@ def _update_caches(job_context: Dict) -> Dict:
     return job_context
 
 
-def create_qn_reference(job_id: int) -> None:
+def create_qn_reference(job_id: int, create_results=True) -> None:
     pipeline = Pipeline(name=PipelineEnum.QN_REFERENCE.value)
     job_context = utils.run_pipeline(
-        {"job_id": job_id, "pipeline": pipeline},
+        {"job_id": job_id, "pipeline": pipeline, "create_results": create_results},
         [
             utils.start_job,
             _prepare_input,

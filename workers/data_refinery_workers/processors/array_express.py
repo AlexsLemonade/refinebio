@@ -6,7 +6,7 @@ from typing import Dict
 from django.utils import timezone
 
 import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
+from rpy2.rinterface_lib.embedded import RRuntimeError
 
 from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger

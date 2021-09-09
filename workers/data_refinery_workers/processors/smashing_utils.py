@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import csv
+import itertools
 import logging
 import math
 import multiprocessing
 import os
+import random
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -17,6 +19,7 @@ import numpy as np
 import pandas as pd
 import psutil
 import rpy2.robjects as ro
+import scipy
 import simplejson as json
 from rpy2.robjects import pandas2ri, r as rlang
 from rpy2.robjects.packages import importr
@@ -116,7 +119,7 @@ def prepare_files(job_context: Dict) -> Dict:
 
 
 def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
-    """ Read and sanitize a computed file """
+    """Read and sanitize a computed file"""
 
     data = pd.read_csv(
         computed_file_path,
@@ -163,8 +166,8 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
 
 
 def process_frame(work_dir, computed_file, sample_accession_code, aggregate_by) -> pd.DataFrame:
-    """ Downloads the computed file from S3 and tries to see if it's smashable.
-    Returns a data frame if the file can be processed or False otherwise. """
+    """Downloads the computed file from S3 and tries to see if it's smashable.
+    Returns a data frame if the file can be processed or False otherwise."""
 
     try:
         # Download the file to a job-specific location so it
@@ -472,11 +475,10 @@ def _split_dataframe_columns(dataframe, chunk_size):
 
 def _quantile_normalize_matrix(target_vector, original_matrix):
     preprocessCore = importr("preprocessCore")
-    as_numeric = rlang("as.numeric")
     data_matrix = rlang("data.matrix")
 
     # Convert the smashed frames to an R numeric Matrix
-    target_vector = as_numeric(target_vector)
+    target_vector = ro.vectors.FloatVector(target_vector)
 
     # Do so in chunks if the matrix is too large.
     if original_matrix.shape[1] <= QN_CHUNK_SIZE:
@@ -505,56 +507,36 @@ def _quantile_normalize_matrix(target_vector, original_matrix):
 
 
 def _test_qn(merged_matrix):
-    """ Selects a list of 100 random pairs of columns and performs the KS Test on them.
-    Returns a list of tuples with the results of the KN test (statistic, pvalue) """
+    """Selects a list of 100 random pairs of columns and performs the KS Test on them.
+    Returns a list of tuples with the results of the KN test (statistic, pvalue)"""
     # Verify this QN, related:
     # https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-    data_matrix = rlang("data.matrix")
-    as_numeric = rlang("as.numeric")
-    set_seed = rlang("set.seed")
-    combn = rlang("combn")
-    ncol = rlang("ncol")
-    ks_test = rlang("ks.test")
-    which = rlang("which")
 
-    merged_R_matrix = data_matrix(merged_matrix)
-
-    set_seed(123)
-
-    n = ncol(merged_R_matrix)[0]
-    m = 2
-
+    random.seed(123)
+    num_columns = merged_matrix.shape[1]
     # Not enough columns to perform KS test - either bad smash or single sample smash.
-    if n < m:
+    if num_columns < 2:
         return None
 
-    # This wont work with larger matricies
-    # https://github.com/AlexsLemonade/refinebio/issues/1860
-    ncolumns = ncol(merged_R_matrix)
-
-    if ncolumns[0] <= 200:
-        # Convert to NP, Shuffle, Return to R
-        combos = combn(ncolumns, 2)
-        ar = np.array(combos)
-        np.random.shuffle(np.transpose(ar))
+    if num_columns <= 200:
+        pairings = [[i for i in j] for j in itertools.combinations(range(num_columns), 2)]
+        combos = np.array(pairings)
+        np.random.shuffle(np.transpose(combos))
     else:
-        indexes = [*range(ncolumns[0])]
+        indexes = [*range(num_columns)]
         np.random.shuffle(indexes)
-        ar = np.array([*zip(indexes[0:100], indexes[100:200])])
-
-    nr, nc = ar.shape
-    combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+        combos = np.array([*zip(indexes[0:100], indexes[100:200])])
 
     result = []
     # adapted from
     # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
     # apply KS test to randomly selected pairs of columns (samples)
-    for i in range(1, min(ncol(combos)[0], 100)):
-        value1 = combos.rx(1, i)[0]
-        value2 = combos.rx(2, i)[0]
+    for i in range(min(combos.shape[0], 100)):
+        column_a_index = combos[i][0]
+        column_b_index = combos[i][1]
 
-        test_a = merged_R_matrix.rx(True, value1)
-        test_b = merged_R_matrix.rx(True, value2)
+        column_a = merged_matrix.iloc[:, column_a_index]
+        column_b = merged_matrix.iloc[:, column_b_index]
 
         # RNA-seq has a lot of zeroes in it, which
         # breaks the ks_test. Therefore we want to
@@ -563,33 +545,21 @@ def _test_qn(merged_matrix):
         # still zeroes in there, then that's
         # probably too many zeroes so it's okay to
         # fail.
-        median_a = np.median(test_a)
-        median_b = np.median(test_b)
+        median_a = np.median(column_a)
+        median_b = np.median(column_b)
+        test_a = [column_a[i] for i in range(len(column_a)) if column_a[i] > median_a]
+        test_b = [column_b[i] for i in range(len(column_b)) if column_b[i] > median_b]
 
-        # `which` returns indices which are
-        # 1-indexed. Python accesses lists with
-        # zero-indexes, even if that list is
-        # actually an R vector. Therefore subtract
-        # 1 to account for the difference.
-        test_a = [test_a[i - 1] for i in which(test_a > median_a)]
-        test_b = [test_b[i - 1] for i in which(test_b > median_b)]
-
-        # The python list comprehension gives us a
-        # python list, but ks_test wants an R
-        # vector so let's go back.
-        test_a = as_numeric(test_a)
-        test_b = as_numeric(test_b)
-
-        ks_res = ks_test(test_a, test_b)
-        statistic = ks_res.rx("statistic")[0][0]
-        pvalue = ks_res.rx("p.value")[0][0]
+        ks_res = scipy.stats.kstest(test_a, test_b)
+        statistic = ks_res.statistic
+        pvalue = ks_res.pvalue
 
         result.append((statistic, pvalue))
 
     return result
 
 
-def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
+def quantile_normalize(job_context: Dict, ks_stat=0.001) -> Dict:
     """
     Apply quantile normalization.
     """
@@ -622,13 +592,6 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     # And add the quantile normalized matrix to job_context.
     job_context["merged_qn"] = new_merged
 
-    # For now, don't test the QN for mouse/human. This never fails on
-    # smasher jobs and is OOM-killing our very large compendia
-    # jobs. Let's run this manually after we have a compendia job
-    # actually finish.
-    if organism.name in ["MUS_MUSCULUS", "HOMO_SAPIENS"]:
-        return job_context
-
     ks_res = _test_qn(new_merged)
     if ks_res:
         for (statistic, pvalue) in ks_res:
@@ -638,7 +601,7 @@ def quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
             # We're unsure of how strigent to be about
             # the pvalue just yet, so we're extra lax
             # rather than failing tons of tests. This may need tuning.
-            if ks_check and (statistic > ks_stat or pvalue < 0.8):
+            if statistic > ks_stat or pvalue < 0.8:
                 job_context["ks_warning"] = (
                     "Failed Kolmogorov Smirnov test! Stat: "
                     + str(statistic)
@@ -823,7 +786,10 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                 ):
                     for pair_dict in annotation_value:
                         if "category" in pair_dict and "value" in pair_dict:
-                            col_name, col_value = pair_dict["category"], pair_dict["value"]
+                            col_name, col_value = (
+                                "characteristic_" + pair_dict["category"],
+                                pair_dict["value"],
+                            )
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
                             )
@@ -834,7 +800,10 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                 ):
                     for pair_dict in annotation_value:
                         if "name" in pair_dict and "value" in pair_dict:
-                            col_name, col_value = pair_dict["name"], pair_dict["value"]
+                            col_name, col_value = (
+                                "variable_" + pair_dict["name"],
+                                pair_dict["value"],
+                            )
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
                             )
@@ -852,6 +821,7 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                     for pair_str in annotation_value:
                         if ":" in pair_str:
                             col_name, col_value = pair_str.split(":", 1)
+                            col_name = "characteristics_ch1_" + col_name
                             col_value = col_value.strip()
                             _add_annotation_value(
                                 row_data, col_name, col_value, sample_accession_code
@@ -875,6 +845,29 @@ def get_tsv_row_data(sample_metadata, dataset_data):
                     _add_annotation_value(
                         row_data, annotation_key, annotation_value, sample_accession_code
                     )
+
+        for attribute in Sample.objects.get(accession_code=sample_accession_code).attributes.all():
+            attribute_key = f"{attribute.source.source_name}_{attribute.name.human_readable_name}"
+            attribute_value = attribute.get_value()
+            _add_annotation_value(row_data, attribute_key, attribute_value, sample_accession_code)
+
+            if attribute.unit is not None:
+                attribute_key = (
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.unit"
+                )
+                attribute_value = attribute.unit.human_readable_name
+                _add_annotation_value(
+                    row_data, attribute_key, attribute_value, sample_accession_code
+                )
+
+            if attribute.probability is not None:
+                attribute_key = (
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.confidence",
+                )
+                attribute_value = attribute.probability
+                _add_annotation_value(
+                    row_data, attribute_key, attribute_value, sample_accession_code
+                )
 
     row_data["experiment_accession"] = get_experiment_accession(sample_accession_code, dataset_data)
 
@@ -907,7 +900,9 @@ def get_tsv_columns(samples_metadata):
                     ):
                         for pair_dict in annotation_value:
                             if "category" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(annotation_columns, pair_dict["category"])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristic_" + pair_dict["category"]
+                                )
                     # For ArrayExpress samples, also take out the fields
                     # nested in "variable" as separate columns.
                     elif (
@@ -916,7 +911,9 @@ def get_tsv_columns(samples_metadata):
                     ):
                         for pair_dict in annotation_value:
                             if "name" in pair_dict and "value" in pair_dict:
-                                _add_annotation_column(annotation_columns, pair_dict["name"])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristic_" + pair_dict["name"]
+                                )
                     # For ArrayExpress samples, skip "source" field
                     elif (
                         sample_metadata.get("refinebio_source_database", "") == "ARRAY_EXPRESS"
@@ -932,10 +929,30 @@ def get_tsv_columns(samples_metadata):
                         for pair_str in annotation_value:
                             if ":" in pair_str:
                                 tokens = pair_str.split(":", 1)
-                                _add_annotation_column(annotation_columns, tokens[0])
+                                _add_annotation_column(
+                                    annotation_columns, "characteristics_ch1_" + tokens[0]
+                                )
                     # Saves all other annotation fields in separate columns
                     else:
                         _add_annotation_column(annotation_columns, annotation_key)
+
+        for attribute in Sample.objects.get(
+            accession_code=sample_metadata["refinebio_accession_code"]
+        ).attributes.all():
+            _add_annotation_column(
+                annotation_columns,
+                f"{attribute.source.source_name}_{attribute.name.human_readable_name}",
+            )
+            if attribute.unit is not None:
+                _add_annotation_column(
+                    annotation_columns,
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.unit",
+                )
+            if attribute.probability is not None:
+                _add_annotation_column(
+                    annotation_columns,
+                    f"{attribute.source.source_name}_{attribute.name.human_readable_name}.confidence",
+                )
 
     # Return sorted columns, in which "refinebio_accession_code" and "experiment_accession" are
     # always first, followed by the other refinebio columns (in alphabetic order), and
@@ -996,6 +1013,24 @@ def write_tsv_json(job_context):
                     if sample_metadata.get("refinebio_organism", "") == species:
                         row_data = get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
+
+                        contributions = set()
+                        for attribute in Sample.objects.get(
+                            accession_code=sample_metadata["refinebio_accession_code"]
+                        ).attributes.all():
+                            sample_metadata[
+                                f"{attribute.source.source_name}_{attribute.name.human_readable_name}"
+                            ] = attribute.to_dict()
+
+                            contributions.add(attribute.source)
+
+                        if len(contributions) != 0:
+                            sample_metadata["methods"] = {}
+                            for contribution in contributions:
+                                sample_metadata["methods"][
+                                    contribution.source_name
+                                ] = contribution.methods_url
+
                         samples_in_species.append(sample_metadata)
 
                     i = i + 1
@@ -1030,10 +1065,10 @@ def write_tsv_json(job_context):
 
 
 def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> Tuple[Sample, str]:
-    """ this function downloads the latest computed file and then returns the
+    """this function downloads the latest computed file and then returns the
     failure reason as a string, if there was one. Receives a tuple with the
     computed file and the path where it needs to be downloaded This is used to
-    parallelize downloading quantsf files. """
+    parallelize downloading quantsf files."""
     (sample, latest_computed_file, output_file_path) = download_tuple
     try:
         latest_computed_file.get_synced_file_path(path=output_file_path)
@@ -1066,9 +1101,9 @@ def download_quant_file(download_tuple: Tuple[Sample, ComputedFile, str]) -> Tup
 
 
 def sync_quant_files(output_path, samples: List[Sample], filtered_samples: Dict):
-    """ Takes a list of ComputedFiles and copies the ones that are quant files
+    """Takes a list of ComputedFiles and copies the ones that are quant files
     to the provided directory.  Returns the total number of samples that were
-    included, and adds those that were not included to `filtered_samples` """
+    included, and adds those that were not included to `filtered_samples`"""
     num_samples = 0
 
     page_size = 100
