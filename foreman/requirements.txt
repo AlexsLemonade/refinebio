@@ -14,42 +14,40 @@ click==8.0.1
     # via pyrefinebio
 coverage==5.5
     # via -r requirements.in
-django-computedfields==0.1.5
-    # via -r requirements.in
-django-elasticsearch-dsl-drf==0.22.1
-    # via -r requirements.in
-django-elasticsearch-dsl==6.5.0
-    # via
-    #   -r requirements.in
-    #   django-elasticsearch-dsl-drf
-django-nine==0.2.4
-    # via django-elasticsearch-dsl-drf
 django==3.2.4
     # via
     #   -r requirements.in
     #   django-nine
     #   djangorestframework
-djangorestframework==3.12.4
+django-computedfields==0.1.5
+    # via -r requirements.in
+django-elasticsearch-dsl==6.5.0
     # via
     #   -r requirements.in
     #   django-elasticsearch-dsl-drf
-elasticsearch-dsl==6.4.0
+django-elasticsearch-dsl-drf==0.22.1
+    # via -r requirements.in
+django-nine==0.2.4
+    # via django-elasticsearch-dsl-drf
+djangorestframework==3.12.4
     # via
     #   -r requirements.in
-    #   django-elasticsearch-dsl
     #   django-elasticsearch-dsl-drf
 elasticsearch==6.8.2
     # via
     #   django-elasticsearch-dsl-drf
     #   elasticsearch-dsl
+elasticsearch-dsl==6.4.0
+    # via
+    #   -r requirements.in
+    #   django-elasticsearch-dsl
+    #   django-elasticsearch-dsl-drf
 geoparse==2.0.3
     # via -r requirements.in
 idna==2.10
     # via
     #   requests
     #   yarl
-importlib-metadata==4.5.0
-    # via click
 iso8601==0.1.16
     # via pyrefinebio
 multidict==5.1.0
@@ -101,17 +99,12 @@ six==1.16.0
     #   python-dateutil
     #   retrying
     #   vcrpy
-sqlparse==0.4.1
+sqlparse==0.4.2
     # via django
 tblib==1.7.0
     # via -r requirements.in
 tqdm==4.61.1
     # via geoparse
-typing-extensions==3.10.0.0
-    # via
-    #   asgiref
-    #   importlib-metadata
-    #   yarl
 urllib3==1.26.5
     # via
     #   elasticsearch
@@ -122,5 +115,3 @@ wrapt==1.12.1
     # via vcrpy
 yarl==1.6.3
     # via vcrpy
-zipp==3.4.1
-    # via importlib-metadata
