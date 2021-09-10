@@ -217,6 +217,10 @@ resource "aws_acm_certificate" "ssl-cert" {
       Environment = "data-refinery-circleci-${var.stage}"
     }
   )
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_acm_certificate_validation" "ssl-cert" {
