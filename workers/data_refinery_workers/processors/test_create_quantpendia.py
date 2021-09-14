@@ -126,6 +126,7 @@ class QuantpendiaTestCase(TransactionTestCase):
             metadata = json.load(f)
 
             self.assertTrue(metadata.get("quant_sf_only"))
+            self.assertEqual(metadata.get("compendia_version"), 1)
             self.assertEqual(metadata.get("num_samples"), 1)
             self.assertEqual(metadata.get("num_experiments"), 1)
 

@@ -311,6 +311,8 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
             metadata = json.load(f)
 
             self.assertFalse(metadata.get("quant_sf_only"))
+            self.assertEqual(metadata.get("compendia_version"), 1)
+
             # 420 microarray + 420 RNA seq
             # -1 that is filtered for a missing file
             # -9 that are filtered for having less than 50% present values

@@ -87,6 +87,11 @@ def _download_files(job_context: Dict) -> Dict:
 
 @utils.cache_keys("metadata", work_dir_key="job_dir")
 def _add_metadata(job_context: Dict) -> Dict:
+    job_context["compendia_organism"] = _get_organisms(job_context["samples"]).first()
+    job_context["compendia_version"] = _get_next_compendia_version(
+        job_context["compendia_organism"]
+    )
+
     logger.debug(
         "Writing metadata for quantpendia.", job_id=job_context["job_id"], **get_process_stats()
     )
@@ -122,8 +127,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     Store and host the result as a ComputationalResult object.
     """
     archive_path = job_context["archive_path"]
-    compendia_organism = _get_organisms(job_context["samples"]).first()
-    compendia_version = _get_next_compendia_version(compendia_organism)
+    compendia_organism = job_context["compendia_organism"]
 
     result = ComputationalResult()
     result.commands.append(" ".join(job_context["formatted_command"]))
@@ -149,7 +153,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_compendia = True
     archive_computed_file.quant_sf_only = True
     archive_computed_file.compendia_organism = compendia_organism
-    archive_computed_file.compendia_version = compendia_version
+    archive_computed_file.compendia_version = job_context["compendia_version"]
     archive_computed_file.save()
 
     compendium_result = CompendiumResult()

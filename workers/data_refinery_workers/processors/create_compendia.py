@@ -54,13 +54,6 @@ def log_state(message, job_id, start_time=False):
 def _prepare_input(job_context: Dict) -> Dict:
     start_time = log_state("prepare input", job_context["job"].id)
 
-    job_context["primary_organism"] = max(
-        job_context["samples"], key=lambda organism: len(job_context["samples"][organism])
-    )
-    job_context["all_organisms"] = job_context["samples"].keys()
-    all_samples = list(itertools.chain(*job_context["samples"].values()))
-    job_context["samples"] = {job_context["primary_organism"]: all_samples}
-
     # We'll store here all sample accession codes that didn't make it into the compendia
     # with the reason why not.
     job_context["filtered_samples"] = {}
@@ -79,6 +72,18 @@ def _prepare_input(job_context: Dict) -> Dict:
         job_context["work_dir"] = SMASHING_DIR + job_context["organism_name"] + "/"
         if not os.path.exists(job_context["work_dir"]):
             os.makedirs(job_context["work_dir"])
+
+    job_context["organism_object"] = Organism.get_object_for_name(job_context["organism_name"])
+    job_context["compendium_version"] = (
+        CompendiumResult.objects.filter(
+            primary_organism=job_context["organism_object"], quant_sf_only=False
+        ).count()
+        + 1
+    )
+
+    job_context["all_organisms"] = job_context["samples"].keys()
+    all_samples = list(itertools.chain(*job_context["samples"].values()))
+    job_context["samples"] = {job_context["organism_name"]: all_samples}
 
     log_state("prepare input done", job_context["job"].id, start_time)
     return job_context
@@ -573,23 +578,18 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.save()
 
     # Compendia Result Helpers
-    primary_organism = Organism.get_object_for_name(job_context["primary_organism"])
     organisms = [
         Organism.get_object_for_name(organism) for organism in job_context["all_organisms"]
     ]
-    compendium_version = (
-        CompendiumResult.objects.filter(
-            primary_organism=primary_organism, quant_sf_only=False
-        ).count()
-        + 1
-    )
+    compendium_version = job_context["compendium_version"]
+
     # Save Compendia Result
     compendium_result = CompendiumResult()
     compendium_result.quant_sf_only = job_context["dataset"].quant_sf_only
     compendium_result.svd_algorithm = job_context["dataset"].svd_algorithm
     compendium_result.compendium_version = compendium_version
     compendium_result.result = result
-    compendium_result.primary_organism = primary_organism
+    compendium_result.primary_organism = job_context["organism_object"]
     compendium_result.save()
 
     # create relations to all organisms contained in the compendia
