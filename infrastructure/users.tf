@@ -233,33 +233,3 @@ resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachmen
   group = aws_iam_group.data_refinery_group.name
   policy_arn = aws_iam_policy.data_refinery_client_policy_es.arn
 }
-
-##
-# IAM Policy Documents
-##
-
-data "aws_iam_policy_document" "data-refinery-deployment" {
-  statement {
-    actions = [
-      "s3:ListObjects",
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject",
-      "s3:PutObjectAcl",
-    ]
-
-    resources = [
-      "arn:aws:s3:::${aws_s3_bucket.data-refinery-static.id}/*",
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:ListBucket",
-    ]
-
-    resources = [
-      "arn:aws:s3:::${aws_s3_bucket.data-refinery-static.id}",
-    ]
-  }
-}
