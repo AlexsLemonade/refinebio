@@ -615,6 +615,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, key)
 
     if not uploaded_to_s3:
+        archive_computed_file.delete()
+
         raise utils.ProcessorJobError(
             "Failed to upload compendia to S3",
             success=False,
