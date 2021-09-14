@@ -44,7 +44,7 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
             "is_qc",
             "is_compendia",
             "quant_sf_only",
-            "compendia_version",
+            "compendium_version",
             "compendia_organism_name",
             "sha1",
             "s3_bucket",
@@ -82,7 +82,7 @@ class DetailedComputedFileSerializer(serializers.ModelSerializer):
             "is_qc",
             "is_compendia",
             "quant_sf_only",
-            "compendia_version",
+            "compendium_version",
             "compendia_organism_name",
             "sha1",
             "s3_bucket",
@@ -123,7 +123,7 @@ class ComputedFileListView(generics.ListAPIView):
         "is_compendia",
         "quant_sf_only",
         "svd_algorithm",
-        "compendia_version",
+        "compendium_version",
         "created_at",
         "last_modified",
         "result__id",
@@ -132,7 +132,7 @@ class ComputedFileListView(generics.ListAPIView):
         "id",
         "created_at",
         "last_modified",
-        "compendia_version",
+        "compendium_version",
     )
     ordering = ("-id",)
 
