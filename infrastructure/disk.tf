@@ -42,29 +42,6 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
   }
 }
 
-resource "aws_s3_bucket" "data-refinery-static" {
-  bucket = "${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"
-  force_destroy = var.static_bucket_prefix == "dev" ? true : false
-
-  cors_rule {
-    allowed_origins = ["*"]
-    allowed_methods = ["GET"]
-    max_age_seconds = 3000
-    allowed_headers = ["Authorization"]
-  }
-
-  tags = merge(
-    var.default_tags,
-    {
-      Name = "data-refinery-static-site-${var.user}-${var.stage}"
-    }
-  )
-
-  website {
-    index_document = "index.html"
-  }
-}
-
 resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   bucket = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
   acl = "public-read"
@@ -170,32 +147,4 @@ resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
       aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,
     ) - 2,
   )
-}
-
-resource "aws_s3_bucket" "data-refinery-static-access-logs" {
-  bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
-
-  tags = merge(
-    var.default_tags,
-    {
-      Name = "data-refinery-static-access-logs-${var.user}-${var.stage}"
-      Environment = var.stage
-    }
-  )
-
-  lifecycle_rule {
-    id = "auto-delete-after-7-days-${var.user}-${var.stage}"
-    prefix = ""
-    enabled = true
-    abort_incomplete_multipart_upload_days = 7
-
-    expiration {
-      days = 7
-      expired_object_delete_marker = true
-    }
-
-    noncurrent_version_expiration {
-      days = 7
-    }
-  }
 }
