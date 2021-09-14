@@ -19,3 +19,4 @@ pyyaml>=5.4
 # For end-to-end tests
 numpy
 scipy
+sqlparse>=0.4.2
