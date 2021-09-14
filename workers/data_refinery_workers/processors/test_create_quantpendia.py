@@ -108,6 +108,7 @@ class QuantpendiaTestCase(TransactionTestCase):
 
         final_context = create_quantpendia(job.id)
 
+        self.assertTrue(final_context["success"])
         self.assertTrue(
             os.path.exists(final_context["output_dir"] + "/GSE51088/GSM1237818_quant.sf")
         )

@@ -128,6 +128,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """
     archive_path = job_context["archive_path"]
     compendia_organism = job_context["compendia_organism"]
+    compendium_version = job_context["compendium_version"]
 
     result = ComputationalResult()
     result.commands.append(" ".join(job_context["formatted_command"]))
@@ -153,7 +154,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_compendia = True
     archive_computed_file.quant_sf_only = True
     archive_computed_file.compendia_organism = compendia_organism
-    archive_computed_file.compendium_version = job_context["compendium_version"]
+    archive_computed_file.compendium_version = compendium_version
     archive_computed_file.save()
 
     compendium_result = CompendiumResult()
