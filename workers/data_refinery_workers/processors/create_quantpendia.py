@@ -87,6 +87,11 @@ def _download_files(job_context: Dict) -> Dict:
 
 @utils.cache_keys("metadata", work_dir_key="job_dir")
 def _add_metadata(job_context: Dict) -> Dict:
+    job_context["compendia_organism"] = _get_organisms(job_context["samples"]).first()
+    job_context["compendium_version"] = _get_next_compendium_version(
+        job_context["compendia_organism"]
+    )
+
     logger.debug(
         "Writing metadata for quantpendia.", job_id=job_context["job_id"], **get_process_stats()
     )
@@ -122,8 +127,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     Store and host the result as a ComputationalResult object.
     """
     archive_path = job_context["archive_path"]
-    compendia_organism = _get_organisms(job_context["samples"]).first()
-    compendia_version = _get_next_compendia_version(compendia_organism)
+    compendia_organism = job_context["compendia_organism"]
+    compendium_version = job_context["compendium_version"]
 
     result = ComputationalResult()
     result.commands.append(" ".join(job_context["formatted_command"]))
@@ -149,14 +154,14 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_compendia = True
     archive_computed_file.quant_sf_only = True
     archive_computed_file.compendia_organism = compendia_organism
-    archive_computed_file.compendia_version = compendia_version
+    archive_computed_file.compendium_version = compendium_version
     archive_computed_file.save()
 
     compendium_result = CompendiumResult()
     compendium_result.quant_sf_only = True
     compendium_result.result = result
     compendium_result.primary_organism = compendia_organism
-    compendium_result.compendium_version = compendia_version
+    compendium_result.compendium_version = compendium_version
     compendium_result.save()
 
     logger.info(
@@ -169,7 +174,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Upload the result to S3
     timestamp = str(int(time.time()))
-    s3_key = compendia_organism.name + "_" + str(compendia_version) + "_" + timestamp + ".zip"
+    s3_key = compendia_organism.name + "_" + str(compendium_version) + "_" + timestamp + ".zip"
     uploaded_to_s3 = archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, s3_key)
 
     if not uploaded_to_s3:
@@ -224,17 +229,17 @@ def _get_organisms(aggregated_samples: Dict[str, Sample]) -> List[Organism]:
     return Organism.objects.filter(id__in=list(organisms))
 
 
-def _get_next_compendia_version(organism: Organism) -> int:
+def _get_next_compendium_version(organism: Organism) -> int:
     last_compendia = (
         ComputedFile.objects.filter(
             is_compendia=True, quant_sf_only=True, compendia_organism=organism
         )
-        .order_by("-compendia_version")
+        .order_by("-compendium_version")
         .first()
     )
 
     if last_compendia:
-        return last_compendia.compendia_version + 1
+        return last_compendia.compendium_version + 1
 
     # otherwise this is the first compendia that we are generating
     return 1

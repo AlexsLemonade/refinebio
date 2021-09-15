@@ -76,7 +76,7 @@ class ComputedFile(models.Model):
     compendia_organism = models.ForeignKey(
         "Organism", blank=True, null=True, on_delete=models.CASCADE
     )
-    compendia_version = models.IntegerField(blank=True, null=True)
+    compendium_version = models.IntegerField(blank=True, null=True)
 
     # AWS
     s3_bucket = models.CharField(max_length=255, blank=True, null=True)

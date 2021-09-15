@@ -9,7 +9,7 @@ requests>=2.22.0
 retrying
 psutil>=5.6.6
 Jinja2>=2.10.1
-Pillow>=7.1.0
+Pillow>=8.3.2
 tzlocal>=2.1
 # Fancyimpute needs this version.
 scikit-learn>=0.21.2
@@ -29,3 +29,4 @@ selenium==3.141.0
 vcrpy
 django-computedfields>=0.1.5
 pyyaml>=5.4
+sqlparse>=0.4.2
