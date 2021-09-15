@@ -108,6 +108,7 @@ class QuantpendiaTestCase(TransactionTestCase):
 
         final_context = create_quantpendia(job.id)
 
+        self.assertTrue(final_context["success"])
         self.assertTrue(
             os.path.exists(final_context["output_dir"] + "/GSE51088/GSM1237818_quant.sf")
         )
@@ -126,6 +127,7 @@ class QuantpendiaTestCase(TransactionTestCase):
             metadata = json.load(f)
 
             self.assertTrue(metadata.get("quant_sf_only"))
+            self.assertEqual(metadata.get("compendium_version"), 1)
             self.assertEqual(metadata.get("num_samples"), 1)
             self.assertEqual(metadata.get("num_experiments"), 1)
 

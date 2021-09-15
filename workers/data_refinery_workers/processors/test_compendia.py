@@ -311,6 +311,8 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
             metadata = json.load(f)
 
             self.assertFalse(metadata.get("quant_sf_only"))
+            self.assertEqual(metadata.get("compendium_version"), 1)
+
             # 420 microarray + 420 RNA seq
             # -1 that is filtered for a missing file
             # -9 that are filtered for having less than 50% present values
@@ -711,4 +713,4 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         rmse = math.sqrt(squared_error / N)
 
         # The results of a previous run plus a little bit of leeway
-        self.assertLess(abs(rmse - 0.2868600293662542), 0.01)
+        self.assertLess(abs(rmse - 0.2868600293662542), 0.05)

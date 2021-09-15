@@ -38,7 +38,7 @@ class APITestCases(APITestCase):
         hsc1.is_compendia = True
         hsc1.quant_sf_only = False
         hsc1.compendia_organism = self.homo_sapiens
-        hsc1.compendia_version = 1
+        hsc1.compendium_version = 1
         hsc1.s3_bucket = "dr-compendia"
         hsc1.s3_key = "hsc1.tsv"
         hsc1.save()
@@ -54,7 +54,7 @@ class APITestCases(APITestCase):
         hsc2.is_compendia = True
         hsc2.quant_sf_only = False
         hsc2.compendia_organism = self.homo_sapiens
-        hsc2.compendia_version = 2
+        hsc2.compendium_version = 2
         hsc2.s3_bucket = "dr-compendia"
         hsc2.s3_key = "hsc2.tsv"
         hsc2.save()
@@ -70,7 +70,7 @@ class APITestCases(APITestCase):
         drc1.is_compendia = True
         drc1.quant_sf_only = True
         drc1.compendia_organism = self.danio_rerio
-        drc1.compendia_version = 1
+        drc1.compendium_version = 1
         drc1.s3_bucket = "dr-compendia"
         drc1.s3_key = "drc2.tsv"
         drc1.save()

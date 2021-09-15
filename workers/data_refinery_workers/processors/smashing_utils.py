@@ -627,6 +627,9 @@ def compile_metadata(job_context: Dict) -> Dict:
     metadata["num_experiments"] = job_context["experiments"].count()
     metadata["quant_sf_only"] = job_context["dataset"].quant_sf_only
 
+    if "compendium_version" in job_context:
+        metadata["compendium_version"] = job_context["compendium_version"]
+
     quant_sf_only = job_context["dataset"].quant_sf_only
 
     if not quant_sf_only:
