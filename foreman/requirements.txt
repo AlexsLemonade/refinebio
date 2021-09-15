@@ -101,8 +101,10 @@ six==1.16.0
     #   python-dateutil
     #   retrying
     #   vcrpy
-sqlparse==0.4.1
-    # via django
+sqlparse==0.4.2
+    # via
+    #   -r requirements.in
+    #   django
 tblib==1.7.0
     # via -r requirements.in
 tqdm==4.61.1

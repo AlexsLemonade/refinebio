@@ -22,3 +22,4 @@ drf_yasg>=1.20.0
 apscheduler
 django-computedfields>=0.1.5
 pyyaml>=5.4
+sqlparse>=0.4.2
