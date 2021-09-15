@@ -2,8 +2,10 @@
 # The default environment is a 2 vCPU spot cluster
 
 locals {
-  compute_environment_type = var.use_on_demand_instances == true ? "EC2" : "SPOT"
-  allocation_strategy = var.use_on_demand_instances == true ? "BEST_FIT" : "SPOT_CAPACITY_OPTIMIZED"
+  on_demand_environment_type = "EC2"
+  on_demand_allocation_strategy = "BEST_FIT"
+  compute_environment_type = var.use_on_demand_instances == true ? local.on_demand_environment_type : "SPOT"
+  allocation_strategy = var.use_on_demand_instances == true ? local.on_demand_allocation_strategy : "SPOT_CAPACITY_OPTIMIZED"
 }
 
 resource "aws_batch_compute_environment" "data_refinery_workers" {
@@ -107,8 +109,9 @@ resource "aws_batch_compute_environment" "data_refinery_compendia" {
       "x1.16xlarge"
     ]
 
-    type = local.compute_environment_type
-    allocation_strategy = local.allocation_strategy
+    # Compendia are long running, so we don't want to use spot instances.
+    type = local.on_demand_environment_type
+    allocation_strategy = local.on_demand_allocation_strategy
     spot_iam_fleet_role = var.data_refinery_spot_fleet_role.arn
     bid_percentage = 100
 
