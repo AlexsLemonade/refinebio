@@ -112,10 +112,9 @@ resource "aws_batch_compute_environment" "data_refinery_compendia" {
     # Compendia are long running, so we don't want to use spot instances.
     type = local.on_demand_environment_type
     allocation_strategy = local.on_demand_allocation_strategy
-    spot_iam_fleet_role = var.data_refinery_spot_fleet_role.arn
     bid_percentage = 100
 
-    max_vcpus = 32
+    max_vcpus = 64
     min_vcpus = 0
     # standard launch template
     launch_template {
