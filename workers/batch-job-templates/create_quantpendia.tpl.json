@@ -1,6 +1,6 @@
 {
     "jobDefinitionName": "${{USER}}_${{STAGE}}_CREATE_QUANTPENDIA_${{RAM}}",
-    "timeout": {"attemptDurationSeconds": 10800},
+    "timeout": {"attemptDurationSeconds": 864000},
     "type": "container",
     "parameters": {
         "job_name": "",
