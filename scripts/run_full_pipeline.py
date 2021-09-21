@@ -24,7 +24,7 @@ def parse_args():
 
 def get_job_to_run():
     completed_command = subprocess.run(
-        ["./foreman/run_surveyor.sh", "get_job_to_be_run"], stdout=subprocess.PIPE,
+        ["./foreman/run_management_command.sh", "get_job_to_be_run"], stdout=subprocess.PIPE,
     )
 
     # The JSON output is on the last line of the output, but it has a
@@ -71,7 +71,7 @@ def run_job(job):
 
 def survey_accession(accession_code):
     subprocess.check_call(
-        ["./foreman/run_surveyor.sh", "survey_all", "--accession", accession_code]
+        ["./foreman/run_management_command.sh", "survey_all", "--accession", accession_code]
     )
 
 

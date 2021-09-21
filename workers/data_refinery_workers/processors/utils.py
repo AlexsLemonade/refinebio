@@ -240,6 +240,7 @@ def end_job(job_context: Dict, abort=False):
             if result and settings.RUNNING_IN_CLOUD:
                 computed_file.delete_local_file()
             elif not result:
+                computed_file.delete()
                 success = False
                 job_context["success"] = False
                 job.failure_reason = "Failed to upload computed file."
