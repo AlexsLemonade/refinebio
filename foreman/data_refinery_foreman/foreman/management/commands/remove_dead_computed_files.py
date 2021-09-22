@@ -32,13 +32,13 @@ def requeue_sample(sample, dry_run=False):
         )
 
         if not (has_live_computational_results or live_computed_files.count() > 1):
-            # There's no live computed files, the sample
-            # should not have been marked processed.
-            sample.is_processed = False
-            sample.save()
-
             sample_was_requeued = True
             if not dry_run:
+                # There's no live computed files, the sample
+                # should not have been marked processed.
+                sample.is_processed = False
+                sample.save()
+
                 create_downloader_job(sample.original_files.all(), force=True)
 
     return sample_was_requeued
