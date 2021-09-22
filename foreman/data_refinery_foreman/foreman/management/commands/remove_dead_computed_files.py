@@ -31,7 +31,7 @@ def requeue_sample(sample, dry_run=False):
             s3_bucket__isnull=False, s3_key__isnull=False
         )
 
-        if not (has_live_computational_results or live_computed_files.count() < 1):
+        if not (has_live_computational_results or live_computed_files.count() > 1):
             # There's no live computed files, the sample
             # should not have been marked processed.
             sample.is_processed = False
