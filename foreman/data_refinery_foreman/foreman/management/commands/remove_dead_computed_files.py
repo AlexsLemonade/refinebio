@@ -22,23 +22,23 @@ def requeue_sample(sample, dry_run=False):
         has_live_computational_results = False
         for result in sample.results.all():
             live_files = result.computedfile_set.filter(
-                s3_bucket__is_null=False, s3_key__is_null=False
+                s3_bucket__isnull=False, s3_key__isnull=False
             )
             if live_files.count() >= 1:
                 has_live_computational_results = True
 
         live_computed_files = sample.computed_files.filter(
-            s3_bucket__is_null=False, s3_key__is_null=False
+            s3_bucket__isnull=False, s3_key__isnull=False
         )
 
-        if not (has_live_computational_results or live_computed_files.count() < 1):
-            # There's no live computed files, the sample
-            # should not have been marked processed.
-            sample.is_processed = False
-            sample.save()
-
+        if not (has_live_computational_results or live_computed_files.count() > 1):
             sample_was_requeued = True
             if not dry_run:
+                # There's no live computed files, the sample
+                # should not have been marked processed.
+                sample.is_processed = False
+                sample.save()
+
                 create_downloader_job(sample.original_files.all(), force=True)
 
     return sample_was_requeued
