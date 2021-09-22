@@ -14,9 +14,9 @@ coverage==5.5
     # via coveralls
 coveralls==3.1.0
     # via -r requirements.in
-django-computedfields==0.1.5
+django==3.2.5
     # via -r requirements.in
-django==3.2.4
+django-computedfields==0.1.5
     # via -r requirements.in
 docopt==0.6.2
     # via coveralls
@@ -50,10 +50,6 @@ sqlparse==0.4.2
     # via
     #   -r requirements.in
     #   django
-typing-extensions==3.10.0.0
-    # via
-    #   asgiref
-    #   yarl
 urllib3==1.26.5
     # via
     #   -r requirements.in
