@@ -250,15 +250,16 @@ class ComputedFile(models.Model):
         if not settings.RUNNING_IN_CLOUD and not force:
             return False
 
-        try:
-            S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
-        except Exception:
-            logger.exception(
-                "Failed to delete S3 object for Computed File.",
-                computed_file=self.id,
-                s3_object=self.s3_key,
-            )
-            return False
+        if self.s3_bucket and self.s3_key:
+            try:
+                S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
+            except Exception:
+                logger.exception(
+                    "Failed to delete S3 object for Computed File.",
+                    computed_file=self.id,
+                    s3_object=self.s3_key,
+                )
+                return False
 
         self.s3_key = None
         self.s3_bucket = None
