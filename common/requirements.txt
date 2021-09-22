@@ -20,34 +20,34 @@ coverage==5.5
     # via -r requirements.in
 daiquiri==3.0.0
     # via -r requirements.in
+django==3.2.5
+    # via
+    #   -r requirements.in
+    #   django-nine
+    #   djangorestframework
 django-computedfields==0.1.5
-    # via -r requirements.in
-django-elasticsearch-dsl-drf==0.22.1
     # via -r requirements.in
 django-elasticsearch-dsl==6.5.0
     # via
     #   -r requirements.in
     #   django-elasticsearch-dsl-drf
+django-elasticsearch-dsl-drf==0.22.1
+    # via -r requirements.in
 django-nine==0.2.4
     # via django-elasticsearch-dsl-drf
-django==3.2.4
-    # via
-    #   -r requirements.in
-    #   django-nine
-    #   djangorestframework
 djangorestframework==3.12.4
     # via
     #   -r requirements.in
-    #   django-elasticsearch-dsl-drf
-elasticsearch-dsl==6.4.0
-    # via
-    #   -r requirements.in
-    #   django-elasticsearch-dsl
     #   django-elasticsearch-dsl-drf
 elasticsearch==6.8.2
     # via
     #   django-elasticsearch-dsl-drf
     #   elasticsearch-dsl
+elasticsearch-dsl==6.4.0
+    # via
+    #   -r requirements.in
+    #   django-elasticsearch-dsl
+    #   django-elasticsearch-dsl-drf
 idna==2.10
     # via
     #   requests
@@ -92,10 +92,6 @@ sqlparse==0.4.2
     # via
     #   -r requirements.in
     #   django
-typing-extensions==3.10.0.0
-    # via
-    #   asgiref
-    #   yarl
 urllib3==1.26.5
     # via
     #   -r requirements.in
