@@ -26,7 +26,7 @@ from rpy2.robjects.packages import importr
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile, Sample
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, queryset_page_iterator
 from data_refinery_workers.processors import utils
 
 MULTIPROCESSING_MAX_THREAD_COUNT = max(1, math.floor(multiprocessing.cpu_count() / 2) - 1)
@@ -646,28 +646,30 @@ def compile_metadata(job_context: Dict) -> Dict:
     filtered_samples = job_context["filtered_samples"]
 
     samples = {}
-    for sample in job_context["dataset"].get_samples():
-        if sample.accession_code in filtered_samples:
-            # skip the samples that were filtered
-            continue
-        computed_file = None
-        if quant_sf_only:
-            computed_file = sample.get_most_recent_quant_sf_file()
-        else:
-            computed_file = sample.get_most_recent_smashable_result_file()
-        samples[sample.accession_code] = sample.to_metadata_dict(computed_file)
+    for page in queryset_page_iterator(job_context["dataset"].get_samples()):
+        for sample in page:
+            if sample.accession_code in filtered_samples:
+                # skip the samples that were filtered
+                continue
+            computed_file = None
+            if quant_sf_only:
+                computed_file = sample.get_most_recent_quant_sf_file()
+            else:
+                computed_file = sample.get_most_recent_smashable_result_file()
+            samples[sample.accession_code] = sample.to_metadata_dict(computed_file)
 
     metadata["samples"] = samples
     metadata["num_samples"] = len(metadata["samples"])
 
     experiments = {}
-    for experiment in job_context["dataset"].get_experiments():
-        experiment_metadata = experiment.to_metadata_dict()
-        # exclude filtered samples from experiment metadata
-        all_samples = experiment_metadata["sample_accession_codes"]
-        all_samples = [code for code in all_samples if code not in filtered_samples]
-        experiment_metadata["sample_accession_codes"] = all_samples
-        experiments[experiment.accession_code] = experiment_metadata
+    for page in queryset_page_iterator(job_context["dataset"].get_experiments()):
+        for experiment in page:
+            experiment_metadata = experiment.to_metadata_dict()
+            # exclude filtered samples from experiment metadata
+            all_samples = experiment_metadata["sample_accession_codes"]
+            all_samples = [code for code in all_samples if code not in filtered_samples]
+            experiment_metadata["sample_accession_codes"] = all_samples
+            experiments[experiment.accession_code] = experiment_metadata
 
     metadata["experiments"] = experiments
 
