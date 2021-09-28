@@ -42,6 +42,7 @@ BODY_ERROR_HTML = (
 )
 BYTES_IN_GB = 1024 * 1024 * 1024
 QN_CHUNK_SIZE = 10000
+PAGE_SIZE = 2000
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName("DEBUG"))
@@ -645,9 +646,17 @@ def compile_metadata(job_context: Dict) -> Dict:
 
     filtered_samples = job_context["filtered_samples"]
 
+    all_sample_accessions = []
+    for sample_list in job_context["dataset"].data.values():
+        all_sample_accessions = all_sample_accessions + sample_list
+    all_sample_accessions = list(set(all_sample_accessions))
+
     samples = {}
-    for page in queryset_page_iterator(job_context["dataset"].get_samples()):
-        for sample in page:
+    for page in range(0, len(all_sample_accessions), PAGE_SIZE):
+        sample_page = Sample.objects.filter(
+            accession_code__in=all_sample_accessions[page : page + PAGE_SIZE]
+        )
+        for sample in sample_page:
             if sample.accession_code in filtered_samples:
                 # skip the samples that were filtered
                 continue
@@ -662,14 +671,13 @@ def compile_metadata(job_context: Dict) -> Dict:
     metadata["num_samples"] = len(metadata["samples"])
 
     experiments = {}
-    for page in queryset_page_iterator(job_context["dataset"].get_experiments()):
-        for experiment in page:
-            experiment_metadata = experiment.to_metadata_dict()
-            # exclude filtered samples from experiment metadata
-            all_samples = experiment_metadata["sample_accession_codes"]
-            all_samples = [code for code in all_samples if code not in filtered_samples]
-            experiment_metadata["sample_accession_codes"] = all_samples
-            experiments[experiment.accession_code] = experiment_metadata
+    for experiment in job_context["dataset"].get_experiments():
+        experiment_metadata = experiment.to_metadata_dict()
+        # exclude filtered samples from experiment metadata
+        all_samples = experiment_metadata["sample_accession_codes"]
+        all_samples = [code for code in all_samples if code not in filtered_samples]
+        experiment_metadata["sample_accession_codes"] = all_samples
+        experiments[experiment.accession_code] = experiment_metadata
 
     metadata["experiments"] = experiments
 
