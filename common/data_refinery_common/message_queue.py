@@ -11,12 +11,7 @@ from django.utils import timezone
 
 import boto3
 
-from data_refinery_common.enums import (
-    SMASHER_JOB_TYPES,
-    Downloaders,
-    ProcessorPipeline,
-    SurveyJobTypes,
-)
+from data_refinery_common.enums import Downloaders, ProcessorPipeline, SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
 
@@ -298,8 +293,6 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         should_dispatch = is_dispatch  # only dispatch when specifically requested to
 
     if should_dispatch:
-        batch = boto3.client("batch", region_name=AWS_REGION)
-
         job_name = JOB_DEFINITION_PREFIX + job_name
 
         # Smasher, tximport, and janitor jobs  don't have RAM tiers.
@@ -343,3 +336,10 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
             raise
 
     return True
+
+
+def terminate_job(job, reason=None):
+    if not reason:
+        reason = "The job was terminated by data_refinery_common.message_queue.terminate_job()."
+
+    batch.terminate_job(jobId=job.batch_job_id, reason=reason)
