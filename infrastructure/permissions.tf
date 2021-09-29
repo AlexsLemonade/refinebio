@@ -239,6 +239,15 @@ resource "aws_iam_policy" "batch_write_policy" {
   tags = var.default_tags
 }
 
+resource "aws_iam_policy" "batch_terminate_policy" {
+  name = "data-refinery-batch-terminate-policy-${var.user}-${var.stage}"
+  description = "Allows Batch Terminate Permissions."
+
+  policy = local.batch_terminate_policy
+
+  tags = var.default_tags
+}
+
 resource "aws_iam_role_policy_attachment" "worker_batch_read" {
   role = aws_iam_role.data_refinery_worker.name
   policy_arn = aws_iam_policy.batch_read_policy.arn
@@ -257,6 +266,11 @@ resource "aws_iam_role_policy_attachment" "foreman_batch_read" {
 resource "aws_iam_role_policy_attachment" "foreman_batch_write" {
   role = aws_iam_role.data_refinery_foreman.name
   policy_arn = aws_iam_policy.batch_write_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "foreman_batch_terminate" {
+  role = aws_iam_role.data_refinery_foreman.name
+  policy_arn = aws_iam_policy.batch_terminate_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "api_batch_read" {

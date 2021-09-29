@@ -126,6 +126,23 @@ EOF
 }
 EOF
 
+  batch_terminate_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "batch:TerminateJob"
+            ],
+            "Resource": [
+              "arn:aws:batch:${var.region}:${data.aws_caller_identity.current.account_id}:*"
+            ]
+        }
+    ]
+}
+EOF
+
   ses_access_policy = <<EOF
 {
     "Version": "2012-10-17",
