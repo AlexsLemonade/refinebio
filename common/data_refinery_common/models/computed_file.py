@@ -261,9 +261,11 @@ class ComputedFile(models.Model):
                 )
                 return False
 
-        self.s3_key = None
-        self.s3_bucket = None
-        self.save()
+        if self.s3_bucket or self.s3_key:
+            self.s3_key = None
+            self.s3_bucket = None
+            self.save()
+
         return True
 
     def get_synced_file_path(self, force=False, path=None):
