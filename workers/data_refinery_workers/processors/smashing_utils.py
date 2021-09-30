@@ -26,7 +26,7 @@ from rpy2.robjects.packages import importr
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile, Sample
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, queryset_page_iterator
 from data_refinery_workers.processors import utils
 
 MULTIPROCESSING_MAX_THREAD_COUNT = max(1, math.floor(multiprocessing.cpu_count() / 2) - 1)
@@ -42,6 +42,7 @@ BODY_ERROR_HTML = (
 )
 BYTES_IN_GB = 1024 * 1024 * 1024
 QN_CHUNK_SIZE = 10000
+PAGE_SIZE = 2000
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName("DEBUG"))
@@ -645,17 +646,26 @@ def compile_metadata(job_context: Dict) -> Dict:
 
     filtered_samples = job_context["filtered_samples"]
 
+    all_sample_accessions = []
+    for sample_list in job_context["dataset"].data.values():
+        all_sample_accessions = all_sample_accessions + sample_list
+    all_sample_accessions = list(set(all_sample_accessions))
+
     samples = {}
-    for sample in job_context["dataset"].get_samples():
-        if sample.accession_code in filtered_samples:
-            # skip the samples that were filtered
-            continue
-        computed_file = None
-        if quant_sf_only:
-            computed_file = sample.get_most_recent_quant_sf_file()
-        else:
-            computed_file = sample.get_most_recent_smashable_result_file()
-        samples[sample.accession_code] = sample.to_metadata_dict(computed_file)
+    for page in range(0, len(all_sample_accessions), PAGE_SIZE):
+        sample_page = Sample.objects.filter(
+            accession_code__in=all_sample_accessions[page : page + PAGE_SIZE]
+        )
+        for sample in sample_page:
+            if sample.accession_code in filtered_samples:
+                # skip the samples that were filtered
+                continue
+            computed_file = None
+            if quant_sf_only:
+                computed_file = sample.get_most_recent_quant_sf_file()
+            else:
+                computed_file = sample.get_most_recent_smashable_result_file()
+            samples[sample.accession_code] = sample.to_metadata_dict(computed_file)
 
     metadata["samples"] = samples
     metadata["num_samples"] = len(metadata["samples"])

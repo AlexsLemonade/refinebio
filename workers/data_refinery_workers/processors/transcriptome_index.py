@@ -432,6 +432,14 @@ def _populate_index_object(job_context: Dict) -> Dict:
         sync_result = computed_file.sync_to_s3(S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key)
         if sync_result:
             computed_file.delete_local_file()
+        else:
+            computed_file.delete()
+
+            raise utils.ProcessorJobError(
+                "Failed to upload transcriptome index to S3",
+                success=False,
+                computed_file_id=computed_file.id,
+            )
     else:
         logger.warn(
             "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME not configured, therefore %s %s will not be uploaded.",
