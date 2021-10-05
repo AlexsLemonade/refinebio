@@ -28,7 +28,7 @@ resource "aws_batch_compute_environment" "data_refinery_workers" {
     min_vcpus = 0
     # standard launch template
     launch_template {
-      launch_template_id = aws_launch_template.data_refinery_launch_template.id
+      launch_template_id = aws_launch_template.data_refinery_worker.id
     }
     ec2_key_pair = var.data_refinery_keypair.key_name
     security_group_ids = [
@@ -74,7 +74,7 @@ resource "aws_batch_compute_environment" "data_refinery_smasher" {
     min_vcpus = 0
     # standard launch template
     launch_template {
-      launch_template_id = aws_launch_template.data_refinery_launch_template.id
+      launch_template_id = aws_launch_template.data_refinery_worker.id
     }
     ec2_key_pair = var.data_refinery_keypair.key_name
     security_group_ids = [
@@ -118,7 +118,7 @@ resource "aws_batch_compute_environment" "data_refinery_compendia" {
     min_vcpus = 0
     # standard launch template
     launch_template {
-      launch_template_id = aws_launch_template.data_refinery_launch_template.id
+      launch_template_id = aws_launch_template.data_refinery_compendia.id
     }
     ec2_key_pair = var.data_refinery_keypair.key_name
     security_group_ids = [
