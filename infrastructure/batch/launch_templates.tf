@@ -1,5 +1,5 @@
 resource "aws_launch_template" "data_refinery_worker" {
-  name = "data-refinery-launch-template-${var.user}-${var.stage}"
+  name = "data-refinery-worker-${var.user}-${var.stage}"
   tags = var.default_tags
   # ccdl-data-refinery-base-v2.0 image
   image_id = var.data_refinery_worker_ami
@@ -26,7 +26,7 @@ resource "aws_launch_template" "data_refinery_worker" {
 }
 
 resource "aws_launch_template" "data_refinery_compendia" {
-  name = "data-refinery-launch-template-${var.user}-${var.stage}"
+  name = "data-refinery-compendia-${var.user}-${var.stage}"
   tags = var.default_tags
   # ccdl-data-refinery-base-v2.0 image
   image_id = var.data_refinery_worker_ami
