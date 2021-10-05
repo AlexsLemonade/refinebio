@@ -173,7 +173,8 @@ fi
 
 # Terraform doesn't manage these well, so they need to be tainted if
 # they exist to ensure they won't require manual intervention.
-terraform taint module.batch.aws_launch_template.data_refinery_launch_template || true
+terraform taint module.batch.aws_launch_template.data_refinery_worker || true
+terraform taint module.batch.aws_launch_template.data_refinery_compendia || true
 if terraform state list | grep -q module.batch.aws_batch_job_queue.data_refinery_; then
     terraform state list \
         | grep module.batch.aws_batch_job_queue.data_refinery_ \
@@ -318,7 +319,8 @@ docker run \
 
 # Terraform doesn't manage these well, so they need to be tainted to
 # ensure they won't require manual intervention.
-terraform taint module.batch.aws_launch_template.data_refinery_launch_template
+terraform taint module.batch.aws_launch_template.data_refinery_worker
+terraform taint module.batch.aws_launch_template.data_refinery_compendia
 terraform state list \
     | grep module.batch.aws_batch_job_queue.data_refinery_ \
     | xargs -L 1 terraform taint \
