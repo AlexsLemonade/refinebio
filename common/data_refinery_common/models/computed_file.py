@@ -106,7 +106,7 @@ class ComputedFile(models.Model):
                 self.absolute_file_path,
                 s3_bucket,
                 s3_key,
-                ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
+                ExtraArgs={"StorageClass": "STANDARD_IA"},
             )
         except Exception:
             logger.exception(
