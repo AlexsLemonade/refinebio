@@ -12,6 +12,13 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
   )
 }
 
+resource "aws_s3_bucket_public_access_block" "data_refinery_bucket" {
+  bucket = aws_s3_bucket.data_refinery_bucket.id
+
+  block_public_acls   = true
+  block_public_policy = true
+}
+
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
   acl = "private"
@@ -40,6 +47,13 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
       days = 1
     }
   }
+}
+
+resource "aws_s3_bucket_public_access_block" "data_refinery_results_bucket" {
+  bucket = aws_s3_bucket.data_refinery_results_bucket.id
+
+  block_public_acls   = true
+  block_public_policy = true
 }
 
 resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
@@ -82,6 +96,13 @@ resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
       Environment = var.stage
     }
   )
+}
+
+resource "aws_s3_bucket_public_access_block" "data_refinery_compendia_bucket" {
+  bucket = aws_s3_bucket.data_refinery_compendia_bucket.id
+
+  block_public_acls   = true
+  block_public_policy = true
 }
 
 resource "aws_s3_bucket" "data_refinery_cloudtrail_logs_bucket" {
