@@ -9,6 +9,8 @@ from base64 import b64decode, b64encode
 from django.core.paginator import Page
 from django.db.models import DateTimeField
 
+PAGE_SIZE = 2000
+
 
 # we inherit from Page, even though it's a bit odd since we're so
 # different, but if we don't some of the tools that use it will break,

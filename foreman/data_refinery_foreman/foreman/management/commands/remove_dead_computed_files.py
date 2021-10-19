@@ -11,9 +11,7 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
-from data_refinery_common.performant_pagination.pagination import PerformantPaginator
-
-PAGE_SIZE = 2000
+from data_refinery_common.performant_pagination.pagination import PAGE_SIZE, PerformantPaginator
 
 
 def requeue_sample(sample, dry_run=False):
