@@ -49,13 +49,6 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "data_refinery_results_bucket" {
-  bucket = aws_s3_bucket.data_refinery_results_bucket.id
-
-  block_public_acls   = true
-  block_public_policy = true
-}
-
 resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   bucket = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
   acl = "public-read"
