@@ -93,7 +93,7 @@ resource "aws_db_instance" "postgres_db" {
   skip_final_snapshot = var.stage == "prod" ? false : true
   final_snapshot_identifier = var.stage == "prod" ? "data-refinery-prod-snapshot" : "none"
 
-  enabled_cloudwatch_logs_exports = ["postgres", "update"]
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   vpc_security_group_ids = [aws_security_group.data_refinery_db.id]
   multi_az = true
