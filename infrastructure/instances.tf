@@ -60,6 +60,11 @@ resource "aws_db_parameter_group" "postgres_parameters" {
     value = false
   }
 
+  parameter {
+    name = "work_mem"
+    value = 64000
+  }
+
   tags = var.default_tags
 }
 
@@ -87,6 +92,8 @@ resource "aws_db_instance" "postgres_db" {
   # Only the prod's bucket prefix is empty.
   skip_final_snapshot = var.stage == "prod" ? false : true
   final_snapshot_identifier = var.stage == "prod" ? "data-refinery-prod-snapshot" : "none"
+
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   vpc_security_group_ids = [aws_security_group.data_refinery_db.id]
   multi_az = true
