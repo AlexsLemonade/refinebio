@@ -140,6 +140,7 @@ resource "aws_db_parameter_group" "postgres_parameters" {
     value = 200
   }
 
+  # These two should match how many cores we have.
   parameter {
     name = "max_worker_processes"
     value = "{DBInstanceVCPU}"
