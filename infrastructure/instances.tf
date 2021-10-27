@@ -65,6 +65,91 @@ resource "aws_db_parameter_group" "postgres_parameters" {
     value = 64000
   }
 
+  # If you have a dedicated database server with 1GB or more of RAM, a
+  # reasonable starting value for shared_buffers is 25% of the memory
+  # in your system. There are some workloads where even larger
+  # settings for shared_buffers are effective, but because PostgreSQL
+  # also relies on the operating system cache, it is unlikely that an
+  # allocation of more than 40% of RAM to shared_buffers will work
+  # better than a smaller amount. Larger settings for shared_buffers
+  # usually require a corresponding increase in max_wal_size, in order
+  # to spread out the process of writing large quantities of new or
+  # changed data over a longer period of time.
+  parameter {
+    name = "shared_buffers"
+    # Note that the unit here is 8KB, so 8192 * .25 = 32768
+    value = "{DBInstanceClassMemory/32768}"
+  }
+
+  # https://www.2ndquadrant.com/en/blog/basics-of-tuning-checkpoints/ says:
+  # Let’s also discuss the other extreme – doing very frequent
+  # checkpoints (say, every second or so). That would allow keeping
+  # only tiny amount of WAL and the recovery would be very fast
+  # (having to replay only the tiny WAL amount). But it would also
+  # turn the asynchronous writes to data files into synchronous ones,
+  # seriously impacting the users (e.g. increasing COMMIT latency,
+  # reducing throughput).
+
+  # Higher WAL values means a higher recovery time, but better general
+  # performance. We want to optimize for general performance over
+  # recovery time.
+  parameter {
+    name = "max_wal_size"
+    # Note that the unit here is 1MB, so this is 4GB.
+    value = 4096
+  }
+
+  parameter {
+    name = "min_wal_size"
+    # Note that the unit here is 1MB, so this is 1GB.
+    value = 1024
+  }
+
+  parameter {
+    name = "effective_cache_size"
+    # Note that the unit here is 8KB, so 8192 * .5 = 16384
+    value = "{DBInstanceClassMemory/16384}"
+  }
+
+  parameter {
+    name = "wal_buffers"
+    # Note that the unit here is 8KB so this is 16MB.
+    value = 16384
+  }
+
+  parameter {
+    name = "maintenance_work_mem"
+    # The unit here is KB, so this is 1GB.
+    value = 1048576
+  }
+
+  # From https://www.postgresql.org/docs/11/runtime-config-query.html
+  # Storage that has a low random read cost relative to sequential,
+  # e.g., solid-state drives, might also be better modeled with a
+  # lower value for random_page_cost, e.g., 1.1.
+  parameter {
+    name = "random_page_cost"
+    value = 1.1
+  }
+
+  # https://www.postgresql.org/docs/current/runtime-config-resource.html says
+  # SSDs and other memory-based storage can often process many
+  # concurrent requests, so the best value might be in the hundreds.
+  parameter {
+    name = "effective_io_concurrency"
+    value = 200
+  }
+
+  parameter {
+    name = "max_worker_processes"
+    value = "{DBInstanceVCPU}"
+  }
+
+  parameter {
+    name = "max_parallel_workers"
+    value = "{DBInstanceVCPU}"
+  }
+
   tags = var.default_tags
 }
 
