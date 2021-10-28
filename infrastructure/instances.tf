@@ -79,6 +79,7 @@ resource "aws_db_parameter_group" "postgres_parameters" {
     name = "shared_buffers"
     # Note that the unit here is 8KB, so 8192 * .25 = 32768
     value = "{DBInstanceClassMemory/32768}"
+    apply_method = "pending-reboot"
   }
 
   # https://www.2ndquadrant.com/en/blog/basics-of-tuning-checkpoints/ says:
@@ -106,15 +107,16 @@ resource "aws_db_parameter_group" "postgres_parameters" {
   }
 
   parameter {
-    name = "effective_cache_size"
-    # Note that the unit here is 8KB, so 8192 * .5 = 16384
-    value = "{DBInstanceClassMemory/16384}"
-  }
-
-  parameter {
     name = "wal_buffers"
     # Note that the unit here is 8KB so this is 16MB.
     value = 16384
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "effective_cache_size"
+    # Note that the unit here is 8KB, so 8192 * .5 = 16384
+    value = "{DBInstanceClassMemory/16384}"
   }
 
   parameter {
@@ -149,6 +151,12 @@ resource "aws_db_parameter_group" "postgres_parameters" {
   parameter {
     name = "max_parallel_workers"
     value = "{DBInstanceVCPU}"
+  }
+
+  parameter {
+    name = "autovacuum_vacuum_scale_factor"
+    value = "0.01"
+    apply_method = "pending-reboot"
   }
 
   tags = var.default_tags
