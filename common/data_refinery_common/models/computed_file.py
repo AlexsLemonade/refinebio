@@ -95,18 +95,20 @@ class ComputedFile(models.Model):
         self.last_modified = current_time
         return super(ComputedFile, self).save(*args, **kwargs)
 
-    def sync_to_s3(self, s3_bucket, s3_key) -> bool:
+    def sync_to_s3(self, s3_bucket, s3_key, public=False) -> bool:
         """ Syncs a file to AWS S3.
         """
         if not settings.RUNNING_IN_CLOUD:
             return True
 
         try:
+            extra_args = {"StorageClass": "STANDARD_IA"}
+
+            if public:
+                extra_args["ACL"] = "public-read"
+
             S3.upload_file(
-                self.absolute_file_path,
-                s3_bucket,
-                s3_key,
-                ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
+                self.absolute_file_path, s3_bucket, s3_key, ExtraArgs=extra_args,
             )
         except Exception:
             logger.exception(

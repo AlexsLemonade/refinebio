@@ -327,10 +327,7 @@ def _upload(job_context: Dict) -> Dict:
         # Note that file expiry is handled by the S3 object lifecycle,
         # managed by terraform.
         s3_client.upload_file(
-            job_context["output_file"],
-            RESULTS_BUCKET,
-            output_filename,
-            ExtraArgs={"ACL": "public-read"},
+            job_context["output_file"], RESULTS_BUCKET, output_filename,
         )
     except Exception:
         raise utils.ProcessorJobError(

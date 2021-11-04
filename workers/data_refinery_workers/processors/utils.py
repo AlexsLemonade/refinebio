@@ -222,10 +222,13 @@ def end_job(job_context: Dict, abort=False):
     # Upload first so if this fails we can set success = False and let
     # the rest of the function mark it as failed.
     if success:
+        public_results = False
+
         # QN reference files go to a special bucket so they can be
         # publicly available.
         if job_context["job"].pipeline_applied == "QN_REFERENCE":
             s3_bucket = S3_QN_TARGET_BUCKET_NAME
+            public_results = True
         else:
             s3_bucket = S3_BUCKET_NAME
 
@@ -235,7 +238,9 @@ def end_job(job_context: Dict, abort=False):
             nonce = "".join(
                 random.choice(string.ascii_lowercase + string.digits) for _ in range(24)
             )
-            result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
+            result = computed_file.sync_to_s3(
+                s3_bucket, nonce + "_" + computed_file.filename, public=public_results
+            )
 
             if result and settings.RUNNING_IN_CLOUD:
                 computed_file.delete_local_file()
