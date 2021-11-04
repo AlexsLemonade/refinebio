@@ -897,7 +897,7 @@ def _run_salmon(job_context: Dict) -> Dict:
                     quant_file.absolute_file_path,
                     quant_file.s3_bucket,
                     quant_file.s3_key,
-                    ExtraArgs={"ACL": "public-read", "StorageClass": "STANDARD_IA"},
+                    ExtraArgs={"StorageClass": "STANDARD_IA"},
                 )
             except Exception as e:
                 logger.exception(
