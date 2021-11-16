@@ -429,7 +429,9 @@ def _populate_index_object(job_context: Dict) -> Dict:
         )
         timestamp = str(timezone.now().timestamp()).split(".")[0]
         s3_key = organism_object.name + "_" + index_object.index_type + "_" + timestamp + ".tar.gz"
-        sync_result = computed_file.sync_to_s3(S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key)
+        sync_result = computed_file.sync_to_s3(
+            S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key, public=True
+        )
         if sync_result:
             computed_file.delete_local_file()
         else:
