@@ -163,6 +163,12 @@ resource "aws_iam_role_policy_attachment" "foreman_s3" {
   policy_arn = aws_iam_policy.s3_access_policy.arn
 }
 
+# The API needs access to S3 to be able to generate presigned URLs.
+resource "aws_iam_role_policy_attachment" "api_s3" {
+  role = aws_iam_role.data_refinery_api.name
+  policy_arn = aws_iam_policy.s3_access_policy.arn
+}
+
 resource "aws_iam_policy" "ses_access_policy" {
   name = "data-refinery-ses-access-policy-${var.user}-${var.stage}"
   description = "Allows sending email through SES"
