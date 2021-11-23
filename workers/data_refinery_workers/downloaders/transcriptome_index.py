@@ -109,8 +109,8 @@ def download_transcriptome(job_id: int) -> None:
             source_filename=long_original_file.source_filename,
             source_url=long_original_file.source_url,
             is_downloaded=True,
-            absolute_file_path=long_dl_file_path,
-            filename=long_original_file.source_filename,
+            absolute_file_path=short_dl_file_path,
+            filename=long_original_file.filename,
             has_raw=True,
         )
         short_original_file.calculate_size()
