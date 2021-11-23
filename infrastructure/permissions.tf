@@ -170,7 +170,7 @@ resource "aws_iam_role_policy_attachment" "api_s3" {
 }
 
 
-resource "aws_iam_policy" "cert-bucket_access_policy" {
+resource "aws_iam_policy" "cert_bucket_access_policy" {
   name = "data-refinery-cert-bucket-access-policy-${var.user}-${var.stage}"
   description = "Allows S3 Permissions for the SSL cert bucket."
 
