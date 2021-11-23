@@ -38,6 +38,39 @@ locals {
 }
 EOF
 
+  cert_bucket_access_policy = <<EOF
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Effect":"Allow",
+         "Action":[
+            "s3:ListAllMyBuckets"
+         ],
+         "Resource":"arn:aws:s3:::*"
+      },
+      {
+         "Effect":"Allow",
+         "Action":[
+            "s3:ListBucket",
+            "s3:GetBucketLocation"
+         ],
+         "Resource":"arn:aws:s3:::${aws_s3_bucket.data_refinery_cert_bucket.bucket}"
+      },
+      {
+         "Effect":"Allow",
+         "Action":[
+            "s3:PutObject",
+            "s3:PutObjectAcl",
+            "s3:GetObject",
+            "s3:DeleteObject"
+         ],
+         "Resource": "arn:aws:s3:::${aws_s3_bucket.data_refinery_cert_bucket.bucket}/*"
+      }
+   ]
+}
+EOF
+
   # Policy text found at:
   # http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html
   cloudwatch_logs_policy = <<EOF
