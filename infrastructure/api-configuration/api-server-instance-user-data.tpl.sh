@@ -56,7 +56,7 @@ if [[ "${stage}" == "staging" || "${stage}" == "prod" ]]; then
 	cp /etc/nginx/nginx.conf /etc/letsencrypt/
 
 	cd /etc/letsencrypt/ || exit
-	sudo zip -r ../letsencryptdir.zip "../$(basename $PWD)"
+	sudo zip -r ../letsencryptdir.zip "../$(basename "$PWD")"
 
 	# And then cleanup the extra copy.
 	rm /etc/letsencrypt/nginx.conf
