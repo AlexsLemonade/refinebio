@@ -19,37 +19,58 @@ cat <<"EOF" > nginx.conf
 ${nginx_config}
 EOF
 apt-get update -y
-apt-get install nginx -y
+apt-get install nginx awscli zip -y
 cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
 if [[ "${stage}" == "staging" || "${stage}" == "prod" ]]; then
-    # Create and install SSL Certificate for the API.
-    # Only necessary on staging and prod.
-    # We cannot use ACM for this because *.bio is not a Top Level Domain that Route53 supports.
-    snap install core
-    snap refresh core
-    snap install --classic certbot
-    apt-get update
-    apt-get install -y python-certbot-nginx
+    # Check here for the cert in S3, if present install, if not run certbot.
+    if [[ $(aws s3 ls "${data_refinery_cert_bucket}" | wc -l) == "0" ]]; then
+	# Create and install SSL Certificate for the API.
+	# Only necessary on staging and prod.
+	# We cannot use ACM for this because *.bio is not a Top Level Domain that Route53 supports.
+	snap install core
+	snap refresh core
+	snap install --classic certbot
+	apt-get update
+	apt-get install -y python-certbot-nginx
 
-    # g3w4k4t5n3s7p7v8@alexslemonade.slack.com is the email address we
-    # have configured to forward mail to the #teamcontact channel in
-    # slack. Certbot will use it for "important account
-    # notifications".
-    # In the future, if we ever hit the 5-deploy-a-week limit, changing one of these lines to:
-    # certbot --nginx -d api.staging.refine.bio -d api2.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
-    # will circumvent certbot's limit because the 5-a-week limit only applies to the
-    # "same set of domains", so by changing that set we get to use the 20-a-week limit.
-    if [[ "${stage}" == "staging" ]]; then
         # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
         sleep 180
-        certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
-    elif [[ "${stage}" == "prod" ]]; then
-        # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
-        sleep 180
-        RANDOM_API=$(( ( RANDOM % 8 ) + 2 )) # 2 to 9
-        certbot --nginx -d api.refine.bio -d api$RANDOM_API.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+
+	# g3w4k4t5n3s7p7v8@alexslemonade.slack.com is the email address we
+	# have configured to forward mail to the #teamcontact channel in
+	# slack. Certbot will use it for "important account
+	# notifications".
+	# In the future, if we ever hit the 5-deploy-a-week limit, changing one of these lines to:
+	# certbot --nginx -d api.staging.refine.bio -d api2.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+	# will circumvent certbot's limit because the 5-a-week limit only applies to the
+	# "same set of domains", so by changing that set we get to use the 20-a-week limit.
+	if [[ "${stage}" == "staging" ]]; then
+            certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+	elif [[ "${stage}" == "prod" ]]; then
+            certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+	fi
+
+	# Add the nginx.conf file that certbot setup to the zip dir.
+	cp /etc/nginx/nginx.conf /etc/letsencrypt/
+
+	cd /etc/letsencrypt/ || exit
+	sudo zip -r ../letsencryptdir.zip "../$(basename "$PWD")"
+
+	# And then cleanup the extra copy.
+	rm /etc/letsencrypt/nginx.conf
+
+	cd - || exit
+	mv /etc/letsencryptdir.zip .
+	aws s3 cp letsencryptdir.zip "s3://${data_refinery_cert_bucket}/"
+	rm letsencryptdir.zip
+    else
+	zip_filename=$(aws s3 ls "${data_refinery_cert_bucket}" | head -1 | awk '{print $4}')
+	aws s3 cp "s3://${data_refinery_cert_bucket}/$zip_filename" letsencryptdir.zip
+	unzip letsencryptdir.zip -d /etc/
+	mv /etc/letsencrypt/nginx.conf /etc/nginx/
+	service nginx restart
     fi
 fi
 

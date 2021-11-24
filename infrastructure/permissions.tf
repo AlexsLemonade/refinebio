@@ -169,6 +169,22 @@ resource "aws_iam_role_policy_attachment" "api_s3" {
   policy_arn = aws_iam_policy.s3_access_policy.arn
 }
 
+
+resource "aws_iam_policy" "cert_bucket_access_policy" {
+  name = "data-refinery-cert-bucket-access-policy-${var.user}-${var.stage}"
+  description = "Allows S3 Permissions for the SSL cert bucket."
+
+  policy = local.cert_bucket_access_policy
+
+  tags = var.default_tags
+}
+
+# The API needs access to S3 to be able to generate presigned URLs.
+resource "aws_iam_role_policy_attachment" "api_cert_bucket" {
+  role = aws_iam_role.data_refinery_api.name
+  policy_arn = aws_iam_policy.cert_bucket_access_policy.arn
+}
+
 resource "aws_iam_policy" "ses_access_policy" {
   name = "data-refinery-ses-access-policy-${var.user}-${var.stage}"
   description = "Allows sending email through SES"
