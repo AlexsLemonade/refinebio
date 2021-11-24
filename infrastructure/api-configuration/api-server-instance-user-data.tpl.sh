@@ -19,7 +19,7 @@ cat <<"EOF" > nginx.conf
 ${nginx_config}
 EOF
 apt-get update -y
-apt-get install nginx aws-cli zip -y
+apt-get install nginx awscli zip -y
 cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 

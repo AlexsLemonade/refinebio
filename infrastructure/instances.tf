@@ -140,6 +140,7 @@ data "template_file" "api_server_script_smusher" {
     api_environment = data.local_file.api_environment.content
     dockerhub_repo = var.dockerhub_repo
     api_docker_image = var.api_docker_image
+    data_refinery_cert_bucket = aws_s3_bucket.data_refinery_cert_bucket.id
     user = var.user
     stage = var.stage
     region = var.region
@@ -159,6 +160,7 @@ data "template_file" "api_server_script_smusher" {
     aws_instance.pg_bouncer,
     aws_security_group_rule.data_refinery_api_http,
     aws_security_group_rule.data_refinery_api_outbound,
+    aws_s3_bucket.data_refinery_cert_bucket,
   ]
 }
 
