@@ -315,6 +315,9 @@ def _determine_index_length(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = "Unable to determine number_of_reads."
         job_context["job"].no_retry = True
         job_context["success"] = False
+
+        job_context["sample"].is_unable_to_be_processed = True
+        job_context["sample"].save()
         return job_context
 
     index_length_raw = total_base_pairs / number_of_reads

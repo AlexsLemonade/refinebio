@@ -71,6 +71,7 @@ class Sample(models.Model):
 
     # Crunch Properties
     is_processed = models.BooleanField(default=False)
+    is_unable_to_be_processed = models.BooleanField(default=False)
 
     # Blacklisting
     is_blacklisted = models.BooleanField(default=False)
