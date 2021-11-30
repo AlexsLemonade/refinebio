@@ -154,13 +154,7 @@ PATTERN
 resource "aws_cloudwatch_event_target" "compendia_object_metrics_target" {
   rule = aws_cloudwatch_event_rule.compendia_object_metrics.name
   target_id = "compendia-object-logs-target-${var.user}-${var.stage}"
-  arn = substr(
-    aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,
-    0,
-    length(
-      aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn,
-    ) - 2,
-  )
+  arn = aws_cloudwatch_log_group.compendia_object_metrics_log_group.arn
 }
 
 resource "aws_s3_bucket" "data_refinery_cert_bucket" {
