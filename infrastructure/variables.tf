@@ -239,14 +239,6 @@ output "environment_variables" {
       value = var.stage
     },
     {
-      name = "AWS_ACCESS_KEY_ID_CLIENT"
-      value = aws_iam_access_key.data_refinery_user_client_key.id
-    },
-    {
-      name = "AWS_SECRET_ACCESS_KEY_CLIENT"
-      value = aws_iam_access_key.data_refinery_user_client_key.secret
-    },
-    {
       name = "WORKER_ROLE_ARN"
       value = aws_iam_role.data_refinery_worker.arn
     },
