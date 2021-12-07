@@ -330,9 +330,13 @@ terraform state list \
 terraform taint aws_instance.foreman_server_1
 
 # Remove the ingress config so the next `terraform apply` will remove
-# access for Circle.
-# echo "Removing ingress.."
-# rm ci_ingress.tf
+# access for Circle. Leave this for staging and dev so end-to-end
+# tests can run and have access to the database since they don't use
+# test databases.
+if [ "$env" = "prod" ]; then
+    echo "Removing ingress.."
+    rm ci_ingress.tf
+fi
 
 if [[ -n "$GITHUB_ACTIONS" ]]; then
     # Make sure we can't expose secrets in circleci
