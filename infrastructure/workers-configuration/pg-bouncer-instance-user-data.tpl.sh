@@ -40,7 +40,7 @@ listen_addr = *
 max_client_conn = 10560
 default_pool_size = 10
 listen_port = ${listen_port}
-auth_type = trust
+auth_type = md5
 auth_file = /etc/pgbouncer/userlist.txt
 pool_mode = transaction
 server_reset_query = DISCARD ALL
@@ -50,10 +50,8 @@ unix_socket_dir = /var/run/postgresql
 FOE
 
 # Set up PG Bouncer
-# TODO: Actually make the password required to connect through PGBouncer.
-cat << FOE >> /etc/pgbouncer/userlist.txt
-"${database_user}" "${database_password}"
-FOE
+md5_password=$(echo -n "md5"; echo -n "${database_password}${database_user}" | md5sum | awk '{print $1}')
+echo "\"${database_user}\" \"$md5_password\"" > /etc/pgbouncer/userlist.txt
 
 echo "ulimit -n 16384" >> /etc/default/pgbouncer
 
