@@ -105,7 +105,10 @@ run_on_deploy_box "sudo touch /var/log/deploy_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/deploy_$CI_TAG.log"
 run_on_deploy_box "source env_vars && echo -e '######\nStarting new deploy for $CI_TAG\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
 run_on_deploy_box "sudo ./.github/scripts/fix_ca_certs.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
+
+# This should never be logged to Github Actions in case it exposes any secrets as terraform output.
 run_on_deploy_box "source env_vars && ./.github/scripts/run_terraform.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
+
 run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CI_TAG finished!\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
 
 ./.github/scripts/slackpost_deploy.sh robots deploybot
