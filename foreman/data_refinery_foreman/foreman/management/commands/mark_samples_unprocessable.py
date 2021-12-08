@@ -7,6 +7,7 @@ be stored on the sample's is_unable_to_be_processed field.
 
 from django.core.management.base import BaseCommand
 
+from data_refinery_common.job_management import is_job_unprocessable
 from data_refinery_common.models import Sample
 from data_refinery_common.performant_pagination.pagination import PAGE_SIZE
 from data_refinery_common.utils import queryset_page_iterator
@@ -29,23 +30,15 @@ def mark_unprocessable_samples():
 
     for page in results:
         for sample in page:
-            # Hmm, this might be a good time to do some additional
-            # denormalization.
+            sample.last_processor_job = sample.get_most_recent_processor_job()
+            sample.last_downloader_job = sample.get_most_recent_downloader_job()
+            sample.most_recent_smashable_file = sample.get_most_recent_smashable_result_file()
+            sample.most_recent_quant_file = sample.get_most_recent_quant_sf_file()
 
-            # I could just go through every single sample and add the following fields:
-            # last_processor_job
-            # most_recent_smashable_file
-            # most_recent_quant_file
-            # is_unable_to_be_processed
+            if not sample.is_processed and sample.last_processor_job:
+                sample.is_unable_to_be_processed = is_job_unprocessable(sample.last_processor_job)
 
-            # However, I think the logic for checking if a job
-            # indicates that a sample is unprocessable should be done
-            # in common somewhere so that it can also be used by
-            # processor jobs to keep things up to date. Then this
-            # command should only have to be run once to backfill
-            # properties. All future samples should have them updated
-            # as they're processed.
-            pass
+            sample.save()
 
 
 class Command(BaseCommand):

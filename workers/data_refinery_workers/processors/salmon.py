@@ -29,11 +29,7 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
-from data_refinery_common.rna_seq import (
-    get_quant_files_for_results,
-    get_quant_results_for_experiment,
-    should_run_tximport,
-)
+from data_refinery_common.rna_seq import get_tximport_inputs_if_eligible
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
@@ -608,7 +604,7 @@ def _run_tximport_for_experiment(
     return job_context
 
 
-def get_tximport_inputs(job_context: Dict) -> Dict:
+def set_tximport_inputs(job_context: Dict) -> Dict:
     """Adds to the job_context a mapping from experiments to a list of their quant files.
 
     Checks all the experiments which contain a sample from the current
@@ -626,17 +622,17 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
         if not eligible_samples.exists():
             continue
 
-        salmon_quant_results = get_quant_results_for_experiment(experiment)
         is_tximport_job = "is_tximport_only" in job_context and job_context["is_tximport_only"]
+        salmon_quant_files = get_tximport_inputs_if_eligible(experiment, is_tximport_job)
 
-        if is_tximport_job and len(salmon_quant_results):
+        if is_tximport_job and salmon_quant_files:
             # If the job is only running tximport, then index_length
             # hasn't been set on the job context because we don't have
             # a raw file to run it on. Therefore pull it from one of
             # the result annotations.
 
             # Can't just do salmon_quant_results[0] because it's a set.
-            index_length = next(iter(salmon_quant_results)).get_index_length()
+            index_length = salmon_quant_files[0].result.get_index_length()
             if index_length:
                 job_context["index_length"] = index_length
             elif "index_length" not in job_context:
@@ -649,8 +645,8 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
                     no_retry=True,
                 )
 
-        if should_run_tximport(experiment, salmon_quant_results, is_tximport_job):
-            quantified_experiments[experiment] = get_quant_files_for_results(salmon_quant_results)
+        if salmon_quant_files:
+            quantified_experiments[experiment] = salmon_quant_files
 
     job_context["tximport_inputs"] = quantified_experiments
 
@@ -1112,7 +1108,7 @@ def salmon(job_id: int) -> None:
             _determine_index_length,
             _find_or_download_index,
             _run_salmon,
-            get_tximport_inputs,
+            set_tximport_inputs,
             tximport,
             _run_salmontools,
             utils.end_job,

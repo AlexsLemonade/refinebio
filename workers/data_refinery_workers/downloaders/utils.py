@@ -108,6 +108,11 @@ def end_downloader_job(job: DownloaderJob, success: bool):
                 failure_reason=job.failure_reason,
             )
 
+    for original_file in job.original_files.all():
+        for sample in original_file.samples.all():
+            sample.last_downloader_job = job
+            sample.save()
+
     job.success = success
     job.end_time = timezone.now()
     job.save()

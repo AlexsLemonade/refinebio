@@ -288,7 +288,7 @@ class SalmonTestCase(TestCase):
         job_context = salmon._find_or_download_index(job_context)
 
         job_context = salmon._run_salmon(job_context)
-        job_context = salmon.get_tximport_inputs(job_context)
+        job_context = salmon.set_tximport_inputs(job_context)
         job_context = salmon.tximport(job_context)
         output_quant_filename = os.path.join(job_context["output_directory"], "quant.sf")
         self.assertTrue(os.path.exists(output_quant_filename))
@@ -364,7 +364,7 @@ class SalmonTestCase(TestCase):
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample'.
-        experiments_ready = salmon.get_tximport_inputs(job_context)["tximport_inputs"]
+        experiments_ready = salmon.set_tximport_inputs(job_context)["tximport_inputs"]
         self.assertEqual(len(experiments_ready), 0)
 
     @tag("salmon")
@@ -435,7 +435,7 @@ class SalmonTestCase(TestCase):
         # Check quant.sf in `salmon quant` output dir of sample1
         self.check_salmon_quant(job1_context, sample1_dir)
         # Confirm that this experiment is not ready for tximport yet.
-        experiments_ready = salmon.get_tximport_inputs(job1_context)["tximport_inputs"]
+        experiments_ready = salmon.set_tximport_inputs(job1_context)["tximport_inputs"]
         self.assertEqual(len(experiments_ready), 0)
         # This job should not have produced any tximport output
         # because the other sample isn't ready yet.
@@ -495,13 +495,13 @@ class SalmonTestCase(TestCase):
             self.assertTrue(os.path.isfile(file.absolute_file_path))
 
     @tag("salmon")
-    def test_get_tximport_inputs(self):
+    def test_set_tximport_inputs(self):
         """"Tests that tximport only considers RNA-Seq samples from GEO.
         """
         # Create one experiment and two related samples, based on:
         #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
         # (We don't need any original files because
-        # get_tximport_inputs doesn't consider them.)
+        # set_tximport_inputs doesn't consider them.)
         experiment_accession = "PRJNA242809"
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
@@ -552,7 +552,7 @@ class SalmonTestCase(TestCase):
         comp_file.s3_bucket = "bucket"
         comp_file.save()
 
-        quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})["tximport_inputs"]
+        quantified_experiments = salmon.set_tximport_inputs({"sample": sample1})["tximport_inputs"]
 
         self.assertEqual({}, quantified_experiments)
 
@@ -923,6 +923,8 @@ def create_tximport_job_context(
         quant_file.save()
 
         SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
+        sample.most_recent_quant_file = quant_file
+        sample.save()
 
     # Processor jobs need at least one original file associated with
     # them so they know what they're processing.
@@ -968,7 +970,7 @@ def create_tximport_job_context(
 def run_tximport_for_job_context(job_context: Dict) -> Dict:
     job_context = salmon._find_or_download_index(job_context)
 
-    job_context = salmon.get_tximport_inputs(job_context)
+    job_context = salmon.set_tximport_inputs(job_context)
     job_context = salmon.tximport(job_context)
     job_context = utils.end_job(job_context)
 
@@ -1051,7 +1053,7 @@ class EarlyTximportTestCase(TestCase):
         rds_file = ComputedFile.objects.get(filename="txi_out.RDS")
 
         for accession_code in complete_accessions:
-            # Check to make sure that all the associations were madep
+            # Check to make sure that all the associations were made
             # correctly. These queries will fail if they weren't.
             tpm_file = ComputedFile.objects.get(
                 filename=accession_code + "_output_gene_lengthScaledTPM.tsv"
@@ -1270,11 +1272,14 @@ class EarlyTximportTestCase(TestCase):
 
         job_context = create_tximport_job_context(complete_accessions, incomplete_accessions)
 
-        result = Sample.objects.filter(accession_code="SRR5125621").first().results.first()
+        sample = Sample.objects.filter(accession_code="SRR5125621").first()
+        result = sample.results.first()
         computed_file = ComputedFile.objects.get(result=result, filename="quant.sf")
         computed_file.s3_bucket = None
         computed_file.s3_key = None
         computed_file.save()
+        sample.most_recent_quant_file = computed_file
+        sample.save()
 
         job_context = run_tximport_for_job_context(job_context)
 

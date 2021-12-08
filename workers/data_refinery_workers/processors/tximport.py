@@ -63,7 +63,7 @@ def tximport(job_id: int) -> None:
             utils.start_job,
             _set_job_prefix,
             _prepare_files,
-            salmon.get_tximport_inputs,
+            salmon.set_tximport_inputs,
             salmon._find_or_download_index,
             salmon.tximport,
             utils.end_job,

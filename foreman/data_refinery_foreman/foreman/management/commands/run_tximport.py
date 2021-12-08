@@ -20,7 +20,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
 )
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
-from data_refinery_common.rna_seq import get_quant_results_for_experiment, should_run_tximport
+from data_refinery_common.rna_seq import get_tximport_inputs_if_eligible
 
 logger = get_and_configure_logger(__name__)
 
@@ -35,9 +35,8 @@ def run_tximport_if_eligible(experiment: Experiment, dispatch_jobs=True) -> bool
     Returns the ProcessorJob if a job was created or None if one was not.
     """
     tximport_pipeline = ProcessorPipeline.TXIMPORT
-    quant_results = get_quant_results_for_experiment(experiment)
 
-    if should_run_tximport(experiment, quant_results, True):
+    if get_tximport_inputs_if_eligible(experiment, True):
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = tximport_pipeline.value
         processor_job.ram_amount = 32768
