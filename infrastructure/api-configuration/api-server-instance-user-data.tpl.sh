@@ -35,8 +35,12 @@ if [[ "${stage}" == "staging" || "${stage}" == "prod" ]]; then
 	apt-get update
 	apt-get install -y python-certbot-nginx
 
+	# Temporary to see what this outputs
+	curl 'http://api.refine.bio'
         # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
-        sleep 180
+        sleep 300
+	# Temporary to see what this outputs
+	curl 'http://api.refine.bio'
 
 	# g3w4k4t5n3s7p7v8@alexslemonade.slack.com is the email address we
 	# have configured to forward mail to the #teamcontact channel in
