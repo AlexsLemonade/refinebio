@@ -109,6 +109,10 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context["failure_reason"] = failure_reason
         logger.error(failure_reason, sample=sample, processor_job=job_context["job_id"])
 
+        # We can't process it, we should mark it as such.
+        sample.is_unable_to_be_processed = True
+        sample.save()
+
         # No need to retry and fail more than once for this reason.
         job_context["success"] = False
         job_context["job"].failure_reason = failure_reason
