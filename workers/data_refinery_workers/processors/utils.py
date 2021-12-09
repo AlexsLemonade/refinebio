@@ -257,10 +257,6 @@ def end_job(job_context: Dict, abort=False):
                 for sample in computed_file.samples.all():
                     sample.most_recent_smashable_file = computed_file
                     sample.save()
-            elif computed_file.filename == "quant.sf":
-                for sample in computed_file.samples.all():
-                    sample.most_recent_quant_file = computed_file
-                    sample.save()
 
     if not success:
         for computed_file in job_context.get("computed_files", []):

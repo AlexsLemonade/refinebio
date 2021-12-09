@@ -927,6 +927,8 @@ def _run_salmon(job_context: Dict) -> Dict:
             SampleResultAssociation.objects.get_or_create(
                 sample=job_context["sample"], result=result
             )
+            job_context["sample"].most_recent_quant_file = quant_file
+            job_context["sample"].save()
 
             salmon_quant_archive.result = result
             salmon_quant_archive.save()
