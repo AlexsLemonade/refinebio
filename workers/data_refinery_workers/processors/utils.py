@@ -361,9 +361,10 @@ def end_job(job_context: Dict, abort=False):
                 failure_reason=job.failure_reason,
             )
 
-    for sample in job_context.get("samples", []):
-        sample.last_processor_job = job
-        sample.save()
+    if ProcessorPipeline(job.pipeline_applied) not in SMASHER_JOB_TYPES:
+        for sample in job_context.get("samples", []):
+            sample.last_processor_job = job
+            sample.save()
 
     # Return Final Job context so testers can check it
     return job_context
