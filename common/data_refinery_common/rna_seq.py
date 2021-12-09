@@ -52,7 +52,11 @@ def get_tximport_inputs_if_eligible(experiment: Experiment, is_tximport_job: boo
     for sample in experiment.samples.all():
         if sample.is_unable_to_be_processed:
             num_unprocessable_samples += 1
-        elif sample.most_recent_quant_file:
+        elif (
+            sample.most_recent_quant_file
+            and sample.most_recent_quant_file.s3_bucket is not None
+            and sample.most_recent_quant_file.s3_key is not None
+        ):
             sample_organism_index = sample.most_recent_quant_file.result.organism_index
             if sample_organism_index == organism_indices[sample.organism.id]:
                 good_quant_files.append(sample.most_recent_quant_file)

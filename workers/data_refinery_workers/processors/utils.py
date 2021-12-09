@@ -253,12 +253,14 @@ def end_job(job_context: Dict, abort=False):
 
             # Both of these types of computed files should have a
             # sample, but double check anyway.
-            if computed_file.is_smashable and computed_file.sample:
-                computed_file.sample.most_recent_smashable_file = computed_file
-                computed_file.sample.save()
-            elif computed_file.filename == "quant.sf" and computed_file.sample:
-                computed_file.sample.most_recent_quant_file = computed_file
-                computed_file.sample.save()
+            if computed_file.is_smashable:
+                for sample in computed_file.samples.all():
+                    sample.most_recent_smashable_file = computed_file
+                    sample.save()
+            elif computed_file.filename == "quant.sf":
+                for sample in computed_file.samples.all():
+                    sample.most_recent_quant_file = computed_file
+                    sample.save()
 
     if not success:
         for computed_file in job_context.get("computed_files", []):
