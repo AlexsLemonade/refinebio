@@ -15,8 +15,11 @@ from drf_yasg.utils import swagger_auto_schema
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_api.utils import check_filters
 from data_refinery_api.views.relation_serializers import (
+    ComputedFileRelationSerializer,
+    DownloaderJobRelationSerializer,
     OrganismIndexRelationSerializer,
     OrganismRelationSerializer,
+    ProcessorJobRelationSerializer,
     ProcessorRelationSerializer,
 )
 from data_refinery_common.models import (
@@ -58,6 +61,10 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
     annotations = SampleAnnotationSerializer(many=True, source="sampleannotation_set")
     organism = OrganismRelationSerializer(many=False)
     results = DetailedSamplesComputationalResultSerializer(many=True)
+    last_processor_job = ProcessorJobRelationSerializer(many=False)
+    last_downloader_job = DownloaderJobRelationSerializer(many=False)
+    most_recent_smashable_file = ComputedFileRelationSerializer(many=False)
+    most_recent_quant_file = ComputedFileRelationSerializer(many=False)
 
     class Meta:
         model = Sample
@@ -94,6 +101,10 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             "last_modified",
             "original_files",
             "computed_files",
+            "last_processor_job",
+            "last_downloader_job",
+            "most_recent_smashable_file",
+            "most_recent_quant_file",
             "contributed_metadata",
             "contributed_keywords",
             "experiment_accession_codes",
