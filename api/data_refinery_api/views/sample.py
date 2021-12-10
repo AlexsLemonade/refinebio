@@ -97,6 +97,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             "compound",
             "time",
             "is_processed",
+            "is_unable_to_be_processed",
             "created_at",
             "last_modified",
             "original_files",
@@ -167,6 +168,7 @@ class SampleListView(generics.ListAPIView):
         "compound",
         "time",
         "is_processed",
+        "is_unable_to_be_processed",
         "is_public",
     )
 
