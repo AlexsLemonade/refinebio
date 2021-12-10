@@ -23,6 +23,16 @@ resource "aws_launch_template" "data_refinery_worker" {
   }
 
   user_data = base64encode(var.data_refinery_worker_user_data)
+
+  tag_specifications {
+      resource_type = "instance"
+      tags = var.default_tags
+  }
+
+  tag_specifications {
+    resource_type = "volume"
+    tags = var.default_tags
+  }
 }
 
 resource "aws_launch_template" "data_refinery_compendia" {
@@ -50,4 +60,14 @@ resource "aws_launch_template" "data_refinery_compendia" {
   }
 
   user_data = base64encode(var.data_refinery_worker_user_data)
+
+  tag_specifications {
+      resource_type = "instance"
+      tags = var.default_tags
+  }
+
+  tag_specifications {
+    resource_type = "volume"
+    tags = var.default_tags
+  }
 }
