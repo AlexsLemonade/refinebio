@@ -251,6 +251,13 @@ def end_job(job_context: Dict, abort=False):
                 job.failure_reason = "Failed to upload computed file."
                 break
 
+            # Both of these types of computed files should have a
+            # sample, but double check anyway.
+            if computed_file.is_smashable:
+                for sample in computed_file.samples.all():
+                    sample.most_recent_smashable_file = computed_file
+                    sample.save()
+
     if not success:
         for computed_file in job_context.get("computed_files", []):
             computed_file.delete_local_file()
@@ -353,6 +360,11 @@ def end_job(job_context: Dict, abort=False):
                 no_retry=job.no_retry,
                 failure_reason=job.failure_reason,
             )
+
+    if ProcessorPipeline(job.pipeline_applied) not in SMASHER_JOB_TYPES:
+        for sample in job_context.get("samples", []):
+            sample.last_processor_job = job
+            sample.save()
 
     # Return Final Job context so testers can check it
     return job_context

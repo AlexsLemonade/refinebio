@@ -170,6 +170,8 @@ def prep_tximport_at_progress_point(
         quant_file.s3_key = "key"
         quant_file.save()
 
+        sample.most_recent_quant_file = quant_file
+        sample.save()
         SampleResultAssociation.objects.get_or_create(sample=sample, result=quant_result)
 
 

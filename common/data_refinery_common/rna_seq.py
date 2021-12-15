@@ -28,47 +28,64 @@ EARLY_TXIMPORT_MIN_SIZE = 25
 EARLY_TXIMPORT_MIN_PERCENT = 0.80
 
 
-def should_run_tximport(experiment: Experiment, results, is_tximport_job: bool):
-    """ Returns whether or not the experiment is eligible to have tximport
-    run on it.
+def get_latest_organism_index(organism):
+    # Salmon version gets saved as what salmon outputs, which includes this prefix.
+    current_salmon_version = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
+    return (
+        OrganismIndex.objects.filter(salmon_version=current_salmon_version, organism=organism)
+        .order_by("-created_at")
+        .first()
+    )
 
-    results is a set of ComputationalResults for the samples that had salmon quant run on them.
+
+def get_tximport_inputs_if_eligible(experiment: Experiment, is_tximport_job: bool):
+    """Returns a list of the most recent quant.sf ComputedFiles for the experiment.
+
+    If the experiment is not eligble for tximport, then None will be returned instead.
     """
-    num_quantified = len(results)
+    organism_indices = {}
+    for organism in experiment.organisms.all():
+        organism_indices[organism.id] = get_latest_organism_index(organism)
+
+    good_quant_files = []
+    num_unprocessable_samples = 0
+    for sample in experiment.samples.all():
+        if sample.is_unable_to_be_processed:
+            num_unprocessable_samples += 1
+        elif (
+            sample.most_recent_quant_file
+            and sample.most_recent_quant_file.s3_bucket is not None
+            and sample.most_recent_quant_file.s3_key is not None
+        ):
+            sample_organism_index = sample.most_recent_quant_file.result.organism_index
+            if sample_organism_index == organism_indices[sample.organism.id]:
+                good_quant_files.append(sample.most_recent_quant_file)
+
+    num_quantified = len(good_quant_files)
     if num_quantified == 0:
-        return False
-
-    salmon_versions = set()
-    for result in results:
-        if result.organism_index.salmon_version:
-            salmon_versions.add(result.organism_index.salmon_version)
-
-    if len(salmon_versions) > 1:
-        # Tximport requires that all samples are processed with the same salmon version
-        # https://github.com/AlexsLemonade/refinebio/issues/1496
-        return False
+        return None
 
     eligible_samples = experiment.samples.filter(source_database="SRA", technology="RNA-SEQ")
 
-    num_eligible_samples = eligible_samples.count()
-    if num_eligible_samples == 0:
-        return False
+    num_eligible_samples = eligible_samples.count() - num_unprocessable_samples
+    if num_eligible_samples <= 0:
+        return None
 
     percent_complete = num_quantified / num_eligible_samples
 
     if percent_complete == 1.0:
         # If an experiment is fully quantified then we should run
         # tximport regardless of its size.
-        return True
+        return good_quant_files
 
     if (
         is_tximport_job
         and num_eligible_samples >= EARLY_TXIMPORT_MIN_SIZE
         and percent_complete >= EARLY_TXIMPORT_MIN_PERCENT
     ):
-        return True
+        return good_quant_files
     else:
-        return False
+        return None
 
 
 def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions=True):
@@ -106,25 +123,6 @@ def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions
         latest_results.add(latest_result)
 
     return latest_results
-
-
-def get_quant_files_for_results(results: List[ComputationalResult]):
-    """Returns a list of salmon quant results from `experiment`."""
-    quant_files = []
-
-    for result in results:
-        quant_sf_file = result.get_quant_sf_file()
-        if quant_sf_file:
-            quant_files.append(quant_sf_file)
-        else:
-            logger.exception(
-                "Salmon quant result found without quant.sf ComputedFile!",
-                quant_result=result.id,
-                sample=result.samples.first(),
-            )
-            raise Exception("Salmon quant result found without quant.sf ComputedFile!")
-
-    return quant_files
 
 
 ENA_DOWNLOAD_URL_TEMPLATE = (

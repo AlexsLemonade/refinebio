@@ -90,7 +90,10 @@ def get_species_detail_by_assembly(assembly: str, division: str) -> str:
             # Generally bad to roll your own CSV parser, but some
             # encoding issue seemed to have been breaking the csv
             # parser module and this works.
-            row = line.decode("utf-8").strip().split("\t")
+            try:
+                row = line.decode("utf-8").strip().split("\t")
+            except UnicodeDecodeError:
+                row = line.decode("latin").strip().split("\t")
 
             if not header:
                 header = row
