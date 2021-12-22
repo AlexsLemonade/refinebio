@@ -145,7 +145,9 @@ class Sample(models.Model):
         return processor_jobs
 
     def get_most_recent_processor_job(self):
-        return min(self.get_processor_jobs(), key=lambda job: job.created_at)
+        processor_jobs = self.get_processor_jobs()
+        if processor_jobs:
+            return min(processor_jobs, key=lambda job: job.created_at)
 
     # Returns a set of DownloaderJob objects but we cannot specify
     # that in type hints because it hasn't been declared yet.
@@ -158,7 +160,9 @@ class Sample(models.Model):
         return downloader_jobs
 
     def get_most_recent_downloader_job(self):
-        return min(self.get_downloader_jobs(), key=lambda job: job.created_at)
+        downloader_jobs = self.get_downloader_jobs()
+        if downloader_jobs:
+            return min(downloader_jobs, key=lambda job: job.created_at)
 
     def get_result_files(self):
         """Get all of the ComputedFile objects associated with this Sample"""
