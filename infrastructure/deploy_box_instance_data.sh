@@ -33,9 +33,8 @@
 #  - Record the IPv4 Public IP of the instance you just created.
 
 
-# Finally, go into the CirlceCI web application and select the refinebio project.
-# Go to the project settings and navigate to the Environment Variables tab.
-# Click 'Add Variable' and set the name to DEPLOY_IP_ADDRESS and the value to the
+# Finally, go into the Github Actions's Secrets for the refinebio repo.
+# Click 'Add Secret' and set the name to DEPLOY_IP_ADDRESS and the value to the
 # IP address of the EC2 instance you created.
 
 # Also, if you want to be notified on slack after the deploy finishes, you can add

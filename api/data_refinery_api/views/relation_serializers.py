@@ -90,6 +90,7 @@ class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
             "pretty_platform",
             "technology",
             "is_processed",
+            "is_unable_to_be_processed",
         )
         read_only_fields = fields
 
@@ -112,6 +113,7 @@ class SampleRelationSerializer(serializers.ModelSerializer):
             "manufacturer",
             "protocol_info",
             "is_processed",
+            "is_unable_to_be_processed",
             "created_at",
             "last_modified",
         )

@@ -19,6 +19,25 @@ from data_refinery_common.models import (
 logger = get_and_configure_logger(__name__)
 
 
+UNFIXABLE_ERRORS = [
+    "The annotation package, pd.primeview, could not be loaded.",
+    "Missing gene index for primeview",
+    "Missing gene index for zebgene11st",
+    "This could be indicative of a mismatch between the reference and sample, or a very bad sample.",
+]
+
+
+def is_job_unprocessable(job):
+    if job.success is not False:
+        return False
+
+    for error in UNFIXABLE_ERRORS:
+        if job.failure_reason and error in job.failure_reason:
+            return True
+
+    return False
+
+
 def create_downloader_job(
     undownloaded_files: List[OriginalFile], *, processor_job_id=None, force=False
 ) -> bool:

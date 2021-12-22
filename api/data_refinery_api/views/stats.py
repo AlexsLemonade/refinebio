@@ -40,7 +40,7 @@ from data_refinery_common.utils import get_env_variable
 
 logger = get_and_configure_logger(__name__)
 
-JOB_CREATED_AT_CUTOFF = datetime(2019, 9, 19, tzinfo=timezone.utc)
+JOB_CREATED_AT_CUTOFF = datetime(2021, 7, 14, tzinfo=timezone.utc)
 
 # We want to cache all stats pages for 10 minutes to reduce the load on our
 # servers, because computing all of the stats is really expensive

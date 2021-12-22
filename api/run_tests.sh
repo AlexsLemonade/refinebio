@@ -19,6 +19,12 @@ if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "./scripts/run_postgres.sh" >&2
     exit 1
 fi
+# Ensure that elasticsearch is running
+if ! [ "$(docker ps --filter name=dres -q)" ]; then
+    echo "You must start elasticsearchfirst with:" >&2
+    echo "./scripts/run_es.sh" >&2
+    exit 1
+fi
 
 project_root=$(pwd) # "cd .." called above
 volume_directory="$project_root/test_volume"
@@ -32,7 +38,6 @@ fi
 . ./scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
-
 
 # Only run interactively if we are on a TTY
 if [ -t 1 ]; then

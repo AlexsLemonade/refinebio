@@ -71,6 +71,19 @@ class Sample(models.Model):
 
     # Crunch Properties
     is_processed = models.BooleanField(default=False)
+    is_unable_to_be_processed = models.BooleanField(default=False)
+    last_processor_job = models.ForeignKey("ProcessorJob", null=True, on_delete=models.SET_NULL)
+    last_downloader_job = models.ForeignKey("DownloaderJob", null=True, on_delete=models.SET_NULL)
+    # Set related_name to "+" to prevent the backwards relation, since
+    # it should be a duplicate of the relation already established by
+    # the computed_files field.
+    most_recent_smashable_file = models.ForeignKey(
+        "ComputedFile", null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    most_recent_quant_file = models.ForeignKey(
+        "ComputedFile", null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    is_unable_to_be_processed = models.BooleanField(default=False)
 
     # Blacklisting
     is_blacklisted = models.BooleanField(default=False)
@@ -131,6 +144,11 @@ class Sample(models.Model):
 
         return processor_jobs
 
+    def get_most_recent_processor_job(self):
+        processor_jobs = self.get_processor_jobs()
+        if processor_jobs:
+            return min(processor_jobs, key=lambda job: job.created_at)
+
     # Returns a set of DownloaderJob objects but we cannot specify
     # that in type hints because it hasn't been declared yet.
     def get_downloader_jobs(self) -> Set:
@@ -140,6 +158,11 @@ class Sample(models.Model):
                 downloader_jobs.add(downloader_job)
 
         return downloader_jobs
+
+    def get_most_recent_downloader_job(self):
+        downloader_jobs = self.get_downloader_jobs()
+        if downloader_jobs:
+            return min(downloader_jobs, key=lambda job: job.created_at)
 
     def get_result_files(self):
         """Get all of the ComputedFile objects associated with this Sample"""
