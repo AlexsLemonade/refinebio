@@ -48,7 +48,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 

@@ -9,6 +9,7 @@ import boto3
 from botocore.client import Config
 
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.managers import PublicObjectsManager
 from data_refinery_common.utils import calculate_file_size, calculate_sha1
 
@@ -19,7 +20,7 @@ S3 = boto3.client("s3", config=Config(signature_version="s3v4"))
 logger = get_and_configure_logger(__name__)
 
 
-class ComputedFile(models.Model):
+class ComputedFile(TimestampedModel):
     """ A representation of a file created by a data-refinery process """
 
     class Meta:
@@ -84,16 +85,6 @@ class ComputedFile(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(ComputedFile, self).save(*args, **kwargs)
 
     def sync_to_s3(self, s3_bucket, s3_key, public=False) -> bool:
         """ Syncs a file to AWS S3.

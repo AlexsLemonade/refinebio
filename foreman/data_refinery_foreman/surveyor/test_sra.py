@@ -284,4 +284,4 @@ class SraSurveyorTestCase(TestCase):
             " liver after exposure to biliatresone, a biliary toxin.",
         )
         self.assertEqual(experiment.source_first_published, datetime.date(2017, 9, 25))
-        self.assertEqual(experiment.source_last_modified, datetime.date(2017, 9, 25))
+        self.assertEqual(experiment.source_last_modified_at, datetime.date(2017, 9, 25))

@@ -44,7 +44,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
             "time_start",
             "time_end",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 

@@ -31,7 +31,7 @@ class QNTargetSerializer(serializers.ModelSerializer):
             "s3_key",
             "s3_url",
             "created_at",
-            "last_modified",
+            "last_modified_at",
             "result",
         )
         read_only_fields = fields

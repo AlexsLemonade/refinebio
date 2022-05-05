@@ -33,7 +33,7 @@ class OriginalFileSerializer(serializers.ModelSerializer):
             "is_archive",
             "has_raw",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -60,7 +60,7 @@ class OriginalFileListSerializer(serializers.ModelSerializer):
             "source_filename",
             "has_raw",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -83,7 +83,7 @@ class OriginalFileListView(generics.ListAPIView):
     ordering_fields = (
         "id",
         "created_at",
-        "last_modified",
+        "last_modified_at",
     )
     ordering = ("-id",)
 

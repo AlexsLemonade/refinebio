@@ -3,6 +3,7 @@ from typing import Dict
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
@@ -11,7 +12,7 @@ from data_refinery_common.models.jobs.job_managers import (
 )
 
 
-class SurveyJob(models.Model):
+class SurveyJob(TimestampedModel):
     """Records information about a Surveyor Job."""
 
     class Meta:
@@ -54,17 +55,6 @@ class SurveyJob(models.Model):
 
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
-
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(SurveyJob, self).save(*args, **kwargs)
 
     def get_properties(self) -> Dict:
         """ Return all associated SurveyJobKeyValues as a dict"""

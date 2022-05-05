@@ -392,7 +392,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         if "study_ena_first_public" in metadata:
             experiment.source_first_published = parse_date(metadata["study_ena_first_public"])
         if "study_ena_last_update" in metadata:
-            experiment.source_last_modified = parse_date(metadata["study_ena_last_update"])
+            experiment.source_last_modified_at = parse_date(metadata["study_ena_last_update"])
 
         if metadata.get("external_id", None) is not None:
             experiment.alternate_accession_code = metadata["external_id"]

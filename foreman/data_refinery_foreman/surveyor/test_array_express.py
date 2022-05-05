@@ -64,7 +64,7 @@ class SurveyTestCase(TestCase):
             experiment.source_first_published, datetime.datetime(2014, 10, 31, tzinfo=timezone.utc)
         )
         self.assertEqual(
-            experiment.source_last_modified, datetime.datetime(2014, 10, 30, tzinfo=timezone.utc)
+            experiment.source_last_modified_at, datetime.datetime(2014, 10, 30, tzinfo=timezone.utc)
         )
 
         sample = Sample.objects.first()

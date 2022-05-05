@@ -65,13 +65,13 @@ def retry_by_accession_codes(accession_codes_param):
     )
 
 
-def retry_by_regex(pattern, last_modified=None):
+def retry_by_regex(pattern, last_modified_at=None):
     """ Finds the samples where the failure reason of the latest processor job that was applied to them
     matches the given regex
     https://docs.djangoproject.com/en/dev/ref/models/querysets/#regex
     """
-    if last_modified:
-        processor_jobs = ProcessorJob.objects.filter(last_modified__gt=last_modified)
+    if last_modified_at:
+        processor_jobs = ProcessorJob.objects.filter(last_modified_at__gt=last_modified_at)
     else:
         processor_jobs = ProcessorJob.objects
 
@@ -95,9 +95,9 @@ def retry_by_regex(pattern, last_modified=None):
     )
 
 
-def retry_computed_files_not_uploaded(last_modified=None):
-    if last_modified:
-        computed_files = ComputedFile.objects.filter(last_modified__gt=last_modified)
+def retry_computed_files_not_uploaded(last_modified_at=None):
+    if last_modified_at:
+        computed_files = ComputedFile.objects.filter(last_modified_at__gt=last_modified_at)
     else:
         computed_files = ComputedFile.objects
 
@@ -170,7 +170,7 @@ class Command(BaseCommand):
             # Examples
             # --failure-regex="ProcessorJob has already completed .*"
             # --failure-regex="Encountered error in R code while running AFFY_TO_PCL pipeline .*"
-            retry_by_regex(options["failure_regex"], options.get("last_modified", None))
+            retry_by_regex(options["failure_regex"], options.get("last_modified_at", None))
 
         if options["computed_files_not_uploaded"]:
-            retry_computed_files_not_uploaded(options.get("last_modified", None))
+            retry_computed_files_not_uploaded(options.get("last_modified_at", None))

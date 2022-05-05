@@ -21,13 +21,13 @@ class SanityTestJobsTestCase(TestCase):
         dl_job.save()
 
     def test_time_tracking_works(self):
-        """created_at and last_modified are initialized upon creation"""
+        """created_at and last_modified_at are initialized upon creation"""
         job = SurveyJob.objects.create(source_type="ARRAY_EXPRESS")
         timedelta = timezone.now() - job.created_at
         self.assertLess(timedelta.total_seconds(), 1)
-        self.assertEqual(job.created_at, job.last_modified)
+        self.assertEqual(job.created_at, job.last_modified_at)
 
-        # When the job is updated and saved, last_modified changes
+        # When the job is updated and saved, last_modified_at changes
         job.success = False
         job.save()
-        self.assertNotEqual(job.created_at, job.last_modified)
+        self.assertNotEqual(job.created_at, job.last_modified_at)

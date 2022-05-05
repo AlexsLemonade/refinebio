@@ -3,6 +3,7 @@ from typing import Set
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
@@ -12,7 +13,7 @@ from data_refinery_common.models.jobs.job_managers import (
 from data_refinery_common.models.sample import Sample
 
 
-class DownloaderJob(models.Model):
+class DownloaderJob(TimestampedModel):
     """Records information about running a Downloader."""
 
     class Meta:
@@ -92,9 +93,6 @@ class DownloaderJob(models.Model):
     # This helps prevent an infinite loop of DownloaderJob recreation.
     was_recreated = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
     def get_samples(self) -> Set[Sample]:
         samples = set()
         for original_file in self.original_files.all():
@@ -102,14 +100,6 @@ class DownloaderJob(models.Model):
                 samples.add(sample)
 
         return samples
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(DownloaderJob, self).save(*args, **kwargs)
 
     def __str__(self):
         return "DownloaderJob " + str(self.pk) + ": " + str(self.downloader_task)

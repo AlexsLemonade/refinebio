@@ -68,7 +68,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         experiment_object.description = experiment_descripton
 
         experiment_object.source_first_published = parse_date(parsed_json["releasedate"])
-        experiment_object.source_last_modified = parse_date(cls._get_last_update_date(parsed_json))
+        experiment_object.source_last_modified_at = parse_date(cls._get_last_update_date(parsed_json))
 
     def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
         """Given an experiment accession code, create an Experiment object.
