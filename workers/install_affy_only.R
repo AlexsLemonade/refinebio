@@ -8,6 +8,7 @@ options(Ncpus=parallel::detectCores())
 devtools::install_version('dplyr', version='1.0.0')
 devtools::install_version('tidyr', version='1.1.0')
 devtools::install_version('ff', version='2.2-14')
+devtools::install_version('locfit', version='1.5-9.4')
 
 # Helper function that installs a list of packages using the input URLs
 install_with_url <- function(urls) {
