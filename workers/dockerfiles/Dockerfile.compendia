@@ -3,6 +3,7 @@ FROM nvidia/cuda:11.1-runtime-ubuntu18.04
 # This is very similar to the `smasher` image, but comes with OpenBLAS and some
 # of the other libraries required for fancyimpute.
 
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
 RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
 RUN add-apt-repository ppa:apt-fast/stable
@@ -14,21 +15,21 @@ RUN echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections
 RUN _APTMGR=apt-get apt-get install -y apt-fast
 
 RUN export DEBIAN_FRONTEND=noninteractive; \
-    export DEBCONF_NONINTERACTIVE_SEEN=true; \
-    echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections; \
-    echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
-    apt-get update -qqy \
- && apt-get install -qqy --no-install-recommends \
-        tzdata \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+  export DEBCONF_NONINTERACTIVE_SEEN=true; \
+  echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections; \
+  echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
+  apt-get update -qqy \
+  && apt-get install -qqy --no-install-recommends \
+  tzdata \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y lsb-release && \
   echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-      >> /etc/apt/sources.list.d/added_repos.list && \
+  >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
   apt-fast install -y \
