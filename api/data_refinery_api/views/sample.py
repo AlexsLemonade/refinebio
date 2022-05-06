@@ -38,7 +38,7 @@ class SampleAnnotationSerializer(serializers.ModelSerializer):
             "data",
             "is_ccdl",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -99,7 +99,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             "is_processed",
             "is_unable_to_be_processed",
             "created_at",
-            "last_modified",
+            "last_modified_at",
             "original_files",
             "computed_files",
             "last_processor_job",

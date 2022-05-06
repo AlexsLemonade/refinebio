@@ -2,10 +2,11 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.constants import CURRENT_SALMON_VERSION
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.managers import PublicObjectsManager
 
 
-class OrganismIndex(models.Model):
+class OrganismIndex(TimestampedModel):
     """ A special type of process result, necessary for processing other SRA samples """
 
     class Meta:
@@ -58,17 +59,7 @@ class OrganismIndex(models.Model):
     absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
 
     def get_computed_file(self):
         """ Short hand method for getting the computed file for this organism index"""
         return self.result.computedfile_set.first()
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(OrganismIndex, self).save(*args, **kwargs)

@@ -4,10 +4,11 @@ from django.db.models import Count
 from django.db.models.expressions import Q
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.managers import ProcessedPublicObjectsManager, PublicObjectsManager
 
 
-class Experiment(models.Model):
+class Experiment(TimestampedModel):
     """An Experiment or Study"""
 
     class Meta:
@@ -49,7 +50,7 @@ class Experiment(models.Model):
     publication_authors = ArrayField(models.TextField(), default=list)
     pubmed_id = models.CharField(max_length=32, blank=True)
     source_first_published = models.DateTimeField(null=True)
-    source_last_modified = models.DateTimeField(null=True)
+    source_last_modified_at = models.DateTimeField(null=True)
 
     # Cached Computed Properties
     num_total_samples = models.IntegerField(default=0)
@@ -62,16 +63,8 @@ class Experiment(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """On save, update timestamps"""
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-
         if self.accession_code and not self.alternate_accession_code:
             if self.accession_code.startswith("GSE"):
                 self.alternate_accession_code = "E-GEOD-" + self.accession_code[3:]
@@ -118,12 +111,12 @@ class Experiment(models.Model):
             )
         else:
             metadata["source_first_published"] = ""
-        if self.source_last_modified:
-            metadata["source_last_modified"] = self.source_last_modified.strftime(
+        if self.source_last_modified_at:
+            metadata["source_last_modified_at"] = self.source_last_modified_at.strftime(
                 "%Y-%m-%dT%H:%M:%S"
             )
         else:
-            metadata["source_last_modified"] = ""
+            metadata["source_last_modified_at"] = ""
 
         return metadata
 

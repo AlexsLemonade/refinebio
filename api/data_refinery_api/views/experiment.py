@@ -20,7 +20,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
             "data",
             "is_ccdl",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -56,9 +56,9 @@ class ExperimentSerializer(serializers.ModelSerializer):
             "organism_names",
             "submitter_institution",
             "created_at",
-            "last_modified",
+            "last_modified_at",
             "source_first_published",
-            "source_last_modified",
+            "source_last_modified_at",
             "sample_metadata",
             "technologies",
         )
@@ -103,9 +103,9 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
             "publication_authors",
             "pubmed_id",
             "source_first_published",
-            "source_last_modified",
+            "source_last_modified_at",
             "submitter_institution",
-            "last_modified",
+            "last_modified_at",
             "created_at",
             "organism_names",
             "sample_metadata",
@@ -137,9 +137,9 @@ class ExperimentListView(generics.ListAPIView):
         "organisms",
         "submitter_institution",
         "created_at",
-        "last_modified",
+        "last_modified_at",
         "source_first_published",
-        "source_last_modified",
+        "source_last_modified_at",
     )
 
     def get_queryset(self):

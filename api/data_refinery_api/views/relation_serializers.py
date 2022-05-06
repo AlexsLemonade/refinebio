@@ -52,7 +52,7 @@ class ComputedFileRelationSerializer(serializers.ModelSerializer):
             "s3_bucket",
             "s3_key",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -71,7 +71,7 @@ class ComputedFileWithUrlRelationSerializer(serializers.ModelSerializer):
             "s3_key",
             "download_url",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -115,7 +115,7 @@ class SampleRelationSerializer(serializers.ModelSerializer):
             "is_processed",
             "is_unable_to_be_processed",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -143,7 +143,7 @@ class DownloaderJobRelationSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -169,7 +169,7 @@ class ProcessorJobRelationSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -197,7 +197,7 @@ class OrganismIndexRelationSerializer(serializers.ModelSerializer):
             "salmon_version",
             "download_url",
             "result_id",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -228,7 +228,7 @@ class ProcessorRelationSerializer(serializers.ModelSerializer):
 class ComputationalResultAnnotationRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComputationalResultAnnotation
-        fields = ("id", "data", "is_ccdl", "created_at", "last_modified")
+        fields = ("id", "data", "is_ccdl", "created_at", "last_modified_at")
         read_only_fields = fields
 
 
@@ -253,7 +253,7 @@ class ComputationalResultRelationSerializer(serializers.ModelSerializer):
             "time_start",
             "time_end",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields
 
@@ -277,6 +277,6 @@ class ComputationalResultNoFilesRelationSerializer(serializers.ModelSerializer):
             "time_start",
             "time_end",
             "created_at",
-            "last_modified",
+            "last_modified_at",
         )
         read_only_fields = fields

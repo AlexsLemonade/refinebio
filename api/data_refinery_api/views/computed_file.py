@@ -52,7 +52,7 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
             "s3_url",
             "download_url",
             "created_at",
-            "last_modified",
+            "last_modified_at",
             "result",
         )
         read_only_fields = fields
@@ -90,7 +90,7 @@ class DetailedComputedFileSerializer(serializers.ModelSerializer):
             "s3_url",
             "download_url",
             "created_at",
-            "last_modified",
+            "last_modified_at",
             "result",
         )
         read_only_fields = fields
@@ -137,13 +137,13 @@ class ComputedFileListView(generics.ListAPIView):
         "svd_algorithm",
         "compendium_version",
         "created_at",
-        "last_modified",
+        "last_modified_at",
         "result__id",
     )
     ordering_fields = (
         "id",
         "created_at",
-        "last_modified",
+        "last_modified_at",
         "compendium_version",
     )
     ordering = ("-id",)

@@ -1,10 +1,11 @@
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.managers import PublicObjectsManager
 
 
-class SampleAnnotation(models.Model):
+class SampleAnnotation(TimestampedModel):
     """ Semi-standard information associated with a Sample """
 
     class Meta:
@@ -24,13 +25,3 @@ class SampleAnnotation(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(SampleAnnotation, self).save(*args, **kwargs)

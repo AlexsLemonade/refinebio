@@ -4,8 +4,10 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 
-class APIToken(models.Model):
+
+class APIToken(TimestampedModel):
     """ Required for starting a smash job """
 
     # ID
@@ -13,18 +15,6 @@ class APIToken(models.Model):
 
     # Activation
     is_activated = models.BooleanField(default=False)
-
-    # Common Properties
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(APIToken, self).save(*args, **kwargs)
 
     @property
     def terms_and_conditions(self):

@@ -3,6 +3,7 @@ from typing import Set
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.jobs.job_managers import (
     FailedJobsManager,
     HungJobsManager,
@@ -12,7 +13,7 @@ from data_refinery_common.models.jobs.job_managers import (
 from data_refinery_common.models.sample import Sample
 
 
-class ProcessorJob(models.Model):
+class ProcessorJob(TimestampedModel):
     """Records information about running a processor."""
 
     class Meta:
@@ -94,9 +95,6 @@ class ProcessorJob(models.Model):
     # If the job is retried, this is the id of the new job
     retried_job = models.ForeignKey("self", on_delete=models.SET_NULL, null=True)
 
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
     def get_samples(self) -> Set[Sample]:
         samples = set()
         for original_file in self.original_files.all():
@@ -104,14 +102,6 @@ class ProcessorJob(models.Model):
                 samples.add(sample)
 
         return samples
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(ProcessorJob, self).save(*args, **kwargs)
 
     def __str__(self):
         return "ProcessorJob " + str(self.pk) + ": " + str(self.pipeline_applied)

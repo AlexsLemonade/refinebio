@@ -1,12 +1,13 @@
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.computed_file import ComputedFile
 from data_refinery_common.models.managers import PublicObjectsManager
 
 
 # Compendium Computational Result
-class CompendiumResult(models.Model):
+class CompendiumResult(TimestampedModel):
     """ Computational Result For A Compendium """
 
     class Meta:
@@ -57,16 +58,6 @@ class CompendiumResult(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(CompendiumResult, self).save(*args, **kwargs)
 
     # helper
     def get_computed_file(self):

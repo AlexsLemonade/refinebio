@@ -7,6 +7,7 @@ from django.utils import timezone
 from data_refinery_common.constants import CURRENT_SALMON_VERSION, SYSTEM_VERSION
 from data_refinery_common.enums import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.managers import PublicObjectsManager
 from data_refinery_common.utils import (
     FileUtils,
@@ -19,7 +20,7 @@ from data_refinery_common.utils import (
 logger = get_and_configure_logger(__name__)
 
 
-class OriginalFile(models.Model):
+class OriginalFile(TimestampedModel):
     """ A representation of a file from an external source """
 
     class Meta:
@@ -72,16 +73,6 @@ class OriginalFile(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(OriginalFile, self).save(*args, **kwargs)
 
     def set_downloaded(self, absolute_file_path, filename=None):
         """ Marks the file as downloaded, if `filename` is not provided it will

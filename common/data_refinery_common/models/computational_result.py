@@ -2,6 +2,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.computational_result_annotation import (
     ComputationalResultAnnotation,
 )
@@ -9,7 +10,7 @@ from data_refinery_common.models.computed_file import ComputedFile
 from data_refinery_common.models.managers import PublicObjectsManager
 
 
-class ComputationalResult(models.Model):
+class ComputationalResult(TimestampedModel):
     """ Meta-information about the output of a computer process. (Ex Salmon) """
 
     class Meta:
@@ -45,16 +46,6 @@ class ComputationalResult(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(ComputationalResult, self).save(*args, **kwargs)
 
     # Currently unused because of pre_delete signal for computed files
     def remove_computed_files_from_s3(self):

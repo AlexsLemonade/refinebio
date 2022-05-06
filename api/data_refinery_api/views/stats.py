@@ -221,10 +221,10 @@ class Stats(APIView):
 
         # processed and unprocessed samples stats
         data["unprocessed_samples"] = cls._get_object_stats(
-            Sample.objects.filter(is_processed=False), range_param, "last_modified"
+            Sample.objects.filter(is_processed=False), range_param, "last_modified_at"
         )
         data["processed_samples"] = cls._get_object_stats(
-            Sample.processed_objects, range_param, "last_modified"
+            Sample.processed_objects, range_param, "last_modified_at"
         )
 
         data["dataset"] = cls._get_dataset_stats(range_param)
@@ -280,9 +280,9 @@ class Stats(APIView):
 
         if range_param:
             # We don't save the dates when datasets are processed, but we can use
-            # `last_modified`, since datasets aren't modified again after they are processed
+            # `last_modified_at`, since datasets aren't modified again after they are processed
             result["timeline"] = cls._get_intervals(
-                Dataset.processed_filtered_objects, range_param, "last_modified"
+                Dataset.processed_filtered_objects, range_param, "last_modified_at"
             ).annotate(total=Count("id"), total_size=Sum("size_in_bytes"))
         return result
 
@@ -290,7 +290,7 @@ class Stats(APIView):
     def _samples_processed_last_hour(cls):
         current_date = datetime.now(tz=timezone.utc)
         start = current_date - timedelta(hours=1)
-        return Sample.processed_objects.filter(last_modified__range=(start, current_date)).count()
+        return Sample.processed_objects.filter(last_modified_at__range=(start, current_date)).count()
 
     @classmethod
     def _get_input_data_size(cls):
@@ -376,7 +376,7 @@ class Stats(APIView):
         return result
 
     @classmethod
-    def _get_intervals(cls, objects, range_param, field="last_modified"):
+    def _get_intervals(cls, objects, range_param, field="last_modified_at"):
         range_to_trunc = {"day": "hour", "week": "day", "month": "day", "year": "month"}
 
         # truncate the parameterized field so it can be annotated by range

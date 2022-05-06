@@ -4,11 +4,12 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.computed_file import ComputedFile
 from data_refinery_common.models.managers import ProcessedObjectsManager, PublicObjectsManager
 
 
-class Sample(models.Model):
+class Sample(TimestampedModel):
     """
     An individual sample.
     """
@@ -90,16 +91,6 @@ class Sample(models.Model):
 
     # Common Properties
     is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """On save, update timestamps"""
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(Sample, self).save(*args, **kwargs)
 
     def to_metadata_dict(self, computed_file=None):
         """Render this Sample as a dict."""

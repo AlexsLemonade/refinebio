@@ -3,11 +3,11 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models.expressions import Q
-from django.utils import timezone
 
 import boto3
 from botocore.client import Config
 
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.experiment import Experiment
 from data_refinery_common.models.sample import Sample
 
@@ -54,7 +54,7 @@ class ProcessedFilteredDatasets(models.Manager):
         return processed_datasets
 
 
-class Dataset(models.Model):
+class Dataset(TimestampedModel):
     """A Dataset is a desired set of experiments/samples to smash and download"""
 
     class Meta:
@@ -161,20 +161,8 @@ class Dataset(models.Model):
     )
     sha1 = models.CharField(max_length=64, null=True, default="")
 
-    # Common Properties
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """On save, update timestamps"""
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(Dataset, self).save(*args, **kwargs)
-
     def get_samples(self):
-        """Retuns all of the Sample objects in this Dataset"""
+        """Returns all of the Sample objects in this Dataset"""
         all_samples = []
         for sample_list in self.data.values():
             all_samples = all_samples + sample_list
@@ -196,7 +184,7 @@ class Dataset(models.Model):
         )
 
     def get_experiments(self):
-        """Retuns all of the Experiments objects in this Dataset"""
+        """Returns all of the Experiments objects in this Dataset"""
         all_experiments = self.data.keys()
         return Experiment.objects.filter(accession_code__in=all_experiments)
 

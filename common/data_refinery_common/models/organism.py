@@ -7,6 +7,7 @@ import requests
 from computedfields.models import ComputedFieldsModel, computed
 
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models.base_models import TimestampedModel
 from data_refinery_common.models.compendium_result import CompendiumResult
 from data_refinery_common.utils import get_env_variable
 
@@ -108,7 +109,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     return int(id_list[0].text)
 
 
-class Organism(ComputedFieldsModel):
+class Organism(ComputedFieldsModel, TimestampedModel):
     """Provides a lookup between organism name and taxonomy ids.
 
     Should only be used via the two class methods get_name_for_id and
@@ -122,8 +123,6 @@ class Organism(ComputedFieldsModel):
     name = models.CharField(max_length=256, unique=True)
     taxonomy_id = models.IntegerField(unique=True)
     is_scientific_name = models.BooleanField(default=False)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
 
     experiments = models.ManyToManyField("Experiment", through="ExperimentOrganismAssociation")
     qn_target = models.ForeignKey(
@@ -148,14 +147,6 @@ class Organism(ComputedFieldsModel):
 
     def __str__(self):
         return str(self.name)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(Organism, self).save(*args, **kwargs)
 
     def get_genus(self):
         return self.name.split("_")[0]
