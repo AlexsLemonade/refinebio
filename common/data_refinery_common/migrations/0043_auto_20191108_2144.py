@@ -38,7 +38,10 @@ class Migration(migrations.Migration):
                 ),
                 ("is_public", models.BooleanField(default=True)),
             ],
-            options={"db_table": "compendium_results", "base_manager_name": "public_objects",},
+            options={
+                "db_table": "compendium_results",
+                "base_manager_name": "public_objects",
+            },
             managers=[
                 ("objects", django.db.models.manager.Manager()),
                 ("public_objects", django.db.models.manager.Manager()),
@@ -68,7 +71,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "compendium_result_organism_associations",},
+            options={
+                "db_table": "compendium_result_organism_associations",
+            },
         ),
         migrations.AddField(
             model_name="compendiumresult",

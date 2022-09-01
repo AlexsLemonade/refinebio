@@ -27,8 +27,8 @@ CHUNK_SIZE = 1024 * 256
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
-    """ Download a file from ArrayExpress via FTP. There is no Aspera endpoint
-    which I can find. """
+    """Download a file from ArrayExpress via FTP. There is no Aspera endpoint
+    which I can find."""
     try:
         logger.debug(
             "Downloading file from %s to %s.", download_url, file_path, downloader_job=job.id
@@ -45,8 +45,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
 
 
 def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> List[str]:
-    """Extract zip and return a list of the raw files.
-    """
+    """Extract zip and return a list of the raw files."""
     logger.debug("Extracting %s!", file_path, file_path=file_path, downloader_job=job.id)
     abs_with_code_raw = LOCAL_ROOT_DIR + "/" + accession_code + "/raw/"
 

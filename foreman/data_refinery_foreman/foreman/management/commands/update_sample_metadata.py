@@ -30,8 +30,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """Refreshes the metadata for all samples, or samples from a specific database
-        """
+        """Refreshes the metadata for all samples, or samples from a specific database"""
         possible_source_databases = ["ARRAY_EXPRESS", "GEO", "SRA"]
 
         if options.get("source_database", None) is None:

@@ -205,7 +205,7 @@ class APITestCases(APITestCase):
         return
 
     def tearDown(self):
-        """ Good bye """
+        """Good bye"""
         cache.clear()
         Experiment.objects.all().delete()
         ExperimentAnnotation.objects.all().delete()
@@ -483,7 +483,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_processed_samples_only(self):
-        """ Don't return unprocessed samples """
+        """Don't return unprocessed samples"""
         experiment = Experiment()
         experiment.accession_code = "GSX12345"
         experiment.is_public = True

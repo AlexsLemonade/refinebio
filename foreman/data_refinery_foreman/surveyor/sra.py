@@ -190,7 +190,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         This endpoint returns a weird format, so some custom parsing is required:
         run_accession	fastq_ftp	fastq_bytes	fastq_md5	submitted_ftp	submitted_bytes	submitted_md5	sra_ftp	sra_bytes	sra_md5
-        SRR7353755	ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz	25176;2856704;3140575	7ef1ba010dcb679217112efa380798b2;6bc5651b7103306d4d65018180ab8d0d;3856c14164612d9879d576a046a9879f	"""
+        SRR7353755	ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz	25176;2856704;3140575	7ef1ba010dcb679217112efa380798b2;6bc5651b7103306d4d65018180ab8d0d;3856c14164612d9879d576a046a9879f"""
         response = utils.requests_retry_session().get(
             ENA_FILE_REPORT_URL_TEMPLATE.format(accession=run_accession)
         )

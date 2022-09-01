@@ -108,12 +108,14 @@ class TestOntologyTerm(TestCase):
         created_terms = OntologyTerm.import_entire_ontology("cvcl")
 
         self.assertEqual(
-            OntologyTerm.objects.all().count(), 34,  # This is the number I counted in the file
+            OntologyTerm.objects.all().count(),
+            34,  # This is the number I counted in the file
         )
         self.assertEqual(OntologyTerm.objects.all().count(), created_terms)
 
         self.assertEqual(
-            "#W7079", OntologyTerm.get_or_create_from_api("CVCL:E549").human_readable_name,
+            "#W7079",
+            OntologyTerm.get_or_create_from_api("CVCL:E549").human_readable_name,
         )
 
         mock_api_call.assert_not_called()

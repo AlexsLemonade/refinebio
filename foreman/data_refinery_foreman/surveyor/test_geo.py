@@ -34,7 +34,7 @@ class SurveyTestCase(TransactionTestCase):
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_microarray.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_geo_survey_microarray(self, mock_send_task):
-        """ Run the GEO surveyor and make sure we get some files to DL!
+        """Run the GEO surveyor and make sure we get some files to DL!
 
         For an Illumina Microarray platform.
         """
@@ -87,8 +87,7 @@ class SurveyTestCase(TransactionTestCase):
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_not_agilent.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_geo_survey_not_agilent(self, mock_send_task):
-        """ Test to make sure we're setting MFG correctly
-        """
+        """Test to make sure we're setting MFG correctly"""
         self.prep_test("GSE34198")
 
         geo_surveyor = GeoSurveyor(self.survey_job)
@@ -100,7 +99,7 @@ class SurveyTestCase(TransactionTestCase):
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_agilent.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_geo_survey_agilent(self, mock_send_task):
-        """ Run the GEO surveyor and make sure we get some files to DL!
+        """Run the GEO surveyor and make sure we get some files to DL!
 
         For an Agilent Microarray platform.
         """
@@ -183,7 +182,7 @@ class SurveyTestCase(TransactionTestCase):
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.get_pubmet_id_title.yaml")
     def test_get_pubmed_id_title(self):
-        """ We scrape PMIDs now. """
+        """We scrape PMIDs now."""
         resp = get_title_and_authors_for_pubmed_id("22367537")
         self.assertEqual(
             resp[0],

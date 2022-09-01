@@ -67,7 +67,9 @@ class Migration(migrations.Migration):
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name="experiment", name="num_total_samples", field=models.IntegerField(default=0),
+            model_name="experiment",
+            name="num_total_samples",
+            field=models.IntegerField(default=0),
         ),
         migrations.AddField(
             model_name="experiment",
