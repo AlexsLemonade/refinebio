@@ -114,6 +114,7 @@ crontab -l > tempcron
 cat <<EOF >> tempcron
 0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_brainarray_gene_agreement >> /var/log/cron_job_tests.log 2>&1
 0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_tx_index_transcript_agreement >> /var/log/cron_job_tests.log 2>&1
+0 12 * * SUN /bin/bash /home/ubuntu/run_management_command.sh gather_weekly_accessions >> /var/log/gather_weekly_accessions.log 2>&1
 EOF
 # install new cron file
 crontab tempcron
