@@ -1,4 +1,3 @@
-from data_refinery_common.models.accession import Accession  # noqa
 from data_refinery_common.models.api_token import APIToken  # noqa
 from data_refinery_common.models.associations.compendium_result_organism_association import (  # noqa
     CompendiumResultOrganismAssociation,
