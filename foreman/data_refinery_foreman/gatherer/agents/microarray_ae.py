@@ -92,7 +92,7 @@ class MicroArrayExpressAccessionAgent(AccessionAgentBase):
             logger.debug(f"Processing entries {range_start} - {range_end}")
 
             response = get_response(self.DATA_URL, params=params)
-            entries = response.json().get("hits")
+            entries = response.json().get("hits", ())
             if entries:
                 entries = (
                     GatheredAccession.create_from_ma_ae_entry(entry, organism=self.organism)
