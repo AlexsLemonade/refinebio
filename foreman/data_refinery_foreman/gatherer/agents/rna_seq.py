@@ -34,6 +34,7 @@ class RNASeqAccessionAgent(AccessionAgentBase):
 
         AND = " AND "
         OR = " OR "
+        # TODO(ark): extract instrument models to a config file.
         instrument_models = (
             "HiSeq X Five",
             "HiSeq X Ten",
