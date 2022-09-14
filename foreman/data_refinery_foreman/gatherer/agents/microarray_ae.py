@@ -24,6 +24,9 @@ class MicroArrayExpressAccessionAgent(AccessionAgentBase):
     DATA_CHUNK_SIZE = 100
     DATA_URL = "https://www.ebi.ac.uk/biostudies/api/v1/search"
 
+    def __str__(self):
+        return "MicroArray ArrayExpress accession agent"
+
     def build_query(self) -> dict:
         """Returns a query dict for getting array/organism specific accessions."""
         query_dict = {
