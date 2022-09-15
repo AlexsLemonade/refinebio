@@ -1,5 +1,7 @@
-"""MicroArray ArrayExpress accession gathering automation.
-Data source: https://www.ebi.ac.uk/biostudies/help"""
+"""
+MicroArray ArrayExpress accession gathering automation.
+Data source: https://www.ebi.ac.uk/biostudies/help
+"""
 
 from typing import List, Set
 
@@ -13,7 +15,7 @@ from data_refinery_foreman.gatherer.agents.base import AccessionAgentBase
 logger = get_and_configure_logger(__name__)
 
 
-class MicroArrayExpressAccessionAgent(AccessionAgentBase):
+class AEAgent(AccessionAgentBase):
     """
     MicroArray ArrayExpress accession gathering agent. The data is fetched from
     the BioStudies database. See https://www.ebi.ac.uk/biostudies/help and
@@ -23,6 +25,9 @@ class MicroArrayExpressAccessionAgent(AccessionAgentBase):
 
     DATA_CHUNK_SIZE = 100
     DATA_URL = "https://www.ebi.ac.uk/biostudies/api/v1/search"
+    SOURCE = "ebi-biostudies"
+    SOURCE_NAME = "microarray-ae"
+    TECHNOLOGY = "microarray"
 
     def build_query(self) -> dict:
         """Returns a query dict for getting array/organism specific accessions."""
@@ -95,7 +100,9 @@ class MicroArrayExpressAccessionAgent(AccessionAgentBase):
             entries = response.json().get("hits", ())
             if entries:
                 entries = (
-                    GatheredAccession.create_from_ma_ae_entry(entry, organism=self.organism)
+                    GatheredAccession.create_from_external_entry(
+                        entry, self.SOURCE, self.TECHNOLOGY, organism=self.organism
+                    )
                     for entry in entries
                 )
                 params["page"] += 1
@@ -103,7 +110,11 @@ class MicroArrayExpressAccessionAgent(AccessionAgentBase):
                 is_done = True
 
             if self.previous_accessions:
-                entries = (entry for entry in entries if entry.code not in self.previous_accessions)
+                entries = (
+                    entry
+                    for entry in entries
+                    if entry.accession_code not in self.previous_accessions
+                )
             accessions.update(entries)
 
             # Quit after getting a sufficient amount of accessions.

@@ -1,5 +1,8 @@
-"""MicroArray GEO accession gathering automation.
-Data source: local SQLite meta DB from https://www.bioconductor.org/packages/release/bioc/html/GEOmetadb.html"""
+"""
+MicroArray GEO accession gathering automation.
+Data source: local SQLite meta DB from
+https://www.bioconductor.org/packages/release/bioc/html/GEOmetadb.html
+"""
 
 import os
 import re
@@ -13,7 +16,7 @@ from data_refinery_foreman.gatherer.agents.base import AccessionAgentBase
 logger = get_and_configure_logger(__name__)
 
 
-class MicroArrayGEOAccessionAgent(AccessionAgentBase):
+class GEOAgent(AccessionAgentBase):
     """
     MicroArray GEO accession gathering agent. The data is fetched from a local
     SQLite GEO meta database.
@@ -23,6 +26,9 @@ class MicroArrayGEOAccessionAgent(AccessionAgentBase):
     # Implement syncing procedure.
     # Update URL once the original file is available again.
     DB_PATH = "data/microarray/GEOmetadb.sqlite"
+    SOURCE = "geo-meta-db"
+    SOURCE_NAME = "microarray-geo"
+    TECHNOLOGY = "microarray"
 
     def build_query(self) -> str:
         """Returns a query for getting GEO accessions from the local SQLite meta DB."""
@@ -101,10 +107,17 @@ class MicroArrayGEOAccessionAgent(AccessionAgentBase):
             entries = filter(match_keyword, entries)
 
         entries = ({key.lower(): entry[key] for key in entry.keys()} for entry in entries)
-        entries = set((GatheredAccession.create_from_ma_geo_entry(entry) for entry in entries))
+        entries = set(
+            (
+                GatheredAccession.create_from_external_entry(entry, self.SOURCE, self.TECHNOLOGY)
+                for entry in entries
+            )
+        )
 
         if self.previous_accessions:
-            entries = (entry for entry in entries if entry.code not in self.previous_accessions)
+            entries = (
+                entry for entry in entries if entry.accession_code not in self.previous_accessions
+            )
         accessions.update(entries)
 
         return accessions

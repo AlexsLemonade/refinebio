@@ -1,5 +1,7 @@
-"""RNA-Seq accession gathering automation.
-Data source: https://www.ebi.ac.uk/ena/portal/api/"""
+"""
+RNA-Seq accession gathering automation.
+Data source: https://www.ebi.ac.uk/ena/portal/api/
+"""
 
 from json.decoder import JSONDecodeError
 from typing import List, Set
@@ -15,7 +17,7 @@ from data_refinery_foreman.gatherer.agents.base import AccessionAgentBase
 logger = get_and_configure_logger(__name__)
 
 
-class RNASeqAccessionAgent(AccessionAgentBase):
+class RNASeqAgent(AccessionAgentBase):
     """
     RNA-Seq accession gathering agent. The data is fetched from
     The European Nucleotide Archive (ENA) Portal.
@@ -25,6 +27,9 @@ class RNASeqAccessionAgent(AccessionAgentBase):
 
     DATA_CHUNK_SIZE = 10000
     DATA_URL = "https://www.ebi.ac.uk/ena/portal/api/search"
+    SOURCE = "ebi-ena-portal"
+    SOURCE_NAME = "rna-seq"
+    TECHNOLOGY = "rna-seq"
 
     def build_query(self, taxon_id: str = None) -> str:
         """
@@ -174,7 +179,12 @@ class RNASeqAccessionAgent(AccessionAgentBase):
             try:
                 response = get_response(self.DATA_URL, data=data)
                 entries = response.json()
-                entries = (GatheredAccession.create_from_rnaseq_entry(entry) for entry in entries)
+                entries = (
+                    GatheredAccession.create_from_external_entry(
+                        entry, self.SOURCE, self.TECHNOLOGY
+                    )
+                    for entry in entries
+                )
             except JSONDecodeError:
                 is_done = True
             except TypeError:
@@ -182,7 +192,11 @@ class RNASeqAccessionAgent(AccessionAgentBase):
             data["offset"] += self.DATA_CHUNK_SIZE
 
             if self.previous_accessions:
-                entries = (entry for entry in entries if entry.code not in self.previous_accessions)
+                entries = (
+                    entry
+                    for entry in entries
+                    if entry.accession_code not in self.previous_accessions
+                )
             accessions.update(entries)
 
             # Quit after getting a sufficient amount of accessions.
