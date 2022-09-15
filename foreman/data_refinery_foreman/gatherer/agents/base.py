@@ -66,7 +66,10 @@ class AccessionAgentBase(ABC):
 
         # Gathered accessions.
         self.previous_accessions.update(
-            (entry["code"] for entry in GatheredAccession.objects.values("code"))
+            (
+                entry["accession_code"]
+                for entry in GatheredAccession.objects.values("accession_code")
+            )
         )
 
         # Surveyed accessions.

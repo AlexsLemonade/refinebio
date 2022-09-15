@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("code", models.TextField(unique=True)),
+                ("accession_code", models.TextField(unique=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("last_modified_at", models.DateTimeField(auto_now=True)),
                 ("organism", models.TextField()),
