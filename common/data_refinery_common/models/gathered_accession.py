@@ -10,7 +10,7 @@ class GatheredAccession(models.Model):
     class Meta:
         db_table = "gathered_accessions"
 
-    code = models.TextField(unique=True)
+    accession_code = models.TextField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified_at = models.DateTimeField(auto_now=True)
     organism = models.TextField()
@@ -21,64 +21,44 @@ class GatheredAccession(models.Model):
 
     def __eq__(self, other: object) -> bool:
         """Returns True if two objects are equal. Otherwise returns False."""
-        return isinstance(other, GatheredAccession) and self.code == other.code
+        return isinstance(other, GatheredAccession) and self.accession_code == other.accession_code
 
     def __hash__(self) -> int:
         """Returns accession object unique hash value."""
-        return hash(self.code)
+        return hash(self.accession_code)
 
     def __str__(self) -> str:
         """Returns accession default string representation."""
-        return ", ".join((self.code, self.technology, self.source, str(self.published_date.date())))
+        return ", ".join(
+            (
+                self.accession_code,
+                self.technology,
+                self.source,
+                str(self.published_date.date()),
+            )
+        )
 
     @staticmethod
-    def create_from_ma_ae_entry(entry, organism=None):
+    def create_from_external_entry(data, source, technology, organism=None):
         """Creates accession object from MicroArray ArrayExpress entry."""
         accession = GatheredAccession()
-        accession.code = entry["accession"]
-        accession.source = "ebi_biostudies"
-        accession.technology = "microarray"
 
+        accession.accession_code = (
+            data.get("accession") or data.get("gse") or data.get("secondary_study_accession")
+        )
+
+        organism = data.get("organism") or data.get("scientific_name") or organism
         if organism:
-            accession.organism = organism
-        if "release_date" in entry:
-            accession.published_date = timezone.make_aware(
-                datetime.strptime(entry["release_date"], "%Y-%m-%d")
-            )
+            accession.organism = organism.lower()
 
-        return accession
+        published_date = (
+            data.get("first_public") or data.get("release_date") or data.get("submission_date")
+        )
+        accession.published_date = timezone.make_aware(
+            datetime.strptime(published_date, "%Y-%m-%d")
+        )
 
-    @staticmethod
-    def create_from_ma_geo_entry(entry):
-        """Creates accession object from MicroArray GEO meta DB entry."""
-        accession = GatheredAccession()
-        accession.code = entry["gse"]
-        accession.source = "geo_meta_db"
-        accession.technology = "microarray"
-
-        if "organism" in entry:
-            accession.organism = entry["organism"].lower()
-        if "submission_date" in entry:
-
-            accession.published_date = timezone.make_aware(
-                datetime.strptime(entry["submission_date"], "%Y-%m-%d")
-            )
-
-        return accession
-
-    @staticmethod
-    def create_from_rnaseq_entry(entry):
-        """Creates accession object from RNA-Seq entry."""
-        accession = GatheredAccession()
-        accession.code = entry["secondary_study_accession"]
-        accession.source = "ebi_ena_portal"
-        accession.technology = "rna-seq"
-
-        if "scientific_name" in entry:
-            accession.organism = entry["scientific_name"].lower()
-        if "first_public" in entry:
-            accession.published_date = timezone.make_aware(
-                datetime.strptime(entry["first_public"], "%Y-%m-%d")
-            )
+        accession.source = source
+        accession.technology = technology
 
         return accession
