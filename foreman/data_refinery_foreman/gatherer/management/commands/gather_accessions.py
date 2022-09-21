@@ -15,9 +15,9 @@ from django.db.utils import IntegrityError
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.gathered_accession import GatheredAccession
-from data_refinery_foreman.gatherer.agents.microarray_ae import AEAgent
-from data_refinery_foreman.gatherer.agents.microarray_geo import GEOAgent
-from data_refinery_foreman.gatherer.agents.rna_seq import RNASeqAgent
+from data_refinery_foreman.gatherer.agents.ae_agent import AEAgent
+from data_refinery_foreman.gatherer.agents.geo_agent import GEOAgent
+from data_refinery_foreman.gatherer.agents.rnaseq_agent import RNASeqAgent
 
 logger = get_and_configure_logger(__name__)
 
