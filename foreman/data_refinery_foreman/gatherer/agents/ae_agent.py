@@ -32,6 +32,9 @@ class AEAgent(AccessionAgentBase):
     def __str__(self):
         return "MicroArray ArrayExpress accession agent"
 
+    def __str__(self):
+        return "MicroArray ArrayExpress accession agent"
+
     def build_query(self) -> dict:
         """Returns a query dict for getting array/organism specific accessions."""
         query_dict = {
