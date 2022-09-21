@@ -29,6 +29,9 @@ class AEAgent(AccessionAgentBase):
     SOURCE_NAME = "microarray-ae"
     TECHNOLOGY = "microarray"
 
+    def __str__(self):
+        return "MicroArray ArrayExpress accession agent"
+
     def build_query(self) -> dict:
         """Returns a query dict for getting array/organism specific accessions."""
         query_dict = {

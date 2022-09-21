@@ -7,13 +7,14 @@ Data sources:
 """
 
 import argparse
-import logging
 import re
 
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
+from django.template.defaultfilters import pluralize
 
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import gathered_accession
 from data_refinery_common.models.gathered_accession import GatheredAccession
 from data_refinery_foreman.gatherer.agents.ae_agent import AEAgent
 from data_refinery_foreman.gatherer.agents.geo_agent import GEOAgent
@@ -88,13 +89,6 @@ class Command(BaseCommand):
             help="Keyword to use for filtering.",
         )
         parser.add_argument(
-            "-lv",
-            "--log-verbose",
-            action="store_true",
-            default=False,
-            help="Enable verbose log output.",
-        )
-        parser.add_argument(
             "-ne",
             "--no-exclude-previous",
             action="store_false",
@@ -138,14 +132,6 @@ class Command(BaseCommand):
             type=str,
             help="Collect accessions made public before or on this date.",
         )
-
-    def set_verbosity_level(self, options) -> None:
-        """Configures log verbosity level."""
-        if options["log_verbose"]:
-            logger.addHandler(logging.StreamHandler())
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.ERROR)
 
     def validate_args(self, options) -> None:
         """Validates arguments."""
@@ -208,7 +194,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Creates agents and runs the accession gathering process."""
         self.validate_args(options)
-        self.set_verbosity_level(options)
 
         agents = list()
         sources_names = options["source"] or self.DATA_SOURCE_NAMES
@@ -217,28 +202,52 @@ class Command(BaseCommand):
                 continue
             agents.append(cls(options))
 
-        entries = set()
+        gathered_accessions = set()
+        gathered_accessions_count = 0
         for agent in agents:
-            entries.update(agent.collect_data())
+            agent_accessions = agent.collect_data()
+            agent_accessions_count = len(agent_accessions)
 
-        entries = sorted(  # Sort the resulting list.
-            (entry for entry in entries if self.RE_ACCESSION.match(entry.accession_code)),
-            key=lambda entry: (
-                self.RE_ACCESSION.match(entry.accession_code).group(1),
-                int(self.RE_ACCESSION.match(entry.accession_code).group(2)),
+            gathered_accessions.update(agent_accessions)
+            gathered_accessions_count += agent_accessions_count
+
+            logger.info(
+                f"{agent} gathered {agent_accessions_count} "
+                f"new accession{pluralize(gathered_accessions_count)} since {options['since']}."
+            )
+
+        gathered_accessions = sorted(  # Sort the resulting list.
+            (ga for ga in gathered_accessions if self.RE_ACCESSION.match(ga.code)),
+            key=lambda ga: (
+                self.RE_ACCESSION.match(ga.code).group(1),
+                int(self.RE_ACCESSION.match(ga.code).group(2)),
             ),
         )
         # Limit the number of output entries.
-        entries = entries[: options["count"]] if options["count"] else entries
+        gathered_accessions = (
+            gathered_accessions[: options["count"]] if options["count"] else gathered_accessions
+        )
+
+        agents_count = len(agents)
+        logger.info(
+            f"{gathered_accessions_count} new accession{pluralize(gathered_accessions_count)} "
+            f"w{pluralize(gathered_accessions_count, 'as,ere')} gathered by {agents_count} "
+            f"accession agent{pluralize(agents_count)} since {options['since']}."
+        )
 
         if options["dry_run"]:
-            if entries:
-                output = "\n".join((str(entry) for entry in entries))
+            if gathered_accessions:
+                output = "\n".join((str(ga) for ga in gathered_accessions))
             else:
-                output = "No accessions found."
+                output = "No new accessions gathered."
             print(output)
         else:
             try:
-                GatheredAccession.objects.bulk_create(entries)
+                GatheredAccession.objects.bulk_create(gathered_accessions)
+                added_accessions_count = len(gathered_accessions)
+                logger.info(
+                    f"{added_accessions_count} new accession{pluralize(added_accessions_count)} "
+                    f"w{pluralize(added_accessions_count, 'as,ere')} added to the database. "
+                )
             except IntegrityError as e:
                 logger.exception(f"Could not save new accessions to the database: {e}")
