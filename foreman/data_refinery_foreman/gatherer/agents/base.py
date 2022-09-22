@@ -8,8 +8,7 @@ from requests.exceptions import ConnectionError, ConnectTimeout
 from urllib3.exceptions import ProtocolError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models.experiment import Experiment
-from data_refinery_common.models.gathered_accession import GatheredAccession
+from data_refinery_common.models import GatheredAccession, SurveyedAccession
 
 logger = get_and_configure_logger(__name__)
 
@@ -60,7 +59,7 @@ class AccessionAgentBase(ABC):
         pass
 
     def populate_previous_accessions(self) -> None:
-        """Populates previous accession set from a provided excluded ids file."""
+        """Populates previous accession set from gathered/surveyed accessions."""
         if not self.options["exclude_previous"] or self.previous_accessions:
             return
 
@@ -73,10 +72,6 @@ class AccessionAgentBase(ABC):
         )
 
         # Surveyed accessions.
-        experiments = Experiment.objects.values("accession_code", "alternate_accession_code")
         self.previous_accessions.update(
-            (experiment["accession_code"] for experiment in experiments)
-        )
-        self.previous_accessions.update(
-            (experiment["alternate_accession_code"] for experiment in experiments)
+            (sa["accession_code"] for sa in SurveyedAccession.objects.values("accession_code"))
         )
