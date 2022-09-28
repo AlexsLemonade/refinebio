@@ -9,6 +9,10 @@ class GatheredAccession(models.Model):
 
     class Meta:
         db_table = "gathered_accessions"
+        indexes = (
+            models.Index(fields=("accession_code",)),
+            models.Index(fields=("created_at",)),
+        )
 
     accession_code = models.TextField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
