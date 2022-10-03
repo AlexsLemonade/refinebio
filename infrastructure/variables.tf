@@ -256,7 +256,7 @@ output "environment_variables" {
     },
     {
       name = "DATABASE_NAME"
-      value = aws_db_instance.postgres_db.name
+      value = aws_db_instance.postgres_db.db_name
     },
     {
       name = "DATABASE_HOST"
