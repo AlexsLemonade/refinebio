@@ -7,31 +7,8 @@ data "aws_ami" "ubuntu" {
   owners = ["589864003899"]
 
   filter {
-    name = "name"
+    name   = "name"
     values = ["ccdl-ubuntu-18.04-*"]
-  }
-}
-
-# This script smusher exists in order to be able to circumvent a
-# limitation of AWS which is that you get one script and one script
-# only to set up the instance when it boots up. Because there is only
-# one script you cannot place additional files your script may need
-# onto the instance. Therefore this script smusher templates the files
-# the instance-user-data.sh script needs into it, so that once it
-# makes its way onto the instance it can spit them back out onto the
-# disk.
-data "template_file" "worker_script_smusher" {
-  template = file("workers-configuration/workers-instance-user-data.tpl.sh")
-
-  vars = {
-    user = var.user
-    stage = var.stage
-    region = var.region
-    database_host = aws_instance.pg_bouncer.private_ip
-    database_port = var.database_port
-    database_user = var.database_user
-    database_password = var.database_password
-    database_name = aws_db_instance.postgres_db.name
   }
 }
 
@@ -53,7 +30,7 @@ data "aws_caller_identity" "current" {
 }
 
 resource "aws_elasticsearch_domain" "es" {
-  domain_name = "es-${var.user}-${var.stage}"
+  domain_name           = "es-${var.user}-${var.stage}"
   elasticsearch_version = "6.3"
 
   advanced_options = {
@@ -109,7 +86,7 @@ CONFIG
     var.default_tags,
     {
       Domain = "es-${var.user}-${var.stage}"
-      Name = "es-${var.user}-${var.stage}"
+      Name   = "es-${var.user}-${var.stage}"
     }
   )
 }
@@ -130,56 +107,43 @@ data "local_file" "api_environment" {
   filename = "api-configuration/environment"
 }
 
-# This script smusher serves a similar purpose to
-# ${data.template_file.worker_script_smusher} but for the Nginx/API.
-data "template_file" "api_server_script_smusher" {
-  template = file("api-configuration/api-server-instance-user-data.tpl.sh")
-
-  vars = {
-    nginx_config = data.local_file.api_nginx_config.content
-    api_environment = data.local_file.api_environment.content
-    dockerhub_repo = var.dockerhub_repo
-    api_docker_image = var.api_docker_image
-    data_refinery_cert_bucket = aws_s3_bucket.data_refinery_cert_bucket.id
-    user = var.user
-    stage = var.stage
-    region = var.region
-    database_host = aws_instance.pg_bouncer.private_ip
-    database_user = var.database_user
-    database_password = var.database_password
-    database_name = aws_db_instance.postgres_db.name
-    elasticsearch_host = aws_elasticsearch_domain.es.endpoint
-    elasticsearch_port = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
-    log_group = aws_cloudwatch_log_group.data_refinery_log_group.name
-    log_stream = aws_cloudwatch_log_stream.log_stream_api.name
-  }
-
-  depends_on = [
-    aws_db_instance.postgres_db,
-    aws_elasticsearch_domain.es,
-    aws_instance.pg_bouncer,
-    aws_security_group_rule.data_refinery_api_http,
-    aws_security_group_rule.data_refinery_api_outbound,
-    aws_s3_bucket.data_refinery_cert_bucket,
-  ]
-}
-
 resource "aws_instance" "api_server_1" {
-  ami = data.aws_ami.ubuntu.id
-  instance_type = var.api_instance_type
-  availability_zone = "${var.region}a"
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.api_instance_type
+  availability_zone      = "${var.region}a"
   vpc_security_group_ids = [aws_security_group.data_refinery_api.id]
-  iam_instance_profile = aws_iam_instance_profile.data_refinery_api.name
-  subnet_id = aws_subnet.data_refinery_1a.id
+  iam_instance_profile   = aws_iam_instance_profile.data_refinery_api.name
+  subnet_id              = aws_subnet.data_refinery_1a.id
   depends_on = [
     aws_db_instance.postgres_db,
     aws_elasticsearch_domain.es,
     aws_instance.pg_bouncer,
+    aws_s3_bucket.data_refinery_cert_bucket,
     aws_security_group_rule.data_refinery_api_http,
     aws_security_group_rule.data_refinery_api_outbound,
   ]
-  user_data = data.template_file.api_server_script_smusher.rendered
-  key_name = aws_key_pair.data_refinery.key_name
+
+  user_data = templatefile("api-configuration/api-server-instance-user-data.tpl.sh",
+    {
+      api_docker_image          = var.api_docker_image
+      api_environment           = data.local_file.api_environment.content
+      data_refinery_cert_bucket = aws_s3_bucket.data_refinery_cert_bucket.id
+      database_host             = aws_instance.pg_bouncer.private_ip
+      database_name             = aws_db_instance.postgres_db.db_name
+      database_password         = var.database_password
+      database_user             = var.database_user
+      dockerhub_repo            = var.dockerhub_repo
+      elasticsearch_host        = aws_elasticsearch_domain.es.endpoint
+      elasticsearch_port        = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
+      log_group                 = aws_cloudwatch_log_group.data_refinery_log_group.name
+      log_stream                = aws_cloudwatch_log_stream.log_stream_api.name
+      nginx_config              = data.local_file.api_nginx_config.content
+      region                    = var.region
+      stage                     = var.stage
+      user                      = var.user
+    }
+  )
+  key_name  = aws_key_pair.data_refinery.key_name
 
   tags = merge(
     var.default_tags,
@@ -210,44 +174,44 @@ data "local_file" "foreman_environment" {
   filename = "foreman-configuration/environment"
 }
 
-# This script smusher serves a similar purpose to
-# ${data.template_file.worker_script_smusher} but for the Foreman.
-data "template_file" "foreman_server_script_smusher" {
-  template = file(
-    "foreman-configuration/foreman-server-instance-user-data.tpl.sh",
-  )
-
-  vars = {
-    foreman_environment = data.local_file.foreman_environment.content
-    dockerhub_repo = var.dockerhub_repo
-    foreman_docker_image = var.foreman_docker_image
-    user = var.user
-    stage = var.stage
-    region = var.region
-    database_host = aws_instance.pg_bouncer.private_ip
-    database_user = var.database_user
-    database_password = var.database_password
-    database_name = aws_db_instance.postgres_db.name
-    elasticsearch_host = aws_elasticsearch_domain.es.endpoint
-    elasticsearch_port = var.elasticsearch_port
-    log_group = aws_cloudwatch_log_group.data_refinery_log_group.name
-  }
-}
-
 resource "aws_instance" "foreman_server_1" {
-  ami = data.aws_ami.ubuntu.id
-  instance_type = var.foreman_instance_type
-  availability_zone = "${var.region}a"
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.foreman_instance_type
+  availability_zone      = "${var.region}a"
   vpc_security_group_ids = [aws_security_group.data_refinery_foreman.id]
-  iam_instance_profile = aws_iam_instance_profile.data_refinery_foreman.name
-  subnet_id = aws_subnet.data_refinery_1a.id
+  iam_instance_profile   = aws_iam_instance_profile.data_refinery_foreman.name
+  subnet_id              = aws_subnet.data_refinery_1a.id
+
   depends_on = [
     aws_db_instance.postgres_db,
-    aws_instance.pg_bouncer,
     aws_elasticsearch_domain.es,
+    aws_instance.pg_bouncer,
+    aws_s3_bucket.data_refinery_cert_bucket,
+    aws_security_group_rule.data_refinery_api_http,
+    aws_security_group_rule.data_refinery_api_outbound,
   ]
-  user_data = data.template_file.foreman_server_script_smusher.rendered
-  key_name = aws_key_pair.data_refinery.key_name
+
+  user_data = templatefile("api-configuration/api-server-instance-user-data.tpl.sh",
+    {
+      api_docker_image          = var.api_docker_image
+      api_environment           = data.local_file.api_environment.content
+      data_refinery_cert_bucket = aws_s3_bucket.data_refinery_cert_bucket.id
+      database_host             = aws_instance.pg_bouncer.private_ip
+      database_name             = aws_db_instance.postgres_db.db_name
+      database_password         = var.database_password
+      database_user             = var.database_user
+      dockerhub_repo            = var.dockerhub_repo
+      elasticsearch_host        = aws_elasticsearch_domain.es.endpoint
+      elasticsearch_port        = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
+      log_group                 = aws_cloudwatch_log_group.data_refinery_log_group.name
+      log_stream                = aws_cloudwatch_log_stream.log_stream_api.name
+      nginx_config              = data.local_file.api_nginx_config.content
+      region                    = var.region
+      stage                     = var.stage
+      user                      = var.user
+    }
+  )
+  key_name  = aws_key_pair.data_refinery.key_name
 
   tags = merge(
     var.default_tags,
