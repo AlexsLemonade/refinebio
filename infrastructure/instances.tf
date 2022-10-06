@@ -191,24 +191,22 @@ resource "aws_instance" "foreman_server_1" {
     aws_security_group_rule.data_refinery_api_outbound,
   ]
 
-  user_data = templatefile("api-configuration/api-server-instance-user-data.tpl.sh",
+  user_data = templatefile("foreman-configuration/foreman-server-instance-user-data.tpl.sh",
     {
-      api_docker_image          = var.api_docker_image
-      api_environment           = data.local_file.api_environment.content
-      data_refinery_cert_bucket = aws_s3_bucket.data_refinery_cert_bucket.id
-      database_host             = aws_instance.pg_bouncer.private_ip
-      database_name             = aws_db_instance.postgres_db.db_name
-      database_password         = var.database_password
-      database_user             = var.database_user
-      dockerhub_repo            = var.dockerhub_repo
-      elasticsearch_host        = aws_elasticsearch_domain.es.endpoint
-      elasticsearch_port        = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
-      log_group                 = aws_cloudwatch_log_group.data_refinery_log_group.name
-      log_stream                = aws_cloudwatch_log_stream.log_stream_api.name
-      nginx_config              = data.local_file.api_nginx_config.content
-      region                    = var.region
-      stage                     = var.stage
-      user                      = var.user
+      accession_gathering_job_run_day = var.accession_gathering_job_run_day
+      database_host = aws_instance.pg_bouncer.private_ip
+      database_name = aws_db_instance.postgres_db.name
+      database_password = var.database_password
+      database_user = var.database_user
+      dockerhub_repo = var.dockerhub_repo
+      elasticsearch_host = aws_elasticsearch_domain.es.endpoint
+      elasticsearch_port = var.elasticsearch_port
+      foreman_docker_image = var.foreman_docker_image
+      foreman_environment = data.local_file.foreman_environment.content
+      log_group = aws_cloudwatch_log_group.data_refinery_log_group.name
+      region = var.region
+      stage = var.stage
+      user = var.user
     }
   )
   key_name  = aws_key_pair.data_refinery.key_name
