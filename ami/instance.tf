@@ -1,5 +1,4 @@
 provider "aws" {
-  version = "2.70.0"
   region = "us-east-1"
 }
 
@@ -26,10 +25,14 @@ resource "aws_instance" "ubuntu-ami-template-instance" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = data.template_file.ubuntu_instance_user_data.rendered
+  user_data = templatefile("ubuntu-instance-user-data.tpl.sh", {
+      docker_apt_key = data.local_file.docker_apt_key.content
+    }
+  )
 
-  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   associate_public_ip_address = true
+  key_name = "data-refinery-key-circleci-prod"
+  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   vpc_security_group_ids = [aws_security_group.ami_template_instance.id]
 
   tags = {
@@ -46,11 +49,14 @@ resource "aws_instance" "ecs-ami-template-instance" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = data.template_file.ecs_instance_user_data.rendered
+  user_data = templatefile("ecs-instance-user-data.tpl.sh", {
+      docker_apt_key = data.local_file.docker_apt_key.content
+    }
+  )
 
-  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   associate_public_ip_address = true
   key_name = "data-refinery-key-circleci-prod"
+  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   vpc_security_group_ids = [aws_security_group.ami_template_instance.id]
 
   tags = {
