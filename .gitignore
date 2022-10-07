@@ -17,11 +17,12 @@ foreman/batch-job-specs/*
 !foreman/batch-job-specs/*.tpl
 
 # Terraform
-infrastructure/.terraform/
-ami/.terraform/
-.circleci/s3_tfstate/.terraform
+.terraform
+.terraform.lock.hcl
 infrastructure/api-configuration/environment
 infrastructure/foreman-configuration/environment
+terraform.tfstate
+terraform.tfstate.backup
 
 # Files that are created during deploys
 infrastructure/batch-job-templates/
@@ -141,6 +142,7 @@ dr_env/
 
 #VS Code
 .vscode
+*.code-workspace
 
 # OSX
 .DS_Store
@@ -154,3 +156,6 @@ dr_env/
 
 # vim swp files
 *.*.swp
+
+# Other
+errors.txt
