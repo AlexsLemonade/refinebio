@@ -205,7 +205,7 @@ class APITestCases(APITestCase):
         return
 
     def tearDown(self):
-        """ Good bye """
+        """Good bye"""
         cache.clear()
         Experiment.objects.all().delete()
         ExperimentAnnotation.objects.all().delete()
@@ -256,11 +256,12 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("survey_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["results"][0]["is_queued"])
+        job = response.data["results"][0]
+        self.assertFalse(job["is_queued"])
         cache.clear()
 
         response = self.client.get(
-            reverse("survey_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
+            reverse("survey_jobs_detail", kwargs={"id": job["id"], "version": API_VERSION})
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["is_queued"])
@@ -268,16 +269,15 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("downloader_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["results"][0]["is_queued"])
+        job = response.data["results"][0]
+        self.assertFalse(job["is_queued"])
         cache.clear()
 
-        # Don't know the best way to deal with this, but since the
-        # other tests in different files create objects which are then
-        # deleted, the new objects from these tests will have
-        # different IDs. In this case, since this file is ran first,
-        # the IDs are 1, but this may be a problem in the future.
         response = self.client.get(
-            reverse("downloader_jobs", kwargs={"version": API_VERSION}) + "1/"  # change back
+            reverse(
+                "downloader_jobs_detail",
+                kwargs={"id": job["id"], "version": API_VERSION},
+            )
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["is_queued"])
@@ -285,11 +285,15 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("processor_jobs", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["results"][0]["is_queued"])
+        job = response.data["results"][0]
+        self.assertFalse(job["is_queued"])
         cache.clear()
 
         response = self.client.get(
-            reverse("processor_jobs", kwargs={"version": API_VERSION}) + "1/"
+            reverse(
+                "processor_jobs_detail",
+                kwargs={"id": job["id"], "version": API_VERSION},
+            )
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["is_queued"])
@@ -301,9 +305,12 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse("results", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        result = response.data["results"][0]
         cache.clear()
 
-        response = self.client.get(reverse("results", kwargs={"version": API_VERSION}) + "1/")
+        response = self.client.get(
+            reverse("results_detail", kwargs={"id": result["id"], "version": API_VERSION})
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         cache.clear()
 
@@ -311,16 +318,14 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         cache.clear()
 
-        response = self.client.get(
-            reverse("transcriptome_indices", kwargs={"version": API_VERSION})
-            + "?organism__name=DANIO_RERIO"
+        transcriptome_indices_url = reverse(
+            "transcriptome_indices", kwargs={"version": API_VERSION}
         )
+        response = self.client.get(f"{transcriptome_indices_url}?organism__name=DANIO_RERIO")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         cache.clear()
 
-        response = self.client.get(
-            reverse("transcriptome_indices", kwargs={"version": API_VERSION}) + "?result_id=1"
-        )
+        response = self.client.get(f"{transcriptome_indices_url}?result_id={result['id']}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         cache.clear()
 
@@ -415,14 +420,16 @@ class APITestCases(APITestCase):
         cache.clear()
 
         response = self.client.get(
-            reverse("samples", kwargs={"version": API_VERSION}), {"limit": 1, "ordering": "-title"}
+            reverse("samples", kwargs={"version": API_VERSION}),
+            {"limit": 1, "ordering": "-title"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["title"], "789")
         cache.clear()
 
         response = self.client.get(
-            reverse("samples", kwargs={"version": API_VERSION}), {"limit": 1, "ordering": "title"}
+            reverse("samples", kwargs={"version": API_VERSION}),
+            {"limit": 1, "ordering": "title"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["results"][0]["title"], "123")
@@ -460,7 +467,10 @@ class APITestCases(APITestCase):
 
     def test_sample_detail_experiment_accessions(self):
         response = self.client.get(
-            reverse("samples_detail", kwargs={"version": API_VERSION, "accession_code": "789"})
+            reverse(
+                "samples_detail",
+                kwargs={"version": API_VERSION, "accession_code": "789"},
+            )
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["experiment_accession_codes"], ["GSE123"])
@@ -483,7 +493,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_processed_samples_only(self):
-        """ Don't return unprocessed samples """
+        """Don't return unprocessed samples"""
         experiment = Experiment()
         experiment.accession_code = "GSX12345"
         experiment.is_public = True
@@ -552,7 +562,8 @@ class APITestCases(APITestCase):
 
         # Now activate using a second request
         response = self.client.post(
-            reverse("token", kwargs={"version": API_VERSION}), content_type="application/json"
+            reverse("token", kwargs={"version": API_VERSION}),
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         token = response.json()

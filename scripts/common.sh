@@ -20,7 +20,7 @@ get_docker_es_ip_address () {
 # then exit with the appropriate code.
 # This is done a function so arguments to the tests can be passed through.
 run_tests_with_coverage () {
-    COVERAGE="coverage run --source=\".\" manage.py test --no-input $*; exit_code=\$?;"
+    COVERAGE="coverage run --source=\".\" manage.py test --settings=tests.settings --no-input $*; exit_code=\$?;"
     SAVE_REPORT="coverage xml -o data_store/coverage.xml;"
     PRINT_REPORT="coverage report -m;"
     RETURN="exit \$exit_code"

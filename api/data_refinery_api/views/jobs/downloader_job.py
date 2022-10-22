@@ -120,7 +120,7 @@ class DownloaderJobListView(generics.ListAPIView):
 
 
 class DownloaderJobDetailView(generics.RetrieveAPIView):
-    """ Retrieves a DownloaderJob by ID """
+    """Retrieves a DownloaderJob by ID"""
 
     lookup_field = "id"
     model = DownloaderJob

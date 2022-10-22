@@ -6,7 +6,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_api.test.test_api_general import API_VERSION
+from tests.views.test_api_general import API_VERSION
+
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -205,7 +206,12 @@ class DatasetTestCase(APITestCase):
 
         # Good, except for empty email.
         jdata = json.dumps(
-            {"start": True, "data": {"GSE123": ["789"]}, "token_id": token_id, "email_address": "",}
+            {
+                "start": True,
+                "data": {"GSE123": ["789"]},
+                "token_id": token_id,
+                "email_address": "",
+            }
         )
         response = self.client.post(
             reverse("create_dataset", kwargs={"version": API_VERSION}),
@@ -328,7 +334,8 @@ class DatasetTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "Non-downloadable sample(s) in dataset", response.json()["message"],
+            "Non-downloadable sample(s) in dataset",
+            response.json()["message"],
         )
         self.assertEqual(response.json()["details"], ["456"])
         cache.clear()
@@ -341,7 +348,8 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertIn(
-            "Sample(s) in dataset do not exist on refine", response.json()["message"],
+            "Sample(s) in dataset do not exist on refine",
+            response.json()["message"],
         )
         self.assertEqual(response.status_code, 400)
         cache.clear()
@@ -374,7 +382,8 @@ class DatasetTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "Sample(s) in dataset are missing quant.sf files", response.json()["message"],
+            "Sample(s) in dataset are missing quant.sf files",
+            response.json()["message"],
         )
         self.assertEqual(response.json()["details"], ["456"])
         cache.clear()
@@ -394,7 +403,8 @@ class DatasetTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "Experiment(s) in dataset have zero downloadable samples", response.json()["message"],
+            "Experiment(s) in dataset have zero downloadable samples",
+            response.json()["message"],
         )
         self.assertEqual(response.json()["details"], ["GSE123"])
         cache.clear()

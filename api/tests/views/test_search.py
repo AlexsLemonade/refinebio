@@ -6,7 +6,8 @@ from django.core.management import call_command
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from data_refinery_api.test.test_api_general import API_VERSION
+from tests.views.test_api_general import API_VERSION
+
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -66,7 +67,11 @@ class ESTestCases(APITestCase):
         sample.accession_code = "123"
         sample.save()
 
-        organism = Organism(name=ECOLI_STRAIN_NAME, taxonomy_id=879462, is_scientific_name=True,)
+        organism = Organism(
+            name=ECOLI_STRAIN_NAME,
+            taxonomy_id=879462,
+            is_scientific_name=True,
+        )
         organism.save()
 
         sample = Sample()
