@@ -14,7 +14,6 @@ from django.db.utils import IntegrityError
 from django.template.defaultfilters import pluralize
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import gathered_accession
 from data_refinery_common.models.gathered_accession import GatheredAccession
 from data_refinery_foreman.gatherer.agents.ae_agent import AEAgent
 from data_refinery_foreman.gatherer.agents.geo_agent import GEOAgent
@@ -203,24 +202,22 @@ class Command(BaseCommand):
             agents.append(cls(options))
 
         gathered_accessions = set()
-        gathered_accessions_count = 0
         for agent in agents:
             agent_accessions = agent.collect_data()
             agent_accessions_count = len(agent_accessions)
 
             gathered_accessions.update(agent_accessions)
-            gathered_accessions_count += agent_accessions_count
 
             logger.info(
-                f"{agent} gathered {agent_accessions_count} "
-                f"new accession{pluralize(gathered_accessions_count)} since {options['since']}."
+                f"Since {options['since']} {agent} has gathered {agent_accessions_count} "
+                f"new accession{pluralize(agent_accessions_count)}."
             )
 
         gathered_accessions = sorted(  # Sort the resulting list.
-            (ga for ga in gathered_accessions if self.RE_ACCESSION.match(ga.code)),
+            (ga for ga in gathered_accessions if self.RE_ACCESSION.match(ga.accession_code)),
             key=lambda ga: (
-                self.RE_ACCESSION.match(ga.code).group(1),
-                int(self.RE_ACCESSION.match(ga.code).group(2)),
+                self.RE_ACCESSION.match(ga.accession_code).group(1),
+                int(self.RE_ACCESSION.match(ga.accession_code).group(2)),
             ),
         )
         # Limit the number of output entries.
@@ -229,10 +226,12 @@ class Command(BaseCommand):
         )
 
         agents_count = len(agents)
+        gathered_accessions_count = len(gathered_accessions)
         logger.info(
-            f"{gathered_accessions_count} new accession{pluralize(gathered_accessions_count)} "
-            f"w{pluralize(gathered_accessions_count, 'as,ere')} gathered by {agents_count} "
-            f"accession agent{pluralize(agents_count)} since {options['since']}."
+            f"Since {options['since']} {gathered_accessions_count} "
+            f"new accession{pluralize(gathered_accessions_count)} "
+            f"h{pluralize(gathered_accessions_count, 'as,ave')} been gathered by {agents_count} "
+            f"accession agent{pluralize(agents_count)}."
         )
 
         if options["dry_run"]:
@@ -247,7 +246,7 @@ class Command(BaseCommand):
                 added_accessions_count = len(gathered_accessions)
                 logger.info(
                     f"{added_accessions_count} new accession{pluralize(added_accessions_count)} "
-                    f"w{pluralize(added_accessions_count, 'as,ere')} added to the database. "
+                    f"h{pluralize(added_accessions_count, 'as,ave')} been added to the database. "
                 )
             except IntegrityError as e:
                 logger.exception(f"Could not save new accessions to the database: {e}")
