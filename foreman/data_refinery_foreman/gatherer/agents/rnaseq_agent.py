@@ -34,10 +34,7 @@ class RNASeqAgent(AccessionAgentBase):
     def __str__(self):
         return "RNA-Seq accession agent"
 
-    def __str__(self):
-        return "RNA-Seq accession agent"
-
-    def build_query(self, taxon_id: str = None) -> str:
+    def build_query(self, taxon_ids: tuple = None) -> str:
         """
         Returns a query to use for getting specific taxon ID accessions.
         Some special characters must remain unquoted.
@@ -69,6 +66,7 @@ class RNASeqAgent(AccessionAgentBase):
         )
 
         instrument_models = OR.join((f'instrument_model="{im}"' for im in instrument_models))
+        taxon_ids = OR.join((f"tax_eq({taxon_id})" for taxon_id in taxon_ids))
         conditions = [
             # Relevant date fields: collection_date, collection_date_submitted,
             # first_public, last_updated.
@@ -79,8 +77,8 @@ class RNASeqAgent(AccessionAgentBase):
             'library_strategy="RNA-Seq"',
         ]
 
-        if taxon_id:
-            conditions.append(f"tax_eq({taxon_id})")
+        if taxon_ids:
+            conditions.append(f"({taxon_ids})")
         elif self.keyword:
             search_fields = (
                 "assembly_software",
@@ -118,26 +116,19 @@ class RNASeqAgent(AccessionAgentBase):
         accessions = set()
 
         if self.ids:
-            logger.debug(
-                f"Getting RNA-Seq entries by taxon ID(s): "
+            logger.info(
+                f"Getting {self.count or 'all'} RNA-Seq entries by taxon ID(s): "
                 f"{', '.join((str(i) for i in self.ids))} for [{self.since} - {self.until}] range."
             )
-            total = len(self.ids)
-            for idx, taxon_id in enumerate(self.ids):
-                if self.count and len(accessions) >= self.count:
-                    break
-
-                if total > 1:
-                    logger.debug(f"Getting entries for taxon ID {taxon_id}, {idx + 1} of {total}.")
-                accessions.update(self.fetch_data(taxon_id=taxon_id))
+            accessions.update(self.fetch_data(taxon_ids=self.ids))
         elif self.keyword:
-            logger.debug(
+            logger.info(
                 f'Getting RNA-Seq entries by "{self.keyword}" keyword '
                 f"for [{self.since} - {self.until}] range."
             )
             accessions.update(self.fetch_data())
         elif self.organism:
-            logger.debug(
+            logger.info(
                 f'Getting entries by "{self.organism}" organism '
                 f"for [{self.since} - {self.until}] range."
             )
@@ -145,7 +136,7 @@ class RNASeqAgent(AccessionAgentBase):
 
         return accessions
 
-    def fetch_data(self, taxon_id=None) -> Set[str]:
+    def fetch_data(self, taxon_ids=None) -> Set[str]:
         """
         Retrieves accessions from API search endpoint.
         The API allows to set limit to 0 (get all in one request) but we do
@@ -171,14 +162,14 @@ class RNASeqAgent(AccessionAgentBase):
             "format": "json",
             "limit": self.DATA_CHUNK_SIZE,
             "offset": 0,
-            "query": self.build_query(taxon_id=taxon_id),
+            "query": self.build_query(taxon_ids=taxon_ids),
             "result": "read_study",
             "sortFields": fields,
         }
 
         is_done = False
         while not is_done:
-            logger.debug(
+            logger.info(
                 f"Processing entries {data['offset'] + 1} - {data['offset'] + self.DATA_CHUNK_SIZE}"
             )
             entries = ()
