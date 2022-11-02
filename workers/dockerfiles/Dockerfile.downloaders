@@ -1,59 +1,64 @@
 FROM ubuntu:18.04
 
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-RUN apt-get update -qq
-RUN apt-get -y install apt-fast
-
 # Prevent tzdata from prompting us for a timezone and hanging the build.
 ENV DEBIAN_FRONTEND=noninteractive
-
-# The packages related to R are somewhat weird, see the README for more details.
-
-COPY workers/CRAN.gpg .
-RUN \
-  apt-fast update -qq && \
-  apt-get install -y apt-transport-https && \
-  apt-fast install -y lsb-release && \
-  echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-      >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key add CRAN.gpg && \
-  apt-fast update -qq && \
-  apt-fast install -y \
-  ed \
-  git \
-  python3 \
-  python3-pip \
-  r-base-core \
-  r-base-dev \
-  libpq-dev \
-  libxml2-dev \
-  libssl-dev \
-  libcurl4-openssl-dev \
-  libpq-dev \
-  curl \
-  wget && \
-  rm -rf /var/lib/apt/lists/*
-RUN rm CRAN.gpg
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
-WORKDIR /home/user
 
 # Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
 # For whatever reason this worked and 'en_US.UTF-8' did not.
 ENV LANG C.UTF-8
 
-RUN pip3 install --upgrade pip
+RUN apt-get update
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository ppa:apt-fast/stable
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN add-apt-repository ppa:savoury1/llvm-defaults-10
+
+RUN apt-get update -qq
+RUN apt-get install -y apt-fast apt-transport-https
+
+# The packages related to R are somewhat weird, see the README for more details.
+COPY workers/CRAN.gpg .
+RUN apt-key add CRAN.gpg
+RUN echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
+      >> /etc/apt/sources.list.d/added_repos.list
+
+RUN apt-fast update -qq && apt-fast install -y \
+  build-essential \
+  cmake \
+  curl \
+  cython3 \
+  ed \
+  git \
+  libcairo-dev \
+  libcurl4-openssl-dev \
+  libedit-dev \
+  libpq-dev \
+  libssl-dev \
+  libxml2-dev \
+  llvm-10-dev \
+  lsb-release \
+  mercurial \
+  pkg-config \
+  python3-pip \
+  python3.8 \
+  python3.8-dev \
+  r-base-core \
+  wget
+
+RUN rm CRAN.gpg
+RUN apt-get clean; rm -rf /var/lib/apt/lists/*
+RUN ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
 
 ENV R_LIBS "/usr/local/lib/R/site-library"
 
 COPY common/install_devtools.R .
-
 RUN Rscript install_devtools.R
 
 COPY workers/install_downloader_R_only.R .
-
 RUN Rscript install_downloader_R_only.R
 
 # Aspera will only install as the current user.
@@ -71,22 +76,19 @@ RUN rm aspera-cli-3.9.1-0.tar.bz2
 # Now that we're done installing Aspera go back to being root for a bit.
 USER root
 
-COPY config config
-COPY .boto .boto
-
-COPY workers/data_refinery_workers/downloaders/requirements.txt .
-
-RUN  pip3 install -r requirements.txt
-
+RUN pip3 install --upgrade pip
 # Install this rpy2 here instead of via requirements.txt because
 # pip-compile throws an error for it.
 RUN pip3 install rpy2==3.4.5
-COPY common/dist/data-refinery-common-* common/
+
+COPY workers/data_refinery_workers/downloaders/requirements.txt .
+RUN pip3 install --ignore-installed -r requirements.txt
 
 # Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
 RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
-# Clear our the pip3 cache
+# Clear out the pip3 cache.
 RUN rm -rf /root/.cache
 
 ARG SYSTEM_VERSION
@@ -95,6 +97,8 @@ ENV SYSTEM_VERSION $SYSTEM_VERSION
 
 USER user
 
+COPY .boto .boto
+COPY config config
 COPY workers/ .
 
 ENTRYPOINT []
