@@ -13,6 +13,7 @@ from django.test import TransactionTestCase, tag
 
 import pandas as pd
 import vcr
+from tests.utils import ProcessorJobTestCaseMixin
 
 from data_refinery_common.models import (
     ComputationalResult,
@@ -24,19 +25,15 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     OntologyTerm,
     Organism,
-    OriginalFile,
     ProcessorJob,
     ProcessorJobDatasetAssociation,
-    ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
     SampleAttribute,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    SurveyJob,
 )
 from data_refinery_workers.processors import smasher, smashing_utils
-from data_refinery_workers.processors.testing_utils import ProcessorJobTestCaseMixin
 
 
 def prepare_job():

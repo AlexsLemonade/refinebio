@@ -7,6 +7,8 @@ from typing import Dict
 
 from django.test import TestCase, tag
 
+from tests import utils
+
 from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.models import (
     Organism,
@@ -18,7 +20,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
 )
-from data_refinery_workers.processors import illumina, testing_utils, utils
+from data_refinery_workers.processors import illumina, utils
 
 
 def prepare_illumina_job(job_info: Dict) -> ProcessorJob:

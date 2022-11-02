@@ -28,7 +28,6 @@ from data_refinery_common.models import (
     Sample,
     SampleComputedFileAssociation,
     SampleResultAssociation,
-    SurveyJob,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import salmon, tximport, utils

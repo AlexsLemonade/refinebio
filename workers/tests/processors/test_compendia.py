@@ -11,6 +11,7 @@ from django.test import TransactionTestCase, tag
 
 import numpy as np
 import pandas as pd
+from tests.utils import ProcessorJobTestCaseMixin
 
 from data_refinery_common.enums import PipelineEnum, ProcessorPipeline
 from data_refinery_common.models import (
@@ -29,7 +30,6 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_workers.processors import create_compendia, utils
-from data_refinery_workers.processors.testing_utils import ProcessorJobTestCaseMixin
 
 
 def create_sample_for_experiment(sample_info: Dict, experiment: Experiment) -> Sample:
