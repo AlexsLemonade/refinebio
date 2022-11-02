@@ -3,22 +3,16 @@ from django.test import TransactionTestCase
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentSampleAssociation,
-    Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
-    SurveyJob,
-    SurveyJobKeyValue,
 )
 from data_refinery_foreman.foreman.management.commands.create_missing_processor_jobs import Command
 
 
 class SurveyTestCase(TransactionTestCase):
-    # @patch('data_refinery_foreman.surveyor.external_source.send_job')
     def test_create_missing_jobs(self):
         """Tests that files which should have processor jobs get them created.
 

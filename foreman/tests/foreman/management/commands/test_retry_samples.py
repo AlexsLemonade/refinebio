@@ -4,30 +4,21 @@ from django.test import TestCase
 from django.utils import timezone
 
 from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    ComputedFile,
     DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
     Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentResultAssociation,
     ExperimentSampleAssociation,
     Organism,
-    OrganismIndex,
     OriginalFile,
     OriginalFileSampleAssociation,
-    Processor,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
-    SampleResultAssociation,
 )
 from data_refinery_foreman.foreman.management.commands.retry_samples import retry_by_regex
 
 
 def setup_experiment() -> Dict:
-    """ Create an experiment with two samples where one of them has a processor job that failed
+    """Create an experiment with two samples where one of them has a processor job that failed
     because Batch restarted it."""
 
     # Create the experiment
@@ -92,8 +83,7 @@ def setup_experiment() -> Dict:
 
 
 class RetrySamples(TestCase):
-    """
-    """
+    """ """
 
     def test(self):
         setup_experiment()
