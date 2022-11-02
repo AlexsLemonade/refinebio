@@ -1,55 +1,67 @@
-FROM nvidia/cuda:11.1-runtime-ubuntu18.04
+FROM nvidia/cuda:11.8.0-runtime-ubuntu18.04
 
 # This is very similar to the `smasher` image, but comes with OpenBLAS and some
 # of the other libraries required for fancyimpute.
 
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-RUN apt-get update -qq
+# Prevent tzdata from prompting us for a timezone and hanging the build.
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG C.UTF-8
+
+# RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
 # via https://github.com/ilikenwf/apt-fast/issues/85#issuecomment-261640099
 RUN echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections
 RUN echo debconf apt-fast/dlflag boolean true | debconf-set-selections
 RUN echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections
-RUN _APTMGR=apt-get apt-get install -y apt-fast
+RUN echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections
+RUN echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections
 
-RUN export DEBIAN_FRONTEND=noninteractive; \
-    export DEBCONF_NONINTERACTIVE_SEEN=true; \
-    echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections; \
-    echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
-    apt-get update -qqy \
- && apt-get install -qqy --no-install-recommends \
-        tzdata \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository ppa:apt-fast/stable
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN add-apt-repository ppa:savoury1/llvm-defaults-10
+
+RUN apt-get update -qq
+RUN apt-get install -y apt-fast apt-transport-https tzdata
 
 COPY workers/CRAN.gpg .
-RUN \
-  apt-fast update -qq && \
-  apt-fast install -y lsb-release && \
-  echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-      >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key add CRAN.gpg && \
-  apt-fast update -qq && \
-  apt-fast install -y \
-  ed \
-  git \
-  liblapack-dev \
-  libopenblas-dev \
-  python3 \
-  python3-pip \
-  libcurl4-openssl-dev \
-  libpq-dev \
-  r-base-core \
-  r-base-dev \
-  libpq-dev \
-  libxml2-dev \
-  libssl-dev \
-  libcurl4-openssl-dev \
+RUN apt-key add CRAN.gpg
+RUN echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
+      >> /etc/apt/sources.list.d/added_repos.list
+
+RUN apt-fast update -qq && apt-fast install -y \
+  build-essential \
+  cmake \
   curl \
-  wget && \
-  rm -rf /var/lib/apt/lists/*
+  cython3 \
+  ed \
+  gfortran \
+  git \
+  libcairo-dev \
+  libcurl4-openssl-dev \
+  libedit-dev \
+  libblas-dev \
+  liblapack-dev \
+  libpq-dev \
+  libssl-dev \
+  libxml2-dev \
+  llvm-10-dev \
+  lsb-release \
+  mercurial \
+  pkg-config \
+  python3-pip \
+  python3.8 \
+  python3.8-dev \
+  r-base-core \
+  wget
+
 RUN rm CRAN.gpg
+RUN apt-get clean; rm -rf /var/lib/apt/lists/*
+RUN ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
@@ -62,7 +74,6 @@ RUN ln -s /usr/local/share/phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local
 ENV R_LIBS "/usr/local/lib/R/site-library"
 
 COPY common/install_devtools.R .
-
 RUN Rscript install_devtools.R
 
 COPY workers/R_dependencies/qn/dependencies.R .
@@ -72,30 +83,21 @@ COPY workers/qn_dependencies.R .
 RUN Rscript qn_dependencies.R
 # End QN-specific
 
-# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
-# For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG C.UTF-8
-
 RUN pip3 install --upgrade pip
-
 # Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.25.3 scikit-learn sympy nose rpy2===3.4.5 tzlocal fancySVD
+RUN pip3 install --ignore-installed numpy scipy matplotlib pandas==0.25.3 scikit-learn sympy nose rpy2===3.4.5 tzlocal fancySVD
 # End smasher-specific
 
-COPY config/ config/
-COPY .boto .boto
-
 COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed -r requirements.txt
 
-RUN  pip3 --no-cache-dir install -r requirements.txt
-RUN pip3 install numpy==1.16.0 # Fix a downgrade
-
-COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed numpy==1.16.0 # Fix a downgrade
 
 # Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
 RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
-# Clear our the pip3 cache
+# Clear out the pip3 cache.
 RUN rm -rf /root/.cache
 
 ARG SYSTEM_VERSION
@@ -104,6 +106,8 @@ ENV SYSTEM_VERSION $SYSTEM_VERSION
 
 USER user
 
+COPY .boto .boto
+COPY config/ config/
 COPY workers/ .
 
 ENTRYPOINT []
