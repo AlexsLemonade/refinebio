@@ -5,6 +5,7 @@ from django.test import TestCase, tag
 
 import pandas as pd
 import scipy.stats
+from tests.utils import assertMostlyAgrees
 
 from data_refinery_common.models import (
     ComputationalResult,
@@ -14,7 +15,6 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
 )
 from data_refinery_workers.processors import array_express
-from data_refinery_workers.processors.testing_utils import assertMostlyAgrees
 
 
 def prepare_ba_job():
