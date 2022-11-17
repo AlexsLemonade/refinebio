@@ -1,35 +1,40 @@
 FROM ubuntu:18.04
 
-# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
-# For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG C.UTF-8
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-
-RUN apt-get update -qq
-RUN apt-get -y install apt-fast
-RUN apt-fast update -qq
-RUN apt-fast install -y \
-    gcc \
-    libpq-dev \
-    python3 \
-    python3-pip
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-RUN pip3 install --upgrade pip
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG=C.UTF-8
 
-COPY foreman/requirements.txt .
-# The base image does not have Python 2.X on it at all, so all calls
-# to pip or python are by default calls to pip3 or python3
-RUN pip3 install -r requirements.txt
+# Prevent tzdata from prompting us for a timezone and hanging the build.
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y software-properties-common && \
+    add-apt-repository ppa:apt-fast/stable && \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y apt-fast && \
+    apt-fast update -qq && \
+    apt-fast install -y \
+        gcc \
+        libpq-dev \
+        python3 \
+        python3-pip && \
+    apt-get clean && \
+    groupadd user && \
+    useradd --create-home --home-dir /home/user -g user user && \
+    pip3 install --ignore-installed --no-cache-dir --upgrade pip
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir \
+    common/$(ls common -1 | sort --version-sort | tail -1)
+
+COPY foreman/requirements.txt .
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY .boto .boto
 COPY config config
