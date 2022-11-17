@@ -1,81 +1,30 @@
-FROM ubuntu:20.04
+FROM ccdlstaging/dr_worker_base:latest
 
-# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
-# For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG C.UTF-8
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Prevent tzdata from prompting us for a timezone and hanging the build.
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-
-RUN apt-get update -qq
-RUN apt-get install -y apt-fast apt-transport-https
-
-# The packages related to R are somewhat weird, see the README for more details.
-COPY workers/CRAN.gpg .
-RUN apt-key add CRAN.gpg
-RUN echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-      >> /etc/apt/sources.list.d/added_repos.list
-
-RUN apt-fast update -qq && apt-fast install -y \
-  build-essential \
-  cmake \
-  curl \
-  cython3 \
-  ed \
-  git \
-  libcairo-dev \
-  libcurl4-openssl-dev \
-  libedit-dev \
-  libpq-dev \
-  libssl-dev \
-  libxml2-dev \
-  llvm-10-dev \
-  lsb-release \
-  mercurial \
-  pkg-config \
-  python3-pip \
-  python3 \
-  python3-dev \
-  r-base-core \
-  wget
-
-RUN rm CRAN.gpg
-RUN apt-get clean; rm -rf /var/lib/apt/lists/*
-RUN ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-ENV R_LIBS "/usr/local/lib/R/site-library"
-
-COPY common/install_devtools.R .
-RUN Rscript install_devtools.R
-
-COPY workers/R_dependencies/affymetrix/dependencies.R .
-RUN Rscript dependencies.R
-
-COPY workers/affymetrix_dependencies.R .
-RUN Rscript affymetrix_dependencies.R
-
-RUN pip3 install pip --upgrade
-RUN pip3 install setuptools --upgrade
-
-# Install this one here instead of via requirements.txt because not
-# all processors need it.
-RUN pip3 install rpy2==3.4.5
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip setuptools && \
+    # Install this one here instead of via requirements.txt because not
+    # all processors need it.
+    pip3 install rpy2==3.4.5
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir \
+    common/$(ls common -1 | sort --version-sort | tail -1)
 
-# Clear out the pip3 cache.
-RUN rm -rf /root/.cache
+COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+
+COPY workers/R/dependencies/affymetrix/cran/dependencies.R dependencies.R
+RUN Rscript dependencies.R
+
+COPY workers/R/dependencies/affymetrix/install_ensg_pkgs.R .
+
+COPY workers/R/dependencies/affymetrix/bioc/dependencies.R dependencies.R
+RUN Rscript dependencies.R
 
 ARG SYSTEM_VERSION
 
@@ -86,6 +35,7 @@ USER user
 COPY .boto .boto
 COPY config/ config/
 COPY workers/ .
-COPY workers/install_ensg_pkgs.R .
+
+RUN ccache -s
 
 ENTRYPOINT []

@@ -1,94 +1,38 @@
-FROM ubuntu:18.04
+FROM ccdlstaging/dr_worker_base:latest
 
-# Prevent tzdata from prompting us for a timezone and hanging the build.
-ENV DEBIAN_FRONTEND=noninteractive
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
-# For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG C.UTF-8
-
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-
-RUN add-apt-repository ppa:apt-fast/stable
-# deadsnakes packages new python versions for older Ubuntu releases
-RUN add-apt-repository ppa:deadsnakes/ppa
-
-RUN apt-get update -qq
-RUN apt-get -y install apt-fast
-
-# The packages related to R are somewhat weird, see the README for more details.
-COPY workers/CRAN.gpg .
-RUN apt-key add CRAN.gpg
-RUN echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-      >> /etc/apt/sources.list.d/added_repos.list
-
-RUN apt-fast update -qq && apt-fast install -y \
-  build-essential \
-  cmake \
-  curl \
-  cython3 \
-  ed \
-  git \
-  libcairo-dev \
-  libcurl4-openssl-dev \
-  libedit-dev \
-  libfreetype6-dev \
-  libpq-dev \
-  libssl-dev \
-  libxml2-dev \
-  llvm-10-dev \
-  lsb-release \
-  mercurial \
-  pkg-config \
-  python3-pip \
-  python3.8 \
-  python3.8-dev \
-  r-base-core \
-  wget
-
-RUN rm CRAN.gpg
-RUN apt-get clean; rm -rf /var/lib/apt/lists/*
-RUN ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-# Noop-specific requirements
-ENV R_LIBS "/usr/local/lib/R/site-library"
-
-COPY common/install_devtools.R .
-RUN Rscript install_devtools.R
-
-COPY workers/R_dependencies/no_op/dependencies.R .
+COPY workers/R/dependencies/no_op/cran/dependencies.R .
 RUN Rscript dependencies.R
 
-COPY workers/install_gene_convert.R .
+COPY workers/R/dependencies/no_op/install_gene_convert.R .
 RUN Rscript install_gene_convert.R
 
+# Noop-specific.
 RUN mkdir -p gene_indexes
 WORKDIR /home/user/gene_indexes
 ENV ID_REFINERY_URL https://zenodo.org/record/1410647/files/all_1536267482.zip
-RUN curl -O $ID_REFINERY_URL
-RUN echo $ID_REFINERY_URL > /etc/identifier_refinery_url
-RUN unzip *.zip
-RUN rm *.zip
-WORKDIR /home/user
-# End Noop-specific
+RUN curl -O $ID_REFINERY_URL && \
+    echo $ID_REFINERY_URL > /etc/identifier_refinery_url && \
+    unzip *.zip && \
+    rm *.zip
+# End Noop-specific.
 
-RUN pip3 install --upgrade pip
-RUN pip3 install numpy
+WORKDIR /home/user
+
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
+    pip3 install --ignore-installed --no-cache-dir numpy
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
-
-# Clear out the pip3 cache.
-RUN rm -rf /root/.cache
+RUN pip3 install --ignore-installed --no-cache-dir \
+    common/$(ls common -1 | sort --version-sort | tail -1)
 
 ARG SYSTEM_VERSION
 

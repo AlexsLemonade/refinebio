@@ -1,83 +1,25 @@
-FROM ubuntu:18.04
+FROM ccdlstaging/dr_worker_base:latest
 
-# Prevent tzdata from prompting us for a timezone and hanging the build.
-ENV DEBIAN_FRONTEND=noninteractive
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
-# For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG C.UTF-8
-
-RUN apt-get update
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-RUN add-apt-repository ppa:deadsnakes/ppa
-RUN add-apt-repository ppa:savoury1/llvm-defaults-10
-
-RUN apt-get update -qq
-RUN apt-get install -y apt-fast apt-transport-https
-
-# The packages related to R are somewhat weird, see the README for more details.
-COPY workers/CRAN.gpg .
-RUN apt-key add CRAN.gpg
-RUN echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-      >> /etc/apt/sources.list.d/added_repos.list
-
-RUN apt-fast update -qq && apt-fast install -y \
-  build-essential \
-  cmake \
-  curl \
-  cython3 \
-  ed \
-  gfortran \
-  git \
-  libcairo-dev \
-  libcurl4-openssl-dev \
-  libedit-dev \
-  libblas-dev \
-  liblapack-dev \
-  libpq-dev \
-  libssl-dev \
-  libxml2-dev \
-  llvm-10-dev \
-  lsb-release \
-  mercurial \
-  pkg-config \
-  python3-pip \
-  python3.8 \
-  python3.8-dev \
-  r-base-core \
-  wget
-
-RUN rm CRAN.gpg
-RUN apt-get clean; rm -rf /var/lib/apt/lists/*
-RUN ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-ENV R_LIBS "/usr/local/lib/R/site-library"
-
-COPY common/install_devtools.R .
-RUN Rscript install_devtools.R
-
-COPY workers/R_dependencies/illumina/dependencies.R .
+COPY workers/R/dependencies/illumina/cran/dependencies.R .
 RUN Rscript dependencies.R
 
 # These are for Illumina.
-COPY workers/illumina_dependencies.R .
-RUN Rscript illumina_dependencies.R
-
-RUN pip3 install --upgrade pip
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed -r requirements.txt
+COPY workers/R/dependencies/illumina/bioc/dependencies.R .
+RUN Rscript dependencies.R
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir \
+    common/$(ls common -1 | sort --version-sort | tail -1)
 
-# Clear out the pip3 cache.
-RUN rm -rf /root/.cache
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip
+COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed -r requirements.txt
 
 ARG SYSTEM_VERSION
 

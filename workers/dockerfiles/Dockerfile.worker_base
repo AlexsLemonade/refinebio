@@ -1,0 +1,68 @@
+FROM ubuntu:18.04
+
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+WORKDIR /home/user
+
+# Prevent tzdata from prompting us for a timezone and hanging the build.
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
+# For whatever reason this worked and 'en_US.UTF-8' did not.
+ENV LANG=C.UTF-8
+
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y software-properties-common && \
+    add-apt-repository ppa:apt-fast/stable && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    add-apt-repository ppa:savoury1/llvm-defaults-10 && \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y apt-fast apt-transport-https gpg-agent
+
+# The packages related to R are somewhat weird, see the README for more details.
+COPY workers/CRAN.gpg .
+RUN apt-key add CRAN.gpg && \
+    echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
+      >> /etc/apt/sources.list.d/added_repos.list
+
+RUN apt-fast update -qq && apt-fast install -y \
+    build-essential \
+    ccache \
+    cmake \
+    curl \
+    cython3 \
+    ed \
+    git \
+    libcairo-dev \
+    libcurl4-gnutls-dev \
+    libedit-dev \
+    libgit2-dev \
+    libpq-dev \
+    libssl-dev \
+    libxml2-dev \
+    llvm-10-dev \
+    lsb-release \
+    mercurial \
+    pkg-config \
+    python3-pip \
+    python3.8 \
+    python3.8-dev \
+    r-base-core \
+    wget && \
+    rm CRAN.gpg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
+    groupadd user && useradd --create-home --home-dir /home/user -g user user
+
+# Set up ccache.
+COPY workers/ccache.conf /root/.ccache/ccache.conf
+RUN for i in c++ cc g++ gcc; do ln -s /usr/bin/ccache /usr/local/bin/$i; done
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Pre-install dev tools.
+ENV R_LIBS="/usr/local/lib/R/site-library"
+COPY common/R/install_devtools.R .
+RUN Rscript install_devtools.R
