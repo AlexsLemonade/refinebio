@@ -15,8 +15,7 @@ RUN pip3 install --ignore-installed --no-cache-dir \
     common/$(ls common -1 | sort --version-sort | tail -1)
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 

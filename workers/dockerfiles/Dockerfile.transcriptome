@@ -1,4 +1,4 @@
-FROM ccdlstaging/dr_worker_base:latest
+FROM ccdlstaging/dr_base:latest
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -15,10 +15,11 @@ RUN git clone https://github.com/deweylab/RSEM.git && \
 # Salmon to work https://github.com/AlexsLemonade/refinebio/issues/1496.
 # This is something that should be considered when updating salmon, because
 # all samples from incomplete experiments must have salmon run on them again.
-ENV SALMON_VERSION 0.13.1
+ENV SALMON_VERSION=0.13.1
 
 # Salmon can extract to a different directory than the name of the tar file.
-RUN wget -q "https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
+RUN wget -q "https://github.com/COMBINE-lab/salmon/releases/download/\
+v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
     tar -xzf "Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
     cp "$(tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | \
         head -1 | cut -f1 -d '/')/bin/salmon" /usr/local/bin && \
@@ -27,19 +28,20 @@ RUN wget -q "https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_V
     rm -r Salmon*
 # End Salmon installation.
 
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir numpy
+RUN pip3 install --ignore-installed --upgrade pip && \
+    pip3 install --ignore-installed numpy
 
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
+RUN pip3 install --ignore-installed \
     common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip3 cache.
+    rm -rf /root/.cache
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 

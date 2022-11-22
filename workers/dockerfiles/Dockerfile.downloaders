@@ -10,12 +10,16 @@ RUN Rscript install_downloader_R_only.R
 
 # Aspera will only install as the current user.
 # Even using `su - user &&` doesn't work...
-USER user
 
+USER user
 # Install Aspera. We have to install it using Holland Computing Center's conda
 # repo because download.asperasoft.com now returns 403s
-RUN wget -q https://anaconda.org/HCC/aspera-cli/3.9.1/download/linux-64/aspera-cli-3.9.1-0.tar.bz2 && \
-    [ "$(sha256sum aspera-cli-3.9.1-0.tar.bz2 | cut -d ' ' -f1)" = 60a09a7f3795186954079869106aa89a64183b7be8e0da7cbbe9d57c66c9bcdb ] && \
+
+RUN wget -q "https://anaconda.org/HCC/aspera-cli/3.9.1/download/\
+linux-64/aspera-cli-3.9.1-0.tar.bz2" && \
+    [ "$(sha256sum aspera-cli-3.9.1-0.tar.bz2 | cut -d ' ' -f1)" =\
+      "60a09a7f3795186954079869106aa89a64183b7be8e0da7cbbe9d57c66c9bcdb" ] && \
+    rm -rf .aspera && \
     mkdir -p .aspera/cli && \
     tar xf aspera-cli-3.9.1-0.tar.bz2 -C .aspera/cli && \
     rm aspera-cli-3.9.1-0.tar.bz2
@@ -23,20 +27,21 @@ RUN wget -q https://anaconda.org/HCC/aspera-cli/3.9.1/download/linux-64/aspera-c
 # Now that we're done installing Aspera go back to being root for a bit.
 USER root
 
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir rpy2==3.4.5
+RUN pip3 install --ignore-installed --upgrade pip && \
+    pip3 install --ignore-installed rpy2==3.4.5
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
+RUN pip3 install --ignore-installed \
     common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip3 cache.
+    rm -r /root/.cache
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 

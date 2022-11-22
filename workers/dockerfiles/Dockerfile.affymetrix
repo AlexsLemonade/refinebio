@@ -5,18 +5,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip setuptools && \
-    # Install this one here instead of via requirements.txt because not
-    # all processors need it.
-    pip3 install rpy2==3.4.5
-
-# Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
-    common/$(ls common -1 | sort --version-sort | tail -1)
-
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+# Install and set up ccache.
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y ccache && \
+    for i in c++ cc g++ gcc; do ln -fs /usr/bin/ccache /usr/local/bin/$i; done
+COPY workers/ccache.conf /root/.ccache/ccache.conf
+ENV PATH="/usr/local/bin:${PATH}"
 
 COPY workers/R/dependencies/affymetrix/cran/dependencies.R dependencies.R
 RUN Rscript dependencies.R
@@ -26,16 +20,33 @@ COPY workers/R/dependencies/affymetrix/install_ensg_pkgs.R .
 COPY workers/R/dependencies/affymetrix/bioc/dependencies.R dependencies.R
 RUN Rscript dependencies.R
 
-ARG SYSTEM_VERSION
+RUN pip3 install --ignore-installed --upgrade pip setuptools && \
+    # Install this one here instead of via requirements.txt because not
+    # all processors need it.
+    pip3 install --ignore-installed rpy2==3.4.5
 
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+# Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed \
+    common/$(ls common -1 | sort --version-sort | tail -1)
+
+COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip3 cache.
+    rm -r /root/.cache
+
+ARG SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
+
+# Print compiler cache stats (the cache hit ratio should be ~90%).
+RUN ccache --show-stats && \
+    # Clear out the ccache.
+    ccache --clear
 
 USER user
 
 COPY .boto .boto
 COPY config/ config/
 COPY workers/ .
-
-RUN ccache -s
 
 ENTRYPOINT []
