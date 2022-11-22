@@ -1,20 +1,9 @@
-FROM ccdlstaging/dr_worker_base:latest
+FROM ccdlstaging/dr_base:latest
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
-
-RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir nose numpy rpy2==3.4.5
-
-# Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
-    common/$(ls common -1 | sort --version-sort | tail -1)
-
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY workers/R/dependencies/qn/cran/dependencies.R .
 RUN Rscript dependencies.R
@@ -22,9 +11,21 @@ RUN Rscript dependencies.R
 COPY workers/R/dependencies/qn/bioc/dependencies.R .
 RUN Rscript dependencies.R
 
-ARG SYSTEM_VERSION
+RUN pip3 install --ignore-installed --upgrade pip && \
+    pip3 install --ignore-installed nose numpy rpy2==3.4.5
 
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+# Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed \
+    common/$(ls common -1 | sort --version-sort | tail -1)
+
+COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip3 cache.
+    rm -rf /root/.cache
+
+ARG SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 

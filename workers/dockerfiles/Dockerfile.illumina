@@ -14,16 +14,18 @@ RUN Rscript dependencies.R
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
+RUN pip3 install --ignore-installed \
     common/$(ls common -1 | sort --version-sort | tail -1)
 
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip
+RUN pip3 install --ignore-installed --upgrade pip
+
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed -r requirements.txt
+RUN pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip3 cache.
+    rm -r /root/.cache
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 
