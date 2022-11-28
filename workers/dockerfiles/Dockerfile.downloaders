@@ -1,4 +1,4 @@
-FROM ccdlstaging/dr_worker_base:latest
+FROM ccdlstaging/dr_base:latest
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
