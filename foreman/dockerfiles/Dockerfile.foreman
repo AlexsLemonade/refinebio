@@ -3,8 +3,6 @@ FROM ubuntu:18.04
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-WORKDIR /home/user
-
 # Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
 # For whatever reason this worked and 'en_US.UTF-8' did not.
 ENV LANG=C.UTF-8
@@ -24,25 +22,28 @@ RUN apt-get update -qq && \
         python3 \
         python3-pip && \
     apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
     groupadd user && \
     useradd --create-home --home-dir /home/user -g user user && \
     pip3 install --ignore-installed --no-cache-dir --upgrade pip
 
+WORKDIR /home/user
+
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
+RUN pip3 install --ignore-installed \
     common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY foreman/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed -r requirements.txt && \
+    rm -rf /root/.cache
 
 COPY .boto .boto
 COPY config config
 COPY foreman/ .
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 
