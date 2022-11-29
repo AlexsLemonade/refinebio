@@ -1,21 +1,24 @@
 FROM python:3.8.5-slim-buster
 
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN groupadd user && \
+    useradd --create-home --home-dir /home/user -g user user
+
 WORKDIR /home/user
 
-# Needed for migration 0006
-COPY config/ config
-
 COPY common/requirements.txt .
-
-RUN pip install -r requirements.txt
+RUN pip install --ignore-installed -r requirements.txt && \
+    rm -rf /root/.cache
 
 COPY common/ .
+# Needed for migration 0006.
+COPY config config
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 
-ENTRYPOINT [""]
+ENTRYPOINT []
