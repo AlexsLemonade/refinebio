@@ -27,14 +27,18 @@ print_options() {
     echo "    -p           Pull the latest version of the image from Dockerhub"
     echo "    -d REPO      The docker repo to pull images from."
     echo "                 The default option is 'ccdl'"
+    echo "    -b           The remote docker builder name (optional)."
     echo
     echo "Examples:"
     echo "    Build the image ccdl/dr_downloaders:"
     echo "    ./scripts/prepare_image.sh -i downloaders -d ccdl"
 }
 
-while getopts "phi:d:s:" opt; do
+while getopts "phi:b:d:s:" opt; do
     case $opt in
+        b)
+            builder="--builder $OPTARG"
+            ;;
         i)
             image=$OPTARG
             ;;
@@ -71,7 +75,6 @@ if [ -z "$image" ]; then
     exit 1
 fi
 
-
 if [ -z "$service" ]; then
     service="workers"
 fi
@@ -87,41 +90,46 @@ fi
 
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
-image_name="$dockerhub_repo/dr_$image"
+IMAGE_NAME="$dockerhub_repo/dr_$image"
 # shellcheck disable=SC2086
-if [ "$(docker_img_exists $image_name $branch_name)" ] ; then
-    docker pull "$image_name:$branch_name"
+if [ "$(docker_img_exists $IMAGE_NAME $branch_name)" ] ; then
+    docker pull "$IMAGE_NAME:$branch_name"
 elif [ -n "$pull" ]; then
-    docker pull "$image_name"
+    docker pull "$IMAGE_NAME"
 else
     echo ""
-    echo "Rebuilding the $image_name image."
+    echo "Rebuilding the $IMAGE_NAME image."
     finished=1
     attempts=0
-    while [ $finished != 0 ] && [ $attempts -lt 3 ]; do
+    while [ $finished != 0 ] && [ $attempts -lt 1 ]; do
         if [ $attempts -gt 0 ]; then
-            echo "Failed to build $image_name, trying again."
+            echo "Failed to build $IMAGE_NAME, trying again."
         fi
 
-
+        CACHED_IMAGE="$IMAGE_NAME:latest"
         if test "$GITHUB_ACTIONS"; then
             # docker needs repositories to be lowercase
-            CACHE_REPO="$(echo "ghrc.io/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
-            CACHED_PACKAGE="$CACHE_REPO/dr_$image"
-            CACHE="--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $CACHED_PACKAGE"
+            CACHE_REPO="$(echo "ghrc.io/$GITHUB_REPOSITORY" | \
+                tr '[:upper:]' '[:lower:]')"
+            CACHED_IMAGE="$CACHE_REPO/dr_$image"
         fi
 
-        docker build \
-               -t "$image_name" \
+        DOCKER_BUILDKIT=1 docker buildx build $builder \
                -f "$service/dockerfiles/Dockerfile.$image" \
+               -t "$IMAGE_NAME" \
+               --build-arg BUILDKIT_INLINE_CACHE=1 \
                --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-               $CACHE .
+               --cache-from $CACHED_IMAGE \
+               --platform linux/amd64 \
+               --progress plain \
+               --push \
+               .
         finished=$?
         attempts=$((attempts+1))
     done
 
     if [ $finished != 0 ] && [ $attempts -ge 3 ]; then
-        echo "Could not build $image_name after three attempts."
+        echo "Could not build $IMAGE_NAME after three attempts."
         exit 1
     fi
 fi
