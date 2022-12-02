@@ -12,27 +12,26 @@ RUN Rscript dependencies.R
 COPY workers/R/dependencies/illumina/bioc/dependencies.R .
 RUN Rscript dependencies.R
 
+COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed --upgrade pip && \
+    pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip cache.
+    rm -rf /root/.cache
+
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
 RUN pip3 install --ignore-installed \
-    common/$(ls common -1 | sort --version-sort | tail -1)
-
-RUN pip3 install --ignore-installed --upgrade pip
-
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip3 cache.
-    rm -r /root/.cache
-
-ARG SYSTEM_VERSION
-ENV SYSTEM_VERSION=$SYSTEM_VERSION
-
-USER user
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY config/ config/
 COPY workers/ .
 COPY workers/data_refinery_workers/processors/detect_database.R .
 COPY workers/illumina_probe_maps/ probe_maps/
+
+ARG SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
+
+USER user
 
 ENTRYPOINT []

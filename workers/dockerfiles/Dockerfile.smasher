@@ -11,26 +11,25 @@ RUN Rscript dependencies.R
 COPY workers/R/dependencies/qn/bioc/dependencies.R .
 RUN Rscript dependencies.R
 
+COPY workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --upgrade pip && \
-    pip3 install --ignore-installed nose numpy rpy2==3.4.5
+    pip3 install --ignore-installed nose numpy rpy2==3.4.5 && \
+    pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip cache.
+    rm -rf /root/.cache
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
 RUN pip3 install --ignore-installed \
-    common/$(ls common -1 | sort --version-sort | tail -1)
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip3 cache.
-    rm -rf /root/.cache
+COPY .boto .boto
+COPY config/ config/
+COPY workers/ .
 
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
-
-COPY .boto .boto
-COPY config/ config/
-COPY workers/ .
 
 ENTRYPOINT []

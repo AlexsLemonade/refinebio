@@ -11,9 +11,23 @@ RUN Rscript dependencies.R
 COPY workers/R/dependencies/no_op/install_gene_convert.R .
 RUN Rscript install_gene_convert.R
 
+COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed --upgrade pip && \
+    pip3 install --ignore-installed numpy && \
+    pip3 install --ignore-installed -r requirements.txt && \
+    # Clear out the pip cache.
+    rm -rf /root/.cache
+
+# Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed \
+        common/$(ls common -1 | sort --version-sort | tail -1)
+
 # Noop-specific.
 RUN mkdir -p gene_indexes
+
 WORKDIR /home/user/gene_indexes
+
 ENV ID_REFINERY_URL=https://zenodo.org/record/1410647/files/all_1536267482.zip
 RUN curl -O $ID_REFINERY_URL && \
     echo $ID_REFINERY_URL > /etc/identifier_refinery_url && \
@@ -21,28 +35,15 @@ RUN curl -O $ID_REFINERY_URL && \
     rm *.zip
 # End Noop-specific.
 
-WORKDIR /home/user/
+WORKDIR /home/user
 
-# Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed \
-    common/$(ls common -1 | sort --version-sort | tail -1)
-
-RUN pip3 install --ignore-installed --upgrade pip && \
-    pip3 install --ignore-installed numpy
-
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip3 cache.
-    rm -r /root/.cache
+COPY .boto .boto
+COPY config/ config/
+COPY workers/ .
 
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
-
-COPY .boto .boto
-COPY config/ config/
-COPY workers/ .
 
 ENTRYPOINT []
