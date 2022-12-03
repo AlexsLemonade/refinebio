@@ -6,18 +6,11 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /home/user
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --upgrade pip && \
-    pip3 install --ignore-installed numpy && \
-    pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip cache.
-    rm -rf /root/.cache
-
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed \
-    common/$(ls common -1 | sort --version-sort | tail -1)
-
-# It's annoying that this can only be installed via git.
-RUN git clone https://github.com/deweylab/RSEM.git && \
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
+    pip3 install --ignore-installed --no-cache-dir numpy && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
+    # It's annoying that this can only be installed via git.
+    git clone https://github.com/deweylab/RSEM.git && \
     cd RSEM && make install && \
     rm -rf RSEM
 
@@ -38,6 +31,10 @@ v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
         head -1 | cut -f1 -d '/')/lib/"* /usr/local/lib/ && \
     rm -r Salmon*
 # End Salmon installation.
+
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed --no-cache-dir \
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY config/ config/

@@ -12,15 +12,13 @@ COPY workers/R/dependencies/qn/bioc/dependencies.R .
 RUN Rscript dependencies.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --upgrade pip && \
-    pip3 install --ignore-installed nose numpy rpy2==3.4.5 && \
-    pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip cache.
-    rm -rf /root/.cache
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
+    pip3 install --ignore-installed --no-cache-dir nose numpy rpy2==3.4.5 && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed \
+RUN pip3 install --ignore-installed --no-cache-dir \
         common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto

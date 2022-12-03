@@ -9,16 +9,9 @@ COPY workers/R/dependencies/install_downloader_R_only.R .
 RUN Rscript install_downloader_R_only.R
 
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
-RUN pip3 install --ignore-installed --upgrade pip && \
-    pip3 install --ignore-installed rpy2==3.4.5 && \
-    pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip cache.
-    rm -rf /root/.cache
-
-# Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
+    pip3 install --ignore-installed --no-cache-dir rpy2==3.4.5 && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Aspera will only install as the current user.
 # Even using `su - user &&` doesn't work...
@@ -37,6 +30,11 @@ linux-64/aspera-cli-3.9.1-0.tar.bz2" && \
 
 # Now that we're done installing Aspera go back to being root for a bit.
 USER root
+
+# Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed --no-cache-dir \
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY config config
