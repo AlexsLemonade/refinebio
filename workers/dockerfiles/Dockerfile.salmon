@@ -13,16 +13,9 @@ COPY workers/R/dependencies/tximport/install_tximport.R .
 RUN Rscript install_tximport.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --upgrade pip && \
-    pip3 install --ignore-installed numpy && \
-    pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip cache.
-    rm -rf /root/.cache
-
-# Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
+    pip3 install --ignore-installed --no-cache-dir numpy && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Install Salmon
 # Tximport requires all experiments to be processed with the same version of
@@ -45,9 +38,9 @@ v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
 # End Salmon installation.
 
 ENV SRA_VERSION=2.9.1
-RUN \
-    # Install SalmonTools.
-    git clone https://github.com/COMBINE-lab/SalmonTools.git && \
+
+# Install SalmonTools.
+RUN git clone https://github.com/COMBINE-lab/SalmonTools.git && \
     cd SalmonTools && \
     git checkout 3e6654c2c10a5225498b623056993947fa688afc && \
     cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && \
@@ -58,6 +51,11 @@ RUN \
 sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz" && \
     tar zxfv "sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz" && \
     cp -r "sratoolkit.${SRA_VERSION}-ubuntu64/bin/"* /usr/bin
+
+# Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed --no-cache-dir \
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY config/ config/

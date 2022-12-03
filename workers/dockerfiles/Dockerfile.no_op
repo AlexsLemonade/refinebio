@@ -12,16 +12,9 @@ COPY workers/R/dependencies/no_op/install_gene_convert.R .
 RUN Rscript install_gene_convert.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --upgrade pip && \
-    pip3 install --ignore-installed numpy && \
-    pip3 install --ignore-installed -r requirements.txt && \
-    # Clear out the pip cache.
-    rm -rf /root/.cache
-
-# Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
+    pip3 install --ignore-installed --no-cache-dir numpy && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Noop-specific.
 RUN mkdir -p gene_indexes
@@ -36,6 +29,11 @@ RUN curl -O $ID_REFINERY_URL && \
 # End Noop-specific.
 
 WORKDIR /home/user
+
+# Get the latest version from the dist directory.
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed --no-cache-dir \
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY config/ config/
