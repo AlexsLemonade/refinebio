@@ -28,7 +28,7 @@ coreschema==0.0.4
     #   drf-yasg
 coverage==5.5
     # via -r requirements.in
-django==3.2.15
+django==3.2.16
     # via
     #   -r requirements.in
     #   django-cors-headers
