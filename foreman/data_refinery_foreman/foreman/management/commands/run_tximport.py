@@ -65,8 +65,7 @@ def run_tximport_if_eligible(experiment: Experiment, dispatch_jobs=True) -> bool
 
 
 def run_tximport_for_all_eligible_experiments(dispatch_jobs=True):
-    """Creates a tximport job for all eligible experiments.
-    """
+    """Creates a tximport job for all eligible experiments."""
     eligible_experiments = (
         Experiment.objects.annotate(num_organisms=Count("organisms"))
         .filter(num_organisms=1, technology="RNA-SEQ", num_processed_samples=0)
@@ -101,8 +100,7 @@ def run_tximport_for_all_eligible_experiments(dispatch_jobs=True):
 
 
 def run_tximport_for_list(accession_codes: List[str], dispatch_jobs=True):
-    """Creates a tximport job for all experiments in the list of accession_codes that are eligble.
-    """
+    """Creates a tximport job for all experiments in the list of accession_codes that are eligble."""
     accession_codes = accession_codes.split(",")
     creation_count = 0
     print(accession_codes)

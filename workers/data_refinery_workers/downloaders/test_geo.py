@@ -90,7 +90,7 @@ class DownloadGeoTestCase(TestCase):
 
     @tag("downloaders")
     def test_download_aspera_and_ftp(self):
-        """ Tests the main 'download_geo' function. """
+        """Tests the main 'download_geo' function."""
 
         dlj = DownloaderJob()
         dlj.accession_code = "GSE22427"
@@ -158,7 +158,7 @@ class DownloadGeoTestCase(TestCase):
 
     @tag("downloaders")
     def test_download_geo(self):
-        """ Tests the main 'download_geo' function. """
+        """Tests the main 'download_geo' function."""
 
         dlj = DownloaderJob()
         dlj.accession_code = "GSE22427"
@@ -217,8 +217,7 @@ class DownloadGeoTestCase(TestCase):
 
     @tag("downloaders")
     def test_no_rnaseq(self):
-        """Makes sure that no RNA-Seq data gets downloaded even if there's a job for it.
-        """
+        """Makes sure that no RNA-Seq data gets downloaded even if there's a job for it."""
         dlj = DownloaderJob()
         dlj.accession_code = "GSE103217"
         dlj.save()

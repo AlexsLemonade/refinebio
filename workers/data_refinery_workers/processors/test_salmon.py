@@ -496,8 +496,7 @@ class SalmonTestCase(TestCase):
 
     @tag("salmon")
     def test_set_tximport_inputs(self):
-        """"Tests that tximport only considers RNA-Seq samples from GEO.
-        """
+        """ "Tests that tximport only considers RNA-Seq samples from GEO."""
         # Create one experiment and two related samples, based on:
         #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
         # (We don't need any original files because
@@ -1070,8 +1069,7 @@ class EarlyTximportTestCase(TestCase):
 
     @tag("salmon")
     def test_version_filter(self):
-        """Tests that we don't run tximport on old salmon versions.
-        """
+        """Tests that we don't run tximport on old salmon versions."""
         # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
         # don't actually want to process them so it's okay.
         incomplete_accessions = [

@@ -24,7 +24,8 @@ def parse_args():
 
 def get_job_to_run():
     completed_command = subprocess.run(
-        ["./foreman/run_management_command.sh", "get_job_to_be_run"], stdout=subprocess.PIPE,
+        ["./foreman/run_management_command.sh", "get_job_to_be_run"],
+        stdout=subprocess.PIPE,
     )
 
     # The JSON output is on the last line of the output, but it has a

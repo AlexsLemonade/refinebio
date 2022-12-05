@@ -10,7 +10,9 @@ START_DATE = datetime.datetime(2021, 1, 1, tzinfo=timezone.utc)
 
 qs = (
     Dataset.processed_filtered_objects.filter(created_at__gt=START_DATE)
-    .annotate(week=ExtractWeek("created_at"),)
+    .annotate(
+        week=ExtractWeek("created_at"),
+    )
     .values("week")
     .annotate(n=Count("pk"))
     .order_by("week")

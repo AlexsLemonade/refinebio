@@ -42,8 +42,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """Re-surveys GEO experiments containing samples with incorrect platform information.
-        """
+        """Re-surveys GEO experiments containing samples with incorrect platform information."""
         # Check against CDF corrected accessions table to prevent recorrection of the same samples.
         corrected_experiments = CdfCorrectedAccession.objects.all().values("accession_code")
 

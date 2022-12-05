@@ -276,7 +276,10 @@ class ExperimentDocumentView(DocumentViewSet):
 
     # Define filtering fields
     filter_fields = {
-        "id": {"field": "_id", "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN],},
+        "id": {
+            "field": "_id",
+            "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN],
+        },
         "technology": "technology",
         "has_publication": "has_publication",
         "accession_code": "accession_code",

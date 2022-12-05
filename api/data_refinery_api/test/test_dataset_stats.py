@@ -20,7 +20,7 @@ class APITestCases(APITestCase):
         self.homo_sapiens.save()
 
     def test_dataset_stats(self):
-        """ Test the dataset stats endpoint """
+        """Test the dataset stats endpoint"""
 
         gallus_gallus = Organism(name="GALLUS_GALLUS", taxonomy_id=9031, is_scientific_name=True)
         gallus_gallus.save()

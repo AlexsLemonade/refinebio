@@ -2,7 +2,7 @@ from django.db import migrations
 
 
 def populate_compendium_results(apps, schema_editor):
-    """ Fetch existing compendia and create compendium results"""
+    """Fetch existing compendia and create compendium results"""
     CompendiumResult = apps.get_model("data_refinery_common", "CompendiumResult")
     CompendiumResultOrganismAssociation = apps.get_model(
         "data_refinery_common", "CompendiumResultOrganismAssociation"

@@ -2,7 +2,7 @@ from django.db import migrations
 
 
 def svd_algorithm_fix(apps, schema_editor):
-    """ Fetch existing compendia and create compendium results"""
+    """Fetch existing compendia and create compendium results"""
     ComputedFile = apps.get_model("data_refinery_common", "ComputedFile")
 
     compendium_computed_files = ComputedFile.objects.filter(

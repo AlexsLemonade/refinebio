@@ -2,7 +2,7 @@ from django.db import migrations, models
 
 
 def batch_update(queryset, batch=1000, **changes):
-    """ Update per batch """
+    """Update per batch"""
     is_done = False
     current = 0
 
@@ -36,7 +36,9 @@ class Migration(migrations.Migration):
     operations = [
         # 1. add fields with None as default value
         migrations.AddField(
-            model_name="processorjob", name="abort", field=models.BooleanField(null=True),
+            model_name="processorjob",
+            name="abort",
+            field=models.BooleanField(null=True),
         ),
         # 2. set default value in batches
         migrations.RunPython(set_default_abort_value),
