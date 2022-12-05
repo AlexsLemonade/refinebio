@@ -20,7 +20,7 @@ coverage==5.5
     # via -r requirements.in
 daiquiri==3.0.0
     # via -r requirements.in
-django==3.2.15
+django==3.2.16
     # via
     #   -r requirements.in
     #   django-nine
