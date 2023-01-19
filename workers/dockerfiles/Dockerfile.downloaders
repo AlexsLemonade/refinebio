@@ -5,8 +5,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY workers/R/dependencies/install_downloader_R_only.R .
-RUN Rscript install_downloader_R_only.R
+COPY workers/R/dependencies/downloaders/renv.lock .
+COPY workers/R/renv_load.R .
+RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
