@@ -70,18 +70,11 @@ RUN echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections && \
 
 WORKDIR /home/user
 
-# We need a few special packages for QN.
 ENV R_LIBS=/usr/local/lib/R/site-library
 
-COPY common/R/install_devtools.R .
-RUN Rscript install_devtools.R
-
-COPY workers/R/dependencies/qn/cran/dependencies.R .
-RUN Rscript dependencies.R
-
-COPY workers/R/dependencies/qn/bioc/dependencies.R .
-RUN Rscript dependencies.R
-# End QN-specific.
+COPY workers/R/dependencies/compendia/renv.lock .
+COPY workers/R/renv_load.R .
+RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \

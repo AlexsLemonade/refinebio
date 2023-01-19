@@ -36,9 +36,15 @@ RUN apt-get update && \
         libcairo-dev \
         libcurl4-gnutls-dev \
         libedit-dev \
+        libfreetype6-dev \
+        libfribidi-dev \
         libgit2-dev \
+        libharfbuzz-dev \
+        libjpeg-dev \
+        libpng-dev \
         libpq-dev \
         libssl-dev \
+        libtiff5-dev \
         libxml2-dev \
         llvm-10-dev \
         lsb-release \
@@ -59,7 +65,6 @@ RUN apt-get update && \
     useradd --create-home --home-dir /home/user/ -g user user && \
     chown -R user /home/user/
 
-# Pre-install dev tools.
 ENV R_LIBS=/usr/local/lib/R/site-library
-COPY common/R/install_devtools.R .
-RUN Rscript install_devtools.R
+
+ENTRYPOINT []
