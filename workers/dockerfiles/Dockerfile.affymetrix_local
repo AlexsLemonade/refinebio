@@ -3,6 +3,8 @@ FROM ccdlstaging/dr_affymetrix:latest
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+USER root
+
 WORKDIR /home/user
 
 # Remove the version of common already installed.
