@@ -25,16 +25,16 @@ print_options() {
 while getopts ":p:e:o:v:h" opt; do
     case $opt in
         p)
-            export project=$OPTARG
+            export project="$OPTARG"
             ;;
         e)
-            export env=$OPTARG
+            export env="$OPTARG"
             ;;
         o)
-            export output_dir=$OPTARG
+            export output_dir="$OPTARG"
             ;;
         v)
-            export system_version=$OPTARG
+            export system_version="$OPTARG"
             ;;
         h)
             print_description

@@ -38,10 +38,10 @@ EOF
 while getopts ":d:v:ah" opt; do
     case $opt in
     d)
-        export DOCKERHUB_REPO=$OPTARG
+        export DOCKERHUB_REPO="$OPTARG"
         ;;
     v)
-        export SYSTEM_VERSION=$OPTARG
+        export SYSTEM_VERSION="$OPTARG"
         ;;
     a)
         AFFYMETRIX=true

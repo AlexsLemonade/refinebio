@@ -12,10 +12,10 @@ EOF
 while getopts ":s:a:h" opt; do
     case $opt in
     s)
-        export SURVEYOR=$OPTARG
+        export SURVEYOR="$OPTARG"
         ;;
     a)
-        export ACCESSION=$OPTARG
+        export ACCESSION="$OPTARG"
         ;;
     h)
         print_description
