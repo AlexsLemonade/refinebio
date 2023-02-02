@@ -19,6 +19,8 @@ RUN pip3 install --ignore-installed --no-cache-dir \
 COPY config/ config/
 COPY workers/ .
 
+RUN rm -rf /root/.cache/*
+
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
