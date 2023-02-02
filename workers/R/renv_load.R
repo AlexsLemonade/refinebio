@@ -6,8 +6,9 @@ options(repos = structure(c(
     CRAN = "https://cloud.r-project.org/"
 )))
 options(Ncpus = parallel::detectCores())
+options(renv.settings.use.cache = FALSE)
 
 install.packages("renv")
 
 renv::consent(provided = TRUE)
-renv::restore(prompt = FALSE)
+renv::restore(prompt = FALSE, rebuild = TRUE)

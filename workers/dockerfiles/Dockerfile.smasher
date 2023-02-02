@@ -23,6 +23,8 @@ COPY .boto .boto
 COPY config/ config/
 COPY workers/ .
 
+RUN rm -rf /root/.cache/*
+
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 

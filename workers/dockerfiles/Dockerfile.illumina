@@ -24,6 +24,8 @@ COPY workers/ .
 COPY workers/data_refinery_workers/processors/detect_database.R .
 COPY workers/illumina_probe_maps/ probe_maps/
 
+RUN rm -rf /root/.cache/*
+
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
