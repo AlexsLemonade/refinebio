@@ -54,7 +54,7 @@ def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
             results__computedfile__s3_bucket__isnull=False,
         )
 
-        if samples.count() == 0:
+        if not samples.exists():
             return False
 
     else:
@@ -128,7 +128,7 @@ def validate_dataset(data):
             results__computedfile__s3_key__isnull=False,
             results__computedfile__s3_bucket__isnull=False,
         )
-        if samples_without_quant_sf.count():
+        if samples_without_quant_sf.exists():
             raise InvalidData(
                 message="Sample(s) in dataset are missing quant.sf files. See `details` for a full list",
                 details=[s.accession_code for s in samples_without_quant_sf],
@@ -136,7 +136,7 @@ def validate_dataset(data):
 
     else:
         unprocessed_samples = samples.exclude(is_processed=True)
-        if unprocessed_samples.count():
+        if unprocessed_samples.exists():
             raise InvalidData(
                 message="Non-downloadable sample(s) in dataset. See `details` for a full list",
                 details=[s.accession_code for s in unprocessed_samples],
