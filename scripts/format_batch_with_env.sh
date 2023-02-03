@@ -105,9 +105,7 @@ fi
 
 # This script should always run from the context of the directory of
 # the project it is building.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
 
 project_directory="$script_directory/.."
 
