@@ -59,12 +59,22 @@ def handle404error(request, exception):
     if not match(r"^/v[1-9]/.*", request.path):
         message = "refine.bio API resources are only available through versioned requests."
 
-    return JsonResponse({"message": message, "docs": url, "status_code": 404,}, status=404)
+    return JsonResponse(
+        {
+            "message": message,
+            "docs": url,
+            "status_code": 404,
+        },
+        status=404,
+    )
 
 
 def handle500error(request):
     return JsonResponse(
-        {"message": "A server error occured. This has been reported.", "status_code": 500,},
+        {
+            "message": "A server error occured. This has been reported.",
+            "status_code": 500,
+        },
         status=500,
     )
 

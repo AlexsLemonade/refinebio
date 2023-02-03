@@ -221,24 +221,54 @@ class DatasetSerializer(serializers.ModelSerializer):
             "worker_version",
         )
         extra_kwargs = {
-            "data": {"required": True,},
-            "id": {"read_only": True,},
-            "is_processing": {"read_only": True,},
-            "is_processed": {"read_only": True,},
-            "is_available": {"read_only": True,},
+            "data": {
+                "required": True,
+            },
+            "id": {
+                "read_only": True,
+            },
+            "is_processing": {
+                "read_only": True,
+            },
+            "is_processed": {
+                "read_only": True,
+            },
+            "is_available": {
+                "read_only": True,
+            },
             "email_address": {"required": False, "write_only": True},
             "email_ccdl_ok": {"required": False, "write_only": True},
             "notify_me": {"required": False, "write_only": True},
-            "expires_on": {"read_only": True,},
-            "s3_bucket": {"read_only": True,},
-            "s3_key": {"read_only": True,},
-            "success": {"read_only": True,},
-            "failure_reason": {"read_only": True,},
-            "created_at": {"read_only": True,},
-            "last_modified": {"read_only": True,},
-            "size_in_bytes": {"read_only": True,},
-            "sha1": {"read_only": True,},
-            "download_url": {"read_only": True,},
+            "expires_on": {
+                "read_only": True,
+            },
+            "s3_bucket": {
+                "read_only": True,
+            },
+            "s3_key": {
+                "read_only": True,
+            },
+            "success": {
+                "read_only": True,
+            },
+            "failure_reason": {
+                "read_only": True,
+            },
+            "created_at": {
+                "read_only": True,
+            },
+            "last_modified": {
+                "read_only": True,
+            },
+            "size_in_bytes": {
+                "read_only": True,
+            },
+            "sha1": {
+                "read_only": True,
+            },
+            "download_url": {
+                "read_only": True,
+            },
             "worker_version": {
                 "read_only": True,
                 "help_text": "Returns the latest version of refine.bio that was used to build this dataset.",
