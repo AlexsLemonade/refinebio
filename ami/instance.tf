@@ -1,5 +1,4 @@
 provider "aws" {
-  version = "2.70.0"
   region = "us-east-1"
 }
 
@@ -32,8 +31,9 @@ resource "aws_instance" "ubuntu-ami-template-instance" {
     }
   )
 
-  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   associate_public_ip_address = true
+  key_name = "data-refinery-key-circleci-prod"
+  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   vpc_security_group_ids = [aws_security_group.ami_template_instance.id]
 
   tags = {
@@ -56,9 +56,9 @@ resource "aws_instance" "ecs-ami-template-instance" {
     }
   )
 
-  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   associate_public_ip_address = true
   key_name = "data-refinery-key-circleci-prod"
+  subnet_id = data.aws_subnet.ccdl_dev_subnet.id
   vpc_security_group_ids = [aws_security_group.ami_template_instance.id]
 
   tags = {
