@@ -348,7 +348,7 @@ class DatasetTestCase(APITestCase):
             content_type="application/json",
         )
         self.assertIn(
-            "Sample(s) in dataset do not exist on refine",
+            "Sample(s) in dataset do not exist on refine.bio",
             response.json()["message"],
         )
         self.assertEqual(response.status_code, 400)
@@ -707,3 +707,63 @@ class DatasetTestCase(APITestCase):
 
         ds.refresh_from_db()
         self.assertFalse(ds.notify_me)
+
+    def test_add_dataset_multiple_experiment_sample(self):
+        response = self.client.post(
+            reverse("token", kwargs={"version": API_VERSION}),
+            json.dumps({"is_activated": True}),
+            content_type="application/json",
+        )
+        token_id = response.json()["id"]
+
+        response = self.client.post(
+            reverse("create_dataset", kwargs={"version": API_VERSION}),
+            json.dumps(
+                {
+                    "data": {
+                        "GSE000": ["789"],
+                    },
+                    "token_id": token_id,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+        data_set_id = response.json()["id"]
+        data = {
+            "GSE000": ["789"],
+            "GSE123": ["789"],
+        }
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": data_set_id, "version": API_VERSION}),
+            json.dumps(
+                {
+                    "data": data,
+                    "token_id": token_id,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data_set = Dataset.objects.get(id=data_set_id)
+        self.assertEqual(data_set.data, data)
+
+        data = {
+            "GSE000": ["789"],
+        }
+        response = self.client.put(
+            reverse("dataset", kwargs={"id": data_set_id, "version": API_VERSION}),
+            json.dumps(
+                {
+                    "data": data,
+                    "token_id": token_id,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data_set.refresh_from_db()
+        self.assertEqual(data_set.data, data)
