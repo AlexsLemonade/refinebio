@@ -25,7 +25,8 @@ resource "aws_instance" "ubuntu-ami-template-instance" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = templatefile("ubuntu-instance-user-data.tpl.sh", {
+  user_data = templatefile("ubuntu-instance-user-data.tpl.sh",
+    {
       docker_apt_key = data.local_file.docker_apt_key.content
     }
   )
@@ -49,7 +50,8 @@ resource "aws_instance" "ecs-ami-template-instance" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = templatefile("ecs-instance-user-data.tpl.sh", {
+  user_data = templatefile("ecs-instance-user-data.tpl.sh",
+    {
       docker_apt_key = data.local_file.docker_apt_key.content
     }
   )
