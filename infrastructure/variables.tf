@@ -223,6 +223,14 @@ variable "processing_compendia" {
   default = true
 }
 
+variable "accession_gathering_job_run_day" {
+  default = "SAT"
+}
+
+variable "max_accessions_gathered_per_run" {
+  default = 0
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -256,7 +264,7 @@ output "environment_variables" {
     },
     {
       name = "DATABASE_NAME"
-      value = aws_db_instance.postgres_db.name
+      value = aws_db_instance.postgres_db.db_name
     },
     {
       name = "DATABASE_HOST"
