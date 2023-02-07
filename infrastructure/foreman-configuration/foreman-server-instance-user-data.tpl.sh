@@ -112,11 +112,9 @@ service monit restart
 # Install the cron job tests
 crontab -l > tempcron
 cat <<EOF >> tempcron
-
 0 12 * * MON /bin/bash /home/ubuntu/run_manage_command.sh affymetrix check_brainarray_gene_agreement >> /var/log/affymetrix_checks.log 2>&1
 0 12 * * MON /bin/bash /home/ubuntu/run_manage_command.sh affymetrix check_tx_index_transcript_agreement >> /var/log/affymetrix_checks.log 2>&1
 0 12 * * ${accession_gathering_job_run_day} /bin/bash /home/ubuntu/run_manage_command.sh foreman gather_weekly_accessions >> /var/log/weekly_accessions.log 2>&1
-
 EOF
 # install new cron file
 crontab tempcron
