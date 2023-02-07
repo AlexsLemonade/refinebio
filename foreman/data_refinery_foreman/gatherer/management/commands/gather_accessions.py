@@ -11,12 +11,13 @@ import logging
 import re
 
 from django.core.management.base import BaseCommand
+from django.db.utils import IntegrityError
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.gathered_accession import GatheredAccession
-from data_refinery_foreman.gatherer.agents.microarray_ae import MicroArrayExpressAccessionAgent
-from data_refinery_foreman.gatherer.agents.microarray_geo import MicroArrayGEOAccessionAgent
-from data_refinery_foreman.gatherer.agents.rna_seq import RNASeqAccessionAgent
+from data_refinery_foreman.gatherer.agents.ae_agent import AEAgent
+from data_refinery_foreman.gatherer.agents.geo_agent import GEOAgent
+from data_refinery_foreman.gatherer.agents.rnaseq_agent import RNASeqAgent
 
 logger = get_and_configure_logger(__name__)
 
@@ -24,11 +25,8 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     """Creates agents and runs actual accession gathering."""
 
-    DATA_SOURCE_MA_AE = "microarray-ae"
-    DATA_SOURCE_MA_GEO = "microarray-geo"
-    DATA_SOURCE_RNA_SEQ = "rna-seq"
-    DATA_SOURCES = (DATA_SOURCE_MA_AE, DATA_SOURCE_MA_GEO, DATA_SOURCE_RNA_SEQ)
-
+    DATA_AGENTS = (AEAgent, GEOAgent, RNASeqAgent)
+    DATA_SOURCE_NAMES = [agent.SOURCE_NAME for agent in DATA_AGENTS]
     RE_ACCESSION = re.compile(r"(\D+)(\d+)")
     RE_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -164,43 +162,43 @@ class Command(BaseCommand):
 
         keyword = options["keyword"]
         organism = options["organism"]
-        sources = options["source"] or self.DATA_SOURCES
+        source_names = options["source"] or self.DATA_SOURCE_NAMES
 
-        for source in sources:
-            if source in self.DATA_SOURCES:
+        for source_name in source_names:
+            if source_name in self.DATA_SOURCE_NAMES:
                 continue
             errors.append(
-                f"Unknown source: {source}. Supported sources: {', '.join(self.DATA_SOURCES)}"
+                f"Unknown source: {source_name}. Supported sources: {', '.join(self.DATA_SOURCE_NAMES)}"
             )
 
-        if self.DATA_SOURCE_MA_AE in sources:
+        if AEAgent.SOURCE_NAME in source_names:
             ids = options["ae_id"] or options["ae_ids_file"]
             if not (ids or keyword or organism):
                 errors.append(
                     (
                         "Exactly one of the keyword [-k, --keyword], organism [-o, --organism] or "
                         "ArrayExpress ID(s) [--ae-id, --ae-ids-file] must be specified for "
-                        f"'{self.DATA_SOURCE_MA_AE}' source."
+                        f"'{AEAgent.SOURCE_NAME}' source."
                     )
                 )
-        if self.DATA_SOURCE_MA_GEO in sources:
+        if GEOAgent.SOURCE_NAME in source_names:
             ids = options["gpl_id"] or options["gpl_ids_file"]
             if not (ids or keyword or organism):
                 errors.append(
                     (
                         "Exactly one of the keyword [-k, --keyword], organism [-o, --organism] or "
                         "GEO platform ID(s) [--gpl-id, --gpl-ids-file] must be specified for "
-                        f"'{self.DATA_SOURCE_MA_GEO}' source."
+                        f"'{GEOAgent.SOURCE_NAME}' source."
                     )
                 )
-        if self.DATA_SOURCE_RNA_SEQ in sources:
+        if RNASeqAgent.SOURCE_NAME in source_names:
             ids = options["taxon_id"] or options["taxon_ids_file"]
             if not (ids or keyword or organism):
                 errors.append(
                     (
                         "Exactly one of the keyword [-k, --keyword], organism [-o, --organism] "
                         "or taxon ID(s) [--taxon-id, --taxon-ids-file] must be specified for "
-                        f"'{self.DATA_SOURCE_RNA_SEQ}' source."
+                        f"'{RNASeqAgent.SOURCE_NAME}' source."
                     )
                 )
 
@@ -213,26 +211,21 @@ class Command(BaseCommand):
         self.set_verbosity_level(options)
 
         agents = list()
-        sources = options["source"] or self.DATA_SOURCES
-
-        if self.DATA_SOURCE_RNA_SEQ in sources:
-            agents.append(RNASeqAccessionAgent(options))
-
-        if self.DATA_SOURCE_MA_AE in sources:
-            agents.append(MicroArrayExpressAccessionAgent(options))
-
-        if self.DATA_SOURCE_MA_GEO in sources:
-            agents.append(MicroArrayGEOAccessionAgent(options))
+        sources_names = options["source"] or self.DATA_SOURCE_NAMES
+        for cls in self.DATA_AGENTS:
+            if cls.SOURCE_NAME not in sources_names:
+                continue
+            agents.append(cls(options))
 
         entries = set()
         for agent in agents:
             entries.update(agent.collect_data())
 
         entries = sorted(  # Sort the resulting list.
-            (entry for entry in entries if self.RE_ACCESSION.match(entry.code)),
+            (entry for entry in entries if self.RE_ACCESSION.match(entry.accession_code)),
             key=lambda entry: (
-                self.RE_ACCESSION.match(entry.code).group(1),
-                int(self.RE_ACCESSION.match(entry.code).group(2)),
+                self.RE_ACCESSION.match(entry.accession_code).group(1),
+                int(self.RE_ACCESSION.match(entry.accession_code).group(2)),
             ),
         )
         # Limit the number of output entries.
@@ -245,4 +238,7 @@ class Command(BaseCommand):
                 output = "No accessions found."
             print(output)
         else:
-            GatheredAccession.objects.bulk_create(entries)
+            try:
+                GatheredAccession.objects.bulk_create(entries)
+            except IntegrityError as e:
+                logger.exception(f"Could not save new accessions to the database: {e}")

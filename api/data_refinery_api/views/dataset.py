@@ -54,7 +54,7 @@ def experiment_has_downloadable_samples(experiment, quant_sf_only=False):
             results__computedfile__s3_bucket__isnull=False,
         )
 
-        if samples.count() == 0:
+        if not samples.exists():
             return False
 
     else:
@@ -75,60 +75,60 @@ def validate_dataset(data):
     if data.get("data") is None or type(data["data"]) != dict:
         raise InvalidData("`data` must be a dict of lists.")
 
-    if data.get("start") and len(data["data"]) == 0:
+    if data.get("start") and not data["data"]:
         raise InvalidData("`data` must contain at least one experiment.")
 
-    accessions = []
-    non_downloadable_experiments = []
+    accessions = set()
+    non_downloadable_experiments = set()
+
     for key, value in data["data"].items():
         if type(value) != list:
-            raise InvalidData("`data` must be a dict of lists. Problem with `" + str(key) + "`")
+            raise InvalidData(f"`data` must be a dict of lists. Problem with `{key}`")
 
-        if len(value) < 1:
+        if not value:
             raise InvalidData(
-                "`data` must be a dict of lists, each with one or more elements. Problem with `"
-                + str(key)
-                + "`"
+                "`data` must be a dict of lists, each with one or more elements. "
+                f"Problem with `{key}`"
             )
 
         if len(value) != len(set(value)):
-            raise InvalidData("Duplicate values detected in " + str(value))
+            raise InvalidData(f"Duplicate values detected in {value}")
 
         # If they want "ALL", just make sure that the experiment has at least one downloadable sample
         if value == ["ALL"]:
             if not experiment_has_downloadable_samples(
                 key, quant_sf_only=data.get("quant_sf_only", False)
             ):
-                non_downloadable_experiments.append(key)
+                non_downloadable_experiments.add(key)
 
         # Otherwise, we will check that all the samples they requested are downloadable
         else:
-            accessions.extend(value)
+            accessions.update(value)
 
-    if len(non_downloadable_experiments) != 0:
+    if non_downloadable_experiments:
         raise InvalidData(
             message="Experiment(s) in dataset have zero downloadable samples. See `details` for a full list",
             details=non_downloadable_experiments,
         )
 
-    if len(accessions) == 0:
+    if not accessions:
         return
 
     samples = Sample.public_objects.filter(accession_code__in=accessions)
     if samples.count() != len(accessions):
         raise InvalidData(
             message="Sample(s) in dataset do not exist on refine.bio. See `details` for a full list",
-            details=list(set(accessions) - set(s.accession_code for s in samples)),
+            details=list(accessions - set(s.accession_code for s in samples)),
         )
 
-    if data.get("quant_sf_only", False):
+    if data.get("quant_sf_only"):
         samples_without_quant_sf = samples.exclude(
             # Exclude samples that have at least one uploaded quant.sf file associated with them
             results__computedfile__filename="quant.sf",
             results__computedfile__s3_key__isnull=False,
             results__computedfile__s3_bucket__isnull=False,
         )
-        if samples_without_quant_sf.count() > 0:
+        if samples_without_quant_sf.exists():
             raise InvalidData(
                 message="Sample(s) in dataset are missing quant.sf files. See `details` for a full list",
                 details=[s.accession_code for s in samples_without_quant_sf],
@@ -136,7 +136,7 @@ def validate_dataset(data):
 
     else:
         unprocessed_samples = samples.exclude(is_processed=True)
-        if unprocessed_samples.count() > 0:
+        if unprocessed_samples.exists():
             raise InvalidData(
                 message="Non-downloadable sample(s) in dataset. See `details` for a full list",
                 details=[s.accession_code for s in unprocessed_samples],
@@ -221,24 +221,54 @@ class DatasetSerializer(serializers.ModelSerializer):
             "worker_version",
         )
         extra_kwargs = {
-            "data": {"required": True,},
-            "id": {"read_only": True,},
-            "is_processing": {"read_only": True,},
-            "is_processed": {"read_only": True,},
-            "is_available": {"read_only": True,},
+            "data": {
+                "required": True,
+            },
+            "id": {
+                "read_only": True,
+            },
+            "is_processing": {
+                "read_only": True,
+            },
+            "is_processed": {
+                "read_only": True,
+            },
+            "is_available": {
+                "read_only": True,
+            },
             "email_address": {"required": False, "write_only": True},
             "email_ccdl_ok": {"required": False, "write_only": True},
             "notify_me": {"required": False, "write_only": True},
-            "expires_on": {"read_only": True,},
-            "s3_bucket": {"read_only": True,},
-            "s3_key": {"read_only": True,},
-            "success": {"read_only": True,},
-            "failure_reason": {"read_only": True,},
-            "created_at": {"read_only": True,},
-            "last_modified": {"read_only": True,},
-            "size_in_bytes": {"read_only": True,},
-            "sha1": {"read_only": True,},
-            "download_url": {"read_only": True,},
+            "expires_on": {
+                "read_only": True,
+            },
+            "s3_bucket": {
+                "read_only": True,
+            },
+            "s3_key": {
+                "read_only": True,
+            },
+            "success": {
+                "read_only": True,
+            },
+            "failure_reason": {
+                "read_only": True,
+            },
+            "created_at": {
+                "read_only": True,
+            },
+            "last_modified": {
+                "read_only": True,
+            },
+            "size_in_bytes": {
+                "read_only": True,
+            },
+            "sha1": {
+                "read_only": True,
+            },
+            "download_url": {
+                "read_only": True,
+            },
             "worker_version": {
                 "read_only": True,
                 "help_text": "Returns the latest version of refine.bio that was used to build this dataset.",
