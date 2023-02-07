@@ -26,6 +26,8 @@ class Migration(migrations.Migration):
                     models.DateTimeField(default=django.utils.timezone.now, editable=False),
                 ),
             ],
-            options={"db_table": "cdf_corrected_accessions",},
+            options={
+                "db_table": "cdf_corrected_accessions",
+            },
         ),
     ]

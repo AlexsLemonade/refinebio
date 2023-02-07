@@ -73,7 +73,12 @@ def _detect_encoding(job_context: Dict) -> Dict:
 
     try:
         encoding = subprocess.check_output(
-            ["file", "--brief", "--mime-encoding", job_context["input_file_path"],],
+            [
+                "file",
+                "--brief",
+                "--mime-encoding",
+                job_context["input_file_path"],
+            ],
             encoding="utf-8",
         ).strip()
     except subprocess.CalledProcessError as e:
@@ -365,7 +370,11 @@ def _detect_platform(job_context: Dict) -> Dict:
             "illuminaHumanv3",
             "illuminaHumanv4",
         ],
-        "MUS_MUSCULUS": ["illuminaMousev1", "illuminaMousev1p1", "illuminaMousev2",],
+        "MUS_MUSCULUS": [
+            "illuminaMousev1",
+            "illuminaMousev1p1",
+            "illuminaMousev2",
+        ],
         "RATTUS_NORVEGICUS": ["illuminaRatv1"],
     }
 

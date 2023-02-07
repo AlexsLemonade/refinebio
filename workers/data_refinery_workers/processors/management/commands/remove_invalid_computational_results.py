@@ -35,7 +35,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """ Takes care of removing invalid computational results. """
+        """Takes care of removing invalid computational results."""
         computational_result_ids = []
 
         if options["compendias"]:

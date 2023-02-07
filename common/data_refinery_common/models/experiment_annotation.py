@@ -5,7 +5,7 @@ from data_refinery_common.models.managers import PublicObjectsManager
 
 
 class ExperimentAnnotation(models.Model):
-    """ Semi-standard information associated with an Experiment """
+    """Semi-standard information associated with an Experiment"""
 
     class Meta:
         db_table = "experiment_annotations"
@@ -28,7 +28,7 @@ class ExperimentAnnotation(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time

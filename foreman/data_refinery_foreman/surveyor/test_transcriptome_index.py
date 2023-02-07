@@ -37,7 +37,7 @@ class SurveyTestCase(TestCase):
         "/home/user/data_store/cassettes/surveyor.transcriptome.correct_index_location.yaml"
     )
     def test_correct_index_location(self):
-        """ Tests that the files returned actually exist.
+        """Tests that the files returned actually exist.
 
         Uses an organism in the main division.
         """
@@ -68,7 +68,7 @@ class SurveyTestCase(TestCase):
         "/home/user/data_store/cassettes/surveyor.transcriptome.correct_location_metazoa.yaml"
     )
     def test_correct_index_location_metazoa(self):
-        """ Tests that the files returned actually exist.
+        """Tests that the files returned actually exist.
 
         Tests the Metazoa division instead of the main division.
         """
@@ -97,7 +97,7 @@ class SurveyTestCase(TestCase):
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.single_plant.yaml")
     def test_single_plant(self):
-        """ Tests that the files returned actually exist.
+        """Tests that the files returned actually exist.
 
         Tests the Metazoa division instead of the main division.
         """
@@ -128,7 +128,7 @@ class SurveyTestCase(TestCase):
         "/home/user/data_store/cassettes/surveyor.transcriptome.correct_location_protist.yaml"
     )
     def test_correct_index_location_protist(self):
-        """ Tests that the files returned actually exist.
+        """Tests that the files returned actually exist.
 
         Tests the Metazoa division instead of the main division.
         """

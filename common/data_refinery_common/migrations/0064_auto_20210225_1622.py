@@ -10,5 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(name="dataset", options={"base_manager_name": "objects"},),
+        migrations.AlterModelOptions(
+            name="dataset",
+            options={"base_manager_name": "objects"},
+        ),
     ]

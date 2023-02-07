@@ -41,7 +41,9 @@ def stop_jobs(job_ids, job_type, reason):
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "job-ids", type=str, help=("Comma separated job IDs that need to be stopped."),
+            "job-ids",
+            type=str,
+            help=("Comma separated job IDs that need to be stopped."),
         )
 
         parser.add_argument(

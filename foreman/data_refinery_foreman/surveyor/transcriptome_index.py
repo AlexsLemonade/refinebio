@@ -57,8 +57,7 @@ DIVISION_RELEASE_URL = "https://rest.ensembl.org/info/eg_version?content-type=ap
 def get_strain_mapping_for_organism(
     species_name: str, config_file="config/organism_strain_mapping.csv"
 ) -> List[Dict]:
-    """Returns the row of the strain/organism mapping for the species_name
-    """
+    """Returns the row of the strain/organism mapping for the species_name"""
     upper_name = species_name.upper()
     with open(config_file) as csvfile:
         reader = csv.DictReader(csvfile)
@@ -369,7 +368,9 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         ).value
 
         logger.info(
-            "Surveying %s division of ensembl.", ensembl_division, survey_job=self.survey_job.id,
+            "Surveying %s division of ensembl.",
+            ensembl_division,
+            survey_job=self.survey_job.id,
         )
 
         try:
