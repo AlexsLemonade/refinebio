@@ -109,8 +109,7 @@ class SurveyTestCase(TestCase):
         "/home/user/data_store/cassettes/surveyor.array_express.determine_accession.yaml"
     )
     def test_determine_accession(self):
-        """Test of the `determine_sample_accession` function
-        """
+        """Test of the `determine_sample_accession` function"""
         survey_job = self.create_job_for_accession("E-MTAB-3050")
         ae_surveyor = ArrayExpressSurveyor(survey_job)
 

@@ -39,7 +39,7 @@ def check_item(computed_file):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        """ We found some computed files that seem to be in S3 but they don't exist for some reason.
+        """We found some computed files that seem to be in S3 but they don't exist for some reason.
         This command will check all of them and ensure they exists in S3. For those that don't exist it
         will clear their `s3_key`/`s3_bucket` fields.
         ref https://github.com/AlexsLemonade/refinebio/issues/1696

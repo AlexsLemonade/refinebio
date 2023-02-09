@@ -21,6 +21,8 @@ class Migration(migrations.Migration):
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="originalfile", name="md5", field=models.CharField(max_length=32, null=True),
+            model_name="originalfile",
+            name="md5",
+            field=models.CharField(max_length=32, null=True),
         ),
     ]

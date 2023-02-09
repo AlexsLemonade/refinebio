@@ -24,13 +24,19 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="dataset", name="success", field=models.BooleanField(null=True),
+            model_name="dataset",
+            name="success",
+            field=models.BooleanField(null=True),
         ),
         migrations.AlterField(
-            model_name="datasetannotation", name="data", field=models.JSONField(default=dict),
+            model_name="datasetannotation",
+            name="data",
+            field=models.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name="downloaderjob", name="success", field=models.BooleanField(null=True),
+            model_name="downloaderjob",
+            name="success",
+            field=models.BooleanField(null=True),
         ),
         migrations.AlterField(
             model_name="experiment",
@@ -38,21 +44,33 @@ class Migration(migrations.Migration):
             field=models.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name="experimentannotation", name="data", field=models.JSONField(default=dict),
+            model_name="experimentannotation",
+            name="data",
+            field=models.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name="processor", name="environment", field=models.JSONField(default=dict),
+            model_name="processor",
+            name="environment",
+            field=models.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name="processorjob", name="success", field=models.BooleanField(null=True),
+            model_name="processorjob",
+            name="success",
+            field=models.BooleanField(null=True),
         ),
         migrations.AlterField(
-            model_name="sample", name="protocol_info", field=models.JSONField(default=dict),
+            model_name="sample",
+            name="protocol_info",
+            field=models.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name="sampleannotation", name="data", field=models.JSONField(default=dict),
+            model_name="sampleannotation",
+            name="data",
+            field=models.JSONField(default=dict),
         ),
         migrations.AlterField(
-            model_name="surveyjob", name="success", field=models.BooleanField(null=True),
+            model_name="surveyjob",
+            name="success",
+            field=models.BooleanField(null=True),
         ),
     ]

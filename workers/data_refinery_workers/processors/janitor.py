@@ -23,7 +23,7 @@ batch = boto3.client("batch", region_name=AWS_REGION)
 
 
 def _find_and_remove_expired_jobs(job_context):
-    """ Finds expired jobs and removes their working directories """
+    """Finds expired jobs and removes their working directories"""
 
     job_context["deleted_items"] = []
 

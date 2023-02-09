@@ -1,9 +1,7 @@
 #!/bin/sh
 
 # the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
 cd "$script_directory" || exit
 
 # However in order to give Docker access to all the code we have to

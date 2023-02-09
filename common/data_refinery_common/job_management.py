@@ -168,7 +168,8 @@ def create_downloader_job(
 
 
 def create_processor_jobs_for_original_files(
-    original_files: List[OriginalFile], downloader_job: DownloaderJob = None,
+    original_files: List[OriginalFile],
+    downloader_job: DownloaderJob = None,
 ):
     """
     Creates one processor job for each original file given.
@@ -178,7 +179,8 @@ def create_processor_jobs_for_original_files(
 
 
 def create_processor_job_for_original_files(
-    original_files: List[OriginalFile], downloader_job: DownloaderJob = None,
+    original_files: List[OriginalFile],
+    downloader_job: DownloaderJob = None,
 ):
     """
     Create a processor job and queue a processor task for sample related to an experiment.

@@ -121,7 +121,7 @@ class ProcessorJobListView(generics.ListAPIView):
 
 
 class ProcessorJobDetailView(generics.RetrieveAPIView):
-    """ Retrieves a ProcessorJob by ID """
+    """Retrieves a ProcessorJob by ID"""
 
     lookup_field = "id"
     model = ProcessorJob

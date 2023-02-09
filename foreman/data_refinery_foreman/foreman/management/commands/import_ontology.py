@@ -17,7 +17,9 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "--ontology", type=str, help=("The prefix of the ontology to import (e.g. UO)."),
+            "--ontology",
+            type=str,
+            help=("The prefix of the ontology to import (e.g. UO)."),
         )
 
     def handle(self, *args, **options):

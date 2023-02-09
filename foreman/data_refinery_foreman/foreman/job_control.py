@@ -59,7 +59,7 @@ def send_janitor_jobs():
 
 
 def clean_database():
-    """ Removes duplicated objects that may have appeared through race, OOM, bugs, etc.
+    """Removes duplicated objects that may have appeared through race, OOM, bugs, etc.
     See: https://github.com/AlexsLemonade/refinebio/issues/1183
     """
 

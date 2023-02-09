@@ -27,8 +27,7 @@ CHUNK_SIZE = 1024 * 256
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob, force_ftp=False) -> None:
-    """ Download a file from GEO via Aspera unless `force_ftp` is True
-    """
+    """Download a file from GEO via Aspera unless `force_ftp` is True"""
 
     # Ensure directory exists
     os.makedirs(file_path.rsplit("/", 1)[0], exist_ok=True)
@@ -64,7 +63,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob, force_
 def _download_file_aspera(
     download_url: str, downloader_job: DownloaderJob, target_file_path: str, attempt=0
 ) -> bool:
-    """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
+    """Download a file to a location using Aspera by shelling out to the `ascp` client."""
 
     try:
         logger.debug(
@@ -154,7 +153,7 @@ class FileExtractionError(Exception):
 
 
 class ArchivedFile:
-    """ Contains utility functions to enumerate the files inside an archive that was downloaded from GEO. """
+    """Contains utility functions to enumerate the files inside an archive that was downloaded from GEO."""
 
     def __init__(self, downloaded_file_path, parent_archive=None):
         self.file_path = downloaded_file_path
@@ -165,31 +164,31 @@ class ArchivedFile:
         self.extension = os.path.splitext(self.file_path)[1]
 
     def parent_is_archive(self):
-        """ Returns true if this file came from an archive """
+        """Returns true if this file came from an archive"""
         return self.parent_archive and self.parent_archive.is_archive()
 
     def experiment_accession_code(self):
-        """ Tries to get an experiment accession code from the file name.
-        GEO experiment accession codes start with GSE and have between 5 and 9 characters """
+        """Tries to get an experiment accession code from the file name.
+        GEO experiment accession codes start with GSE and have between 5 and 9 characters"""
         match = re.match(r"(GSE\d{2,6})", self.filename)
         if match:
             return match.group(0)
         return None
 
     def sample_accession_code(self):
-        """ Tries to get a sample accession code from the file name.
-        GEO sample accession codes start with GSM and have between 6 and 10 characters """
+        """Tries to get a sample accession code from the file name.
+        GEO sample accession codes start with GSM and have between 6 and 10 characters"""
         match = re.match(r"(GSM\d{4,7})", self.filename)
         if match:
             return match.group(0)
         return None
 
     def get_sample(self):
-        """ Tries to find the sample associated with this file, and returns None if unable. """
+        """Tries to find the sample associated with this file, and returns None if unable."""
         return Sample.objects.filter(accession_code=self.sample_accession_code()).first()
 
     def is_processable(self):
-        """ There're some known file patterns that are found in GEO that we know we can ignore. """
+        """There're some known file patterns that are found in GEO that we know we can ignore."""
         if re.match(r"(GSE\d{2,6})_family.xml", self.filename):
             return False
 
@@ -234,7 +233,7 @@ class ArchivedFile:
         raise FileExtractionError(self.file_path, "Unknown archive file format.")
 
     def _get_absolute_path(self):
-        """ This returns the path where this file would be extracted if it's an archive """
+        """This returns the path where this file would be extracted if it's an archive"""
         if self.experiment_accession_code():
             return LOCAL_ROOT_DIR + "/" + self.experiment_accession_code() + "/raw/"
         elif self.sample_accession_code():
@@ -243,7 +242,7 @@ class ArchivedFile:
             return LOCAL_ROOT_DIR + "/" + self.filename + "/raw/"
 
     def _extract_tar(self) -> List[str]:
-        """ Extract tar and return a list of the raw files. """
+        """Extract tar and return a list of the raw files."""
         # This is technically an unsafe operation.
         # However, we're trusting GEO as a data source.
         abs_with_code_raw = self._get_absolute_path()

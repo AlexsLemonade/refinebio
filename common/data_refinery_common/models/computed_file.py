@@ -20,7 +20,7 @@ logger = get_and_configure_logger(__name__)
 
 
 class ComputedFile(models.Model):
-    """ A representation of a file created by a data-refinery process """
+    """A representation of a file created by a data-refinery process"""
 
     class Meta:
         db_table = "computed_files"
@@ -88,7 +88,7 @@ class ComputedFile(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -96,8 +96,7 @@ class ComputedFile(models.Model):
         return super(ComputedFile, self).save(*args, **kwargs)
 
     def sync_to_s3(self, s3_bucket, s3_key, public=False) -> bool:
-        """ Syncs a file to AWS S3.
-        """
+        """Syncs a file to AWS S3."""
         if not settings.RUNNING_IN_CLOUD:
             return True
 
@@ -108,7 +107,10 @@ class ComputedFile(models.Model):
                 extra_args["ACL"] = "public-read"
 
             S3.upload_file(
-                self.absolute_file_path, s3_bucket, s3_key, ExtraArgs=extra_args,
+                self.absolute_file_path,
+                s3_bucket,
+                s3_key,
+                ExtraArgs=extra_args,
             )
         except Exception:
             logger.exception(
@@ -126,7 +128,7 @@ class ComputedFile(models.Model):
         return True
 
     def sync_from_s3(self, force=False, path=None):
-        """ Downloads a file from S3 to the local file system.
+        """Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
         path = path if path is not None else self.absolute_file_path
@@ -219,19 +221,17 @@ class ComputedFile(models.Model):
         return True
 
     def calculate_sha1(self) -> None:
-        """ Calculate the SHA1 value of a given file.
-        """
+        """Calculate the SHA1 value of a given file."""
         self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
-        """ Calculate the number of bytes in a given file.
-        """
+        """Calculate the number of bytes in a given file."""
         self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def delete_local_file(self, force=False):
-        """ Deletes a file from the path and actually removes it from the file system."""
+        """Deletes a file from the path and actually removes it from the file system."""
         if not settings.RUNNING_IN_CLOUD and not force:
             return
 
@@ -271,8 +271,8 @@ class ComputedFile(models.Model):
         return True
 
     def get_synced_file_path(self, force=False, path=None):
-        """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
-        isn't already available locally. """
+        """Fetches the absolute file path to this ComputedFile, fetching from S3 if it
+        isn't already available locally."""
         if path:
             if os.path.exists(path):
                 return path
@@ -286,11 +286,11 @@ class ComputedFile(models.Model):
 
     @property
     def s3_url(self):
-        """ Render the resulting HTTPS URL for the S3 object."""
+        """Render the resulting HTTPS URL for the S3 object."""
         return self.get_s3_url()
 
     def get_s3_url(self):
-        """ Render the resulting HTTPS URL for the S3 object."""
+        """Render the resulting HTTPS URL for the S3 object."""
         if (self.s3_key) and (self.s3_bucket):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
         else:
@@ -298,11 +298,11 @@ class ComputedFile(models.Model):
 
     @property
     def download_url(self):
-        """ A temporary URL from which the file can be downloaded. """
+        """A temporary URL from which the file can be downloaded."""
         return self.create_download_url()
 
     def create_download_url(self):
-        """ Create a temporary URL from which the file can be downloaded."""
+        """Create a temporary URL from which the file can be downloaded."""
         if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
             return S3.generate_presigned_url(
                 ClientMethod="get_object",
@@ -313,5 +313,5 @@ class ComputedFile(models.Model):
             return None
 
     def has_been_log2scaled(self):
-        """ Return true if this is a smashable file that has been log2 scaled """
+        """Return true if this is a smashable file that has been log2 scaled"""
         return self.is_smashable and self.filename.endswith("lengthScaledTPM.tsv")

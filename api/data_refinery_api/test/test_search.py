@@ -66,7 +66,11 @@ class ESTestCases(APITestCase):
         sample.accession_code = "123"
         sample.save()
 
-        organism = Organism(name=ECOLI_STRAIN_NAME, taxonomy_id=879462, is_scientific_name=True,)
+        organism = Organism(
+            name=ECOLI_STRAIN_NAME,
+            taxonomy_id=879462,
+            is_scientific_name=True,
+        )
         organism.save()
 
         sample = Sample()

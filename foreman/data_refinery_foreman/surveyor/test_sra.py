@@ -51,8 +51,7 @@ class SraSurveyorTestCase(TestCase):
         SurveyJob.objects.all().delete()
 
     def test_survey(self):
-        """A Simple test of the SRA surveyor.
-        """
+        """A Simple test of the SRA surveyor."""
         sra_surveyor = SraSurveyor(self.survey_job)
         sra_surveyor.discover_experiment_and_samples()
 
@@ -69,8 +68,7 @@ class SraSurveyorTestCase(TestCase):
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.srp_survey.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_srp_survey(self, mock_send_job):
-        """A slightly harder test of the SRA surveyor.
-        """
+        """A slightly harder test of the SRA surveyor."""
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(
@@ -148,8 +146,7 @@ class SraSurveyorTestCase(TestCase):
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.sra.survey_nonexistant.yaml")
     def test_nonexistant_srp_survey(self):
-        """Try surveying an accession that does not exist
-        """
+        """Try surveying an accession that does not exist"""
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(
@@ -167,8 +164,7 @@ class SraSurveyorTestCase(TestCase):
         "/home/user/data_store/cassettes/surveyor.sra.arrayexpress_alternate_accession.yaml"
     )
     def test_arrayexpress_alternate_accession(self):
-        """ Make sure that ENA experiments correctly detect their ArrayExpress alternate accession
-        """
+        """Make sure that ENA experiments correctly detect their ArrayExpress alternate accession"""
 
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()

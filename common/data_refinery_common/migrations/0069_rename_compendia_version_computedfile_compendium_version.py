@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RenameField(
-            model_name="computedfile", old_name="compendia_version", new_name="compendium_version",
+            model_name="computedfile",
+            old_name="compendia_version",
+            new_name="compendium_version",
         ),
     ]

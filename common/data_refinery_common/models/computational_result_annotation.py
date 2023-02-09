@@ -5,7 +5,7 @@ from data_refinery_common.models.managers import PublicObjectsManager
 
 
 class ComputationalResultAnnotation(models.Model):
-    """ Non-standard information associated with an ComputationalResult """
+    """Non-standard information associated with an ComputationalResult"""
 
     class Meta:
         db_table = "computational_result_annotations"
@@ -30,7 +30,7 @@ class ComputationalResultAnnotation(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time

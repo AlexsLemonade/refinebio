@@ -10,5 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(model_name="computedfile", name="computed_fi_filenam_64958d_idx",),
+        migrations.RemoveIndex(
+            model_name="computedfile",
+            name="computed_fi_filenam_64958d_idx",
+        ),
     ]
