@@ -7,6 +7,8 @@ from typing import Dict
 
 from django.test import TestCase, tag
 
+from tests import utils
+
 from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.models import (
     Organism,
@@ -18,7 +20,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
 )
-from data_refinery_workers.processors import illumina, testing_utils, utils
+from data_refinery_workers.processors import illumina, utils
 
 
 def prepare_illumina_job(job_info: Dict) -> ProcessorJob:
@@ -318,7 +320,10 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
                 "filename": "GSE33814_trimmed_non-normalized.txt",
                 "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE33814_trimmed_non-normalized.txt",
                 "organism": organism,
-                "samples": [("GSM836222", "IMGUS_32"), ("GSM836223", "IMGUS_33"),],
+                "samples": [
+                    ("GSM836222", "IMGUS_32"),
+                    ("GSM836223", "IMGUS_33"),
+                ],
             }
         )
 
@@ -357,12 +362,16 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
                     (
                         "GSM3071991",
                         "MCF-7 KLHDC7B siRNA knockdown control",
-                        {"description": ["SAMPLE 1"],},
+                        {
+                            "description": ["SAMPLE 1"],
+                        },
                     ),
                     (
                         "GSM3071992",
                         "MCF-7 KLHDC7B siRNA knockdown",
-                        {"description": ["SAMPLE 2"],},
+                        {
+                            "description": ["SAMPLE 2"],
+                        },
                     ),
                 ],
             }
@@ -420,7 +429,9 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
                 "filename": "GSE41355_non-normalized.txt",
                 "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE41355_non-normalized.txt",
                 "organism": organism,
-                "samples": [("GSM1015436", "IRF3/7 DKO 2"),],
+                "samples": [
+                    ("GSM1015436", "IRF3/7 DKO 2"),
+                ],
             }
         )
 
@@ -445,7 +456,13 @@ class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
                 "absolute_file_path": "/home/user/data_store/raw/TEST/ILLUMINA/GSE100301_non-normalized.txt",
                 "organism": organism,
                 "samples": [
-                    ("GSM2677583", "22Rv1-tetO-Gal4, replicate 1", {"description": ["SAMPLE 1"],},),
+                    (
+                        "GSM2677583",
+                        "22Rv1-tetO-Gal4, replicate 1",
+                        {
+                            "description": ["SAMPLE 1"],
+                        },
+                    ),
                 ],
             }
         )

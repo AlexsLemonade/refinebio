@@ -42,7 +42,9 @@ class Migration(migrations.Migration):
                 ("ontology_term", models.TextField(unique=True)),
                 ("human_readable_name", models.TextField()),
             ],
-            options={"db_table": "ontology_terms",},
+            options={
+                "db_table": "ontology_terms",
+            },
         ),
         migrations.AddField(
             model_name="experiment",
@@ -150,7 +152,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False,},
+            options={
+                "abstract": False,
+            },
         ),
         migrations.CreateModel(
             name="ExperimentAttribute",
@@ -207,6 +211,8 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False,},
+            options={
+                "abstract": False,
+            },
         ),
     ]

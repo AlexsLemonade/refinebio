@@ -8,7 +8,7 @@ class SurveyedAccession(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -26,7 +26,7 @@ class CdfCorrectedAccession(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time

@@ -111,8 +111,7 @@ def get_downloader_job_queue_depth(job_queue_name):
 
 
 def get_capacity_for_jobs() -> bool:
-    """Returns how many jobs the system has remaining capacity for.
-    """
+    """Returns how many jobs the system has remaining capacity for."""
     num_job_queues = len(settings.AWS_BATCH_QUEUE_WORKERS_NAMES)
     MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
     # Maximum number of total jobs running at a time.
@@ -163,8 +162,7 @@ def increment_downloader_job_queue_depth(job_queue_name):
 
 
 def get_batch_queue_for_downloader_job():
-    """Logic for distributing downloader jobs across queues.
-    """
+    """Logic for distributing downloader jobs across queues."""
     job_queue_depths = get_job_queue_depths()["downloader_jobs"]
     for job_queue in settings.AWS_BATCH_QUEUE_WORKERS_NAMES:
         if job_queue_depths[job_queue] <= settings.MAX_DOWNLOADER_JOBS_PER_NODE:

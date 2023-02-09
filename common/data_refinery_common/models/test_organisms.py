@@ -231,8 +231,7 @@ class OrganismModelTestCase(TestCase):
 
     @patch("data_refinery_common.models.organism.requests.get")
     def test_unfound_names_raise(self, mock_get):
-        """If we can't find the taxonomy id, it's likely a bad organism name.
-        """
+        """If we can't find the taxonomy id, it's likely a bad organism name."""
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = ESEARCH_NOT_FOUND_XML
 

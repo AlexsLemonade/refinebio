@@ -222,8 +222,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """Requeues all unprocessed RNA-Seq samples for an organism.
-        """
+        """Requeues all unprocessed RNA-Seq samples for an organism."""
         if options["organism_name"] is None:
             logger.error("You must specify an organism-name.")
             sys.exit(1)

@@ -89,7 +89,7 @@ class UtilsTestCase(TestCase):
         self.assertTrue(readable_platform_names["xenopuslaevis"] == expected_readable_name)
 
     def test_get_normalized_platform(self):
-        """ Test a particular normaization we need to perform """
+        """Test a particular normaization we need to perform"""
 
         self.assertEqual(utils.get_normalized_platform("hugene10stv1"), "hugene10st")
         self.assertEqual(utils.get_normalized_platform("hugene10stv2"), "hugene10st")

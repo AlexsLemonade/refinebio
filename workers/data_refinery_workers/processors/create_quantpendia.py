@@ -196,8 +196,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
 
 def _remove_job_dir(job_context: Dict):
-    """ remove the directory when the job is successful. At this point
-    the quantpendia was already zipped and uploaded. """
+    """remove the directory when the job is successful. At this point
+    the quantpendia was already zipped and uploaded."""
     # don't remove the files when running locally or for tests
     if settings.RUNNING_IN_CLOUD:
         shutil.rmtree(job_context["job_dir"], ignore_errors=True)
