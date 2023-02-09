@@ -88,7 +88,9 @@ class ProcessorJob(models.Model):
 
     # If the job had data downloaded for it, this is the DownloaderJob that did so.
     downloader_job = models.ForeignKey(
-        "data_refinery_common.DownloaderJob", on_delete=models.SET_NULL, null=True,
+        "data_refinery_common.DownloaderJob",
+        on_delete=models.SET_NULL,
+        null=True,
     )
 
     # If the job is retried, this is the id of the new job
@@ -106,7 +108,7 @@ class ProcessorJob(models.Model):
         return samples
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time

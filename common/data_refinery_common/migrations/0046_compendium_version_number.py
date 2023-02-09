@@ -4,7 +4,7 @@ from django.db.models.functions import RowNumber
 
 
 def compendium_version_number_fix(apps, schema_editor):
-    """ Fetch existing compendia and fix their version_number."""
+    """Fetch existing compendia and fix their version_number."""
     CompendiumResult = apps.get_model("data_refinery_common", "CompendiumResult")
 
     # normalized compendia

@@ -6,7 +6,7 @@ from django.utils import timezone
 
 
 class APIToken(models.Model):
-    """ Required for starting a smash job """
+    """Required for starting a smash job"""
 
     # ID
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -19,7 +19,7 @@ class APIToken(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time

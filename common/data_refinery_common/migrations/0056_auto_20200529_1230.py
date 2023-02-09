@@ -11,9 +11,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name="datasetannotation", options={"base_manager_name": "objects"},
+            name="datasetannotation",
+            options={"base_manager_name": "objects"},
         ),
-        migrations.AlterModelManagers(name="datasetannotation", managers=[],),
+        migrations.AlterModelManagers(
+            name="datasetannotation",
+            managers=[],
+        ),
         migrations.AlterField(
             model_name="datasetannotation",
             name="is_public",

@@ -44,7 +44,7 @@ def flatten(d, parent_key="", sep="_"):
 
 
 def get_title_and_authors_for_pubmed_id(pmid):
-    """ Given a PMID, return that PMID's (title, [authors]). """
+    """Given a PMID, return that PMID's (title, [authors])."""
 
     try:
         j_url = (

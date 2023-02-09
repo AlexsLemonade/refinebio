@@ -29,8 +29,7 @@ CHUNK_SIZE = 1024 * 256
 def _download_file(
     original_file: OriginalFile, downloader_job: DownloaderJob, target_file_path: str
 ) -> bool:
-    """ Download file dispatcher. Dispatches to the HTTP or Aspera downloader
-    """
+    """Download file dispatcher. Dispatches to the HTTP or Aspera downloader"""
     download_url = original_file.source_url
     # SRA files have Apsera downloads.
     if "ftp.sra.ebi.ac.uk" in download_url:
@@ -92,7 +91,7 @@ def _download_file_aspera(
     original_file=None,
     source="NCBI",
 ) -> bool:
-    """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
+    """Download a file to a location using Aspera by shelling out to the `ascp` client."""
 
     try:
         logger.debug(

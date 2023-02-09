@@ -66,7 +66,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def setup_eager_loading(queryset):
-        """ Perform necessary eager loading of data. """
+        """Perform necessary eager loading of data."""
         queryset = queryset.prefetch_related("samples").prefetch_related("organisms")
 
         # Multiple count annotations
@@ -117,7 +117,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
 
 
 class ExperimentListView(generics.ListAPIView):
-    """ Paginated list of all experiments. Advanced filtering can be done with the `/search` endpoint. """
+    """Paginated list of all experiments. Advanced filtering can be done with the `/search` endpoint."""
 
     model = Experiment
     queryset = Experiment.public_objects.all()
@@ -152,7 +152,7 @@ class ExperimentListView(generics.ListAPIView):
 
 
 class ExperimentDetailView(generics.RetrieveAPIView):
-    """ Retrieve details for an experiment given it's accession code """
+    """Retrieve details for an experiment given it's accession code"""
 
     lookup_field = "accession_code"
     queryset = Experiment.public_objects.all()

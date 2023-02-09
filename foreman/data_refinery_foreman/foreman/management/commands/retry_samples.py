@@ -66,7 +66,7 @@ def retry_by_accession_codes(accession_codes_param):
 
 
 def retry_by_regex(pattern, last_modified=None):
-    """ Finds the samples where the failure reason of the latest processor job that was applied to them
+    """Finds the samples where the failure reason of the latest processor job that was applied to them
     matches the given regex
     https://docs.djangoproject.com/en/dev/ref/models/querysets/#regex
     """
@@ -158,7 +158,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """ Re-queues all unprocessed RNA-Seq samples for an organism. """
+        """Re-queues all unprocessed RNA-Seq samples for an organism."""
         if options["source_database"]:
             retry_by_source_database(options["source_database"])
 

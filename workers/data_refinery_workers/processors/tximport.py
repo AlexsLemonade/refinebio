@@ -20,14 +20,13 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
 def _set_job_prefix(job_context: Dict) -> Dict:
-    """ Sets the `job_dir_prefix` value in the job context object."""
+    """Sets the `job_dir_prefix` value in the job context object."""
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
     return job_context
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Moves the file(s) from the raw directory to the temp directory.
-    """
+    """Moves the file(s) from the raw directory to the temp directory."""
     logger.debug("Preparing files..")
 
     # Create a directory specific to this processor job.

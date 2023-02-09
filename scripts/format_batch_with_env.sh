@@ -25,16 +25,16 @@ print_options() {
 while getopts ":p:e:o:v:h" opt; do
     case $opt in
         p)
-            export project=$OPTARG
+            export project="$OPTARG"
             ;;
         e)
-            export env=$OPTARG
+            export env="$OPTARG"
             ;;
         o)
-            export output_dir=$OPTARG
+            export output_dir="$OPTARG"
             ;;
         v)
-            export system_version=$OPTARG
+            export system_version="$OPTARG"
             ;;
         h)
             print_description
@@ -105,9 +105,7 @@ fi
 
 # This script should always run from the context of the directory of
 # the project it is building.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
 
 project_directory="$script_directory/.."
 

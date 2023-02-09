@@ -4,7 +4,7 @@ from django.db import migrations
 
 
 def fix_typo_in_sample_manufacturer(apps, schema_editor):
-    """ Fixes affymetrix samples that have their manufacturer set to "AFFYMETRTIX" or "NEXTSEQ" """
+    """Fixes affymetrix samples that have their manufacturer set to "AFFYMETRTIX" or "NEXTSEQ" """
     Sample = apps.get_model("data_refinery_common", "Sample")
     Sample.objects.all().filter(manufacturer="AFFYMETRTIX").update(manufacturer="AFFYMETRIX")
     Sample.objects.all().filter(manufacturer="NEXTSEQ").update(manufacturer="ILLUMINA")
