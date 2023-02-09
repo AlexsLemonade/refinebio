@@ -16,9 +16,9 @@
 # Cranlock was used to find the versions of dependencies to install
 
 # Treat warnings as errors, set CRAN mirror, and set parallelization:
-options(warn=2)
-options(repos=structure(c(CRAN="https://cloud.r-project.org/")))
-options(Ncpus=parallel::detectCores())
+options(warn = 2)
+options(repos = structure(c(CRAN = "https://cloud.r-project.org/")))
+options(Ncpus = parallel::detectCores())
 
 
 install_package_version <- function(package_name, version) {
@@ -31,18 +31,18 @@ install_package_version <- function(package_name, version) {
   package_url <- paste0("https://cloud.r-project.org/src/contrib/", package_tarball)
 
   # Give CRAN a full minute to timeout since it's not always the most reliable.
-  curl_result <- system(paste0("curl --head --connect-timeout 60 ", package_url), intern=TRUE)
+  curl_result <- system(paste0("curl --head --connect-timeout 60 ", package_url), intern = TRUE)
   if (grepl("404", curl_result[1])) {
     package_url <- paste0("https://cloud.r-project.org/src/contrib/Archive/", package_name, "/", package_tarball)
 
     # Make sure the package actually exists in the archive!
-    curl_result <- system(paste0("curl --head --connect-timeout 120 ", package_url), intern=TRUE)
+    curl_result <- system(paste0("curl --head --connect-timeout 120 ", package_url), intern = TRUE)
     if (grepl("404", curl_result[1])) {
       stop(paste("Package", package_name, "version", version, "does not exist!"))
     }
   }
 
-  install.packages(package_url)
+  install.packages(package_url, Ncpus = 32)
 }
 
 # Generated using cranlock

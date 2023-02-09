@@ -137,11 +137,11 @@ resource "aws_db_instance" "postgres_db" {
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
-  engine_version = "11.1"
+  engine_version = "11.16"
   allow_major_version_upgrade = true
   auto_minor_version_upgrade = false
   instance_class = "db.${var.database_instance_type}"
-  name = "data_refinery"
+  db_name = "data_refinery"
   port = var.database_hidden_port
   username = var.database_user
   password = var.database_password
@@ -182,7 +182,19 @@ resource "aws_instance" "pg_bouncer" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = data.template_file.pg_bouncer_script_smusher.rendered
+  user_data = templatefile("workers-configuration/pg-bouncer-instance-user-data.tpl.sh",
+    {
+      database_host = aws_db_instance.postgres_db.address
+      database_name = aws_db_instance.postgres_db.db_name
+      database_password = var.database_password
+      database_port = var.database_hidden_port
+      database_user = var.database_user
+      listen_port = var.database_port
+      region = var.region
+      stage = var.stage
+      user = var.user
+    }
+  )
 
   tags = merge(
     var.default_tags,
@@ -196,21 +208,5 @@ resource "aws_instance" "pg_bouncer" {
     volume_size = 100
 
     tags = var.default_tags
-  }
-}
-
-data "template_file" "pg_bouncer_script_smusher" {
-  template = file("workers-configuration/pg-bouncer-instance-user-data.tpl.sh")
-
-  vars = {
-    database_host = aws_db_instance.postgres_db.address
-    database_user = var.database_user
-    database_port = var.database_hidden_port
-    database_password = var.database_password
-    database_name = aws_db_instance.postgres_db.name
-    listen_port = var.database_port
-    user = var.user
-    stage = var.stage
-    region = var.region
   }
 }
