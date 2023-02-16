@@ -98,7 +98,7 @@ def post_downloads_summary(days, channel, top_countries=5):
 
         user_locations = set()
         for user_annotation in user_annotations:
-            user_locations.add(annotation.data["location"])
+            user_locations.add(user_annotation.data["location"])
             try:
                 country = user_annotation.data["location"].split(", ")[1]
                 downloads_per_country.update({country: 1})
