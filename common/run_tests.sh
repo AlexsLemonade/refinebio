@@ -40,5 +40,6 @@ docker run -t $INTERACTIVE \
        --add-host=database:"$DB_HOST_IP" \
        --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file common/environments/test \
+       --platform linux/amd64 \
        --volume "$volume_directory":/home/user/data_store \
         ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage "$@")" --parallel
