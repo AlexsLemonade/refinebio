@@ -73,8 +73,8 @@ def _download_file_aspera(
             downloader_job=downloader_job.id,
         )
 
-        ascp = ".aspera/cli/bin/ascp"
-        key = ".aspera/cli/etc/asperaweb_id_dsa.openssh"
+        ascp = "ascp"
+        key = "keys/asperaweb_id_dsa.openssh"
         url = download_url
         user = "anonftp"
         ftp = "ftp-trace.ncbi.nlm.nih.gov"
