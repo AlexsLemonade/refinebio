@@ -5,30 +5,22 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY workers/R/dependencies/install_downloader_R_only.R .
-RUN Rscript install_downloader_R_only.R
+COPY workers/R/dependencies/downloaders/renv.lock .
+COPY workers/R/renv_load.R .
+RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir rpy2==3.4.5 && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
-# Aspera will only install as the current user.
-# Even using `su - user &&` doesn't work...
+# Install Aspera.
+RUN gpg --keyserver keyserver.ubuntu.com --recv-keys \
+         409B6B1796C275462A1703113804BB82D39DC0E3 \
+         7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
+    curl -sSL https://get.rvm.io | bash -s stable --ruby --gems=aspera-cli
+
 USER user
-
-# Install Aspera. We have to install it using Holland Computing Center's conda
-# repo because download.asperasoft.com now returns 403s
-RUN wget -q "https://anaconda.org/HCC/aspera-cli/3.9.1/download/\
-linux-64/aspera-cli-3.9.1-0.tar.bz2" && \
-    [ "$(sha256sum aspera-cli-3.9.1-0.tar.bz2 | cut -d ' ' -f1)" =\
-      "60a09a7f3795186954079869106aa89a64183b7be8e0da7cbbe9d57c66c9bcdb" ] && \
-    rm -rf .aspera && \
-    mkdir -p .aspera/cli && \
-    tar xf aspera-cli-3.9.1-0.tar.bz2 -C .aspera/cli && \
-    rm aspera-cli-3.9.1-0.tar.bz2
-
-# Now that we're done installing Aspera go back to being root for a bit.
+RUN source /usr/local/rvm/scripts/rvm && \
+    ascli conf ascp install
 USER root
 
 # Get the latest version from the dist directory.
@@ -40,7 +32,10 @@ COPY .boto .boto
 COPY config config
 COPY workers/ .
 
+RUN rm -rf /root/.cache/*
+
 ARG SYSTEM_VERSION
+ENV PATH="$PATH:/home/user/.aspera/ascli/sdk"
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user

@@ -8,6 +8,7 @@ test_volume/*
 workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz
 volumes_postgres/
 aspera*
+!workers/keys/asperaweb_id_dsa.openssh
 common/version
 
 # Project-specific Batch related files
