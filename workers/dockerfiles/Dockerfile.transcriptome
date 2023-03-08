@@ -6,9 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /home/user
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir numpy && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
     # It's annoying that this can only be installed via git.
     git clone https://github.com/deweylab/RSEM.git && \
     cd RSEM && make install && \
@@ -39,6 +37,8 @@ RUN pip3 install --ignore-installed --no-cache-dir \
 COPY .boto .boto
 COPY config/ config/
 COPY workers/ .
+
+RUN rm -rf /root/.cache/*
 
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
