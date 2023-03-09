@@ -1,26 +1,30 @@
-renv::install("getopt@1.20.3")
-renv::install("optparse@1.4.4")
-renv::install("rjson@0.2.19")
-renv::install("R6@2.4.0")
-renv::install("pkgconfig@2.0.2")
-renv::install("cli@2.0.2")
-renv::install("rlang@0.4.5")
-renv::install("zeallot@0.1.0")
-renv::install("backports@1.1.4")
-renv::install("glue@1.3.1")
-renv::install("digest@0.6.19")
-renv::install("vctrs@0.1.0")
-renv::install("hms@0.4.2")
-renv::install("Rcpp@1.0.1")
-renv::install("assertthat@0.2.1")
-renv::install("crayon@1.3.4")
-renv::install("cli@1.1.0")
-renv::install("utf8@1.1.4")
-renv::install("fansi@0.4.0")
-renv::install("pillar@1.4.2")
-renv::install("tibble@2.1.3")
-renv::install("readr@1.1.1")
-
 renv::install(
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/tximport_1.16.1.tar.gz"
+    "assertthat@0.2.1",
+    "backports@1.1.4",
+    "cli@2.0.2",
+    "crayon@1.3.4",
+    "digest@0.6.19",
+    "dplyr@1.0.2",
+    "ellipsis@0.3.2",
+    "fansi@0.4.0",
+    "ff@2.2-14",
+    "getopt@1.20.3",
+    "glue@1.6.1",
+    "hms@0.4.2",
+    "oligo",
+    "optparse@1.4.4",
+    "pillar@1.4.2",
+    "pkgconfig@2.0.2",
+    "purrr@0.3.5",
+    "R6@2.4.0",
+    "Rcpp@1.0.1",
+    "readr@1.3.1",
+    "rjson@0.2.19",
+    "rlang@1.0.6",
+    "tibble@2.1.3",
+    "tidyr@1.1.0",
+    "tximport",
+    "utf8@1.1.4",
+    "vctrs@0.4.1",
+    "zeallot@0.1.0"
 )
