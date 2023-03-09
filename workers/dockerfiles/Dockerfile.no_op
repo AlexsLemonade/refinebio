@@ -10,15 +10,11 @@ COPY workers/R/renv_load.R .
 RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir numpy && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Noop-specific.
 RUN mkdir -p gene_indexes
-
 WORKDIR /home/user/gene_indexes
-
 ENV ID_REFINERY_URL=https://zenodo.org/record/1410647/files/all_1536267482.zip
 RUN curl -O $ID_REFINERY_URL && \
     echo $ID_REFINERY_URL > /etc/identifier_refinery_url && \
