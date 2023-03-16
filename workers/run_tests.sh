@@ -77,13 +77,18 @@ if [ -z "$tag" ] || [ "$tag" = "salmon" ]; then
         rm "$volume_directory"/salmon_tests.tar.gz
     fi
 
-    # Download salmontools test data
-    rm -rf "$volume_directory"/salmontools/
-    git clone https://github.com/dongbohu/salmontools_tests.git "$volume_directory"/salmontools
+    # salmontools test data
+    salmontools_test_zip="$test_data_repo/salmontools_test_data.tar.gz"
+    salmontools_test_dir="$volume_directory/salmontools"
 
-    # Download tximport test data
-    rm -rf "$volume_directory"/tximport_test/
-    git clone https://github.com/dongbohu/tximport_test.git "$volume_directory"/tximport_test
+    # Clean the test data directory
+    rm -rf "$salmontools_test_dir"
+    mkdir -p "$salmontools_test_dir"
+
+    echo "Downloading 'salmontools' test data..."
+    wget -q -O "$volume_directory"/salmontools.tar.gz "$salmontools_test_zip"
+    tar xzf "$volume_directory"/salmontools.tar.gz -C "$volume_directory"
+    rm "$volume_directory"/salmontools.tar.gz
 
     # Make sure data for Salmon test is downloaded from S3.
     rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
