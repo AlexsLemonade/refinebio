@@ -19,7 +19,7 @@ MIN = 100
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        """ Dispatch QN_REFERENCE creation jobs for all Organisms with a platform with enough processed samples. """
+        """Dispatch QN_REFERENCE creation jobs for all Organisms with a platform with enough processed samples."""
 
         organisms = Organism.objects.all()
 

@@ -83,8 +83,8 @@ def get_target_organisms(organisms):
 
 
 def group_organisms_by_biggest_platform(target_organisms):
-    """ Create groups of organisms that share the same platform
-    ref https://github.com/AlexsLemonade/refinebio/issues/1736 """
+    """Create groups of organisms that share the same platform
+    ref https://github.com/AlexsLemonade/refinebio/issues/1736"""
     result = []
 
     # process the organisms with the most platforms first
@@ -122,8 +122,8 @@ def group_organisms_by_biggest_platform(target_organisms):
 
 
 def get_organism_microarray_platforms(organism):
-    """ Returns the accession codes of the Affymetrix microarray platforms associated with an
-    organism. Ordered by the number of samples for each platform in descending order """
+    """Returns the accession codes of the Affymetrix microarray platforms associated with an
+    organism. Ordered by the number of samples for each platform in descending order"""
     return (
         organism.sample_set.filter(has_raw=True, technology="MICROARRAY", is_processed=True)
         .values("platform_accession_code")
@@ -165,7 +165,7 @@ def create_job_for_organism(organisms: List[Organism], svd_algorithm="ARPACK"):
 
 
 def get_dataset(organisms: List[Organism]):
-    """ Builds a dataset with the samples associated with the given organisms """
+    """Builds a dataset with the samples associated with the given organisms"""
     dataset = {}
 
     filter_query = Q()

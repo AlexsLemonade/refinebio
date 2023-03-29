@@ -5,8 +5,8 @@ from data_refinery_common.models.managers import PublicObjectsManager
 
 
 class DatasetAnnotation(models.Model):
-    """ Semi-standard information associated with a Dataset.
-    IMPORTANT: This data shouldn't not be exposed through an API. """
+    """Semi-standard information associated with a Dataset.
+    IMPORTANT: This data shouldn't not be exposed through an API."""
 
     class Meta:
         db_table = "dataset_annotations"
@@ -28,7 +28,7 @@ class DatasetAnnotation(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.pk:
             self.created_at = current_time

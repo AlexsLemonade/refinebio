@@ -9,7 +9,7 @@ class TimeTrackedModel(models.Model):
     updated_at = models.DateTimeField()
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time

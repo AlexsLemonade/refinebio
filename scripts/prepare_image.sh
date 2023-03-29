@@ -2,9 +2,7 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
 cd "$script_directory" || exit
 
 # Import the functions in common.sh
@@ -106,7 +104,7 @@ else
 
         if test "$GITHUB_ACTIONS"; then
             # docker needs repositories to be lowercase
-            CACHE_REPO="$(echo "ghrc.io/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+            CACHE_REPO="$(echo "ghcr.io/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
             CACHED_PACKAGE="$CACHE_REPO/dr_$image"
             CACHE="--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $CACHED_PACKAGE"
         fi

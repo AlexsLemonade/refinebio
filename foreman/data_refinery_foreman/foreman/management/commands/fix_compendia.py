@@ -31,7 +31,10 @@ def transfer_computed_file(computed_file):
     copy_source = {"Bucket": old_s3_bucket, "Key": s3_key}
     # keep the same key, just different
     S3.copy(
-        copy_source, S3_COMPENDIA_BUCKET_NAME, s3_key, ExtraArgs={"StorageClass": "STANDARD_IA"},
+        copy_source,
+        S3_COMPENDIA_BUCKET_NAME,
+        s3_key,
+        ExtraArgs={"StorageClass": "STANDARD_IA"},
     )
 
     # 2. update computed file

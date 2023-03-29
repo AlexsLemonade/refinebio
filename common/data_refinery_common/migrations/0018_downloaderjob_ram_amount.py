@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="downloaderjob", name="ram_amount", field=models.IntegerField(default=1024),
+            model_name="downloaderjob",
+            name="ram_amount",
+            field=models.IntegerField(default=1024),
         ),
     ]

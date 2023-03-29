@@ -59,7 +59,7 @@ class SurveyJob(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -67,11 +67,11 @@ class SurveyJob(models.Model):
         return super(SurveyJob, self).save(*args, **kwargs)
 
     def get_properties(self) -> Dict:
-        """ Return all associated SurveyJobKeyValues as a dict"""
+        """Return all associated SurveyJobKeyValues as a dict"""
         return {pair.key: pair.value for pair in self.surveyjobkeyvalue_set.all()}
 
     def get_accession_code(self):
-        """ Return `experiment_accession_code`, the most important code."""
+        """Return `experiment_accession_code`, the most important code."""
         try:
             kvp = self.surveyjobkeyvalue_set.get(key="experiment_accession_code")
             return kvp.value

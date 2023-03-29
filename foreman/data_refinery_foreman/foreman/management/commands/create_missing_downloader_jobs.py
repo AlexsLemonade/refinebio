@@ -32,7 +32,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """ Requeues downloader jobs for samples that haven't been processed and their original files
+        """Requeues downloader jobs for samples that haven't been processed and their original files
         have no no downloader jobs associated with them
         """
         supported_microarray_platforms = [

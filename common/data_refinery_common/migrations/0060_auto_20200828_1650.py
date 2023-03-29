@@ -11,7 +11,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RenameField(
-            model_name="organismindex", old_name="source_version", new_name="release_version",
+            model_name="organismindex",
+            old_name="source_version",
+            new_name="release_version",
         ),
         migrations.AddField(
             model_name="organismindex",
