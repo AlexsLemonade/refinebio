@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="dataset", name="notify_me", field=models.BooleanField(default=True),
+            model_name="dataset",
+            name="notify_me",
+            field=models.BooleanField(default=True),
         ),
     ]

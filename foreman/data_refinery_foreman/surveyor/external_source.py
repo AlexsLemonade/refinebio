@@ -106,8 +106,7 @@ class ExternalSourceSurveyor:
         experiment_accession_code: str = None,
         is_transcriptome: bool = False,
     ):
-        """Creates a single DownloaderJob with multiple files to download.
-        """
+        """Creates a single DownloaderJob with multiple files to download."""
         # Transcriptome is a special case because there's no sample_object.
         # It's alright to re-process transcriptome indices.
         if is_transcriptome:

@@ -56,7 +56,9 @@ def import_keywords(keywords: Dict, source: Contribution):
 
         for keyword in keywords:
             SampleKeyword.objects.get_or_create(
-                sample=sample, source=source, name=OntologyTerm.get_or_create_from_api(keyword),
+                sample=sample,
+                source=source,
+                name=OntologyTerm.get_or_create_from_api(keyword),
             )
 
     for experiment in dirty_experiments:

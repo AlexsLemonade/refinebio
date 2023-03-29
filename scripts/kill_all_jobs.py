@@ -18,7 +18,9 @@ for batch_queue_name in AWS_BATCH_QUEUE_ALL_NAMES:
 
         while "nextToken" in list_jobs_dict and list_jobs_dict["nextToken"]:
             list_jobs_dict = batch.list_jobs(
-                jobQueue=batch_queue_name, jobStatus=status, nextToken=list_jobs_dict["nextToken"],
+                jobQueue=batch_queue_name,
+                jobStatus=status,
+                nextToken=list_jobs_dict["nextToken"],
             )
 
             for job in list_jobs_dict["jobSummaryList"]:

@@ -16,6 +16,8 @@ class Migration(migrations.Migration):
             field=models.CharField(max_length=256, null=True),
         ),
         migrations.AddField(
-            model_name="surveyjob", name="ram_amount", field=models.IntegerField(default=256),
+            model_name="surveyjob",
+            name="ram_amount",
+            field=models.IntegerField(default=256),
         ),
     ]

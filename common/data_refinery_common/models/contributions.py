@@ -14,7 +14,7 @@ class Contribution(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         if not self.id:
             self.created_at = timezone.now()
         return super(Contribution, self).save(*args, **kwargs)

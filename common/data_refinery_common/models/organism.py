@@ -150,7 +150,7 @@ class Organism(ComputedFieldsModel):
         return str(self.name)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -223,5 +223,5 @@ class Organism(ComputedFieldsModel):
 
     @classmethod
     def get_objects_with_qn_targets(cls):
-        """ Return a list of Organisms who already have valid QN targets associated with them. """
+        """Return a list of Organisms who already have valid QN targets associated with them."""
         return Organism.objects.all().filter(qn_target__isnull=False)

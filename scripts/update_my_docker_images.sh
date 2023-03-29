@@ -8,9 +8,7 @@ set -e
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
 cd "$script_directory" || exit
 
 # Get access to all of refinebio
@@ -38,10 +36,10 @@ EOF
 while getopts ":d:v:ah" opt; do
     case $opt in
     d)
-        export DOCKERHUB_REPO=$OPTARG
+        export DOCKERHUB_REPO="$OPTARG"
         ;;
     v)
-        export SYSTEM_VERSION=$OPTARG
+        export SYSTEM_VERSION="$OPTARG"
         ;;
     a)
         AFFYMETRIX=true
