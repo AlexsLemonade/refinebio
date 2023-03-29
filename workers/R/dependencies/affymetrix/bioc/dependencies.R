@@ -1,11 +1,12 @@
-# Turn warnings into errors because biocLite throws warnings instead # of error if it fails to install something.
+# Turn warnings into errors because biocLite throws warnings instead
+# of error if it fails to install something.
 options(warn = 2)
 options(repos = structure(c(CRAN = "https://cloud.r-project.org")))
 options(Ncpus = parallel::detectCores())
 
-# Bioconductor packages, installed by devtools::install_url()
+# Bioconductor packages, installed by devtools::install_url().
 
-# Helper function that installs a list of packages using the input URLs
+# Helper function that installs a list of packages using the input URLs.
 install_with_url <- function(urls) {
   pkg_ids <- devtools::install_url(urls)
   if (any(is.na(pkg_ids))) {
@@ -34,10 +35,10 @@ bioc_pkg_urls <- c(
 )
 install_with_url(bioc_pkg_urls)
 
-# Invoke another R script to install BrainArray ensg packages
+# Invoke another R script to install BrainArray ensg packages.
 source("install_ensg_pkgs.R")
 
-# Install Bioconductor platform design (pd) packages
+# Install Bioconductor platform design (pd) packages.
 pd_experiment_pkgs <- c(
   "https://bioconductor.org/packages/3.11/data/experiment/src/contrib/pd.atdschip.tiling_0.26.0.tar.gz"
 )
