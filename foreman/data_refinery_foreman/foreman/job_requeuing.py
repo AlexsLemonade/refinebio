@@ -245,7 +245,9 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
 
     for keyvalue in keyvalues:
         SurveyJobKeyValue.objects.get_or_create(
-            survey_job=new_job, key=keyvalue.key, value=keyvalue.value,
+            survey_job=new_job,
+            key=keyvalue.key,
+            value=keyvalue.value,
         )
 
     logger.debug(

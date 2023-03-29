@@ -7,7 +7,7 @@ from data_refinery_common.models.managers import PublicObjectsManager
 
 # Compendium Computational Result
 class CompendiumResult(models.Model):
-    """ Computational Result For A Compendium """
+    """Computational Result For A Compendium"""
 
     class Meta:
         db_table = "compendium_results"
@@ -61,7 +61,7 @@ class CompendiumResult(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -70,5 +70,5 @@ class CompendiumResult(models.Model):
 
     # helper
     def get_computed_file(self):
-        """ Short hand method for getting the computed file for this compendium"""
+        """Short hand method for getting the computed file for this compendium"""
         return ComputedFile.objects.filter(result=self.result).first()

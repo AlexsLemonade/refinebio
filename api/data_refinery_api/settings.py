@@ -121,10 +121,18 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": ("django.contrib.auth.password_validation" + ".UserAttributeSimilarityValidator"),},
-    {"NAME": ("django.contrib.auth.password_validation." + "MinimumLengthValidator"),},
-    {"NAME": ("django.contrib.auth.password_validation" + ".CommonPasswordValidator"),},
-    {"NAME": ("django.contrib.auth.password_validation" + ".NumericPasswordValidator"),},
+    {
+        "NAME": ("django.contrib.auth.password_validation.UserAttributeSimilarityValidator"),
+    },
+    {
+        "NAME": ("django.contrib.auth.password_validation.MinimumLengthValidator"),
+    },
+    {
+        "NAME": ("django.contrib.auth.password_validation.CommonPasswordValidator"),
+    },
+    {
+        "NAME": ("django.contrib.auth.password_validation.NumericPasswordValidator"),
+    },
 ]
 
 
@@ -228,15 +236,10 @@ ELASTICSEARCH_DSL = {
     }
 }
 
-if "test" in sys.argv:
-    ELASTICSEARCH_INDEX_NAMES = {
-        "data_refinery_common.models.documents": "experiments_test",
-    }
-else:
-    ELASTICSEARCH_INDEX_NAMES = {
-        "data_refinery_common.models.documents": "experiments",
-    }
-    ELASTICSEARCH_DSL_AUTOSYNC = False
+ELASTICSEARCH_INDEX_NAMES = {
+    "data_refinery_common.models.documents": "experiments",
+}
+ELASTICSEARCH_DSL_AUTOSYNC = False
 
 # ToS
 TERMS_AND_CONDITIONS = """Welcome to the Alex’s Lemonade Childhood Cancer Data Lab, which is supported by Alex’s Lemonade Stand Foundation ("we," "our," or "us"). These Terms of Use (these "Terms") are a binding legal agreement between you and us regarding your access to and use of the websites located at https://www.ccdatalab.org, https://cognoma.org, http://www.refine.bio or any subdomains thereof and any embedded or associated software, applications, data or other content, provided or managed by us in connection with such websites (collectively, as may be updated, modified or replaced from time to time, the "CCDL").

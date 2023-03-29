@@ -129,7 +129,7 @@ def download_transcriptome(job_id: int) -> None:
 def create_long_and_short_processor_jobs(
     downloader_job, long_files_to_process, short_files_to_process
 ):
-    """ Creates two processor jobs for the files needed for this transcriptome"""
+    """Creates two processor jobs for the files needed for this transcriptome"""
 
     processor_job_long = ProcessorJob()
     processor_job_long.downloader_job = downloader_job

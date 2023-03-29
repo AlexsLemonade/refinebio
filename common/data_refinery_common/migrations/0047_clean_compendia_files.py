@@ -3,7 +3,7 @@ from django.db.models import Count
 
 
 def clean_compendium_files(apps, schema_editor):
-    """ We used to have more than one computed file for a compendium
+    """We used to have more than one computed file for a compendium
     Now we just want to keep the zipped file that lives on s3."""
     CompendiumResult = apps.get_model("data_refinery_common", "CompendiumResult")
     ComputedFile = apps.get_model("data_refinery_common", "ComputedFile")

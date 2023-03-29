@@ -25,7 +25,10 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
         # create data representation
         data = client.get_data_from_request(request)
         data.update(
-            {"level": logging.WARN, "logger": "BadRequestMiddleware",}
+            {
+                "level": logging.WARN,
+                "logger": "BadRequestMiddleware",
+            }
         )
 
         client.captureMessage(message=message, data=data)
@@ -40,7 +43,10 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
 
         data = client.get_data_from_request(request)
         data.update(
-            {"level": logging.WARN, "logger": "BadRequestMiddleware",}
+            {
+                "level": logging.WARN,
+                "logger": "BadRequestMiddleware",
+            }
         )
 
         client.captureMessage(message=str(exception), data=data)

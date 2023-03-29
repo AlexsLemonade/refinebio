@@ -12,13 +12,19 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RenameField(
-            model_name="downloaderjob", old_name="nomad_job_id", new_name="batch_job_id",
+            model_name="downloaderjob",
+            old_name="nomad_job_id",
+            new_name="batch_job_id",
         ),
         migrations.RenameField(
-            model_name="processorjob", old_name="nomad_job_id", new_name="batch_job_id",
+            model_name="processorjob",
+            old_name="nomad_job_id",
+            new_name="batch_job_id",
         ),
         migrations.RenameField(
-            model_name="surveyjob", old_name="nomad_job_id", new_name="batch_job_id",
+            model_name="surveyjob",
+            old_name="nomad_job_id",
+            new_name="batch_job_id",
         ),
         migrations.AddField(
             model_name="downloaderjob",
@@ -54,6 +60,8 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="surveyjob", name="ram_amount", field=models.IntegerField(default=1024),
+            model_name="surveyjob",
+            name="ram_amount",
+            field=models.IntegerField(default=1024),
         ),
     ]

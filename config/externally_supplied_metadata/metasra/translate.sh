@@ -11,9 +11,7 @@ PROCESSED_ACCESSIONS_FILE="$(basename -s .tab "$ACCESSIONS_FILE").processed.tab"
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
 cd "$script_directory" || exit
 
 if ! [ -e "$JSON_FILE" ]; then

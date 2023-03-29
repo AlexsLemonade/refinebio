@@ -22,8 +22,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """Run tximport on an experiment for the samples that have been processed by Salmon.
-        """
+        """Run tximport on an experiment for the samples that have been processed by Salmon."""
         if options["experiment_accession"] is None:
             logger.error("The --experiment-accession argument must be provided")
             sys.exit(1)

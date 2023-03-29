@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 
 def update_organisms_qn_targets(apps, schema_editor):
-    """ Set the latest qn_target to each organism. """
+    """Set the latest qn_target to each organism."""
     Organism = apps.get_model("data_refinery_common", "Organism")
     ComputationalResultAnnotation = apps.get_model(
         "data_refinery_common", "ComputationalResultAnnotation"

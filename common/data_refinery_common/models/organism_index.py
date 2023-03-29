@@ -6,7 +6,7 @@ from data_refinery_common.models.managers import PublicObjectsManager
 
 
 class OrganismIndex(models.Model):
-    """ A special type of process result, necessary for processing other SRA samples """
+    """A special type of process result, necessary for processing other SRA samples"""
 
     class Meta:
         db_table = "organism_index"
@@ -62,11 +62,11 @@ class OrganismIndex(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def get_computed_file(self):
-        """ Short hand method for getting the computed file for this organism index"""
+        """Short hand method for getting the computed file for this organism index"""
         return self.result.computedfile_set.first()
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time

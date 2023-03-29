@@ -38,7 +38,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "dataset_annotations", "base_manager_name": "public_objects",},
+            options={
+                "db_table": "dataset_annotations",
+                "base_manager_name": "public_objects",
+            },
             managers=[
                 ("objects", django.db.models.manager.Manager()),
                 ("public_objects", django.db.models.manager.Manager()),
