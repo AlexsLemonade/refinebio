@@ -16,3 +16,5 @@ vcrpy
 django-computedfields>=0.1.5
 pyyaml>=5.4
 sqlparse>=0.4.2
+markupsafe==2.0.1
+    # via jinja2        # via boto3, botocore
