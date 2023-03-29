@@ -79,7 +79,7 @@ class JanitorTestCase(TestCase):
     @tag("janitor")
     @patch("data_refinery_workers.processors.janitor.batch.describe_jobs")
     def test_janitor(self, mock_describe_jobs):
-        """ Main tester. """
+        """Main tester."""
         job = prepare_job()
 
         mock_describe_jobs.return_value = {"jobs": [{"jobId": "running_job", "status": "RUNNING"}]}

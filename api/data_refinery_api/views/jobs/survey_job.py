@@ -90,7 +90,7 @@ class SurveyJobListView(generics.ListAPIView):
 
 
 class SurveyJobDetailView(generics.RetrieveAPIView):
-    """ Retrieves a SurveyJob by ID """
+    """Retrieves a SurveyJob by ID"""
 
     lookup_field = "id"
     model = SurveyJob

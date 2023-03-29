@@ -27,7 +27,7 @@ from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples 
 
 
 def setup_experiment(new_version_accessions: List[str], old_version_accessions: List[str]) -> Dict:
-    """ Create an experiment where some samples were processed with the newest version of salmon and
+    """Create an experiment where some samples were processed with the newest version of salmon and
     other with an older one.
     """
     # Create the experiment

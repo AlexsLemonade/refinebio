@@ -25,7 +25,7 @@ import boto3
 import botocore
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import *
+from data_refinery_common.models import Contribution, OntologyTerm, Sample, SampleKeyword
 from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
@@ -56,7 +56,9 @@ def import_keywords(keywords: Dict, source: Contribution):
 
         for keyword in keywords:
             SampleKeyword.objects.get_or_create(
-                sample=sample, source=source, name=OntologyTerm.get_or_create_from_api(keyword),
+                sample=sample,
+                source=source,
+                name=OntologyTerm.get_or_create_from_api(keyword),
             )
 
     for experiment in dirty_experiments:

@@ -36,7 +36,7 @@ class HarmonyTestCase(TestCase):
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sdrf_harmony.yaml")
     def test_sdrf_harmony(self):
-        """ Harmonize SDRF test"""
+        """Harmonize SDRF test"""
 
         metadata = parse_sdrf(
             "https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt"
@@ -56,7 +56,7 @@ class HarmonyTestCase(TestCase):
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.harmony.sdrf_big.yaml")
     @tag("slow")
     def test_sdrf_big(self):
-        """ Tests lots of different cases for harmonization"""
+        """Tests lots of different cases for harmonization"""
 
         lots = [
             "E-GEOD-59071",

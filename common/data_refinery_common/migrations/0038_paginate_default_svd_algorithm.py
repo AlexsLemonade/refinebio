@@ -2,7 +2,7 @@ from django.db import migrations
 
 
 def batch_update(queryset, batch=1000, **changes):
-    """ Update per batch """
+    """Update per batch"""
     is_done = False
     current = 0
 
@@ -18,21 +18,21 @@ def batch_update(queryset, batch=1000, **changes):
 
 
 def set_computed_file_svd_algorithm_arpack(apps, schema_editor):
-    """ Set svd_algorithm for computed files - ARPACK when is_compendia"""
+    """Set svd_algorithm for computed files - ARPACK when is_compendia"""
     ComputedFile = apps.get_model("data_refinery_common", "ComputedFile")
     arpack_queryset = ComputedFile.objects.filter(is_compendia=True).order_by("id")
     batch_update(arpack_queryset, svd_algorithm="ARPACK")
 
 
 def set_computed_file_svd_algorithm_none(apps, schema_editor):
-    """ Set svd_algorithm for computed files - None when not is_compendia"""
+    """Set svd_algorithm for computed files - None when not is_compendia"""
     ComputedFile = apps.get_model("data_refinery_common", "ComputedFile")
     none_queryset = ComputedFile.objects.filter(is_compendia=False).order_by("id")
     batch_update(none_queryset, svd_algorithm="NONE")
 
 
 def set_dataset_svd_algorithm_none(apps, schema_editor):
-    """ Apply default svd_algorithm via pagination to dataset """
+    """Apply default svd_algorithm via pagination to dataset"""
     Dataset = apps.get_model("data_refinery_common", "Dataset")
     queryset = Dataset.objects.all().order_by("id")
     batch_update(queryset, svd_algorithm="NONE")

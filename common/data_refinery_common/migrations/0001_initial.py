@@ -59,7 +59,10 @@ class Migration(migrations.Migration):
                 ),
                 ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={"db_table": "computational_results", "base_manager_name": "public_objects",},
+            options={
+                "db_table": "computational_results",
+                "base_manager_name": "public_objects",
+            },
             managers=[
                 ("objects", django.db.models.manager.Manager()),
                 ("public_objects", django.db.models.manager.Manager()),
@@ -131,7 +134,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "computed_files", "get_latest_by": "created_at",},
+            options={
+                "db_table": "computed_files",
+                "get_latest_by": "created_at",
+            },
         ),
         migrations.CreateModel(
             name="Dataset",
@@ -213,7 +219,9 @@ class Migration(migrations.Migration):
                 ),
                 ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={"db_table": "downloader_jobs",},
+            options={
+                "db_table": "downloader_jobs",
+            },
         ),
         migrations.CreateModel(
             name="DownloaderJobOriginalFileAssociation",
@@ -232,7 +240,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "downloaderjob_originalfile_associations",},
+            options={
+                "db_table": "downloaderjob_originalfile_associations",
+            },
         ),
         migrations.CreateModel(
             name="Experiment",
@@ -273,7 +283,10 @@ class Migration(migrations.Migration):
                 ),
                 ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={"db_table": "experiments", "base_manager_name": "public_objects",},
+            options={
+                "db_table": "experiments",
+                "base_manager_name": "public_objects",
+            },
             managers=[
                 ("objects", django.db.models.manager.Manager()),
                 ("public_objects", django.db.models.manager.Manager()),
@@ -304,7 +317,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "experiment_annotations", "base_manager_name": "public_objects",},
+            options={
+                "db_table": "experiment_annotations",
+                "base_manager_name": "public_objects",
+            },
             managers=[
                 ("objects", django.db.models.manager.Manager()),
                 ("public_objects", django.db.models.manager.Manager()),
@@ -327,7 +343,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "experiment_organism_associations",},
+            options={
+                "db_table": "experiment_organism_associations",
+            },
         ),
         migrations.CreateModel(
             name="ExperimentSampleAssociation",
@@ -346,7 +364,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "experiment_sample_associations",},
+            options={
+                "db_table": "experiment_sample_associations",
+            },
         ),
         migrations.CreateModel(
             name="Organism",
@@ -366,7 +386,9 @@ class Migration(migrations.Migration):
                 ),
                 ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={"db_table": "organisms",},
+            options={
+                "db_table": "organisms",
+            },
         ),
         migrations.CreateModel(
             name="OrganismIndex",
@@ -407,7 +429,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "organism_index", "base_manager_name": "public_objects",},
+            options={
+                "db_table": "organism_index",
+                "base_manager_name": "public_objects",
+            },
             managers=[
                 ("objects", django.db.models.manager.Manager()),
                 ("public_objects", django.db.models.manager.Manager()),
@@ -440,7 +465,9 @@ class Migration(migrations.Migration):
                 ),
                 ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={"db_table": "original_files",},
+            options={
+                "db_table": "original_files",
+            },
         ),
         migrations.CreateModel(
             name="OriginalFileSampleAssociation",
@@ -459,7 +486,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "original_file_sample_associations",},
+            options={
+                "db_table": "original_file_sample_associations",
+            },
         ),
         migrations.CreateModel(
             name="Pipeline",
@@ -478,7 +507,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "pipelines",},
+            options={
+                "db_table": "pipelines",
+            },
         ),
         migrations.CreateModel(
             name="Processor",
@@ -494,7 +525,9 @@ class Migration(migrations.Migration):
                 ("docker_image", models.CharField(max_length=255)),
                 ("environment", django.contrib.postgres.fields.jsonb.JSONField(default={})),
             ],
-            options={"db_table": "processors",},
+            options={
+                "db_table": "processors",
+            },
         ),
         migrations.CreateModel(
             name="ProcessorJob",
@@ -524,7 +557,9 @@ class Migration(migrations.Migration):
                 ),
                 ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={"db_table": "processor_jobs",},
+            options={
+                "db_table": "processor_jobs",
+            },
         ),
         migrations.CreateModel(
             name="ProcessorJobDatasetAssociation",
@@ -550,7 +585,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "processorjob_dataset_associations",},
+            options={
+                "db_table": "processorjob_dataset_associations",
+            },
         ),
         migrations.CreateModel(
             name="ProcessorJobOriginalFileAssociation",
@@ -576,7 +613,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "processorjob_originalfile_associations",},
+            options={
+                "db_table": "processorjob_originalfile_associations",
+            },
         ),
         migrations.CreateModel(
             name="Sample",
@@ -659,7 +698,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "sample_annotations", "base_manager_name": "public_objects",},
+            options={
+                "db_table": "sample_annotations",
+                "base_manager_name": "public_objects",
+            },
             managers=[
                 ("objects", django.db.models.manager.Manager()),
                 ("public_objects", django.db.models.manager.Manager()),
@@ -689,7 +731,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "sample_computed_file_associations",},
+            options={
+                "db_table": "sample_computed_file_associations",
+            },
         ),
         migrations.CreateModel(
             name="SampleResultAssociation",
@@ -715,7 +759,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "sample_result_associations",},
+            options={
+                "db_table": "sample_result_associations",
+            },
         ),
         migrations.CreateModel(
             name="SurveyJob",
@@ -738,7 +784,9 @@ class Migration(migrations.Migration):
                 ),
                 ("last_modified", models.DateTimeField(default=django.utils.timezone.now)),
             ],
-            options={"db_table": "survey_jobs",},
+            options={
+                "db_table": "survey_jobs",
+            },
         ),
         migrations.CreateModel(
             name="SurveyJobKeyValue",
@@ -759,7 +807,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "survey_job_key_values",},
+            options={
+                "db_table": "survey_job_key_values",
+            },
         ),
         migrations.AddField(
             model_name="sample",
@@ -821,7 +871,8 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterUniqueTogether(
-            name="processor", unique_together={("name", "version", "docker_image", "environment")},
+            name="processor",
+            unique_together={("name", "version", "docker_image", "environment")},
         ),
         migrations.AddField(
             model_name="originalfilesampleassociation",
@@ -921,23 +972,28 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterUniqueTogether(
-            name="sampleresultassociation", unique_together={("result", "sample")},
+            name="sampleresultassociation",
+            unique_together={("result", "sample")},
         ),
         migrations.AlterUniqueTogether(
-            name="samplecomputedfileassociation", unique_together={("sample", "computed_file")},
+            name="samplecomputedfileassociation",
+            unique_together={("sample", "computed_file")},
         ),
         migrations.AlterUniqueTogether(
             name="processorjoboriginalfileassociation",
             unique_together={("processor_job", "original_file")},
         ),
         migrations.AlterUniqueTogether(
-            name="originalfilesampleassociation", unique_together={("original_file", "sample")},
+            name="originalfilesampleassociation",
+            unique_together={("original_file", "sample")},
         ),
         migrations.AlterUniqueTogether(
-            name="experimentsampleassociation", unique_together={("experiment", "sample")},
+            name="experimentsampleassociation",
+            unique_together={("experiment", "sample")},
         ),
         migrations.AlterUniqueTogether(
-            name="experimentorganismassociation", unique_together={("experiment", "organism")},
+            name="experimentorganismassociation",
+            unique_together={("experiment", "organism")},
         ),
         migrations.AlterUniqueTogether(
             name="downloaderjoboriginalfileassociation",
