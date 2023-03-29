@@ -12,7 +12,6 @@ COPY common/requirements.txt .
 RUN pip install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY common/ .
-# Needed for migration 0006.
 COPY config config
 
 ARG SYSTEM_VERSION
