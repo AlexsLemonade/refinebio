@@ -12,7 +12,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # For whatever reason this worked and 'en_US.UTF-8' did not.
 ENV LANG=C.UTF-8
 
-COPY workers/CRAN.gpg .
 RUN apt-get update && \
     apt-get install --no-install-recommends -y software-properties-common && \
     add-apt-repository ppa:apt-fast/stable && \
@@ -23,15 +22,14 @@ RUN apt-get update && \
         apt-fast \
         apt-transport-https \
         gpg-agent && \
-    apt-key add CRAN.gpg && \
-    echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-        >> /etc/apt/sources.list.d/added_repos.list && \
     apt-fast update -qq && apt-fast install -y \
         build-essential \
         cmake \
         curl \
+        cython \
         cython3 \
         ed \
+        file \
         git \
         libcairo-dev \
         libcurl4-gnutls-dev \
@@ -51,16 +49,17 @@ RUN apt-get update && \
         mercurial \
         pkg-config \
         python3-pip \
+        python3-pybind11 \
         python3.8 \
         python3.8-dev \
         r-base-core \
         wget && \
     apt-get clean && \
-    rm CRAN.gpg && \
     rm -rf /var/lib/apt/lists/* && \
     ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config && \
     update-alternatives --install \
         /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
+    pip3 install --upgrade pip setuptools && \
     groupadd user && \
     useradd --create-home --home-dir /home/user/ -g user user && \
     chown -R user /home/user/
