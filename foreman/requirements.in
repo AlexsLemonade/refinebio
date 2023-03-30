@@ -8,6 +8,7 @@ python-dateutil
 raven
 pyrefinebio>=0.4.7
 tblib
+# TODO(ark): make sure DRF is required.
 djangorestframework<3.14.0
 # Can't go above 6.X without upgrading elasticsearch
 django-elasticsearch-dsl==6.5.0
