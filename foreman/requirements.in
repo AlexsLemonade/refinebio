@@ -1,22 +1,24 @@
-django>=3.2.5
-psycopg2-binary>=2.8.4
-requests>=2.20.0
+django>=3.2,<4
+psycopg2-binary
+requests
 retrying
 coverage
-GEOparse>=2.0.3
+geoparse
 python-dateutil
 raven
 pyrefinebio>=0.4.7
 tblib
-djangorestframework>=3.11.2
+# TODO(ark): make sure DRF is required.
+djangorestframework<3.14.0
 # Can't go above 6.X without upgrading elasticsearch
 django-elasticsearch-dsl==6.5.0
 django-elasticsearch-dsl-drf>=0.17.1
 elasticsearch-dsl>=6.1.0,<7.0.0
 vcrpy
-django-computedfields>=0.1.5
-pyyaml>=5.4
+django-computedfields
+pyyaml
 # For end-to-end tests
-numpy
+numpy==1.19.5
+pandas==1.1.5
 scipy
-sqlparse>=0.4.2
+sqlparse
