@@ -1,5 +1,5 @@
 coverage
-django>=3.2.5
+django>=3.2,<4
 psycopg2-binary
 boto3>=1.12.21
 requests>=2.23.0
@@ -7,7 +7,7 @@ urllib3>=1.24.2
 Jinja2>=2.11.3
 # We need at least 1.1 because of https://github.com/pallets/markupsafe/issues/57
 markupsafe>=1.1
-djangorestframework>=3.11.2
+djangorestframework<3.14.0
 djangorestframework-hstore
 django-cors-headers
 django-filter

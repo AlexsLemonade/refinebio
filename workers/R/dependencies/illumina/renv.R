@@ -1,0 +1,49 @@
+renv::install("iterators@1.0.10")
+renv::install("codetools@0.2-16")
+renv::install("foreach@1.4.4")
+renv::install("doParallel@1.0.11")
+renv::install("data.table@1.11.0")
+renv::install("getopt@1.20.3")
+renv::install("optparse@1.4.4")
+renv::install("lazyeval@0.2.1")
+renv::install("rlang@0.3.1")
+renv::install("glue@1.3.1")
+renv::install("digest@0.6.18")
+renv::install("crayon@1.3.4")
+renv::install("assertthat@0.2.1")
+renv::install("fansi@0.4.0")
+renv::install("utf8@1.1.4")
+renv::install("pillar@1.3.1")
+renv::install("pkgconfig@2.0.2")
+renv::install("pillar@1.3.1")
+renv::install("tibble@2.0.1")
+renv::install("R6@2.4.0")
+renv::install("Rcpp@1.0.1")
+renv::install("magrittr@1.5")
+renv::install("tidyselect@0.2.5")
+renv::install("lifecycle@1.0.3")
+renv::install("tibble@2.0.1")
+renv::install("dplyr@1.0.0")
+renv::install("DBI@1.0.0")
+renv::install("memoise@1.1.0")
+renv::install("bit@1.1-14")
+renv::install("bit64@0.9-7")
+renv::install("ff@2.2-14")
+renv::install("prettyunits@1.0.2")
+renv::install("blob@1.1.1")
+renv::install("RSQLite@2.1.1")
+
+renv::install(
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligoClasses_1.50.4.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligo_1.52.1.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/AnnotationDbi_1.50.3.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/limma_3.44.3.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv1.db_1.26.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv2.db_1.26.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv3.db_1.26.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv4.db_1.26.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev1.db_1.26.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev1p1.db_1.26.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev2.db_1.26.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaRatv1.db_1.26.0.tar.gz"
+)
