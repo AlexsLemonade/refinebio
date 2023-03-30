@@ -1,4 +1,5 @@
 options(Ncpus = parallel::detectCores())
+
 install.packages("xml2")
 library("xml2")
 ensg_url <- "http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/22.0.0/ensg.asp"
@@ -44,5 +45,5 @@ write.table(list(chips, pkg_urls),
     row.names = FALSE, col.names = FALSE, sep = "\t"
 )
 
-# Install these ensg packages
-lapply(pkg_urls, devtools::install_url)
+# Install these ensg packages.
+install_with_url(pkg_urls)
