@@ -1,5 +1,5 @@
 coverage
-django>=3.2.5
+django>=3.2,<4
 psycopg2-binary>=2.8.4
 boto3>=1.12.21
 requests>=2.23.0
@@ -11,8 +11,10 @@ elasticsearch-dsl<7.0.0
 django-elasticsearch-dsl-drf
 # Can't go above 6.X without upgrading elasticsearch
 django-elasticsearch-dsl==6.5.0
-djangorestframework>=3.11.2
+djangorestframework<3.14.0
 vcrpy
 django-computedfields>=0.1.5
 pyyaml>=5.4
 sqlparse>=0.4.2
+markupsafe==2.0.0
+rpy2==3.4.5
