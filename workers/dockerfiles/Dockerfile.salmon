@@ -10,9 +10,7 @@ COPY workers/R/renv_load.R .
 RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir numpy && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Install Salmon
 # Tximport requires all experiments to be processed with the same version of
