@@ -9,12 +9,11 @@ COPY workers/R/dependencies/affymetrix/renv.lock .
 COPY workers/R/renv_load.R .
 RUN Rscript renv_load.R
 
+COPY workers/R/dependencies/affymetrix/install_ensg_pkgs.R .
+RUN Rscript install_ensg_pkgs.R
+
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip setuptools && \
-    # Install this one here instead of via requirements.txt because not
-    # all processors need it.
-    pip3 install --ignore-installed --no-cache-dir rpy2==3.4.5 && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
