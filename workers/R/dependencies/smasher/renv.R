@@ -6,7 +6,16 @@ renv::install("data.table@1.11.0")
 renv::install("getopt@1.20.3")
 renv::install("optparse@1.4.4")
 renv::install("lazyeval@0.2.1")
+renv::install("ff@2.2-14.2")
+renv::install("bit@1.1-15.2")
+renv::install("dplyr@1.0.2")
+renv::install("readr@1.3.1")
+renv::install("rlang@1.0.6")
+renv::install("ellipsis@0.3.2")
 
+# Bioconductor.
 renv::install(
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/preprocessCore_1.50.0.tar.gz"
+    "oligo",
+    "oligoClasses",
+    "preprocessCore"
 )

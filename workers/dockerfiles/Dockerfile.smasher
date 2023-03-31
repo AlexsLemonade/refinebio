@@ -10,9 +10,7 @@ COPY workers/R/renv_load.R .
 RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
-    pip3 install --ignore-installed --no-cache-dir nose numpy rpy2==3.4.5 && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
