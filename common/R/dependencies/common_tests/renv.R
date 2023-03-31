@@ -1,0 +1,24 @@
+renv::install("rlang@1.0.4")
+renv::install("dplyr@1.0.0")
+renv::install("tidyr@1.1.0")
+renv::install("ff@2.2-14")
+renv::install("locfit@1.5-9.4")
+renv::install("cli@3.3.0")
+renv::install("lifecycle@1.0.3")
+renv::install("vctrs@0.4.1")
+
+renv::install(
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligoClasses_1.50.4.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligo_1.52.1.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/GEOquery_2.56.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/SCAN.UPC_2.30.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/affy_1.66.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/affyio_1.58.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/AnnotationDbi_1.50.3.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/zlibbioc_1.34.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/preprocessCore_1.50.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/genefilter_1.70.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/sva_3.36.0.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/tximport_1.16.1.tar.gz",
+    "https://bioconductor.org/packages/3.11/bioc/src/contrib/limma_3.44.3.tar.gz"
+)
