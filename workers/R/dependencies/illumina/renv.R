@@ -34,16 +34,16 @@ renv::install("blob@1.1.1")
 renv::install("RSQLite@2.1.1")
 
 renv::install(
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligoClasses_1.50.4.tar.gz",
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligo_1.52.1.tar.gz",
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/AnnotationDbi_1.50.3.tar.gz",
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/limma_3.44.3.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv1.db_1.26.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv2.db_1.26.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv3.db_1.26.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaHumanv4.db_1.26.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev1.db_1.26.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev1p1.db_1.26.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaMousev2.db_1.26.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/illuminaRatv1.db_1.26.0.tar.gz"
+    "oligoClasses",
+    "oligo",
+    "AnnotationDbi",
+    "limma",
+    "illuminaHumanv1.db",
+    "illuminaHumanv2.db",
+    "illuminaHumanv3.db",
+    "illuminaHumanv4.db",
+    "illuminaMousev1.db",
+    "illuminaMousev1p1.db",
+    "illuminaMousev2.db",
+    "illuminaRatv1.db"
 )
