@@ -71,10 +71,11 @@ COPY workers/R/dependencies/compendia/renv.lock .
 COPY workers/R/renv_load.R .
 RUN Rscript renv_load.R
 
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir nose numpy scipy matplotlib \
-        pandas==0.25.3 scikit-learn sympy tzlocal fancySVD && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+COPY workers/data_refinery_workers/requirements/compendia.txt requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+
+COPY workers/data_refinery_workers/processors/requirements.txt requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Install phantomjs.
 RUN wget -q "https://bitbucket.org/ariya/phantomjs/downloads/\
