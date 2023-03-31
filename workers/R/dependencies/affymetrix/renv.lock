@@ -1,0 +1,5958 @@
+{
+  "R": {
+    "Version": "3.6.3",
+    "Repositories": [
+      {
+        "Name": "Bioconductor",
+        "URL": "https://bioconductor.org/packages/3.11/bioc"
+      },
+      {
+        "Name": "BioconductorAnnotation",
+        "URL": "https://bioconductor.org/packages/3.11/data/annotation"
+      },
+      {
+        "Name": "BioconductorExperiment",
+        "URL": "https://bioconductor.org/packages/3.11/data/experiment"
+      },
+      {
+        "Name": "CRAN",
+        "URL": "https://cloud.r-project.org"
+      }
+    ]
+  },
+  "Packages": {
+    "AnnotationDbi": {
+      "Package": "AnnotationDbi",
+      "Version": "1.50.3",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/AnnotationDbi_1.50.3.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/AnnotationDbi",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "efa119c",
+      "git_last_commit_date": "2020-07-24",
+      "Hash": "8118f8655ad5604099a0e8ac14090f91",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors"
+      ]
+    },
+    "BH": {
+      "Package": "BH",
+      "Version": "1.72.0-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8f9ce74c6417d61f0782cbae5fd2b7b0",
+      "Requirements": []
+    },
+    "Biobase": {
+      "Package": "Biobase",
+      "Version": "2.48.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/Biobase",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "4ffadf2",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "da9b1bc36fb35ebbec219dc007657f21",
+      "Requirements": [
+        "BiocGenerics"
+      ]
+    },
+    "BiocGenerics": {
+      "Package": "BiocGenerics",
+      "Version": "0.34.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/BiocGenerics",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "f7c2020",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "ae191b5608f175de0f69b6302390c705",
+      "Requirements": []
+    },
+    "BiocManager": {
+      "Package": "BiocManager",
+      "Version": "1.30.19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "726b3bc83ff8e0c35c7efdb74a462b0d",
+      "Requirements": []
+    },
+    "BiocParallel": {
+      "Package": "BiocParallel",
+      "Version": "1.22.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/BiocParallel",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "430511c",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "6457b5a769de3e02704fd1b529a3c6e1",
+      "Requirements": [
+        "BH",
+        "futile.logger",
+        "snow"
+      ]
+    },
+    "Biostrings": {
+      "Package": "Biostrings",
+      "Version": "2.56.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/Biostrings",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "79b7ec8",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "f5d135c565a244740559409e48c410cd",
+      "Requirements": [
+        "BiocGenerics",
+        "IRanges",
+        "S4Vectors",
+        "XVector",
+        "crayon"
+      ]
+    },
+    "DBI": {
+      "Package": "DBI",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7bc8be0e425da29fe0e10f792bdbb74b",
+      "Requirements": []
+    },
+    "DT": {
+      "Package": "DT",
+      "Version": "0.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a3580ce0309c94d061c23b0afb4accbd",
+      "Requirements": [
+        "crosstalk",
+        "htmltools",
+        "htmlwidgets",
+        "jsonlite",
+        "magrittr",
+        "promises"
+      ]
+    },
+    "DelayedArray": {
+      "Package": "DelayedArray",
+      "Version": "0.14.1",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/DelayedArray",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "52230a4",
+      "git_last_commit_date": "2020-07-13",
+      "Hash": "8430a6ec606d0d92198ff107f1d98261",
+      "Requirements": [
+        "BiocGenerics",
+        "IRanges",
+        "Matrix",
+        "S4Vectors",
+        "matrixStats"
+      ]
+    },
+    "GEOquery": {
+      "Package": "GEOquery",
+      "Version": "2.56.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/GEOquery_2.56.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/GEOquery",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "50417b3",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "4f5f180eb5db85e0741db59fee6158c2",
+      "Requirements": [
+        "Biobase",
+        "dplyr",
+        "httr",
+        "limma",
+        "magrittr",
+        "readr",
+        "tidyr",
+        "xml2"
+      ]
+    },
+    "GenomeInfoDb": {
+      "Package": "GenomeInfoDb",
+      "Version": "1.24.2",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/GenomeInfoDb",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "e3713f3",
+      "git_last_commit_date": "2020-06-14",
+      "Hash": "f1556568ab93fd7704380539fca71e6a",
+      "Requirements": [
+        "BiocGenerics",
+        "GenomeInfoDbData",
+        "IRanges",
+        "RCurl",
+        "S4Vectors"
+      ]
+    },
+    "GenomeInfoDbData": {
+      "Package": "GenomeInfoDbData",
+      "Version": "1.2.3",
+      "Source": "Bioconductor",
+      "Hash": "8fe62eac6e27b8e56d51f9ae6030cbcd",
+      "Requirements": []
+    },
+    "GenomicRanges": {
+      "Package": "GenomicRanges",
+      "Version": "1.40.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/GenomicRanges",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "a9e18e4",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "05cd2ba8e1e373e9089454cf762df723",
+      "Requirements": [
+        "BiocGenerics",
+        "GenomeInfoDb",
+        "IRanges",
+        "S4Vectors",
+        "XVector"
+      ]
+    },
+    "IRanges": {
+      "Package": "IRanges",
+      "Version": "2.22.2",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/IRanges",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "8c5e991",
+      "git_last_commit_date": "2020-05-20",
+      "Hash": "1403fa5c98c5f48b989a6bc5a65c6c25",
+      "Requirements": [
+        "BiocGenerics",
+        "S4Vectors"
+      ]
+    },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8dcfa99b14c296bc9f1fd64d52fd3ce7",
+      "Requirements": []
+    },
+    "MASS": {
+      "Package": "MASS",
+      "Version": "7.3-58",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4bf2c61e656bbc238634c798c208d386",
+      "Requirements": []
+    },
+    "Matrix": {
+      "Package": "Matrix",
+      "Version": "1.5-1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "539dc0c0c05636812f1080f473d2c177",
+      "Requirements": [
+        "lattice"
+      ]
+    },
+    "R6": {
+      "Package": "R6",
+      "Version": "2.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d4618c4cb36bc46831551c5d85815818",
+      "Requirements": []
+    },
+    "RCurl": {
+      "Package": "RCurl",
+      "Version": "1.95-4.10",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6875cb45c7e5e749120442b47ebc04db",
+      "Requirements": [
+        "bitops"
+      ]
+    },
+    "RSQLite": {
+      "Package": "RSQLite",
+      "Version": "2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "162bf21ed2680cd3d386b0c8b119deba",
+      "Requirements": [
+        "BH",
+        "DBI",
+        "Rcpp",
+        "bit64",
+        "blob",
+        "memoise",
+        "pkgconfig",
+        "plogr"
+      ]
+    },
+    "Rcpp": {
+      "Package": "Rcpp",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d5ae8445d4972caed1c5517ffae908d7",
+      "Requirements": []
+    },
+    "S4Vectors": {
+      "Package": "S4Vectors",
+      "Version": "0.26.1",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/S4Vectors",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "935769c",
+      "git_last_commit_date": "2020-05-15",
+      "Hash": "c252d04c13a3a6667d3cc140360780f1",
+      "Requirements": [
+        "BiocGenerics"
+      ]
+    },
+    "SCAN.UPC": {
+      "Package": "SCAN.UPC",
+      "Version": "2.30.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/SCAN.UPC_2.30.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/SCAN.UPC",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "052d3c4",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "f76f2473345a4c25263772c3c862df0e",
+      "Requirements": [
+        "Biobase",
+        "Biostrings",
+        "GEOquery",
+        "IRanges",
+        "MASS",
+        "affy",
+        "affyio",
+        "foreach",
+        "oligo",
+        "sva"
+      ]
+    },
+    "SummarizedExperiment": {
+      "Package": "SummarizedExperiment",
+      "Version": "1.18.2",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/SummarizedExperiment",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "e22fafe",
+      "git_last_commit_date": "2020-07-09",
+      "Hash": "811eb16b3d542aa098d4c89f0985f3bc",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "DelayedArray",
+        "GenomeInfoDb",
+        "GenomicRanges",
+        "IRanges",
+        "Matrix",
+        "S4Vectors"
+      ]
+    },
+    "XML": {
+      "Package": "XML",
+      "Version": "3.98-1.10",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f24c56597fc23b321a5478f6f3e7824c",
+      "Requirements": []
+    },
+    "XVector": {
+      "Package": "XVector",
+      "Version": "0.28.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/XVector",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "8bda737",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "a5669a9d44010120a5c10be7977f0626",
+      "Requirements": [
+        "BiocGenerics",
+        "IRanges",
+        "S4Vectors",
+        "zlibbioc"
+      ]
+    },
+    "affxparser": {
+      "Package": "affxparser",
+      "Version": "1.60.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/affxparser",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "22b10b1",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "4fca40e4bb842b56d6be95bff88ac85f",
+      "Requirements": []
+    },
+    "affy": {
+      "Package": "affy",
+      "Version": "1.66.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/affy_1.66.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/affy",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "ae131f8",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "7d4686f9fa0ba9db6d0f596058dd1a15",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "BiocManager",
+        "affyio",
+        "preprocessCore",
+        "zlibbioc"
+      ]
+    },
+    "affyio": {
+      "Package": "affyio",
+      "Version": "1.58.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/affyio_1.58.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/affyio",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "76fee54",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "841239ddcf5f028105cd3687976948ef",
+      "Requirements": [
+        "zlibbioc"
+      ]
+    },
+    "annotate": {
+      "Package": "annotate",
+      "Version": "1.66.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/annotate",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "a63378f",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "61677ca20165e7790955cdd1fc27281e",
+      "Requirements": [
+        "AnnotationDbi",
+        "Biobase",
+        "BiocGenerics",
+        "DBI",
+        "RCurl",
+        "XML",
+        "xtable"
+      ]
+    },
+    "askpass": {
+      "Package": "askpass",
+      "Version": "1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e8a22846fff485f0be3770c2da758713",
+      "Requirements": [
+        "sys"
+      ]
+    },
+    "assertthat": {
+      "Package": "assertthat",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "50c838a310445e954bc13f26f26a6ecf",
+      "Requirements": []
+    },
+    "backports": {
+      "Package": "backports",
+      "Version": "1.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b9a4db2667d7e43d197ed12e40781889",
+      "Requirements": []
+    },
+    "base64enc": {
+      "Package": "base64enc",
+      "Version": "0.1-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "543776ae6848fde2f48ff3816d0628bc",
+      "Requirements": []
+    },
+    "bit": {
+      "Package": "bit",
+      "Version": "1.1-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ac0b4115f7bddd07e733e1ac1697c687",
+      "Requirements": []
+    },
+    "bit64": {
+      "Package": "bit64",
+      "Version": "0.9-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3338d4a9b1352f5a613e2bdcefe784ea",
+      "Requirements": [
+        "bit"
+      ]
+    },
+    "bitops": {
+      "Package": "bitops",
+      "Version": "1.0-6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0b118d5900596bae6c4d4865374536a6",
+      "Requirements": []
+    },
+    "blob": {
+      "Package": "blob",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3ce988193cfb67e59fde06121bd9f8be",
+      "Requirements": [
+        "prettyunits"
+      ]
+    },
+    "boot": {
+      "Package": "boot",
+      "Version": "1.3-28",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0baa960e3b49c6176a4f42addcbacc59",
+      "Requirements": []
+    },
+    "bovgene10stbtensgprobe": {
+      "Package": "bovgene10stbtensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/bovgene10stbtensgprobe_22.0.0.tar.gz",
+      "Hash": "0f2f8916fc2e5ca95281c72a3cdfe917",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "bovgene11stbtensgprobe": {
+      "Package": "bovgene11stbtensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/bovgene11stbtensgprobe_22.0.0.tar.gz",
+      "Hash": "9a30b34e562ea508986eba9794043d9d",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "bovinebtensgprobe": {
+      "Package": "bovinebtensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/bovinebtensgprobe_22.0.0.tar.gz",
+      "Hash": "ede0216535fd3c5c4406f5e4fcda9627",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "brew": {
+      "Package": "brew",
+      "Version": "1.0-6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "92a5f887f9ae3035ac7afde22ba73ee9",
+      "Requirements": []
+    },
+    "callr": {
+      "Package": "callr",
+      "Version": "3.4.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "643163a00cb536454c624883a10ae0bc",
+      "Requirements": [
+        "R6",
+        "processx"
+      ]
+    },
+    "cangene10stcfensgprobe": {
+      "Package": "cangene10stcfensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/cangene10stcfensgprobe_22.0.0.tar.gz",
+      "Hash": "3c07fbcd5c313d469d0a6240f04a173e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "cangene11stcfensgprobe": {
+      "Package": "cangene11stcfensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/cangene11stcfensgprobe_22.0.0.tar.gz",
+      "Hash": "220a1678f78dd6ef664996c76cb1c62f",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "canine2cfensgprobe": {
+      "Package": "canine2cfensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/canine2cfensgprobe_22.0.0.tar.gz",
+      "Hash": "c78f430adf8a4dcba1852fbc2ee73fa3",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "canine2pmcfensgprobe": {
+      "Package": "canine2pmcfensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/canine2pmcfensgprobe_22.0.0.tar.gz",
+      "Hash": "82caba97f2b64aafe84b2c2e017c6e2c",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "celegansceensgprobe": {
+      "Package": "celegansceensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/celegansceensgprobe_22.0.0.tar.gz",
+      "Hash": "c9bd264a581fd374c8f6ff1f4b14235f",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "chickenggensgprobe": {
+      "Package": "chickenggensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/chickenggensgprobe_22.0.0.tar.gz",
+      "Hash": "24ab2dfb9a8de7da71a9ec651161ec91",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "chigene10stggensgprobe": {
+      "Package": "chigene10stggensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/chigene10stggensgprobe_22.0.0.tar.gz",
+      "Hash": "de09679f96e6d60252dae5dbb94b01b7",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "chigene11stggensgprobe": {
+      "Package": "chigene11stggensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/chigene11stggensgprobe_22.0.0.tar.gz",
+      "Hash": "d3971a4f125a7cac5d936ef49859408f",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "chogene20stmmensgprobe": {
+      "Package": "chogene20stmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/chogene20stmmensgprobe_22.0.0.tar.gz",
+      "Hash": "c7bb55ed13d7a0c357f840a2513adad8",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "chogene21stmmensgprobe": {
+      "Package": "chogene21stmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/chogene21stmmensgprobe_22.0.0.tar.gz",
+      "Hash": "3156824087c91e69be8d2b983d26cb58",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomdhumanhsensgprobe": {
+      "Package": "clariomdhumanhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomdhumanhsensgprobe_22.0.0.tar.gz",
+      "Hash": "0338d8d542f00f2ee2e6f02944a67d6e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomdmousemmensgprobe": {
+      "Package": "clariomdmousemmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomdmousemmensgprobe_22.0.0.tar.gz",
+      "Hash": "c38095308128b4f5337508c6ecad320e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomdratrnensgprobe": {
+      "Package": "clariomdratrnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomdratrnensgprobe_22.0.0.tar.gz",
+      "Hash": "d1fbd47318dac632752d040b4f55ad1e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomshumanhsensgprobe": {
+      "Package": "clariomshumanhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomshumanhsensgprobe_22.0.0.tar.gz",
+      "Hash": "6cde955ea4ee547be8210973fc51bffe",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomshumanhthsensgprobe": {
+      "Package": "clariomshumanhthsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomshumanhthsensgprobe_22.0.0.tar.gz",
+      "Hash": "e378b6cf87aeb7e4b2a62a51ede4645f",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomsmousehtmmensgprobe": {
+      "Package": "clariomsmousehtmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomsmousehtmmensgprobe_22.0.0.tar.gz",
+      "Hash": "94310a2c27b478dc85d3c0d848706ad8",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomsmousemmensgprobe": {
+      "Package": "clariomsmousemmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomsmousemmensgprobe_22.0.0.tar.gz",
+      "Hash": "ed514e3e601f8fd981ddd72d0f63e1a7",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomsrathtrnensgprobe": {
+      "Package": "clariomsrathtrnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomsrathtrnensgprobe_22.0.0.tar.gz",
+      "Hash": "c72460c841833d727bacf3a9767711b1",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "clariomsratrnensgprobe": {
+      "Package": "clariomsratrnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/clariomsratrnensgprobe_22.0.0.tar.gz",
+      "Hash": "6397cdc881fac8ad8edf3e4206b0b521",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "da09d82223e669d270e47ed24ac8686e",
+      "Requirements": [
+        "MASS"
+      ]
+    },
+    "cli": {
+      "Package": "cli",
+      "Version": "3.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3177a5a16c243adc199ba33117bd9657",
+      "Requirements": []
+    },
+    "clipr": {
+      "Package": "clipr",
+      "Version": "0.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8633315be5a50b858a69615dc1234c3b",
+      "Requirements": []
+    },
+    "cluster": {
+      "Package": "cluster",
+      "Version": "2.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5edbbabab6ce0bf7900a74fd4358628e",
+      "Requirements": []
+    },
+    "codetools": {
+      "Package": "codetools",
+      "Version": "0.2-18",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "019388fc48e48b3da0d3a76ff94608a8",
+      "Requirements": []
+    },
+    "commonmark": {
+      "Package": "commonmark",
+      "Version": "1.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0f22be39ec1d141fd03683c06f3a6e67",
+      "Requirements": []
+    },
+    "covr": {
+      "Package": "covr",
+      "Version": "3.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "cbc6df1ef6ee576f844f973c1fc04ab4",
+      "Requirements": [
+        "crayon",
+        "digest",
+        "httr",
+        "jsonlite",
+        "rex",
+        "withr",
+        "yaml"
+      ]
+    },
+    "crayon": {
+      "Package": "crayon",
+      "Version": "1.3.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0d57bc8e27b7ba9e45dba825ebc0de6b",
+      "Requirements": []
+    },
+    "crosstalk": {
+      "Package": "crosstalk",
+      "Version": "1.1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ae55f5d7c02f0ab43c58dd050694f2b4",
+      "Requirements": [
+        "R6",
+        "htmltools",
+        "jsonlite",
+        "lazyeval"
+      ]
+    },
+    "curl": {
+      "Package": "curl",
+      "Version": "3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c71bf321a357db97242bc233a1f99a55",
+      "Requirements": []
+    },
+    "cyrgene10stmamuensgprobe": {
+      "Package": "cyrgene10stmamuensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/cyrgene10stmamuensgprobe_22.0.0.tar.gz",
+      "Hash": "3fc60a34f303bf15c9a52616e41e0db5",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "cyrgene11stmamuensgprobe": {
+      "Package": "cyrgene11stmamuensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/cyrgene11stmamuensgprobe_22.0.0.tar.gz",
+      "Hash": "299169558d61c16243246eaffd58b072",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "desc": {
+      "Package": "desc",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6c8fe8fa26a23b79949375d372c7b395",
+      "Requirements": [
+        "R6",
+        "assertthat",
+        "crayon",
+        "rprojroot"
+      ]
+    },
+    "devtools": {
+      "Package": "devtools",
+      "Version": "2.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "271df6a328617c64149283e98b1cd8da",
+      "Requirements": [
+        "DT",
+        "callr",
+        "cli",
+        "covr",
+        "desc",
+        "ellipsis",
+        "httr",
+        "jsonlite",
+        "memoise",
+        "pkgbuild",
+        "pkgload",
+        "rcmdcheck",
+        "remotes",
+        "rlang",
+        "roxygen2",
+        "rstudioapi",
+        "rversions",
+        "sessioninfo",
+        "testthat",
+        "usethis",
+        "withr"
+      ]
+    },
+    "digest": {
+      "Package": "digest",
+      "Version": "0.6.19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2ac7f712959404638ccb1977809eabdd",
+      "Requirements": []
+    },
+    "dplyr": {
+      "Package": "dplyr",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d0509913b27ea898189ee664b6030dc2",
+      "Requirements": [
+        "R6",
+        "ellipsis",
+        "generics",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "rlang",
+        "tibble",
+        "tidyselect",
+        "vctrs"
+      ]
+    },
+    "drogene10stdmensgprobe": {
+      "Package": "drogene10stdmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/drogene10stdmensgprobe_22.0.0.tar.gz",
+      "Hash": "a6e69a3942bd21e83fa4a881e14e978d",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "drogene11stdmensgprobe": {
+      "Package": "drogene11stdmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/drogene11stdmensgprobe_22.0.0.tar.gz",
+      "Hash": "e7b2e4430e272bbfbe09c875332d4224",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "drosgenome1dmensgprobe": {
+      "Package": "drosgenome1dmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/drosgenome1dmensgprobe_22.0.0.tar.gz",
+      "Hash": "c782e7c9f1faf8b340f3d925dd79304e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "drosophila2dmensgprobe": {
+      "Package": "drosophila2dmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/drosophila2dmensgprobe_22.0.0.tar.gz",
+      "Hash": "2e42c332a3f5bb18b9880e8137590eef",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "edgeR": {
+      "Package": "edgeR",
+      "Version": "3.30.3",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/edgeR",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "7a3a272",
+      "git_last_commit_date": "2020-06-02",
+      "Hash": "fed69054bac345df0b60fc9afa7101e9",
+      "Requirements": [
+        "Rcpp",
+        "limma",
+        "locfit"
+      ]
+    },
+    "elegene10stceensgprobe": {
+      "Package": "elegene10stceensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/elegene10stceensgprobe_22.0.0.tar.gz",
+      "Hash": "79edad2a1c2f65f363b17f0e592befa9",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "elegene11stceensgprobe": {
+      "Package": "elegene11stceensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/elegene11stceensgprobe_22.0.0.tar.gz",
+      "Hash": "a100f1ba98041940e9e4e1be594db9a2",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ellipsis": {
+      "Package": "ellipsis",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fd2844b3a43ae2d27e70ece2df1b4e2a",
+      "Requirements": [
+        "rlang"
+      ]
+    },
+    "equgene10steqcaensgprobe": {
+      "Package": "equgene10steqcaensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/equgene10steqcaensgprobe_22.0.0.tar.gz",
+      "Hash": "9f44cc067a066f0879b372ecba9e740e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "equgene11steqcaensgprobe": {
+      "Package": "equgene11steqcaensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/equgene11steqcaensgprobe_22.0.0.tar.gz",
+      "Hash": "2d6cf9f7604053b5fba365ebb0f4edd3",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "evaluate": {
+      "Package": "evaluate",
+      "Version": "0.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ec8ca05cffcc70569eaaad8469d2a3a7",
+      "Requirements": []
+    },
+    "fansi": {
+      "Package": "fansi",
+      "Version": "0.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b31d9e5d051553d1177083aeba04b5b9",
+      "Requirements": []
+    },
+    "ff": {
+      "Package": "ff",
+      "Version": "2.2-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2f745ad9a324bf4247df10ea6ebc3953",
+      "Requirements": [
+        "bit"
+      ]
+    },
+    "foreach": {
+      "Package": "foreach",
+      "Version": "1.5.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "618609b42c9406731ead03adf5379850",
+      "Requirements": [
+        "codetools",
+        "iterators"
+      ]
+    },
+    "foreign": {
+      "Package": "foreign",
+      "Version": "0.8-76",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "649b9c7a979d50d869578c73fed072cd",
+      "Requirements": []
+    },
+    "formatR": {
+      "Package": "formatR",
+      "Version": "1.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "63cb26d12517c7863f5abb006c5e0f25",
+      "Requirements": []
+    },
+    "fs": {
+      "Package": "fs",
+      "Version": "1.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8c04112383ca1988e96f429255f95675",
+      "Requirements": []
+    },
+    "futile.logger": {
+      "Package": "futile.logger",
+      "Version": "1.4.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "99f0ace8c05ec7d3683d27083c4f1e7e",
+      "Requirements": [
+        "futile.options",
+        "lambda.r"
+      ]
+    },
+    "futile.options": {
+      "Package": "futile.options",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0d9bf02413ddc2bbe8da9ce369dcdd2b",
+      "Requirements": []
+    },
+    "genefilter": {
+      "Package": "genefilter",
+      "Version": "1.70.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/genefilter_1.70.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/genefilter",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "a071480",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "8db2ebb178f95b85a77813e2d99c6b40",
+      "Requirements": [
+        "AnnotationDbi",
+        "Biobase",
+        "BiocGenerics",
+        "annotate",
+        "survival"
+      ]
+    },
+    "generics": {
+      "Package": "generics",
+      "Version": "0.1.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "15e9634c0fcd294799e9b2e929ed1b86",
+      "Requirements": []
+    },
+    "gh": {
+      "Package": "gh",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "89ea5998938d1ad55f035c8a86f96b74",
+      "Requirements": [
+        "cli",
+        "httr",
+        "ini",
+        "jsonlite"
+      ]
+    },
+    "git2r": {
+      "Package": "git2r",
+      "Version": "0.27.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "531a82d1beed1f545beb25f4f5945bf7",
+      "Requirements": []
+    },
+    "glue": {
+      "Package": "glue",
+      "Version": "1.6.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4f2596dfb05dac67b9dc558e5c6fba2e",
+      "Requirements": []
+    },
+    "gngnf1bahsensgprobe": {
+      "Package": "gngnf1bahsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/gngnf1bahsensgprobe_22.0.0.tar.gz",
+      "Hash": "0b71fe88bf3590dc4f0d9fc1f38f6d85",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "gngnf1musammensgprobe": {
+      "Package": "gngnf1musammensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/gngnf1musammensgprobe_22.0.0.tar.gz",
+      "Hash": "a11abd250c8501c936826d3038d3c81d",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hcg110hsensgprobe": {
+      "Package": "hcg110hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hcg110hsensgprobe_22.0.0.tar.gz",
+      "Hash": "2382a4d470148a607f6337d3dc1392e5",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgfocushsensgprobe": {
+      "Package": "hgfocushsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgfocushsensgprobe_22.0.0.tar.gz",
+      "Hash": "fefdf348384e5f5daf89949ac90ee2ec",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hglue20hsensgprobe": {
+      "Package": "hglue20hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hglue20hsensgprobe_22.0.0.tar.gz",
+      "Hash": "ef919aeffd12b71c4176eb98293df668",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu133a2hsensgprobe": {
+      "Package": "hgu133a2hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu133a2hsensgprobe_22.0.0.tar.gz",
+      "Hash": "6a298e8e6c7d72bbf9ad6fc718c6475e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu133ahsensgprobe": {
+      "Package": "hgu133ahsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu133ahsensgprobe_22.0.0.tar.gz",
+      "Hash": "2fc701a661efd831d3420f80bdc210aa",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu133bhsensgprobe": {
+      "Package": "hgu133bhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu133bhsensgprobe_22.0.0.tar.gz",
+      "Hash": "af2eaaff811c9578959111dd3f4856f3",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu133plus2hsensgprobe": {
+      "Package": "hgu133plus2hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu133plus2hsensgprobe_22.0.0.tar.gz",
+      "Hash": "2cdaade2be9d9b60ac7e8479af77f0d6",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu219hsensgprobe": {
+      "Package": "hgu219hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu219hsensgprobe_22.0.0.tar.gz",
+      "Hash": "7ce6584d368325333f6a5e68a453e163",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu95ahsensgprobe": {
+      "Package": "hgu95ahsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu95ahsensgprobe_22.0.0.tar.gz",
+      "Hash": "e8a759b0d3058003640cc5aafaf5bcde",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu95av2hsensgprobe": {
+      "Package": "hgu95av2hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu95av2hsensgprobe_22.0.0.tar.gz",
+      "Hash": "68fa8e53177ad06eca3c93db3c47303e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu95bhsensgprobe": {
+      "Package": "hgu95bhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu95bhsensgprobe_22.0.0.tar.gz",
+      "Hash": "903a9ed33067c9fd2082f17dbfec779b",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu95chsensgprobe": {
+      "Package": "hgu95chsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu95chsensgprobe_22.0.0.tar.gz",
+      "Hash": "17c8270194e6fb8cd2e3122b4918e315",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu95dhsensgprobe": {
+      "Package": "hgu95dhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu95dhsensgprobe_22.0.0.tar.gz",
+      "Hash": "70ee4a984dfcb42ed502e932edde87b8",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hgu95ehsensgprobe": {
+      "Package": "hgu95ehsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hgu95ehsensgprobe_22.0.0.tar.gz",
+      "Hash": "b5a593aeff3b5bd1f18fc23e0ee7c6b5",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "highr": {
+      "Package": "highr",
+      "Version": "0.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4dc5bb88961e347a0f4d8aad597cbfac",
+      "Requirements": []
+    },
+    "hms": {
+      "Package": "hms",
+      "Version": "0.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b1d40b416da234147d5869a009458702",
+      "Requirements": [
+        "pkgconfig",
+        "rlang"
+      ]
+    },
+    "hta20hsensgprobe": {
+      "Package": "hta20hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hta20hsensgprobe_22.0.0.tar.gz",
+      "Hash": "28f6512e3e1b4d36737ada3c5fdd3f53",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hthgu133ahsensgprobe": {
+      "Package": "hthgu133ahsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hthgu133ahsensgprobe_22.0.0.tar.gz",
+      "Hash": "2219357b7db3310bbc3013e512181ab1",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hthgu133bhsensgprobe": {
+      "Package": "hthgu133bhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hthgu133bhsensgprobe_22.0.0.tar.gz",
+      "Hash": "b10f1e4bafec603f33c9477cd4852dbd",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hthgu133pluspmhsensgprobe": {
+      "Package": "hthgu133pluspmhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hthgu133pluspmhsensgprobe_22.0.0.tar.gz",
+      "Hash": "c4f1a6c03969628eb5cd7f178d440dfd",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "htmg430ammensgprobe": {
+      "Package": "htmg430ammensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/htmg430ammensgprobe_22.0.0.tar.gz",
+      "Hash": "d237023099ee22633e15c9f253889be7",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "htmg430bmmensgprobe": {
+      "Package": "htmg430bmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/htmg430bmmensgprobe_22.0.0.tar.gz",
+      "Hash": "35dcf3941b4a994a467449b0431391e0",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "htmg430pmmmensgprobe": {
+      "Package": "htmg430pmmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/htmg430pmmmensgprobe_22.0.0.tar.gz",
+      "Hash": "90c3be3baa266b5009ffa0f9a6026ea5",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "htmltools": {
+      "Package": "htmltools",
+      "Version": "0.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7d651b7131794fe007b1ad6f21aaa401",
+      "Requirements": [
+        "base64enc",
+        "digest",
+        "rlang"
+      ]
+    },
+    "htmlwidgets": {
+      "Package": "htmlwidgets",
+      "Version": "1.5.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "41bace23583fbc25089edae324de2dc3",
+      "Requirements": [
+        "htmltools",
+        "jsonlite",
+        "yaml"
+      ]
+    },
+    "htrat230pmrnensgprobe": {
+      "Package": "htrat230pmrnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/htrat230pmrnensgprobe_22.0.0.tar.gz",
+      "Hash": "c176d5a6e28fdb0f06db6259c4eba33c",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "htratfocusrnensgprobe": {
+      "Package": "htratfocusrnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/htratfocusrnensgprobe_22.0.0.tar.gz",
+      "Hash": "23b2365cda2fd5b9cda558edb27d319d",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "httr": {
+      "Package": "httr",
+      "Version": "1.4.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7146fea4685b4252ebf478978c75f597",
+      "Requirements": [
+        "R6",
+        "curl",
+        "jsonlite",
+        "mime",
+        "openssl"
+      ]
+    },
+    "hu6800hsensgprobe": {
+      "Package": "hu6800hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hu6800hsensgprobe_22.0.0.tar.gz",
+      "Hash": "3817e088bc515f26b17e147b47a6b7b8",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "huex10sthsensgprobe": {
+      "Package": "huex10sthsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/huex10sthsensgprobe_22.0.0.tar.gz",
+      "Hash": "aa0e3a8d31c028ebdd06d0eb30566c77",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hugene10sthsensgprobe": {
+      "Package": "hugene10sthsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hugene10sthsensgprobe_22.0.0.tar.gz",
+      "Hash": "84562ab57fe068be425370679728973b",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hugene11sthsensgprobe": {
+      "Package": "hugene11sthsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hugene11sthsensgprobe_22.0.0.tar.gz",
+      "Hash": "35b772f85615e17f4e5aa53d3ebc4eff",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hugene20sthsensgprobe": {
+      "Package": "hugene20sthsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hugene20sthsensgprobe_22.0.0.tar.gz",
+      "Hash": "17d4cc2257f5eb430e307ac42308fe81",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "hugene21sthsensgprobe": {
+      "Package": "hugene21sthsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/hugene21sthsensgprobe_22.0.0.tar.gz",
+      "Hash": "71ea5226d8a79a139400dff193216c16",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ini": {
+      "Package": "ini",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6154ec2223172bce8162d4153cda21f7",
+      "Requirements": []
+    },
+    "iterators": {
+      "Package": "iterators",
+      "Version": "1.0.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8954069286b4b2b0d023d1b288dce978",
+      "Requirements": []
+    },
+    "jnj384screenhsensgprobe": {
+      "Package": "jnj384screenhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/jnj384screenhsensgprobe_22.0.0.tar.gz",
+      "Hash": "867f0597943b3dafd80ca9d88b8b1dfc",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "jsonlite": {
+      "Package": "jsonlite",
+      "Version": "1.7.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2657f20b9a74c996c602e74ebe540b06",
+      "Requirements": []
+    },
+    "knitr": {
+      "Package": "knitr",
+      "Version": "1.29",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e5f4c41c17df8cdf7b0df12117c0d99a",
+      "Requirements": [
+        "evaluate",
+        "highr",
+        "markdown",
+        "stringr",
+        "xfun",
+        "yaml"
+      ]
+    },
+    "lambda.r": {
+      "Package": "lambda.r",
+      "Version": "1.2.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b1e925c4b9ffeb901bacf812cbe9a6ad",
+      "Requirements": [
+        "formatR"
+      ]
+    },
+    "later": {
+      "Package": "later",
+      "Version": "1.1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d0a62b247165aabf397fded504660d8a",
+      "Requirements": [
+        "BH",
+        "Rcpp",
+        "rlang"
+      ]
+    },
+    "lattice": {
+      "Package": "lattice",
+      "Version": "0.20-45",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b64cdbb2b340437c4ee047a1f4c4377b",
+      "Requirements": []
+    },
+    "lazyeval": {
+      "Package": "lazyeval",
+      "Version": "0.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d908914ae53b04d4c0c0fd72ecc35370",
+      "Requirements": []
+    },
+    "lifecycle": {
+      "Package": "lifecycle",
+      "Version": "1.0.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "001cecbeac1cff9301bdc3775ee46a86",
+      "Requirements": [
+        "cli",
+        "glue",
+        "rlang"
+      ]
+    },
+    "limma": {
+      "Package": "limma",
+      "Version": "3.44.3",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/limma_3.44.3.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/limma",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "90275de",
+      "git_last_commit_date": "2020-06-12",
+      "Hash": "6f85e30aa587815acc9551390ff0bbec",
+      "Requirements": []
+    },
+    "locfit": {
+      "Package": "locfit",
+      "Version": "1.5-9.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "760b5b542e8435237d1b3c253bfe18e7",
+      "Requirements": [
+        "lattice"
+      ]
+    },
+    "mafacyrgene10stmamuensgprobe": {
+      "Package": "mafacyrgene10stmamuensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mafacyrgene10stmamuensgprobe_22.0.0.tar.gz",
+      "Hash": "2f477a95b56f2ab667be9d0c59f38718",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mafacyrgene11stmamuensgprobe": {
+      "Package": "mafacyrgene11stmamuensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mafacyrgene11stmamuensgprobe_22.0.0.tar.gz",
+      "Hash": "a9ab46277c25cec2cc3be70d75cb96da",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "magrittr": {
+      "Package": "magrittr",
+      "Version": "1.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1bb58822a20301cee84a41678e25d9b7",
+      "Requirements": []
+    },
+    "mapping10kxba142hsensgprobe": {
+      "Package": "mapping10kxba142hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mapping10kxba142hsensgprobe_22.0.0.tar.gz",
+      "Hash": "d1e475013f3392ddf8c445431b653089",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mapping250knsphsensgprobe": {
+      "Package": "mapping250knsphsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mapping250knsphsensgprobe_22.0.0.tar.gz",
+      "Hash": "bfcdeaac04421dd2047b487b319bb206",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mapping250kstyhsensgprobe": {
+      "Package": "mapping250kstyhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mapping250kstyhsensgprobe_22.0.0.tar.gz",
+      "Hash": "ba87421cb5062157c864d50fdeccedb0",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mapping50khind240hsensgprobe": {
+      "Package": "mapping50khind240hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mapping50khind240hsensgprobe_22.0.0.tar.gz",
+      "Hash": "28e76ed9ea04e4e8ca4b72c9f4a3830d",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mapping50kxba240hsensgprobe": {
+      "Package": "mapping50kxba240hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mapping50kxba240hsensgprobe_22.0.0.tar.gz",
+      "Hash": "3c2796e8883ae35fe26ac98214e9035a",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "markdown": {
+      "Package": "markdown",
+      "Version": "1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "61e4a10781dd00d7d81dd06ca9b94e95",
+      "Requirements": [
+        "mime",
+        "xfun"
+      ]
+    },
+    "matrixStats": {
+      "Package": "matrixStats",
+      "Version": "0.63.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "57af0c3da1f1a50680b186591c3359af",
+      "Requirements": []
+    },
+    "memoise": {
+      "Package": "memoise",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "58baa74e4603fcfb9a94401c58c8f9b1",
+      "Requirements": [
+        "digest"
+      ]
+    },
+    "mgcv": {
+      "Package": "mgcv",
+      "Version": "1.8-41",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6b3904f13346742caa3e82dd0303d4ad",
+      "Requirements": [
+        "Matrix",
+        "nlme"
+      ]
+    },
+    "mgu74ammensgprobe": {
+      "Package": "mgu74ammensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mgu74ammensgprobe_22.0.0.tar.gz",
+      "Hash": "1da7f55112979080ac5cff18b863be43",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mgu74av2mmensgprobe": {
+      "Package": "mgu74av2mmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mgu74av2mmensgprobe_22.0.0.tar.gz",
+      "Hash": "1e58cbe215399d64286e3cd96b108bb9",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mgu74bv2mmensgprobe": {
+      "Package": "mgu74bv2mmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mgu74bv2mmensgprobe_22.0.0.tar.gz",
+      "Hash": "be58a8feb30ae8f4ab7e819d09d2a685",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mgu74cv2mmensgprobe": {
+      "Package": "mgu74cv2mmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mgu74cv2mmensgprobe_22.0.0.tar.gz",
+      "Hash": "2320dde26a32115f6bd5cf64d4b4231b",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mime": {
+      "Package": "mime",
+      "Version": "0.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f085cb5d1548336cafa5ee7ec56d7e34",
+      "Requirements": []
+    },
+    "moe430ammensgprobe": {
+      "Package": "moe430ammensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/moe430ammensgprobe_22.0.0.tar.gz",
+      "Hash": "8d33ed927fbc22aada931433ca307ea3",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "moe430bmmensgprobe": {
+      "Package": "moe430bmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/moe430bmmensgprobe_22.0.0.tar.gz",
+      "Hash": "d044d977477f32f320999747df7a717d",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "moex10stmmensgprobe": {
+      "Package": "moex10stmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/moex10stmmensgprobe_22.0.0.tar.gz",
+      "Hash": "9fb3e659b96a591377b67de036ad2204",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mogene10stmmensgprobe": {
+      "Package": "mogene10stmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mogene10stmmensgprobe_22.0.0.tar.gz",
+      "Hash": "9d42f3bf699d3e224c415105bf45a3c5",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mogene11stmmensgprobe": {
+      "Package": "mogene11stmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mogene11stmmensgprobe_22.0.0.tar.gz",
+      "Hash": "c8f7092b9441993cd46ccd40ff118986",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mogene20stmmensgprobe": {
+      "Package": "mogene20stmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mogene20stmmensgprobe_22.0.0.tar.gz",
+      "Hash": "14590a5dfdeb2b63a32d2018a10bd6f7",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mogene21stmmensgprobe": {
+      "Package": "mogene21stmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mogene21stmmensgprobe_22.0.0.tar.gz",
+      "Hash": "0fe56ec3dcd2304ef38bdcb3f016daec",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mouse4302mmensgprobe": {
+      "Package": "mouse4302mmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mouse4302mmensgprobe_22.0.0.tar.gz",
+      "Hash": "c661b15d365974df317ea0ad294d4f08",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mouse430a2mmensgprobe": {
+      "Package": "mouse430a2mmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mouse430a2mmensgprobe_22.0.0.tar.gz",
+      "Hash": "5fc08b266b92a072455a789eb2fa7900",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mu11ksubammensgprobe": {
+      "Package": "mu11ksubammensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mu11ksubammensgprobe_22.0.0.tar.gz",
+      "Hash": "79418a202a1996a2fdc787704e809f72",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "mu11ksubbmmensgprobe": {
+      "Package": "mu11ksubbmmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/mu11ksubbmmensgprobe_22.0.0.tar.gz",
+      "Hash": "260949154fe0d78aa5b34f5beaa2557e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "nlme": {
+      "Package": "nlme",
+      "Version": "3.1-161",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b49e163093c0ef46fbbfc40bcb87916c",
+      "Requirements": [
+        "lattice"
+      ]
+    },
+    "nnet": {
+      "Package": "nnet",
+      "Version": "7.3-18",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "170da2130d5332bea7d6ede01875ba1d",
+      "Requirements": []
+    },
+    "nugohs1a520180hsensgprobe": {
+      "Package": "nugohs1a520180hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/nugohs1a520180hsensgprobe_22.0.0.tar.gz",
+      "Hash": "b1f67e8eb215f5d91b11edea11cf79a8",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "nugomm1a520177mmensgprobe": {
+      "Package": "nugomm1a520177mmensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/nugomm1a520177mmensgprobe_22.0.0.tar.gz",
+      "Hash": "b011919717c126bbcb8f78eebcf98244",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "oligo": {
+      "Package": "oligo",
+      "Version": "1.52.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligo_1.52.1.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/oligo",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "cbd66c8",
+      "git_last_commit_date": "2020-08-10",
+      "Hash": "25a32b15cf0656f2624672150de9d750",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "Biostrings",
+        "DBI",
+        "RSQLite",
+        "affxparser",
+        "affyio",
+        "ff",
+        "oligoClasses",
+        "preprocessCore",
+        "zlibbioc"
+      ]
+    },
+    "oligoClasses": {
+      "Package": "oligoClasses",
+      "Version": "1.50.4",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/oligoClasses_1.50.4.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/oligoClasses",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "da7b856",
+      "git_last_commit_date": "2020-08-10",
+      "Hash": "f4190217bc7d1b697b37bd4711560084",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "BiocManager",
+        "Biostrings",
+        "DBI",
+        "GenomicRanges",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "SummarizedExperiment",
+        "affyio",
+        "ff",
+        "foreach"
+      ]
+    },
+    "openssl": {
+      "Package": "openssl",
+      "Version": "1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fd1f6c1cdd6519189d6d4a7d275da15f",
+      "Requirements": [
+        "askpass"
+      ]
+    },
+    "ovigene10stoaensgprobe": {
+      "Package": "ovigene10stoaensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/ovigene10stoaensgprobe_22.0.0.tar.gz",
+      "Hash": "a672cdcf426dc98f1db139da91d30fea",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ovigene11stoaensgprobe": {
+      "Package": "ovigene11stoaensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/ovigene11stoaensgprobe_22.0.0.tar.gz",
+      "Hash": "15f4080fbfa9ecfdaa369ea61e53e34a",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "pd.081229.hg18.promoter.medip.hx1": {
+      "Package": "pd.081229.hg18.promoter.medip.hx1",
+      "Version": "0.99.4",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.081229.hg18.promoter.medip.hx1_0.99.4.tar.gz",
+      "Hash": "53eb6e8405e70bfa03b1e4db51ce6c76",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.2006.07.18.hg18.refseq.promoter": {
+      "Package": "pd.2006.07.18.hg18.refseq.promoter",
+      "Version": "1.8.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.2006.07.18.hg18.refseq.promoter_1.8.1.tar.gz",
+      "Hash": "6af2e6d0af52fe293ba67330533f192f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.2006.07.18.mm8.refseq.promoter": {
+      "Package": "pd.2006.07.18.mm8.refseq.promoter",
+      "Version": "0.99.3",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.2006.07.18.mm8.refseq.promoter_0.99.3.tar.gz",
+      "Hash": "b25c881b9f22f06da95f014d40058bc7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.2006.10.31.rn34.refseq.promoter": {
+      "Package": "pd.2006.10.31.rn34.refseq.promoter",
+      "Version": "0.99.3",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.2006.10.31.rn34.refseq.promoter_0.99.3.tar.gz",
+      "Hash": "8a4e2adabf9e3bb67710a171207a0157",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ag": {
+      "Package": "pd.ag",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ag_3.12.0.tar.gz",
+      "Hash": "6f607b3f209d25c0a1a375890689c26e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.aragene.1.0.st": {
+      "Package": "pd.aragene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.aragene.1.0.st_3.12.0.tar.gz",
+      "Hash": "242f70197f2dbc0bd0dc43260b52f40a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.aragene.1.1.st": {
+      "Package": "pd.aragene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.aragene.1.1.st_3.12.0.tar.gz",
+      "Hash": "ada75b31598483587ac87c5420b75870",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.atdschip.tiling": {
+      "Package": "pd.atdschip.tiling",
+      "Version": "0.26.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/experiment/src/contrib/pd.atdschip.tiling_0.26.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/pd.atdschip.tiling",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "68d6c37",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "d5ee2c695abedbcc7d5a7240a2fdbfb3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ath1.121501": {
+      "Package": "pd.ath1.121501",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ath1.121501_3.12.0.tar.gz",
+      "Hash": "85c4777c6e50a58d41c18ce8614d3ce0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.barley1": {
+      "Package": "pd.barley1",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.barley1_3.12.0.tar.gz",
+      "Hash": "03fd799ccc5ff7120f8b15e05eb650fe",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bovgene.1.0.st": {
+      "Package": "pd.bovgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.bovgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "1f03de61afcfcc1f521015d0edcd8fd2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bovgene.1.1.st": {
+      "Package": "pd.bovgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.bovgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "7947efb64ef885055e8d4e105b7d1b34",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bovine": {
+      "Package": "pd.bovine",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.bovine_3.12.0.tar.gz",
+      "Hash": "87697e66b2f3aa88c5cce324a527558f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bsubtilis": {
+      "Package": "pd.bsubtilis",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.bsubtilis_3.12.0.tar.gz",
+      "Hash": "70e507fe536a247a80e5a8e313506a80",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cangene.1.0.st": {
+      "Package": "pd.cangene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cangene.1.0.st_3.12.0.tar.gz",
+      "Hash": "ca4441cd54c41382952e4fb7fe5ce62b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cangene.1.1.st": {
+      "Package": "pd.cangene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cangene.1.1.st_3.12.0.tar.gz",
+      "Hash": "2db861757aca17a6a5b6a9a5b8a00699",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.canine": {
+      "Package": "pd.canine",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.canine_3.12.0.tar.gz",
+      "Hash": "cab4560c9edb751edf137ce1e5966a3d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.canine.2": {
+      "Package": "pd.canine.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.canine.2_3.12.0.tar.gz",
+      "Hash": "7b6c1c117c6e5612239c83d50f9e55d6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.celegans": {
+      "Package": "pd.celegans",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.celegans_3.12.0.tar.gz",
+      "Hash": "6602f8e81b7e4023e7a01cca00ef1da3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.charm.hg18.example": {
+      "Package": "pd.charm.hg18.example",
+      "Version": "0.99.4",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.charm.hg18.example_0.99.4.tar.gz",
+      "Hash": "186efe738f0f3d18f5b28a0c7867106e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chicken": {
+      "Package": "pd.chicken",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.chicken_3.12.0.tar.gz",
+      "Hash": "d4511f1e387dc82ab9f6bc06cccdc705",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chigene.1.0.st": {
+      "Package": "pd.chigene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.chigene.1.0.st_3.12.0.tar.gz",
+      "Hash": "23f3f6b53d057e3009f04306bc0e5cfb",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chigene.1.1.st": {
+      "Package": "pd.chigene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.chigene.1.1.st_3.12.0.tar.gz",
+      "Hash": "639e72a56120512a78a128834687e35d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chogene.2.0.st": {
+      "Package": "pd.chogene.2.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.chogene.2.0.st_3.12.0.tar.gz",
+      "Hash": "0c5dd426566a261bc938941d886fc8b2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chogene.2.1.st": {
+      "Package": "pd.chogene.2.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.chogene.2.1.st_3.12.0.tar.gz",
+      "Hash": "45873a91801e8d8dd8cdcbf867268ff5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.citrus": {
+      "Package": "pd.citrus",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.citrus_3.12.0.tar.gz",
+      "Hash": "a1eb0fa690fc30f98172a316db69d71a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.d.human": {
+      "Package": "pd.clariom.d.human",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.clariom.d.human_3.14.1.tar.gz",
+      "Hash": "1e25dd0c5769aa2fd2b18ba19ed29a9e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.human": {
+      "Package": "pd.clariom.s.human",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.clariom.s.human_3.14.1.tar.gz",
+      "Hash": "81b8231c1ada91024fe01ad2c437bb69",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.human.ht": {
+      "Package": "pd.clariom.s.human.ht",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.clariom.s.human.ht_3.14.1.tar.gz",
+      "Hash": "4052db2f8bc6a7d0a05bc6f4edad1482",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.mouse": {
+      "Package": "pd.clariom.s.mouse",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.clariom.s.mouse_3.14.1.tar.gz",
+      "Hash": "9e19a00ea02ad8511bcc1f58a20fea07",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.mouse.ht": {
+      "Package": "pd.clariom.s.mouse.ht",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.clariom.s.mouse.ht_3.14.1.tar.gz",
+      "Hash": "bb89ada94db2031b19d35c34ad7af700",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.rat": {
+      "Package": "pd.clariom.s.rat",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.clariom.s.rat_3.14.1.tar.gz",
+      "Hash": "4dac0df605a64fe27347d2e6f8ba16e9",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.rat.ht": {
+      "Package": "pd.clariom.s.rat.ht",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.clariom.s.rat.ht_3.14.1.tar.gz",
+      "Hash": "f03d76988375f79de8095e3dfe7b2347",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cotton": {
+      "Package": "pd.cotton",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cotton_3.12.0.tar.gz",
+      "Hash": "99caab42d24b4e38852379616eec715a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyngene.1.0.st": {
+      "Package": "pd.cyngene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cyngene.1.0.st_3.12.0.tar.gz",
+      "Hash": "ea3adaef2f518700a10ce11ae9aeab95",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyngene.1.1.st": {
+      "Package": "pd.cyngene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cyngene.1.1.st_3.12.0.tar.gz",
+      "Hash": "e2c8a84ad5e38fdbedcdcc7761d6981a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyrgene.1.0.st": {
+      "Package": "pd.cyrgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cyrgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "36d90d255b62639d6d36811586b73545",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyrgene.1.1.st": {
+      "Package": "pd.cyrgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cyrgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "9a6176a4e4176c1fbe0767200588369e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cytogenetics.array": {
+      "Package": "pd.cytogenetics.array",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.cytogenetics.array_3.12.0.tar.gz",
+      "Hash": "f973e810afeb38384124ecc8ae9af030",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drogene.1.0.st": {
+      "Package": "pd.drogene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.drogene.1.0.st_3.12.0.tar.gz",
+      "Hash": "01960f47aaa60ab3f93988ab4e790980",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drogene.1.1.st": {
+      "Package": "pd.drogene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.drogene.1.1.st_3.12.0.tar.gz",
+      "Hash": "b056bb075d7c7f59f6e9ecb44c359552",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drosgenome1": {
+      "Package": "pd.drosgenome1",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.drosgenome1_3.12.0.tar.gz",
+      "Hash": "81712dc7144b9876a288a6e60997a799",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drosophila.2": {
+      "Package": "pd.drosophila.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.drosophila.2_3.12.0.tar.gz",
+      "Hash": "d434036c82a87f17fb77e5e252e9b321",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.e.coli.2": {
+      "Package": "pd.e.coli.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.e.coli.2_3.12.0.tar.gz",
+      "Hash": "09fc8d04e48f8457f7a032689dbc1cab",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ecoli": {
+      "Package": "pd.ecoli",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ecoli_3.12.0.tar.gz",
+      "Hash": "d758441cc8e4366c2479536983cfa1a9",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ecoli.asv2": {
+      "Package": "pd.ecoli.asv2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ecoli.asv2_3.12.0.tar.gz",
+      "Hash": "73c26a981ed6e1b8231b018bcd9b5fed",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.elegene.1.0.st": {
+      "Package": "pd.elegene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.elegene.1.0.st_3.12.0.tar.gz",
+      "Hash": "aa3fa2fabd8101de4d1f64ddcd245487",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.elegene.1.1.st": {
+      "Package": "pd.elegene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.elegene.1.1.st_3.12.0.tar.gz",
+      "Hash": "43c81cd9ebf43531bbe1a4f7bd84ec20",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.equgene.1.0.st": {
+      "Package": "pd.equgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.equgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "e1f20c3af31fccef85308b6934b55441",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.equgene.1.1.st": {
+      "Package": "pd.equgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.equgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "2133db340ef06d187341f13a63c60fb1",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.feinberg.hg18.me.hx1": {
+      "Package": "pd.feinberg.hg18.me.hx1",
+      "Version": "0.99.3",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.feinberg.hg18.me.hx1_0.99.3.tar.gz",
+      "Hash": "b27c1962737363bfd2df0385e73415cd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.feinberg.mm8.me.hx1": {
+      "Package": "pd.feinberg.mm8.me.hx1",
+      "Version": "0.99.3",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.feinberg.mm8.me.hx1_0.99.3.tar.gz",
+      "Hash": "d12e341636e1df38b2621f7b06827dc2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.felgene.1.0.st": {
+      "Package": "pd.felgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.felgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "bce45f4260a9569b56b6ca1ec5a52f06",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.felgene.1.1.st": {
+      "Package": "pd.felgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.felgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "84a1d84d08cdc3c9f956179de207f824",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.fingene.1.0.st": {
+      "Package": "pd.fingene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.fingene.1.0.st_3.12.0.tar.gz",
+      "Hash": "1241f4f526e9d7d3292cec4f0a0754bc",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.fingene.1.1.st": {
+      "Package": "pd.fingene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.fingene.1.1.st_3.12.0.tar.gz",
+      "Hash": "bce18b90b1fbd651dc087bdbd6f01621",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.genomewidesnp.5": {
+      "Package": "pd.genomewidesnp.5",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.genomewidesnp.5_3.14.1.tar.gz",
+      "Hash": "21f0f87b10084d9ea472a361490917ba",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.genomewidesnp.6": {
+      "Package": "pd.genomewidesnp.6",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.genomewidesnp.6_3.14.1.tar.gz",
+      "Hash": "241aadeca6a1aed8bf169981ee394896",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.guigene.1.0.st": {
+      "Package": "pd.guigene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.guigene.1.0.st_3.12.0.tar.gz",
+      "Hash": "af0f7c522eddaaee500709217ced6949",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.guigene.1.1.st": {
+      "Package": "pd.guigene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.guigene.1.1.st_3.12.0.tar.gz",
+      "Hash": "279ca6325786bffcf7383779d0f02ca2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hc.g110": {
+      "Package": "pd.hc.g110",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hc.g110_3.12.0.tar.gz",
+      "Hash": "8833c5fe83e3cea7f3b17ee7b51edf6d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.focus": {
+      "Package": "pd.hg.focus",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.focus_3.12.0.tar.gz",
+      "Hash": "36d959e8b729163358ff249e8cace254",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133.plus.2": {
+      "Package": "pd.hg.u133.plus.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u133.plus.2_3.12.0.tar.gz",
+      "Hash": "f1830b276400302cd41748c89c28dfc0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133a": {
+      "Package": "pd.hg.u133a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u133a_3.12.0.tar.gz",
+      "Hash": "2596d3dc9326c4f6dfef1f8094f4b294",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133a.2": {
+      "Package": "pd.hg.u133a.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u133a.2_3.12.0.tar.gz",
+      "Hash": "00eb5b3cbeb1cdb23a0db8824fdf87cc",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133a.tag": {
+      "Package": "pd.hg.u133a.tag",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u133a.tag_3.12.0.tar.gz",
+      "Hash": "08641f6f22b14d377c3e3b19dd97ec40",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133b": {
+      "Package": "pd.hg.u133b",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u133b_3.12.0.tar.gz",
+      "Hash": "dfb1f98d541b66127700c86ee65dadc6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u219": {
+      "Package": "pd.hg.u219",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u219_3.12.0.tar.gz",
+      "Hash": "ab647b495a91672f7f5f2338f4f05086",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95a": {
+      "Package": "pd.hg.u95a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u95a_3.12.0.tar.gz",
+      "Hash": "e3987e45dbbfd1ef73e20cb8ce10c31b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95av2": {
+      "Package": "pd.hg.u95av2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u95av2_3.12.0.tar.gz",
+      "Hash": "3ba29538fc0235a75e3882840acfdab3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95b": {
+      "Package": "pd.hg.u95b",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u95b_3.12.0.tar.gz",
+      "Hash": "39cd7f7e24dcfc40afa147d6217084dd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95c": {
+      "Package": "pd.hg.u95c",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u95c_3.12.0.tar.gz",
+      "Hash": "4721e88f48515638f28ed7074e333975",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95d": {
+      "Package": "pd.hg.u95d",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u95d_3.12.0.tar.gz",
+      "Hash": "94db900f0a126348c1453b809b93f006",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95e": {
+      "Package": "pd.hg.u95e",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg.u95e_3.12.0.tar.gz",
+      "Hash": "30e685be5c9393a6c0ecaf827f21ff32",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg18.60mer.expr": {
+      "Package": "pd.hg18.60mer.expr",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hg18.60mer.expr_3.12.0.tar.gz",
+      "Hash": "b62484e2aa61cb46bf151e5e0459809a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ht.hg.u133.plus.pm": {
+      "Package": "pd.ht.hg.u133.plus.pm",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ht.hg.u133.plus.pm_3.12.0.tar.gz",
+      "Hash": "0c85213d8202eb50cc653cae3a729127",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ht.hg.u133a": {
+      "Package": "pd.ht.hg.u133a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ht.hg.u133a_3.12.0.tar.gz",
+      "Hash": "5325025c794b806ad59abaf236647b71",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ht.mg.430a": {
+      "Package": "pd.ht.mg.430a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ht.mg.430a_3.12.0.tar.gz",
+      "Hash": "13e54d888910bd1d5023b5ceb8e40ca8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hta.2.0": {
+      "Package": "pd.hta.2.0",
+      "Version": "3.12.2",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hta.2.0_3.12.2.tar.gz",
+      "Hash": "ec21a5163f80c39e13ca9a5380520118",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hu6800": {
+      "Package": "pd.hu6800",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hu6800_3.12.0.tar.gz",
+      "Hash": "3feff94112b3a6e93c420ac2ec2cf724",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.huex.1.0.st.v2": {
+      "Package": "pd.huex.1.0.st.v2",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.huex.1.0.st.v2_3.14.1.tar.gz",
+      "Hash": "0f4628027cc7c9e99d6113fbcbe905ad",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.1.0.st.v1": {
+      "Package": "pd.hugene.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hugene.1.0.st.v1_3.14.1.tar.gz",
+      "Hash": "b4af98eee538b41c048c6b0072e63bfe",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.1.1.st.v1": {
+      "Package": "pd.hugene.1.1.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hugene.1.1.st.v1_3.14.1.tar.gz",
+      "Hash": "28a838217e3e27a26e061dd90afc65dc",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.2.0.st": {
+      "Package": "pd.hugene.2.0.st",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hugene.2.0.st_3.14.1.tar.gz",
+      "Hash": "405d09ad6449026e2586e7fc54164798",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.2.1.st": {
+      "Package": "pd.hugene.2.1.st",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.hugene.2.1.st_3.14.1.tar.gz",
+      "Hash": "fa247194ecb0caf2be3a6012d9232fbc",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.maize": {
+      "Package": "pd.maize",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.maize_3.12.0.tar.gz",
+      "Hash": "13bd0c8d75eed396aa838af65337221b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping250k.nsp": {
+      "Package": "pd.mapping250k.nsp",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mapping250k.nsp_3.12.0.tar.gz",
+      "Hash": "0dd6d0ae1fb4e06cc1f409a4b38ba355",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping250k.sty": {
+      "Package": "pd.mapping250k.sty",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mapping250k.sty_3.12.0.tar.gz",
+      "Hash": "5f567ed7d6ff7f728ebb2009ede4d0ad",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping50k.hind240": {
+      "Package": "pd.mapping50k.hind240",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mapping50k.hind240_3.12.0.tar.gz",
+      "Hash": "73d85fe02f1730110942900b9e8c65ba",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping50k.xba240": {
+      "Package": "pd.mapping50k.xba240",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mapping50k.xba240_3.12.0.tar.gz",
+      "Hash": "5852c728bf36a2fd0a3b4ce3745a23dd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.margene.1.0.st": {
+      "Package": "pd.margene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.margene.1.0.st_3.12.0.tar.gz",
+      "Hash": "9d227a2cdad65864f2ba4afb440e5cf3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.margene.1.1.st": {
+      "Package": "pd.margene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.margene.1.1.st_3.12.0.tar.gz",
+      "Hash": "567b69c8cd8eb74ed86becd6da207e98",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.medgene.1.0.st": {
+      "Package": "pd.medgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.medgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "67c90efbab960446b965e53cea17ff2f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.medgene.1.1.st": {
+      "Package": "pd.medgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.medgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "42b4d2b4419371bcd5c05881796a97c9",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.medicago": {
+      "Package": "pd.medicago",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.medicago_3.12.0.tar.gz",
+      "Hash": "68293e5d7e7f3417643ba05a98b4cac7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74a": {
+      "Package": "pd.mg.u74a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mg.u74a_3.12.0.tar.gz",
+      "Hash": "0c29196050eb08ffe1de8606671b0011",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74av2": {
+      "Package": "pd.mg.u74av2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mg.u74av2_3.12.0.tar.gz",
+      "Hash": "0eedb6ab46f639ee57f128e9c9ce7270",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74b": {
+      "Package": "pd.mg.u74b",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mg.u74b_3.12.0.tar.gz",
+      "Hash": "21622eb1566bb9b27cd1e28ac4e8d72e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74bv2": {
+      "Package": "pd.mg.u74bv2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mg.u74bv2_3.12.0.tar.gz",
+      "Hash": "304cd79e6b82eb951376f0b9c20aa15c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74c": {
+      "Package": "pd.mg.u74c",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mg.u74c_3.12.0.tar.gz",
+      "Hash": "ab46cfcdcfef3df2481791f4f192abc5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74cv2": {
+      "Package": "pd.mg.u74cv2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mg.u74cv2_3.12.0.tar.gz",
+      "Hash": "59377f7fdf33bed26b30ad123986c26b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.1.0": {
+      "Package": "pd.mirna.1.0",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mirna.1.0_3.12.0.tar.gz",
+      "Hash": "03d28ddf735af432b402cd2f24ea1214",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.2.0": {
+      "Package": "pd.mirna.2.0",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mirna.2.0_3.12.0.tar.gz",
+      "Hash": "4e1e7c7bc918cce5991106be4d0b5a3a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.3.0": {
+      "Package": "pd.mirna.3.0",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mirna.3.0_3.12.0.tar.gz",
+      "Hash": "c812f0da2e232a0e048880c7db79e562",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.3.1": {
+      "Package": "pd.mirna.3.1",
+      "Version": "3.8.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mirna.3.1_3.8.1.tar.gz",
+      "Hash": "4c08046922af110cbaf10fbe27357f8a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.4.0": {
+      "Package": "pd.mirna.4.0",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mirna.4.0_3.12.0.tar.gz",
+      "Hash": "5590536cc4095346fe47602590af9414",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.moe430a": {
+      "Package": "pd.moe430a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.moe430a_3.12.0.tar.gz",
+      "Hash": "49f7265936d773098909c3c964698858",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.moe430b": {
+      "Package": "pd.moe430b",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.moe430b_3.12.0.tar.gz",
+      "Hash": "d412d7c91ac35cec71090ca910960348",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.moex.1.0.st.v1": {
+      "Package": "pd.moex.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.moex.1.0.st.v1_3.14.1.tar.gz",
+      "Hash": "2e7b2bc4f82d682fe4f65666d43ba76f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.1.0.st.v1": {
+      "Package": "pd.mogene.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mogene.1.0.st.v1_3.14.1.tar.gz",
+      "Hash": "1317c9eb4cdacc77ac9519883f593cb7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.1.1.st.v1": {
+      "Package": "pd.mogene.1.1.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mogene.1.1.st.v1_3.14.1.tar.gz",
+      "Hash": "cf6c9fc4d7157888f63999988626a5ef",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.2.0.st": {
+      "Package": "pd.mogene.2.0.st",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mogene.2.0.st_3.14.1.tar.gz",
+      "Hash": "7688e5d41096d438eae51237b4ad3371",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.2.1.st": {
+      "Package": "pd.mogene.2.1.st",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mogene.2.1.st_3.14.1.tar.gz",
+      "Hash": "3d1c811dfb475ca807c630742c92ce64",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mouse430.2": {
+      "Package": "pd.mouse430.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mouse430.2_3.12.0.tar.gz",
+      "Hash": "3e53415d95dc45785cf413a016a8ea14",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mouse430a.2": {
+      "Package": "pd.mouse430a.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mouse430a.2_3.12.0.tar.gz",
+      "Hash": "5002ecebff1a59423962635cf950f2a3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mta.1.0": {
+      "Package": "pd.mta.1.0",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mta.1.0_3.12.0.tar.gz",
+      "Hash": "d3698ce540b2816c234f11b325ec9fba",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mu11ksuba": {
+      "Package": "pd.mu11ksuba",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mu11ksuba_3.12.0.tar.gz",
+      "Hash": "f65488e4371a693645ad8e02de4d8b72",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mu11ksubb": {
+      "Package": "pd.mu11ksubb",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.mu11ksubb_3.12.0.tar.gz",
+      "Hash": "133e97943763f8bece6b3f635bbb1861",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.nugo.hs1a520180": {
+      "Package": "pd.nugo.hs1a520180",
+      "Version": "3.4.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.nugo.hs1a520180_3.4.0.tar.gz",
+      "Hash": "443f78281706ec9586d72d4dae08b156",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.nugo.mm1a520177": {
+      "Package": "pd.nugo.mm1a520177",
+      "Version": "3.4.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.nugo.mm1a520177_3.4.0.tar.gz",
+      "Hash": "c7da30acb046a2006acd6d80b5ca7662",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ovigene.1.0.st": {
+      "Package": "pd.ovigene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ovigene.1.0.st_3.12.0.tar.gz",
+      "Hash": "fa7c5ed7a601ff5947db24f8a493a12d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ovigene.1.1.st": {
+      "Package": "pd.ovigene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ovigene.1.1.st_3.12.0.tar.gz",
+      "Hash": "f02d7884dc14ec0b077d20f657e55479",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.pae.g1a": {
+      "Package": "pd.pae.g1a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.pae.g1a_3.12.0.tar.gz",
+      "Hash": "d379ef475ae17d25a309cdeb905f294c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.plasmodium.anopheles": {
+      "Package": "pd.plasmodium.anopheles",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.plasmodium.anopheles_3.12.0.tar.gz",
+      "Hash": "fde3fcc90a788ff052c7bb7be61af756",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.poplar": {
+      "Package": "pd.poplar",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.poplar_3.12.0.tar.gz",
+      "Hash": "bbf8b3cd2bb678774f4a5db94acf27a1",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.porcine": {
+      "Package": "pd.porcine",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.porcine_3.12.0.tar.gz",
+      "Hash": "d87681c713103bb27748aec26814edea",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.porgene.1.0.st": {
+      "Package": "pd.porgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.porgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "90962886bf1d9c1475dcdfc59d20d9f7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.porgene.1.1.st": {
+      "Package": "pd.porgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.porgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "01536193871647030bed87edd35ac49f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rabgene.1.0.st": {
+      "Package": "pd.rabgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rabgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "ccc4050dea6b532db890627f02adce92",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rabgene.1.1.st": {
+      "Package": "pd.rabgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rabgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "f00c89472c63d7c59519dd175737c53e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rae230a": {
+      "Package": "pd.rae230a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rae230a_3.12.0.tar.gz",
+      "Hash": "47140a04ce212d23c3a6afff031d8e8d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rae230b": {
+      "Package": "pd.rae230b",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rae230b_3.12.0.tar.gz",
+      "Hash": "0c149e5216e37e8a9ee48a7976c07d60",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.raex.1.0.st.v1": {
+      "Package": "pd.raex.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.raex.1.0.st.v1_3.14.1.tar.gz",
+      "Hash": "49423efdc8f78000b12689da2123d8d3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.1.0.st.v1": {
+      "Package": "pd.ragene.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ragene.1.0.st.v1_3.14.1.tar.gz",
+      "Hash": "5aa0befbbb317ffaf3aed4f5022a421a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.1.1.st.v1": {
+      "Package": "pd.ragene.1.1.st.v1",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ragene.1.1.st.v1_3.14.1.tar.gz",
+      "Hash": "37e9c8c272f08a8db01e7b914cbcb8c0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.2.0.st": {
+      "Package": "pd.ragene.2.0.st",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ragene.2.0.st_3.14.1.tar.gz",
+      "Hash": "a38149212bba8d13e470f885f1c18800",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.2.1.st": {
+      "Package": "pd.ragene.2.1.st",
+      "Version": "3.14.1",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.ragene.2.1.st_3.14.1.tar.gz",
+      "Hash": "d37172c436b8067d37cd47ab285c0779",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rat230.2": {
+      "Package": "pd.rat230.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rat230.2_3.12.0.tar.gz",
+      "Hash": "480f2f4648e2f2d0a0fca5516dab6687",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rcngene.1.0.st": {
+      "Package": "pd.rcngene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rcngene.1.0.st_3.12.0.tar.gz",
+      "Hash": "687d94202e4d91dcad430e6b596c1e30",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rcngene.1.1.st": {
+      "Package": "pd.rcngene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rcngene.1.1.st_3.12.0.tar.gz",
+      "Hash": "0f81a022379ee7737a049ae38bc1e2cc",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rg.u34a": {
+      "Package": "pd.rg.u34a",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rg.u34a_3.12.0.tar.gz",
+      "Hash": "626bd412668d9a0d77cd91e57c360b56",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rg.u34b": {
+      "Package": "pd.rg.u34b",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rg.u34b_3.12.0.tar.gz",
+      "Hash": "358cd293aa16641847c5414b59a47668",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rg.u34c": {
+      "Package": "pd.rg.u34c",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rg.u34c_3.12.0.tar.gz",
+      "Hash": "f3b00c1f6aaf1cce57be9b2ed2b8c6d0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rhegene.1.0.st": {
+      "Package": "pd.rhegene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rhegene.1.0.st_3.12.0.tar.gz",
+      "Hash": "96c940e5f09cf198cc5ba33e8ec9c05d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rhegene.1.1.st": {
+      "Package": "pd.rhegene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rhegene.1.1.st_3.12.0.tar.gz",
+      "Hash": "6d56195dadeaa4cefe8c5e1a9b82f76e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rhesus": {
+      "Package": "pd.rhesus",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rhesus_3.12.0.tar.gz",
+      "Hash": "bfef43bc1f1caaba7a276f8a7cd8d99e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rice": {
+      "Package": "pd.rice",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rice_3.12.0.tar.gz",
+      "Hash": "251cb8b0ff216f7990c3543aef0b4bb8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rjpgene.1.0.st": {
+      "Package": "pd.rjpgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rjpgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "6ca673862d4fa15e624822198f38c8a9",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rjpgene.1.1.st": {
+      "Package": "pd.rjpgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rjpgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "e6516e4e0b6690ea0fb9ddc224314907",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rn.u34": {
+      "Package": "pd.rn.u34",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rn.u34_3.12.0.tar.gz",
+      "Hash": "25bfa9ad38c1a4542fc6c885eb6e4040",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rta.1.0": {
+      "Package": "pd.rta.1.0",
+      "Version": "3.12.2",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rta.1.0_3.12.2.tar.gz",
+      "Hash": "bf812de8106bd4d52dc60851cd77babb",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rusgene.1.0.st": {
+      "Package": "pd.rusgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rusgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "fbdad934b59c18a4cf55f0b7ce313fd2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rusgene.1.1.st": {
+      "Package": "pd.rusgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.rusgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "056e35d33ab8893372586c202bc6ec7e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.s.aureus": {
+      "Package": "pd.s.aureus",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.s.aureus_3.12.0.tar.gz",
+      "Hash": "97e63f00fcd19361b37d05bde757a04b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.soybean": {
+      "Package": "pd.soybean",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.soybean_3.12.0.tar.gz",
+      "Hash": "8ce34d2bf0d26c7dc3f2341a600e57ba",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.soygene.1.0.st": {
+      "Package": "pd.soygene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.soygene.1.0.st_3.12.0.tar.gz",
+      "Hash": "b738a8fac4c93c21d9c5f1341792b4ea",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.soygene.1.1.st": {
+      "Package": "pd.soygene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.soygene.1.1.st_3.12.0.tar.gz",
+      "Hash": "6624621ee345c61b4f132c6bdf4b9688",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.sugar.cane": {
+      "Package": "pd.sugar.cane",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.sugar.cane_3.12.0.tar.gz",
+      "Hash": "cc37459d251a951ff6b3c37874298d0d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.tomato": {
+      "Package": "pd.tomato",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.tomato_3.12.0.tar.gz",
+      "Hash": "50dda903035a8cdb8234b20994a6f5b7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.u133.x3p": {
+      "Package": "pd.u133.x3p",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.u133.x3p_3.12.0.tar.gz",
+      "Hash": "0e8db8f1e971e492d379107bc98edabc",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.vitis.vinifera": {
+      "Package": "pd.vitis.vinifera",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.vitis.vinifera_3.12.0.tar.gz",
+      "Hash": "28e0e5c7b53198864ecd12ebb52c1f09",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.wheat": {
+      "Package": "pd.wheat",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.wheat_3.12.0.tar.gz",
+      "Hash": "dbca4083c501f8a47bec20edfec51511",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.x.laevis.2": {
+      "Package": "pd.x.laevis.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.x.laevis.2_3.12.0.tar.gz",
+      "Hash": "3eedcf374550f394996071feaf7d897a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.x.tropicalis": {
+      "Package": "pd.x.tropicalis",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.x.tropicalis_3.12.0.tar.gz",
+      "Hash": "bfd9f2351d054b1fa8795ed857a783ec",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.xenopus.laevis": {
+      "Package": "pd.xenopus.laevis",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.xenopus.laevis_3.12.0.tar.gz",
+      "Hash": "0d23ca0f9529ac065a0c2f453156483c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.yeast.2": {
+      "Package": "pd.yeast.2",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.yeast.2_3.12.0.tar.gz",
+      "Hash": "e7b4817bcff6c1f6612972dbe383bf37",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.yg.s98": {
+      "Package": "pd.yg.s98",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.yg.s98_3.12.0.tar.gz",
+      "Hash": "393e8cdc6b89fee611f5303f84ad60b9",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.zebgene.1.0.st": {
+      "Package": "pd.zebgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.zebgene.1.0.st_3.12.0.tar.gz",
+      "Hash": "04d67c12fddf84e911cc5942d77a84dd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.zebgene.1.1.st": {
+      "Package": "pd.zebgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.zebgene.1.1.st_3.12.0.tar.gz",
+      "Hash": "d352cde50922c13e489405ff6abe63bc",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.zebrafish": {
+      "Package": "pd.zebrafish",
+      "Version": "3.12.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/data/annotation/src/contrib/pd.zebrafish_3.12.0.tar.gz",
+      "Hash": "9b1b745bc2a6884595ca22b2ff57e85f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pillar": {
+      "Package": "pillar",
+      "Version": "1.8.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f2316df30902c81729ae9de95ad5a608",
+      "Requirements": [
+        "cli",
+        "fansi",
+        "glue",
+        "lifecycle",
+        "rlang",
+        "utf8",
+        "vctrs"
+      ]
+    },
+    "pkgbuild": {
+      "Package": "pkgbuild",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "404684bc4e3685007f9720adf13b06c1",
+      "Requirements": [
+        "R6",
+        "callr",
+        "cli",
+        "crayon",
+        "desc",
+        "prettyunits",
+        "rprojroot",
+        "withr"
+      ]
+    },
+    "pkgconfig": {
+      "Package": "pkgconfig",
+      "Version": "2.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b8a063ca3694e651ac46f71b4bf0e090",
+      "Requirements": []
+    },
+    "pkgload": {
+      "Package": "pkgload",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b6b150cd4709e0c0c9b5d51ac4376282",
+      "Requirements": [
+        "cli",
+        "crayon",
+        "desc",
+        "pkgbuild",
+        "rlang",
+        "rprojroot",
+        "rstudioapi",
+        "withr"
+      ]
+    },
+    "plogr": {
+      "Package": "plogr",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "09eb987710984fc2905c7129c7d85e65",
+      "Requirements": []
+    },
+    "porcinessensgprobe": {
+      "Package": "porcinessensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/porcinessensgprobe_22.0.0.tar.gz",
+      "Hash": "1b2a5d94b6b3669c8beead5004c8162b",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "porgene10stssensgprobe": {
+      "Package": "porgene10stssensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/porgene10stssensgprobe_22.0.0.tar.gz",
+      "Hash": "aced001073d065e85b3fc133be037171",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "porgene11stssensgprobe": {
+      "Package": "porgene11stssensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/porgene11stssensgprobe_22.0.0.tar.gz",
+      "Hash": "37e3293ed9414af57c60c3d9dc7d43e4",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "praise": {
+      "Package": "praise",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a555924add98c99d2f411e37e7d25e9f",
+      "Requirements": []
+    },
+    "preprocessCore": {
+      "Package": "preprocessCore",
+      "Version": "1.50.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/preprocessCore_1.50.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/preprocessCore",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "9230366",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "4d183aca4311a7610cb96d14e528e73e",
+      "Requirements": []
+    },
+    "prettyunits": {
+      "Package": "prettyunits",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f3c960f0105f2ed179460864979fc37c",
+      "Requirements": [
+        "assertthat",
+        "magrittr"
+      ]
+    },
+    "primeviewhsensgprobe": {
+      "Package": "primeviewhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/primeviewhsensgprobe_22.0.0.tar.gz",
+      "Hash": "c244f01edfcf9fbff9a0db054cc60743",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "processx": {
+      "Package": "processx",
+      "Version": "3.4.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f4f13345fcb00c51ace12f65dd18749f",
+      "Requirements": [
+        "R6",
+        "ps"
+      ]
+    },
+    "promises": {
+      "Package": "promises",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a8730dcbdd19f9047774909f0ec214a4",
+      "Requirements": [
+        "R6",
+        "Rcpp",
+        "later",
+        "magrittr",
+        "rlang"
+      ]
+    },
+    "ps": {
+      "Package": "ps",
+      "Version": "1.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "425d938eb9c02906a8ac98c0c2a306b5",
+      "Requirements": []
+    },
+    "purrr": {
+      "Package": "purrr",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "22aca7d1181718e927d403a8c2d69d62",
+      "Requirements": [
+        "magrittr",
+        "rlang"
+      ]
+    },
+    "rabbit2a520535focensgprobe": {
+      "Package": "rabbit2a520535focensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rabbit2a520535focensgprobe_22.0.0.tar.gz",
+      "Hash": "dd7d0bbfac8181127d2b4ccf221c9ef0",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rabgene10stocensgprobe": {
+      "Package": "rabgene10stocensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rabgene10stocensgprobe_22.0.0.tar.gz",
+      "Hash": "c824bf5eeafb2654aa0ebc1fcb204405",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rabgene11stocensgprobe": {
+      "Package": "rabgene11stocensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rabgene11stocensgprobe_22.0.0.tar.gz",
+      "Hash": "7439b9b5c9bc9e215ae5bbb116c89931",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rae230arnensgprobe": {
+      "Package": "rae230arnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rae230arnensgprobe_22.0.0.tar.gz",
+      "Hash": "291ac5412ea6369b55d8e64317ee8942",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rae230brnensgprobe": {
+      "Package": "rae230brnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rae230brnensgprobe_22.0.0.tar.gz",
+      "Hash": "376144773efbd1e3ac69ad4528df724d",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "raex10strnensgprobe": {
+      "Package": "raex10strnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/raex10strnensgprobe_22.0.0.tar.gz",
+      "Hash": "56e2cad481c8e43c1848a82bfdf7126c",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ragene10strnensgprobe": {
+      "Package": "ragene10strnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/ragene10strnensgprobe_22.0.0.tar.gz",
+      "Hash": "4f735b2c6f8c6370f58639ad13379772",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ragene11strnensgprobe": {
+      "Package": "ragene11strnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/ragene11strnensgprobe_22.0.0.tar.gz",
+      "Hash": "fe80b1465ff18c5ed13192f660a28af1",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ragene20strnensgprobe": {
+      "Package": "ragene20strnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/ragene20strnensgprobe_22.0.0.tar.gz",
+      "Hash": "d0fa70b640e6033fea59cabffc7b5558",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ragene21strnensgprobe": {
+      "Package": "ragene21strnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/ragene21strnensgprobe_22.0.0.tar.gz",
+      "Hash": "6d60b6d84e8a2f910fd4b46bb7170011",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rat2302rnensgprobe": {
+      "Package": "rat2302rnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rat2302rnensgprobe_22.0.0.tar.gz",
+      "Hash": "cfbd68bec4e5a6ee8f97a67e2fa2135e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rattoxfxrnensgprobe": {
+      "Package": "rattoxfxrnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rattoxfxrnensgprobe_22.0.0.tar.gz",
+      "Hash": "9fa5bd74eb360790b5d5db61165a750a",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rcmdcheck": {
+      "Package": "rcmdcheck",
+      "Version": "1.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ed95895886dab6d2a584da45503555da",
+      "Requirements": [
+        "R6",
+        "callr",
+        "cli",
+        "crayon",
+        "desc",
+        "digest",
+        "pkgbuild",
+        "prettyunits",
+        "rprojroot",
+        "sessioninfo",
+        "withr",
+        "xopen"
+      ]
+    },
+    "readr": {
+      "Package": "readr",
+      "Version": "1.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "af8ab99cd936773a148963905736907b",
+      "Requirements": [
+        "BH",
+        "R6",
+        "Rcpp",
+        "clipr",
+        "crayon",
+        "hms",
+        "tibble"
+      ]
+    },
+    "rematch2": {
+      "Package": "rematch2",
+      "Version": "2.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "76c9e04c712a05848ae7a23d2f170a40",
+      "Requirements": [
+        "tibble"
+      ]
+    },
+    "remotes": {
+      "Package": "remotes",
+      "Version": "2.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "430a0908aee75b1fcba0e62857cab0ce",
+      "Requirements": []
+    },
+    "renv": {
+      "Package": "renv",
+      "Version": "0.16.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c9e8442ab69bc21c9697ecf856c1e6c7",
+      "Requirements": []
+    },
+    "rex": {
+      "Package": "rex",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "093584b944440c5cd07a696b3c8e0e4c",
+      "Requirements": [
+        "lazyeval"
+      ]
+    },
+    "rgu34arnensgprobe": {
+      "Package": "rgu34arnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rgu34arnensgprobe_22.0.0.tar.gz",
+      "Hash": "d1deefa14a7b70f307771a2de323dd94",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rgu34brnensgprobe": {
+      "Package": "rgu34brnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rgu34brnensgprobe_22.0.0.tar.gz",
+      "Hash": "57682fae4e0af1c70c4cd6d81c704fc5",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rgu34crnensgprobe": {
+      "Package": "rgu34crnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rgu34crnensgprobe_22.0.0.tar.gz",
+      "Hash": "af0d881bbe5a3392980fbefefc6711f1",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rhesusmamuensgprobe": {
+      "Package": "rhesusmamuensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rhesusmamuensgprobe_22.0.0.tar.gz",
+      "Hash": "cc2696d3dbf8bd90f734053f8d68d77c",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rlang": {
+      "Package": "rlang",
+      "Version": "1.0.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4ed1f8336c8d52c3e750adcdc57228a7",
+      "Requirements": []
+    },
+    "rnu34rnensgprobe": {
+      "Package": "rnu34rnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rnu34rnensgprobe_22.0.0.tar.gz",
+      "Hash": "68f66af31133d5d4ba416cd6d2e8f0f5",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "roxygen2": {
+      "Package": "roxygen2",
+      "Version": "7.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fcd94e00cc409b25d07ca50f7bf339f5",
+      "Requirements": [
+        "R6",
+        "Rcpp",
+        "brew",
+        "commonmark",
+        "desc",
+        "digest",
+        "knitr",
+        "pkgload",
+        "purrr",
+        "rlang",
+        "stringi",
+        "stringr",
+        "xml2"
+      ]
+    },
+    "rpart": {
+      "Package": "rpart",
+      "Version": "4.1.19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b3c892a81783376cc2204af0f5805a80",
+      "Requirements": []
+    },
+    "rprojroot": {
+      "Package": "rprojroot",
+      "Version": "1.3-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f6a407ae5dd21f6f80a6708bbb6eb3ae",
+      "Requirements": [
+        "backports"
+      ]
+    },
+    "rstudioapi": {
+      "Package": "rstudioapi",
+      "Version": "0.11",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "33a5b27a03da82ac4b1d43268f80088a",
+      "Requirements": []
+    },
+    "rtu34rnensgprobe": {
+      "Package": "rtu34rnensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/rtu34rnensgprobe_22.0.0.tar.gz",
+      "Hash": "3e182022a9a9b72fe810930fa8e11815",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "rversions": {
+      "Package": "rversions",
+      "Version": "2.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0ec41191f744d0f5afad8c6f35cc36e4",
+      "Requirements": [
+        "curl",
+        "xml2"
+      ]
+    },
+    "sessioninfo": {
+      "Package": "sessioninfo",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "308013098befe37484df72c39cf90d6e",
+      "Requirements": [
+        "cli",
+        "withr"
+      ]
+    },
+    "snow": {
+      "Package": "snow",
+      "Version": "0.4-4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "40b74690debd20c57d93d8c246b305d4",
+      "Requirements": []
+    },
+    "snowballs520824fssensgprobe": {
+      "Package": "snowballs520824fssensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/snowballs520824fssensgprobe_22.0.0.tar.gz",
+      "Hash": "b2df0ae4f0ff09ed14efecd71e0b9984",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "spatial": {
+      "Package": "spatial",
+      "Version": "7.3-11",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f27a078d834614513608da2c08031130",
+      "Requirements": []
+    },
+    "stringi": {
+      "Package": "stringi",
+      "Version": "1.4.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "74a50760af835563fb2c124e66aa134e",
+      "Requirements": []
+    },
+    "stringr": {
+      "Package": "stringr",
+      "Version": "1.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0759e6b6c0957edb1311028a49a35e76",
+      "Requirements": [
+        "glue",
+        "magrittr",
+        "stringi"
+      ]
+    },
+    "survival": {
+      "Package": "survival",
+      "Version": "3.4-0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "04411ae66ab4659230c067c32966fc20",
+      "Requirements": [
+        "Matrix"
+      ]
+    },
+    "sva": {
+      "Package": "sva",
+      "Version": "3.36.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/sva_3.36.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/sva",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "d92b71f",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "7063ce04e0eeec513cff2d23b1eef5b1",
+      "Requirements": [
+        "BiocParallel",
+        "edgeR",
+        "genefilter",
+        "limma",
+        "matrixStats",
+        "mgcv"
+      ]
+    },
+    "sys": {
+      "Package": "sys",
+      "Version": "3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "595c352c624e65f8f67f66a77a6409b6",
+      "Requirements": []
+    },
+    "testthat": {
+      "Package": "testthat",
+      "Version": "2.3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0829b987b8961fb07f3b1b64a2fbc495",
+      "Requirements": [
+        "R6",
+        "cli",
+        "crayon",
+        "digest",
+        "ellipsis",
+        "evaluate",
+        "magrittr",
+        "pkgload",
+        "praise",
+        "rlang",
+        "withr"
+      ]
+    },
+    "tibble": {
+      "Package": "tibble",
+      "Version": "3.1.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "56b6934ef0f8c68225949a8672fe1a8f",
+      "Requirements": [
+        "fansi",
+        "lifecycle",
+        "magrittr",
+        "pillar",
+        "pkgconfig",
+        "rlang",
+        "vctrs"
+      ]
+    },
+    "tidyr": {
+      "Package": "tidyr",
+      "Version": "0.8.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1ee2ae693b6a7e5a05208d04bddfaad5",
+      "Requirements": [
+        "Rcpp",
+        "dplyr",
+        "glue",
+        "magrittr",
+        "purrr",
+        "rlang",
+        "stringi",
+        "tibble",
+        "tidyselect"
+      ]
+    },
+    "tidyselect": {
+      "Package": "tidyselect",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "79540e5fcd9e0435af547d885f184fd5",
+      "Requirements": [
+        "cli",
+        "glue",
+        "lifecycle",
+        "rlang",
+        "vctrs",
+        "withr"
+      ]
+    },
+    "u133aaofav2hsensgprobe": {
+      "Package": "u133aaofav2hsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/u133aaofav2hsensgprobe_22.0.0.tar.gz",
+      "Hash": "9aa99d386368e992dd4fdb6dd120ea45",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "u133x3phsensgprobe": {
+      "Package": "u133x3phsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/u133x3phsensgprobe_22.0.0.tar.gz",
+      "Hash": "433f2798c95c2a71a7bab894ab28fd57",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "usethis": {
+      "Package": "usethis",
+      "Version": "1.6.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e1985f5a9985fea2e338fa7eb99018ca",
+      "Requirements": [
+        "cli",
+        "clipr",
+        "crayon",
+        "curl",
+        "desc",
+        "fs",
+        "gh",
+        "git2r",
+        "glue",
+        "purrr",
+        "rematch2",
+        "rlang",
+        "rprojroot",
+        "rstudioapi",
+        "whisker",
+        "withr",
+        "yaml"
+      ]
+    },
+    "utf8": {
+      "Package": "utf8",
+      "Version": "1.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4a5081acfb7b81a572e4384a7aaf2af1",
+      "Requirements": []
+    },
+    "vctrs": {
+      "Package": "vctrs",
+      "Version": "0.5.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "970324f6572b4fd81db507b5d4062cb0",
+      "Requirements": [
+        "cli",
+        "glue",
+        "lifecycle",
+        "rlang"
+      ]
+    },
+    "whisker": {
+      "Package": "whisker",
+      "Version": "0.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ca970b96d894e90397ed20637a0c1bbe",
+      "Requirements": []
+    },
+    "withr": {
+      "Package": "withr",
+      "Version": "2.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ecd17882a0b4419545691e095b74ee89",
+      "Requirements": []
+    },
+    "xcelhsensgprobe": {
+      "Package": "xcelhsensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/xcelhsensgprobe_22.0.0.tar.gz",
+      "Hash": "13c99be92d11040f255d75cefe0d78ef",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "xfun": {
+      "Package": "xfun",
+      "Version": "0.16",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b4106139b90981a8bfea9c10bab0baf1",
+      "Requirements": []
+    },
+    "xml2": {
+      "Package": "xml2",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "300860f90d5798249a0a8ad9271d4c18",
+      "Requirements": [
+        "Rcpp"
+      ]
+    },
+    "xopen": {
+      "Package": "xopen",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6c85f015dee9cc7710ddd20f86881f58",
+      "Requirements": [
+        "processx"
+      ]
+    },
+    "xtable": {
+      "Package": "xtable",
+      "Version": "1.8-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4739f99be2ab40fe89cbd00365c98294",
+      "Requirements": []
+    },
+    "yaml": {
+      "Package": "yaml",
+      "Version": "2.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2826c5d9efb0a88f657c7a679c7106db",
+      "Requirements": []
+    },
+    "yeast2scensgprobe": {
+      "Package": "yeast2scensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/yeast2scensgprobe_22.0.0.tar.gz",
+      "Hash": "6baa4190005f29aac3de58aa02da899e",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "ygs98scensgprobe": {
+      "Package": "ygs98scensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/ygs98scensgprobe_22.0.0.tar.gz",
+      "Hash": "b458e2a476194cc40f6e649d38568ec4",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "zeallot": {
+      "Package": "zeallot",
+      "Version": "0.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ee9b643aa8331c45d8d82eb3a137c9bc",
+      "Requirements": []
+    },
+    "zebgene10stdrensgprobe": {
+      "Package": "zebgene10stdrensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/zebgene10stdrensgprobe_22.0.0.tar.gz",
+      "Hash": "e82a5135e1bef65e28eb1d954c71755b",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "zebgene11stdrensgprobe": {
+      "Package": "zebgene11stdrensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/zebgene11stdrensgprobe_22.0.0.tar.gz",
+      "Hash": "a37398ce016c74f123c33c9aca6f5275",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "zebrafishdrensgprobe": {
+      "Package": "zebrafishdrensgprobe",
+      "Version": "22.0.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://mbni.org/customcdf/22.0.0/ensg.download/zebrafishdrensgprobe_22.0.0.tar.gz",
+      "Hash": "068e6bfde72381b6447564e5283da635",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "zlibbioc": {
+      "Package": "zlibbioc",
+      "Version": "1.34.0",
+      "Source": "URL",
+      "RemoteType": "url",
+      "RemoteUrl": "https://bioconductor.org/packages/3.11/bioc/src/contrib/zlibbioc_1.34.0.tar.gz",
+      "git_url": "https://git.bioconductor.org/packages/zlibbioc",
+      "git_branch": "RELEASE_3_11",
+      "git_last_commit": "2db035c",
+      "git_last_commit_date": "2020-04-27",
+      "Hash": "d9bbfbd67e8c4bced2f5c1ce4251a744",
+      "Requirements": []
+    }
+  }
+}
