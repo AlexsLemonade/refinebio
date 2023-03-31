@@ -5,12 +5,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY workers/R/dependencies/illumina/cran/dependencies.R .
-RUN Rscript dependencies.R
-
-# These are for Illumina.
-COPY workers/R/dependencies/illumina/bioc/dependencies.R .
-RUN Rscript dependencies.R
+COPY workers/R/dependencies/illumina/renv.lock .
+COPY workers/R/renv_load.R .
+RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
@@ -26,6 +23,8 @@ COPY config/ config/
 COPY workers/ .
 COPY workers/data_refinery_workers/processors/detect_database.R .
 COPY workers/illumina_probe_maps/ probe_maps/
+
+RUN rm -rf /root/.cache/*
 
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
