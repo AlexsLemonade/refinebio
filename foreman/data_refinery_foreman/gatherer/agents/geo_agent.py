@@ -33,9 +33,6 @@ class GEOAgent(AccessionAgentBase):
     def __str__(self):
         return "MicroArray GEO accession agent"
 
-    def __str__(self):
-        return "MicroArray GEO accession agent"
-
     def build_query(self) -> str:
         """Returns a query for getting GEO accessions from the local SQLite meta DB."""
         tables = [

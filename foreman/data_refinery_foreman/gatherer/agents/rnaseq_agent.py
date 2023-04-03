@@ -34,9 +34,6 @@ class RNASeqAgent(AccessionAgentBase):
     def __str__(self):
         return "RNA-Seq accession agent"
 
-    def __str__(self):
-        return "RNA-Seq accession agent"
-
     def build_query(self, taxon_id: str = None) -> str:
         """
         Returns a query to use for getting specific taxon ID accessions.
