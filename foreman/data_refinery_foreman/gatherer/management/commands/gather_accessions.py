@@ -27,8 +27,6 @@ class Command(BaseCommand):
 
     DATA_AGENTS = (AEAgent, GEOAgent, RNASeqAgent)
     DATA_SOURCE_NAMES = [agent.SOURCE_NAME for agent in DATA_AGENTS]
-    RE_ACCESSION = re.compile(r"(\D+)(\d+)")
-    RE_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
     # TODO(ark): remove after upgrade to python3.8 where parser argument
     # "extend" action is directly available.
@@ -136,11 +134,12 @@ class Command(BaseCommand):
         """Validates arguments."""
         errors = list()
 
+        RE_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
         since = options["since"]
         until = options["until"]
-        if not self.RE_DATE.match(since):
+        if not RE_DATE.match(since):
             errors.append('The -s, --since value must match "YYYY-MM-DD" format.')
-        if until and not self.RE_DATE.match(until):
+        if until and not RE_DATE.match(until):
             errors.append('The -u, --until value must match "YYYY-MM-DD" format.')
         if since and until and since > until:
             errors.append("The -s, --since date must be earlier than -u, --until date.")
@@ -213,11 +212,12 @@ class Command(BaseCommand):
                 f"new accession{pluralize(agent_accessions_count)}."
             )
 
+        RE_ACCESSION = re.compile(r"(\D+)(\d+)")
         gathered_accessions = sorted(  # Sort the resulting list.
-            (ga for ga in gathered_accessions if self.RE_ACCESSION.match(ga.accession_code)),
+            (ga for ga in gathered_accessions if RE_ACCESSION.match(ga.accession_code)),
             key=lambda ga: (
-                self.RE_ACCESSION.match(ga.accession_code).group(1),
-                int(self.RE_ACCESSION.match(ga.accession_code).group(2)),
+                RE_ACCESSION.match(ga.accession_code).group(1),
+                int(RE_ACCESSION.match(ga.accession_code).group(2)),
             ),
         )
         # Limit the number of output entries.
