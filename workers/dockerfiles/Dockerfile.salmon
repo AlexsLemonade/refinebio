@@ -5,12 +5,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY workers/R/dependencies/tximport/cran/dependencies.R tximport_dependencies.R
-RUN Rscript tximport_dependencies.R
-
-# Install tximport.
-COPY workers/R/dependencies/tximport/install_tximport.R .
-RUN Rscript install_tximport.R
+COPY workers/R/dependencies/salmon/renv.lock .
+COPY workers/R/renv_load.R .
+RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
@@ -60,6 +57,8 @@ RUN pip3 install --ignore-installed --no-cache-dir \
 COPY .boto .boto
 COPY config/ config/
 COPY workers/ .
+
+RUN rm -rf /root/.cache/*
 
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
