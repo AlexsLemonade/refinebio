@@ -37,29 +37,29 @@ def create_survey_jobs(days, quota):
 
     remaining_quota = get_remaining_quota(days, quota)
     if not remaining_quota:
-        return
+        logger.info("Unable to create new survey jobs: remaining quota is 0.")
+        return None
 
-    gathered_accessions = [
-        ga["accession_code"]
-        for ga in GatheredAccession.objects.order_by("created_at").values("accession_code")
-    ]
+    gathered_accessions = GatheredAccession.objects.order_by("created_at").values_list(
+        "accession_code", flat=True
+    )
 
-    batch_start = 0
-    batch_size = 1000
-    queued_accessions = list()
-    while True:
-        batch_accessions = gathered_accessions[batch_start : batch_start + batch_size]
-        if not batch_accessions:
+    BATCH_SIZE = 100
+    queued_accessions = []
+    for batch_start in range(0, len(gathered_accessions), BATCH_SIZE):
+        if len(queued_accessions) == remaining_quota:
+            logger.info("Unable to create new survey jobs: remaining quota is 0.")
             break
 
-        surveyed_accessions = (
-            sa["accession_code"]
-            for sa in SurveyedAccession.objects.filter(accession_code__in=batch_accessions).values(
-                "accession_code"
-            )
-        )
+        batch = gathered_accessions[batch_start : batch_start + BATCH_SIZE]
+        if not batch:
+            break
 
-        for accession_code in set(batch_accessions) - set(surveyed_accessions):
+        surveyed_accessions = SurveyedAccession.objects.filter(
+            accession_code__in=batch
+        ).values_list("accession_code", flat=True)
+
+        for accession_code in set(batch).difference(set(surveyed_accessions)):
             try:
                 queue_surveyor_for_accession(accession_code)
             except Exception as e:
@@ -69,20 +69,21 @@ def create_survey_jobs(days, quota):
                 if len(queued_accessions) == remaining_quota:
                     break
 
-        if len(queued_accessions) == remaining_quota:
-            break
-
-        batch_start += batch_size
-
-    queued_accession_count = len(queued_accessions)
-    logger.info(
-        f"Queued {queued_accession_count} accession{pluralize(queued_accession_count)} "
-        f"based on {quota} accession{pluralize(quota)} per {days} "
-        f"day{pluralize(days)} quota."
-    )
-    SurveyedAccession.objects.bulk_create(
-        (SurveyedAccession(accession_code=accession_code) for accession_code in queued_accessions)
-    )
+        try:
+            SurveyedAccession.objects.bulk_create(
+                (
+                    SurveyedAccession(accession_code=accession_code)
+                    for accession_code in queued_accessions
+                )
+            )
+            queued_accession_count = len(queued_accessions)
+            logger.info(
+                f"Queued {queued_accession_count} accession{pluralize(queued_accession_count)} "
+                f"based on {quota} accession{pluralize(quota)} per {days} "
+                f"day{pluralize(days)} quota."
+            )
+        except Exception as e:
+            logger.error("Couldn't add surveyed accessions due to: %s" % e)
 
 
 def get_remaining_quota(days, quota):
