@@ -10,7 +10,7 @@ from data_refinery_common.models.managers import PublicObjectsManager
 
 
 class ComputationalResult(models.Model):
-    """ Meta-information about the output of a computer process. (Ex Salmon) """
+    """Meta-information about the output of a computer process. (Ex Salmon)"""
 
     class Meta:
         db_table = "computational_results"
@@ -49,7 +49,7 @@ class ComputationalResult(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -58,7 +58,7 @@ class ComputationalResult(models.Model):
 
     # Currently unused because of pre_delete signal for computed files
     def remove_computed_files_from_s3(self):
-        """ Removes all associated computed files from S3.
+        """Removes all associated computed files from S3.
 
         Use this before deleting a computational result.
         """
@@ -66,7 +66,7 @@ class ComputationalResult(models.Model):
             computed_file.delete_s3_file()
 
     def get_index_length(self):
-        """ Pull the index_length from one of the result annotations """
+        """Pull the index_length from one of the result annotations"""
         annotations = ComputationalResultAnnotation.objects.filter(result=self)
 
         for annotation_json in annotations:
@@ -78,7 +78,10 @@ class ComputationalResult(models.Model):
     def get_quant_sf_file(self):
         return (
             ComputedFile.objects.filter(
-                result=self, filename="quant.sf", s3_key__isnull=False, s3_bucket__isnull=False,
+                result=self,
+                filename="quant.sf",
+                s3_key__isnull=False,
+                s3_bucket__isnull=False,
             )
             .order_by("-id")
             .first()

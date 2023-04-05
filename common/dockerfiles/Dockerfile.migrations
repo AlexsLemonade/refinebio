@@ -3,6 +3,11 @@ FROM python:3.8.5-slim-buster
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
+RUN apt-get update -qq && \
+    apt-get install -y \
+    gcc \
+    libpq-dev
+
 # Needed for migration 0006
 COPY config/ config
 

@@ -30,7 +30,11 @@ html_strip_no_stop = analyzer(
     filter=["standard", "lowercase"],
     char_filter=["html_strip"],
 )
-standard_keyword = analyzer("standard_keyword", tokenizer="keyword", filter=[],)
+standard_keyword = analyzer(
+    "standard_keyword",
+    tokenizer="keyword",
+    filter=[],
+)
 
 
 @experiment_index.doc_type

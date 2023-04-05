@@ -33,7 +33,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="sample", name="is_blacklisted", field=models.BooleanField(default=False),
+            model_name="sample",
+            name="is_blacklisted",
+            field=models.BooleanField(default=False),
         ),
         migrations.RunPython(update_blacklisted_samples),
     ]

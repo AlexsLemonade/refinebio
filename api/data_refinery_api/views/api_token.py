@@ -49,7 +49,9 @@ class APITokenSerializer(serializers.ModelSerializer):
 )
 @method_decorator(
     name="retrieve",
-    decorator=swagger_auto_schema(operation_description="Return details about a specific token.",),
+    decorator=swagger_auto_schema(
+        operation_description="Return details about a specific token.",
+    ),
 )
 @method_decorator(
     name="update",

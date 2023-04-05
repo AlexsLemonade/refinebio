@@ -10,5 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(model_name="dataset", name="email_sent",),
+        migrations.RemoveField(
+            model_name="dataset",
+            name="email_sent",
+        ),
     ]

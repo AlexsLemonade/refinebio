@@ -4,9 +4,7 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
 cd "$script_directory" || exit
 
 # However in order to give Docker access to all the code we have to
@@ -42,5 +40,6 @@ docker run -t $INTERACTIVE \
        --add-host=database:"$DB_HOST_IP" \
        --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file common/environments/test \
+       --platform linux/amd64 \
        --volume "$volume_directory":/home/user/data_store \
         ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage "$@")" --parallel

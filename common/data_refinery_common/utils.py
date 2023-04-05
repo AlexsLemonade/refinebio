@@ -28,7 +28,7 @@ ANNOTATION_PACKAGE_OVERRIDES = None
 
 
 def get_env_variable(var_name: str, default: str = None) -> str:
-    """ Get an environment variable or return a default value """
+    """Get an environment variable or return a default value"""
     try:
         return os.environ[var_name]
     except KeyError:
@@ -167,7 +167,9 @@ def get_readable_affymetrix_names(
 
     READABLE_PLATFORM_NAMES = {}
     with open(mapping_csv, encoding="utf-8") as mapping_file:
-        reader = csv.reader(mapping_file,)
+        reader = csv.reader(
+            mapping_file,
+        )
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
@@ -194,7 +196,9 @@ def get_affymetrix_annotation_package_name_overrides(
 
     ANNOTATION_PACKAGE_OVERRIDES = {}
     with open(overrides_csv, encoding="utf-8") as overrides_file:
-        reader = csv.reader(overrides_file,)
+        reader = csv.reader(
+            overrides_file,
+        )
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
@@ -344,11 +348,13 @@ def get_https_sra_download(run_accession: str):
 
 
 def load_blacklist(blacklist_csv: str = "config/RNASeqRunBlackList.csv"):
-    """ Loads the SRA run blacklist """
+    """Loads the SRA run blacklist"""
 
     blacklisted_samples = []
     with open(blacklist_csv, encoding="utf-8") as blacklist_file:
-        reader = csv.reader(blacklist_file,)
+        reader = csv.reader(
+            blacklist_file,
+        )
         for line in reader:
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
@@ -361,7 +367,7 @@ def load_blacklist(blacklist_csv: str = "config/RNASeqRunBlackList.csv"):
 
 
 def queryset_page_iterator(queryset, page_size=2000):
-    """ use the performant paginator to iterate over each page in a queryset """
+    """use the performant paginator to iterate over each page in a queryset"""
     paginator = PerformantPaginator(queryset, page_size)
     page = paginator.page()
     while True:
@@ -374,7 +380,7 @@ def queryset_page_iterator(queryset, page_size=2000):
 
 
 def queryset_iterator(queryset, page_size=2000):
-    """ use the performant paginator to iterate over a queryset """
+    """use the performant paginator to iterate over a queryset"""
     for page in queryset_page_iterator(queryset, page_size):
         for item in page:
             yield item
@@ -407,7 +413,7 @@ def download_file(
         if retry < max_retries:
             # After the retry-th failed attempt, retry downloading after
             # k*backoff_factor, where k is a random integer between 0 and 2^retry − 1.
-            k = random.randint(0, 2 ** retry - 1)
+            k = random.randint(0, 2**retry - 1)
             sleep_timeout = min(k * backoff_factor, max_sleep_timeout)
             time.sleep(sleep_timeout)
 

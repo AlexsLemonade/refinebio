@@ -49,7 +49,10 @@ def create_job_for_organism(organism: Organism):
 
 def build_dataset(organism: Organism):
     data = {}
-    experiments = Experiment.objects.filter(organisms=organism, technology="RNA-SEQ",).distinct()
+    experiments = Experiment.objects.filter(
+        organisms=organism,
+        technology="RNA-SEQ",
+    ).distinct()
 
     for experiment_page in queryset_page_iterator(experiments):
         for experiment in experiment_page:

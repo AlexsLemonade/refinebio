@@ -27,7 +27,7 @@ def find_division_by_species(species: str, division_jsons: dict) -> str:
 
 
 def add_transcriptome_database_names(apps, schema_editor):
-    """ Updates `database_name` values for transcriptome indices """
+    """Updates `database_name` values for transcriptome indices"""
     OrganismIndex = apps.get_model("data_refinery_common", "OrganismIndex")
     transcriptome_indices = OrganismIndex.objects.all()
 

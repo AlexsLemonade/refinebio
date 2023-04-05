@@ -1,109 +1,109 @@
-FROM nvidia/cuda:11.1-runtime-ubuntu18.04
-
 # This is very similar to the `smasher` image, but comes with OpenBLAS and some
 # of the other libraries required for fancyimpute.
 
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-RUN apt-get update -qq
-# via https://github.com/ilikenwf/apt-fast/issues/85#issuecomment-261640099
-RUN echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections
-RUN echo debconf apt-fast/dlflag boolean true | debconf-set-selections
-RUN echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections
-RUN _APTMGR=apt-get apt-get install -y apt-fast
+FROM nvidia/cuda:11.8.0-runtime-ubuntu18.04
 
-RUN export DEBIAN_FRONTEND=noninteractive; \
-    export DEBCONF_NONINTERACTIVE_SEEN=true; \
-    echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections; \
-    echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
-    apt-get update -qqy \
- && apt-get install -qqy --no-install-recommends \
-        tzdata \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-COPY workers/CRAN.gpg .
-RUN \
-  apt-fast update -qq && \
-  apt-fast install -y lsb-release && \
-  echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
-      >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key add CRAN.gpg && \
-  apt-fast update -qq && \
-  apt-fast install -y \
-  ed \
-  git \
-  liblapack-dev \
-  libopenblas-dev \
-  python3 \
-  python3-pip \
-  libcurl4-openssl-dev \
-  libpq-dev \
-  r-base-core \
-  r-base-dev \
-  libpq-dev \
-  libxml2-dev \
-  libssl-dev \
-  libcurl4-openssl-dev \
-  curl \
-  wget && \
-  rm -rf /var/lib/apt/lists/*
-RUN rm CRAN.gpg
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
-WORKDIR /home/user
-
-RUN wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-RUN tar xvjf phantomjs-2.1.1-linux-x86_64.tar.bz2 -C /usr/local/share/
-RUN ln -s /usr/local/share/phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
-
-# We need a few special packages for QN
-ENV R_LIBS "/usr/local/lib/R/site-library"
-
-COPY common/install_devtools.R .
-
-RUN Rscript install_devtools.R
-
-COPY workers/R_dependencies/qn/dependencies.R .
-RUN Rscript dependencies.R
-
-COPY workers/qn_dependencies.R .
-RUN Rscript qn_dependencies.R
-# End QN-specific
+# Prevent tzdata from prompting us for a timezone and hanging the build.
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
 # For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG C.UTF-8
+ENV LANG=C.UTF-8
 
-RUN pip3 install --upgrade pip
+COPY workers/CRAN.gpg .
 
-# Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.25.3 scikit-learn sympy nose rpy2===3.4.5 tzlocal fancySVD
-# End smasher-specific
+# RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+# via https://github.com/ilikenwf/apt-fast/issues/85#issuecomment-261640099
+RUN echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections && \
+    echo debconf apt-fast/dlflag boolean true | debconf-set-selections && \
+    echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections && \
+    echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections && \
+    echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections && \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y software-properties-common && \
+    add-apt-repository ppa:apt-fast/stable && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    add-apt-repository ppa:savoury1/llvm-defaults-10 && \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y apt-fast apt-transport-https gpg-agent tzdata && \
+    apt-key add CRAN.gpg && \
+    echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" \
+        >> /etc/apt/sources.list.d/added_repos.list && \
+    apt-fast update -qq && \
+    apt-fast install -y \
+        build-essential \
+        ccache \
+        cmake \
+        curl \
+        cython3 \
+        ed \
+        gfortran \
+        git \
+        libblas-dev \
+        libcairo-dev \
+        libcurl4-openssl-dev \
+        libedit-dev \
+        liblapack-dev \
+        libpq-dev \
+        libssl-dev \
+        libxml2-dev \
+        llvm-10-dev \
+        lsb-release \
+        mercurial \
+        pkg-config \
+        python3-pip \
+        python3.8 \
+        python3.8-dev \
+        r-base-core \
+        wget && \
+    apt-get clean && \
+    rm CRAN.gpg && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config && \
+    update-alternatives --install /usr/bin/python3 python3 \
+        /usr/bin/python3.8 1 && \
+    groupadd user && \
+    useradd --create-home --home-dir /home/user -g user user
 
-COPY config/ config/
-COPY .boto .boto
+WORKDIR /home/user
+
+ENV R_LIBS=/usr/local/lib/R/site-library
+
+COPY workers/R/dependencies/compendia/renv.lock .
+COPY workers/R/renv_load.R .
+RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed --no-cache-dir --upgrade pip && \
+    pip3 install --ignore-installed --no-cache-dir nose numpy scipy matplotlib \
+        pandas==0.25.3 scikit-learn sympy rpy2===3.4.5 tzlocal fancySVD && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
+    pip3 install --ignore-installed --no-cache-dir numpy==1.16.0
 
-RUN  pip3 --no-cache-dir install -r requirements.txt
-RUN pip3 install numpy==1.16.0 # Fix a downgrade
-
-COPY common/dist/data-refinery-common-* common/
+# Install phantomjs.
+RUN wget -q "https://bitbucket.org/ariya/phantomjs/downloads/\
+phantomjs-2.1.1-linux-x86_64.tar.bz2" && \
+    tar xvjf phantomjs-2.1.1-linux-x86_64.tar.bz2 -C /usr/local/share/ && \
+    ln -s /usr/local/share/phantomjs-2.1.1-linux-x86_64/bin/phantomjs \
+        /usr/local/bin/
 
 # Get the latest version from the dist directory.
-RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed --no-cache-dir \
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
-# Clear our the pip3 cache
-RUN rm -rf /root/.cache
+COPY .boto .boto
+COPY config/ config/
+COPY workers/ .
+
+RUN rm -rf /root/.cache/*
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
-
-COPY workers/ .
 
 ENTRYPOINT []

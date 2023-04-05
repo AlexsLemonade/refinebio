@@ -265,7 +265,7 @@ TITLE_FIELDS = [
 
 
 def extract_title(sample: Dict, priority_field: str = None) -> str:
-    """ Given a flat sample dictionary, find the title """
+    """Given a flat sample dictionary, find the title"""
     if priority_field:
         title_fields = [priority_field] + [tf for tf in TITLE_FIELDS if tf != priority_field]
     else:
@@ -288,7 +288,7 @@ def extract_title(sample: Dict, priority_field: str = None) -> str:
 
 
 def create_variants(fields_list: List):
-    """ Given a list of strings, create variations likely to give metadata hits.
+    """Given a list of strings, create variations likely to give metadata hits.
 
     Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well.
     """
@@ -324,7 +324,7 @@ def create_variants(fields_list: List):
 
 
 def parse_sdrf(sdrf_url: str) -> List:
-    """ Given a URL to an SDRF file, download parses it into JSON. """
+    """Given a URL to an SDRF file, download parses it into JSON."""
 
     try:
         sdrf_response = requests_retry_session().get(sdrf_url, timeout=60)

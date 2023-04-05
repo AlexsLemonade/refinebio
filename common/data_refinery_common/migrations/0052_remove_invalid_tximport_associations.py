@@ -2,9 +2,9 @@ from django.db import migrations
 
 
 def remove_tximport_invalid_associations(apps, schema_editor):
-    """ We were associating tximport with all samples in an experiment
+    """We were associating tximport with all samples in an experiment
     even though some of them were unprocessed.
-    Ref https://github.com/AlexsLemonade/refinebio/issues/2054 """
+    Ref https://github.com/AlexsLemonade/refinebio/issues/2054"""
     SampleResultAssociation = apps.get_model("data_refinery_common", "SampleResultAssociation")
 
     SampleResultAssociation.objects.filter(
