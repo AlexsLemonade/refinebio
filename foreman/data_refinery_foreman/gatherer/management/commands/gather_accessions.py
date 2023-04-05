@@ -25,7 +25,8 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     """Creates agents and runs actual accession gathering."""
 
-    DATA_AGENTS = (AEAgent, GEOAgent, RNASeqAgent)
+    DATA_AGENTS = (AEAgent, GEOAgent)
+    # DATA_AGENTS = (AEAgent, GEOAgent, RNASeqAgent)
     DATA_SOURCE_NAMES = [agent.SOURCE_NAME for agent in DATA_AGENTS]
 
     # TODO(ark): remove after upgrade to python3.8 where parser argument
@@ -52,7 +53,12 @@ class Command(BaseCommand):
             type=str,
             help="Path to a file containing ArrayExpress ID(s) to use for filtering.",
         )
-        parser.add_argument("-c", "--count", type=int, help="Number of accessions to collect.")
+        parser.add_argument(
+            "-c",
+            "--count",
+            type=int,
+            help="Number of accessions to collect.",
+        )
         parser.add_argument(
             "-d",
             "--dry-run",
@@ -244,6 +250,7 @@ class Command(BaseCommand):
         BATCH_SIZE = 100
         for batch_start in range(0, len(gathered_accessions), BATCH_SIZE):
             batch = gathered_accessions[batch_start : batch_start + BATCH_SIZE]
+            batch_accessions = (ga.accession_code for ga in batch)
             try:
                 GatheredAccession.objects.bulk_create(batch)
                 added_accessions_count = len(batch)
@@ -251,7 +258,7 @@ class Command(BaseCommand):
                     f"{added_accessions_count} new accession{pluralize(added_accessions_count)} "
                     f"h{pluralize(added_accessions_count, 'as,ave')} been added to the database. "
                 )
-                logger.info("Added accessions: '%s'" % batch)
+                logger.info("Added accessions: %s." % ", ".join(batch_accessions))
             except IntegrityError as e:
                 logger.exception(f"Could not save new accessions to the database: {e}")
-                logger.info("Failed accessions: '%s'" % batch)
+                logger.info("Failed accessions: %s." % ", ".join(batch_accessions))
