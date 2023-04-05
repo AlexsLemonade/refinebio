@@ -239,14 +239,19 @@ class Command(BaseCommand):
                 output = "\n".join((str(ga) for ga in gathered_accessions))
             else:
                 output = "No new accessions gathered."
-            print(output)
-        else:
+            exit(output)
+
+        BATCH_SIZE = 100
+        for batch_start in range(0, len(gathered_accessions), BATCH_SIZE):
+            batch = gathered_accessions[batch_start : batch_start + BATCH_SIZE]
             try:
-                GatheredAccession.objects.bulk_create(gathered_accessions)
-                added_accessions_count = len(gathered_accessions)
+                GatheredAccession.objects.bulk_create(batch)
+                added_accessions_count = len(batch)
                 logger.info(
                     f"{added_accessions_count} new accession{pluralize(added_accessions_count)} "
                     f"h{pluralize(added_accessions_count, 'as,ave')} been added to the database. "
                 )
+                logger.info("Added accessions: '%s'" % batch)
             except IntegrityError as e:
                 logger.exception(f"Could not save new accessions to the database: {e}")
+                logger.info("Failed accessions: '%s'" % batch)
