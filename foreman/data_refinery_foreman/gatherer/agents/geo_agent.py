@@ -25,10 +25,13 @@ class GEOAgent(AccessionAgentBase):
     # TODO(ark): move the DB file from Docker image to S3.
     # Implement syncing procedure.
     # Update URL once the original file is available again.
-    DB_PATH = "data/microarray/GEOmetadb.sqlite"
+    DB_PATH = "/home/user/data/microarray/GEOmetadb.sqlite"
     SOURCE = "geo-meta-db"
     SOURCE_NAME = "microarray-geo"
     TECHNOLOGY = "microarray"
+
+    def __str__(self):
+        return "MicroArray GEO accession agent"
 
     def build_query(self) -> str:
         """Returns a query for getting GEO accessions from the local SQLite meta DB."""

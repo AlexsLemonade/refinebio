@@ -7,11 +7,11 @@ Data sources:
 """
 
 import argparse
-import logging
 import re
 
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
+from django.template.defaultfilters import pluralize
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.gathered_accession import GatheredAccession
@@ -27,8 +27,6 @@ class Command(BaseCommand):
 
     DATA_AGENTS = (AEAgent, GEOAgent, RNASeqAgent)
     DATA_SOURCE_NAMES = [agent.SOURCE_NAME for agent in DATA_AGENTS]
-    RE_ACCESSION = re.compile(r"(\D+)(\d+)")
-    RE_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
     # TODO(ark): remove after upgrade to python3.8 where parser argument
     # "extend" action is directly available.
@@ -54,7 +52,12 @@ class Command(BaseCommand):
             type=str,
             help="Path to a file containing ArrayExpress ID(s) to use for filtering.",
         )
-        parser.add_argument("-c", "--count", type=int, help="Number of accessions to collect.")
+        parser.add_argument(
+            "-c",
+            "--count",
+            type=int,
+            help="Number of accessions to collect.",
+        )
         parser.add_argument(
             "-d",
             "--dry-run",
@@ -86,13 +89,6 @@ class Command(BaseCommand):
             "--keyword",
             type=str,
             help="Keyword to use for filtering.",
-        )
-        parser.add_argument(
-            "-lv",
-            "--log-verbose",
-            action="store_true",
-            default=False,
-            help="Enable verbose log output.",
         )
         parser.add_argument(
             "-ne",
@@ -139,23 +135,16 @@ class Command(BaseCommand):
             help="Collect accessions made public before or on this date.",
         )
 
-    def set_verbosity_level(self, options) -> None:
-        """Configures log verbosity level."""
-        if options["log_verbose"]:
-            logger.addHandler(logging.StreamHandler())
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.ERROR)
-
     def validate_args(self, options) -> None:
         """Validates arguments."""
         errors = list()
 
+        RE_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
         since = options["since"]
         until = options["until"]
-        if not self.RE_DATE.match(since):
+        if not RE_DATE.match(since):
             errors.append('The -s, --since value must match "YYYY-MM-DD" format.')
-        if until and not self.RE_DATE.match(until):
+        if until and not RE_DATE.match(until):
             errors.append('The -u, --until value must match "YYYY-MM-DD" format.')
         if since and until and since > until:
             errors.append("The -s, --since date must be earlier than -u, --until date.")
@@ -208,7 +197,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Creates agents and runs the accession gathering process."""
         self.validate_args(options)
-        self.set_verbosity_level(options)
 
         agents = list()
         sources_names = options["source"] or self.DATA_SOURCE_NAMES
@@ -217,28 +205,60 @@ class Command(BaseCommand):
                 continue
             agents.append(cls(options))
 
-        entries = set()
+        gathered_accessions = set()
         for agent in agents:
-            entries.update(agent.collect_data())
+            agent_accessions = agent.collect_data()
+            agent_accessions_count = len(agent_accessions)
 
-        entries = sorted(  # Sort the resulting list.
-            (entry for entry in entries if self.RE_ACCESSION.match(entry.accession_code)),
-            key=lambda entry: (
-                self.RE_ACCESSION.match(entry.accession_code).group(1),
-                int(self.RE_ACCESSION.match(entry.accession_code).group(2)),
+            gathered_accessions.update(agent_accessions)
+
+            logger.info(
+                f"{agent} has gathered {agent_accessions_count} "
+                f"new accession{pluralize(agent_accessions_count)} since {options['since']}."
+            )
+
+        # Regex to split into two groups, non-digits and digits ex: (GSE)(1234).
+        RE_ACCESSION = re.compile(r"(\D+)(\d+)")
+        gathered_accessions = sorted(  # Sort the resulting list.
+            (ga for ga in gathered_accessions if RE_ACCESSION.match(ga.accession_code)),
+            key=lambda ga: (
+                RE_ACCESSION.match(ga.accession_code).group(1),
+                int(RE_ACCESSION.match(ga.accession_code).group(2)),
             ),
         )
         # Limit the number of output entries.
-        entries = entries[: options["count"]] if options["count"] else entries
+        gathered_accessions = (
+            gathered_accessions[: options["count"]] if options["count"] else gathered_accessions
+        )
+
+        agents_count = len(agents)
+        gathered_accessions_count = len(gathered_accessions)
+        logger.info(
+            f"Since {options['since']} {gathered_accessions_count} "
+            f"new accession{pluralize(gathered_accessions_count)} "
+            f"h{pluralize(gathered_accessions_count, 'as,ave')} been gathered by {agents_count} "
+            f"accession agent{pluralize(agents_count)}."
+        )
 
         if options["dry_run"]:
-            if entries:
-                output = "\n".join((str(entry) for entry in entries))
+            if gathered_accessions:
+                output = "\n".join((str(ga) for ga in gathered_accessions))
             else:
-                output = "No accessions found."
-            print(output)
-        else:
+                output = "No new accessions gathered."
+            exit(output)
+
+        BATCH_SIZE = 100
+        for batch_start in range(0, len(gathered_accessions), BATCH_SIZE):
+            batch = gathered_accessions[batch_start : batch_start + BATCH_SIZE]
+            batch_accessions = (ga.accession_code for ga in batch)
             try:
-                GatheredAccession.objects.bulk_create(entries)
+                GatheredAccession.objects.bulk_create(batch)
+                added_accessions_count = len(batch)
+                logger.info(
+                    f"{added_accessions_count} new accession{pluralize(added_accessions_count)} "
+                    f"h{pluralize(added_accessions_count, 'as,ave')} been added to the database. "
+                )
+                logger.info("Added accessions: %s." % ", ".join(batch_accessions))
             except IntegrityError as e:
                 logger.exception(f"Could not save new accessions to the database: {e}")
+                logger.info("Failed accessions: %s." % ", ".join(batch_accessions))
