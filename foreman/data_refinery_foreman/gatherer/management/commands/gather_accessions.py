@@ -25,8 +25,7 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     """Creates agents and runs actual accession gathering."""
 
-    DATA_AGENTS = (AEAgent, GEOAgent)
-    # DATA_AGENTS = (AEAgent, GEOAgent, RNASeqAgent)
+    DATA_AGENTS = (AEAgent, GEOAgent, RNASeqAgent)
     DATA_SOURCE_NAMES = [agent.SOURCE_NAME for agent in DATA_AGENTS]
 
     # TODO(ark): remove after upgrade to python3.8 where parser argument
@@ -214,8 +213,8 @@ class Command(BaseCommand):
             gathered_accessions.update(agent_accessions)
 
             logger.info(
-                f"Since {options['since']} {agent} has gathered {agent_accessions_count} "
-                f"new accession{pluralize(agent_accessions_count)}."
+                f"{agent} has gathered {agent_accessions_count} "
+                f"new accession{pluralize(agent_accessions_count)} since {options['since']}."
             )
 
         RE_ACCESSION = re.compile(r"(\D+)(\d+)")
