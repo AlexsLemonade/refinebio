@@ -217,6 +217,7 @@ class Command(BaseCommand):
                 f"new accession{pluralize(agent_accessions_count)} since {options['since']}."
             )
 
+        # Regex to split into two groups, non-digits and digits ex: (GSE)(1234).
         RE_ACCESSION = re.compile(r"(\D+)(\d+)")
         gathered_accessions = sorted(  # Sort the resulting list.
             (ga for ga in gathered_accessions if RE_ACCESSION.match(ga.accession_code)),
