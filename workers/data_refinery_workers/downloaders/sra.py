@@ -35,28 +35,21 @@ def _download_file(
     if "ftp.sra.ebi.ac.uk" in download_url:
         # From: ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
         # To: era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz
-        download_url = download_url.replace("ftp", "era-fasp@fasp")
-        download_url = download_url.replace(".uk/", ".uk:/")
+        download_url = download_url.replace("ftp", "era-fasp@fasp").replace(".uk/", ".uk:/")
         original_file.source_url = download_url
         return _download_file_aspera(
-            download_url, downloader_job, target_file_path, 0, original_file, source="ENA"
+            download_url,
+            downloader_job,
+            target_file_path,
+            0,
+            original_file,
+            source="ENA",
         )
-    elif "ncbi.nlm.nih.gov" in download_url:
-        # Try to convert old-style endpoints into new-style endpoints if possible
-        try:
-            if "anonftp" in download_url or "dbtest" in download_url:
-                accession = download_url.split("/")[-1].split(".sra")[0]
-                new_url = get_https_sra_download(accession)
-                if new_url:
-                    download_url = new_url
-        except Exception:
-            pass
+    elif "sra-pub-run-odp.s3.amazonaws.com" in download_url:
         return _download_file_http(download_url, downloader_job, target_file_path)
     else:
         downloader_job.failure_reason = ("Unrecognized URL pattern: {}").format(download_url)
         return False
-
-    return True
 
 
 def _download_file_http(
@@ -105,26 +98,24 @@ def _download_file_aspera(
             # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
             # We are also NOT using encryption (-T) to avoid slowdown,
             # and we are not using any kind of rate limiting.
-            command_str = (
-                ".aspera/cli/bin/ascp -QT -l 300m -P33001"
-                " -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
-            )
+            command_str = "ascp -QT -l 300m -P 33001 -i keys/asperaweb_id_dsa.openssh {src} {dest}"
             formatted_command = command_str.format(src=download_url, dest=target_file_path)
             completed_command = subprocess.run(
-                formatted_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                formatted_command.split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
         else:
             # NCBI requires encryption and recommends -k1 resume, as
             # well as the 450m limit and -Q (play fair).
             # ex: https://github.com/AlexsLemonade/refinebio/pull/1189#issuecomment-478018580
-            command_str = (
-                ".aspera/cli/bin/ascp -p -Q -T -k1 -l 450m"
-                " -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
-            )
+            command_str = "ascp -p -Q -T -k1 -l 450m -i keys/asperaweb_id_dsa.openssh {src} {dest}"
             formatted_command = command_str.format(src=download_url, dest=target_file_path)
             logger.info("Starting NCBI ascp", time=str(timezone.now()))
             completed_command = subprocess.run(
-                formatted_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                formatted_command.split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
             logger.info("Ending NCBI ascp", time=str(timezone.now()))
 
@@ -252,7 +243,9 @@ def _replace_dotsra_with_fastq_files(
     original_file.save()
 
     read_two_original_file = OriginalFile.objects.get_or_create(
-        source_url=read_two_url, source_filename=read_two_url.split("/")[-1], has_raw=True
+        source_url=read_two_url,
+        source_filename=read_two_url.split("/")[-1],
+        has_raw=True,
     )[0]
     OriginalFileSampleAssociation.objects.get_or_create(
         original_file=read_two_original_file, sample=sample

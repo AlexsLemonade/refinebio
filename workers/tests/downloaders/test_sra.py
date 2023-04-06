@@ -63,8 +63,9 @@ class DownloadSraTestCase(TestCase):
         dlj.accession_code = "SRR9117853"
         dlj.save()
         og = OriginalFile()
-        og.source_filename = "SRR9117853.sra"
-        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/SRR/SRR9117/SRR9117853/SRR9117853.sra"
+        og.source_filename = "SRR9117853"
+        og.source_url = "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR9117853/SRR9117853"
+
         og.is_archive = True
         og.save()
         sample = Sample()
@@ -92,8 +93,8 @@ class DownloadSraTestCase(TestCase):
         dlj.accession_code = "SRR9117853"
         dlj.save()
         og = OriginalFile()
-        og.source_filename = "SRR9117853.sra"
-        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/SRR/SRR9117/SRR9117853/SRR9117853.sra"
+        og.source_filename = "SRR9117853"
+        og.source_url = "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR9117853/SRR9117853"
         og.is_archive = True
         og.save()
         sample = Sample()

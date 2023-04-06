@@ -1,4 +1,11 @@
 renv::install(
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/affyio_1.58.0.tar.gz",
-    "https://bioconductor.org/packages/3.11/bioc/src/contrib/zlibbioc_1.34.0.tar.gz"
+    "affyio",
+    "dplyr@1.0.2",
+    "ff@2.2-14",
+    "httr@1.4.4",
+    "oligo",
+    "oligoClasses",
+    "purrr@0.3.5",
+    "readr@1.3.1",
+    "zlibbioc"
 )
