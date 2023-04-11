@@ -1,26 +1,19 @@
-FROM python:3.8.5-slim-buster
+FROM ccdlstaging/dr_base:latest
 
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 WORKDIR /home/user
 
-RUN apt-get update -qq && \
-    apt-get install -y \
-    gcc \
-    libpq-dev
-
-# Needed for migration 0006
-COPY config/ config
-
 COPY common/requirements.txt .
-
-RUN pip install -r requirements.txt
+RUN pip install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY common/ .
+COPY config config
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 
-ENTRYPOINT [""]
+ENTRYPOINT []

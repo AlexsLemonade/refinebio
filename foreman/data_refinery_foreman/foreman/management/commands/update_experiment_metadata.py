@@ -51,7 +51,8 @@ class Command(BaseCommand):
         while True:
             for experiment in page.object_list:
                 logger.debug(
-                    "Refreshing metadata for an experiment.", experiment=experiment.accession_code
+                    "Refreshing metadata for an experiment.",
+                    experiment=experiment.accession_code,
                 )
                 try:
                     if experiment.source_database == "SRA":
@@ -70,12 +71,10 @@ class Command(BaseCommand):
                         GeoSurveyor._apply_metadata_to_experiment(experiment, gse)
 
                     elif experiment.source_database == "ARRAY_EXPRESS":
-                        request_url = EXPERIMENTS_URL + experiment.accession_code
-                        experiment_request = utils.requests_retry_session().get(
-                            request_url, timeout=60
-                        )
                         try:
-                            parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+                            metadata = ArrayExpressSurveyor._get_experiment_data(
+                                experiment.accession_code
+                            )
                         except KeyError:
                             logger.error(
                                 "Remote experiment has no Experiment data!",
@@ -83,7 +82,7 @@ class Command(BaseCommand):
                                 survey_job=self.survey_job.id,
                             )
                             continue
-                        ArrayExpressSurveyor._apply_metadata_to_experiment(experiment, parsed_json)
+                        ArrayExpressSurveyor._apply_metadata_to_experiment(experiment, metadata)
 
                     experiment.save()
 
