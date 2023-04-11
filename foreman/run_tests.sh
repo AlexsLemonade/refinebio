@@ -42,5 +42,6 @@ fi
 docker run -t $INTERACTIVE \
        --add-host=database:"$DB_HOST_IP" \
        --env-file foreman/environments/test \
+       --platform linux/amd64 \
        --volume "$volume_directory":/home/user/data_store \
        ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage --exclude-tag=manual "$@")"

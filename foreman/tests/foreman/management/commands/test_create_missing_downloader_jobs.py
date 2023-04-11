@@ -3,15 +3,9 @@ from django.test import TransactionTestCase, tag
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentSampleAssociation,
-    Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
-    ProcessorJob,
     Sample,
-    SurveyJob,
-    SurveyJobKeyValue,
 )
 from data_refinery_foreman.foreman.management.commands.create_missing_downloader_jobs import Command
 

@@ -146,7 +146,7 @@ class CompendiaTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
 
         # Because one of the samples is filtered out, there will be too few
         # remaining samples to smash together, so we expect this job to fail.
-        self.assertFailed(job, "k must be between 1 and min(A.shape)")
+        self.assertFailed(job, "`k` must be an integer satisfying `0 < k < min(A.shape)`")
 
         # check that sample with no computed file was skipped
         self.assertTrue("GSM1487222" in final_context["filtered_samples"])

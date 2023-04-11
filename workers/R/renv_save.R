@@ -10,6 +10,6 @@ options(renv.r.version = "3.4.4")
 options(renv.settings.use.cache = FALSE)
 
 install.packages("BiocInstaller")
-install.packages("https://cloud.r-project.org/src/contrib/renv_0.16.0.tar.gz")
+install.packages("https://cran.r-project.org/src/contrib/Archive/renv/renv_0.16.0.tar.gz")
 
 renv::init(bioconductor = "3.6")

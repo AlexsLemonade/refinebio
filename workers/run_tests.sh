@@ -571,8 +571,9 @@ for image in $worker_images; do
                --env-file workers/environments/test \
                --env AWS_ACCESS_KEY_ID \
                --env AWS_SECRET_ACCESS_KEY \
-               --volume "$volume_directory":/home/user/data_store \
                --memory=5G \
+               --platform linux/amd64 \
+               --volume "$volume_directory":/home/user/data_store \
                "$image_name" bash -c "$test_command"
     fi
 done

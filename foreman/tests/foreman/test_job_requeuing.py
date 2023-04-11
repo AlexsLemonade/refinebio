@@ -5,13 +5,10 @@ from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
 
+from tests.foreman.utils import create_downloader_job, create_processor_job, create_survey_job
+
 from data_refinery_common.models import DownloaderJob, ProcessorJob, SurveyJob
 from data_refinery_foreman.foreman import job_requeuing
-from data_refinery_foreman.foreman.test_utils import (
-    create_downloader_job,
-    create_processor_job,
-    create_survey_job,
-)
 
 
 def fake_send_job(job_type, job, is_dispatch=False):
