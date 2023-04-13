@@ -120,7 +120,7 @@ class SurveyTestCase(TransactionTestCase):
         command.handle()
 
         # Test that the title was fixed.
-        experiment = Experiment.objects.get_or_create(accession_code=experiment.accession_code)[0]
+        experiment, _ = Experiment.objects.get_or_create(accession_code=experiment.accession_code)
         self.assertNotEqual(
             experiment.title,
             SurveyTestCase.BAD_TITLE,

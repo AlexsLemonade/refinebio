@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import chain
 from typing import Dict, List, Tuple
 
 from data_refinery_common.enums import Downloaders
@@ -52,36 +53,37 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
     @classmethod
     def _parse_api_data_response(cls, data: Dict) -> Dict:
         parsed_data = {}
-        for attribute in data["section"]["attributes"]:
-            attribute_name = attribute["name"]
-            if attribute_name not in {"Description", "Organism", "Title"}:
-                continue
-            parsed_data[attribute_name.lower()] = attribute["value"]
 
-        for subsection in data["section"]["subsections"]:
-            for subsection_entry in subsection:
-                # Protocols.
-                if isinstance(subsection_entry, dict) and subsection_entry["type"] == "Protocols":
-                    if "protocols" not in parsed_data:
-                        parsed_data["protocols"] = []
+        # Filter for supported section attributes.
+        attribute_filter = lambda attr: attr["name"] in {
+            "Description",
+            "Organism",
+            "Title",
+        }
+        attributes = data["section"]["attributes"]
+        for attribute in filter(attribute_filter, attributes):
+            parsed_data[attribute["name"].lower()] = attribute["value"]
 
-                    protocol = {}
-                    for attribute in subsection_entry["attributes"]:
-                        if "value" not in attribute:
-                            continue
-                        protocol[attribute["name"].lower()] = attribute["value"]
-                    if protocol:
-                        parsed_data["protocols"].append(protocol)
+        # Protocols.
+        parsed_data["protocols"] = []
+        protocol_filter = lambda entry: isinstance(entry, dict) and entry["type"] == "Protocols"
+        value_defined_filter = lambda attr: "value" in attr
+        subsections = data["section"]["subsections"]
+        for subsection in filter(protocol_filter, chain.from_iterable(subsections)):
+            # Protocols.
+            protocol = {}
+            for attribute in filter(value_defined_filter, subsection["attributes"]):
+                protocol[attribute["name"].lower()] = attribute["value"]
+            parsed_data["protocols"].append(protocol)
 
-                # Array Designs.
-                elif subsection["type"] == "Assays and Data":
-                    array_designs = []
-                    for assays_data_subsection in subsection["subsections"]:
-                        if assays_data_subsection["type"] == "Array Designs":
-                            for link in assays_data_subsection["links"]:
-                                for link_entry in link:
-                                    array_designs.append(link_entry["url"])
-                    parsed_data["array_designs"] = array_designs
+        # Array Designs.
+        parsed_data["array_designs"] = []
+        assay_filter = lambda entry: isinstance(entry, list) and entry["type"] == "Assays and Data"
+        is_design = lambda entry: entry["type"] == "Array Designs"
+        for subsection in filter(assay_filter, chain.from_iterable(subsections)):
+            for assays_data_subsection in filter(is_design, subsection):
+                links = chain.from_iterable(assays_data_subsection["links"])
+                parsed_data["array_designs"].extend((link["url"] for link in links))
 
         return parsed_data
 
@@ -544,7 +546,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             sample_source_name = sample_data["source"].get("name", "")
             sample_assay_name = sample_data["assay"].get("name", "")
             sample_accession_code = self.determine_sample_accession(
-                experiment.accession_code, sample_source_name, sample_assay_name, filename
+                experiment.accession_code,
+                sample_source_name,
+                sample_assay_name,
+                filename,
             )
 
             # Figure out the Organism for this sample
