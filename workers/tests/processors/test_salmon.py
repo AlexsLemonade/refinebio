@@ -473,7 +473,7 @@ class SalmonTestCase(TestCase):
         cmd_tokens = [
             "/usr/bin/Rscript",
             "--vanilla",
-            "/home/user/data_refinery_workers/processors/test_tximport.R",
+            "/home/user/data_refinery_workers/processors/tests/test_tximport.R",
             "--txi_out",
             rds_file_path,
             "--gene2txmap",
