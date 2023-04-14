@@ -7,7 +7,7 @@ from typing import Dict
 
 from django.test import TestCase, tag
 
-from tests import utils
+from tests import utils as test_utils
 
 from data_refinery_common.enums import PipelineEnum
 from data_refinery_common.models import (
@@ -151,7 +151,7 @@ GSE22427_HEADER = [
 ]
 
 
-class IlluminaToPCLTestCase(TestCase, testing_utils.ProcessorJobTestCaseMixin):
+class IlluminaToPCLTestCase(TestCase, test_utils.ProcessorJobTestCaseMixin):
     @tag("illumina")
     def test_illumina_to_pcl(self):
         """Most basic Illumina to PCL test"""

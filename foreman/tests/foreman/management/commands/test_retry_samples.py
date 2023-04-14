@@ -4,24 +4,15 @@ from django.test import TestCase
 from django.utils import timezone
 
 from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    ComputedFile,
     DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
     Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentResultAssociation,
     ExperimentSampleAssociation,
     Organism,
-    OrganismIndex,
     OriginalFile,
     OriginalFileSampleAssociation,
-    Processor,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
-    SampleResultAssociation,
 )
 from data_refinery_foreman.foreman.management.commands.retry_samples import retry_by_regex
 

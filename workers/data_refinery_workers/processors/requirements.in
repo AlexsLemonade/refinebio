@@ -1,6 +1,7 @@
 boto3>=1.9.199
 coveralls
-django>=3.2.5
+django>=3.2,<4
+rpy2===3.4.5
 matplotlib
 numpy
 pandas
@@ -20,13 +21,14 @@ unicodecsv
 untangle>=1.1.1
 # For visualization
 dask>=1.1.1
-xarray>=0.12.2
-datashader>=0.6.9
+xarray==0.16.2
+datashader==0.14.4
 datashape>=0.5.2
 holoviews>=1.11.2
 selenium==3.141.0
-# For mocking out S3 calls for the smasher
-vcrpy
+# For mocking out S3 calls for the smasher.
+vcrpy==4.1.1
 django-computedfields>=0.1.5
 pyyaml>=5.4
 sqlparse>=0.4.2
+nose
