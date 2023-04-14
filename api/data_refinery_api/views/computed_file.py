@@ -139,6 +139,7 @@ class ComputedFileListView(generics.ListAPIView):
         "created_at",
         "last_modified",
         "result__id",
+        "filename",
     )
     ordering_fields = (
         "id",
