@@ -1,10 +1,7 @@
-FROM python:3.8.5-slim-buster
+FROM ccdlstaging/dr_base:latest
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-RUN groupadd user && \
-    useradd --create-home --home-dir /home/user -g user user
 
 WORKDIR /home/user
 

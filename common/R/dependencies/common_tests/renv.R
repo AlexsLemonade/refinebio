@@ -1,0 +1,20 @@
+renv::install(
+    "affy",
+    "affyio",
+    "AnnotationDbi",
+    "dplyr@1.0.2",
+    "ff@2.2-14",
+    "genefilter",
+    "GEOquery",
+    "limma",
+    "oligo",
+    "oligoClasses",
+    "preprocessCore",
+    "purrr@0.3.5",
+    "readr@1.3.1",
+    "SCAN.UPC",
+    "sva",
+    "tidyr@1.1.0",
+    "tximport",
+    "zlibbioc"
+)

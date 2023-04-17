@@ -77,8 +77,8 @@ docker run \\
        -e DATABASE_PASSWORD=${database_password} \\
        -v /tmp:/tmp \\
        -it ${dockerhub_repo}/dr_\"\$1\" python3 manage.py \"\$2\"
-" >> /home/ubuntu/run_cron_job_test.sh
-chmod +x /home/ubuntu/run_cron_job_test.sh
+" >> /home/ubuntu/run_manage_command.sh
+chmod +x /home/ubuntu/run_manage_command.sh
 
 # Use Monit to ensure the Foreman is always running
 apt-get -y update
@@ -112,8 +112,9 @@ service monit restart
 # Install the cron job tests
 crontab -l > tempcron
 cat <<EOF >> tempcron
-0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_brainarray_gene_agreement >> /var/log/cron_job_tests.log 2>&1
-0 12 * * MON /bin/bash /home/ubuntu/run_cron_job_test.sh affymetrix check_tx_index_transcript_agreement >> /var/log/cron_job_tests.log 2>&1
+0 12 * * MON /bin/bash /home/ubuntu/run_manage_command.sh affymetrix check_brainarray_gene_agreement >> /var/log/affymetrix_checks.log 2>&1
+0 12 * * MON /bin/bash /home/ubuntu/run_manage_command.sh affymetrix check_tx_index_transcript_agreement >> /var/log/affymetrix_checks.log 2>&1
+0 12 * * ${accession_gathering_job_run_day} /bin/bash /home/ubuntu/run_manage_command.sh foreman gather_weekly_accessions >> /var/log/weekly_accessions.log 2>&1
 EOF
 # install new cron file
 crontab tempcron

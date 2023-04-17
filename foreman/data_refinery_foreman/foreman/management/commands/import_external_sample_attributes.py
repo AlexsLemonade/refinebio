@@ -23,7 +23,7 @@ import boto3
 import botocore
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import Contribution, OntologyTerm, Sample, SampleAttribute
+from data_refinery_common.models import *
 from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)

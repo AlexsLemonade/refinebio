@@ -1,0 +1,4545 @@
+{
+  "R": {
+    "Version": "3.4.4",
+    "Repositories": [
+      {
+        "Name": "Bioconductor",
+        "URL": "https://bioconductor.org/packages/3.6/bioc"
+      },
+      {
+        "Name": "BioconductorAnnotation",
+        "URL": "https://bioconductor.org/packages/3.6/data/annotation"
+      },
+      {
+        "Name": "BioconductorExperiment",
+        "URL": "https://bioconductor.org/packages/3.6/data/experiment"
+      },
+      {
+        "Name": "CRAN",
+        "URL": "https://cloud.r-project.org"
+      }
+    ]
+  },
+  "Packages": {
+    "AnnotationDbi": {
+      "Package": "AnnotationDbi",
+      "Version": "1.40.0",
+      "Source": "Bioconductor",
+      "Hash": "abb20d74ae5ea08a8d9616a6f1bbaca5",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors"
+      ]
+    },
+    "BH": {
+      "Package": "BH",
+      "Version": "1.72.0-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8f9ce74c6417d61f0782cbae5fd2b7b0",
+      "Requirements": []
+    },
+    "Biobase": {
+      "Package": "Biobase",
+      "Version": "2.38.0",
+      "Source": "Bioconductor",
+      "Hash": "8c8060a3f339c35f1dc14af3b7d22d71",
+      "Requirements": [
+        "BiocGenerics"
+      ]
+    },
+    "BiocGenerics": {
+      "Package": "BiocGenerics",
+      "Version": "0.24.0",
+      "Source": "Bioconductor",
+      "Hash": "108ff3e3233e79aef825decc9fa87ee3",
+      "Requirements": []
+    },
+    "BiocInstaller": {
+      "Package": "BiocInstaller",
+      "Version": "1.28.0",
+      "Source": "Bioconductor",
+      "Hash": "ee02868b8bd3657a3463d8bc3a64d831",
+      "Requirements": []
+    },
+    "BiocManager": {
+      "Package": "BiocManager",
+      "Version": "1.30.20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a7fca16a50b6ef7771b49d636dd54b57",
+      "Requirements": []
+    },
+    "BiocParallel": {
+      "Package": "BiocParallel",
+      "Version": "1.12.0",
+      "Source": "Bioconductor",
+      "Hash": "4fc0d93ea840783e2000f15f111b8a9b",
+      "Requirements": [
+        "BH",
+        "futile.logger",
+        "snow"
+      ]
+    },
+    "Biostrings": {
+      "Package": "Biostrings",
+      "Version": "2.46.0",
+      "Source": "Bioconductor",
+      "Hash": "12005b8dd90f7f7f9864ee9d6965c366",
+      "Requirements": [
+        "BiocGenerics",
+        "IRanges",
+        "S4Vectors",
+        "XVector"
+      ]
+    },
+    "DBI": {
+      "Package": "DBI",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7bc8be0e425da29fe0e10f792bdbb74b",
+      "Requirements": []
+    },
+    "DelayedArray": {
+      "Package": "DelayedArray",
+      "Version": "0.4.1",
+      "Source": "Bioconductor",
+      "Hash": "c2572a27fb1281ee4c11390826f326a1",
+      "Requirements": [
+        "BiocGenerics",
+        "IRanges",
+        "S4Vectors",
+        "matrixStats"
+      ]
+    },
+    "GEOquery": {
+      "Package": "GEOquery",
+      "Version": "2.46.15",
+      "Source": "Bioconductor",
+      "Hash": "71fbb4c39d7ea4ca06dcfdfd41ef1ee5",
+      "Requirements": [
+        "Biobase",
+        "dplyr",
+        "httr",
+        "limma",
+        "magrittr",
+        "readr",
+        "tidyr",
+        "xml2"
+      ]
+    },
+    "GenomeInfoDb": {
+      "Package": "GenomeInfoDb",
+      "Version": "1.14.0",
+      "Source": "Bioconductor",
+      "Hash": "39dc4261100e402165a6db62f364b493",
+      "Requirements": [
+        "BiocGenerics",
+        "GenomeInfoDbData",
+        "IRanges",
+        "RCurl",
+        "S4Vectors"
+      ]
+    },
+    "GenomeInfoDbData": {
+      "Package": "GenomeInfoDbData",
+      "Version": "1.0.0",
+      "Source": "Bioconductor",
+      "Hash": "336cc20fd69db19ebfad8a73e05d88b3",
+      "Requirements": []
+    },
+    "GenomicRanges": {
+      "Package": "GenomicRanges",
+      "Version": "1.30.3",
+      "Source": "Bioconductor",
+      "Hash": "ecfab21e609cea7ee297e0e1230b5bb4",
+      "Requirements": [
+        "BiocGenerics",
+        "GenomeInfoDb",
+        "IRanges",
+        "S4Vectors",
+        "XVector"
+      ]
+    },
+    "IRanges": {
+      "Package": "IRanges",
+      "Version": "2.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d89aecf720b113b47f936c48b356d264",
+      "Requirements": [
+        "BiocGenerics",
+        "S4Vectors"
+      ]
+    },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-15",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "081f417f4d6d55b7e8981433e8404a22",
+      "Requirements": []
+    },
+    "MASS": {
+      "Package": "MASS",
+      "Version": "7.3-49",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f47828414f155725f342d93be7fcfabd",
+      "Requirements": []
+    },
+    "Matrix": {
+      "Package": "Matrix",
+      "Version": "1.2-12",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2451d6490ec017b18b6eff460c65fd85",
+      "Requirements": [
+        "lattice"
+      ]
+    },
+    "R6": {
+      "Package": "R6",
+      "Version": "2.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d4618c4cb36bc46831551c5d85815818",
+      "Requirements": []
+    },
+    "RCurl": {
+      "Package": "RCurl",
+      "Version": "1.95-4.10",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6875cb45c7e5e749120442b47ebc04db",
+      "Requirements": [
+        "bitops"
+      ]
+    },
+    "RSQLite": {
+      "Package": "RSQLite",
+      "Version": "2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "162bf21ed2680cd3d386b0c8b119deba",
+      "Requirements": [
+        "BH",
+        "DBI",
+        "Rcpp",
+        "bit64",
+        "blob",
+        "memoise",
+        "pkgconfig",
+        "plogr"
+      ]
+    },
+    "Rcpp": {
+      "Package": "Rcpp",
+      "Version": "1.0.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "dab19adae4440ae55aa8a9d238b246bb",
+      "Requirements": []
+    },
+    "S4Vectors": {
+      "Package": "S4Vectors",
+      "Version": "0.16.0",
+      "Source": "Bioconductor",
+      "Hash": "e9cd4cea8c93cbdd8595e562c8ed0624",
+      "Requirements": [
+        "BiocGenerics"
+      ]
+    },
+    "SCAN.UPC": {
+      "Package": "SCAN.UPC",
+      "Version": "2.20.0",
+      "Source": "Bioconductor",
+      "Hash": "1583bdf3637b41eb5f8812e7ac678f73",
+      "Requirements": [
+        "Biobase",
+        "Biostrings",
+        "GEOquery",
+        "IRanges",
+        "MASS",
+        "affy",
+        "affyio",
+        "foreach",
+        "oligo",
+        "sva"
+      ]
+    },
+    "SummarizedExperiment": {
+      "Package": "SummarizedExperiment",
+      "Version": "1.8.1",
+      "Source": "Bioconductor",
+      "Hash": "57080b28b2f5606100e02a7ab01b3022",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "DelayedArray",
+        "GenomeInfoDb",
+        "GenomicRanges",
+        "IRanges",
+        "Matrix",
+        "S4Vectors"
+      ]
+    },
+    "XML": {
+      "Package": "XML",
+      "Version": "3.98-1.10",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f24c56597fc23b321a5478f6f3e7824c",
+      "Requirements": []
+    },
+    "XVector": {
+      "Package": "XVector",
+      "Version": "0.18.0",
+      "Source": "Bioconductor",
+      "Hash": "c677dd00d99bd1f81caf0fc3d9fa7672",
+      "Requirements": [
+        "BiocGenerics",
+        "IRanges",
+        "S4Vectors",
+        "zlibbioc"
+      ]
+    },
+    "affxparser": {
+      "Package": "affxparser",
+      "Version": "1.50.0",
+      "Source": "Bioconductor",
+      "Hash": "86914cfc7998f083d207a8ae84488697",
+      "Requirements": []
+    },
+    "affy": {
+      "Package": "affy",
+      "Version": "1.56.0",
+      "Source": "Bioconductor",
+      "Hash": "1022ecaff1da7aaa5f1ebe6168794e97",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "BiocInstaller",
+        "affyio",
+        "preprocessCore",
+        "zlibbioc"
+      ]
+    },
+    "affyio": {
+      "Package": "affyio",
+      "Version": "1.48.0",
+      "Source": "Bioconductor",
+      "Hash": "f973e1ee016e8ff7095847e0769a9d97",
+      "Requirements": [
+        "zlibbioc"
+      ]
+    },
+    "annotate": {
+      "Package": "annotate",
+      "Version": "1.56.2",
+      "Source": "Bioconductor",
+      "Hash": "064f14d8325abc226f7433f9ff8094c9",
+      "Requirements": [
+        "AnnotationDbi",
+        "Biobase",
+        "BiocGenerics",
+        "DBI",
+        "RCurl",
+        "XML",
+        "xtable"
+      ]
+    },
+    "askpass": {
+      "Package": "askpass",
+      "Version": "1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e8a22846fff485f0be3770c2da758713",
+      "Requirements": [
+        "sys"
+      ]
+    },
+    "assertthat": {
+      "Package": "assertthat",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "50c838a310445e954bc13f26f26a6ecf",
+      "Requirements": []
+    },
+    "backports": {
+      "Package": "backports",
+      "Version": "1.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b9a4db2667d7e43d197ed12e40781889",
+      "Requirements": []
+    },
+    "base64enc": {
+      "Package": "base64enc",
+      "Version": "0.1-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "543776ae6848fde2f48ff3816d0628bc",
+      "Requirements": []
+    },
+    "bit": {
+      "Package": "bit",
+      "Version": "1.1-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ac0b4115f7bddd07e733e1ac1697c687",
+      "Requirements": []
+    },
+    "bit64": {
+      "Package": "bit64",
+      "Version": "0.9-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3338d4a9b1352f5a613e2bdcefe784ea",
+      "Requirements": [
+        "bit"
+      ]
+    },
+    "bitops": {
+      "Package": "bitops",
+      "Version": "1.0-6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0b118d5900596bae6c4d4865374536a6",
+      "Requirements": []
+    },
+    "blob": {
+      "Package": "blob",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3ce988193cfb67e59fde06121bd9f8be",
+      "Requirements": [
+        "prettyunits"
+      ]
+    },
+    "boot": {
+      "Package": "boot",
+      "Version": "1.3-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "560a6eb3b4658e2ce3d0f8feb087fe56",
+      "Requirements": []
+    },
+    "brew": {
+      "Package": "brew",
+      "Version": "1.0-6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "92a5f887f9ae3035ac7afde22ba73ee9",
+      "Requirements": []
+    },
+    "brio": {
+      "Package": "brio",
+      "Version": "1.1.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "976cf154dfb043c012d87cddd8bca363",
+      "Requirements": []
+    },
+    "bslib": {
+      "Package": "bslib",
+      "Version": "0.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a7fbf03946ad741129dc81098722fca1",
+      "Requirements": [
+        "base64enc",
+        "cachem",
+        "htmltools",
+        "jquerylib",
+        "jsonlite",
+        "memoise",
+        "mime",
+        "rlang",
+        "sass"
+      ]
+    },
+    "cachem": {
+      "Package": "cachem",
+      "Version": "1.0.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "cda74447c42f529de601fe4d4050daef",
+      "Requirements": [
+        "fastmap",
+        "rlang"
+      ]
+    },
+    "callr": {
+      "Package": "callr",
+      "Version": "3.7.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9b2191ede20fa29828139b9900922e51",
+      "Requirements": [
+        "R6",
+        "processx"
+      ]
+    },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c39d47020cdf42e88bd80c83ca6a0a0b",
+      "Requirements": [
+        "MASS"
+      ]
+    },
+    "cli": {
+      "Package": "cli",
+      "Version": "3.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3177a5a16c243adc199ba33117bd9657",
+      "Requirements": []
+    },
+    "clipr": {
+      "Package": "clipr",
+      "Version": "0.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8633315be5a50b858a69615dc1234c3b",
+      "Requirements": []
+    },
+    "cluster": {
+      "Package": "cluster",
+      "Version": "2.0.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ea8c392e186024710ab52bc405212f5e",
+      "Requirements": []
+    },
+    "codetools": {
+      "Package": "codetools",
+      "Version": "0.2-19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c089a619a7fae175d149d89164f8c7d8",
+      "Requirements": []
+    },
+    "commonmark": {
+      "Package": "commonmark",
+      "Version": "1.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0f22be39ec1d141fd03683c06f3a6e67",
+      "Requirements": []
+    },
+    "cpp11": {
+      "Package": "cpp11",
+      "Version": "0.4.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ed588261931ee3be2c700d22e94a29ab",
+      "Requirements": []
+    },
+    "crayon": {
+      "Package": "crayon",
+      "Version": "1.3.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0d57bc8e27b7ba9e45dba825ebc0de6b",
+      "Requirements": []
+    },
+    "credentials": {
+      "Package": "credentials",
+      "Version": "1.3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "93762d0a34d78e6a025efdbfb5c6bb41",
+      "Requirements": [
+        "askpass",
+        "curl",
+        "jsonlite",
+        "openssl",
+        "sys"
+      ]
+    },
+    "curl": {
+      "Package": "curl",
+      "Version": "3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c71bf321a357db97242bc233a1f99a55",
+      "Requirements": []
+    },
+    "data.table": {
+      "Package": "data.table",
+      "Version": "1.14.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b4c06e554f33344e044ccd7fdca750a9",
+      "Requirements": []
+    },
+    "desc": {
+      "Package": "desc",
+      "Version": "1.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6b9602c7ebbe87101a9c8edb6e8b6d21",
+      "Requirements": [
+        "R6",
+        "cli",
+        "rprojroot"
+      ]
+    },
+    "devtools": {
+      "Package": "devtools",
+      "Version": "2.4.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ea5bc8b4a6a01e4f12d98b58329930bb",
+      "Requirements": [
+        "cli",
+        "desc",
+        "ellipsis",
+        "fs",
+        "lifecycle",
+        "memoise",
+        "miniUI",
+        "pkgbuild",
+        "pkgdown",
+        "pkgload",
+        "profvis",
+        "rcmdcheck",
+        "remotes",
+        "rlang",
+        "roxygen2",
+        "rversions",
+        "sessioninfo",
+        "testthat",
+        "urlchecker",
+        "usethis",
+        "withr"
+      ]
+    },
+    "diffobj": {
+      "Package": "diffobj",
+      "Version": "0.3.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bcaa8b95f8d7d01a5dedfd959ce88ab8",
+      "Requirements": [
+        "crayon"
+      ]
+    },
+    "digest": {
+      "Package": "digest",
+      "Version": "0.6.19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2ac7f712959404638ccb1977809eabdd",
+      "Requirements": []
+    },
+    "doParallel": {
+      "Package": "doParallel",
+      "Version": "1.0.17",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "451e5edf411987991ab6a5410c45011f",
+      "Requirements": [
+        "foreach",
+        "iterators"
+      ]
+    },
+    "downlit": {
+      "Package": "downlit",
+      "Version": "0.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "79bf3f66590752ffbba20f8d2da94c7c",
+      "Requirements": [
+        "brio",
+        "desc",
+        "digest",
+        "evaluate",
+        "fansi",
+        "memoise",
+        "rlang",
+        "vctrs",
+        "withr",
+        "yaml"
+      ]
+    },
+    "dplyr": {
+      "Package": "dplyr",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d0509913b27ea898189ee664b6030dc2",
+      "Requirements": [
+        "R6",
+        "ellipsis",
+        "generics",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "rlang",
+        "tibble",
+        "tidyselect",
+        "vctrs"
+      ]
+    },
+    "ellipsis": {
+      "Package": "ellipsis",
+      "Version": "0.3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bb0eec2fe32e88d9e2836c2f73ea2077",
+      "Requirements": [
+        "rlang"
+      ]
+    },
+    "evaluate": {
+      "Package": "evaluate",
+      "Version": "0.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ec8ca05cffcc70569eaaad8469d2a3a7",
+      "Requirements": []
+    },
+    "fansi": {
+      "Package": "fansi",
+      "Version": "0.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b31d9e5d051553d1177083aeba04b5b9",
+      "Requirements": []
+    },
+    "fastmap": {
+      "Package": "fastmap",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f7736a18de97dea803bde0a2daaafb27",
+      "Requirements": []
+    },
+    "ff": {
+      "Package": "ff",
+      "Version": "2.2-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2f745ad9a324bf4247df10ea6ebc3953",
+      "Requirements": [
+        "bit"
+      ]
+    },
+    "fontawesome": {
+      "Package": "fontawesome",
+      "Version": "0.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e80750aec5717dedc019ad7ee40e4a7c",
+      "Requirements": [
+        "htmltools",
+        "rlang"
+      ]
+    },
+    "foreach": {
+      "Package": "foreach",
+      "Version": "1.5.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "618609b42c9406731ead03adf5379850",
+      "Requirements": [
+        "codetools",
+        "iterators"
+      ]
+    },
+    "foreign": {
+      "Package": "foreign",
+      "Version": "0.8-69",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6f953f3e73fc00af8cdad0864f535f97",
+      "Requirements": []
+    },
+    "formatR": {
+      "Package": "formatR",
+      "Version": "1.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "63cb26d12517c7863f5abb006c5e0f25",
+      "Requirements": []
+    },
+    "fs": {
+      "Package": "fs",
+      "Version": "1.6.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f4dcd23b67e33d851d2079f703e8b985",
+      "Requirements": []
+    },
+    "futile.logger": {
+      "Package": "futile.logger",
+      "Version": "1.4.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "99f0ace8c05ec7d3683d27083c4f1e7e",
+      "Requirements": [
+        "futile.options",
+        "lambda.r"
+      ]
+    },
+    "futile.options": {
+      "Package": "futile.options",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0d9bf02413ddc2bbe8da9ce369dcdd2b",
+      "Requirements": []
+    },
+    "genefilter": {
+      "Package": "genefilter",
+      "Version": "1.60.0",
+      "Source": "Bioconductor",
+      "Hash": "e325ea00e99e1c3ce474aa07b88cd81c",
+      "Requirements": [
+        "AnnotationDbi",
+        "Biobase",
+        "S4Vectors",
+        "annotate",
+        "survival"
+      ]
+    },
+    "generics": {
+      "Package": "generics",
+      "Version": "0.1.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "15e9634c0fcd294799e9b2e929ed1b86",
+      "Requirements": []
+    },
+    "gert": {
+      "Package": "gert",
+      "Version": "1.9.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9122b3958e749badb5c939f498038b57",
+      "Requirements": [
+        "askpass",
+        "credentials",
+        "openssl",
+        "rstudioapi",
+        "sys",
+        "zip"
+      ]
+    },
+    "getopt": {
+      "Package": "getopt",
+      "Version": "1.20.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ad68e3263f0bc9269aab8c2039440117",
+      "Requirements": []
+    },
+    "gh": {
+      "Package": "gh",
+      "Version": "1.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "03533b1c875028233598f848fda44c4c",
+      "Requirements": [
+        "cli",
+        "gitcreds",
+        "httr2",
+        "ini",
+        "jsonlite",
+        "rlang"
+      ]
+    },
+    "gitcreds": {
+      "Package": "gitcreds",
+      "Version": "0.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ab08ac61f3e1be454ae21911eb8bc2fe",
+      "Requirements": []
+    },
+    "glue": {
+      "Package": "glue",
+      "Version": "1.6.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4f2596dfb05dac67b9dc558e5c6fba2e",
+      "Requirements": []
+    },
+    "highr": {
+      "Package": "highr",
+      "Version": "0.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4dc5bb88961e347a0f4d8aad597cbfac",
+      "Requirements": []
+    },
+    "hms": {
+      "Package": "hms",
+      "Version": "0.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b1d40b416da234147d5869a009458702",
+      "Requirements": [
+        "pkgconfig",
+        "rlang"
+      ]
+    },
+    "htmltools": {
+      "Package": "htmltools",
+      "Version": "0.5.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9d27e99cc90bd701c0a7a63e5923f9b7",
+      "Requirements": [
+        "base64enc",
+        "digest",
+        "ellipsis",
+        "fastmap",
+        "rlang"
+      ]
+    },
+    "htmlwidgets": {
+      "Package": "htmlwidgets",
+      "Version": "1.5.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "41bace23583fbc25089edae324de2dc3",
+      "Requirements": [
+        "htmltools",
+        "jsonlite",
+        "yaml"
+      ]
+    },
+    "httpuv": {
+      "Package": "httpuv",
+      "Version": "1.6.9",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1046aa31a57eae8b357267a56a0b6d8b",
+      "Requirements": [
+        "R6",
+        "Rcpp",
+        "later",
+        "promises"
+      ]
+    },
+    "httr": {
+      "Package": "httr",
+      "Version": "1.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a525aba14184fec243f9eaec62fbed43",
+      "Requirements": [
+        "R6",
+        "curl",
+        "jsonlite",
+        "mime",
+        "openssl"
+      ]
+    },
+    "httr2": {
+      "Package": "httr2",
+      "Version": "0.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5c09fe33064978ede54de42309c8b532",
+      "Requirements": [
+        "R6",
+        "cli",
+        "curl",
+        "glue",
+        "magrittr",
+        "openssl",
+        "rappdirs",
+        "rlang",
+        "withr"
+      ]
+    },
+    "ini": {
+      "Package": "ini",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6154ec2223172bce8162d4153cda21f7",
+      "Requirements": []
+    },
+    "iterators": {
+      "Package": "iterators",
+      "Version": "1.0.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8954069286b4b2b0d023d1b288dce978",
+      "Requirements": []
+    },
+    "jquerylib": {
+      "Package": "jquerylib",
+      "Version": "0.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5aab57a3bd297eee1c1d862735972182",
+      "Requirements": [
+        "htmltools"
+      ]
+    },
+    "jsonlite": {
+      "Package": "jsonlite",
+      "Version": "1.7.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2657f20b9a74c996c602e74ebe540b06",
+      "Requirements": []
+    },
+    "knitr": {
+      "Package": "knitr",
+      "Version": "1.29",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e5f4c41c17df8cdf7b0df12117c0d99a",
+      "Requirements": [
+        "evaluate",
+        "highr",
+        "markdown",
+        "stringr",
+        "xfun",
+        "yaml"
+      ]
+    },
+    "lambda.r": {
+      "Package": "lambda.r",
+      "Version": "1.2.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b1e925c4b9ffeb901bacf812cbe9a6ad",
+      "Requirements": [
+        "formatR"
+      ]
+    },
+    "later": {
+      "Package": "later",
+      "Version": "1.1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d0a62b247165aabf397fded504660d8a",
+      "Requirements": [
+        "BH",
+        "Rcpp",
+        "rlang"
+      ]
+    },
+    "lattice": {
+      "Package": "lattice",
+      "Version": "0.20-35",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "10a22a9a66fbe7944e9ef98985d7c927",
+      "Requirements": []
+    },
+    "lazyeval": {
+      "Package": "lazyeval",
+      "Version": "0.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d908914ae53b04d4c0c0fd72ecc35370",
+      "Requirements": []
+    },
+    "lifecycle": {
+      "Package": "lifecycle",
+      "Version": "1.0.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "001cecbeac1cff9301bdc3775ee46a86",
+      "Requirements": [
+        "cli",
+        "glue",
+        "rlang"
+      ]
+    },
+    "limma": {
+      "Package": "limma",
+      "Version": "3.34.9",
+      "Source": "Bioconductor",
+      "Hash": "06c81c4043f41177428a83c73a59d094",
+      "Requirements": []
+    },
+    "locfit": {
+      "Package": "locfit",
+      "Version": "1.5-9.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ea75a919bdd6a9b1dc983d8931b27385",
+      "Requirements": [
+        "lattice"
+      ]
+    },
+    "magrittr": {
+      "Package": "magrittr",
+      "Version": "1.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1bb58822a20301cee84a41678e25d9b7",
+      "Requirements": []
+    },
+    "markdown": {
+      "Package": "markdown",
+      "Version": "1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "61e4a10781dd00d7d81dd06ca9b94e95",
+      "Requirements": [
+        "mime",
+        "xfun"
+      ]
+    },
+    "matrixStats": {
+      "Package": "matrixStats",
+      "Version": "0.63.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "57af0c3da1f1a50680b186591c3359af",
+      "Requirements": []
+    },
+    "memoise": {
+      "Package": "memoise",
+      "Version": "2.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e2817ccf4a065c5d9d7f2cfbe7c1d78c",
+      "Requirements": [
+        "cachem",
+        "rlang"
+      ]
+    },
+    "mgcv": {
+      "Package": "mgcv",
+      "Version": "1.8-23",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b1a3bba86e45ddea6b66e67623f587ee",
+      "Requirements": [
+        "Matrix",
+        "nlme"
+      ]
+    },
+    "mime": {
+      "Package": "mime",
+      "Version": "0.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f085cb5d1548336cafa5ee7ec56d7e34",
+      "Requirements": []
+    },
+    "miniUI": {
+      "Package": "miniUI",
+      "Version": "0.1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fec5f52652d60615fdb3957b3d74324a",
+      "Requirements": [
+        "htmltools",
+        "shiny"
+      ]
+    },
+    "nlme": {
+      "Package": "nlme",
+      "Version": "3.1-131",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "215a901b25abf4077a8e7d2d6ce2b211",
+      "Requirements": [
+        "lattice"
+      ]
+    },
+    "nnet": {
+      "Package": "nnet",
+      "Version": "7.3-12",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "68287aec1f476c41d16ce1ace445800c",
+      "Requirements": []
+    },
+    "oligo": {
+      "Package": "oligo",
+      "Version": "1.42.0",
+      "Source": "Bioconductor",
+      "Hash": "694c134c6a0d42dd72084c9283735e1a",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "Biostrings",
+        "DBI",
+        "RSQLite",
+        "affxparser",
+        "affyio",
+        "ff",
+        "oligoClasses",
+        "preprocessCore",
+        "zlibbioc"
+      ]
+    },
+    "oligoClasses": {
+      "Package": "oligoClasses",
+      "Version": "1.40.0",
+      "Source": "Bioconductor",
+      "Hash": "c197dfefe8a4928044851fceb05b5eba",
+      "Requirements": [
+        "Biobase",
+        "BiocGenerics",
+        "BiocInstaller",
+        "Biostrings",
+        "DBI",
+        "GenomicRanges",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "SummarizedExperiment",
+        "affyio",
+        "ff",
+        "foreach"
+      ]
+    },
+    "openssl": {
+      "Package": "openssl",
+      "Version": "2.0.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b9621e75c0652041002a19609fb23c5a",
+      "Requirements": [
+        "askpass"
+      ]
+    },
+    "optparse": {
+      "Package": "optparse",
+      "Version": "1.4.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "803e834713c77eda6c233965977b2c58",
+      "Requirements": [
+        "getopt"
+      ]
+    },
+    "pd.081229.hg18.promoter.medip.hx1": {
+      "Package": "pd.081229.hg18.promoter.medip.hx1",
+      "Version": "0.99.4",
+      "Source": "Bioconductor",
+      "Hash": "f7afce8ddb37b0e59242a9ad8c85e6e0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.2006.07.18.hg18.refseq.promoter": {
+      "Package": "pd.2006.07.18.hg18.refseq.promoter",
+      "Version": "1.8.1",
+      "Source": "Bioconductor",
+      "Hash": "a1ec02a7117ca194e12f144ee12bd5e8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.2006.07.18.mm8.refseq.promoter": {
+      "Package": "pd.2006.07.18.mm8.refseq.promoter",
+      "Version": "0.99.3",
+      "Source": "Bioconductor",
+      "Hash": "a53d98d1a5c9f1e43f4fb7fcec2f5bc1",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.2006.10.31.rn34.refseq.promoter": {
+      "Package": "pd.2006.10.31.rn34.refseq.promoter",
+      "Version": "0.99.3",
+      "Source": "Bioconductor",
+      "Hash": "1721412a2805c3afbf10bfc7f28bf8bf",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ag": {
+      "Package": "pd.ag",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "6e7114b6570a8771f661feea577b6275",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.aragene.1.0.st": {
+      "Package": "pd.aragene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "f83a280c15589e486fea8a5f1980914c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.aragene.1.1.st": {
+      "Package": "pd.aragene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "e92aceacade8c2edc64945e4888c4360",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.atdschip.tiling": {
+      "Package": "pd.atdschip.tiling",
+      "Version": "0.16.0",
+      "Source": "Bioconductor",
+      "Hash": "eedc76fd65ea3a49b8cc5984b66c653a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ath1.121501": {
+      "Package": "pd.ath1.121501",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d69eef00df9efc44e7eb8f034b3272aa",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.barley1": {
+      "Package": "pd.barley1",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "77fe5652e678146506b5613f7a126f6f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bovgene.1.0.st": {
+      "Package": "pd.bovgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "78adab01c64f1551370f9e95f0ca027f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bovgene.1.1.st": {
+      "Package": "pd.bovgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "8087e043592a519c2e8097b412b538c6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bovine": {
+      "Package": "pd.bovine",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "e82d5e05667825c5a0d828deb4c28105",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.bsubtilis": {
+      "Package": "pd.bsubtilis",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "7798014213a9968146d737a033ce3ba5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cangene.1.0.st": {
+      "Package": "pd.cangene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "3ef64330c89b37aeb26f6fd3276ea604",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cangene.1.1.st": {
+      "Package": "pd.cangene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "0cc260228ac0c7ad160e65ce66292c0e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.canine": {
+      "Package": "pd.canine",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d5dfd581bb94bd791b66fc930d143b04",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.canine.2": {
+      "Package": "pd.canine.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "e2c1aaa1e7883375ce80d5874193d4d0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.celegans": {
+      "Package": "pd.celegans",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "3b3af11b819506a41c5f6a705df139c6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.charm.hg18.example": {
+      "Package": "pd.charm.hg18.example",
+      "Version": "0.99.4",
+      "Source": "Bioconductor",
+      "Hash": "1aae017e6d612b75f5354b5ed7bee356",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chicken": {
+      "Package": "pd.chicken",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c9198a85a6c61e7ff1ce2bfb68dab1be",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chigene.1.0.st": {
+      "Package": "pd.chigene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "6c58a7ed8ca073fd4ef1ad8ddd233437",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chigene.1.1.st": {
+      "Package": "pd.chigene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "bfcf87bc9de432ed11d5d882ad8f29e6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chogene.2.0.st": {
+      "Package": "pd.chogene.2.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "b530bc3a2b0bacf1bcea988317fcf283",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.chogene.2.1.st": {
+      "Package": "pd.chogene.2.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "1f8e27d05b2af91f32929ffb371d54d0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.citrus": {
+      "Package": "pd.citrus",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c9100773bc865186caaa6fe7c2df8b1d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.d.human": {
+      "Package": "pd.clariom.d.human",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "e12d4cb420290368afe9d76d1c0d361d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.human": {
+      "Package": "pd.clariom.s.human",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "ab32b37823e2754938aec1b8c2853086",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.human.ht": {
+      "Package": "pd.clariom.s.human.ht",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "cb36c373bd60915cc854593ecf54af93",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.mouse": {
+      "Package": "pd.clariom.s.mouse",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "3435057a30bced113ed298f319992a84",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.mouse.ht": {
+      "Package": "pd.clariom.s.mouse.ht",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "5c8e35ded88d7dde1858eab86eb57270",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.rat": {
+      "Package": "pd.clariom.s.rat",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "3e6fba0ae2c5b7e8de4f0286e430a645",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.clariom.s.rat.ht": {
+      "Package": "pd.clariom.s.rat.ht",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "ecb89f6f6f13d08692a2c79564470cf5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cotton": {
+      "Package": "pd.cotton",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "fec18f69bdca3c47ef6cb5c10dcb2887",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyngene.1.0.st": {
+      "Package": "pd.cyngene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "42f13f7489b2c25506a07cf216f3eeb2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyngene.1.1.st": {
+      "Package": "pd.cyngene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "6212be4e2c884ec936d60172e8a769d8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyrgene.1.0.st": {
+      "Package": "pd.cyrgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "4413b1b3eab0e9c019b74cee0414d65b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cyrgene.1.1.st": {
+      "Package": "pd.cyrgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a673d3efcecdf5ee450c918a7ffc81e4",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.cytogenetics.array": {
+      "Package": "pd.cytogenetics.array",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c38ea2c4866259bca2632c1be08e9233",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drogene.1.0.st": {
+      "Package": "pd.drogene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "caca9fe3c6c03e9861ca3b4be6bc776a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drogene.1.1.st": {
+      "Package": "pd.drogene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a07e8f1ec3bda92e61da44b78168d897",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drosgenome1": {
+      "Package": "pd.drosgenome1",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "55912d30ef52adadd16b513173d81c0c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.drosophila.2": {
+      "Package": "pd.drosophila.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "59583c4005783ccc32b122105bd549f8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.e.coli.2": {
+      "Package": "pd.e.coli.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "896e06201d209d0d1c7cea0945230fe0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ecoli": {
+      "Package": "pd.ecoli",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "ae2e68783e7026b1a93f7e6378c121a7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ecoli.asv2": {
+      "Package": "pd.ecoli.asv2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "b69d425bb7519135bacfcf10f64caddb",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.elegene.1.0.st": {
+      "Package": "pd.elegene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "dd05e38a55833ed4c9e5240daa421b7e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.elegene.1.1.st": {
+      "Package": "pd.elegene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "3d7c4efc8498eebb4958b6d34be98fe9",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.equgene.1.0.st": {
+      "Package": "pd.equgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a4b517c3216ef93b07b4c58cdad659c8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.equgene.1.1.st": {
+      "Package": "pd.equgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "27163e1db034ead4212adaabad1f7f5b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.feinberg.hg18.me.hx1": {
+      "Package": "pd.feinberg.hg18.me.hx1",
+      "Version": "0.99.3",
+      "Source": "Bioconductor",
+      "Hash": "4a5046b9eaff9c8bfdbbb32d80bf0427",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.feinberg.mm8.me.hx1": {
+      "Package": "pd.feinberg.mm8.me.hx1",
+      "Version": "0.99.3",
+      "Source": "Bioconductor",
+      "Hash": "dc5f65af57e55e62a60df469ccadd282",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.felgene.1.0.st": {
+      "Package": "pd.felgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c97bf3bffe58673156f8420b238acf98",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.felgene.1.1.st": {
+      "Package": "pd.felgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "1d01331a51389db843697f391965f271",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.fingene.1.0.st": {
+      "Package": "pd.fingene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "601b5b660eda40bdb6be31aaac16250c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.fingene.1.1.st": {
+      "Package": "pd.fingene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "babd5432001e080550f7611b1988338d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.genomewidesnp.5": {
+      "Package": "pd.genomewidesnp.5",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "1489b56df1d7e09795a14b10ed4c7a40",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.genomewidesnp.6": {
+      "Package": "pd.genomewidesnp.6",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "7d354c2b21dc9b9c0d3e0514a9ab069d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.guigene.1.0.st": {
+      "Package": "pd.guigene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "0197bfaf8d9d5b38a882154060ca4091",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.guigene.1.1.st": {
+      "Package": "pd.guigene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d6dc551e8b56cb13603a5b62e466c203",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hc.g110": {
+      "Package": "pd.hc.g110",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "828558c354b1ab66fd1d8cac76fe78ee",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.focus": {
+      "Package": "pd.hg.focus",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "2774b8238ee043a11018dafa1af42f1a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133.plus.2": {
+      "Package": "pd.hg.u133.plus.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "848b0566554c7c4fff45d7ee4b6e75b4",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133a": {
+      "Package": "pd.hg.u133a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "bbecde18cad9c4542c0a5f468287c4a5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133a.2": {
+      "Package": "pd.hg.u133a.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "be9315fd0552936789fd9568ad619348",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133a.tag": {
+      "Package": "pd.hg.u133a.tag",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a9042815776d78630a146fa5a4024d29",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u133b": {
+      "Package": "pd.hg.u133b",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "6747b0e8d19d8dadfc688da01298d953",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u219": {
+      "Package": "pd.hg.u219",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "88697315a1b5e136908da9fb55b0ace8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95a": {
+      "Package": "pd.hg.u95a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "454b843b22231e7c466efd1d71e8f0f7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95av2": {
+      "Package": "pd.hg.u95av2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "4e303d782ca41feb31e92aab0ab12a47",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95b": {
+      "Package": "pd.hg.u95b",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "bfc7aa4ad7403a0d699ca3f28a48f1ec",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95c": {
+      "Package": "pd.hg.u95c",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "34736e253ea53ba84f32f6909605cc88",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95d": {
+      "Package": "pd.hg.u95d",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "f7194cdd4912cf4c9cecd1930ead8ed0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg.u95e": {
+      "Package": "pd.hg.u95e",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "8a43d193465a5087ed3d67f03e5de3fe",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hg18.60mer.expr": {
+      "Package": "pd.hg18.60mer.expr",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "30224e6414b55cfa7f016d22329dd39e",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ht.hg.u133.plus.pm": {
+      "Package": "pd.ht.hg.u133.plus.pm",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "1bd584f01fb0c0873e52a12bf74e0a76",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ht.hg.u133a": {
+      "Package": "pd.ht.hg.u133a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a517bb1f4b2801f6fcb358cef89e3c43",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ht.mg.430a": {
+      "Package": "pd.ht.mg.430a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "071a7f9de3e5f146d23da96660968d7b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hta.2.0": {
+      "Package": "pd.hta.2.0",
+      "Version": "3.12.2",
+      "Source": "Bioconductor",
+      "Hash": "6efc1bbeb7bbb66166e37356b9807216",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hu6800": {
+      "Package": "pd.hu6800",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c23e01c0846afc22cf6181dd4656d090",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.huex.1.0.st.v2": {
+      "Package": "pd.huex.1.0.st.v2",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "6ed65a58c116d39085afe62bf02b9621",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.1.0.st.v1": {
+      "Package": "pd.hugene.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "e56491718a5b69a6ddfc6b56c9c60d1c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.1.1.st.v1": {
+      "Package": "pd.hugene.1.1.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "6378db1c5aac356650fe7ad19311cce8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.2.0.st": {
+      "Package": "pd.hugene.2.0.st",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "0613934bbd5f2603938c5d9bcd3af9bd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.hugene.2.1.st": {
+      "Package": "pd.hugene.2.1.st",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "6579531e878ad16ce4ec572293af2970",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.maize": {
+      "Package": "pd.maize",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a8df1cd9981fe039dac5557615f16d08",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping250k.nsp": {
+      "Package": "pd.mapping250k.nsp",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "f3fafdb6002e60727bbd9b402451eb52",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping250k.sty": {
+      "Package": "pd.mapping250k.sty",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "814ebf2048086214328ce0c572ecb5d4",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping50k.hind240": {
+      "Package": "pd.mapping50k.hind240",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "8bd0b82b63964fe6e2fd026c31464a75",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mapping50k.xba240": {
+      "Package": "pd.mapping50k.xba240",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "18ebcc1f7149528bbab0f4003a076146",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.margene.1.0.st": {
+      "Package": "pd.margene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "e184cc4ff9a6b544c8efce48a412d65b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.margene.1.1.st": {
+      "Package": "pd.margene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c3618171b02b1b8a29861a6433f00712",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.medgene.1.0.st": {
+      "Package": "pd.medgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "60b9e246e8add38acdde0a52a6c5b1f6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.medgene.1.1.st": {
+      "Package": "pd.medgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "94211f97dcfffee35d94fa547b037671",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.medicago": {
+      "Package": "pd.medicago",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "472ff892c995f42d475a6feeba2d89b0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74a": {
+      "Package": "pd.mg.u74a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "201381c56dbd99e8f69f9f10c7dd312a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74av2": {
+      "Package": "pd.mg.u74av2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "26d99b1297dbcf64e1366c81e19ed7a6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74b": {
+      "Package": "pd.mg.u74b",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "2e530eee736305e00489198c95bb8280",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74bv2": {
+      "Package": "pd.mg.u74bv2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "14072516062c0082854cc76f8e7df6c2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74c": {
+      "Package": "pd.mg.u74c",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "e10560072e988ae7542833a5a66e24a2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mg.u74cv2": {
+      "Package": "pd.mg.u74cv2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "763d01111316fa41a5d5157ca72146d3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.1.0": {
+      "Package": "pd.mirna.1.0",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "2f3268bd844cef62853a81be4e2f6a82",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.2.0": {
+      "Package": "pd.mirna.2.0",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "866660498b76471d4150c730f7e0b3f8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.3.0": {
+      "Package": "pd.mirna.3.0",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "0f835755831d62094151c1b9c6a718fd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.3.1": {
+      "Package": "pd.mirna.3.1",
+      "Version": "3.8.1",
+      "Source": "Bioconductor",
+      "Hash": "dd0758c5c37379e389c9417c82e8e334",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mirna.4.0": {
+      "Package": "pd.mirna.4.0",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "be6efd9d4dacfccbd05248b69dfab30f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.moe430a": {
+      "Package": "pd.moe430a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "3dfda2542f7dbe9aedb68dba8c2660c3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.moe430b": {
+      "Package": "pd.moe430b",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "3ea40e238da7fd16fe85c34b169af914",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.moex.1.0.st.v1": {
+      "Package": "pd.moex.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "55a68c024d3e70030ba425863b9ea3b4",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.1.0.st.v1": {
+      "Package": "pd.mogene.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "f2221926975778f4366d8e764f009656",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.1.1.st.v1": {
+      "Package": "pd.mogene.1.1.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "0302be5361adf4c63a2da4b331036c29",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.2.0.st": {
+      "Package": "pd.mogene.2.0.st",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "3c2bf1a3c259599f2bc1c2cbc738c3d8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mogene.2.1.st": {
+      "Package": "pd.mogene.2.1.st",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "cd872a9007316eac76335bca38e466f5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mouse430.2": {
+      "Package": "pd.mouse430.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c770d88aac6375fa5b1a5bce80e83025",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mouse430a.2": {
+      "Package": "pd.mouse430a.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "26470c816f5b4ad6b5e2fb3b97ddc593",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mta.1.0": {
+      "Package": "pd.mta.1.0",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "de2d20403bfe44fb47c22583ebb766f5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mu11ksuba": {
+      "Package": "pd.mu11ksuba",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "b0eeaa8c13b7fbf64214c52122c582bd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.mu11ksubb": {
+      "Package": "pd.mu11ksubb",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "84c54cc4e27e404b2f7fb6cd602f2601",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.nugo.hs1a520180": {
+      "Package": "pd.nugo.hs1a520180",
+      "Version": "3.4.0",
+      "Source": "Bioconductor",
+      "Hash": "01ab5af77c42e0e5bc553ba6bc7d6e0d",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.nugo.mm1a520177": {
+      "Package": "pd.nugo.mm1a520177",
+      "Version": "3.4.0",
+      "Source": "Bioconductor",
+      "Hash": "39f360fb191a898f870cf947dacf5457",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ovigene.1.0.st": {
+      "Package": "pd.ovigene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "5a55ca184be90dcb9f15990a9b04e7a7",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ovigene.1.1.st": {
+      "Package": "pd.ovigene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "bfbec7a969c1ebb819aedecac8ee906a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.pae.g1a": {
+      "Package": "pd.pae.g1a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "215764ad2c872aa5211e7a2f72417858",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.plasmodium.anopheles": {
+      "Package": "pd.plasmodium.anopheles",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "64b1f07b7b6e7e0de18ef445ca125afb",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.poplar": {
+      "Package": "pd.poplar",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "6a2564b87de65479a54377c2fcc24d3c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.porcine": {
+      "Package": "pd.porcine",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "1e1a763d1fa6ed3ebf3f43323fbe3377",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.porgene.1.0.st": {
+      "Package": "pd.porgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d7a8e92838ad5c5ec10e7fbdfe70aeee",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.porgene.1.1.st": {
+      "Package": "pd.porgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "46079b207fb8e441220027d0c03c4c00",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rabgene.1.0.st": {
+      "Package": "pd.rabgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "59255bd928ecedb83bfd3a6b953c9668",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rabgene.1.1.st": {
+      "Package": "pd.rabgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "b863fdcabd0bd7c8e3a55022b7c75af1",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rae230a": {
+      "Package": "pd.rae230a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "b08a6dd291da79df3d6d3e4cb6613ef8",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rae230b": {
+      "Package": "pd.rae230b",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "adc00bfdcf464341f7fc33545751f86f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.raex.1.0.st.v1": {
+      "Package": "pd.raex.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "a5e9d042b6723ea1c97af9ff870d4b60",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.1.0.st.v1": {
+      "Package": "pd.ragene.1.0.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "0733d14b3698f46a5e081c66e5f4681b",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.1.1.st.v1": {
+      "Package": "pd.ragene.1.1.st.v1",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "e4aaea733c24e4e9bf86a91f52eeacba",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.2.0.st": {
+      "Package": "pd.ragene.2.0.st",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "c0ed2ea86c30cecd2333b70b2e3975a2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.ragene.2.1.st": {
+      "Package": "pd.ragene.2.1.st",
+      "Version": "3.14.1",
+      "Source": "Bioconductor",
+      "Hash": "977d7727c9be56a81ec5931c556bcf24",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rat230.2": {
+      "Package": "pd.rat230.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "8eafcb38c9203f1c02f486c89edcbedb",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rcngene.1.0.st": {
+      "Package": "pd.rcngene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "6ca9e12b9fe4389009d8a7f3411466e2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rcngene.1.1.st": {
+      "Package": "pd.rcngene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "37f0b72d85d9079bef6f4bd6fb262eaf",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rg.u34a": {
+      "Package": "pd.rg.u34a",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "53a893071aca38d467b28ce71cc91dbf",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rg.u34b": {
+      "Package": "pd.rg.u34b",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "69813d646af4d08fb64c9c1df3e9ce5f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rg.u34c": {
+      "Package": "pd.rg.u34c",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "9c24d0128dc81bc04780d1270de1a440",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rhegene.1.0.st": {
+      "Package": "pd.rhegene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "b435e86c98391f4fb708b53ecfbef972",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rhegene.1.1.st": {
+      "Package": "pd.rhegene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "830b21fdb9776cc7f584f659cc975eec",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rhesus": {
+      "Package": "pd.rhesus",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "c086f7ba9c53ddc4ac837c905d95aad2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rice": {
+      "Package": "pd.rice",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d20989134682192c94ca350658b4aec2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rjpgene.1.0.st": {
+      "Package": "pd.rjpgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "38dc751c18dafee2a441f40056828580",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rjpgene.1.1.st": {
+      "Package": "pd.rjpgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a3ac441163d4a7322b687d02ef7dff1c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rn.u34": {
+      "Package": "pd.rn.u34",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a22b1c43976cb7068686d0d2a599c740",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rta.1.0": {
+      "Package": "pd.rta.1.0",
+      "Version": "3.12.2",
+      "Source": "Bioconductor",
+      "Hash": "23f045e2e690d3868451d761837285a2",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rusgene.1.0.st": {
+      "Package": "pd.rusgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "9574263c96820c71900ef16e791658cd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.rusgene.1.1.st": {
+      "Package": "pd.rusgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "eabc8cd5788b3e5c13b0571b88f7c1fd",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.s.aureus": {
+      "Package": "pd.s.aureus",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "07d98e6048c0d0a91245cae86a6b0385",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.soybean": {
+      "Package": "pd.soybean",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "937fa075ce784fad770f8a21b68617a6",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.soygene.1.0.st": {
+      "Package": "pd.soygene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "e8665453335633c8454b131a308eec27",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.soygene.1.1.st": {
+      "Package": "pd.soygene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "f0afcd1ae6d9b2e3348ad02c8bd5b7d1",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.sugar.cane": {
+      "Package": "pd.sugar.cane",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "2bbc61cd06f67b0c962ba1b6500f9339",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.tomato": {
+      "Package": "pd.tomato",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d6fd6592faae7b009a6744538c5eca74",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.u133.x3p": {
+      "Package": "pd.u133.x3p",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "d8e93f9787aba181426723464be3aec0",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.vitis.vinifera": {
+      "Package": "pd.vitis.vinifera",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "46c90d3f46397d0a5e22aef96a857e6c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.wheat": {
+      "Package": "pd.wheat",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "fcf7d7fa792238501b2f7c7f5931985c",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.x.laevis.2": {
+      "Package": "pd.x.laevis.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "a669e12d776049b377ceae109b7947e3",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.x.tropicalis": {
+      "Package": "pd.x.tropicalis",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "276bf9487d567b4e7dfd1ea0c0856f74",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.xenopus.laevis": {
+      "Package": "pd.xenopus.laevis",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "38f4924fc343ef2b122d84c87a7d2925",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.yeast.2": {
+      "Package": "pd.yeast.2",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "adce2916c9f381a2e43e19eae91b858f",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.yg.s98": {
+      "Package": "pd.yg.s98",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "bd9af42efd037b14eaaeb6e9359522e5",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.zebgene.1.0.st": {
+      "Package": "pd.zebgene.1.0.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "8055ffc0ff24cbf788904f7aa9423b54",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.zebgene.1.1.st": {
+      "Package": "pd.zebgene.1.1.st",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "8535b9d5f4f79a208ce1bc587f6b74e9",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pd.zebrafish": {
+      "Package": "pd.zebrafish",
+      "Version": "3.12.0",
+      "Source": "Bioconductor",
+      "Hash": "73aeaab62445f915e528c4fea6a8896a",
+      "Requirements": [
+        "Biostrings",
+        "DBI",
+        "IRanges",
+        "RSQLite",
+        "S4Vectors",
+        "oligo",
+        "oligoClasses"
+      ]
+    },
+    "pillar": {
+      "Package": "pillar",
+      "Version": "1.8.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f2316df30902c81729ae9de95ad5a608",
+      "Requirements": [
+        "cli",
+        "fansi",
+        "glue",
+        "lifecycle",
+        "rlang",
+        "utf8",
+        "vctrs"
+      ]
+    },
+    "pkgbuild": {
+      "Package": "pkgbuild",
+      "Version": "1.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d6c3008d79653a0f267703288230105e",
+      "Requirements": [
+        "R6",
+        "callr",
+        "cli",
+        "crayon",
+        "desc",
+        "prettyunits",
+        "processx",
+        "rprojroot",
+        "withr"
+      ]
+    },
+    "pkgconfig": {
+      "Package": "pkgconfig",
+      "Version": "2.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b8a063ca3694e651ac46f71b4bf0e090",
+      "Requirements": []
+    },
+    "pkgdown": {
+      "Package": "pkgdown",
+      "Version": "2.0.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "16fa15449c930bf3a7761d3c68f8abf9",
+      "Requirements": [
+        "bslib",
+        "callr",
+        "cli",
+        "desc",
+        "digest",
+        "downlit",
+        "fs",
+        "httr",
+        "jsonlite",
+        "magrittr",
+        "memoise",
+        "purrr",
+        "ragg",
+        "rlang",
+        "rmarkdown",
+        "tibble",
+        "whisker",
+        "withr",
+        "xml2",
+        "yaml"
+      ]
+    },
+    "pkgload": {
+      "Package": "pkgload",
+      "Version": "1.3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6b0c222c5071efe0f3baf3dae9aa40e2",
+      "Requirements": [
+        "cli",
+        "crayon",
+        "desc",
+        "fs",
+        "glue",
+        "rlang",
+        "rprojroot",
+        "withr"
+      ]
+    },
+    "plogr": {
+      "Package": "plogr",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "09eb987710984fc2905c7129c7d85e65",
+      "Requirements": []
+    },
+    "plyr": {
+      "Package": "plyr",
+      "Version": "1.8.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d744387aef9047b0b48be2933d78e862",
+      "Requirements": [
+        "Rcpp"
+      ]
+    },
+    "praise": {
+      "Package": "praise",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a555924add98c99d2f411e37e7d25e9f",
+      "Requirements": []
+    },
+    "preprocessCore": {
+      "Package": "preprocessCore",
+      "Version": "1.40.0",
+      "Source": "Bioconductor",
+      "Hash": "db115919701b4e644b96de3f7523d17a",
+      "Requirements": []
+    },
+    "prettyunits": {
+      "Package": "prettyunits",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f3c960f0105f2ed179460864979fc37c",
+      "Requirements": [
+        "assertthat",
+        "magrittr"
+      ]
+    },
+    "processx": {
+      "Package": "processx",
+      "Version": "3.8.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a33ee2d9bf07564efb888ad98410da84",
+      "Requirements": [
+        "R6",
+        "ps"
+      ]
+    },
+    "profvis": {
+      "Package": "profvis",
+      "Version": "0.3.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e9d21e79848e02e524bea6f5bd53e7e4",
+      "Requirements": [
+        "htmlwidgets",
+        "stringr"
+      ]
+    },
+    "promises": {
+      "Package": "promises",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a8730dcbdd19f9047774909f0ec214a4",
+      "Requirements": [
+        "R6",
+        "Rcpp",
+        "later",
+        "magrittr",
+        "rlang"
+      ]
+    },
+    "ps": {
+      "Package": "ps",
+      "Version": "1.3.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a54a7dfd68124abb2225dbfa9a85c457",
+      "Requirements": []
+    },
+    "purrr": {
+      "Package": "purrr",
+      "Version": "0.3.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "54842a2443c76267152eface28d9e90a",
+      "Requirements": [
+        "magrittr",
+        "rlang"
+      ]
+    },
+    "ragg": {
+      "Package": "ragg",
+      "Version": "1.2.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "690bc058ea2b1b8a407d3cfe3dce3ef9",
+      "Requirements": [
+        "systemfonts",
+        "textshaping"
+      ]
+    },
+    "rappdirs": {
+      "Package": "rappdirs",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5e3c5dc0b071b21fa128676560dbe94d",
+      "Requirements": []
+    },
+    "rcmdcheck": {
+      "Package": "rcmdcheck",
+      "Version": "1.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8f25ebe2ec38b1f2aef3b0d2ef76f6c4",
+      "Requirements": [
+        "R6",
+        "callr",
+        "cli",
+        "curl",
+        "desc",
+        "digest",
+        "pkgbuild",
+        "prettyunits",
+        "rprojroot",
+        "sessioninfo",
+        "withr",
+        "xopen"
+      ]
+    },
+    "readr": {
+      "Package": "readr",
+      "Version": "1.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "af8ab99cd936773a148963905736907b",
+      "Requirements": [
+        "BH",
+        "R6",
+        "Rcpp",
+        "clipr",
+        "crayon",
+        "hms",
+        "tibble"
+      ]
+    },
+    "rematch2": {
+      "Package": "rematch2",
+      "Version": "2.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "76c9e04c712a05848ae7a23d2f170a40",
+      "Requirements": [
+        "tibble"
+      ]
+    },
+    "remotes": {
+      "Package": "remotes",
+      "Version": "2.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "227045be9aee47e6dda9bb38ac870d67",
+      "Requirements": []
+    },
+    "renv": {
+      "Package": "renv",
+      "Version": "0.16.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c9e8442ab69bc21c9697ecf856c1e6c7",
+      "Requirements": []
+    },
+    "reshape2": {
+      "Package": "reshape2",
+      "Version": "1.4.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bb5996d0bd962d214a11140d77589917",
+      "Requirements": [
+        "Rcpp",
+        "plyr",
+        "stringr"
+      ]
+    },
+    "rlang": {
+      "Package": "rlang",
+      "Version": "1.0.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4ed1f8336c8d52c3e750adcdc57228a7",
+      "Requirements": []
+    },
+    "rmarkdown": {
+      "Package": "rmarkdown",
+      "Version": "2.20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "716fde5382293cc94a71f68c85b78d19",
+      "Requirements": [
+        "bslib",
+        "evaluate",
+        "htmltools",
+        "jquerylib",
+        "jsonlite",
+        "knitr",
+        "stringr",
+        "tinytex",
+        "xfun",
+        "yaml"
+      ]
+    },
+    "roxygen2": {
+      "Package": "roxygen2",
+      "Version": "7.2.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7b153c746193b143c14baa072bae4e27",
+      "Requirements": [
+        "R6",
+        "brew",
+        "cli",
+        "commonmark",
+        "cpp11",
+        "desc",
+        "knitr",
+        "pkgload",
+        "purrr",
+        "rlang",
+        "stringi",
+        "stringr",
+        "withr",
+        "xml2"
+      ]
+    },
+    "rpart": {
+      "Package": "rpart",
+      "Version": "4.1-13",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6315535da80d5cc6c2e573966d8c8210",
+      "Requirements": []
+    },
+    "rprojroot": {
+      "Package": "rprojroot",
+      "Version": "1.3-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f6a407ae5dd21f6f80a6708bbb6eb3ae",
+      "Requirements": [
+        "backports"
+      ]
+    },
+    "rstudioapi": {
+      "Package": "rstudioapi",
+      "Version": "0.11",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "33a5b27a03da82ac4b1d43268f80088a",
+      "Requirements": []
+    },
+    "rversions": {
+      "Package": "rversions",
+      "Version": "2.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a9881dfed103e83f9de151dc17002cd1",
+      "Requirements": [
+        "curl",
+        "xml2"
+      ]
+    },
+    "sass": {
+      "Package": "sass",
+      "Version": "0.4.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2bb4371a4c80115518261866eab6ab11",
+      "Requirements": [
+        "R6",
+        "fs",
+        "htmltools",
+        "rappdirs",
+        "rlang"
+      ]
+    },
+    "sessioninfo": {
+      "Package": "sessioninfo",
+      "Version": "1.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3f9796a8d0a0e8c6eb49a4b029359d1f",
+      "Requirements": [
+        "cli"
+      ]
+    },
+    "shiny": {
+      "Package": "shiny",
+      "Version": "1.7.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c2eae3d8c670fa9dfa35a12066f4a1d5",
+      "Requirements": [
+        "R6",
+        "bslib",
+        "cachem",
+        "commonmark",
+        "crayon",
+        "ellipsis",
+        "fastmap",
+        "fontawesome",
+        "glue",
+        "htmltools",
+        "httpuv",
+        "jsonlite",
+        "later",
+        "lifecycle",
+        "mime",
+        "promises",
+        "rlang",
+        "sourcetools",
+        "withr",
+        "xtable"
+      ]
+    },
+    "snow": {
+      "Package": "snow",
+      "Version": "0.4-4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "40b74690debd20c57d93d8c246b305d4",
+      "Requirements": []
+    },
+    "sourcetools": {
+      "Package": "sourcetools",
+      "Version": "0.1.7-1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5f5a7629f956619d519205ec475fe647",
+      "Requirements": []
+    },
+    "spatial": {
+      "Package": "spatial",
+      "Version": "7.3-11",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f27a078d834614513608da2c08031130",
+      "Requirements": []
+    },
+    "stringi": {
+      "Package": "stringi",
+      "Version": "1.5.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a063ebea753c92910a4cca7b18bc1f05",
+      "Requirements": []
+    },
+    "stringr": {
+      "Package": "stringr",
+      "Version": "1.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0759e6b6c0957edb1311028a49a35e76",
+      "Requirements": [
+        "glue",
+        "magrittr",
+        "stringi"
+      ]
+    },
+    "survival": {
+      "Package": "survival",
+      "Version": "2.41-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "60b1da51f5e3556fd177170a1aa40b49",
+      "Requirements": [
+        "Matrix"
+      ]
+    },
+    "sva": {
+      "Package": "sva",
+      "Version": "3.26.0",
+      "Source": "Bioconductor",
+      "Hash": "c21e7fce3b904dae22f5d1a151b8a0c5",
+      "Requirements": [
+        "BiocParallel",
+        "genefilter",
+        "limma",
+        "matrixStats",
+        "mgcv"
+      ]
+    },
+    "sys": {
+      "Package": "sys",
+      "Version": "3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "595c352c624e65f8f67f66a77a6409b6",
+      "Requirements": []
+    },
+    "systemfonts": {
+      "Package": "systemfonts",
+      "Version": "1.0.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "90b28393209827327de889f49935140a",
+      "Requirements": [
+        "cpp11"
+      ]
+    },
+    "testthat": {
+      "Package": "testthat",
+      "Version": "3.1.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7910146255835c66e9eb272fb215248d",
+      "Requirements": [
+        "R6",
+        "brio",
+        "callr",
+        "cli",
+        "desc",
+        "digest",
+        "ellipsis",
+        "evaluate",
+        "jsonlite",
+        "lifecycle",
+        "magrittr",
+        "pkgload",
+        "praise",
+        "processx",
+        "ps",
+        "rlang",
+        "waldo",
+        "withr"
+      ]
+    },
+    "textshaping": {
+      "Package": "textshaping",
+      "Version": "0.3.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1ab6223d3670fac7143202cb6a2d43d5",
+      "Requirements": [
+        "cpp11",
+        "systemfonts"
+      ]
+    },
+    "tibble": {
+      "Package": "tibble",
+      "Version": "3.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "37695ff125982007d42a59ad10982ff2",
+      "Requirements": [
+        "fansi",
+        "lifecycle",
+        "magrittr",
+        "pillar",
+        "pkgconfig",
+        "rlang",
+        "vctrs"
+      ]
+    },
+    "tidyr": {
+      "Package": "tidyr",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7395a05640bf91502dd475a84008d87e",
+      "Requirements": [
+        "Rcpp",
+        "dplyr",
+        "ellipsis",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "purrr",
+        "rlang",
+        "stringi",
+        "tibble",
+        "tidyselect",
+        "vctrs"
+      ]
+    },
+    "tidyselect": {
+      "Package": "tidyselect",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "79540e5fcd9e0435af547d885f184fd5",
+      "Requirements": [
+        "cli",
+        "glue",
+        "lifecycle",
+        "rlang",
+        "vctrs",
+        "withr"
+      ]
+    },
+    "tinytex": {
+      "Package": "tinytex",
+      "Version": "0.44",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c0f007e2eeed7722ce13d42b84a22e07",
+      "Requirements": [
+        "xfun"
+      ]
+    },
+    "tximport": {
+      "Package": "tximport",
+      "Version": "1.6.0",
+      "Source": "Bioconductor",
+      "Hash": "2c824ac20bbb34bba92a9b5b0d600fec",
+      "Requirements": []
+    },
+    "urlchecker": {
+      "Package": "urlchecker",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "409328b8e1253c8d729a7836fe7f7a16",
+      "Requirements": [
+        "cli",
+        "curl",
+        "xml2"
+      ]
+    },
+    "usethis": {
+      "Package": "usethis",
+      "Version": "2.1.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a67a22c201832b12c036cc059f1d137d",
+      "Requirements": [
+        "cli",
+        "clipr",
+        "crayon",
+        "curl",
+        "desc",
+        "fs",
+        "gert",
+        "gh",
+        "glue",
+        "jsonlite",
+        "lifecycle",
+        "purrr",
+        "rappdirs",
+        "rlang",
+        "rprojroot",
+        "rstudioapi",
+        "whisker",
+        "withr",
+        "yaml"
+      ]
+    },
+    "utf8": {
+      "Package": "utf8",
+      "Version": "1.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4a5081acfb7b81a572e4384a7aaf2af1",
+      "Requirements": []
+    },
+    "vctrs": {
+      "Package": "vctrs",
+      "Version": "0.5.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e4ffa94ceed5f124d429a5a5f0f5b378",
+      "Requirements": [
+        "cli",
+        "glue",
+        "lifecycle",
+        "rlang"
+      ]
+    },
+    "waldo": {
+      "Package": "waldo",
+      "Version": "0.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "035fba89d0c86e2113120f93301b98ad",
+      "Requirements": [
+        "cli",
+        "diffobj",
+        "fansi",
+        "glue",
+        "rematch2",
+        "rlang",
+        "tibble"
+      ]
+    },
+    "whisker": {
+      "Package": "whisker",
+      "Version": "0.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ca970b96d894e90397ed20637a0c1bbe",
+      "Requirements": []
+    },
+    "withr": {
+      "Package": "withr",
+      "Version": "2.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c0e49a9760983e81e55cdd9be92e7182",
+      "Requirements": []
+    },
+    "xfun": {
+      "Package": "xfun",
+      "Version": "0.36",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f5baec54606751aa53ac9c0e05848ed6",
+      "Requirements": []
+    },
+    "xml2": {
+      "Package": "xml2",
+      "Version": "1.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "921dce7c0ec595ed85e77683d3e6c8b6",
+      "Requirements": []
+    },
+    "xopen": {
+      "Package": "xopen",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6c85f015dee9cc7710ddd20f86881f58",
+      "Requirements": [
+        "processx"
+      ]
+    },
+    "xtable": {
+      "Package": "xtable",
+      "Version": "1.8-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4739f99be2ab40fe89cbd00365c98294",
+      "Requirements": []
+    },
+    "yaml": {
+      "Package": "yaml",
+      "Version": "2.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2826c5d9efb0a88f657c7a679c7106db",
+      "Requirements": []
+    },
+    "zeallot": {
+      "Package": "zeallot",
+      "Version": "0.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ee9b643aa8331c45d8d82eb3a137c9bc",
+      "Requirements": []
+    },
+    "zip": {
+      "Package": "zip",
+      "Version": "2.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c42bfcec3fa6a0cce17ce1f8bc684f88",
+      "Requirements": []
+    },
+    "zlibbioc": {
+      "Package": "zlibbioc",
+      "Version": "1.24.0",
+      "Source": "Bioconductor",
+      "Hash": "75640bcdaa390770a672332c904642db",
+      "Requirements": []
+    }
+  }
+}

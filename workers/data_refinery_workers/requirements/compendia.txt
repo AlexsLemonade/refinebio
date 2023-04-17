@@ -1,0 +1,9 @@
+nose
+numpy
+scipy
+matplotlib
+pandas==0.25.3
+scikit-learn
+sympy
+tzlocal
+fancySVD

@@ -1,43 +1,45 @@
 FROM python:3.8.5-buster
 
-# Install libpq-dev and gcc for psycopg2
-RUN apt-get update -qq
-RUN apt-get install -y libpq-dev gcc
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+# Install gcc and libpq-dev for psycopg2.
+RUN apt-get update -qq && \
+    apt-get install -y \
+        gcc \
+        libpq-dev
+
+RUN groupadd user && \
+    useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-COPY config/ config/
-
 COPY api/requirements.txt .
-
-RUN pip install -r requirements.txt
-
-COPY common/dist/data-refinery-common-* common/
+RUN pip install --upgrade pip && \
+    pip install --ignore-installed -r requirements.txt && \
+    pip install --ignore-installed uwsgi && \
+    rm -r /root/.cache
 
 # Get the latest version from the dist directory.
-RUN pip install \
+COPY common/dist/data-refinery-common-* common/
+RUN pip install --ignore-installed \
     common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY api/ .
+COPY config/ config/
 
-# uWSGI
-RUN pip install uwsgi
-RUN chmod +x /home/user/collect_and_run_uwsgi.sh
-
-RUN mkdir -p /tmp/www/static
-RUN chown user /tmp/www/static
+RUN chmod +x /home/user/collect_and_run_uwsgi.sh && \
+    mkdir -p /tmp/www/static && \
+    chown user /tmp/www/static
 
 ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 
-# We collect Django's static files and expose them
-# as a volume so that Nginx can serve them directly.
+# We collect Django's static files and expose them as a volume so that Nginx
+# can serve them directly.
 VOLUME /tmp/www/static
 
 EXPOSE 8081
 
-CMD ["/home/user/collect_and_run_uwsgi.sh"]
+CMD ["sh", "-c", "/home/user/collect_and_run_uwsgi.sh"]

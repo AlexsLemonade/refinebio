@@ -3,24 +3,14 @@ FROM ccdlstaging/dr_base:latest
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
-# For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG=C.UTF-8
-ENV R_LIBS=/usr/local/lib/R/site-library
-
 WORKDIR /home/user
 
-COPY workers/R/dependencies/install_bioc.R .
-RUN Rscript install_bioc.R
-
-COPY workers/R/dependencies/affymetrix/install_affy_only.R .
-RUN Rscript install_affy_only.R
+COPY common/R/dependencies/common_tests/renv.lock .
+COPY common/R/renv_load.R .
+RUN Rscript renv_load.R
 
 COPY common/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
-    # Install this rpy2 here instead of via requirements.txt because
-    # pip-compile throws an error for it.
-    pip3 install --ignore-installed --no-cache-dir rpy2==3.4.5
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY common/ .
 COPY config config

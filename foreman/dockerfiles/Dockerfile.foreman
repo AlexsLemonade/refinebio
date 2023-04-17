@@ -5,6 +5,10 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
+ADD https://gbnci.cancer.gov/geo/GEOmetadb.sqlite.gz data/microarray/GEOmetadb.sqlite.gz
+RUN gunzip data/microarray/GEOmetadb.sqlite.gz && \
+    chmod 644 data/microarray/GEOmetadb.sqlite
+
 COPY foreman/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 

@@ -1,0 +1,236 @@
+renv::install("bit@1.1-14")
+renv::install("XML@3.98-1.10")
+renv::install("bitops@1.0-6")
+renv::install("RCurl@1.95-4.10")
+renv::install("pkgconfig@2.0.1")
+renv::install("backports@1.1.4")
+renv::install("rlang@0.4.0")
+renv::install("zeallot@0.1.0")
+renv::install("glue@1.3.1")
+renv::install("digest@0.6.19")
+renv::install("vctrs@0.1.0")
+renv::install("magrittr@1.5")
+renv::install("assertthat@0.2.1")
+renv::install("prettyunits@1.0.2")
+renv::install("blob@1.1.1")
+renv::install("memoise@2.0.1")
+renv::install("DBI@1.0.0")
+renv::install("Rcpp@1.0.7")
+renv::install("bit64@0.9-7")
+renv::install("RSQLite@2.0")
+renv::install("fansi@0.4.0")
+renv::install("crayon@1.3.4")
+renv::install("cli@1.1.0")
+renv::install("utf8@1.1.4")
+renv::install("pillar@1.4.2")
+renv::install("lifecycle@1.0.3")
+renv::install("tibble@1.4.2")
+renv::install("xtable@1.8-2")
+renv::install("tidyselect@0.2.5")
+renv::install("R6@2.4.0")
+renv::install("dplyr@1.0.2")
+renv::install("stringi@1.5.3")
+renv::install("sys@3.2")
+renv::install("askpass@1.1")
+renv::install("openssl@2.0.3")
+renv::install("curl@3.3")
+renv::install("mime@0.7")
+renv::install("httr@1.4.2")
+renv::install("hms@0.4.2")
+renv::install("clipr@0.6.0")
+renv::install("readr@1.3.1")
+renv::install("xml2@1.3.1")
+renv::install("locfit@1.5-9.2")
+renv::install("getopt@1.20.3")
+renv::install("optparse@1.4.4")
+
+renv::install(
+    "affy",
+    "affyio",
+    "AnnotationDbi",
+    "ff@2.2-14",
+    "genefilter",
+    "GEOquery",
+    "limma",
+    "oligo",
+    "oligoClasses",
+    "preprocessCore",
+    "purrr@0.3.5",
+    "SCAN.UPC",
+    "sva",
+    "tidyr@1.1.0",
+    "zlibbioc"
+)
+
+renv::install(
+    "pd.081229.hg18.promoter.medip.hx1",
+    "pd.2006.07.18.hg18.refseq.promoter",
+    "pd.2006.07.18.mm8.refseq.promoter",
+    "pd.2006.10.31.rn34.refseq.promoter",
+    "pd.ag",
+    "pd.aragene.1.0.st",
+    "pd.aragene.1.1.st",
+    "pd.atdschip.tiling",
+    "pd.ath1.121501",
+    "pd.barley1",
+    "pd.bovgene.1.0.st",
+    "pd.bovgene.1.1.st",
+    "pd.bovine",
+    "pd.bsubtilis",
+    "pd.cangene.1.0.st",
+    "pd.cangene.1.1.st",
+    "pd.canine.2",
+    "pd.canine",
+    "pd.celegans",
+    "pd.charm.hg18.example",
+    "pd.chicken",
+    "pd.chigene.1.0.st",
+    "pd.chigene.1.1.st",
+    "pd.chogene.2.0.st",
+    "pd.chogene.2.1.st",
+    "pd.citrus",
+    "pd.clariom.d.human",
+    "pd.clariom.s.human.ht",
+    "pd.clariom.s.human",
+    "pd.clariom.s.mouse.ht",
+    "pd.clariom.s.mouse",
+    "pd.clariom.s.rat.ht",
+    "pd.clariom.s.rat",
+    "pd.cotton",
+    "pd.cyngene.1.0.st",
+    "pd.cyngene.1.1.st",
+    "pd.cyrgene.1.0.st",
+    "pd.cyrgene.1.1.st",
+    "pd.cytogenetics.array",
+    "pd.drogene.1.0.st",
+    "pd.drogene.1.1.st",
+    "pd.drosgenome1",
+    "pd.drosophila.2",
+    "pd.e.coli.2",
+    "pd.ecoli.asv2",
+    "pd.ecoli",
+    "pd.elegene.1.0.st",
+    "pd.elegene.1.1.st",
+    "pd.equgene.1.0.st",
+    "pd.equgene.1.1.st",
+    "pd.feinberg.hg18.me.hx1",
+    "pd.feinberg.mm8.me.hx1",
+    "pd.felgene.1.0.st",
+    "pd.felgene.1.1.st",
+    "pd.fingene.1.0.st",
+    "pd.fingene.1.1.st",
+    "pd.genomewidesnp.5",
+    "pd.genomewidesnp.6",
+    "pd.guigene.1.0.st",
+    "pd.guigene.1.1.st",
+    "pd.hc.g110",
+    "pd.hg.focus",
+    "pd.hg.u133.plus.2",
+    "pd.hg.u133a.2",
+    "pd.hg.u133a.tag",
+    "pd.hg.u133a",
+    "pd.hg.u133b",
+    "pd.hg.u219",
+    "pd.hg.u95a",
+    "pd.hg.u95av2",
+    "pd.hg.u95b",
+    "pd.hg.u95c",
+    "pd.hg.u95d",
+    "pd.hg.u95e",
+    "pd.hg18.60mer.expr",
+    "pd.ht.hg.u133.plus.pm",
+    "pd.ht.hg.u133a",
+    "pd.ht.mg.430a",
+    "pd.hta.2.0",
+    "pd.hu6800",
+    "pd.huex.1.0.st.v2",
+    "pd.hugene.1.0.st.v1",
+    "pd.hugene.1.1.st.v1",
+    "pd.hugene.2.0.st",
+    "pd.hugene.2.1.st",
+    "pd.maize",
+    "pd.mapping250k.nsp",
+    "pd.mapping250k.sty",
+    "pd.mapping50k.hind240",
+    "pd.mapping50k.xba240",
+    "pd.margene.1.0.st",
+    "pd.margene.1.1.st",
+    "pd.medgene.1.0.st",
+    "pd.medgene.1.1.st",
+    "pd.medicago",
+    "pd.mg.u74a",
+    "pd.mg.u74av2",
+    "pd.mg.u74b",
+    "pd.mg.u74bv2",
+    "pd.mg.u74c",
+    "pd.mg.u74cv2",
+    "pd.mirna.1.0",
+    "pd.mirna.2.0",
+    "pd.mirna.3.0",
+    "pd.mirna.3.1",
+    "pd.mirna.4.0",
+    "pd.moe430a",
+    "pd.moe430b",
+    "pd.moex.1.0.st.v1",
+    "pd.mogene.1.0.st.v1",
+    "pd.mogene.1.1.st.v1",
+    "pd.mogene.2.0.st",
+    "pd.mogene.2.1.st",
+    "pd.mouse430.2",
+    "pd.mouse430a.2",
+    "pd.mta.1.0",
+    "pd.mu11ksuba",
+    "pd.mu11ksubb",
+    "pd.nugo.hs1a520180",
+    "pd.nugo.mm1a520177",
+    "pd.ovigene.1.0.st",
+    "pd.ovigene.1.1.st",
+    "pd.pae.g1a",
+    "pd.plasmodium.anopheles",
+    "pd.poplar",
+    "pd.porcine",
+    "pd.porgene.1.0.st",
+    "pd.porgene.1.1.st",
+    "pd.rabgene.1.0.st",
+    "pd.rabgene.1.1.st",
+    "pd.rae230a",
+    "pd.rae230b",
+    "pd.raex.1.0.st.v1",
+    "pd.ragene.1.0.st.v1",
+    "pd.ragene.1.1.st.v1",
+    "pd.ragene.2.0.st",
+    "pd.ragene.2.1.st",
+    "pd.rat230.2",
+    "pd.rcngene.1.0.st",
+    "pd.rcngene.1.1.st",
+    "pd.rg.u34a",
+    "pd.rg.u34b",
+    "pd.rg.u34c",
+    "pd.rhegene.1.0.st",
+    "pd.rhegene.1.1.st",
+    "pd.rhesus",
+    "pd.rice",
+    "pd.rjpgene.1.0.st",
+    "pd.rjpgene.1.1.st",
+    "pd.rn.u34",
+    "pd.rta.1.0",
+    "pd.rusgene.1.0.st",
+    "pd.rusgene.1.1.st",
+    "pd.s.aureus",
+    "pd.soybean",
+    "pd.soygene.1.0.st",
+    "pd.soygene.1.1.st",
+    "pd.sugar.cane",
+    "pd.tomato",
+    "pd.u133.x3p",
+    "pd.vitis.vinifera",
+    "pd.wheat",
+    "pd.x.laevis.2",
+    "pd.x.tropicalis",
+    "pd.xenopus.laevis",
+    "pd.yeast.2",
+    "pd.yg.s98",
+    "pd.zebgene.1.0.st",
+    "pd.zebgene.1.1.st",
+    "pd.zebrafish"
+)
