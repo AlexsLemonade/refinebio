@@ -25,6 +25,7 @@ RUN pip install --ignore-installed \
 
 COPY api/ .
 COPY config/ config/
+COPY setup.cfg .
 
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
