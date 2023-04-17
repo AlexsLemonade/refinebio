@@ -4,7 +4,26 @@ This command will clear out the database to make repeating tests easier.
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_common.models import *
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputationalResultAnnotation,
+    ComputedFile,
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentSampleAssociation,
+    Organism,
+    OrganismIndex,
+    OriginalFile,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+    SampleAnnotation,
+    SampleResultAssociation,
+    SurveyJob,
+    SurveyJobKeyValue,
+)
 
 
 class Command(BaseCommand):
