@@ -8,7 +8,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 VERSION_FILE = "version"
 try:
     with open(VERSION_FILE, "rt") as version_file:
-        version_string = version_file.read().strip()
+        version_string = version_file.read().strip().split("-")[0]
 except OSError:
     print(
         "Cannot read version to determine System Version."
