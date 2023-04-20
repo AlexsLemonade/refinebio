@@ -15,8 +15,8 @@ project_root=$(cd .. && pwd)
 volume_directory="$project_root/test_volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
-    chmod -R a+rwX "$volume_directory"
 fi
+chmod -R a+rwX "$volume_directory"
 
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 reference_file_dir="$volume_directory/reference/"

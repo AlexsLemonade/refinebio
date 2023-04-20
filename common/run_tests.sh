@@ -22,8 +22,8 @@ project_root=$(pwd) # "cd .." called above
 volume_directory="$project_root/test_volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
-    chmod -R a+rwX "$volume_directory"
 fi
+chmod -R a+rwX "$volume_directory"
 
 ./scripts/prepare_image.sh -i common_tests -s common
 

@@ -15,8 +15,8 @@ cd ..
 volume_directory="$script_directory/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
-    chmod -R a+rwX "$volume_directory"
 fi
+chmod -R a+rwX "$volume_directory"
 
 ./scripts/prepare_image.sh -i foreman -s foreman
 
