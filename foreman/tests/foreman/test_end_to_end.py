@@ -41,7 +41,8 @@ SMASHER_SAMPLES = ["GSM1487313", "SRR332914"]
 SMASHER_EXPERIMENTS = ["GSE1487313", "SRP332914"]
 
 MICROARRAY_ACCESSION_CODES = [
-    "E-TABM-496",  # 39 samples of SACCHAROMYCES_CEREVISIAE microarray data
+    # TODO(ark): enable after ArrayExpress migration is done.
+    # "E-TABM-496",  # 39 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE94793",  # 24 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE80822",  # 12 samples of SACCHAROMYCES_CEREVISIAE microarray data
     "GSE96849",  # 68 samples of SACCHAROMYCES_CEREVISIAE microarray data
