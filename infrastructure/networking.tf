@@ -2,7 +2,6 @@
 # related to networking.
 
 provider "aws" {
-  profile = "default"
   region = var.region
 }
 
