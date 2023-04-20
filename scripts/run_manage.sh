@@ -76,8 +76,8 @@ fi
 volume_directory="$script_directory/../api/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
-    chmod -R a+rwX "$volume_directory"
 fi
+chmod -R a+rwX "$volume_directory"
 
 docker build -t dr_shell -f "$service/dockerfiles/Dockerfile.$image" .
 

@@ -78,11 +78,10 @@ else
 fi
 
 volume_directory="$script_directory/volume"
-
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
-    chmod -R a+rwX "$volume_directory"
 fi
+chmod -R a+rwX "$volume_directory"
 
 source scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)

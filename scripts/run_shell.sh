@@ -25,8 +25,8 @@ cd ..
 volume_directory="$script_directory/../foreman/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
-    chmod -R a+rwX "$volume_directory"
 fi
+chmod -R a+rwX "$volume_directory"
 
 docker build -t dr_shell -f foreman/dockerfiles/Dockerfile.foreman .
 
