@@ -43,12 +43,12 @@ done < ../infrastructure/prod_env
 # locally, and when running locally `prepare_image.sh` makes the forman
 # ccdlstaging/dr_foreman.
 docker run -t \
-       --env-file ../infrastructure/prod_env \
-       --env RUNNING_IN_CLOUD=False \
-       --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
-       --env JOB_DEFINITION_PREFIX="$USER_$STAGE_" \
-       --env REFINEBIO_BASE_URL="http://$API_HOST/v1/" \
-       --env DJANGO_SECRET_KEY="TEST_KEY_FOR_DEV" \
-       --volume "$volume_directory":/home/user/data_store \
-       --volume "$HOME/.aws":/home/user/.aws \
-       ccdlstaging/dr_foreman python3 manage.py test --no-input --parallel=2 --testrunner='data_refinery_foreman.test_runner.NoDbTestRunner' data_refinery_foreman.foreman.test_end_to_end
+    --env-file ../infrastructure/prod_env \
+    --env RUNNING_IN_CLOUD=False \
+    --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
+    --env JOB_DEFINITION_PREFIX="$USER_$STAGE_" \
+    --env REFINEBIO_BASE_URL="http://$API_HOST/v1/" \
+    --env DJANGO_SECRET_KEY="TEST_KEY_FOR_DEV" \
+    --volume "$volume_directory":/home/user/data_store \
+    --volume "$HOME/.aws":/home/user/.aws \
+    ccdlstaging/dr_foreman python3 manage.py test --no-input --parallel=2 --testrunner='tests.test_runner.NoDbTestRunner' tests.foreman.test_end_to_end
