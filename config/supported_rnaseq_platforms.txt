@@ -11,6 +11,7 @@ Illumina HiSeq 4000
 Illumina HiSeq X
 HiSeq X Ten
 HiSeq X Five
+Illumina MiSeq
 Illumina NovaSeq 6000
 Illumina NovaSeq X
 NextSeq 500
