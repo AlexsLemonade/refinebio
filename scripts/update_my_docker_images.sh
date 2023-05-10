@@ -1,41 +1,43 @@
 #!/bin/sh
 
-# This script is very similar to .circleci/update_docker_images.sh but it has less
-# production/cloud related checks.
-
-# Exit on failure
+# Exit on failure.
 set -e
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
-# Get access to all of refinebio
+# Get access to all of refinebio.
 cd ..
 
 print_description() {
-    echo 'This script will re-build all refine.bio docker images and push them to'
-    echo 'the specified Dockerhub repo.'
+    echo 'This script will re-build all refine.bio docker images and push '
+    echo 'them to the specified Dockerhub repository.'
 }
 
 print_options() {
-    cat << EOF
+    cat <<EOF
 There are two required arguments for this script:
--d specifies the Dockerhub repo you would like to deploy to.
+-r specifies the Dockerhub repository you would like to deploy to.
 -v specifies the version you would like to build. This version will passed into
     the Docker image as the environment variable SYSTEM_VERSION.
     It also will be used as the tag for the Docker images built.
 
-There is also one optional argument:
+There are also optional arguments:
 -a also build the affymetrix image
     (we normally don't because it is so intense to build)
+-b sets a remote Docker builder.
+-x specifies target Docker images architecture (amd64|arm64).
 EOF
 }
 
-while getopts ":d:v:ah" opt; do
+while getopts ":r:v:abx:h" opt; do
     case $opt in
-    d)
+    r)
         export DOCKERHUB_REPO="$OPTARG"
         ;;
     v)
@@ -43,6 +45,12 @@ while getopts ":d:v:ah" opt; do
         ;;
     a)
         AFFYMETRIX=true
+        ;;
+    b)
+        DOCKER_BUILDER="$OPTARG"
+        ;;
+    x)
+        SYSTEM_ARCH="$OPTARG"
         ;;
     h)
         print_description
@@ -63,64 +71,91 @@ while getopts ":d:v:ah" opt; do
     esac
 done
 
+if [ -z "$SYSTEM_ARCH" ]; then
+    SYSTEM_ARCH="amd64"
+fi
+
+if [ "$SYSTEM_ARCH" != "amd64" ] && [ "$SYSTEM_ARCH" != "arm64" ]; then
+    echo "Error: unsupported architecture $SYSTEM_ARCH: use either amd64 or arm64."
+    exit 1
+fi
+
 if [ -z "$DOCKERHUB_REPO" ]; then
-    echo 'Error: must specify the Dockerhub repo with -d'
+    echo 'Error: must specify the Dockerhub repository with -r'
     exit 1
 fi
 
 if [ -z "$SYSTEM_VERSION" ]; then
-    echo 'Error: must specify the version repo with -v'
+    echo 'Error: must specify the version repository with -v'
     exit 1
 fi
 
-# Intentionally omit affymetrix unless specifically requested since it is so intense to build.
-CCDL_WORKER_IMGS="salmon transcriptome no_op downloaders illumina smasher compendia"
+if [ -z "$DOCKER_BUILDER" ]; then
+    DOCKER_BUILDER="local"
+fi
+
+
+# Intentionally omit affymetrix unless specifically requested since it is so
+# intense to build.
+DOCKER_IMAGES="transcriptome smasher salmon no_op illumina downloaders compendia"
 if [ "$AFFYMETRIX" ]; then
-    CCDL_WORKER_IMGS="$CCDL_WORKER_IMGS affymetrix"
+    DOCKER_IMAGES="$DOCKER_IMAGES affymetrix"
 fi
 
 # Set the version for the common project.
-echo "$SYSTEM_VERSION" > common/version
+echo "$SYSTEM_VERSION" >common/version
 
 # Create common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
-## Remove old common distributions if they exist
+## Remove old common distributions if they exist.
 rm -f common/dist/*
-(cd common && python3 setup.py sdist)
+(cd common && python3 setup.py sdist) # Run in a subshell.
 
-for IMG in $CCDL_WORKER_IMGS; do
-    image_name="$DOCKERHUB_REPO/dr_$IMG"
+ARCH="$(uname -m)"
 
-    echo "Building docker image: $image_name:$SYSTEM_VERSION"
-    # Build and push image.
-    docker build \
-           -t "$image_name:$SYSTEM_VERSION" \
-           -f "workers/dockerfiles/Dockerfile.$IMG" \
-           --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
-    docker push "$image_name:$SYSTEM_VERSION"
-    # Update latest version
-    docker tag "$image_name:$SYSTEM_VERSION" "$image_name:latest"
-    docker push "$image_name:latest"
+if [ "$ARCH" != "$SYSTEM_ARCH" ] && [ -z "$DOCKER_BUILDER" ]; then
+    echo "You're building $SYSTEM_ARCH images on the $ARCH machine without " \
+        "specifying a DOCKER_BUILDER. This may take a while..."
+    sleep 5
+fi
+
+for DOCKER_IMAGE in $DOCKER_IMAGES; do
+    case $DOCKER_IMAGE in
+    api)
+        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.api_production"
+        ;;
+    foreman)
+        DOCKER_FILE_PATH="foreman/dockerfiles/Dockerfile.$DOCKER_IMAGE"
+        ;;
+    *)
+        DOCKER_FILE_PATH="workers/dockerfiles/Dockerfile.$DOCKER_IMAGE"
+        ;;
+    esac
+
+    IMAGE_NAME="$DOCKERHUB_REPO/dr_$DOCKER_IMAGE"
+
+    echo "Building $SYSTEM_ARCH $IMAGE_NAME:$SYSTEM_VERSION image from " \
+        "$DOCKER_FILE_PATH."
+
+    if test "$DOCKER_BUILDER"; then
+        echo "Using builder $DOCKER_BUILDER."
+        docker buildx use "$DOCKER_BUILDER"
+    fi
+
+    DOCKER_BUILDKIT=1 docker buildx build \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+        --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
+        --cache-from="$IMAGE_NAME:$SYSTEM_VERSION" \
+        --cache-from="$IMAGE_NAME:latest" \
+        --file "$DOCKER_FILE_PATH" \
+        --platform "linux/$SYSTEM_ARCH" \
+        --push \
+        --tag "$IMAGE_NAME:$SYSTEM_VERSION" \
+        --tag "$IMAGE_NAME:latest" \
+        .
+
+    docker pull \
+        --platform "linux/$SYSTEM_ARCH" \
+        "$IMAGE_NAME:latest"
 done
-
-# Build and push Foreman image.
-FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
-docker build \
-       -t "$FOREMAN_DOCKER_IMAGE:$SYSTEM_VERSION" \
-       -f foreman/dockerfiles/Dockerfile.foreman \
-       --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
-docker push "$FOREMAN_DOCKER_IMAGE:$SYSTEM_VERSION"
-# Update latest version
-docker tag "$FOREMAN_DOCKER_IMAGE:$SYSTEM_VERSION" "$FOREMAN_DOCKER_IMAGE:latest"
-docker push "$FOREMAN_DOCKER_IMAGE:latest"
-
-# Build and push API image.
-API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
-docker build \
-       -t "$API_DOCKER_IMAGE:$SYSTEM_VERSION" \
-       -f api/dockerfiles/Dockerfile.api_production \
-       --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
-docker push "$API_DOCKER_IMAGE:$SYSTEM_VERSION"
-# Update latest version
-docker tag "$API_DOCKER_IMAGE:$SYSTEM_VERSION" "$API_DOCKER_IMAGE:latest"
-docker push "$API_DOCKER_IMAGE:latest"

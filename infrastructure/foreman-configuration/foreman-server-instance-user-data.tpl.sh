@@ -15,30 +15,34 @@
 cd /home/ubuntu || exit
 
 # Install our environment variables
-cat <<"EOF" > environment
+cat <<"EOF" >environment
 ${foreman_environment}
 EOF
 
 # These database values are created after TF
 # is run, so we have to pass them in programatically
-cat >> /home/ubuntu/run_foreman.sh <<EOF
+cat >>/home/ubuntu/run_foreman.sh <<EOF
 #!/bin/sh
 docker rm -f \$(docker ps --quiet --all) || true
 docker run \\
-       --env-file /home/ubuntu/environment \\
-       -e DATABASE_HOST="${database_host}" \\
-       -e DATABASE_NAME="${database_name}" \\
-       -e DATABASE_USER="${database_user}" \\
-       -e DATABASE_PASSWORD="${database_password}" \\
-       -e ELASTICSEARCH_HOST="${elasticsearch_host}" \\
-       -e ELASTICSEARCH_PORT="${elasticsearch_port}" \\
-       -v /tmp:/tmp \\
-       --log-driver=awslogs \\
-       --log-opt awslogs-region="${region}" \\
-       --log-opt awslogs-group="${log_group}" \\
-       --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \\
-       --name=dr_foreman \\
-       -it -d "${dockerhub_repo}/${foreman_docker_image}" python3 manage.py retry_jobs
+    --detach \\
+    --env DATABASE_HOST="${database_host}" \\
+    --env DATABASE_NAME="${database_name}" \\
+    --env DATABASE_PASSWORD="${database_password}" \\
+    --env DATABASE_USER="${database_user}" \\
+    --env ELASTICSEARCH_HOST="${elasticsearch_host}" \\
+    --env ELASTICSEARCH_PORT="${elasticsearch_port}" \\
+    --env-file /home/ubuntu/environment \\
+    --interactive \\
+    --log-driver=awslogs \\
+    --log-opt awslogs-group="${log_group}" \\
+    --log-opt awslogs-region="${region}" \\
+    --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \\
+    --name=dr_foreman \\
+    --tty \\
+    --volume /tmp:/tmp \\
+    "${dockerhub_repo}/${foreman_docker_image}" \\
+    python3 manage.py retry_jobs
 EOF
 chmod +x /home/ubuntu/run_foreman.sh
 /home/ubuntu/run_foreman.sh
@@ -53,14 +57,18 @@ echo "
 # command.
 
 docker run \\
-       --env-file /home/ubuntu/environment \\
-       -e DATABASE_HOST=${database_host} \\
-       -e DATABASE_NAME=${database_name} \\
-       -e DATABASE_USER=${database_user} \\
-       -e DATABASE_PASSWORD=${database_password} \\
-       -v /tmp:/tmp \\
-       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \"\$@\"
-" >> /home/ubuntu/run_management_command.sh
+    --detach \\
+    --env DATABASE_HOST=${database_host} \\
+    --env DATABASE_NAME=${database_name} \\
+    --env DATABASE_PASSWORD=${database_password} \\
+    --env DATABASE_USER=${database_user} \\
+    --env-file /home/ubuntu/environment \\
+    --interactive \\
+    --tty \\
+    --volume /tmp:/tmp \\
+    ${dockerhub_repo}/${foreman_docker_image} \\
+    python3 manage.py \"\$@\"
+" >>/home/ubuntu/run_management_command.sh
 chmod +x /home/ubuntu/run_management_command.sh
 
 echo "
@@ -70,21 +78,24 @@ echo "
 # the first argument followed by the management command to run.
 
 docker run \\
-       --env-file /home/ubuntu/environment \\
-       -e DATABASE_HOST=${database_host} \\
-       -e DATABASE_NAME=${database_name} \\
-       -e DATABASE_USER=${database_user} \\
-       -e DATABASE_PASSWORD=${database_password} \\
-       -v /tmp:/tmp \\
-       -it ${dockerhub_repo}/dr_\"\$1\" python3 manage.py \"\$2\"
-" >> /home/ubuntu/run_manage_command.sh
+    --env DATABASE_HOST=${database_host} \\
+    --env DATABASE_NAME=${database_name} \\
+    --env DATABASE_PASSWORD=${database_password} \\
+    --env DATABASE_USER=${database_user} \\
+    --env-file /home/ubuntu/environment \\
+    --interactive \\
+    --tty \\
+    --volume /tmp:/tmp \\
+    ${dockerhub_repo}/dr_\"\$1\" \\
+    python3 manage.py \"\$2\"
+" >>/home/ubuntu/run_manage_command.sh
 chmod +x /home/ubuntu/run_manage_command.sh
 
 # Use Monit to ensure the Foreman is always running
 apt-get -y update
 apt-get -y install monit htop
 
-date +%s > /tmp/foreman_last_time
+date +%s >/tmp/foreman_last_time
 chown ubuntu:ubuntu /tmp/foreman_last_time
 # shellcheck disable=2016
 echo '
@@ -96,7 +107,7 @@ if (( $difftime > 1800 )); then
   exit 1;
 fi
 exit 0;
-' >> /home/ubuntu/foreman_status.sh
+' >>/home/ubuntu/foreman_status.sh
 chmod +x /home/ubuntu/foreman_status.sh
 
 echo '
@@ -105,13 +116,13 @@ check program foreman with path "/bin/bash /home/ubuntu/foreman_status.sh" as ui
     if status != 0
         then restart
 set daemon 900
-' >> /etc/monit/monitrc
+' >>/etc/monit/monitrc
 
 service monit restart
 
 # Install the cron job tests
-crontab -l > tempcron
-cat <<EOF >> tempcron
+crontab -l >tempcron
+cat <<EOF >>tempcron
 0 12 * * MON /bin/bash /home/ubuntu/run_manage_command.sh affymetrix check_brainarray_gene_agreement >> /var/log/affymetrix_checks.log 2>&1
 0 12 * * MON /bin/bash /home/ubuntu/run_manage_command.sh affymetrix check_tx_index_transcript_agreement >> /var/log/affymetrix_checks.log 2>&1
 0 12 * * ${accession_gathering_job_run_day} /bin/bash /home/ubuntu/run_manage_command.sh foreman gather_weekly_accessions >> /var/log/weekly_accessions.log 2>&1
@@ -122,18 +133,22 @@ rm tempcron
 
 # Make sure every downloader job has a processor job!
 docker run \
-       --env-file /home/ubuntu/environment \
-       -e DATABASE_HOST="${database_host}" \
-       -e DATABASE_NAME="${database_name}" \
-       -e DATABASE_USER="${database_user}" \
-       -e DATABASE_PASSWORD="${database_password}" \
-       -v /tmp:/tmp \
-       --log-driver=awslogs \
-       --log-opt awslogs-region="${region}" \
-       --log-opt awslogs-group="${log_group}" \
-       --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \
-       --name=job_filler \
-       -it -d "${dockerhub_repo}/${foreman_docker_image}" python3 manage.py create_missing_processor_jobs
+    --detach \
+    --env DATABASE_HOST="${database_host}" \
+    --env DATABASE_NAME="${database_name}" \
+    --env DATABASE_PASSWORD="${database_password}" \
+    --env DATABASE_USER="${database_user}" \
+    --env-file /home/ubuntu/environment \
+    --interactive \
+    --log-driver=awslogs \
+    --log-opt awslogs-group="${log_group}" \
+    --log-opt awslogs-region="${region}" \
+    --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \
+    --name=job_filler \
+    --tty \
+    --volume /tmp:/tmp \
+    "${dockerhub_repo}/${foreman_docker_image}" \
+    python3 manage.py create_missing_processor_jobs
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}

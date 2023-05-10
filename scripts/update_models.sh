@@ -1,18 +1,21 @@
 #! /bin/sh
-# Makes migrations and re-installs so Docker images update locally
+# Makes migrations and re-installs so Docker images update locally.
 
-# Exit on fail
+# Exit on fail.
 set -e
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
-# Get access to all of refinebio
+# Get access to all of refinebio.
 cd ..
 
-if ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb > /dev/null; then
+if ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb >/dev/null; then
     echo "You must start Postgres first with:" >&2
     echo "./scripts/run_postgres.sh" >&2
     exit 1
@@ -25,7 +28,7 @@ if [ -z "$SYSTEM_VERSION" ]; then
 fi
 
 # Put this in place for common to read from.
-echo "$SYSTEM_VERSION" > common/version
+echo "$SYSTEM_VERSION" >common/version
 
 # Ensure there is only one distribution to copy over.
 rm -f common/dist/*

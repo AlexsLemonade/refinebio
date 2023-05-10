@@ -7,18 +7,18 @@ set -e
 
 while getopts "i:" opt; do
     case $opt in
-        i)
-            image=$OPTARG
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
+    i)
+        IMAGE="$OPTARG"
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
     esac
 done
 
-if [ -z "$image" ]; then
-    image="smasher"
+if [ -z "$IMAGE" ]; then
+    IMAGE="smasher"
 else
     shift
     shift
@@ -26,7 +26,10 @@ fi
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
 # However in order to give Docker access to all the code we have to
@@ -47,16 +50,19 @@ fi
 chmod -R a+rwX "$volume_directory"
 
 . ./scripts/common.sh
+
 DB_HOST_IP=$(get_docker_db_ip_address)
 
-./scripts/prepare_image.sh -i "$image" -s workers
-image_name=ccdlstaging/dr_"$image"
+./scripts/prepare_image.sh -i "$IMAGE" -s workers
 
 docker run \
-       --add-host=database:"$DB_HOST_IP" \
-       --env-file workers/environments/local \
-       --env AWS_ACCESS_KEY_ID \
-       --env AWS_SECRET_ACCESS_KEY \
-       --volume "$volume_directory":/home/user/data_store \
-       --link drdb:postgres \
-       -it "$image_name" bash -c "$@"
+    --add-host=database:"$DB_HOST_IP" \
+    --env AWS_ACCESS_KEY_ID \
+    --env AWS_SECRET_ACCESS_KEY \
+    --env-file workers/environments/local \
+    --ineractive \
+    --link drdb:postgres \
+    --tty \
+    --volume "$volume_directory":/home/user/data_store \
+    "$DOCKERHUB_REPO/dr_$IMAGE" \
+    bash -c "$@"

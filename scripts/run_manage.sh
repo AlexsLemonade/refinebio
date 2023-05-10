@@ -6,13 +6,16 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
-# Import the functions in common.sh
+# Import the functions in common.sh.
 . ./common.sh
 
-# We need access to all of the projects
+# We need access to all of the projects.
 cd ..
 
 print_description() {
@@ -44,7 +47,7 @@ if [ "$1" = "-i" ]; then
     shift
     if [ -z "$1" ]; then
         echo "Error: Missing argument for -i" >&2
-	echo
+        echo
         print_options >&2
         exit 1
     fi
@@ -62,7 +65,7 @@ if [ "$1" = "-s" ]; then
     shift
     if [ -z "$1" ]; then
         echo "Error: Missing argument for -s" >&2
-	echo
+        echo
         print_options >&2
         exit 1
     fi
@@ -72,29 +75,36 @@ else
     service="foreman"
 fi
 
-# Set up the data volume directory if it does not already exist
+# Set up the data volume directory if it does not already exist.
 volume_directory="$script_directory/../api/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
 fi
 chmod -R a+rwX "$volume_directory"
 
-docker build -t dr_shell -f "$service/dockerfiles/Dockerfile.$image" .
+docker build \
+    --file "$service/dockerfiles/Dockerfile.$image" \
+    --tag dr_shell \
+    .
 
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
 
-# Only run interactively if we are on a TTY
+# Only run interactively if we are on a TTY.
 if [ -t 1 ]; then
-    INTERACTIVE="-i"
+    INTERACTIVE="--interactive"
 fi
 
-docker run -t $INTERACTIVE \
-       --add-host=database:"$DB_HOST_IP" \
-       --add-host=elasticsearch:"$ES_HOST_IP" \
-       --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-       --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-       --env-file "$service/environments/local" \
-       --volume /tmp:/tmp \
-       --volume "$volume_directory":/home/user/data_store \
-       dr_shell python3 manage.py "$@"
+# shellcheck disable=SC2086
+docker run \
+    --add-host=database:"$DB_HOST_IP" \
+    --add-host=elasticsearch:"$ES_HOST_IP" \
+    --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+    --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+    --env-file "$service/environments/local" \
+    --tty \
+    --volume "$volume_directory":/home/user/data_store \
+    --volume /tmp:/tmp \
+    $INTERACTIVE \
+    dr_shell \
+    python3 manage.py "$@"
