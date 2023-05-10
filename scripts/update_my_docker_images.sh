@@ -109,7 +109,7 @@ echo "$SYSTEM_VERSION" >common/version
 # required by the workers and data_refinery_foreman images.
 ## Remove old common distributions if they exist.
 rm -f common/dist/*
-(cd common && python3 setup.py sdist) # Run in a subshell.
+(cd common && python3 setup.py sdist 1>/dev/null) # Run quietly in a subshell.
 
 ARCH="$(uname -m)"
 
@@ -146,8 +146,8 @@ for DOCKER_IMAGE in $DOCKER_IMAGES; do
         --build-arg BUILDKIT_INLINE_CACHE=1 \
         --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
         --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-        --cache-from="$IMAGE_NAME:$SYSTEM_VERSION" \
-        --cache-from="$IMAGE_NAME:latest" \
+        --cache-from "$IMAGE_NAME:$SYSTEM_VERSION" \
+        --cache-from "$IMAGE_NAME:latest" \
         --file "$DOCKER_FILE_PATH" \
         --platform "linux/$SYSTEM_ARCH" \
         --push \

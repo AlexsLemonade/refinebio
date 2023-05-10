@@ -18,11 +18,10 @@
 #     - AWS_ACCESS_KEY_ID -- The AWS key id to use when interacting with AWS.
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
-
-echo "$INSTANCE_SSH_KEY" > infrastructure/data-refinery-key.pem
+echo "$INSTANCE_SSH_KEY" >infrastructure/data-refinery-key.pem
 chmod 600 infrastructure/data-refinery-key.pem
 
-run_on_deploy_box () {
+run_on_deploy_box() {
     # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
@@ -32,7 +31,7 @@ run_on_deploy_box () {
 
 # Create file containing local env vars that are needed for deploy.
 rm -f env_vars
-cat >> env_vars <<EOF
+cat >>env_vars <<EOF
 export CI_TAG='$CI_TAG'
 export DOCKER_ID='$DOCKER_ID'
 export DOCKER_PASSWD='$DOCKER_PASSWD'
@@ -80,7 +79,7 @@ if [[ "$MASTER_OR_DEV" == "master" ]]; then
 elif [[ "$MASTER_OR_DEV" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
-    echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!?!?"
+    echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!"
     exit 1
 fi
 

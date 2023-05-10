@@ -100,6 +100,7 @@ fi
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
 DOCKER_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE"
+
 # shellcheck disable=SC2086
 if [ "$(docker_img_exists $IMAGE_NAME $branch_name)" ]; then
     docker pull "$IMAGE_NAME:$branch_name"
@@ -111,20 +112,21 @@ else
     echo ""
     echo "Rebuilding the $DOCKER_IMAGE image."
 
-    attempts=0
+    attempt=0
+    attempts=3
     finished=1
-    while [ $finished != 0 ] && [ $attempts -lt 3 ]; do
+    while [ $finished != 0 ] && [ $attempt -lt $attempts ]; do
         if [ $attempts -gt 0 ]; then
             echo "Failed to build $DOCKER_IMAGE, trying again."
         fi
 
-        CURRENT_IMAGE="$DOCKER_IMAGE:$SYSTEM_VERSION"
-        LATEST_IMAGE="$DOCKER_IMAGE:latest"
         if test "$GITHUB_ACTIONS"; then
             # Docker needs repositories to be lowercase.
             CACHE_REPO="$(echo "ghrc.io/$GITHUB_REPOSITORY" |
                 tr '[:upper:]' '[:lower:]')"
-            LATEST_IMAGE="$CACHE_REPO/dr_$IMAGE"
+            CACHE_FROM_IMAGE="$CACHE_REPO/dr_$IMAGE"
+        else
+            CACHE_FROM_IMAGE=$DOCKER_IMAGE
         fi
 
         if test "$DOCKER_BUILDER"; then
@@ -136,18 +138,19 @@ else
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
             --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-            --cache-from "$LATEST_IMAGE" \
-            --cache-from="$CURRENT_IMAGE" \
+            --cache-from "$CACHE_FROM_IMAGE:$SYSTEM_VERSION" \
+            --cache-from "$CACHE_FROM_IMAGE:latest" \
             --file "$SERVICE/dockerfiles/Dockerfile.$IMAGE" \
             --platform linux/amd64 \
             --tag "$DOCKER_IMAGE" \
             .
+
         finished=$?
-        attempts=$((attempts + 1))
+        attempt=$((attempt + 1))
     done
 
-    if [ $finished != 0 ] && [ $attempts -ge 3 ]; then
-        echo "Could not build $DOCKER_IMAGE after three attempts."
+    if [ $finished -ne 0 ] && [ $attempt -ge $attempts ]; then
+        echo "Could not build $DOCKER_IMAGE after $attempt attempts."
         exit 1
     fi
 fi

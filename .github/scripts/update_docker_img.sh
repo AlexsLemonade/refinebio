@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Load docker_img_exists function and $WORKER_IMAGES
+# Load docker_img_exists function and $WORKER_IMAGES.
 . ~/refinebio/scripts/common.sh
 
 # Github won't set the branch name for us, so do it ourselves.
@@ -16,7 +16,7 @@ else
     exit 1
 fi
 
-echo "$CI_TAG" > ~/refinebio/common/version
+echo "$CI_TAG" >~/refinebio/common/version
 
 # Create ~/refinebio/common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
@@ -36,9 +36,10 @@ for IMAGE in $WORKER_IMAGES; do
         echo "Building docker image: $image_name:$CI_TAG"
         # Build and push image. We use the CI_TAG as the system version.
         docker build \
-               -t "$image_name:$CI_TAG" \
-               -f "workers/dockerfiles/Dockerfile.$IMAGE" \
-               --build-arg SYSTEM_VERSION="$CI_TAG" .
+            --build-arg SYSTEM_VERSION="$CI_TAG" \
+            --file "workers/dockerfiles/Dockerfile.$IMAGE" \
+            --tag "$image_name:$CI_TAG" \
+            .
         docker push "$image_name:$CI_TAG"
         # Update latest version.
         docker tag "$image_name:$CI_TAG" "$image_name:latest"
@@ -56,10 +57,10 @@ if docker_img_exists "$FOREMAN_DOCKER_IMAGE" "$CI_TAG"; then
 else
     # Build and push image. We use the CI_TAG as the system version.
     docker build \
-           --build-arg SYSTEM_VERSION="$CI_TAG" \
-           --file foreman/dockerfiles/Dockerfile.foreman \
-           --tag "$FOREMAN_DOCKER_IMAGE:$CI_TAG" \
-           .
+        --build-arg SYSTEM_VERSION="$CI_TAG" \
+        --file foreman/dockerfiles/Dockerfile.foreman \
+        --tag "$FOREMAN_DOCKER_IMAGE:$CI_TAG" \
+        .
     docker push "$FOREMAN_DOCKER_IMAGE:$CI_TAG"
     # Update latest version.
     docker tag "$FOREMAN_DOCKER_IMAGE:$CI_TAG" "$FOREMAN_DOCKER_IMAGE:latest"
@@ -73,10 +74,10 @@ if docker_img_exists "$API_DOCKER_IMAGE" "$CI_TAG"; then
 else
     # Build and push image. We use the CI_TAG as the system version.
     docker build \
-           --build-arg SYSTEM_VERSION="$CI_TAG" \
-           --file api/dockerfiles/Dockerfile.api_production \
-           --tag "$API_DOCKER_IMAGE:$CI_TAG" \
-           .
+        --build-arg SYSTEM_VERSION="$CI_TAG" \
+        --file api/dockerfiles/Dockerfile.api_production \
+        --tag "$API_DOCKER_IMAGE:$CI_TAG" \
+        .
     docker push "$API_DOCKER_IMAGE:$CI_TAG"
     # Update latest version.
     docker tag "$API_DOCKER_IMAGE:$CI_TAG" "$API_DOCKER_IMAGE:latest"
