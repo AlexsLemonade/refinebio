@@ -5,8 +5,11 @@
 export ALL_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders foreman api"
 # Sometimes we only want to work with the worker images.
 export WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders"
+
 # Default Docker registry.
-export DOCKERHUB_REPO="ccdlstaging"
+if [ -z "$DOCKERHUB_REPO" ]; then
+    export DOCKERHUB_REPO="ccdlstaging"
+fi
 
 get_docker_db_ip_address() {
     docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drdb 2>/dev/null
