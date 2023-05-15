@@ -122,8 +122,7 @@ else
 
         if test "$GITHUB_ACTIONS"; then
             # Docker needs repositories to be lowercase.
-            CACHE_REPO="$(echo "ghrc.io/$GITHUB_REPOSITORY" |
-                tr '[:upper:]' '[:lower:]')"
+            CACHE_REPO="$(echo "ghcr.io/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
             CACHE_FROM_IMAGE="$CACHE_REPO/dr_$IMAGE"
         else
             CACHE_FROM_IMAGE=$DOCKER_IMAGE
