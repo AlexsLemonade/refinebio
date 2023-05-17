@@ -9,19 +9,19 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.30.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/browser/api/xml/ERP006216
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ErrorDetails>\n  <timestamp>1627501393717</timestamp>\n
+      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ErrorDetails>\n  <timestamp>1684348606015</timestamp>\n
         \ <status>404</status>\n  <error>Not Found</error>\n  <message>ERP006216 not
         found.</message>\n  <path>/ena/browser/api/xml/ERP006216</path>\n</ErrorDetails>\n"
     headers:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 28 Jul 2021 19:43:13 GMT
+      - Wed, 17 May 2023 18:36:45 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
