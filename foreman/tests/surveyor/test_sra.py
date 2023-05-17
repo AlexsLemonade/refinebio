@@ -228,7 +228,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["sample_accession"], "DRS001521")
         self.assertEqual(
             metadata["sample_center_name"],
-            "Group for Morphological Evolution, Center for Developmental Biology, Kobe Institute, RIKEN"
+            "Group for Morphological Evolution, Center for Developmental Biology, Kobe Institute, RIKEN",
         )
         self.assertEqual(metadata["sample_ena_first_public"], "2013-02-27")
         self.assertEqual(metadata["sample_ena_last_update"], "2014-11-12")
