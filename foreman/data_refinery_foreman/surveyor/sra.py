@@ -1,4 +1,3 @@
-import random
 import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List
@@ -19,7 +18,6 @@ from data_refinery_common.models import (
     SurveyJob,
 )
 from data_refinery_common.rna_seq import _build_ena_file_url
-from data_refinery_common.utils import get_fasp_sra_download
 from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 
@@ -33,14 +31,8 @@ ENA_FILE_REPORT_URL_TEMPLATE = (
     "https://www.ebi.ac.uk/ena/portal/api/filereport?accession={accession}&result=read_run"
 )
 NCBI_DOWNLOAD_URL_TEMPLATE = (
-    "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
-    "{first_three}/{first_six}/{accession}/{accession}.sra"
+    "https://sra-pub-run-odp.s3.amazonaws.com/sra/{accession}/{accession}"
 )
-NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE = (
-    "anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
-    "{first_three}/{first_six}/{accession}/{accession}.sra"
-)
-
 
 class UnsupportedDataTypeError(Exception):
     pass
@@ -338,25 +330,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def _build_ncbi_file_url(run_accession: str):
         """Build the path to the hypothetical .sra file we want"""
-        accession = run_accession
-        first_three = accession[:3]
-        first_six = accession[:6]
-
-        # Prefer the FASP-specific endpoints if possible..
-        download_url = get_fasp_sra_download(run_accession)
-
-        if not download_url:
-            # ..else, load balancing via coin flip.
-            if random.choice([True, False]):
-                download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
-                    first_three=first_three, first_six=first_six, accession=accession
-                )
-            else:
-                download_url = NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE.format(
-                    first_three=first_three, first_six=first_six, accession=accession
-                )
-
-        return download_url
+        return NCBI_DOWNLOAD_URL_TEMPLATE.format(accession=run_accession)
 
     @staticmethod
     def _apply_harmonized_metadata_to_sample(sample: Sample, metadata: dict):
