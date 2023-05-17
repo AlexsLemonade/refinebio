@@ -128,7 +128,7 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
         header=0,
         index_col=0,
         dtype={0: str, 1: np.float32},
-        error_bad_lines=False,
+        on_bad_lines="warn",
     )
 
     # Strip any funky whitespace
@@ -142,7 +142,7 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
     # BA likes to leave '_at', signifying probe identifiers,
     # on their converted, non-probe identifiers. It makes no sense.
     # So, we chop them off and don't worry about it.
-    data.index = data.index.str.replace("_at", "")
+    data.index = data.index.str.replace("_at", "", regex=False)
 
     # Remove any lingering Affymetrix control probes ("AFFX-")
     data = data[~data.index.str.contains("AFFX-")]
@@ -159,7 +159,7 @@ def _load_and_sanitize_file(computed_file_path) -> pd.DataFrame:
     #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/ \
     #       Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg. \
     #       7__3016__AT5G35080.1;db=core)
-    data.index = data.index.str.replace(r"(\.[^.]*)$", "")
+    data.index = data.index.str.replace(r"(\.[^.]*)$", "", regex=True)
 
     data = utils.squish_duplicates(data)
 
@@ -577,7 +577,7 @@ def quantile_normalize(job_context: Dict, ks_stat=0.001) -> Dict:
 
     qn_target_path = organism.qn_target.computedfile_set.latest().sync_from_s3()
     qn_target_frame = pd.read_csv(
-        qn_target_path, sep="\t", header=None, index_col=None, error_bad_lines=False
+        qn_target_path, sep="\t", header=None, index_col=None, on_bad_lines="warn"
     )
 
     # Prepare our RPy2 bridge
