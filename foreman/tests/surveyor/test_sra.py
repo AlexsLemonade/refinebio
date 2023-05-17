@@ -226,7 +226,10 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["run_ena_last_update"], "2017-08-11")
         self.assertEqual(metadata["run_ena_spot_count"], "32568360")
         self.assertEqual(metadata["sample_accession"], "DRS001521")
-        self.assertEqual(metadata["sample_center_name"], "Group for Morphological Evolution, Center for Developmental Biology, Kobe Institute, RIKEN")
+        self.assertEqual(
+            metadata["sample_center_name"],
+            "Group for Morphological Evolution, Center for Developmental Biology, Kobe Institute, RIKEN"
+        )
         self.assertEqual(metadata["sample_ena_first_public"], "2013-02-27")
         self.assertEqual(metadata["sample_ena_last_update"], "2014-11-12")
         self.assertEqual(
@@ -253,7 +256,9 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
 
         ncbi_url = SraSurveyor._build_ncbi_file_url(metadata["run_accession"])
-        self.assertEqual(ncbi_url, "https://sra-pub-run-odp.s3.amazonaws.com/sra/DRR002116/DRR002116")
+        self.assertEqual(
+            ncbi_url, "https://sra-pub-run-odp.s3.amazonaws.com/sra/DRR002116/DRR002116"
+        )
 
     def test_sra_metadata_is_harmonized(self):
         metadata = SraSurveyor.gather_all_metadata("SRR3098582")
