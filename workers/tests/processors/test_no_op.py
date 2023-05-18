@@ -1,4 +1,3 @@
-import math
 import os
 import shutil
 from pathlib import Path
@@ -6,7 +5,6 @@ from pathlib import Path
 from django.test import TestCase, tag
 
 import pandas as pd
-import scipy.stats
 
 from data_refinery_common.models import (
     Organism,
