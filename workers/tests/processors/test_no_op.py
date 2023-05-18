@@ -5,6 +5,7 @@ from pathlib import Path
 from django.test import TestCase, tag
 
 import pandas as pd
+from tests.utils import assertMostlyAgrees
 
 from data_refinery_common.models import (
     Organism,
@@ -15,7 +16,6 @@ from data_refinery_common.models import (
     Sample,
 )
 from data_refinery_workers.processors import no_op
-from data_refinery_workers.processors.testing_utils import assertMostlyAgrees
 
 
 def prepare_job(job_info: dict) -> ProcessorJob:
