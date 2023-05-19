@@ -19,8 +19,6 @@ from data_refinery_workers.processors import no_op
 
 
 def prepare_job(job_info: dict) -> ProcessorJob:
-    # this is a comment to test if this file will get
-    # codecov patch checked
     job = ProcessorJob()
     job.pipeline_applied = "NO_OP"
     job.save()
