@@ -1,4 +1,3 @@
-import random
 import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List
@@ -19,7 +18,6 @@ from data_refinery_common.models import (
     SurveyJob,
 )
 from data_refinery_common.rna_seq import _build_ena_file_url
-from data_refinery_common.utils import get_fasp_sra_download
 from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 
@@ -32,14 +30,7 @@ ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/browser/api/xml/{}"
 ENA_FILE_REPORT_URL_TEMPLATE = (
     "https://www.ebi.ac.uk/ena/portal/api/filereport?accession={accession}&result=read_run"
 )
-NCBI_DOWNLOAD_URL_TEMPLATE = (
-    "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
-    "{first_three}/{first_six}/{accession}/{accession}.sra"
-)
-NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE = (
-    "anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
-    "{first_three}/{first_six}/{accession}/{accession}.sra"
-)
+NCBI_DOWNLOAD_URL_TEMPLATE = "https://sra-pub-run-odp.s3.amazonaws.com/sra/{accession}/{accession}"
 
 
 class UnsupportedDataTypeError(Exception):
@@ -66,7 +57,6 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
-
         formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"])
         response = utils.requests_retry_session().get(formatted_metadata_URL)
         submission_xml = ET.fromstring(response.text)[0]
@@ -190,7 +180,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         This endpoint returns a weird format, so some custom parsing is required:
         run_accession	fastq_ftp	fastq_bytes	fastq_md5	submitted_ftp	submitted_bytes	submitted_md5	sra_ftp	sra_bytes	sra_md5
-        SRR7353755	ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz	25176;2856704;3140575	7ef1ba010dcb679217112efa380798b2;6bc5651b7103306d4d65018180ab8d0d;3856c14164612d9879d576a046a9879f"""
+        SRR7353755	ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR735/005/SRR7353755/SRR7353755_2.fastq.gz	25176;2856704;3140575	7ef1ba010dcb679217112efa380798b2;6bc5651b7103306d4d65018180ab8d0d;3856c14164612d9879d576a046a9879f
+        """
         response = utils.requests_retry_session().get(
             ENA_FILE_REPORT_URL_TEMPLATE.format(accession=run_accession)
         )
@@ -338,25 +329,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def _build_ncbi_file_url(run_accession: str):
         """Build the path to the hypothetical .sra file we want"""
-        accession = run_accession
-        first_three = accession[:3]
-        first_six = accession[:6]
-
-        # Prefer the FASP-specific endpoints if possible..
-        download_url = get_fasp_sra_download(run_accession)
-
-        if not download_url:
-            # ..else, load balancing via coin flip.
-            if random.choice([True, False]):
-                download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
-                    first_three=first_three, first_six=first_six, accession=accession
-                )
-            else:
-                download_url = NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE.format(
-                    first_three=first_three, first_six=first_six, accession=accession
-                )
-
-        return download_url
+        return NCBI_DOWNLOAD_URL_TEMPLATE.format(accession=run_accession)
 
     @staticmethod
     def _apply_harmonized_metadata_to_sample(sample: Sample, metadata: dict):
@@ -629,7 +602,6 @@ class SraSurveyor(ExternalSourceSurveyor):
             accessions_to_run = []
             for child in study_links:
                 if child[0][0].text == "ENA-RUN":
-
                     all_runs = child[0][1].text
 
                     # Ranges can be disjoint, separated by commas

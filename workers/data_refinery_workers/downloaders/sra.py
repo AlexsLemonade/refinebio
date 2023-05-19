@@ -17,7 +17,7 @@ from data_refinery_common.models import (
     Sample,
 )
 from data_refinery_common.rna_seq import _build_ena_file_url
-from data_refinery_common.utils import download_file, get_env_variable, get_https_sra_download
+from data_refinery_common.utils import download_file, get_env_variable
 from data_refinery_workers.downloaders import utils
 
 logger = get_and_configure_logger(__name__)
