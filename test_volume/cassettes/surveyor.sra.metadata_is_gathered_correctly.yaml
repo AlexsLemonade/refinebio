@@ -9,7 +9,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.30.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRR002116
   response:
@@ -42,7 +42,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 28 Jul 2021 19:43:10 GMT
+      - Wed, 17 May 2023 18:36:44 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -60,7 +60,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.30.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRX001563
   response:
@@ -116,7 +116,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 28 Jul 2021 19:43:10 GMT
+      - Wed, 17 May 2023 18:36:44 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -134,48 +134,42 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.30.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRS001521
   response:
     body:
       string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<SAMPLE_SET>\n<SAMPLE accession=\"DRS001521\"
-        alias=\"SAMD00004104\" center_name=\"BioSample\" broker_name=\"DDBJ\">\n     <IDENTIFIERS>\n
-        \         <PRIMARY_ID>DRS001521</PRIMARY_ID>\n          <EXTERNAL_ID namespace=\"BioSample\">SAMD00004104</EXTERNAL_ID>\n
-        \    </IDENTIFIERS>\n     <TITLE>Gg_HH16_1_embryo_mRNAseq</TITLE>\n     <SAMPLE_NAME>\n
-        \         <TAXON_ID>9031</TAXON_ID>\n          <SCIENTIFIC_NAME>Gallus gallus</SCIENTIFIC_NAME>\n
-        \    </SAMPLE_NAME>\n     <SAMPLE_LINKS>\n          <SAMPLE_LINK>\n               <XREF_LINK>\n
-        \                   <DB>ENA-STUDY</DB>\n                    <ID>DRP000595</ID>\n
-        \              </XREF_LINK>\n          </SAMPLE_LINK>\n          <SAMPLE_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-EXPERIMENT</DB>\n
-        \                   <ID>DRX001563</ID>\n               </XREF_LINK>\n          </SAMPLE_LINK>\n
-        \         <SAMPLE_LINK>\n               <XREF_LINK>\n                    <DB>ENA-RUN</DB>\n
-        \                   <ID>DRR002116</ID>\n               </XREF_LINK>\n          </SAMPLE_LINK>\n
-        \         <SAMPLE_LINK>\n               <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n
-        \                   <ID>DRA000567</ID>\n               </XREF_LINK>\n          </SAMPLE_LINK>\n
-        \         <SAMPLE_LINK>\n               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRS001521&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n
-        \              </XREF_LINK>\n          </SAMPLE_LINK>\n          <SAMPLE_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRS001521&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n
-        \              </XREF_LINK>\n          </SAMPLE_LINK>\n     </SAMPLE_LINKS>\n
-        \    <SAMPLE_ATTRIBUTES>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>sample_name</TAG>\n
+        alias=\"SAMD00004104\" center_name=\"Group for Morphological Evolution, Center
+        for Developmental Biology, Kobe Institute, RIKEN\" broker_name=\"DDBJ\">\n
+        \    <IDENTIFIERS>\n          <PRIMARY_ID>DRS001521</PRIMARY_ID>\n          <EXTERNAL_ID
+        namespace=\"BioSample\">SAMD00004104</EXTERNAL_ID>\n     </IDENTIFIERS>\n
+        \    <TITLE>Gg_HH16_1_embryo_mRNAseq</TITLE>\n     <SAMPLE_NAME>\n          <TAXON_ID>9031</TAXON_ID>\n
+        \         <SCIENTIFIC_NAME>Gallus gallus</SCIENTIFIC_NAME>\n          <COMMON_NAME>chicken</COMMON_NAME>\n
+        \    </SAMPLE_NAME>\n     <SAMPLE_LINKS>\n    <SAMPLE_LINK>\n        <XREF_LINK>\n
+        \           <DB>ENA-FASTQ-FILES</DB>\n            <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRS001521&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n
+        \       </XREF_LINK>\n    </SAMPLE_LINK>\n    <SAMPLE_LINK>\n        <XREF_LINK>\n
+        \           <DB>ENA-SUBMITTED-FILES</DB>\n            <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRS001521&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n
+        \       </XREF_LINK>\n    </SAMPLE_LINK>\n</SAMPLE_LINKS>\n<SAMPLE_ATTRIBUTES>\n
+        \         <SAMPLE_ATTRIBUTE>\n               <TAG>INSDC secondary accession</TAG>\n
         \              <VALUE>DRS001521</VALUE>\n          </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n
-        \              <TAG>sample comment</TAG>\n               <VALUE>mRNAseq of
-        chicken at stage HH16 (biological replicate 1)</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
-        \         <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n               <VALUE>32568360</VALUE>\n
-        \         </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n
-        \              <VALUE>3256836000</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
-        \         <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-FIRST-PUBLIC</TAG>\n
-        \              <VALUE>2013-07-20</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
-        \         <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n
-        \              <VALUE>2015-08-24</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
+        \              <TAG>NCBI submission package</TAG>\n               <VALUE>Generic.1.0</VALUE>\n
+        \         </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>organism</TAG>\n
+        \              <VALUE>Gallus gallus</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
+        \         <SAMPLE_ATTRIBUTE>\n               <TAG>sample comment</TAG>\n               <VALUE>mRNAseq
+        of chicken at stage HH16 (biological replicate 1)</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
+        \         <SAMPLE_ATTRIBUTE>\n               <TAG>sample name</TAG>\n               <VALUE>DRS001521</VALUE>\n
+        \         </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>BioSampleModel</TAG>\n
+        \              <VALUE>Generic</VALUE>\n          </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n
+        \              <TAG>ENA-FIRST-PUBLIC</TAG>\n               <VALUE>2013-02-27</VALUE>\n
+        \         </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n
+        \              <VALUE>2014-11-12</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
         \    </SAMPLE_ATTRIBUTES>\n</SAMPLE>\n</SAMPLE_SET>\n"
     headers:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 28 Jul 2021 19:43:10 GMT
+      - Wed, 17 May 2023 18:36:44 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -193,7 +187,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.30.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRP000595
   response:
@@ -236,7 +230,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 28 Jul 2021 19:43:11 GMT
+      - Wed, 17 May 2023 18:36:44 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -254,7 +248,7 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.30.0
     method: GET
     uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRA000567
   response:
@@ -293,7 +287,7 @@ interactions:
       Content-Type:
       - application/xml
       Date:
-      - Wed, 28 Jul 2021 19:43:13 GMT
+      - Wed, 17 May 2023 18:36:45 GMT
       Strict-Transport-Security:
       - max-age=0
       Transfer-Encoding:
@@ -301,66 +295,4 @@ interactions:
     status:
       code: 200
       message: ''
-- request:
-    body: acc=DRR002116&accept-proto=fasp&version=2.0
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '43'
-      User-Agent:
-      - python-requests/2.25.1
-    method: POST
-    uri: https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAAwzIsQ6CMBQF0J2vaOLAhLkttFBmdxPi5PZ40KBpbAM1xuR9vJ7xnMwZ1bFTfs9y
-        mSbAaO3EtKbrvRswiIFuG/QN2hvsaPVo7V0svOs4sPPwmpc5eLOSHYgogFiziHSAXF/xq+qtlHzU
-        Ku+pJE5RPQ5FMabPuqiQdlW2f6T5uXKpfgAAAP//AwDGlZjGjgAAAA==
-    headers:
-      Cache-Control:
-      - private
-      Connection:
-      - Keep-Alive
-      Content-Encoding:
-      - gzip
-      Content-Security-Policy:
-      - upgrade-insecure-requests
-      Content-Type:
-      - text/plain
-      Date:
-      - Wed, 28 Jul 2021 19:43:13 GMT
-      Keep-Alive:
-      - timeout=1, max=10
-      NCBI-PHID:
-      - C7A422B4101B35110000000000000001.m_1
-      NCBI-SID:
-      - C7A422B4101B3511_0000SID
-      Referrer-Policy:
-      - origin-when-cross-origin
-      Server:
-      - Apache
-      Set-Cookie:
-      - ncbi_sid=C7A422B4101B3511_0000SID; domain=.nih.gov; path=/; expires=Thu, 28
-        Jul 2022 19:43:13 GMT
-      SraNameServerOutputVersion:
-      - '2.0'
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      Transfer-Encoding:
-      - chunked
-      Vary:
-      - Accept-Encoding
-      X-UA-Compatible:
-      - IE=Edge
-      X-XSS-Protection:
-      - 1; mode=block
-    status:
-      code: 200
-      message: OK
 version: 1

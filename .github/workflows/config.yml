@@ -39,7 +39,11 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Free Up Space
-        run: ./.github/scripts/cleanup_instance.sh
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
 
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
@@ -72,6 +76,58 @@ jobs:
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t agilent
 
+  # This runs downloader and NO_OP tests.
+  downloader_no_op_tests:
+    runs-on: ubuntu-latest
+    env:
+      # We have issues when downloading the no_op image, so for now let's just not pull it
+      # IMAGES: migrations api_local downloaders no_op foreman
+      IMAGES: migrations api_local downloaders foreman
+      DOCKER_BUILDKIT: 1
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Free Up Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
+
+      - name: Login to Packages Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull cached docker images
+        run: ./.github/scripts/pull_docker_images.sh
+
+      - name: Start Postgres
+        run: ./scripts/run_postgres.sh
+
+      - name: Pause for initialization
+        run: sleep 30
+
+      - name: Install the database
+        run: ./scripts/install_db_docker.sh
+
+      - name: Update the models
+        run: |
+          sudo chmod -R a+wr common
+          ./scripts/update_models.sh
+
+      - name: Run downloader tests
+        run: |
+          .github/scripts/filter_tests.sh -t downloaders
+
+      - name: Run NO_OP tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/scripts/filter_tests.sh -t no_op
+
   test_api:
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -83,7 +139,11 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Free Up Space
-        run: ./.github/scripts/cleanup_instance.sh
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
 
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
@@ -217,7 +277,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Login to Packages Container Registry
+      - name: Free Up Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
+
+      - name: Login to Packages Container registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -407,8 +474,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Free Up Space
-        run: ./.github/scripts/cleanup_instance.sh
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
 
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
