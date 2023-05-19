@@ -1,2 +1,6 @@
 github_checks:
     annotations: false
+
+ignore:
+    - "**/tests/**"
+    - "**/*.sh" # we should look into this later
