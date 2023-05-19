@@ -44,6 +44,7 @@ def prepare_job(job_info: dict) -> ProcessorJob:
         homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         homo_sapiens.save()
         sample.organism = homo_sapiens
+        sample.organism = homo_sapiens
 
     sample.save()
 

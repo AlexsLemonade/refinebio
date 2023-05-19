@@ -46,7 +46,8 @@ def _download_file(
             source="ENA",
         )
     elif "sra-pub-run-odp.s3.amazonaws.com" in download_url:
-        return _download_file_http(download_url, downloader_job, target_file_path)
+        dj = downloader_job
+        return _download_file_http(download_url, dj, target_file_path)
     else:
         downloader_job.failure_reason = ("Unrecognized URL pattern: {}").format(download_url)
         return False
