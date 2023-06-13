@@ -19,46 +19,49 @@ Refine.bio currently has four sub-projects contained within this repo:
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
 
-- [Development](#development)
-  - [Git Workflow](#git-workflow)
-  - [Installation](#installation)
-    - [Automatic](#automatic)
-    - [Linux (Manual)](#linux-manual)
-    - [Mac (Manual)](#mac-manual)
-    - [Virtual Environment](#virtual-environment)
-    - [Services](#services)
-      - [Postgres](#postgres)
-    - [Common Dependecies](#common-dependecies)
-    - [ElasticSearch](#elasticsearch)
-  - [Testing](#testing)
-    - [API](#api)
-    - [Common](#common)
-    - [Foreman](#foreman)
-    - [Workers](#workers)
-  - [Style](#style)
-  - [Gotchas](#gotchas)
-    - [R](#r)
-- [Running Locally](#running-locally)
-  - [API](#api-1)
-  - [Surveyor Jobs](#surveyor-jobs)
-    - [Sequence Read Archive](#sequence-read-archive)
-    - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
-  - [Downloader Jobs](#downloader-jobs)
-  - [Processor Jobs](#processor-jobs)
-  - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
-  - [Creating Compendia](#creating-compendia)
-  - [Running Tximport Early](#running-tximport-early)
-  - [Development Helpers](#development-helpers)
-- [Cloud Deployment](#cloud-deployment)
-  - [Docker Images](#docker-images)
-  - [Terraform](#terraform)
-  - [Running Jobs](#running-jobs)
-  - [Log Consumption](#log-consumption)
-  - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
-  - [Tearing Down](#tearing-down)
-- [Support](#support)
-- [Meta-README](#meta-readme)
-- [License](#license)
+- [Refine.bio  ](#refinebio--)
+  - [Table of Contents](#table-of-contents)
+  - [Development](#development)
+    - [Git Workflow](#git-workflow)
+    - [Installation](#installation)
+      - [Automatic](#automatic)
+      - [Linux (Manual)](#linux-manual)
+      - [Mac (Manual)](#mac-manual)
+      - [Virtual Environment](#virtual-environment)
+      - [Services](#services)
+        - [Postgres](#postgres)
+      - [Common Dependecies](#common-dependecies)
+      - [ElasticSearch](#elasticsearch)
+    - [Testing](#testing)
+      - [API](#api)
+      - [Common](#common)
+      - [Foreman](#foreman)
+      - [Workers](#workers)
+    - [Style](#style)
+    - [Gotchas](#gotchas)
+      - [R](#r)
+  - [Running Locally](#running-locally)
+    - [API](#api-1)
+    - [Surveyor Jobs](#surveyor-jobs)
+      - [Sequence Read Archive](#sequence-read-archive)
+      - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
+    - [Downloader Jobs](#downloader-jobs)
+    - [Processor Jobs](#processor-jobs)
+    - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
+    - [Creating Compendia](#creating-compendia)
+    - [Running Tximport Early](#running-tximport-early)
+    - [Development Helpers](#development-helpers)
+  - [Cloud Deployment](#cloud-deployment)
+    - [Docker Images](#docker-images)
+    - [Terraform](#terraform)
+    - [AWS Batch](#aws-batch)
+    - [Running Jobs](#running-jobs)
+    - [Log Consumption](#log-consumption)
+    - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
+    - [Tearing Down](#tearing-down)
+  - [Support](#support)
+  - [Meta-README](#meta-readme)
+  - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -630,17 +633,17 @@ Please try to keep the `dev` and `master` versions in sync for major and minor v
 
 Refine.bio uses a number of different Docker images to run different pieces of the system.
 By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
-If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-d` option to the `deploy.sh` script.
+If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-r` option to the `deploy.sh` script.
 
-To make building and pushing your own images easier, the `scripts/update_my_docker_images.sh` has been provided.
-The `-d` option will allow you to specify which repo you'd like to push to.
+To make building and pushing your own images easier, the `scripts/update_docker_images.sh` has been provided.
+The `-r` option will allow you to specify which repo you'd like to push to.
 If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
 The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
 
-`scripts/update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
-It can instead be built with `./scripts/prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO>`.
+`scripts/update_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
+It can instead be built with `./scripts/prepare_image.sh -i affymetrix -r <YOUR_DOCKERHUB_REPO>`.
 WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
-It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
+It's not recommended to build the image with less than 75GB of free space on the disk that Docker runs on.
 
 ### Terraform
 
@@ -667,7 +670,7 @@ The correct way to deploy to the cloud is by running the `deploy.sh` script. Thi
 configuration steps, such as setting environment variables, setting up Batch job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
 
 ```bash
-./deploy.sh -u myusername -e dev -r us-east-1 -v v1.0.0 -d my-dockerhub-repo
+./deploy.sh -u myusername -e dev -d us-east-1 -v v1.0.0 -r my-dockerhub-repo
 ```
 
 This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.
@@ -811,7 +814,7 @@ This can take a long time (>30 minutes)!
 
 ### Tearing Down
 
-A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev -r us-east-1`.
+A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev -d us-east-1`.
 The same username and environment must be passed into `destroy_terraform.sh` as were used to run `deploy.sh` either via the -e and -u options or by specifying `TF_VAR_stage` or `TF_VAR_user` so that the script knows which to take down.
 Note that this will prompt you for confirmation before actually destroying all of your cloud resources.
 

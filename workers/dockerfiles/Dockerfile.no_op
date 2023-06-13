@@ -1,4 +1,6 @@
-FROM ccdlstaging/dr_base:latest
+ARG DOCKERHUB_REPO
+ARG SYSTEM_VERSION
+FROM $DOCKERHUB_REPO/dr_base:$SYSTEM_VERSION
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -6,7 +8,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /home/user
 
 COPY workers/R/dependencies/no_op/renv.lock .
-COPY workers/R/renv_load.R .
+COPY common/R/renv_load.R .
 RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
@@ -35,7 +37,6 @@ COPY workers/ .
 
 RUN rm -rf /root/.cache/*
 
-ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user

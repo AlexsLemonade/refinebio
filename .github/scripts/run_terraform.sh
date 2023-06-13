@@ -1,16 +1,14 @@
 #!/bin/bash -e
 
-# Import Hashicorps' Key.
+# Import Hashicorps' key.
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
-
-# Install terraform and nomad
+# Install Terraform.
 cd
 TERRAFORM_VERSION=0.13.5
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig
-
 
 # Verify the signature file is untampered.
 gpg_ok=$(gpg --verify terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig terraform_${TERRAFORM_VERSION}_SHA256SUMS |& grep Good)
@@ -32,9 +30,9 @@ sudo mv terraform /usr/local/bin/
 cd ~/refinebio/infrastructure
 
 # Circle won't set the branch name for us, so do it ourselves.
-source ~/refinebio/scripts/common.sh
-branch=$(get_master_or_dev "$CI_TAG")
+. ~/refinebio/scripts/common.sh
 
+branch=$(get_master_or_dev "$CI_TAG")
 if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod
     BATCH_USE_ON_DEMAND_INSTANCES="false"
@@ -42,7 +40,7 @@ elif [[ $branch == "dev" ]]; then
     ENVIRONMENT=staging
     BATCH_USE_ON_DEMAND_INSTANCES="true"
 else
-    echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!?!?"
+    echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!"
     exit 1
 fi
 
