@@ -2,7 +2,10 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
 # Import the functions in common.sh
@@ -18,64 +21,71 @@ print_description() {
 
 print_options() {
     echo "Options:"
-    echo "    -h           Prints the help message"
+    echo "    -h           Prints the help message."
     echo "    -i IMAGE     The image to be prepared. This must be specified."
     echo "    -s SERVICE   The service to seach for a dockerfile."
-    echo "                 The default option is 'workers'"
-    echo "    -p           Pull the latest version of the image from Dockerhub"
-    echo "    -d REPO      The docker repo to pull images from."
-    echo "                 The default option is 'ccdl'"
+    echo "                 The default option is 'workers'."
+    echo "    -d           Pull the latest version of the image from Dockerhub."
+    echo "    -u           Push the built image to the Dockerhub."
+    echo "    -r REPO      The docker registry to use for pull/push actions."
+    echo "                 The default option is 'ccdlstaging'."
     echo
     echo "Examples:"
     echo "    Build the image ccdl/dr_downloaders:"
-    echo "    ./scripts/prepare_image.sh -i downloaders -d ccdl"
+    echo "    ./scripts/prepare_image.sh -i downloaders -r ccdlstaging"
 }
 
-while getopts "phi:d:s:" opt; do
+while getopts "udhi:b:r:s:" opt; do
     case $opt in
-        i)
-            image=$OPTARG
-            ;;
-        d)
-            dockerhub_repo=$OPTARG
-            ;;
-        p)
-            pull="True"
-            ;;
-        s)
-            service=$OPTARG
-            ;;
-        h)
-            print_description
-            echo
-            print_options
-            exit 0
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            print_options >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            print_options >&2
-            exit 1
-            ;;
+    b)
+        DOCKER_BUILDER="$OPTARG"
+        ;;
+    d)
+        PULL="True"
+        ;;
+    i)
+        IMAGE="$OPTARG"
+        ;;
+    r)
+        DOCKERHUB_REPO="$OPTARG"
+        ;;
+
+    s)
+        SERVICE="$OPTARG"
+        ;;
+    u)
+        DOCKER_ACTION="push"
+        ;;
+    h)
+        print_description
+        echo
+        print_options
+        exit 0
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        print_options >&2
+        exit 1
+        ;;
+    :)
+        echo "Option -$OPTARG requires an argument." >&2
+        print_options >&2
+        exit 1
+        ;;
     esac
 done
 
-if [ -z "$image" ]; then
+if [ -z "$IMAGE" ]; then
     echo "Error: you must specify an image with -i" >&2
     exit 1
 fi
 
-
-if [ -z "$service" ]; then
-    service="workers"
+if [ -z "$SERVICE" ]; then
+    SERVICE="workers"
 fi
 
-if [ -z "$dockerhub_repo" ]; then
-    dockerhub_repo="ccdlstaging"
+if [ -z "$DOCKERHUB_REPO" ]; then
+    DOCKERHUB_REPO="ccdlstaging"
 fi
 
 # Default to "local" for system version if we're not running in the cloud.
@@ -83,43 +93,63 @@ if [ -z "$SYSTEM_VERSION" ]; then
     SYSTEM_VERSION="local$(date +%s)"
 fi
 
+if [ -z "$DOCKER_ACTION" ]; then
+    DOCKER_ACTION="load"
+fi
+
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
-image_name="$dockerhub_repo/dr_$image"
+DOCKER_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE"
+
 # shellcheck disable=SC2086
-if [ "$(docker_img_exists $image_name $branch_name)" ] ; then
-    docker pull "$image_name:$branch_name"
-elif [ -n "$pull" ]; then
-    docker pull "$image_name"
+if [ "$(docker_img_exists $IMAGE_NAME $branch_name)" ]; then
+    docker pull "$IMAGE_NAME:$branch_name"
+elif [ -n "$PULL" ]; then
+    docker pull \
+        --platform linux/amd64 \
+        "$DOCKER_IMAGE"
 else
     echo ""
-    echo "Rebuilding the $image_name image."
-    finished=1
-    attempts=0
-    while [ $finished != 0 ] && [ $attempts -lt 3 ]; do
-        if [ $attempts -gt 0 ]; then
-            echo "Failed to build $image_name, trying again."
-        fi
+    echo "Rebuilding the $DOCKER_IMAGE image."
 
+    attempt=0
+    attempts=3
+    finished=1
+    while [ $finished != 0 ] && [ $attempt -lt $attempts ]; do
+        if [ $attempts -gt 0 ]; then
+            echo "Failed to build $DOCKER_IMAGE, trying again."
+        fi
 
         if test "$GITHUB_ACTIONS"; then
-            # docker needs repositories to be lowercase
+            # Docker needs repositories to be lowercase.
             CACHE_REPO="$(echo "ghcr.io/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
-            CACHED_PACKAGE="$CACHE_REPO/dr_$image"
-            CACHE="--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $CACHED_PACKAGE"
+            CACHE_FROM_IMAGE="$CACHE_REPO/dr_$IMAGE"
+        else
+            CACHE_FROM_IMAGE=$DOCKER_IMAGE
         fi
 
-        docker build \
-               -t "$image_name" \
-               -f "$service/dockerfiles/Dockerfile.$image" \
-               --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-               $CACHE .
+        if test "$DOCKER_BUILDER"; then
+            docker buildx use "$DOCKER_BUILDER"
+        fi
+
+        DOCKER_BUILDKIT=1 docker buildx build \
+            --"$DOCKER_ACTION" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+            --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
+            --cache-from "$CACHE_FROM_IMAGE:$SYSTEM_VERSION" \
+            --cache-from "$CACHE_FROM_IMAGE:latest" \
+            --file "$SERVICE/dockerfiles/Dockerfile.$IMAGE" \
+            --platform linux/amd64 \
+            --tag "$DOCKER_IMAGE" \
+            .
+
         finished=$?
-        attempts=$((attempts+1))
+        attempt=$((attempt + 1))
     done
 
-    if [ $finished != 0 ] && [ $attempts -ge 3 ]; then
-        echo "Could not build $image_name after three attempts."
+    if [ $finished -ne 0 ] && [ $attempt -ge $attempts ]; then
+        echo "Could not build $DOCKER_IMAGE after $attempt attempts."
         exit 1
     fi
 fi

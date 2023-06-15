@@ -10,6 +10,6 @@ fi
 
 for image in $IMAGES; do
     PACKAGE="$REPO/dr_$image"
-    # Only pull the package if it already exists
+    # Only pull the package if it already exists.
     (docker pull "$PACKAGE" && docker tag "$PACKAGE" "ccdlstaging/dr_$image") || true
 done

@@ -2,10 +2,12 @@
 
 # Reintializes the database so there's no data or migrations run against it.
 
-
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
 # Clear it out.

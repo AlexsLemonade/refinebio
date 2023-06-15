@@ -1,4 +1,5 @@
-FROM ccdlstaging/dr_base:latest
+ARG DOCKERHUB_REPO
+FROM $DOCKERHUB_REPO/dr_base:latest
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

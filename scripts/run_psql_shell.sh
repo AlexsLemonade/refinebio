@@ -1,2 +1,10 @@
 #! /bin/sh
-docker run -it -e PGPASSWORD=mysecretpassword --rm --link drdb:postgres postgres:9.6.6 psql -h postgres -U postgres -d data_refinery
+
+docker run \
+    --env PGPASSWORD=mysecretpassword \
+    --interactive \
+    --link drdb:postgres \
+    --rm \
+    --tty \
+    postgres:9.6.6 \
+    psql -h postgres -U postgres -d data_refinery
