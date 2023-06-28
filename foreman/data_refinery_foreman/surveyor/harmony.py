@@ -5,7 +5,7 @@ Given a list of samples and their metadata, extract these common properties:
   `sex`,
   `age`,
   `specimen_part`,
-  `genetic_information`,
+  `genotype`,
   `disease`,
   `disease_stage`,
   `cell_line`,
@@ -245,6 +245,7 @@ GEO:
 """
 
 import csv
+import re
 from io import StringIO
 from typing import Dict, List
 
@@ -252,6 +253,9 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_foreman.surveyor.utils import requests_retry_session
 
 logger = get_and_configure_logger(__name__)
+
+# re.Pattern / re._pattern_type were not defined in 3.8?
+RE_TYPE = re.compile("").__class__
 
 
 TITLE_FIELDS = [
@@ -292,7 +296,7 @@ def create_variants(fields_list: List):
 
     Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well.
     """
-    variants = []
+    variants = set()
 
     for field in fields_list:
         space_variants = [field]
@@ -303,24 +307,27 @@ def create_variants(fields_list: List):
             space_variants.append(field.replace(" ", ""))
 
         for space_variant in space_variants:
-            variants.append(space_variant)
-            variants.append("characteristic [" + space_variant + "]")
-            variants.append("characteristic[" + space_variant + "]")
-            variants.append("characteristics [" + space_variant + "]")
-            variants.append("characteristics[" + space_variant + "]")
-            variants.append("comment [" + space_variant + "]")
-            variants.append("comment[" + space_variant + "]")
-            variants.append("comments [" + space_variant + "]")
-            variants.append("comments[" + space_variant + "]")
-            variants.append("factorvalue[" + space_variant + "]")
-            variants.append("factor value[" + space_variant + "]")
-            variants.append("factorvalue [" + space_variant + "]")
-            variants.append("factor value [" + space_variant + "]")
-            variants.append("sample_" + space_variant)
-            variants.append("sample_host" + space_variant)
-            variants.append("sample_sample_" + space_variant)  # Yes, seriously.
+            variants.add(space_variant)
+            variants.add("characteristic [" + space_variant + "]")
+            variants.add("characteristic[" + space_variant + "]")
+            variants.add("characteristics [" + space_variant + "]")
+            variants.add("characteristics[" + space_variant + "]")
+            variants.add("comment [" + space_variant + "]")
+            variants.add("comment[" + space_variant + "]")
+            variants.add("comments [" + space_variant + "]")
+            variants.add("comments[" + space_variant + "]")
+            variants.add("factorvalue[" + space_variant + "]")
+            variants.add("factor value[" + space_variant + "]")
+            variants.add("factorvalue [" + space_variant + "]")
+            variants.add("factor value [" + space_variant + "]")
+            variants.add("sample_" + space_variant)
+            variants.add("sample_host" + space_variant)
+            variants.add("sample_sample_" + space_variant)  # Yes, seriously.
 
-    return variants
+            # handle SRA flattened json response
+            variants.add(re.compile("characteristics_" + space_variant + "(?:_\d+_text)?$"))
+
+    return list(variants)
 
 
 def parse_sdrf(sdrf_url: str) -> List:
@@ -443,8 +450,7 @@ class Harmonizer:
             "characteristic [organism part]",
             "characteristics [organism part]",
             # SRA
-            "cell_type",
-            "organismpart",
+            "organismpart",  # this isnt seen?
             # GEO
             "isolation source",
             "tissue sampled",
@@ -452,7 +458,7 @@ class Harmonizer:
         ]
         self.specimen_part_fields = create_variants(specimen_part_fields)
 
-        genetic_information_fields = [
+        genotype_fields = [
             "strain/background",
             "strain",
             "strain or line",
@@ -465,7 +471,7 @@ class Harmonizer:
             "cultivar",
             "strain/genotype",
         ]
-        self.genetic_information_fields = create_variants(genetic_information_fields)
+        self.genotype_fields = create_variants(genotype_fields)
 
         disease_fields = [
             "disease",
@@ -493,8 +499,8 @@ class Harmonizer:
 
         cell_line_fields = [
             "cell line",
-            "sample strain",
         ]
+
         self.cell_line_fields = create_variants(cell_line_fields)
 
         treatment_fields = [
@@ -531,7 +537,7 @@ class Harmonizer:
             "donor id",
             "donor",
             # SRA
-            "sample_source_name",
+            # create_variants will find above attributes in characteristics
         ]
         self.subject_fields = create_variants(subject_fields)
 
@@ -539,6 +545,8 @@ class Harmonizer:
             "developmental stage",
             "development stage",
             "development stages",
+            # SRA.
+            "dev stage",
         ]
         self.developmental_stage_fields = create_variants(developmental_stage_fields)
 
@@ -585,25 +593,37 @@ class Harmonizer:
         else:
             return value.lower().strip()
 
-    def harmonize_field(self, sample_metadata: Dict, harmonized_sample: Dict, field: str):
-        field_name = field.split("_fields")[0]
-
+    def harmonize_field(
+        self, sample_metadata: Dict, harmonized_sample: Dict, variants_attribute: str
+    ):
+        sample_attribute = variants_attribute.split("_fields")[0]
+        harmonized_values = set()
         for key, value in sample_metadata.items():
             lower_key = key.lower().strip()
 
-            if lower_key in getattr(self, field):
-                harmonized_value = self.harmonize_value(field_name, value)
+            key_variants = getattr(self, variants_attribute)
+            key_regexes = [r for r in key_variants if isinstance(r, RE_TYPE)]
+            key_strings = [s for s in key_variants if isinstance(s, str)]
 
+            if lower_key in key_strings:
+                harmonized_value = self.harmonize_value(sample_attribute, value)
                 if harmonized_value:
-                    harmonized_sample[field_name] = harmonized_value
-                    break
+                    harmonized_values.add(harmonized_value)
+            else:
+                for key_regex in key_regexes:
+                    if key_regex.fullmatch(lower_key):
+                        harmonized_value = self.harmonize_value(sample_attribute, value)
+                        if harmonized_value:
+                            harmonized_values.add(harmonized_value)
+
+        harmonized_sample[sample_attribute] = ";".join([str(v) for v in harmonized_values])
 
     def harmonize_sample(self, sample_metadata: Dict, title_field: str = None) -> Dict:
-        fields = [
+        variants_attributes = [
             "sex_fields",
             "age_fields",
             "specimen_part_fields",
-            "genetic_information_fields",
+            "genotype_fields",
             "disease_fields",
             "disease_stage_fields",
             "cell_line_fields",
@@ -617,8 +637,8 @@ class Harmonizer:
 
         harmonized_sample = {}
         harmonized_sample["title"] = extract_title(sample_metadata, title_field)
-        for field in fields:
-            self.harmonize_field(sample_metadata, harmonized_sample, field)
+        for variants_attribute in variants_attributes:
+            self.harmonize_field(sample_metadata, harmonized_sample, variants_attribute)
 
         return harmonized_sample
 
