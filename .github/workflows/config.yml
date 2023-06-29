@@ -1,52 +1,51 @@
-name: test-and-deploy
+name: refine.bio CI/CD
 
 on: push
 
 jobs:
-  syntax_test:
-    # ubuntu-latest is ubuntu 18.04 which has a really outdated version of shellcheck
-    runs-on: ubuntu-20.04
+  # Code quality check jobs.
+  check_syntax:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    name: Check Syntax
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
+      - uses: actions/setup-python@v3
       - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 0.13.5
 
-      - name: Install build & test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pre-commit
-
-      - name: Init terraform in the infrastructure folder for validation
+      - name: Init Terraform in the Infrastructure Folder for Validation
         run: cd infrastructure && TF_VAR_user=ci TF_VAR_stage=dev ./init_terraform.sh
 
-      - name: Init terraform in the AMI folder for validation
+      - name: Init Terraform in the AMI Folder for Validation
         run: cd ami && terraform init
 
-      - name: Run pre-commit hooks on all files
-        run: PATH="$PATH:$HOME/.local/bin" pre-commit run --all-files --show-diff-on-failure
+      - uses: pre-commit/action@v3.0.0
 
+  # Test jobs.
   test_affy_agilent:
-    runs-on: ubuntu-latest
     env:
-      IMAGES: migrations affymetrix
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: affymetrix migrations
+    name: Test Affymetrix and Agilent
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Free up space
+      - name: Free Up Space
         uses: jlumbroso/free-disk-space@main
         with:
           # this might remove tools that are actually needed,
           # if set to "true" but frees about 6 GB
           tool-cache: false
 
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -56,23 +55,23 @@ jobs:
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Run affymetrix tests
+      - name: Run Affymetrix Tests
         run: |
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t affymetrix
 
-      - name: Run agilent tests
+      - name: Run Agilent Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t agilent
@@ -89,7 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Free up space
+      - name: Free Up Space
         uses: jlumbroso/free-disk-space@main
         with:
           # this might remove tools that are actually needed,
@@ -130,29 +129,30 @@ jobs:
           .github/scripts/filter_tests.sh -t no_op
 
   test_api:
-    runs-on: ubuntu-latest
     env:
-      IMAGES: migrations api_local
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: api_local migrations
+    name: Test API
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Free up space
+      - name: Free Up Space
         uses: jlumbroso/free-disk-space@main
         with:
           # this might remove tools that are actually needed,
           # if set to "true" but frees about 6 GB
           tool-cache: false
 
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull cached docker images
+      - name: Pull Cached Docker Images
         run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
@@ -161,47 +161,78 @@ jobs:
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Rebuild the Elasticsearch index
+      - name: Rebuild the Elasticsearch Index
         run: ./scripts/rebuild_es_index.sh
 
-      - name: Run API tests
+      - name: Run API Tests
         run: |
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           ./api/run_tests.sh
           .github/scripts/upload_test_coverage.sh api
 
-      - name: Push built docker images
+      - name: Push Built Docker Images
         run: ./.github/scripts/push_docker_images.sh
 
-  test_common:
-    runs-on: ubuntu-latest
+  test_base:
     env:
-      IMAGES: migrations common_tests
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: base
+    name: Test Base
+    needs:
+      - check_syntax
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull cached docker images
+      - name: Pull Cached Docker Images
+        run: ./.github/scripts/pull_docker_images.sh
+
+      - name: Build the Docker Image
+        run: ./scripts/prepare_image.sh -i base -s common
+
+      - name: Push Built Docker Images
+        run: ./.github/scripts/push_docker_images.sh
+
+  test_common:
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: common_tests migrations
+    name: Test Common
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Cached Docker Images
         run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
@@ -210,40 +241,43 @@ jobs:
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Rebuild the Elasticsearch index
+      - name: Rebuild the Elasticsearch Index
         run: ./scripts/rebuild_es_index.sh
 
-      - name: Run Common tests
+      - name: Run Common Tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           ./common/run_tests.sh
           .github/scripts/upload_test_coverage.sh common
 
-      - name: Push built docker images
+      - name: Push Built Docker Images
         run: ./.github/scripts/push_docker_images.sh
 
-  test_foreman:
-    runs-on: ubuntu-latest
+  test_downloaders_no_op:
     env:
-      IMAGES: migrations foreman
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: api_local downloaders foreman migrations no_op
+    name: Test Downloaders and No-Op
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Free up space
+      - name: Free Up Space
         uses: jlumbroso/free-disk-space@main
         with:
           # this might remove tools that are actually needed,
@@ -257,7 +291,55 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull cached docker images
+      - name: Pull Cached Docker Images
+        run: ./.github/scripts/pull_docker_images.sh
+
+      - name: Start Postgres
+        run: ./scripts/run_postgres.sh
+
+      - name: Pause for Initialization
+        run: sleep 30
+
+      - name: Install the Database
+        run: ./scripts/install_db_docker.sh
+
+      - name: Update the Models
+        run: |
+          sudo chmod -R a+rw common
+          ./scripts/update_models.sh
+
+      - name: Run Downloader Tests
+        run: |
+          .github/scripts/filter_tests.sh -t downloaders
+
+      - name: Run No-Op Tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/scripts/filter_tests.sh -t no_op
+
+  test_foreman:
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: migrations foreman
+    name: Test Foreman
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Free Up Space
+        run: ./.github/scripts/cleanup_instance.sh
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Cached Docker Images
         run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
@@ -266,230 +348,379 @@ jobs:
       - name: Start Elasticsearch
         run: ./scripts/run_es.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Rebuild the Elasticsearch index
+      - name: Rebuild the Elasticsearch Index
         run: ./scripts/rebuild_es_index.sh
 
-      - name: Run Foreman tests
+      - name: Run Foreman Tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           ./foreman/run_tests.sh --exclude-tag=end_to_end
           .github/scripts/upload_test_coverage.sh foreman
 
-      - name: Push built docker images
+      - name: Push Built Docker Images
         run: ./.github/scripts/push_docker_images.sh
 
   test_illumina:
-    runs-on: ubuntu-latest
     env:
-      IMAGES: migrations illumina
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: illumina migrations
+    name: Test Illumina
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull cached docker images
+      - name: Pull Cached Docker Images
         run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Run Illumina tests
+      - name: Run Illumina Tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t illumina
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Push built docker images
+      - name: Push Built Docker Images
         run: ./.github/scripts/push_docker_images.sh
 
   test_salmon:
-    runs-on: ubuntu-latest
     env:
-      IMAGES: migrations salmon
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: migrations salmon
+    name: Test Salmon
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull cached docker images
+      - name: Pull Cached Docker Images
         run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Run Salmon tests
+      - name: Run Salmon Tests
         run: |
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t salmon
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Push built docker images
+      - name: Push Built Docker Images
         run: ./.github/scripts/push_docker_images.sh
 
   test_smasher:
-    runs-on: ubuntu-latest
     env:
-      IMAGES: migrations smasher
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: migrations smasher
+    name: Test Smasher
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Free up space
+      - name: Free Up Space
         uses: jlumbroso/free-disk-space@main
         with:
           # this might remove tools that are actually needed,
           # if set to "true" but frees about 6 GB
           tool-cache: false
 
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull cached docker images
+      - name: Pull Cached Docker Images
         run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Run smasher tests
+      - name: Run Smasher Tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t smasher
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Run janitor tests
+      - name: Run Janitor Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t janitor
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Run compendia tests
+      - name: Run Compendia Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t compendia
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Run QN tests
+      - name: Run QN Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t qn
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Push built docker images
+      - name: Push Built Docker Images
         run: ./.github/scripts/push_docker_images.sh
 
   test_transcriptome:
-    runs-on: ubuntu-latest
     env:
-      IMAGES: migrations transcriptome
-      DOCKER_BUILDKIT: 1
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DOCKER_BUILDKIT: 1
+      IMAGES: migrations transcriptome
+    name: Test Transcriptome
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull cached docker images
+      - name: Pull Cached Docker Images
         run: ./.github/scripts/pull_docker_images.sh
 
       - name: Start Postgres
         run: ./scripts/run_postgres.sh
 
-      - name: Pause for initialization
+      - name: Pause for Initialization
         run: sleep 30
 
-      - name: Install the database
+      - name: Install the Database
         run: ./scripts/install_db_docker.sh
 
-      - name: Update the models
+      - name: Update the Models
         run: |
-          sudo chmod -R a+wr common
+          sudo chmod -R a+rw common
           ./scripts/update_models.sh
 
-      - name: Run Transcriptome tests
+      - name: Run Transcriptome Tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t transcriptome
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Push built docker images
+      - name: Push Built Docker Images
         run: ./.github/scripts/push_docker_images.sh
+
+  # Deploy jobs.
+  deploy:
+    env:
+      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
+      DOCKER_ID: ${{ secrets.DOCKER_ID }}
+      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
+      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      ENGAGEMENTBOT_WEBHOOK: ${{ secrets.ENGAGEMENTBOT_WEBHOOK }}
+      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
+      CI_USERNAME: ${{ github.actor }}
+      STAGING_DATABASE_PASSWORD: ${{ secrets.STAGING_DATABASE_PASSWORD }}
+      STAGING_DJANGO_SECRET_KEY: ${{ secrets.STAGING_DJANGO_SECRET_KEY }}
+      STAGING_RAVEN_DSN: ${{ secrets.STAGING_RAVEN_DSN }}
+      STAGING_RAVEN_DSN_API: ${{ secrets.STAGING_RAVEN_DSN_API }}
+      PROD_DATABASE_PASSWORD: ${{ secrets.PROD_DATABASE_PASSWORD }}
+      PROD_DJANGO_SECRET_KEY: ${{ secrets.PROD_DJANGO_SECRET_KEY }}
+      PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
+      PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
+    if: startsWith(github.ref, 'refs/tags/v') && ! endsWith(github.ref, '-hotfix')
+    name: Deploy
+    needs:
+      - check_syntax
+      - determine_branch
+      - test_affy_agilent
+      - test_api
+      - test_base
+      - test_common
+      - test_downloaders_no_op
+      - test_foreman
+      - test_illumina
+      - test_salmon
+      - test_smasher
+      - test_transcriptome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set the $MASTER_OR_DEV and $CI_TAG Environment Variables
+        run: |
+          source scripts/common.sh
+          echo "MASTER_OR_DEV=$(get_master_or_dev ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
+          # Remove /ref/tags/ from the beginning of the tag name
+          echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Set Staging Specific Environment Variables
+        if: ${{needs.determine_branch.outputs.branch == 'dev'}}
+        run: |
+          echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
+          # Staging doesn't notify the engagementbot, so overwrite this to be blank.
+          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
+
+      - name: Set Production Specific Environment Variables
+        if: ${{needs.determine_branch.outputs.branch == 'master'}}
+        run: |
+          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
+          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
+
+      - name: Deploy
+        run: ./.github/scripts/remote_deploy.sh
+
+      - name: Cleanup Deploy
+        run: ./.github/scripts/post_deploy_cleanup.sh
+    timeout-minutes: 1440
+
+  deploy_hotfix:
+    env:
+      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
+      DOCKER_ID: ${{ secrets.DOCKER_ID }}
+      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
+      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      ENGAGEMENTBOT_WEBHOOK: ${{ secrets.ENGAGEMENTBOT_WEBHOOK }}
+      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
+      CI_USERNAME: ${{ github.actor }}
+      STAGING_DATABASE_PASSWORD: ${{ secrets.STAGING_DATABASE_PASSWORD }}
+      STAGING_DJANGO_SECRET_KEY: ${{ secrets.STAGING_DJANGO_SECRET_KEY }}
+      STAGING_RAVEN_DSN: ${{ secrets.STAGING_RAVEN_DSN }}
+      STAGING_RAVEN_DSN_API: ${{ secrets.STAGING_RAVEN_DSN_API }}
+      PROD_DATABASE_PASSWORD: ${{ secrets.PROD_DATABASE_PASSWORD }}
+      PROD_DJANGO_SECRET_KEY: ${{ secrets.PROD_DJANGO_SECRET_KEY }}
+      PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
+      PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
+    if: startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-hotfix')
+    name: Deploy Hotfix
+    needs:
+      - determine_branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set the $MASTER_OR_DEV and $CI_TAG Environment Variables
+        run: |
+          source scripts/common.sh
+          echo "MASTER_OR_DEV=$(get_master_or_dev ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
+          # Remove /ref/tags/ from the beginning of the tag name
+          echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Set Staging Specific Environment Variables
+        if: ${{needs.determine_branch.outputs.branch == 'dev'}}
+        run: |
+          echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
+          # Staging doesn't notify the engagementbot, so overwrite this to be blank.
+          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
+
+      - name: Set Production Specific Environment Variables
+        if: ${{needs.determine_branch.outputs.branch == 'master'}}
+        run: |
+          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
+          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
+          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
+
+      - name: Deploy
+        run: ./.github/scripts/remote_deploy.sh
+
+      - name: Cleanup Deploy
+        run: ./.github/scripts/post_deploy_cleanup.sh
+    timeout-minutes: 1440
 
   determine_branch:
     # As far as I can tell, this is the only way to use the output of
     # a script in a github conditional.
     if: startsWith(github.ref, 'refs/tags/v')
+    name: Determene Branch
     runs-on: ubuntu-latest
     outputs:
       branch: ${{ steps.set_branch.outputs.branch }}
@@ -499,139 +730,7 @@ jobs:
           fetch-depth: 0
 
       - id: set_branch
-        name: Set the $CI_TAG environment variable
+        name: Set the $CI_TAG Environment Variable
         run: |
           source scripts/common.sh
           echo "branch=$(get_master_or_dev ${GITHUB_REF#refs/tags/})" >> $GITHUB_OUTPUT
-
-  deploy:
-    if: startsWith(github.ref, 'refs/tags/v') && ! endsWith(github.ref, '-hotfix')
-    runs-on: ubuntu-latest
-    timeout-minutes: 1440
-    env:
-      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
-      DOCKER_ID: ${{ secrets.DOCKER_ID }}
-      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
-      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ENGAGEMENTBOT_WEBHOOK: ${{ secrets.ENGAGEMENTBOT_WEBHOOK }}
-      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
-      CI_USERNAME: ${{ github.actor }}
-      STAGING_DATABASE_PASSWORD: ${{ secrets.STAGING_DATABASE_PASSWORD }}
-      STAGING_DJANGO_SECRET_KEY: ${{ secrets.STAGING_DJANGO_SECRET_KEY }}
-      STAGING_RAVEN_DSN: ${{ secrets.STAGING_RAVEN_DSN }}
-      STAGING_RAVEN_DSN_API: ${{ secrets.STAGING_RAVEN_DSN_API }}
-      PROD_DATABASE_PASSWORD: ${{ secrets.PROD_DATABASE_PASSWORD }}
-      PROD_DJANGO_SECRET_KEY: ${{ secrets.PROD_DJANGO_SECRET_KEY }}
-      PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
-      PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
-    needs:
-      - determine_branch
-      - downloader_no_op_tests
-      - syntax_test
-      - test_affy_agilent
-      - test_api
-      - test_common
-      - test_foreman
-      - test_illumina
-      - test_salmon
-      - test_smasher
-      - test_transcriptome
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set the $MASTER_OR_DEV and $CI_TAG environment variables
-        run: |
-          source scripts/common.sh
-          echo "MASTER_OR_DEV=$(get_master_or_dev ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
-          # Remove /ref/tags/ from the beginning of the tag name
-          echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Set staging specific environment variables
-        if: ${{needs.determine_branch.outputs.branch == 'dev'}}
-        run: |
-          echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
-          echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
-          # Staging doesn't notify the engagementbot, so overwrite this to be blank.
-          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
-
-      - name: Set prod specific environment variables
-        if: ${{needs.determine_branch.outputs.branch == 'master'}}
-        run: |
-          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
-          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
-          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
-
-      - name: Deploy
-        run: ./.github/scripts/remote_deploy.sh
-
-      - name: Cleanup deploy
-        run: ./.github/scripts/post_deploy_cleanup.sh
-
-  hotfix_deploy:
-    if: startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-hotfix')
-    runs-on: ubuntu-latest
-    timeout-minutes: 1440
-    env:
-      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
-      DOCKER_ID: ${{ secrets.DOCKER_ID }}
-      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
-      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ENGAGEMENTBOT_WEBHOOK: ${{ secrets.ENGAGEMENTBOT_WEBHOOK }}
-      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
-      CI_USERNAME: ${{ github.actor }}
-      STAGING_DATABASE_PASSWORD: ${{ secrets.STAGING_DATABASE_PASSWORD }}
-      STAGING_DJANGO_SECRET_KEY: ${{ secrets.STAGING_DJANGO_SECRET_KEY }}
-      STAGING_RAVEN_DSN: ${{ secrets.STAGING_RAVEN_DSN }}
-      STAGING_RAVEN_DSN_API: ${{ secrets.STAGING_RAVEN_DSN_API }}
-      PROD_DATABASE_PASSWORD: ${{ secrets.PROD_DATABASE_PASSWORD }}
-      PROD_DJANGO_SECRET_KEY: ${{ secrets.PROD_DJANGO_SECRET_KEY }}
-      PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
-      PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
-    needs:
-      - determine_branch
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set the $MASTER_OR_DEV and $CI_TAG environment variables
-        run: |
-          source scripts/common.sh
-          echo "MASTER_OR_DEV=$(get_master_or_dev ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
-          # Remove /ref/tags/ from the beginning of the tag name
-          echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Set staging specific environment variables
-        if: ${{needs.determine_branch.outputs.branch == 'dev'}}
-        run: |
-          echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
-          echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
-          # Staging doesn't notify the engagementbot, so overwrite this to be blank.
-          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
-
-      - name: Set prod specific environment variables
-        if: ${{needs.determine_branch.outputs.branch == 'master'}}
-        run: |
-          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
-          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
-          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
-
-      - name: Deploy
-        run: ./.github/scripts/remote_deploy.sh
-
-      - name: Cleanup deploy
-        run: ./.github/scripts/post_deploy_cleanup.sh
