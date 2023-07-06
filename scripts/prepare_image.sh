@@ -91,14 +91,14 @@ fi
 
 DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
 
-CACHE_FROM_LATEST="cache-from=type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
-CACHE_FROM_VERSION="cache-from=type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
-CACHE_TO_LATEST="cache-to=type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
-CACHE_TO_VERSION="cache-to=type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
+CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
+CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
+CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
+CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
 
 if test "$GITHUB_ACTION"; then
-    CACHE_TO_LATEST="cache-to=type=gha"
-    CACHE_TO_VERSION="cache-to=type=gha"
+    CACHE_TO_LATEST="type=gha"
+    CACHE_TO_VERSION="type=gha"
     DOCKER_ACTION="--push"
 fi
 
@@ -121,10 +121,10 @@ while [ $finished != 0 ] && [ $attempt -lt $attempts ]; do
     docker buildx build \
         --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
         --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-        --"$CACHE_FROM_LATEST" \
-        --"$CACHE_FROM_VERSION" \
-        --"$CACHE_TO_LATEST" \
-        --"$CACHE_TO_VERSION" \
+        --cache-from "$CACHE_FROM_LATEST" \
+        --cache-from "$CACHE_FROM_VERSION" \
+        --cache-to "$CACHE_TO_LATEST" \
+        --cache-to "$CACHE_TO_VERSION" \
         --file "$DOCKER_FILE_PATH" \
         --platform linux/amd64 \
         --tag "$DOCKERHUB_IMAGE:latest" \
