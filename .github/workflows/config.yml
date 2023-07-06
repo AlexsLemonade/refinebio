@@ -1,5 +1,7 @@
 name: refine.bio CI/CD
 
+on: push
+
 env:
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
@@ -9,8 +11,6 @@ env:
   DOCKER_IO_USERNAME: ${{ secrets.DOCKER_IO_USERNAME }}
   DOCKER_IO_PASSWORD: ${{ secrets.DOCKER_IO_PASSWORD }}
   INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
-
-on: push
 
 jobs:
   # Code quality check jobs.
