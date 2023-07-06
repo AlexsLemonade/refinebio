@@ -527,20 +527,20 @@ if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     fi
 fi
 
-. scripts/common.sh
+. ./scripts/common.sh
+
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX "$volume_directory"
 
-worker_images="salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn affymetrix_local janitor compendia"
+worker_images="salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn janitor compendia"
+
 for image in $worker_images; do
     if [ -z "$tag" ] || [ "$tag" = "$image" ]; then
         if [ "$image" = "agilent" ] || [ "$image" = "affymetrix" ]; then
             # Agilent uses the same docker image as Affymetrix.
-            ./scripts/prepare_image.sh -d -i affymetrix -s workers
-            ./scripts/prepare_image.sh -i affymetrix_local -r ccdlstaging
-            docker tag "$DOCKERHUB_REPO/dr_affymetrix_local:latest" "$DOCKERHUB_REPO/dr_affymetrix:latest"
+            ./scripts/prepare_image.sh -i affymetrix -s workers
             image_name="$DOCKERHUB_REPO/dr_affymetrix"
         elif [ "$tag" = "qn" ]; then
             ./scripts/prepare_image.sh -i smasher -s workers

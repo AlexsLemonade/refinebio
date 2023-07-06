@@ -1,17 +1,11 @@
 ARG DOCKERHUB_REPO
-FROM $DOCKERHUB_REPO/dr_base:latest
+ARG SYSTEM_VERSION
+FROM $DOCKERHUB_REPO/dr_base:$SYSTEM_VERSION
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
-
-COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
-    # It's annoying that this can only be installed via git.
-    git clone https://github.com/deweylab/RSEM.git && \
-    cd RSEM && make install && \
-    rm -rf RSEM
 
 # Install Salmon.
 # Tximport requires all experiments to be processed with the same version of
@@ -20,6 +14,7 @@ RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
 # all samples from incomplete experiments must have salmon run on them again.
 ENV SALMON_VERSION=0.13.1
 
+COPY workers/data_refinery_workers/processors/requirements.txt .
 # Salmon can extract to a different directory than the name of the tar file.
 RUN wget -q "https://github.com/COMBINE-lab/salmon/releases/download/\
 v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
@@ -31,6 +26,13 @@ v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
     rm -r Salmon*
 # End Salmon installation.
 
+COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
+    # It's annoying that this can only be installed via git.
+    git clone https://github.com/deweylab/RSEM.git && \
+    cd RSEM && make install && \
+    rm -rf RSEM
+
 COPY common/dist/data-refinery-common-* common/
 RUN pip3 install --ignore-installed --no-cache-dir \
         common/$(ls common -1 | sort --version-sort | tail -1)
@@ -41,7 +43,6 @@ COPY workers/ .
 
 RUN rm -rf /root/.cache/*
 
-ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user

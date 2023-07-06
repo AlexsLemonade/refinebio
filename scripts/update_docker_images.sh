@@ -11,6 +11,8 @@ script_directory="$(
 )"
 cd "$script_directory" || exit
 
+. ./common.sh
+
 # Get access to all of refinebio.
 cd ..
 
@@ -30,12 +32,10 @@ There are two required arguments for this script:
 There are also optional arguments:
 -a also build the affymetrix image
     (we normally don't because it is so intense to build)
--b sets a remote Docker builder.
--x specifies target Docker images architecture (amd64|arm64).
 EOF
 }
 
-while getopts ":r:v:abx:h" opt; do
+while getopts ":r:v:ah" opt; do
     case $opt in
     r)
         export DOCKERHUB_REPO="$OPTARG"
@@ -44,13 +44,7 @@ while getopts ":r:v:abx:h" opt; do
         export SYSTEM_VERSION="$OPTARG"
         ;;
     a)
-        AFFYMETRIX=true
-        ;;
-    b)
-        DOCKER_BUILDER="$OPTARG"
-        ;;
-    x)
-        SYSTEM_ARCH="$OPTARG"
+        BUILD_AFFYMETRIX=true
         ;;
     h)
         print_description
@@ -71,35 +65,21 @@ while getopts ":r:v:abx:h" opt; do
     esac
 done
 
-if [ -z "$SYSTEM_ARCH" ]; then
-    SYSTEM_ARCH="amd64"
-fi
-
-if [ "$SYSTEM_ARCH" != "amd64" ] && [ "$SYSTEM_ARCH" != "arm64" ]; then
-    echo "Error: unsupported architecture $SYSTEM_ARCH: use either amd64 or arm64."
-    exit 1
-fi
-
 if [ -z "$DOCKERHUB_REPO" ]; then
     echo 'Error: must specify the Dockerhub repository with -r'
     exit 1
 fi
 
 if [ -z "$SYSTEM_VERSION" ]; then
-    echo 'Error: must specify the version repository with -v'
-    exit 1
+    SYSTEM_VERSION="$(get_branch_hash)"
 fi
-
-if [ -z "$DOCKER_BUILDER" ]; then
-    DOCKER_BUILDER="local"
-fi
-
 
 # Intentionally omit affymetrix unless specifically requested since it is so
 # intense to build.
-DOCKER_IMAGES="transcriptome smasher salmon no_op illumina downloaders compendia"
-if [ "$AFFYMETRIX" ]; then
-    DOCKER_IMAGES="$DOCKER_IMAGES affymetrix"
+image_names="base migrations common_tests foreman api_base api_production api_local \
+    transcriptome smasher salmon no_op illumina downloaders compendia"
+if [ "$BUILD_AFFYMETRIX" ]; then
+    image_names="$image_names affymetrix"
 fi
 
 # Set the version for the common project.
@@ -107,55 +87,50 @@ echo "$SYSTEM_VERSION" >common/version
 
 # Create common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
-## Remove old common distributions if they exist.
+# Remove old common distributions if they exist.
 rm -f common/dist/*
 (cd common && python3 setup.py sdist 1>/dev/null) # Run quietly in a subshell.
 
-ARCH="$(uname -m)"
-
-if [ "$ARCH" != "$SYSTEM_ARCH" ] && [ -z "$DOCKER_BUILDER" ]; then
-    echo "You're building $SYSTEM_ARCH images on the $ARCH machine without " \
-        "specifying a DOCKER_BUILDER. This may take a while..."
-    sleep 5
-fi
-
-for DOCKER_IMAGE in $DOCKER_IMAGES; do
-    case $DOCKER_IMAGE in
-    api)
-        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.api_production"
+# shellcheck disable=SC2086
+for image_name in $image_names; do
+    case $image_name in
+    api_base | api_local | api_production)
+        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.$image_name"
+        ;;
+    base | common_tests | migrations)
+        DOCKER_FILE_PATH="common/dockerfiles/Dockerfile.$image_name"
         ;;
     foreman)
-        DOCKER_FILE_PATH="foreman/dockerfiles/Dockerfile.$DOCKER_IMAGE"
+        DOCKER_FILE_PATH="foreman/dockerfiles/Dockerfile.$image_name"
         ;;
     *)
-        DOCKER_FILE_PATH="workers/dockerfiles/Dockerfile.$DOCKER_IMAGE"
+        DOCKER_FILE_PATH="workers/dockerfiles/Dockerfile.$image_name"
         ;;
     esac
 
-    IMAGE_NAME="$DOCKERHUB_REPO/dr_$DOCKER_IMAGE"
+    echo
+    echo "Building the $image_name:$SYSTEM_VERSION image from $DOCKER_FILE_PATH."
+    echo
 
-    echo "Building $SYSTEM_ARCH $IMAGE_NAME:$SYSTEM_VERSION image from " \
-        "$DOCKER_FILE_PATH."
+    DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$image_name"
+    CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
+    CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
+    CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
+    CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
 
-    if test "$DOCKER_BUILDER"; then
-        echo "Using builder $DOCKER_BUILDER."
-        docker buildx use "$DOCKER_BUILDER"
-    fi
+    set_up_docker_builder
 
-    DOCKER_BUILDKIT=1 docker buildx build \
-        --build-arg BUILDKIT_INLINE_CACHE=1 \
+    docker buildx build \
         --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
         --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-        --cache-from "$IMAGE_NAME:$SYSTEM_VERSION" \
-        --cache-from "$IMAGE_NAME:latest" \
+        --cache-from "$CACHE_FROM_LATEST" \
+        --cache-from "$CACHE_FROM_VERSION" \
+        --cache-to "$CACHE_TO_LATEST" \
+        --cache-to "$CACHE_TO_VERSION" \
         --file "$DOCKER_FILE_PATH" \
-        --platform "linux/$SYSTEM_ARCH" \
+        --platform linux/amd64 \
         --push \
-        --tag "$IMAGE_NAME:$SYSTEM_VERSION" \
-        --tag "$IMAGE_NAME:latest" \
+        --tag "$DOCKERHUB_IMAGE:latest" \
+        --tag "$DOCKERHUB_IMAGE:$SYSTEM_VERSION" \
         .
-
-    docker pull \
-        --platform "linux/$SYSTEM_ARCH" \
-        "$IMAGE_NAME:latest"
 done

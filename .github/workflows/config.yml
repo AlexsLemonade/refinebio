@@ -2,13 +2,23 @@ name: refine.bio CI/CD
 
 on: push
 
+env:
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
+  DOCKER_BUILDKIT: 1
+  DOCKER_ID: ${{ secrets.DOCKER_ID }}
+  DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
+  DOCKER_IO_USERNAME: ${{ secrets.DOCKER_IO_USERNAME }}
+  DOCKER_IO_PASSWORD: ${{ secrets.DOCKER_IO_PASSWORD }}
+  INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
+
 jobs:
   # Code quality check jobs.
   check_syntax:
+    name: Check Syntax
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    name: Check Syntax
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -26,171 +36,118 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
   # Test jobs.
-  test_affy_agilent:
+  test_affymetrix:
+    name: Test Affymetrix
     env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: affymetrix migrations
-    name: Test Affymetrix and Agilent
+      IMAGES: migrations affymetrix
     needs:
       - test_base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     steps:
       - uses: actions/checkout@v3
-
-      - name: Free Up Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tool-cache: false
 
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Run Affymetrix Tests
         run: |
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t affymetrix
 
+  test_agilent:
+    name: Test Agilent
+    env:
+      IMAGES: migrations affymetrix
+    needs:
+      - test_base
+    runs-on: ubuntu-latest-m
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+
+      - name: Start Postgres
+        run: scripts/run_postgres.sh
+
+      - name: Pause for Initialization
+        run: sleep 15
+
+      - name: Install Database
+        run: scripts/install_db_docker.sh
+
+      - name: Update Models
+        run: scripts/update_models.sh
+
       - name: Run Agilent Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t agilent
 
-  # This runs downloader and NO_OP tests.
-  downloader_no_op_tests:
-    runs-on: ubuntu-latest
-    env:
-      # We have issues when downloading the no_op image, so for now let's just not pull it
-      # IMAGES: migrations api_local downloaders no_op foreman
-      IMAGES: migrations api_local downloaders foreman
-      DOCKER_BUILDKIT: 1
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Free Up Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tool-cache: false
-
-      - name: Login to Packages Container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull cached docker images
-        run: ./.github/scripts/pull_docker_images.sh
-
-      - name: Start Postgres
-        run: ./scripts/run_postgres.sh
-
-      - name: Pause for initialization
-        run: sleep 30
-
-      - name: Install the database
-        run: ./scripts/install_db_docker.sh
-
-      - name: Update the models
-        run: |
-          sudo chmod -R a+wr common
-          ./scripts/update_models.sh
-
-      - name: Run downloader tests
-        run: |
-          .github/scripts/filter_tests.sh -t downloaders
-
-      - name: Run NO_OP tests
-        run: |
-          sudo -E chown -R $USER:$USER workers/test_volume
-          .github/scripts/filter_tests.sh -t no_op
-
   test_api:
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: api_local migrations
     name: Test API
+    env:
+      IMAGES: migrations api_base api_local
+    needs:
+      - check_syntax
+      - test_api_base
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Free Up Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tool-cache: false
 
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Start Elasticsearch
-        run: ./scripts/run_es.sh
+        run: scripts/run_es.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Rebuild the Elasticsearch Index
-        run: ./scripts/rebuild_es_index.sh
+        run: scripts/rebuild_es_index.sh
 
       - name: Run API Tests
         run: |
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
-          ./api/run_tests.sh
+          api/run_tests.sh
           .github/scripts/upload_test_coverage.sh api
 
-      - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
-
-  test_base:
+  test_api_base:
+    name: Test API Base
     env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: base
-    name: Test Base
+      IMAGES: migrations api_base
     needs:
       - check_syntax
     runs-on: ubuntu-latest
@@ -200,25 +157,60 @@ jobs:
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+
+      - name: Start Postgres
+        run: scripts/run_postgres.sh
+
+      - name: Start Elasticsearch
+        run: scripts/run_es.sh
+
+      - name: Pause for Initialization
+        run: sleep 15
+
+      - name: Install Database
+        run: scripts/install_db_docker.sh
+
+      - name: Update Models
+        run: scripts/update_models.sh
+
+      - name: Build the Docker Image
+        run: scripts/prepare_image.sh -i api_base -s api
+
+  test_base:
+    name: Test Base
+    env:
+      IMAGES: base
+    needs:
+      - check_syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+
+      - name: Build the Docker Image
+        run: scripts/prepare_image.sh -i base -s common
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
-
-      - name: Build the Docker Image
-        run: ./scripts/prepare_image.sh -i base -s common
-
       - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
+        run: .github/scripts/push_docker_images.sh
 
   test_common:
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: common_tests migrations
     name: Test Common
+    env:
+      IMAGES: migrations common_tests
     needs:
       - test_base
     runs-on: ubuntu-latest
@@ -228,85 +220,71 @@ jobs:
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Start Elasticsearch
-        run: ./scripts/run_es.sh
+        run: scripts/run_es.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Rebuild the Elasticsearch Index
-        run: ./scripts/rebuild_es_index.sh
+        run: scripts/rebuild_es_index.sh
 
       - name: Run Common Tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
-          ./common/run_tests.sh
+          common/run_tests.sh
           .github/scripts/upload_test_coverage.sh common
 
-      - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
-
-  test_downloaders_no_op:
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: api_local downloaders foreman migrations no_op
-    name: Test Downloaders and No-Op
-    needs:
-      - test_base
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Free Up Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tool-cache: false
-
-      - name: Login to Packages Container registry
+      - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+      - name: Push Built Docker Images
+        run: .github/scripts/push_docker_images.sh
+
+  test_downloaders_no_op:
+    name: Test Downloaders and No-Op
+    env:
+      IMAGES: migrations api_base api_local downloaders foreman
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Run Downloader Tests
         run: |
@@ -318,66 +296,60 @@ jobs:
           .github/scripts/filter_tests.sh -t no_op
 
   test_foreman:
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: migrations foreman
     name: Test Foreman
+    env:
+      IMAGES: migrations foreman
     needs:
       - test_base
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Free Up Space
-        run: ./.github/scripts/cleanup_instance.sh
-
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Start Elasticsearch
-        run: ./scripts/run_es.sh
+        run: scripts/run_es.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Rebuild the Elasticsearch Index
-        run: ./scripts/rebuild_es_index.sh
+        run: scripts/rebuild_es_index.sh
 
       - name: Run Foreman Tests
         run: |
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
-          ./foreman/run_tests.sh --exclude-tag=end_to_end
+          foreman/run_tests.sh --exclude-tag=end_to_end
           .github/scripts/upload_test_coverage.sh foreman
 
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
+        run: .github/scripts/push_docker_images.sh
 
   test_illumina:
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: illumina migrations
     name: Test Illumina
+    env:
+      IMAGES: migrations illumina
     needs:
       - test_base
     runs-on: ubuntu-latest
@@ -387,26 +359,20 @@ jobs:
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Run Illumina Tests
         run: |
@@ -415,15 +381,20 @@ jobs:
           .github/scripts/filter_tests.sh -t illumina
           .github/scripts/upload_test_coverage.sh workers
 
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
+        run: .github/scripts/push_docker_images.sh
 
   test_salmon:
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: migrations salmon
     name: Test Salmon
+    env:
+      IMAGES: migrations salmon
     needs:
       - test_base
     runs-on: ubuntu-latest
@@ -433,26 +404,20 @@ jobs:
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Run Salmon Tests
         run: |
@@ -460,28 +425,6 @@ jobs:
           .github/scripts/filter_tests.sh -t salmon
           .github/scripts/upload_test_coverage.sh workers
 
-      - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
-
-  test_smasher:
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKER_BUILDKIT: 1
-      IMAGES: migrations smasher
-    name: Test Smasher
-    needs:
-      - test_base
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Free Up Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tool-cache: false
-
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
@@ -489,22 +432,36 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+      - name: Push Built Docker Images
+        run: .github/scripts/push_docker_images.sh
+
+  test_smasher:
+    name: Test Smasher
+    env:
+      IMAGES: migrations smasher
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Run Smasher Tests
         run: |
@@ -531,15 +488,21 @@ jobs:
           .github/scripts/filter_tests.sh -t qn
           .github/scripts/upload_test_coverage.sh workers
 
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
+        run: .github/scripts/push_docker_images.sh
 
   test_transcriptome:
+    name: Test Transcriptome
     env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       DOCKER_BUILDKIT: 1
       IMAGES: migrations transcriptome
-    name: Test Transcriptome
     needs:
       - test_base
     runs-on: ubuntu-latest
@@ -549,26 +512,20 @@ jobs:
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull Cached Docker Images
-        run: ./.github/scripts/pull_docker_images.sh
+          username: ${{ secrets.DOCKER_IO_USERNAME }}
+          password: ${{ secrets.DOCKER_IO_PASSWORD }}
 
       - name: Start Postgres
-        run: ./scripts/run_postgres.sh
+        run: scripts/run_postgres.sh
 
       - name: Pause for Initialization
-        run: sleep 30
+        run: sleep 15
 
-      - name: Install the Database
-        run: ./scripts/install_db_docker.sh
+      - name: Install Database
+        run: scripts/install_db_docker.sh
 
-      - name: Update the Models
-        run: |
-          sudo chmod -R a+rw common
-          ./scripts/update_models.sh
+      - name: Update Models
+        run: scripts/update_models.sh
 
       - name: Run Transcriptome Tests
         run: |
@@ -577,11 +534,19 @@ jobs:
           .github/scripts/filter_tests.sh -t transcriptome
           .github/scripts/upload_test_coverage.sh workers
 
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Push Built Docker Images
-        run: ./.github/scripts/push_docker_images.sh
+        run: .github/scripts/push_docker_images.sh
 
   # Deploy jobs.
   deploy:
+    name: Deploy
     env:
       DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
       DOCKER_ID: ${{ secrets.DOCKER_ID }}
@@ -601,13 +566,11 @@ jobs:
       PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
       PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
     if: startsWith(github.ref, 'refs/tags/v') && ! endsWith(github.ref, '-hotfix')
-    name: Deploy
     needs:
-      - check_syntax
       - determine_branch
-      - test_affy_agilent
+      - test_affymetrix
+      - test_agilent
       - test_api
-      - test_base
       - test_common
       - test_downloaders_no_op
       - test_foreman
@@ -648,13 +611,14 @@ jobs:
           echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
 
       - name: Deploy
-        run: ./.github/scripts/remote_deploy.sh
+        run: .github/scripts/remote_deploy.sh
 
       - name: Cleanup Deploy
-        run: ./.github/scripts/post_deploy_cleanup.sh
+        run: .github/scripts/post_deploy_cleanup.sh
     timeout-minutes: 1440
 
   deploy_hotfix:
+    name: Deploy Hotfix
     env:
       DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
       DOCKER_ID: ${{ secrets.DOCKER_ID }}
@@ -674,7 +638,6 @@ jobs:
       PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
       PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
     if: startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-hotfix')
-    name: Deploy Hotfix
     needs:
       - determine_branch
     runs-on: ubuntu-latest
@@ -710,17 +673,17 @@ jobs:
           echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
 
       - name: Deploy
-        run: ./.github/scripts/remote_deploy.sh
+        run: .github/scripts/remote_deploy.sh
 
       - name: Cleanup Deploy
-        run: ./.github/scripts/post_deploy_cleanup.sh
+        run: .github/scripts/post_deploy_cleanup.sh
     timeout-minutes: 1440
 
   determine_branch:
+    name: Determene Branch
     # As far as I can tell, this is the only way to use the output of
     # a script in a github conditional.
     if: startsWith(github.ref, 'refs/tags/v')
-    name: Determene Branch
     runs-on: ubuntu-latest
     outputs:
       branch: ${{ steps.set_branch.outputs.branch }}

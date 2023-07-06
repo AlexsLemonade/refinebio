@@ -73,7 +73,7 @@ cd ..
 
 # Agilent uses the same image as affymetrix
 if [[ "$IMAGE" == "affymetrix" || "$IMAGE" == "agilent" ]]; then
-    ./scripts/prepare_image.sh -d -i affymetrix
+    ./scripts/prepare_image.sh -i affymetrix
     IMAGE_NAME="$DOCKERHUB_REPO/dr_affymetrix"
 else
     ./scripts/prepare_image.sh -i "$IMAGE"
@@ -98,6 +98,8 @@ docker run \
     --env-file workers/environments/local \
     --interactive \
     --link drdb:postgres \
+    --platform linux/amd64 \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
-    "$IMAGE_NAME" "${@: -3}" "${@: -2}" "${@: -1}"
+    "$IMAGE_NAME" \
+    "${@: -3}" "${@: -2}" "${@: -1}"

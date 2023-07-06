@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Load docker_img_exists function and $WORKER_IMAGES.
+# Load docker_image_exists function and $WORKER_IMAGES.
 . ~/refinebio/scripts/common.sh
 
 # Github won't set the branch name for us, so do it ourselves.
@@ -12,7 +12,7 @@ if [[ "$branch" == "master" ]]; then
 elif [[ "$branch" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
-    echo "Why in the world was update_docker_img.sh called from a branch other than dev or master!?"
+    echo "Why in the world was update_docker_image.sh called from a branch other than dev or master!?"
     exit 1
 fi
 
@@ -30,7 +30,7 @@ docker login -u "$DOCKER_ID" -p "$DOCKER_PASSWD"
 cd ~/refinebio
 for IMAGE in $WORKER_IMAGES; do
     image_name="$DOCKERHUB_REPO/dr_$IMAGE"
-    if docker_img_exists "$image_name" "$CI_TAG"; then
+    if docker_image_exists "$image_name" "$CI_TAG"; then
         echo "Docker image exists, skipping: $image_name:$CI_TAG"
     else
         echo "Building docker image: $image_name:$CI_TAG"
@@ -52,7 +52,7 @@ done
 
 # Build and push foreman image.
 FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
-if docker_img_exists "$FOREMAN_DOCKER_IMAGE" "$CI_TAG"; then
+if docker_image_exists "$FOREMAN_DOCKER_IMAGE" "$CI_TAG"; then
     echo "Docker image exists, skipping: $FOREMAN_DOCKER_IMAGE:$CI_TAG"
 else
     # Build and push image. We use the CI_TAG as the system version.
@@ -69,7 +69,7 @@ fi
 
 # Build and push API image.
 API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
-if docker_img_exists "$API_DOCKER_IMAGE" "$CI_TAG"; then
+if docker_image_exists "$API_DOCKER_IMAGE" "$CI_TAG"; then
     echo "Docker image exists, skipping: $API_DOCKER_IMAGE:$CI_TAG"
 else
     # Build and push image. We use the CI_TAG as the system version.

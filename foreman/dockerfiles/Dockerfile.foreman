@@ -1,17 +1,19 @@
 ARG DOCKERHUB_REPO
-FROM $DOCKERHUB_REPO/dr_base:latest
+ARG SYSTEM_VERSION
+FROM $DOCKERHUB_REPO/dr_base:$SYSTEM_VERSION
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-ADD https://gbnci.cancer.gov/geo/GEOmetadb.sqlite.gz data/microarray/GEOmetadb.sqlite.gz
-RUN gunzip data/microarray/GEOmetadb.sqlite.gz && \
-    chmod 644 data/microarray/GEOmetadb.sqlite
-
 COPY foreman/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN mkdir -p data/microarray && \
+    wget -q https://gbnci.cancer.gov/geo/GEOmetadb.sqlite.gz \
+        -O data/microarray/GEOmetadb.sqlite.gz && \
+    gunzip data/microarray/GEOmetadb.sqlite.gz && \
+    chmod 644 data/microarray/GEOmetadb.sqlite && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
@@ -22,7 +24,6 @@ COPY .boto .boto
 COPY config config
 COPY foreman/ .
 
-ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user

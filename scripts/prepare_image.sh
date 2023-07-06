@@ -8,7 +8,6 @@ script_directory="$(
 )"
 cd "$script_directory" || exit
 
-# Import the functions in common.sh
 . ./common.sh
 
 # We need access to all of the projects
@@ -25,7 +24,6 @@ print_options() {
     echo "    -i IMAGE     The image to be prepared. This must be specified."
     echo "    -s SERVICE   The service to seach for a dockerfile."
     echo "                 The default option is 'workers'."
-    echo "    -d           Pull the latest version of the image from Dockerhub."
     echo "    -u           Push the built image to the Dockerhub."
     echo "    -r REPO      The docker registry to use for pull/push actions."
     echo "                 The default option is 'ccdlstaging'."
@@ -35,16 +33,10 @@ print_options() {
     echo "    ./scripts/prepare_image.sh -i downloaders -r ccdlstaging"
 }
 
-while getopts "udhi:b:r:s:" opt; do
+while getopts "uhi:r:s:" opt; do
     case $opt in
-    b)
-        DOCKER_BUILDER="$OPTARG"
-        ;;
-    d)
-        PULL="True"
-        ;;
     i)
-        IMAGE="$OPTARG"
+        IMAGE_NAME="$OPTARG"
         ;;
     r)
         DOCKERHUB_REPO="$OPTARG"
@@ -54,7 +46,7 @@ while getopts "udhi:b:r:s:" opt; do
         SERVICE="$OPTARG"
         ;;
     u)
-        DOCKER_ACTION="push"
+        DOCKER_ACTION="--push"
         ;;
     h)
         print_description
@@ -75,7 +67,7 @@ while getopts "udhi:b:r:s:" opt; do
     esac
 done
 
-if [ -z "$IMAGE" ]; then
+if [ -z "$IMAGE_NAME" ]; then
     echo "Error: you must specify an image with -i" >&2
     exit 1
 fi
@@ -88,68 +80,69 @@ if [ -z "$DOCKERHUB_REPO" ]; then
     DOCKERHUB_REPO="ccdlstaging"
 fi
 
-# Default to "local" for system version if we're not running in the cloud.
+# Defaults to commit hash value for if we're not running in the cloud.
 if [ -z "$SYSTEM_VERSION" ]; then
-    SYSTEM_VERSION="local$(date +%s)"
+    SYSTEM_VERSION="$(get_branch_hash)"
 fi
 
 if [ -z "$DOCKER_ACTION" ]; then
-    DOCKER_ACTION="load"
+    DOCKER_ACTION="--load"
 fi
 
-# We want to check if a test image has been built for this branch. If
-# it has we should use that rather than building it slowly.
-DOCKER_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE"
+DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
 
-# shellcheck disable=SC2086
-if [ "$(docker_img_exists $IMAGE_NAME $branch_name)" ]; then
-    docker pull "$IMAGE_NAME:$branch_name"
-elif [ -n "$PULL" ]; then
+CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
+CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
+CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
+CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
+
+if test "$GITHUB_ACTION"; then
+    CACHE_TO_LATEST="type=gha"
+    CACHE_TO_VERSION="type=gha"
+    DOCKER_ACTION="--push"
+fi
+
+DOCKER_FILE_PATH="$SERVICE/dockerfiles/Dockerfile.$IMAGE_NAME"
+
+echo
+echo "Building the $IMAGE_NAME:$SYSTEM_VERSION image from $DOCKER_FILE_PATH."
+echo
+
+attempt=0
+attempts=3
+finished=1
+while [ $finished != 0 ] && [ $attempt -lt $attempts ]; do
+    if [ $attempt -gt 0 ]; then
+        echo "Failed to build $IMAGE_NAME:$SYSTEM_VERSION image, trying again."
+    fi
+
+    set_up_docker_builder
+
+    docker buildx build \
+        --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+        --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
+        --cache-from "$CACHE_FROM_LATEST" \
+        --cache-from "$CACHE_FROM_VERSION" \
+        --cache-to "$CACHE_TO_LATEST" \
+        --cache-to "$CACHE_TO_VERSION" \
+        --file "$DOCKER_FILE_PATH" \
+        --platform linux/amd64 \
+        --tag "$DOCKERHUB_IMAGE:latest" \
+        --tag "$DOCKERHUB_IMAGE:$SYSTEM_VERSION" \
+        "$DOCKER_ACTION" \
+        .
+
+    finished=$?
+    attempt=$((attempt + 1))
+done
+
+if [ $finished -ne 0 ] && [ $attempt -ge $attempts ]; then
+    echo "Could not build $DOCKERHUB_IMAGE after $attempt attempts."
+    exit 1
+fi
+
+if test "$GITHUB_ACTION"; then
     docker pull \
         --platform linux/amd64 \
-        "$DOCKER_IMAGE"
-else
-    echo ""
-    echo "Rebuilding the $DOCKER_IMAGE image."
-
-    attempt=0
-    attempts=3
-    finished=1
-    while [ $finished != 0 ] && [ $attempt -lt $attempts ]; do
-        if [ $attempts -gt 0 ]; then
-            echo "Failed to build $DOCKER_IMAGE, trying again."
-        fi
-
-        if test "$GITHUB_ACTIONS"; then
-            # Docker needs repositories to be lowercase.
-            CACHE_REPO="$(echo "ghcr.io/$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
-            CACHE_FROM_IMAGE="$CACHE_REPO/dr_$IMAGE"
-        else
-            CACHE_FROM_IMAGE=$DOCKER_IMAGE
-        fi
-
-        if test "$DOCKER_BUILDER"; then
-            docker buildx use "$DOCKER_BUILDER"
-        fi
-
-        DOCKER_BUILDKIT=1 docker buildx build \
-            --"$DOCKER_ACTION" \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
-            --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-            --cache-from "$CACHE_FROM_IMAGE:$SYSTEM_VERSION" \
-            --cache-from "$CACHE_FROM_IMAGE:latest" \
-            --file "$SERVICE/dockerfiles/Dockerfile.$IMAGE" \
-            --platform linux/amd64 \
-            --tag "$DOCKER_IMAGE" \
-            .
-
-        finished=$?
-        attempt=$((attempt + 1))
-    done
-
-    if [ $finished -ne 0 ] && [ $attempt -ge $attempts ]; then
-        echo "Could not build $DOCKER_IMAGE after $attempt attempts."
-        exit 1
-    fi
+        "$DOCKERHUB_IMAGE"
 fi

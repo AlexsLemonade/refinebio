@@ -68,11 +68,11 @@ echo "Building new images"
 run_on_deploy_box "sudo touch /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
-run_on_deploy_box "source env_vars && ./.github/scripts/update_docker_img.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
+run_on_deploy_box "source env_vars && ./.github/scripts/update_docker_image.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 
-# Load docker_img_exists function and $ALL_IMAGES.
-. scripts/common.sh
+# Load docker_image_exists function and $ALL_IMAGES.
+. ./scripts/common.sh
 
 if [[ "$MASTER_OR_DEV" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
@@ -90,8 +90,8 @@ fi
 # an explicit check that the Docker images were successfully updated.
 for IMAGE in $ALL_IMAGES; do
     image_name="$DOCKERHUB_REPO/dr_$IMAGE"
-    if ! docker_img_exists "$image_name" "$CI_TAG"; then
-        echo "Docker image $image_name:$CI_TAG doesn't exist after running update_docker_img.sh!"
+    if ! docker_image_exists "$image_name" "$CI_TAG"; then
+        echo "Docker image $image_name:$CI_TAG doesn't exist after running update_docker_image.sh!"
         echo "This is generally caused by a temporary error, please try the 'Rerun workflow' button."
         exit 1
     fi

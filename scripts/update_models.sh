@@ -21,9 +21,11 @@ if ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb >/dev/null; then
     exit 1
 fi
 
-# Default to "0.0.0.dev" for system version if we're not running in the cloud.
+. ./scripts/common.sh
+
+# Default to the branch name hash for system version if we're not running in the cloud.
 if [ -z "$SYSTEM_VERSION" ]; then
-    SYSTEM_VERSION="0.0.0.dev$(date +%s)"
+    SYSTEM_VERSION="$(get_branch_hash)"
     export SYSTEM_VERSION
 fi
 

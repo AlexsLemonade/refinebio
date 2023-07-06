@@ -75,6 +75,10 @@ else
     service="foreman"
 fi
 
+if [ -z "$SYSTEM_VERSION" ]; then
+    SYSTEM_VERSION="$(get_branch_hash)"
+fi
+
 # Set up the data volume directory if it does not already exist.
 volume_directory="$script_directory/../api/volume"
 if [ ! -d "$volume_directory" ]; then
@@ -83,7 +87,10 @@ fi
 chmod -R a+rwX "$volume_directory"
 
 docker build \
+    --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+    --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
     --file "$service/dockerfiles/Dockerfile.$image" \
+    --platform linux/amd64 \
     --tag dr_shell \
     .
 
@@ -102,6 +109,7 @@ docker run \
     --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
     --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
     --env-file "$service/environments/local" \
+    --platform linux/amd64 \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
     --volume /tmp:/tmp \

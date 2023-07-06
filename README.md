@@ -635,12 +635,12 @@ Refine.bio uses a number of different Docker images to run different pieces of t
 By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
 If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-r` option to the `deploy.sh` script.
 
-To make building and pushing your own images easier, the `scripts/update_my_docker_images.sh` has been provided.
+To make building and pushing your own images easier, the `scripts/update_docker_images.sh` has been provided.
 The `-r` option will allow you to specify which repo you'd like to push to.
 If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
 The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
 
-`scripts/update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
+`scripts/update_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
 It can instead be built with `./scripts/prepare_image.sh -i affymetrix -r <YOUR_DOCKERHUB_REPO>`.
 WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
 It's not recommended to build the image with less than 75GB of free space on the disk that Docker runs on.
