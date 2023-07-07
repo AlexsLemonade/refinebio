@@ -707,7 +707,7 @@ class Harmonizer:
             "donor id",
             "donor",
             # SRA
-            # create_variants will find above attributes in characteristics
+            "source name",
         ]
         self.subject_fields = create_variants(subject_fields)
 
