@@ -768,13 +768,12 @@ class Harmonizer:
     ):
         sample_attribute = variants_attribute.split("_fields")[0]
         harmonized_values = set()
+        key_variants = getattr(self, variants_attribute)
+        key_regexes = [r for r in key_variants if isinstance(r, RE_TYPE)]
+        key_strings = [s for s in key_variants if isinstance(s, str)]
+
         for key, value in sample_metadata.items():
             lower_key = key.lower().strip()
-
-            key_variants = getattr(self, variants_attribute)
-            key_regexes = [r for r in key_variants if isinstance(r, RE_TYPE)]
-            key_strings = [s for s in key_variants if isinstance(s, str)]
-
             if lower_key in key_strings:
                 harmonized_value = self.harmonize_value(sample_attribute, value)
                 if harmonized_value:
