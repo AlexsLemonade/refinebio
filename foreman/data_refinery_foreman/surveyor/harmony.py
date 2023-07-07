@@ -619,8 +619,6 @@ class Harmonizer:
             "organ",
             "characteristic [organism part]",
             "characteristics [organism part]",
-            # SRA
-            "organismpart",  # this isnt seen?
             # GEO
             "isolation source",
             "tissue sampled",
