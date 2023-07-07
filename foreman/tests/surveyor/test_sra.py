@@ -261,19 +261,21 @@ class SraSurveyorTestCase(TestCase):
         )
 
     def test_sra_metadata_is_harmonized(self):
-        metadata = SraSurveyor.gather_all_metadata("SRR3098582")
+        experiment_metadata, samples_metadata = SraSurveyor.gather_all_metadata("SRR3098582")
+        sample_metadata = samples_metadata[0]
+
         sample = Sample()
-        SraSurveyor._apply_harmonized_metadata_to_sample(sample, metadata)
+        SraSurveyor._apply_harmonized_metadata_to_sample(sample, sample_metadata)
         self.assertEqual(sample.treatment, "biliatresone")
         self.assertEqual(sample.subject, "liver")
         self.assertEqual(sample.specimen_part, "liver")
 
         experiment = Experiment()
-        SraSurveyor._apply_metadata_to_experiment(experiment, metadata)
+        SraSurveyor._apply_metadata_to_experiment(experiment, experiment_metadata)
         self.assertEqual(
             experiment.title,
             "Transcriptional profiling through RNA-seq of zebrafish larval"
             " liver after exposure to biliatresone, a biliary toxin.",
         )
-        self.assertEqual(experiment.source_first_published, datetime.date(2017, 9, 25))
-        self.assertEqual(experiment.source_last_modified, datetime.date(2017, 9, 25))
+        self.assertEqual(experiment.source_first_published, datetime.date(2017, 8, 25))
+        self.assertEqual(experiment.source_last_modified, datetime.date(2023, 5, 19))
