@@ -778,14 +778,18 @@ class Harmonizer:
                 harmonized_value = self.harmonize_value(sample_attribute, value)
                 if harmonized_value:
                     harmonized_values.add(harmonized_value)
-            else:
-                for key_regex in key_regexes:
-                    if key_regex.fullmatch(lower_key):
-                        harmonized_value = self.harmonize_value(sample_attribute, value)
-                        if harmonized_value:
-                            harmonized_values.add(harmonized_value)
 
-        harmonized_sample[sample_attribute] = ";".join([str(v) for v in harmonized_values])
+            for key_regex in key_regexes:
+                if key_regex.fullmatch(lower_key):
+                    harmonized_value = self.harmonize_value(sample_attribute, value)
+                    if harmonized_value:
+                        harmonized_values.add(harmonized_value)
+
+        # Age can only be one value in the database.
+        if sample_attribute == "age" and len(harmonized_values) > 0:
+            harmonized_sample[sample_attribute] = harmonized_values.pop()
+        else:
+            harmonized_sample[sample_attribute] = ";".join([str(v) for v in harmonized_values])
 
     def harmonize_sample(self, sample_metadata: Dict, title_field: str = None) -> Dict:
         variants_attributes = [
