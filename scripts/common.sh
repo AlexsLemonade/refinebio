@@ -39,20 +39,20 @@ get_docker_es_ip_address() {
 # A tag is linked to a commit hash, not a branch. A single commit hash
 # can end up on multiple branches. So we first check to see if we're
 # on master, then on dev, then error out because we should only deploy master or dev.
-get_master_or_dev() {
+get_deploy_branch() {
     # Takes the version that is being deployed as its only parameter
     version="$1"
 
     if [ -z "$version" ]; then
-        echo "You must pass the version to get_master_or_dev."
+        echo "You must pass the version to get_deploy_branch()."
     else
-        master_check=$(git log origin/master --decorate=full | grep "$version" || true)
-        dev_check=$(git log origin/dev --decorate=full | grep "$version" || true)
+        is_master=$(git log origin/master --decorate=full | grep "$version" || true)
+        is_dev=$(git log origin/dev --decorate=full | grep "$version" || true)
 
         # All dev versions should end with '-dev' or '-dev-hotfix' and all master versions should not.
-        if [ -n "$master_check" ] && ! echo "$version" | grep -Eq "\-dev(\-hotfix)?$"; then
+        if [ -n "$is_master" ] && ! echo "$version" | grep -Eq "\-dev(\-hotfix)?$"; then
             echo "master"
-        elif [ -n "$dev_check" ]; then
+        elif [ -n "$is_dev" ]; then
             echo "dev"
         else
             echo "unknown"
@@ -117,4 +117,44 @@ EOF
 
     echo "Using Docker builder $DOCKER_BUILDER."
     docker buildx use "$DOCKER_BUILDER"
+}
+
+update_docker_image() {
+    DOCKERHUB_REPO="$1"
+    IMAGE_NAME="$2"
+    SYSTEM_VERSION="$3"
+    DOCKER_FILE_PATH="$4"
+    DOCKER_ACTION="$5"
+
+    if [ -z "$DOCKER_ACTION" ]; then
+        DOCKER_ACTION="--load"
+    fi
+
+    DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
+    CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
+    CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
+    CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
+    CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
+
+    if test "$GITHUB_ACTION"; then
+        CACHE_TO_LATEST="type=gha"
+        CACHE_TO_VERSION="type=gha"
+        DOCKER_ACTION="--push"
+    fi
+
+    set_up_docker_builder
+
+    docker buildx build \
+        --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+        --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
+        --cache-from "$CACHE_FROM_LATEST" \
+        --cache-from "$CACHE_FROM_VERSION" \
+        --cache-to "$CACHE_TO_LATEST" \
+        --cache-to "$CACHE_TO_VERSION" \
+        --file "$DOCKER_FILE_PATH" \
+        --platform linux/amd64 \
+        --tag "$DOCKERHUB_IMAGE:latest" \
+        --tag "$DOCKERHUB_IMAGE:$SYSTEM_VERSION" \
+        "$DOCKER_ACTION" \
+        .
 }

@@ -1,4 +1,6 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e
 
 # TODO: this should also be responsible for running another
 # deploy to remove ci_ingress after the end to end tests run.

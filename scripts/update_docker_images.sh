@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# Exit on failure.
 set -e
 
 # This script should always run as if it were being called from
@@ -11,6 +10,7 @@ script_directory="$(
 )"
 cd "$script_directory" || exit
 
+# shellcheck disable=SC1091
 . ./common.sh
 
 # Get access to all of refinebio.
@@ -74,12 +74,14 @@ if [ -z "$SYSTEM_VERSION" ]; then
     SYSTEM_VERSION="$(get_branch_hash)"
 fi
 
+DOCKER_ACTION="--push"
+
 # Intentionally omit affymetrix unless specifically requested since it is so
 # intense to build.
-image_names="base migrations common_tests foreman api_base api_production api_local \
+IMAGE_NAMES="base migrations common_tests foreman api_base api_production api_local \
     transcriptome smasher salmon no_op illumina downloaders compendia"
 if [ "$BUILD_AFFYMETRIX" ]; then
-    image_names="$image_names affymetrix"
+    IMAGE_NAMES="$IMAGE_NAMES affymetrix"
 fi
 
 # Set the version for the common project.
@@ -91,46 +93,22 @@ echo "$SYSTEM_VERSION" >common/version
 rm -f common/dist/*
 (cd common && python3 setup.py sdist 1>/dev/null) # Run quietly in a subshell.
 
-# shellcheck disable=SC2086
-for image_name in $image_names; do
-    case $image_name in
+for IMAGE_NAME in $IMAGE_NAMES; do
+    case $IMAGE_NAME in
     api_base | api_local | api_production)
-        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.$image_name"
+        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.$IMAGE_NAME"
         ;;
     base | common_tests | migrations)
-        DOCKER_FILE_PATH="common/dockerfiles/Dockerfile.$image_name"
+        DOCKER_FILE_PATH="common/dockerfiles/Dockerfile.$IMAGE_NAME"
         ;;
     foreman)
-        DOCKER_FILE_PATH="foreman/dockerfiles/Dockerfile.$image_name"
+        DOCKER_FILE_PATH="foreman/dockerfiles/Dockerfile.$IMAGE_NAME"
         ;;
     *)
-        DOCKER_FILE_PATH="workers/dockerfiles/Dockerfile.$image_name"
+        DOCKER_FILE_PATH="workers/dockerfiles/Dockerfile.$IMAGE_NAME"
         ;;
     esac
 
-    echo
-    echo "Building the $image_name:$SYSTEM_VERSION image from $DOCKER_FILE_PATH."
-    echo
-
-    DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$image_name"
-    CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
-    CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
-    CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
-    CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
-
-    set_up_docker_builder
-
-    docker buildx build \
-        --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
-        --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-        --cache-from "$CACHE_FROM_LATEST" \
-        --cache-from "$CACHE_FROM_VERSION" \
-        --cache-to "$CACHE_TO_LATEST" \
-        --cache-to "$CACHE_TO_VERSION" \
-        --file "$DOCKER_FILE_PATH" \
-        --platform linux/amd64 \
-        --push \
-        --tag "$DOCKERHUB_IMAGE:latest" \
-        --tag "$DOCKERHUB_IMAGE:$SYSTEM_VERSION" \
-        .
+    echo "Building the $IMAGE_NAME:$SYSTEM_VERSION image from $DOCKER_FILE_PATH."
+    update_docker_image "$DOCKERHUB_REPO" "$IMAGE_NAME" "$SYSTEM_VERSION" "$DOCKER_FILE_PATH" "$DOCKER_ACTION"
 done

@@ -8,6 +8,7 @@ script_directory="$(
 )"
 cd "$script_directory" || exit
 
+# shellcheck disable=SC1091
 . ./common.sh
 
 # We need access to all of the projects
@@ -89,54 +90,24 @@ if [ -z "$DOCKER_ACTION" ]; then
     DOCKER_ACTION="--load"
 fi
 
-DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
-
-CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
-CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
-CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
-CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
-
-if test "$GITHUB_ACTION"; then
-    CACHE_TO_LATEST="type=gha"
-    CACHE_TO_VERSION="type=gha"
-    DOCKER_ACTION="--push"
-fi
-
 DOCKER_FILE_PATH="$SERVICE/dockerfiles/Dockerfile.$IMAGE_NAME"
 
-echo
-echo "Building the $IMAGE_NAME:$SYSTEM_VERSION image from $DOCKER_FILE_PATH."
-echo
-
 attempt=0
-attempts=3
+max_attempts=3
 finished=1
-while [ $finished != 0 ] && [ $attempt -lt $attempts ]; do
+while [ $finished != 0 ] && [ $attempt -lt $max_attempts ]; do
     if [ $attempt -gt 0 ]; then
         echo "Failed to build $IMAGE_NAME:$SYSTEM_VERSION image, trying again."
     fi
 
-    set_up_docker_builder
-
-    docker buildx build \
-        --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
-        --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-        --cache-from "$CACHE_FROM_LATEST" \
-        --cache-from "$CACHE_FROM_VERSION" \
-        --cache-to "$CACHE_TO_LATEST" \
-        --cache-to "$CACHE_TO_VERSION" \
-        --file "$DOCKER_FILE_PATH" \
-        --platform linux/amd64 \
-        --tag "$DOCKERHUB_IMAGE:latest" \
-        --tag "$DOCKERHUB_IMAGE:$SYSTEM_VERSION" \
-        "$DOCKER_ACTION" \
-        .
+    echo "Building the $IMAGE_NAME:$SYSTEM_VERSION image from $DOCKER_FILE_PATH."
+    update_docker_image "$DOCKERHUB_REPO" "$IMAGE_NAME" "$SYSTEM_VERSION" "$DOCKER_FILE_PATH" "$DOCKER_ACTION"
 
     finished=$?
     attempt=$((attempt + 1))
 done
 
-if [ $finished -ne 0 ] && [ $attempt -ge $attempts ]; then
+if [ $finished -ne 0 ] && [ $attempt -ge $max_attempts ]; then
     echo "Could not build $DOCKERHUB_IMAGE after $attempt attempts."
     exit 1
 fi
