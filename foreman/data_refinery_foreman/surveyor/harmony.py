@@ -768,7 +768,7 @@ class Harmonizer:
         harmonized_values = set()
         key_variants = getattr(self, variants_attribute)
         key_regexes = [r for r in key_variants if isinstance(r, RE_TYPE)]
-        key_strings = [s for s in key_variants if isinstance(s, str)]
+        key_strings = set([s for s in key_variants if isinstance(s, str)])
 
         for key, value in sample_metadata.items():
             lower_key = key.lower().strip()
