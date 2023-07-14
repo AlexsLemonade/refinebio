@@ -787,7 +787,9 @@ class Harmonizer:
         if sample_attribute == "age" and len(harmonized_values) > 0:
             harmonized_sample[sample_attribute] = harmonized_values.pop()
         else:
-            harmonized_sample[sample_attribute] = ";".join([str(v) for v in harmonized_values])
+            harmonized_sample[sample_attribute] = ";".join(
+                sorted([str(v) for v in harmonized_values])
+            )
 
     def harmonize_sample(self, sample_metadata: Dict, title_field: str = None) -> Dict:
         variants_attributes = [
