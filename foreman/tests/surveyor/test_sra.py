@@ -184,78 +184,66 @@ class SraSurveyorTestCase(TestCase):
     )
     def test_metadata_is_gathered_correctly(self):
 
-        metadata = SraSurveyor.gather_all_metadata("DRR002116")
+        _, samples_metadata = SraSurveyor.gather_all_metadata("DRR002116")
 
-        self.assertEqual(metadata["broker_name"], "DDBJ")
-        self.assertEqual(metadata["center_name"], "RIKEN_CDB")
-        self.assertEqual(metadata["ena-base-count"], "158881910957")
-        self.assertEqual(metadata["ena-spot-count"], "1371813555")
-        self.assertEqual(metadata["experiment_accession"], "DRX001563")
+        sample_metadata = samples_metadata[0]
+        self.assertEqual(sample_metadata["broker_name"], "")  # used to be DDBJ
+        self.assertEqual(sample_metadata["center_name"], "RIKEN_CDB")
+        self.assertEqual(sample_metadata["experiment_accession"], "DRX001563")
         self.assertEqual(
-            metadata["experiment_design_description"],
-            ("Experiment for mRNAseq of chicken at stage " "HH16 (biological replicate 1)"),
+            sample_metadata["characteristics_sample_comment_0_text"],
+            "mRNAseq of chicken at stage HH16 (biological replicate 1)",
         )
         self.assertEqual(
-            metadata["experiment_title"],
-            ("Illumina HiSeq 2000 sequencing; " "Exp_Gg_HH16_1_embryo_mRNAseq"),
-        )
-        self.assertEqual(
-            metadata["lab_name"],
+            sample_metadata["experiment_title"],
             (
-                "Group for Morphological Evolution, Center for Developmental "
-                "Biology, Kobe Institute, RIKEN"
+                "Illumina HiSeq 2000 sequencing; "
+                "Exp_Gg_HH16_1_embryo_mRNAseq;"
+                "Exp_Gg_HH16_1_embryo_mRNAseq"
             ),
         )
-        self.assertEqual(metadata["library_layout"], "SINGLE")
-        self.assertEqual(metadata["library_name"], "Gg_HH16_1_embryo_mRNAseq")
-        self.assertEqual(metadata["library_selection"], "RANDOM")
-        self.assertEqual(metadata["library_source"], "TRANSCRIPTOMIC")
-        self.assertEqual(metadata["library_strategy"], "RNA-Seq")
-        self.assertEqual(metadata["organism_id"], "9031")
-        self.assertEqual(metadata["organism_name"], "GALLUS GALLUS")
-        self.assertEqual(metadata["platform_instrument_model"], "Illumina HiSeq 2000")
-        self.assertEqual(metadata["read_spec_0_base_coord"], "1")
-        self.assertEqual(metadata["read_spec_0_class"], "Application Read")
-        self.assertEqual(metadata["read_spec_0_index"], "0")
-        self.assertEqual(metadata["read_spec_0_type"], "Forward")
-        self.assertEqual(metadata["run_accession"], "DRR002116")
-        self.assertEqual(metadata["run_center"], "RIKEN_CDB")
-        self.assertEqual(metadata["run_date"], "2011-09-01T00:00:00+09:00")
-        self.assertEqual(metadata["run_ena_base_count"], "3256836000")
-        self.assertEqual(metadata["run_ena_first_public"], "2013-07-19")
-        self.assertEqual(metadata["run_ena_last_update"], "2017-08-11")
-        self.assertEqual(metadata["run_ena_spot_count"], "32568360")
-        self.assertEqual(metadata["sample_accession"], "DRS001521")
         self.assertEqual(
-            metadata["sample_center_name"],
+            sample_metadata["study_ena_center_name"],
+            "RIKEN Center for Developmental Biology",
+        )
+        self.assertEqual(sample_metadata["library_layout"], "SINGLE")
+        self.assertEqual(sample_metadata["library_name"], "Gg_HH16_1_embryo_mRNAseq")
+        self.assertEqual(sample_metadata["library_selection"], "RANDOM")
+        self.assertEqual(sample_metadata["library_source"], "TRANSCRIPTOMIC")
+        self.assertEqual(sample_metadata["library_strategy"], "RNA-Seq")
+        self.assertEqual(sample_metadata["tax_id"], "9031")  # aka organism_id
+        self.assertEqual(sample_metadata["scientific_name"], "Gallus gallus")  # aka organism_name
+        self.assertEqual(
+            sample_metadata["instrument_model"], "Illumina HiSeq 2000"
+        )  # aka platform_instrument_model
+        self.assertEqual(sample_metadata["run_accession"], "DRR002116")
+        self.assertEqual(sample_metadata["run_date"], "1314831600000")
+        self.assertEqual(sample_metadata["base_count"], "3256836000")
+        self.assertEqual(sample_metadata["first_public"], "2013-07-19")
+        self.assertEqual(sample_metadata["last_updated"], "2017-08-11")
+        self.assertEqual(sample_metadata["read_count"], "32568360")
+        self.assertEqual(sample_metadata["secondary_sample_accession"], "DRS001521")
+        self.assertEqual(
+            sample_metadata["characteristics_INSDC_center_name_0_text"],
             "Group for Morphological Evolution, Center for Developmental Biology, Kobe Institute, RIKEN",
         )
-        self.assertEqual(metadata["sample_ena_first_public"], "2013-02-27")
-        self.assertEqual(metadata["sample_ena_last_update"], "2014-11-12")
         self.assertEqual(
-            metadata["sample_sample_comment"],
-            ("mRNAseq of chicken at stage HH16 (biological " "replicate 1)"),
+            sample_metadata["characteristics_INSDC_first_public_0_text"], "2013-02-27T00:00:00Z"
         )
-        self.assertEqual(metadata["sample_sample_name"], "DRS001521")
-        self.assertEqual(metadata["sample_title"], "Gg_HH16_1_embryo_mRNAseq")
-        self.assertEqual(metadata["spot_length"], "100")
-        self.assertEqual(metadata["study_ena_first_public"], "2013-07-19")
-        self.assertEqual(metadata["study_ena_last_update"], "2015-06-22")
-        self.assertEqual(metadata["study_accession"], "DRP000595")
-        self.assertEqual(metadata["submission_accession"], "DRA000567")
         self.assertEqual(
-            metadata["submission_comment"],
-            (
-                "Time course gene expression profiles of turtle "
-                "(Pelodiscus sinensis) and chicken (Gallus gallus) "
-                "embryos were examined. Whole transcriptome of turtle "
-                "was also determined by uding stranded sequencing "
-                "methods."
-            ),
+            sample_metadata["characteristics_sample_comment_0_text"],
+            "mRNAseq of chicken at stage HH16 (biological replicate 1)",
         )
-        self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
+        self.assertEqual(sample_metadata["secondary_sample_accession"], "DRS001521")
+        self.assertEqual(
+            sample_metadata["characteristics_title_0_text"], "Gg_HH16_1_embryo_mRNAseq"
+        )
+        self.assertEqual(sample_metadata["study_ena_first_public"], "2013-12-14")
+        self.assertEqual(sample_metadata["study_ena_last_updated"], "2023-05-19")
+        self.assertEqual(sample_metadata["secondary_study_accession"], "DRP000595")
+        self.assertEqual(sample_metadata["submission_accession"], "DRA000567")
 
-        ncbi_url = SraSurveyor._build_ncbi_file_url(metadata["run_accession"])
+        ncbi_url = SraSurveyor._build_ncbi_file_url(sample_metadata["run_accession"])
         self.assertEqual(
             ncbi_url, "https://sra-pub-run-odp.s3.amazonaws.com/sra/DRR002116/DRR002116"
         )
@@ -279,3 +267,16 @@ class SraSurveyorTestCase(TestCase):
         )
         self.assertEqual(experiment.source_first_published, datetime.date(2017, 8, 25))
         self.assertEqual(experiment.source_last_modified, datetime.date(2023, 5, 19))
+
+    def test_sra_ena_api_endpoint_construction(self):
+        expected_filereport_url = "https://www.ebi.ac.uk/ena/portal/api/filereport/?format=json&accession=SRP047410&result=read_run"
+        filereport_url = SraSurveyor.get_ena_json_api(
+            "filereport", "SRP047410", {"result": "read_run"}
+        )
+        self.assertEqual(expected_filereport_url, filereport_url)
+
+        expected_metadata_url = (
+            "https://www.ebi.ac.uk/ena/portal/api/search/?format=json&accession=SRP047410"
+        )
+        metadata_url = SraSurveyor.get_ena_json_api("search", "SRP047410", {})
+        self.assertEquual(expected_metadata_url, metadata_url)
