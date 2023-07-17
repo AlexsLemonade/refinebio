@@ -6,11 +6,6 @@ export ALL_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no
 # Sometimes we only want to work with the worker images.
 export WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders"
 
-# Default Docker registry.
-if [ -z "$DOCKERHUB_REPO" ]; then
-    export DOCKERHUB_REPO="ccdlstaging"
-fi
-
 # This function checks whether a given docker image name ($1:$2)
 # exists in Docker Hub or not using Docker Hub API V2. Based on:
 # https://stackoverflow.com/questions/32113330/check-if-imagetag-combination-already-exists-on-docker-hub
@@ -118,3 +113,13 @@ EOF
     echo "Using Docker builder $DOCKER_BUILDER."
     docker buildx use "$DOCKER_BUILDER"
 }
+
+# Default Docker registry.
+if [ -z "$DOCKERHUB_REPO" ]; then
+    export DOCKERHUB_REPO="ccdlstaging"
+fi
+
+# Defaults to commit hash value for if we're not running in the cloud.
+if [ -z "$SYSTEM_VERSION" ]; then
+    SYSTEM_VERSION="$(get_branch_hash)"
+fi

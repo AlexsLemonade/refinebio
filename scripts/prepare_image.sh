@@ -86,7 +86,7 @@ if [ -z "$SYSTEM_VERSION" ]; then
 fi
 
 if [ -z "$DOCKER_ACTION" ]; then
-    DOCKER_ACTION="--load"
+    DOCKER_ACTION="--push"
 fi
 
 DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
@@ -141,8 +141,6 @@ if [ $finished -ne 0 ] && [ $attempt -ge $attempts ]; then
     exit 1
 fi
 
-if test "$GITHUB_ACTION"; then
-    docker pull \
-        --platform linux/amd64 \
-        "$DOCKERHUB_IMAGE"
-fi
+docker pull \
+    --platform linux/amd64 \
+    "$DOCKERHUB_IMAGE:$SYSTEM_VERSION"
