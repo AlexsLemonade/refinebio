@@ -53,7 +53,7 @@ def flatten_dict(data: Union[Dict, List], prefix: str = "", sep: str = "_") -> d
 
     for k, v in iterator:
         key = (k if not prefix else f"{prefix}{sep}{k}").replace(" ", sep)
-        if isinstance(v, dict) or isinstance(v, list):
+        if isinstance(v, (dict, list)):
             flattened.update(flatten_dict(v, key))
         else:
             flattened[key] = v
