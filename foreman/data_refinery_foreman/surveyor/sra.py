@@ -54,7 +54,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         return Downloaders.SRA.value
 
     @staticmethod
-    def get_ena_json_api(endpoint: str, accession, params: dict = {}):
+    def get_ena_json_api(endpoint: str, accession: str, params: dict = {}):
         query_params = "&".join([f"{k}={params[k]}" for k in params])
 
         if query_params:
