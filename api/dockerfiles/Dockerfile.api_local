@@ -1,34 +1,9 @@
-FROM python:3.8.5-slim-buster
+ARG DOCKERHUB_REPO
+ARG SYSTEM_VERSION
+FROM $DOCKERHUB_REPO/dr_api_base:$SYSTEM_VERSION
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Install gcc and libpq-dev for psycopg2.
-RUN apt-get update -qq && \
-    apt-get install -y \
-        gcc \
-        libpq-dev
-
-RUN groupadd user && \
-    useradd --create-home --home-dir /home/user -g user user
-WORKDIR /home/user
-
-COPY api/requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --ignore-installed -r requirements.txt && \
-    rm -r /root/.cache
-
-# Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip install --ignore-installed \
-    common/$(ls common -1 | sort --version-sort | tail -1)
-
-COPY api/ .
-COPY config/ config/
-COPY setup.cfg .
-
-ARG SYSTEM_VERSION
-ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 
