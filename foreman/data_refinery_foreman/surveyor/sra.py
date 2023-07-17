@@ -179,7 +179,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_metadata["accession"]
             )
             if len(pubmed_metadata) > 0:
-                experiment_metadata["pubmed_id"] = pubmed_metadata["Source Primary Accession"]
+                experiment_metadata["pubmed_id"] = pubmed_metadata[0]["Source Primary Accession"]
 
         for sample_metadata in samples_metadata:
             sample_metadata.update(utils.flatten_dict(experiment_metadata, "study_ena"))
@@ -215,7 +215,6 @@ class SraSurveyor(ExternalSourceSurveyor):
         experiment.alternate_accession_code = utils.get_nonempty(metadata, "geo_accession", None)
         experiment.protocol_description = utils.get_nonempty(metadata, "protocol", [])
 
-        # need pubmed_id
         experiment.pubmed_id = metadata.get("pubmed_id", "")
         experiment.has_publication = "pubmed_id" in metadata
         # Scrape publication title and authorship from Pubmed

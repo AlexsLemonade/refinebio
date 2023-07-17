@@ -268,6 +268,36 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.source_first_published, datetime.date(2017, 8, 25))
         self.assertEqual(experiment.source_last_modified, datetime.date(2023, 5, 19))
 
+    def test_sra_pubmed_metdata_is_applied(self):
+        experiment_metadata, _ = SraSurveyor.gather_all_metadata("SRR3098582")
+
+        experiment = Experiment()
+        SraSurveyor._apply_metadata_to_experiment(experiment, experiment_metadata)
+        self.assertEqual(experiment.pubmed_id, "27102575")
+        self.assertEqual(experiment.has_publication, True)
+        self.assertEqual(
+            experiment.publication_title,
+            "Glutathione antioxidant pathway activity and reserve determine toxicity and specificity of the biliary toxin biliatresone in zebrafish.",
+        )
+        self.assertEqual(
+            experiment.publication_authors,
+            [
+                "Zhao X",
+                "Lorent K",
+                "Wilkins BJ",
+                "Marchione DM",
+                "Gillespie K",
+                "Waisbourd-Zinman O",
+                "So J",
+                "Koo KA",
+                "Shin D",
+                "Porter JR",
+                "Wells RG",
+                "Blair I",
+                "Pack M",
+            ],
+        )
+
     def test_sra_ena_api_endpoint_construction(self):
         expected_filereport_url = "https://www.ebi.ac.uk/ena/portal/api/filereport/?format=json&accession=SRP047410&result=read_run"
         filereport_url = SraSurveyor.get_ena_json_api(
