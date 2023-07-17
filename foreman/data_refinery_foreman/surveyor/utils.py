@@ -46,7 +46,7 @@ def flatten(d, parent_key="", sep="_"):
 
 # TODO: Merge this with above method after updating array express
 #       to support recursive flattening.
-def flatten_dict(data: Union[Dict, List], prefix: str = "", sep="_") -> dict:
+def flatten_dict(data: Union[Dict, List], prefix: str = "", sep: str = "_") -> dict:
     """Flattens a nested dictionary or list"""
     flattened = {}
     iterator = enumerate(data) if isinstance(data, list) else data.items()
