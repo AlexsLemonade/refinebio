@@ -343,6 +343,13 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample.platform_accession_code = sample.platform_name.replace(" ", "")
             sample.technology = "RNA-SEQ"
 
+            # In the rare case that we get something we don't expect
+            # we don't want to process this sample so we can set it to UNKNOWN.
+            if sample.manufacturer not in ["ILLUMINA", "ION_TORRENT"]:
+                sample.manufacturer = "UNKNOWN"
+                sample.platform_name = "UNKNOWN"
+                sample.platform_accession_code = "UNKNOWN"
+
             SraSurveyor._apply_harmonized_metadata_to_sample(sample, sample_metadata)
 
             self._generate_original_files(sample, sample_metadata)
