@@ -70,7 +70,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         # handle logging of errors here consistently
         if response.status_code != 200:
             logger.error(
-                "Could not discover {}.".format(endpoint),
+                f"Could not discover {endpoint}.",
                 accession=accession,
                 status_code=response.status_code,
                 url=response.url,
