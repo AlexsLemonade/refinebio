@@ -62,9 +62,7 @@ def flatten_dict(data: Union[Dict, List], prefix: str = "", sep: str = "_") -> d
 
 
 def get_nonempty(hash: dict, key: str, fallback):
-    if key in hash and hash[key]:
-        return hash[key]
-    return fallback
+    return hash.get(key) or fallback
 
 
 def get_title_and_authors_for_pubmed_id(pmid):
