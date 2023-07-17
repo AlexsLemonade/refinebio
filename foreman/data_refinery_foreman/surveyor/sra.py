@@ -338,23 +338,15 @@ class SraSurveyor(ExternalSourceSurveyor):
         if sample_created:
             sample.source_database = "SRA"
             sample.organism = organism
+            sample.manufacturer = sample_metadata.get("instrument_platform", "UNKNOWN")
             sample.platform_name = sample_metadata.get("instrument_model", "UNKNOWN")
-            # The platform_name is human readable and contains spaces,
-            # accession codes shouldn't have spaces though:
             sample.platform_accession_code = sample.platform_name.replace(" ", "")
             sample.technology = "RNA-SEQ"
-
-            platform_name = sample.platform_name.upper()
-            if platform_name in ["ILLUMINA", "NEXTSEQ"]:
-                sample.manufacturer = "ILLUMINA"
-            elif "ION TORRENT" in platform_name:
-                sample.manufacturer = "ION_TORRENT"
-            else:
-                sample.manufacturer = "UNKNOWN"
 
             SraSurveyor._apply_harmonized_metadata_to_sample(sample, sample_metadata)
 
             self._generate_original_files(sample, sample_metadata)
+
             sample.save()
         else:
             logger.debug(
