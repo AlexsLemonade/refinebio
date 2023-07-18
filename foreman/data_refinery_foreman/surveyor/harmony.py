@@ -570,7 +570,7 @@ class Harmonizer:
             "sex",
             "gender",
             "subject gender",
-            "subjext sex",
+            "subject sex",
             # This looks reduntant, but there are some samples which use
             # Characteristic[Characteristic[sex]]
             "characteristic [sex]",

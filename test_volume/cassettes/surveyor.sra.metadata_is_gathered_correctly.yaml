@@ -9,44 +9,43 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.30.0
+      - python-requests/2.31.0
     method: GET
-    uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRR002116
+    uri: https://www.ebi.ac.uk/ena/portal/api/search/?format=json&includeAccessions=DRR002116&result=read_run&fields=all
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<RUN_SET>\n<RUN accession=\"DRR002116\"
-        alias=\"DRR002116\" center_name=\"RIKEN_CDB\" run_center=\"RIKEN_CDB\" run_date=\"2011-09-01T00:00:00+09:00\"
-        broker_name=\"DDBJ\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>DRR002116</PRIMARY_ID>\n
-        \         <SUBMITTER_ID namespace=\"RIKEN_CDB\">DRR002116</SUBMITTER_ID>\n
-        \    </IDENTIFIERS>\n     <TITLE>Illumina HiSeq 2000 sequencing; Exp_Gg_HH16_1_embryo_mRNAseq</TITLE>\n
-        \    <EXPERIMENT_REF accession=\"DRX001563\" refcenter=\"RIKEN_CDB\" refname=\"DRX001563\"/>\n
-        \    <RUN_LINKS>\n          <RUN_LINK>\n               <XREF_LINK>\n                    <DB>ENA-STUDY</DB>\n
-        \                   <ID>DRP000595</ID>\n               </XREF_LINK>\n          </RUN_LINK>\n
-        \         <RUN_LINK>\n               <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n
-        \                   <ID>DRS001521</ID>\n               </XREF_LINK>\n          </RUN_LINK>\n
-        \         <RUN_LINK>\n               <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n
-        \                   <ID>DRA000567</ID>\n               </XREF_LINK>\n          </RUN_LINK>\n
-        \         <RUN_LINK>\n               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRR002116&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n
-        \              </XREF_LINK>\n          </RUN_LINK>\n          <RUN_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRR002116&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n
-        \              </XREF_LINK>\n          </RUN_LINK>\n     </RUN_LINKS>\n     <RUN_ATTRIBUTES>\n
-        \         <RUN_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n               <VALUE>32568360</VALUE>\n
-        \         </RUN_ATTRIBUTE>\n          <RUN_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n
-        \              <VALUE>3256836000</VALUE>\n          </RUN_ATTRIBUTE>\n          <RUN_ATTRIBUTE>\n
-        \              <TAG>ENA-FIRST-PUBLIC</TAG>\n               <VALUE>2013-07-19</VALUE>\n
-        \         </RUN_ATTRIBUTE>\n          <RUN_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n
-        \              <VALUE>2017-08-11</VALUE>\n          </RUN_ATTRIBUTE>\n     </RUN_ATTRIBUTES>\n</RUN>\n</RUN_SET>\n"
+      string: '[
+
+        {"run_accession":"DRR002116","submission_accession":"DRA000567","library_min_fragment_size":"","bam_md5":"","assembly_software":"","library_prep_longitude":"","library_selection":"RANDOM","pcr_isolation_protocol":"","chip_protocol":"","sequencing_primer_provider":"","serotype":"","environment_feature":"","last_updated":"2017-08-11","submitted_galaxy":"","extraction_protocol":"","germline":"","secondary_project":"","culture_collection":"","submission_tool":"","sra_bytes":"2324796808","read_strand":"","rna_purity_280_ratio":"","hi_c_protocol":"","collected_by":"","submitted_ftp":"","restriction_enzyme_target_sequence":"","isolate":"","fastq_bytes":"2969261051","instrument_platform":"ILLUMINA","variety":"","sequencing_date_format":"","temperature":"","sra_aspera":"fasp.sra.ebi.ac.uk:/vol1/drr/DRR002/DRR002116","ecotype":"","submitted_aspera":"","sampling_campaign":"","bam_ftp":"","tissue_lib":"","environmental_sample":"","control_experiment":"","sex":"","submitted_md5":"","checklist":"","fastq_galaxy":"ftp.sra.ebi.ac.uk/vol1/fastq/DRR002/DRR002116/DRR002116.fastq.gz","library_gen_protocol":"","specimen_voucher":"","library_prep_latitude":"","submitted_bytes":"","taxonomic_identity_marker":"","run_date":"1314831600000","country":"","ncbi_reporting_standard":"Generic","sample_description":"Gg_HH16_1_embryo_mRNAseq","experiment_title":"Illumina
+        HiSeq 2000 sequencing; Exp_Gg_HH16_1_embryo_mRNAseq;Exp_Gg_HH16_1_embryo_mRNAseq","sra_galaxy":"ftp.sra.ebi.ac.uk/vol1/drr/DRR002/DRR002116","project":"","sample_prep_interval":"","fastq_md5":"a79d7a79451b28c967892995cf268697","sample_accession":"SAMD00004104","secondary_study_accession":"DRP000595","experimental_protocol":"","read_count":"32568360","study_title":"Whole
+        transcriptome identification of turtle","bio_material":"","rna_prep_5_protocol":"","host_body_site":"","local_environmental_context":"","assembly_quality":"","collection_date_end":"","sample_capture_status":"","sample_title":"Gg_HH16_1_embryo_mRNAseq","host_genotype":"","host_phenotype":"","environmental_medium":"","cultivar":"","instrument_model":"Illumina
+        HiSeq 2000","faang_library_selection":"","target_gene":"","bam_bytes":"","library_max_fragment_size":"","experiment_target":"","sequencing_date":"","nominal_sdev":"","chip_ab_provider":"","environment_material":"","host_tax_id":"","sample_material":"","sample_storage_processing":"","sra_md5":"50964cfc69091cdbf92ea58aaaf0ac1c","cell_type":"","fastq_ftp":"ftp.sra.ebi.ac.uk/vol1/fastq/DRR002/DRR002116/DRR002116.fastq.gz","sample_prep_interval_units":"","broker_name":"","sub_strain":"","base_count":"3256836000","library_strategy":"RNA-Seq","restriction_site":"","serovar":"","investigation_type":"","location":"","library_source":"TRANSCRIPTOMIC","sra_ftp":"ftp.sra.ebi.ac.uk/vol1/drr/DRR002/DRR002116","library_layout":"SINGLE","experimental_factor":"","sequencing_primer_catalog":"","environment_biome":"","rna_purity_230_ratio":"","dnase_protocol":"","dev_stage":"","library_prep_date_format":"","bam_aspera":"","binning_software":"","rna_integrity_num":"","library_prep_date":"","location_start":"","marine_region":"","aligned":"","file_location":"","sample_collection":"","chip_target":"","nominal_length":"","broad_scale_environmental_context":"","sequencing_location":"","status":"public","completeness_score":"","lon":"","fastq_aspera":"fasp.sra.ebi.ac.uk:/vol1/fastq/DRR002/DRR002116/DRR002116.fastq.gz","host_sex":"","library_pcr_isolation_protocol":"","sample_alias":"SAMD00004104","mating_type":"","collection_date_start":"","sub_species":"","contamination_score":"","run_alias":"DRR002116","restriction_enzyme":"","depth":"","submitted_read_type":"","library_construction_protocol":"","host_growth_conditions":"","collection_date":"","experiment_alias":"DRX001563","host_gravidity":"","center_name":"RIKEN_CDB","identified_by":"","cell_line":"","sampling_site":"","host":"","library_name":"Gg_HH16_1_embryo_mRNAseq","tag":"ena","first_created":"2013-11-11","lat":"","strain":"","experiment_accession":"DRX001563","scientific_name":"Gallus
+        gallus","host_status":"","tax_id":"9031","study_accession":"PRJDB90","submitted_format":"","submitted_host_sex":"","bisulfite_protocol":"","altitude":"","rt_prep_protocol":"","host_scientific_name":"","bam_galaxy":"","accession":"DRR002116","secondary_sample_accession":"DRS001521","sample_storage":"","cage_protocol":"","sampling_platform":"","taxonomic_classification":"","location_end":"","protocol_label":"","elevation":"","salinity":"","sequencing_method":"","sequencing_primer_lot":"","first_public":"2013-07-19","transposase_protocol":"","study_alias":"DRP000595","library_prep_location":"","rna_prep_3_protocol":"","ph":"","sequencing_longitude":"","tissue_type":"","isolation_source":""}
+
+        ]
+
+        '
     headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - '4749'
       Content-Type:
-      - application/xml
+      - application/json
       Date:
-      - Wed, 17 May 2023 18:36:44 GMT
+      - Wed, 07 Jun 2023 20:31:08 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
       Strict-Transport-Security:
       - max-age=0
-      Transfer-Encoding:
-      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
     status:
       code: 200
       message: ''
@@ -60,67 +59,46 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.30.0
+      - python-requests/2.31.0
     method: GET
-    uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRX001563
+    uri: https://www.ebi.ac.uk/ena/portal/api/search/?format=json&includeAccessions=DRP000595&result=study&fields=all
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<EXPERIMENT_SET>\n<EXPERIMENT
-        accession=\"DRX001563\" alias=\"DRX001563\" center_name=\"RIKEN_CDB\">\n     <IDENTIFIERS>\n
-        \         <PRIMARY_ID>DRX001563</PRIMARY_ID>\n          <SUBMITTER_ID namespace=\"RIKEN_CDB\">DRX001563</SUBMITTER_ID>\n
-        \    </IDENTIFIERS>\n     <TITLE>Illumina HiSeq 2000 sequencing; Exp_Gg_HH16_1_embryo_mRNAseq</TITLE>\n
-        \    <STUDY_REF accession=\"DRP000595\" refcenter=\"RIKEN_CDB\" refname=\"DRP000595\">\n
-        \         <IDENTIFIERS>\n               <PRIMARY_ID>DRP000595</PRIMARY_ID>\n
-        \              <EXTERNAL_ID label=\"BioProject ID\" namespace=\"BioProject\">PRJDB90</EXTERNAL_ID>\n
-        \              <SUBMITTER_ID namespace=\"RIKEN_CDB\">DRP000595</SUBMITTER_ID>\n
-        \         </IDENTIFIERS>\n     </STUDY_REF>\n     <DESIGN>\n          <DESIGN_DESCRIPTION>Experiment
-        for mRNAseq of chicken at stage HH16 (biological replicate 1)</DESIGN_DESCRIPTION>\n
-        \         <SAMPLE_DESCRIPTOR accession=\"DRS001521\" refcenter=\"RIKEN_CDB\"
-        refname=\"DRS001521\">\n               <IDENTIFIERS>\n                    <PRIMARY_ID>DRS001521</PRIMARY_ID>\n
-        \                   <EXTERNAL_ID label=\"BioSample ID\" namespace=\"BioSample\">SAMD00004104</EXTERNAL_ID>\n
-        \                   <SUBMITTER_ID namespace=\"RIKEN_CDB\">DRS001521</SUBMITTER_ID>\n
-        \              </IDENTIFIERS>\n          </SAMPLE_DESCRIPTOR>\n          <LIBRARY_DESCRIPTOR>\n
-        \              <LIBRARY_NAME>Gg_HH16_1_embryo_mRNAseq</LIBRARY_NAME>\n               <LIBRARY_STRATEGY>RNA-Seq</LIBRARY_STRATEGY>\n
-        \              <LIBRARY_SOURCE>TRANSCRIPTOMIC</LIBRARY_SOURCE>\n               <LIBRARY_SELECTION>RANDOM</LIBRARY_SELECTION>\n
-        \              <LIBRARY_LAYOUT>\n                    <SINGLE/>\n               </LIBRARY_LAYOUT>\n
-        \         </LIBRARY_DESCRIPTOR>\n          <SPOT_DESCRIPTOR>\n               <SPOT_DECODE_SPEC>\n
-        \                   <SPOT_LENGTH>100</SPOT_LENGTH>\n                    <READ_SPEC>\n
-        \                        <READ_INDEX>0</READ_INDEX>\n                         <READ_CLASS>Application
-        Read</READ_CLASS>\n                         <READ_TYPE>Forward</READ_TYPE>\n
-        \                        <BASE_COORD>1</BASE_COORD>\n                    </READ_SPEC>\n
-        \              </SPOT_DECODE_SPEC>\n          </SPOT_DESCRIPTOR>\n     </DESIGN>\n
-        \    <PLATFORM>\n          <ILLUMINA>\n               <INSTRUMENT_MODEL>Illumina
-        HiSeq 2000</INSTRUMENT_MODEL>\n          </ILLUMINA>\n     </PLATFORM>\n     <PROCESSING>\n
-        \         <PIPELINE>\n               <PIPE_SECTION>\n                    <STEP_INDEX>1</STEP_INDEX>\n
-        \                   <PREV_STEP_INDEX>NIL</PREV_STEP_INDEX>\n                    <PROGRAM/>\n
-        \                   <VERSION/>\n               </PIPE_SECTION>\n          </PIPELINE>\n
-        \    </PROCESSING>\n     <EXPERIMENT_LINKS>\n          <EXPERIMENT_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n                    <ID>DRS001521</ID>\n
-        \              </XREF_LINK>\n          </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-RUN</DB>\n                    <ID>DRR002116</ID>\n
-        \              </XREF_LINK>\n          </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n
-        \                   <ID>DRA000567</ID>\n               </XREF_LINK>\n          </EXPERIMENT_LINK>\n
-        \         <EXPERIMENT_LINK>\n               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRX001563&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n
-        \              </XREF_LINK>\n          </EXPERIMENT_LINK>\n          <EXPERIMENT_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRX001563&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n
-        \              </XREF_LINK>\n          </EXPERIMENT_LINK>\n     </EXPERIMENT_LINKS>\n
-        \    <EXPERIMENT_ATTRIBUTES>\n          <EXPERIMENT_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n
-        \              <VALUE>32568360</VALUE>\n          </EXPERIMENT_ATTRIBUTE>\n
-        \         <EXPERIMENT_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n
-        \              <VALUE>3256836000</VALUE>\n          </EXPERIMENT_ATTRIBUTE>\n
-        \    </EXPERIMENT_ATTRIBUTES>\n</EXPERIMENT>\n</EXPERIMENT_SET>\n"
+      string: '[
+
+        {"accession":"PRJDB90","keywords":"","description":"Evolutionary origin of
+        turtles, and Evo-Devo aspect of turtle shell were investigated in this project.","study_name":"Pelodiscus
+        sinensis japonicus strain:Eggs bought from local farmer in Japan","geo_accession":"","isolate":"","center_name":"RIKEN
+        Center for Developmental Biology","secondary_study_accession":"DRP000670;DRP000595","tag":"ena","secondary_study_center_name":"","strain":"Eggs
+        bought from local farmer in Japan","study_title":"P. sinensis EvoDevo project","last_updated":"2023-05-19","first_public":"2013-12-14","broker_name":"","study_description":"Evolutionary
+        origin of turtles, and Evo-Devo aspect of turtle shell were investigated in
+        this project.","secondary_study_alias":"DRP000670;DRP000595","scientific_name":"Pelodiscus
+        sinensis japonicus","study_alias":"PRJDB90","breed":"","tax_id":"34908","parent_study_accession":"PRJDB1384;PRJNA171777","study_accession":"PRJDB90","submission_tool":"","cultivar":"","tax_division":"VRT","status":"public"}
+
+        ]
+
+        '
     headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - '1025'
       Content-Type:
-      - application/xml
+      - application/json
       Date:
-      - Wed, 17 May 2023 18:36:44 GMT
+      - Wed, 07 Jun 2023 20:31:08 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
       Strict-Transport-Security:
       - max-age=0
-      Transfer-Encoding:
-      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
     status:
       code: 200
       message: ''
@@ -134,164 +112,47 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python-requests/2.30.0
+      - python-requests/2.31.0
     method: GET
-    uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRS001521
+    uri: https://www.ebi.ac.uk/biosamples/samples/SAMD00004104?format=json
   response:
     body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<SAMPLE_SET>\n<SAMPLE accession=\"DRS001521\"
-        alias=\"SAMD00004104\" center_name=\"Group for Morphological Evolution, Center
-        for Developmental Biology, Kobe Institute, RIKEN\" broker_name=\"DDBJ\">\n
-        \    <IDENTIFIERS>\n          <PRIMARY_ID>DRS001521</PRIMARY_ID>\n          <EXTERNAL_ID
-        namespace=\"BioSample\">SAMD00004104</EXTERNAL_ID>\n     </IDENTIFIERS>\n
-        \    <TITLE>Gg_HH16_1_embryo_mRNAseq</TITLE>\n     <SAMPLE_NAME>\n          <TAXON_ID>9031</TAXON_ID>\n
-        \         <SCIENTIFIC_NAME>Gallus gallus</SCIENTIFIC_NAME>\n          <COMMON_NAME>chicken</COMMON_NAME>\n
-        \    </SAMPLE_NAME>\n     <SAMPLE_LINKS>\n    <SAMPLE_LINK>\n        <XREF_LINK>\n
-        \           <DB>ENA-FASTQ-FILES</DB>\n            <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRS001521&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n
-        \       </XREF_LINK>\n    </SAMPLE_LINK>\n    <SAMPLE_LINK>\n        <XREF_LINK>\n
-        \           <DB>ENA-SUBMITTED-FILES</DB>\n            <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRS001521&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n
-        \       </XREF_LINK>\n    </SAMPLE_LINK>\n</SAMPLE_LINKS>\n<SAMPLE_ATTRIBUTES>\n
-        \         <SAMPLE_ATTRIBUTE>\n               <TAG>INSDC secondary accession</TAG>\n
-        \              <VALUE>DRS001521</VALUE>\n          </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n
-        \              <TAG>NCBI submission package</TAG>\n               <VALUE>Generic.1.0</VALUE>\n
-        \         </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>organism</TAG>\n
-        \              <VALUE>Gallus gallus</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
-        \         <SAMPLE_ATTRIBUTE>\n               <TAG>sample comment</TAG>\n               <VALUE>mRNAseq
-        of chicken at stage HH16 (biological replicate 1)</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
-        \         <SAMPLE_ATTRIBUTE>\n               <TAG>sample name</TAG>\n               <VALUE>DRS001521</VALUE>\n
-        \         </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>BioSampleModel</TAG>\n
-        \              <VALUE>Generic</VALUE>\n          </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n
-        \              <TAG>ENA-FIRST-PUBLIC</TAG>\n               <VALUE>2013-02-27</VALUE>\n
-        \         </SAMPLE_ATTRIBUTE>\n          <SAMPLE_ATTRIBUTE>\n               <TAG>ENA-LAST-UPDATE</TAG>\n
-        \              <VALUE>2014-11-12</VALUE>\n          </SAMPLE_ATTRIBUTE>\n
-        \    </SAMPLE_ATTRIBUTES>\n</SAMPLE>\n</SAMPLE_SET>\n"
-    headers:
-      Content-Type:
-      - application/xml
-      Date:
-      - Wed, 17 May 2023 18:36:44 GMT
-      Strict-Transport-Security:
-      - max-age=0
-      Transfer-Encoding:
-      - chunked
-    status:
-      code: 200
-      message: ''
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python-requests/2.30.0
-    method: GET
-    uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRP000595
-  response:
-    body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<STUDY_SET>\n<STUDY accession=\"DRP000595\"
-        alias=\"DRP000595\" center_name=\"RIKEN_CDB\" broker_name=\"DDBJ\">\n     <IDENTIFIERS>\n
-        \         <PRIMARY_ID>DRP000595</PRIMARY_ID>\n          <SECONDARY_ID>PRJDB90</SECONDARY_ID>\n
-        \         <EXTERNAL_ID label=\"BioProject ID\" namespace=\"BioProject\">PRJDB90</EXTERNAL_ID>\n
-        \         <SUBMITTER_ID namespace=\"RIKEN_CDB\">DRP000595</SUBMITTER_ID>\n
-        \    </IDENTIFIERS>\n     <DESCRIPTOR>\n          <STUDY_TITLE>Whole transcriptome
-        identification of turtle</STUDY_TITLE>\n          <STUDY_TYPE existing_study_type=\"Transcriptome
-        Analysis\"/>\n          <STUDY_ABSTRACT>Whole transcriptome of turtle (Pelodiscus
-        sinensis) was identified in this study by using stranded sequencing methods.</STUDY_ABSTRACT>\n
-        \         <CENTER_PROJECT_NAME>RIKEN_CDB</CENTER_PROJECT_NAME>\n     </DESCRIPTOR>\n
-        \    <STUDY_LINKS>\n          <STUDY_LINK>\n               <XREF_LINK>\n                    <DB>pubmed</DB>\n
-        \                   <ID>23624526</ID>\n               </XREF_LINK>\n          </STUDY_LINK>\n
-        \         <STUDY_LINK>\n               <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n
-        \                   <ID>DRS001495-DRS001536</ID>\n               </XREF_LINK>\n
-        \         </STUDY_LINK>\n          <STUDY_LINK>\n               <XREF_LINK>\n
-        \                   <DB>ENA-EXPERIMENT</DB>\n                    <ID>DRX001537-DRX001578</ID>\n
-        \              </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-RUN</DB>\n                    <ID>DRR002090-DRR002131</ID>\n
-        \              </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SUBMISSION</DB>\n
-        \                   <ID>DRA000567</ID>\n               </XREF_LINK>\n          </STUDY_LINK>\n
-        \         <STUDY_LINK>\n               <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRP000595&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n
-        \              </XREF_LINK>\n          </STUDY_LINK>\n          <STUDY_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRP000595&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n
-        \              </XREF_LINK>\n          </STUDY_LINK>\n     </STUDY_LINKS>\n
-        \    <STUDY_ATTRIBUTES>\n          <STUDY_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n
-        \              <VALUE>1371813555</VALUE>\n          </STUDY_ATTRIBUTE>\n          <STUDY_ATTRIBUTE>\n
-        \              <TAG>ENA-BASE-COUNT</TAG>\n               <VALUE>158881910957</VALUE>\n
-        \         </STUDY_ATTRIBUTE>\n          <STUDY_ATTRIBUTE>\n               <TAG>ENA-FIRST-PUBLIC</TAG>\n
-        \              <VALUE>2013-07-19</VALUE>\n          </STUDY_ATTRIBUTE>\n          <STUDY_ATTRIBUTE>\n
-        \              <TAG>ENA-LAST-UPDATE</TAG>\n               <VALUE>2015-06-22</VALUE>\n
-        \         </STUDY_ATTRIBUTE>\n     </STUDY_ATTRIBUTES>\n</STUDY>\n</STUDY_SET>\n"
-    headers:
-      Content-Type:
-      - application/xml
-      Date:
-      - Wed, 17 May 2023 18:36:44 GMT
-      Strict-Transport-Security:
-      - max-age=0
-      Transfer-Encoding:
-      - chunked
-    status:
-      code: 200
-      message: ''
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python-requests/2.30.0
-    method: GET
-    uri: https://www.ebi.ac.uk/ena/browser/api/xml/DRA000567
-  response:
-    body:
-      string: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<SUBMISSION_SET>\n<SUBMISSION
-        accession=\"DRA000567\" alias=\"DRA000567\" center_name=\"RIKEN_CDB\" lab_name=\"Group
+      string: '{"name":"SAMD00004104","accession":"SAMD00004104","domain":"self.BiosampleImportNCBI","taxId":9031,"status":"PUBLIC","release":"2013-02-27T00:00:00Z","update":"2022-03-29T01:37:11.178Z","submitted":"2013-07-03T08:05:45.306Z","characteristics":{"External
+        Id":[{"text":"SAMD00004104","tag":"Namespace:BioSample"}],"INSDC center name":[{"text":"Group
         for Morphological Evolution, Center for Developmental Biology, Kobe Institute,
-        RIKEN\" submission_comment=\"Time course gene expression profiles of turtle
-        (Pelodiscus sinensis) and chicken (Gallus gallus) embryos were examined. Whole
-        transcriptome of turtle was also determined by uding stranded sequencing methods.\"
-        broker_name=\"DDBJ\">\n     <IDENTIFIERS>\n          <PRIMARY_ID>DRA000567</PRIMARY_ID>\n
-        \         <SUBMITTER_ID namespace=\"RIKEN_CDB\">DRA000567</SUBMITTER_ID>\n
-        \    </IDENTIFIERS>\n     <TITLE>Submitted by RIKEN_CDB on 19-JUL-2013</TITLE>\n
-        \    <SUBMISSION_LINKS>\n          <SUBMISSION_LINK>\n               <XREF_LINK>\n
-        \                   <DB>ENA-STUDY</DB>\n                    <ID>DRP000595</ID>\n
-        \              </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SAMPLE</DB>\n                    <ID>DRS001495-DRS001536</ID>\n
-        \              </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-EXPERIMENT</DB>\n
-        \                   <ID>DRX001537-DRX001578</ID>\n               </XREF_LINK>\n
-        \         </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n               <XREF_LINK>\n
-        \                   <DB>ENA-RUN</DB>\n                    <ID>DRR002090-DRR002131</ID>\n
-        \              </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-FASTQ-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRA000567&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>\n
-        \              </XREF_LINK>\n          </SUBMISSION_LINK>\n          <SUBMISSION_LINK>\n
-        \              <XREF_LINK>\n                    <DB>ENA-SUBMITTED-FILES</DB>\n
-        \                   <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRA000567&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>\n
-        \              </XREF_LINK>\n          </SUBMISSION_LINK>\n     </SUBMISSION_LINKS>\n
-        \    <SUBMISSION_ATTRIBUTES>\n          <SUBMISSION_ATTRIBUTE>\n               <TAG>ENA-SPOT-COUNT</TAG>\n
-        \              <VALUE>1371813555</VALUE>\n          </SUBMISSION_ATTRIBUTE>\n
-        \         <SUBMISSION_ATTRIBUTE>\n               <TAG>ENA-BASE-COUNT</TAG>\n
-        \              <VALUE>158881910957</VALUE>\n          </SUBMISSION_ATTRIBUTE>\n
-        \    </SUBMISSION_ATTRIBUTES>\n</SUBMISSION>\n</SUBMISSION_SET>\n"
+        RIKEN"}],"INSDC first public":[{"text":"2013-02-27T00:00:00Z"}],"INSDC last
+        update":[{"text":"2014-11-12T03:28:52Z"}],"INSDC secondary accession":[{"text":"DRS001521"}],"INSDC
+        status":[{"text":"live"}],"NCBI submission model":[{"text":"Generic"}],"NCBI
+        submission package":[{"text":"Generic.1.0"}],"SRA accession":[{"text":"DRS001521"}],"organism":[{"text":"Gallus
+        gallus","ontologyTerms":["http://purl.obolibrary.org/obo/NCBITaxon_9031"]}],"sample
+        comment":[{"text":"mRNAseq of chicken at stage HH16 (biological replicate
+        1)","tag":"attribute"}],"sample name":[{"text":"DRS001521","tag":"attribute"}],"title":[{"text":"Gg_HH16_1_embryo_mRNAseq"}]},"externalReferences":[{"url":"https://www.ebi.ac.uk/ena/data/view/SAMD00004104","duo":null}],"submittedVia":"JSON_API","create":"2013-07-03T08:05:45.306Z","_links":{"self":{"href":"https://www.ebi.ac.uk/biosamples/samples/SAMD00004104"},"curationDomain":{"href":"https://www.ebi.ac.uk/biosamples/samples/SAMD00004104{?curationdomain}","templated":true},"curationLinks":{"href":"https://www.ebi.ac.uk/biosamples/samples/SAMD00004104/curationlinks"},"curationLink":{"href":"https://www.ebi.ac.uk/biosamples/samples/SAMD00004104/curationlinks/{hash}","templated":true},"structuredData":{"href":"https://www.ebi.ac.uk/biosamples/structureddata/SAMD00004104"}}}'
     headers:
+      Cache-Control:
+      - max-age=60, public
+      Content-Length:
+      - '1732'
       Content-Type:
-      - application/xml
+      - application/json;charset=UTF-8
       Date:
-      - Wed, 17 May 2023 18:36:45 GMT
+      - Wed, 07 Jun 2023 20:31:08 GMT
+      ETag:
+      - '"092374b249b8b19f3dcc3ac478762eae2"'
       Strict-Transport-Security:
       - max-age=0
-      Transfer-Encoding:
-      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
     status:
       code: 200
       message: ''

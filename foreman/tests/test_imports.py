@@ -57,4 +57,5 @@ class ImportTestCase(TestCase):
         import tests.surveyor.test_harmony
         import tests.surveyor.test_sra
         import tests.surveyor.test_surveyor
+        import tests.surveyor.test_utils
         import tests.surveyor.test_transcriptome_index
