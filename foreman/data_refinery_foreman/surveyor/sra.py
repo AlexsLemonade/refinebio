@@ -349,6 +349,12 @@ class SraSurveyor(ExternalSourceSurveyor):
                 sample.manufacturer = "UNKNOWN"
                 sample.platform_name = "UNKNOWN"
                 sample.platform_accession_code = "UNKNOWN"
+                logger.debug(
+                    "Sample %s has unrecognized manufacturer.",
+                    sample_accession_code=sample_accession,
+                    experiment_accession_code=experiment.accession_code,
+                    survey_job=self.survey_job.id,
+                )
 
             SraSurveyor._apply_harmonized_metadata_to_sample(sample, sample_metadata)
 
