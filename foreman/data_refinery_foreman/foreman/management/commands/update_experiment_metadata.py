@@ -8,8 +8,7 @@ import GEOparse
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Experiment
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator
-from data_refinery_foreman.surveyor import utils
-from data_refinery_foreman.surveyor.array_express import EXPERIMENTS_URL, ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor.sra import SraSurveyor
 
@@ -56,10 +55,10 @@ class Command(BaseCommand):
                 )
                 try:
                     if experiment.source_database == "SRA":
-                        metadata = SraSurveyor.gather_all_metadata(
+                        experiment_metadata, sample_metadata = SraSurveyor.gather_all_metadata(
                             experiment.samples.first().accession_code
                         )
-                        SraSurveyor._apply_metadata_to_experiment(experiment, metadata)
+                        SraSurveyor._apply_metadata_to_experiment(experiment, experiment_metadata)
 
                     elif experiment.source_database == "GEO":
                         gse = GEOparse.get_GEO(
