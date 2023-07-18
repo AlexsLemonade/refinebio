@@ -18,11 +18,10 @@
 #     - AWS_ACCESS_KEY_ID -- The AWS key id to use when interacting with AWS.
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
-
-echo "$INSTANCE_SSH_KEY" > infrastructure/data-refinery-key.pem
+echo "$INSTANCE_SSH_KEY" >infrastructure/data-refinery-key.pem
 chmod 600 infrastructure/data-refinery-key.pem
 
-run_on_deploy_box () {
+run_on_deploy_box() {
     # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
@@ -32,7 +31,7 @@ run_on_deploy_box () {
 
 # Create file containing local env vars that are needed for deploy.
 rm -f env_vars
-cat >> env_vars <<EOF
+cat >>env_vars <<EOF
 export CI_TAG='$CI_TAG'
 export DOCKER_ID='$DOCKER_ID'
 export DOCKER_PASSWD='$DOCKER_PASSWD'
@@ -69,18 +68,18 @@ echo "Building new images"
 run_on_deploy_box "sudo touch /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
-run_on_deploy_box "source env_vars && ./.github/scripts/update_docker_img.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
+run_on_deploy_box "source env_vars && ./.github/scripts/update_docker_image.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 
-# Load docker_img_exists function and $ALL_CCDL_IMAGES
-source scripts/common.sh
+# Load docker_image_exists function and $ALL_IMAGES.
+. ./scripts/common.sh
 
 if [[ "$MASTER_OR_DEV" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
 elif [[ "$MASTER_OR_DEV" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
-    echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!?!?"
+    echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!"
     exit 1
 fi
 
@@ -89,10 +88,10 @@ fi
 # https://github.com/AlexsLemonade/refinebio/issues/784
 # Since it's not clear how that happened, the safest thing is to add
 # an explicit check that the Docker images were successfully updated.
-for IMAGE in $ALL_CCDL_IMAGES; do
+for IMAGE in $ALL_IMAGES; do
     image_name="$DOCKERHUB_REPO/dr_$IMAGE"
-    if ! docker_img_exists "$image_name" "$CI_TAG"; then
-        echo "Docker image $image_name:$CI_TAG doesn't exist after running update_docker_img.sh!"
+    if ! docker_image_exists "$image_name" "$CI_TAG"; then
+        echo "Docker image $image_name:$CI_TAG doesn't exist after running update_docker_image.sh!"
         echo "This is generally caused by a temporary error, please try the 'Rerun workflow' button."
         exit 1
     fi

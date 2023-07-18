@@ -1,4 +1,6 @@
-FROM ccdlstaging/dr_base:latest
+ARG DOCKERHUB_REPO
+ARG SYSTEM_VERSION
+FROM $DOCKERHUB_REPO/dr_base:$SYSTEM_VERSION
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -6,7 +8,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /home/user
 
 COPY workers/R/dependencies/salmon/renv.lock .
-COPY workers/R/renv_load.R .
+COPY common/R/renv_load.R .
 RUN Rscript renv_load.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
@@ -29,7 +31,7 @@ v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
         -C "Salmon-${SALMON_VERSION}_linux_x86_64" --strip-components 1 && \
     ln -sf "$(pwd)/Salmon-${SALMON_VERSION}_linux_x86_64/bin/salmon" \
         /usr/local/bin/ && \
-    rm -f "Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz"
+    rm "Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz"
 # End Salmon installation.
 
 ENV SRA_VERSION=2.9.1
@@ -45,7 +47,8 @@ RUN git clone https://github.com/COMBINE-lab/SalmonTools.git && \
     wget -q "https://ftp.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/\
 sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz" && \
     tar zxfv "sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz" && \
-    cp -r "sratoolkit.${SRA_VERSION}-ubuntu64/bin/"* /usr/bin
+    cp -r "sratoolkit.${SRA_VERSION}-ubuntu64/bin/"* /usr/bin && \
+    rm "sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz"
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
@@ -58,7 +61,6 @@ COPY workers/ .
 
 RUN rm -rf /root/.cache/*
 
-ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user

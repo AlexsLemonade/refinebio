@@ -2,7 +2,10 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(cd "$(dirname "$0")" || exit; pwd)"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
 print_description() {
@@ -10,17 +13,17 @@ print_description() {
 }
 
 print_options() {
-    echo 'This script accepts the following arguments: -e, -u, -r, and -h.'
-    echo 'Neither -e, -u or -r is optional unless TF_VAR_stage, TF_VAR_user,'
+    echo 'This script accepts the following arguments: -e, -u, -d, and -h.'
+    echo 'Neither -e, -u or -d is optional unless TF_VAR_stage, TF_VAR_user,'
     echo 'or TF_VAR_region is set, respectively.'
     echo '-h prints this help message and exits.'
     echo '-e specifies the environment you would like to destroy.'
     echo '-u specifies the username you used to spin up the stack.'
-    echo '-r specifies the region of the stack to destroy.'
+    echo '-d specifies the region of the stack to destroy.'
     echo 'All arguments are needed to determine which stack to destroy.'
 }
 
-while getopts ":e:u:r:h" opt; do
+while getopts ":e:u:d:h" opt; do
     case $opt in
     e)
         export env=$OPTARG
@@ -29,7 +32,7 @@ while getopts ":e:u:r:h" opt; do
     u)
         export TF_VAR_user=$OPTARG
         ;;
-    r)
+    d)
         export TF_VAR_region=$OPTARG
         ;;
     h)
@@ -62,7 +65,7 @@ if [[ -z $TF_VAR_user ]]; then
 fi
 
 if [[ -z $TF_VAR_region ]]; then
-    echo 'Error: must specify region by either providing the -r argument or setting TF_VAR_region.'
+    echo 'Error: must specify region by either providing the -d argument or setting TF_VAR_region.'
     exit 1
 fi
 
