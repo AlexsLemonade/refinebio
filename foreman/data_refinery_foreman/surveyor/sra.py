@@ -1,5 +1,6 @@
 import re
 from typing import List
+from urllib.parse import urlencode
 
 from django.utils.dateparse import parse_date
 
@@ -55,15 +56,13 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def get_ena_json_api(endpoint: str, accession: str, params: dict = {}):
-        query_params = "&".join([f"{k}={params[k]}" for k in params])
 
-        if query_params:
-            query_params = f"&{query_params}"
+        params.update({"format": "json", "includeAccessions": accession})
 
-        return f"{ENA_API}{endpoint}/?format=json&includeAccessions={accession}{query_params}"
+        return f"{ENA_API}{endpoint}/?{urlencode(params, )}"
 
     @staticmethod
-    def get_ena_json_api_response(endpoint: str, accession, params: dict = {}):
+    def get_ena_json_api_response(endpoint: str, accession: str, params: dict = {}):
         response = utils.requests_retry_session().get(
             SraSurveyor.get_ena_json_api(endpoint, accession, params)
         )

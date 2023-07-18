@@ -299,14 +299,15 @@ class SraSurveyorTestCase(TestCase):
         )
 
     def test_sra_ena_api_endpoint_construction(self):
-        expected_filereport_url = "https://www.ebi.ac.uk/ena/portal/api/filereport/?format=json&accession=SRP047410&result=read_run"
+        expected_filereport_url = "https://www.ebi.ac.uk/ena/portal/api/filereport/?result=read_run&format=json&includeAccessions=SRP047410"
+
         filereport_url = SraSurveyor.get_ena_json_api(
             "filereport", "SRP047410", {"result": "read_run"}
         )
         self.assertEqual(expected_filereport_url, filereport_url)
 
         expected_metadata_url = (
-            "https://www.ebi.ac.uk/ena/portal/api/search/?format=json&accession=SRP047410"
+            "https://www.ebi.ac.uk/ena/portal/api/search/?format=json&includeAccessions=SRP047410"
         )
         metadata_url = SraSurveyor.get_ena_json_api("search", "SRP047410", {})
-        self.assertEquual(expected_metadata_url, metadata_url)
+        self.assertEqual(expected_metadata_url, metadata_url)
