@@ -30,7 +30,7 @@ cd ~/refinebio/common && python3 setup.py sdist
 cd ~/refinebio
 
 # Log into DockerHub.
-docker login -u "$DOCKER_ID" -p "$DOCKER_PASSWD"
+docker login -u "$DOCKER_IO_USERNAME" -p "$DOCKER_IO_PASSWORD"
 
 IMAGE_NAMES="$WORKER_IMAGES foreman api"
 for IMAGE_NAME in $IMAGE_NAMES; do
