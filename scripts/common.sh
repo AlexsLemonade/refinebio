@@ -2,9 +2,11 @@
 
 # These are lists of docker images that we use. The actual names end
 # up being <DOCKERHUB_REPO>/dr_<IMAGE_NAME> but this is useful for scripting.
-export ALL_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders foreman api"
+
 # Sometimes we only want to work with the worker images.
 export WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders"
+
+export ALL_IMAGES="base api_base api foreman $WORKER_IMAGES"
 
 # Default Docker registry.
 if [ -z "$DOCKERHUB_REPO" ]; then

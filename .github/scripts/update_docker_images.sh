@@ -32,11 +32,13 @@ cd ~/refinebio
 # Log into DockerHub.
 docker login -u "$DOCKER_IO_USERNAME" -p "$DOCKER_IO_PASSWORD"
 
-IMAGE_NAMES="$WORKER_IMAGES foreman api"
-for IMAGE_NAME in $IMAGE_NAMES; do
+for IMAGE_NAME in $ALL_IMAGES; do
     case $IMAGE_NAME in
-    api)
-        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.api_production"
+    api_base | api)
+        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.$IMAGE_NAME"
+        ;;
+    base)
+        DOCKER_FILE_PATH="common/dockerfiles/Dockerfile.$IMAGE_NAME"
         ;;
     foreman)
         DOCKER_FILE_PATH="foreman/dockerfiles/Dockerfile.$IMAGE_NAME"

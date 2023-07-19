@@ -68,7 +68,7 @@ echo "Building new images"
 run_on_deploy_box "sudo touch /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box ". env_vars && echo -e '######\nBuilding new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
-run_on_deploy_box ". env_vars && .github/scripts/update_docker_images.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
+run_on_deploy_box ". env_vars && ./.github/scripts/update_docker_images.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box ". env_vars && echo -e '######\nFinished building new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 
 # Load docker_image_exists function and $ALL_IMAGES.

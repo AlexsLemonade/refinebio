@@ -14,7 +14,7 @@ cd "$script_directory" || exit
 # move up a level.
 cd ..
 
-./scripts/prepare_image.sh -i api_production -s api
+./scripts/prepare_image.sh -i api -s api
 
 . ./scripts/common.sh
 
@@ -30,5 +30,5 @@ docker run \
     --publish 8081:8081 \
     --tty \
     --volume "$STATIC_VOLUMES":/tmp/www/static \
-    "$DOCKERHUB_REPO/dr_api_production" \
+    "$DOCKERHUB_REPO/dr_api" \
     /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"

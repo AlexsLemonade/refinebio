@@ -78,7 +78,7 @@ DOCKER_ACTION="--push"
 
 # Intentionally omit affymetrix unless specifically requested since it is so
 # intense to build.
-IMAGE_NAMES="base migrations common_tests foreman api_base api_production api_local \
+IMAGE_NAMES="base migrations common_tests foreman api_base api api_local \
     transcriptome smasher salmon no_op illumina downloaders compendia"
 if [ "$BUILD_AFFYMETRIX" ]; then
     IMAGE_NAMES="$IMAGE_NAMES affymetrix"
@@ -95,7 +95,7 @@ rm -f common/dist/*
 
 for IMAGE_NAME in $IMAGE_NAMES; do
     case $IMAGE_NAME in
-    api_base | api_local | api_production)
+    api_base | api | api_local)
         DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.$IMAGE_NAME"
         ;;
     base | common_tests | migrations)
