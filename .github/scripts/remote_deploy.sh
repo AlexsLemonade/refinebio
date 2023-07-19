@@ -26,7 +26,8 @@ run_on_deploy_box() {
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
         -i infrastructure/data-refinery-key.pem \
-        ubuntu@"${DEPLOY_IP_ADDRESS}" "cd refinebio && $1"
+        ubuntu@"${DEPLOY_IP_ADDRESS}" \
+        "cd refinebio && $1"
 }
 
 # Create file containing local env vars that are needed for deploy.
@@ -62,21 +63,21 @@ scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
     -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/infrastructure/data-refinery-key.pem
 
-# Output to CircleCI
 echo "Building new images"
 # Output to the docker update log.
 run_on_deploy_box "sudo touch /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CI_TAG.log"
-run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
-run_on_deploy_box "source env_vars && ./.github/scripts/update_docker_image.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
-run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
+run_on_deploy_box ". env_vars && echo -e '######\nBuilding new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
+run_on_deploy_box ". env_vars && ./.github/scripts/update_docker_images.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
+run_on_deploy_box ". env_vars && echo -e '######\nFinished building new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 
 # Load docker_image_exists function and $ALL_IMAGES.
+# shellcheck disable=1091
 . ./scripts/common.sh
 
-if [[ "$MASTER_OR_DEV" == "master" ]]; then
+if [[ "$BRANCH" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ "$MASTER_OR_DEV" == "dev" ]]; then
+elif [[ "$BRANCH" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!"
@@ -88,10 +89,10 @@ fi
 # https://github.com/AlexsLemonade/refinebio/issues/784
 # Since it's not clear how that happened, the safest thing is to add
 # an explicit check that the Docker images were successfully updated.
-for IMAGE in $ALL_IMAGES; do
-    image_name="$DOCKERHUB_REPO/dr_$IMAGE"
+for image in $ALL_IMAGES; do
+    image_name="$DOCKERHUB_REPO/dr_$image"
     if ! docker_image_exists "$image_name" "$CI_TAG"; then
-        echo "Docker image $image_name:$CI_TAG doesn't exist after running update_docker_image.sh!"
+        echo "Docker image $image_name:$CI_TAG doesn't exist after running update_docker_images.sh!"
         echo "This is generally caused by a temporary error, please try the 'Rerun workflow' button."
         exit 1
     fi
@@ -102,18 +103,18 @@ echo "Finished building new images, running run_terraform.sh."
 
 run_on_deploy_box "sudo touch /var/log/deploy_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/deploy_$CI_TAG.log"
-run_on_deploy_box "source env_vars && echo -e '######\nStarting new deploy for $CI_TAG\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
-run_on_deploy_box "sudo ./.github/scripts/fix_ca_certs.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
+run_on_deploy_box ". env_vars && echo -e '######\nStarting new deploy for $CI_TAG\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
+run_on_deploy_box "sudo ./.github/scripts/update_ca_certificates.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
 
 # This should never be logged to Github Actions in case it exposes any secrets as terraform output.
-run_on_deploy_box "source env_vars && ./.github/scripts/run_terraform.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
+run_on_deploy_box ". env_vars && ./.github/scripts/run_terraform.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
 
-run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CI_TAG finished!\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
+run_on_deploy_box ". env_vars && echo -e '######\nDeploying $CI_TAG finished!\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
 
 ./.github/scripts/slackpost_deploy.sh robots deploybot
 
-if [[ "$MASTER_OR_DEV" == "dev" ]]; then
-    run_on_deploy_box "source env_vars && ./foreman/run_end_to_end_tests.sh"
+if [[ "$BRANCH" == "dev" ]]; then
+    run_on_deploy_box ". env_vars && ./foreman/run_end_to_end_tests.sh"
     ./.github/scripts/slackpost_end_to_end.sh robots deploybot
 fi
 

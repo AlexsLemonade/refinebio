@@ -3,7 +3,6 @@ name: refine.bio CI/CD
 on: push
 
 env:
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
   DOCKER_BUILDKIT: 1
   DOCKER_ID: ${{ secrets.DOCKER_ID }}
@@ -142,7 +141,13 @@ jobs:
           mkdir -p test_volume
           sudo chmod -R a+rw test_volume
           api/run_tests.sh
-          .github/scripts/upload_test_coverage.sh api
+          .github/scripts/prepare_test_coverage.sh api
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./test_volume/api_coverage.xml
+          name: API Tests
 
   test_api_base:
     name: Test API Base
@@ -236,7 +241,13 @@ jobs:
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           common/run_tests.sh
-          .github/scripts/upload_test_coverage.sh common
+          .github/scripts/prepare_test_coverage.sh common
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./test_volume/common_coverage.xml
+          name: Common Tests
 
   test_downloaders_no_op:
     name: Test Downloaders and No-Op
@@ -314,7 +325,13 @@ jobs:
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           foreman/run_tests.sh --exclude-tag=end_to_end
-          .github/scripts/upload_test_coverage.sh foreman
+          .github/scripts/prepare_test_coverage.sh foreman
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./test_volume/foreman_coverage.xml
+          name: Foreman Tests
 
   test_illumina:
     name: Test Illumina
@@ -349,7 +366,13 @@ jobs:
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t illumina
-          .github/scripts/upload_test_coverage.sh workers
+          .github/scripts/prepare_test_coverage.sh workers
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./workers/test_volume/workers_coverage.xml
+          name: Illumina Tests
 
   test_salmon:
     name: Test Salmon
@@ -383,7 +406,13 @@ jobs:
         run: |
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t salmon
-          .github/scripts/upload_test_coverage.sh workers
+          .github/scripts/prepare_test_coverage.sh workers
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./workers/test_volume/workers_coverage.xml
+          name: Salmon Tests
 
   test_smasher:
     name: Test Smasher
@@ -418,25 +447,43 @@ jobs:
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t smasher
-          .github/scripts/upload_test_coverage.sh workers
+          .github/scripts/prepare_test_coverage.sh workers
 
       - name: Run Janitor Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t janitor
-          .github/scripts/upload_test_coverage.sh workers
+          .github/scripts/prepare_test_coverage.sh workers
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./workers/test_volume/workers_coverage.xml
+          name: Janitor Tests
 
       - name: Run Compendia Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t compendia
-          .github/scripts/upload_test_coverage.sh workers
+          .github/scripts/prepare_test_coverage.sh workers
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./workers/test_volume/workers_coverage.xml
+          name: Compendia Tests
 
       - name: Run QN Tests
         run: |
           sudo -E chown -R $USER:$USER workers/test_volume
           .github/scripts/filter_tests.sh -t qn
-          .github/scripts/upload_test_coverage.sh workers
+          .github/scripts/prepare_test_coverage.sh workers
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./workers/test_volume/workers_coverage.xml
+          name: QN Tests
 
   test_transcriptome:
     name: Test Transcriptome
@@ -472,7 +519,13 @@ jobs:
           mkdir -p workers/test_volume
           sudo chmod -R a+rw workers/test_volume
           .github/scripts/filter_tests.sh -t transcriptome
-          .github/scripts/upload_test_coverage.sh workers
+          .github/scripts/prepare_test_coverage.sh workers
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./workers/test_volume/workers_coverage.xml
+          name: Transcriptome Tests
 
   # Deploy jobs.
   deploy:
