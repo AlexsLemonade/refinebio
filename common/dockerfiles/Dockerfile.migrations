@@ -11,7 +11,6 @@ COPY common/requirements.txt .
 RUN pip install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY common/ .
-COPY config config
 
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 

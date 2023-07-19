@@ -529,6 +529,8 @@ fi
 
 . ./scripts/common.sh
 
+./scripts/prepare_image.sh -i base -s common
+
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 # Ensure permissions are set for everything within the test data directory.
@@ -577,7 +579,7 @@ for image in $worker_images; do
             --tty \
             --volume "$volume_directory":/home/user/data_store \
             $INTERACTIVE \
-            "$image_name" \
+            "$image_name:$SYSTEM_VERSION" \
             bash -c "$test_command"
     fi
 done

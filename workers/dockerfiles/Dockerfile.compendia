@@ -92,6 +92,7 @@ RUN pip3 install --ignore-installed --no-cache-dir \
 
 COPY .boto .boto
 COPY config/ config/
+COPY setup.cfg .
 COPY workers/ .
 
 RUN rm -rf /root/.cache/*

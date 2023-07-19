@@ -32,6 +32,7 @@ if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     exit 1
 fi
 
+./scripts/prepare_image.sh -i base -s common
 ./scripts/prepare_image.sh -i foreman -s foreman
 
 . ./scripts/common.sh
@@ -51,5 +52,5 @@ docker run \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
     $INTERACTIVE \
-    "$DOCKERHUB_REPO/dr_foreman" \
+    "$DOCKERHUB_REPO/dr_foreman:$SYSTEM_VERSION" \
     bash -c "$(run_tests_with_coverage --exclude-tag=manual "$@")"

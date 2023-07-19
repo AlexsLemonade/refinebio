@@ -202,16 +202,6 @@ jobs:
       - name: Build the Docker Image
         run: scripts/prepare_image.sh -i base -s common
 
-      - name: Login to Packages Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Built Docker Images
-        run: .github/scripts/push_docker_images.sh
-
   test_common:
     name: Test Common
     env:
@@ -258,16 +248,6 @@ jobs:
         with:
           files: ./test_volume/common_coverage.xml
           name: Common Tests
-
-      - name: Login to Packages Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Built Docker Images
-        run: .github/scripts/push_docker_images.sh
 
   test_downloaders_no_op:
     name: Test Downloaders and No-Op
@@ -353,16 +333,6 @@ jobs:
           files: ./test_volume/foreman_coverage.xml
           name: Foreman Tests
 
-      - name: Login to Packages Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Built Docker Images
-        run: .github/scripts/push_docker_images.sh
-
   test_illumina:
     name: Test Illumina
     env:
@@ -404,16 +374,6 @@ jobs:
           files: ./workers/test_volume/workers_coverage.xml
           name: Illumina Tests
 
-      - name: Login to Packages Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Built Docker Images
-        run: .github/scripts/push_docker_images.sh
-
   test_salmon:
     name: Test Salmon
     env:
@@ -453,16 +413,6 @@ jobs:
         with:
           files: ./workers/test_volume/workers_coverage.xml
           name: Salmon Tests
-
-      - name: Login to Packages Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Built Docker Images
-        run: .github/scripts/push_docker_images.sh
 
   test_smasher:
     name: Test Smasher
@@ -535,16 +485,6 @@ jobs:
           files: ./workers/test_volume/workers_coverage.xml
           name: QN Tests
 
-      - name: Login to Packages Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Built Docker Images
-        run: .github/scripts/push_docker_images.sh
-
   test_transcriptome:
     name: Test Transcriptome
     env:
@@ -586,16 +526,6 @@ jobs:
         with:
           files: ./workers/test_volume/workers_coverage.xml
           name: Transcriptome Tests
-
-      - name: Login to Packages Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Built Docker Images
-        run: .github/scripts/push_docker_images.sh
 
   # Deploy jobs.
   deploy:

@@ -8,11 +8,6 @@ export WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcriptome
 
 export ALL_IMAGES="base api_base api foreman $WORKER_IMAGES"
 
-# Default Docker registry.
-if [ -z "$DOCKERHUB_REPO" ]; then
-    export DOCKERHUB_REPO="ccdlstaging"
-fi
-
 # This function checks whether a given docker image name ($1:$2)
 # exists in Docker Hub or not using Docker Hub API V2. Based on:
 # https://stackoverflow.com/questions/32113330/check-if-imagetag-combination-already-exists-on-docker-hub
@@ -160,3 +155,12 @@ update_docker_image() {
         "$DOCKER_ACTION" \
         .
 }
+# Default Docker registry.
+if [ -z "$DOCKERHUB_REPO" ]; then
+    export DOCKERHUB_REPO="ccdlstaging"
+fi
+
+# Defaults to commit hash value for if we're not running in the cloud.
+if [ -z "$SYSTEM_VERSION" ]; then
+    SYSTEM_VERSION="$(get_branch_hash)"
+fi

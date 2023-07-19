@@ -5,7 +5,7 @@ Given a list of samples and their metadata, extract these common properties:
   `sex`,
   `age`,
   `specimen_part`,
-  `genetic_information`,
+  `genotype`,
   `disease`,
   `disease_stage`,
   `cell_line`,
@@ -45,112 +45,282 @@ Array Express Example:
       'sex': 'male'}
 
 SRA Example:
-    {'alias': 'GSM2997959_r1',
-     'broker_name': 'GEO',
-     'center_name': 'GEO',
-     'center_project_name': 'GSE99065',
-     'ena-base-count': '279111754922',
-     'ena-spot-count': '1152605026',
-     'experiment_accession': 'SRX3691797',
-     'experiment_design_description': None,
-     'experiment_title': 'NextSeq 500 paired end sequencing; GSM2997959: INOF_FRT; '
-                         'Homo sapiens; RNA-Seq',
-     'lab_name': '',
-     'library_construction_protocol': 'cDNA library produced with TGIRT RNA was '
-                                      'isolated and DNase treated using RNEasy '
-                                      'mini kit (Qiagen 74106) according to the '
-                                      'manufacturer protocol. 5ug DNA-free total '
-                                      'RNA was then ribodepleted using Ribo-zero '
-                                      'Gold (Illumina RZG1224 ) according to the '
-                                      'manufacturer protocol and purified using a '
-                                      'modified ZYMO RNA Clean and Concentrator '
-                                      '(R1016) protocol where 8 volumes EtOH '
-                                      'instead of 4. rRNA depleted RNA was '
-                                      'fragmented with NEBNext Magnesium RNA '
-                                      'Fragmentation Module (E6150) followed by '
-                                      'dephosphorylation using T4PNK (mandel  ) '
-                                      'and purified by same modified ZYMO '
-                                      'protocol. cDNAs were synthesized via TGIRT '
-                                      'template-switching with 1µM TGIRT-III '
-                                      'reverse transcriptase (Ingex, LLC) for 15 '
-                                      'min at 60o C, during which a DNA '
-                                      'oligonucleotide containing the complement '
-                                      'of an Illumina Read 2 sequencing '
-                                      'primer-binding site becomes seamlessly '
-                                      "linked to the 5' cDNA end. After reaction "
-                                      'cleanup (Qiagen MinElute Reaction cleanup '
-                                      "28206), a 5' adenylated DNA oligonucleotide "
-                                      'containing the complement of an Illumina '
-                                      'Read 1 sequencing primer-binding site is '
-                                      "then ligated to the 3' cDNA end with "
-                                      "Thermostable 5' AppDNA / RNA Ligase (New "
-                                      'England Biolabs M0319). Properly ligated '
-                                      'cDNAs were amplified by PCR (12 cycles) to '
-                                      'synthesize the second strand and add '
-                                      'Illumina flowcell capture and index '
-                                      'sequences. Library was size-selected with '
-                                      'Ampure XP beads (Beckman-Coulter) and '
-                                      'quantified with Qubit and evaluated on an '
-                                      'Agilent 2100 Bioanalyzer.',
-     'library_layout': 'PAIRED',
-     'library_selection': 'cDNA',
-     'library_source': 'TRANSCRIPTOMIC',
-     'library_strategy': 'RNA-Seq',
-     'organism_id': '9606',
-     'organism_name': 'HOMO SAPIENS',
-     'platform_instrument_model': 'NextSeq500',
-     'run_accession': 'SRR6718414',
-     'run_ena_base_count': '1773379870',
-     'run_ena_first_public': '2018-02-17',
-     'run_ena_last_update': '2018-02-17',
-     'run_ena_spot_count': '15046271',
-     'sample_accession': 'SRS2951393',
-     'sample_cell_type': 'Immortalized normal ovarian fibroblast',
-     'sample_ena_base_count': '1773379870',
-     'sample_ena_first_public': '2018-02-14',
-     'sample_ena_last_update': '2018-02-14',
-     'sample_ena_spot_count': '15046271',
-     'sample_source_name': 'INOF cell line',
-     'sample_title': 'INOF_FRT',
-     'sample_treatment': 'none',
-     'study_abstract': 'The ability to compare the abundance of one RNA molecule '
-                       'to another is a crucial step for understanding how gene '
-                       'expression is modulated to shape the transcriptome '
-                       'landscape. However, little information is available about '
-                       'the relative expression of the different classes of coding '
-                       'and non-coding RNA or even between RNA of the same class. '
-                       'In this study, we present a complete portrait of the human '
-                       'transcriptome that depicts the relationship of all classes '
-                       'of non-ribosomal RNA longer than sixty nucleotides. The '
-                       'results show that the most abundant RNA in the human '
-                       'rRNA-depleted transcriptome is tRNA followed by '
-                       'spliceosomal RNA. Surprisingly, the signal recognition '
-                       'particle RNA 7SL by itself occupied 8% of the ribodepleted '
-                       'transcriptome producing a similar number of transcripts as '
-                       'that produced by all snoRNA genes combined. In general, '
-                       'the most abundant RNA are non-coding but many more protein '
-                       'coding than non-coding genes produce more than 1 '
-                       'transcript per million. Examination of gene functions '
-                       'suggests that RNA abundance reflects both gene and cell '
-                       'function. Together, the data indicate that the human '
-                       'transcriptome is shaped by a small number of highly '
-                       'expressed non-coding genes and a large number of '
-                       'moderately expressed protein coding genes that reflect '
-                       'cellular phenotypes. Overall design: RNA was isolated from '
-                       'SKOV3ip1 and INOF human cell lines and selected with '
-                       'different methods. The resulting libraries were '
-                       'multiplexed and paired-end sequenced using Illumina HiSeq.',
-     'study_accession': 'SRP107324',
-     'study_ena_base_count': '279111754922',
-     'study_ena_first_public': '2017-09-25',
-     'study_ena_last_update': '2018-02-15',
-     'study_ena_spot_count': '1152605026',
-     'study_title': 'Simultaneous detection and relative quantification of coding '
-                    'and non-coding RNA using a single sequencing reaction',
-     'study_type': 'Transcriptome Analysis',
-     'submission_accession': 'SRA562540',
-     'submission_comment': 'submission brokered by GEO',
-     'submission_title': 'Submitted by Gene Expression Omnibus on 25-SEP-2017'}
+    {"run_accession": "ERR1427135",
+    "project_name": "Single-cell RNA sequencing of spleen-derived LCK cells from adult Zebrafish",
+    "submission_accession": "ERA631093",
+    "library_min_fragment_size": "",
+    "bam_md5": "",
+    "assembly_software": "",
+    "library_prep_longitude": "",
+    "library_selection": "cDNA",
+    "pcr_isolation_protocol": "",
+    "chip_protocol": "",
+    "sequencing_primer_provider": "",
+    "serotype": "",
+    "environment_feature": "",
+    "last_updated": "2018-11-16",
+    "submitted_galaxy": "ftp.sra.ebi.ac.uk/vol1/run/ERR142/ERR1427135/LCK_4_90.cram;ftp.sra.ebi.ac.uk/vol1/run/ERR142/ERR1427135/LCK_4_90.cram.crai",
+    "extraction_protocol": "",
+    "germline": "",
+    "secondary_project": "",
+    "culture_collection": "",
+    "submission_tool": "",
+    "sra_bytes": "",
+    "read_strand": "",
+    "rna_purity_280_ratio": "",
+    "hi_c_protocol": "",
+    "collected_by": "",
+    "submitted_ftp": "ftp.sra.ebi.ac.uk/vol1/run/ERR142/ERR1427135/LCK_4_90.cram;ftp.sra.ebi.ac.uk/vol1/run/ERR142/ERR1427135/LCK_4_90.cram.crai",
+    "restriction_enzyme_target_sequence": "",
+    "isolate": "",
+    "fastq_bytes": "78258588;82464883",
+    "instrument_platform": "ILLUMINA",
+    "variety": "",
+    "sequencing_date_format": "",
+    "temperature": "",
+    "sra_aspera": "",
+    "ecotype": "",
+    "submitted_aspera": "fasp.sra.ebi.ac.uk:/vol1/run/ERR142/ERR1427135/LCK_4_90.cram;fasp.sra.ebi.ac.uk:/vol1/run/ERR142/ERR1427135/LCK_4_90.cram.crai",
+    "sampling_campaign": "",
+    "bam_ftp": "",
+    "tissue_lib": "",
+    "environmental_sample": "",
+    "control_experiment": "",
+    "sex": "",
+    "submitted_md5": "00c61590c4e662488b18a8397df876d6;ceb9b9368ba635b648d51bf15ad3626d",
+    "checklist": "ERC000011",
+    "fastq_galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/ERR142/005/ERR1427135/ERR1427135_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/ERR142/005/ERR1427135/ERR1427135_2.fastq.gz",
+    "library_gen_protocol": "",
+    "specimen_voucher": "",
+    "library_prep_latitude": "",
+    "submitted_bytes": "214700406;15844",
+    "taxonomic_identity_marker": "",
+    "run_date": "",
+    "country": "",
+    "ncbi_reporting_standard": "",
+    "sample_description": "Protocols: The spleen from a heterozygote Tg(lck:EGFP) or wild-type fish was dissected and passed through a 40\u03bcm cell strainer using the plunger of a 1-mL syringe and cells were collected in cold 1xPBS/5% FBS. A non-transgenic line was used to set up the gating and exclude autofluorescent cells. Propidium iodide (PI) staining was used to exclude dead cells. Individual cells were sorted, using a Becton Dickinson Influx sorter with 488- and 561 nm lasers (Schulte et al., 2015) and collected in a single well of a 96 well plate containing 2.3 uL of 0.2 % Triton X-100 supplemented with 1 U/uL SUPERase In RNAse inhibitor (Ambion). The size, granularity and level of fluorescence for each cell were simultaneously recorded. The Smart-seq2 protocol (Picelli et al., 2014) was used to amplify the whole transcriptome and prepare libraries. Twenty-five cycles of PCR amplification were performed.",
+    "experiment_title": "Illumina HiSeq 2500 paired end sequencing; Single-cell RNA sequencing of spleen-derived LCK cells from adult Zebrafish;Single-cell RNA sequencing of spleen-derived LCK cells from adult Zebrafish",
+    "sra_galaxy": "",
+    "sample_prep_interval": "",
+    "fastq_md5": "d2aa4fe6ff43de680096df109a9e33f6;2664741d32d883f615205939ffc872d5",
+    "sample_accession": "SAMEA4011859",
+    "secondary_study_accession": "ERP015799",
+    "experimental_protocol": "",
+    "read_count": "4001164",
+    "study_title": "Single-cell RNA sequencing of spleen-derived LCK cells from adult Zebrafish",
+    "bio_material": "",
+    "rna_prep_5_protocol": "",
+    "host_body_site": "",
+    "local_environmental_context": "",
+    "assembly_quality": "",
+    "collection_date_end": "",
+    "sample_capture_status": "",
+    "sample_title": "LCK_4#90",
+    "host_genotype": "",
+    "host_phenotype": "",
+    "environmental_medium": "",
+    "cultivar": "",
+    "instrument_model": "Illumina HiSeq 2500",
+    "faang_library_selection": "",
+    "target_gene": "",
+    "bam_bytes": "",
+    "library_max_fragment_size": "",
+    "experiment_target": "",
+    "sequencing_date": "",
+    "nominal_sdev": "20",
+    "chip_ab_provider": "",
+    "environment_material": "",
+    "host_tax_id": "",
+    "sample_material": "",
+    "sample_storage_processing": "",
+    "sra_md5": "",
+    "cell_type": "",
+    "fastq_ftp": "ftp.sra.ebi.ac.uk/vol1/fastq/ERR142/005/ERR1427135/ERR1427135_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/ERR142/005/ERR1427135/ERR1427135_2.fastq.gz",
+    "sample_prep_interval_units": "",
+    "broker_name": "ArrayExpress",
+    "sub_strain": "",
+    "base_count": "500145500",
+    "library_strategy": "RNA-Seq",
+    "restriction_site": "",
+    "serovar": "",
+    "investigation_type": "",
+    "location": "",
+    "library_source": "TRANSCRIPTOMIC",
+    "sra_ftp": "",
+    "library_layout": "PAIRED",
+    "experimental_factor": "",
+    "sequencing_primer_catalog": "",
+    "environment_biome": "",
+    "rna_purity_230_ratio": "",
+    "dnase_protocol": "",
+    "dev_stage": "",
+    "library_prep_date_format": "",
+    "bam_aspera": "",
+    "binning_software": "",
+    "rna_integrity_num": "",
+    "library_prep_date": "",
+    "location_start": "",
+    "marine_region": "",
+    "aligned": "",
+    "file_location": "",
+    "sample_collection": "",
+    "chip_target": "",
+    "nominal_length": "400",
+    "broad_scale_environmental_context": "",
+    "sequencing_location": "",
+    "status": "public",
+    "completeness_score": "",
+    "lon": "",
+    "fastq_aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/ERR142/005/ERR1427135/ERR1427135_1.fastq.gz;fasp.sra.ebi.ac.uk:/vol1/fastq/ERR142/005/ERR1427135/ERR1427135_2.fastq.gz",
+    "host_sex": "",
+    "library_pcr_isolation_protocol": "",
+    "sample_alias": "E-MTAB-4617:LCK_4#90",
+    "mating_type": "",
+    "collection_date_start": "",
+    "sub_species": "",
+    "contamination_score": "",
+    "run_alias": "E-MTAB-4617:LCK_4#90",
+    "restriction_enzyme": "",
+    "depth": "",
+    "submitted_read_type": "",
+    "library_construction_protocol": "The spleen from a heterozygote Tg(lck:EGFP) or wild-type fish was dissected and passed through a 40\u03bcm cell strainer using the plunger of a 1-mL syringe and cells were collected in cold 1xPBS/5% FBS. A non-transgenic line was used to set up the gating and exclude autofluorescent cells. Propidium iodide (PI) staining was used to exclude dead cells. Individual cells were sorted, using a Becton Dickinson Influx sorter with 488- and 561 nm lasers (Schulte et al., 2015) and collected in a single well of a 96 well plate containing 2.3 uL of 0.2 % Triton X-100 supplemented with 1 U/uL SUPERase In RNAse inhibitor (Ambion). The size, granularity and level of fluorescence for each cell were simultaneously recorded.  The Smart-seq2 protocol (Picelli et al., 2014) was used to amplify the whole transcriptome and prepare libraries. Twenty-five cycles of PCR amplification were performed.",
+    "host_growth_conditions": "",
+    "collection_date": "",
+    "experiment_alias": "E-MTAB-4617:LCK_4#90",
+    "host_gravidity": "",
+    "center_name": "Ludwig Center for Cancer Research, University of Lausanne, Lausanne, Switzerland  Swiss Institute of Bioinformatics",
+    "identified_by": "",
+    "cell_line": "",
+    "sampling_site": "",
+    "host": "",
+    "library_name": "LCK_4#90",
+    "tag": "ena;datahub",
+    "first_created": "2016-05-26",
+    "lat": "",
+    "strain": "",
+    "experiment_accession": "ERX1497667",
+    "scientific_name": "Danio rerio",
+    "host_status": "",
+    "tax_id": "7955",
+    "study_accession": "PRJEB14175",
+    "submitted_format": "CRAM;CRAI",
+    "submitted_host_sex": "",
+    "bisulfite_protocol": "",
+    "altitude": "",
+    "rt_prep_protocol": "",
+    "host_scientific_name": "",
+    "bam_galaxy": "",
+    "accession": "ERR1427135",
+    "secondary_sample_accession": "ERS1182969",
+    "sample_storage": "",
+    "cage_protocol": "",
+    "sampling_platform": "",
+    "taxonomic_classification": "",
+    "location_end": "",
+    "protocol_label": "",
+    "elevation": "",
+    "salinity": "",
+    "sequencing_method": "",
+    "sequencing_primer_lot": "",
+    "first_public": "2016-12-01",
+    "transposase_protocol": "",
+    "study_alias": "E-MTAB-4617",
+    "library_prep_location": "",
+    "rna_prep_3_protocol": "",
+    "ph": "",
+    "sequencing_longitude": "",
+    "tissue_type": "Spleen",
+    "isolation_source": "",
+    "name": "E-MTAB-4617:LCK_4#90",
+    "webinSubmissionAccountId": "Webin-24",
+    "taxId": 7955,
+    "release": "2016-12-01T17:01:24Z",
+    "update": "2021-08-21T15:38:37.980Z",
+    "submitted": "2016-05-26T17:59:08Z",
+    "characteristics_ENA_first_public_0_text": "2016-12-01",
+    "characteristics_ENA_first_public_0_tag": "attribute",
+    "characteristics_ENA_last_update_0_text": "2016-05-26",
+    "characteristics_ENA_last_update_0_tag": "attribute",
+    "characteristics_ENA-CHECKLIST_0_text": "ERC000011",
+    "characteristics_ENA-CHECKLIST_0_tag": "attribute",
+    "characteristics_External_Id_0_text": "SAMEA4011859",
+    "characteristics_External_Id_0_tag": "Namespace:BioSample",
+    "characteristics_INSDC_center_alias_0_text": "Ludwig Center for Cancer Research, University of Lausanne, Lausanne, Switzerland Swiss Institute of Bioinformatics",
+    "characteristics_INSDC_center_name_0_text": "Ludwig Center for Cancer Research, University of Lausanne, Lausanne, Switzerland Swiss Institute of Bioinformatics",
+    "characteristics_INSDC_first_public_0_text": "2016-12-01T17:01:24Z",
+    "characteristics_INSDC_last_update_0_text": "2016-05-26T17:59:08Z",
+    "characteristics_INSDC_status_0_text": "public",
+    "characteristics_SRA_accession_0_text": "ERS1182969",
+    "characteristics_Submitter_Id_0_text": "E-MTAB-4617:LCK_4#90",
+    "characteristics_Submitter_Id_0_tag": "Namespace:Ludwig Center for Cancer Research, University of Lausanne, Lausanne, Switzerland  Swiss Institute of Bioinformatics",
+    "characteristics_broker_name_0_text": "ArrayExpress",
+    "characteristics_broker_name_0_ontologyTerms_0": "http://www.ebi.ac.uk/efo/EFO_0009737",
+    "characteristics_common_name_0_text": "zebrafish",
+    "characteristics_description_0_text": "Protocols: The spleen from a heterozygote Tg(lck:EGFP) or wild-type fish was dissected and passed through a 40\u03bcm cell strainer using the plunger of a 1-mL syringe and cells were collected in cold 1xPBS/5% FBS. A non-transgenic line was used to set up the gating and exclude autofluorescent cells. Propidium iodide (PI) staining was used to exclude dead cells. Individual cells were sorted, using a Becton Dickinson Influx sorter with 488- and 561 nm lasers (Schulte et al., 2015) and collected in a single well of a 96 well plate containing 2.3 uL of 0.2 % Triton X-100 supplemented with 1 U/uL SUPERase In RNAse inhibitor (Ambion). The size, granularity and level of fluorescence for each cell were simultaneously recorded. The Smart-seq2 protocol (Picelli et al., 2014) was used to amplify the whole transcriptome and prepare libraries. Twenty-five cycles of PCR amplification were performed.",
+    "characteristics_fsc_0_text": "23555",
+    "characteristics_fsc_0_tag": "attribute",
+    "characteristics_gfp_0_text": "109",
+    "characteristics_gfp_0_tag": "attribute",
+    "characteristics_individual_0_text": "2",
+    "characteristics_individual_0_tag": "attribute",
+    "characteristics_organism_0_text": "Danio rerio",
+    "characteristics_organism_0_ontologyTerms_0": "http://purl.obolibrary.org/obo/NCBITaxon_7955",
+    "characteristics_organism_1_text": "Danio rerio",
+    "characteristics_organism_1_ontologyTerms_0": "http://purl.obolibrary.org/obo/NCBITaxon_7955",
+    "characteristics_organism_1_tag": "attribute",
+    "characteristics_pi_0_text": "9",
+    "characteristics_pi_0_tag": "attribute",
+    "characteristics_plate_0_text": "4",
+    "characteristics_plate_0_tag": "attribute",
+    "characteristics_ssc_0_text": "10994",
+    "characteristics_ssc_0_tag": "attribute",
+    "characteristics_tissue_0_text": "Spleen",
+    "characteristics_tissue_0_ontologyTerms_0": "http://purl.obolibrary.org/obo/UBERON_0002106",
+    "characteristics_tissue_0_tag": "attribute",
+    "characteristics_title_0_text": "LCK_4#90",
+    "characteristics_well_0_text": "B12",
+    "characteristics_well_0_tag": "attribute",
+    "relationships_0_source": "SAMEG321352",
+    "relationships_0_type": "has member",
+    "relationships_0_target": "SAMEA4011859",
+    "externalReferences_0_url": "https://www.ebi.ac.uk/ena/browser/view/SAMEA4011859",
+    "submittedVia": "JSON_API",
+    "create": "2018-12-07T06:18:17.244Z",
+    "_links_self_href": "https://www.ebi.ac.uk/biosamples/samples/SAMEA4011859",
+    "_links_curationDomain_href": "https://www.ebi.ac.uk/biosamples/samples/SAMEA4011859{?curationdomain}",
+    "_links_curationDomain_templated": true,
+    "_links_curationLinks_href": "https://www.ebi.ac.uk/biosamples/samples/SAMEA4011859/curationlinks",
+    "_links_curationLink_href": "https://www.ebi.ac.uk/biosamples/samples/SAMEA4011859/curationlinks/{hash}",
+    "_links_curationLink_templated": true,
+    "_links_structuredData_href": "https://www.ebi.ac.uk/biosamples/structureddata/SAMEA4011859",
+    "study_ena_accession": "PRJEB14175",
+    "study_ena_keywords": "",
+    "study_ena_description": "Transcriptome data from individual lck:GFP expressing cells isolated from adult Zebrafish spleen. LCK is a marker of lymphocytes and here we identified two major subpopulations corresponding to T-cells and NK-like and a minor one of myeloid-like cells. Single cell transcriptomes are matched with FACS index sorting data (GFP, forward and side light scatter and dead cell staining)",
+    "study_ena_study_name": "Single-cell RNA sequencing of spleen-derived LCK cells from adult Zebrafish",
+    "study_ena_project_name": "Single-cell RNA sequencing of spleen-derived LCK cells from adult Zebrafish",
+    "study_ena_geo_accession": "",
+    "study_ena_isolate": "",
+    "study_ena_center_name": "Ludwig Center for Cancer Research, University of Lausanne, Lausanne, Switzerland Swiss Institute of Bioinformatics",
+    "study_ena_secondary_study_accession": "ERP015799",
+    "study_ena_tag": "ena",
+    "study_ena_secondary_study_center_name": "",
+    "study_ena_strain": "",
+    "study_ena_study_title": "Single-cell RNA sequencing of spleen-derived LCK cells from adult Zebrafish",
+    "study_ena_last_updated": "2016-05-26",
+    "study_ena_first_public": "2017-02-03",
+    "study_ena_broker_name": "ArrayExpress",
+    "study_ena_study_description": "Transcriptome data from individual lck:GFP expressing cells isolated from adult Zebrafish spleen. LCK is a marker of lymphocytes and here we identified two major subpopulations corresponding to T-cells and NK-like and a minor one of myeloid-like cells. Single cell transcriptomes are matched with FACS index sorting data (GFP, forward and side light scatter and dead cell staining)",
+    "study_ena_secondary_study_alias": "E-MTAB-4617",
+    "study_ena_scientific_name": "",
+    "study_ena_study_alias": "E-MTAB-4617",
+    "study_ena_breed": "",
+    "study_ena_tax_id": "",
+    "study_ena_parent_study_accession": "",
+    "study_ena_study_accession": "PRJEB14175",
+    "study_ena_submission_tool": "",
+    "study_ena_cultivar": "",
+    "study_ena_tax_division": "",
+    "study_ena_status": "public"}
 
 GEO:
     ex:
@@ -245,6 +415,7 @@ GEO:
 """
 
 import csv
+import re
 from io import StringIO
 from typing import Dict, List
 
@@ -252,6 +423,9 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_foreman.surveyor.utils import requests_retry_session
 
 logger = get_and_configure_logger(__name__)
+
+# re.Pattern / re._pattern_type were not defined in 3.8?
+RE_TYPE = re.compile("").__class__
 
 
 TITLE_FIELDS = [
@@ -292,7 +466,7 @@ def create_variants(fields_list: List):
 
     Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well.
     """
-    variants = []
+    variants = set()
 
     for field in fields_list:
         space_variants = [field]
@@ -303,24 +477,27 @@ def create_variants(fields_list: List):
             space_variants.append(field.replace(" ", ""))
 
         for space_variant in space_variants:
-            variants.append(space_variant)
-            variants.append("characteristic [" + space_variant + "]")
-            variants.append("characteristic[" + space_variant + "]")
-            variants.append("characteristics [" + space_variant + "]")
-            variants.append("characteristics[" + space_variant + "]")
-            variants.append("comment [" + space_variant + "]")
-            variants.append("comment[" + space_variant + "]")
-            variants.append("comments [" + space_variant + "]")
-            variants.append("comments[" + space_variant + "]")
-            variants.append("factorvalue[" + space_variant + "]")
-            variants.append("factor value[" + space_variant + "]")
-            variants.append("factorvalue [" + space_variant + "]")
-            variants.append("factor value [" + space_variant + "]")
-            variants.append("sample_" + space_variant)
-            variants.append("sample_host" + space_variant)
-            variants.append("sample_sample_" + space_variant)  # Yes, seriously.
+            variants.add(space_variant)
+            variants.add("characteristic [" + space_variant + "]")
+            variants.add("characteristic[" + space_variant + "]")
+            variants.add("characteristics [" + space_variant + "]")
+            variants.add("characteristics[" + space_variant + "]")
+            variants.add("comment [" + space_variant + "]")
+            variants.add("comment[" + space_variant + "]")
+            variants.add("comments [" + space_variant + "]")
+            variants.add("comments[" + space_variant + "]")
+            variants.add("factorvalue[" + space_variant + "]")
+            variants.add("factor value[" + space_variant + "]")
+            variants.add("factorvalue [" + space_variant + "]")
+            variants.add("factor value [" + space_variant + "]")
+            variants.add("sample_" + space_variant)
+            variants.add("sample_host" + space_variant)
+            variants.add("sample_sample_" + space_variant)  # Yes, seriously.
 
-    return variants
+            # handle SRA flattened json response
+            variants.add(re.compile("characteristics_" + space_variant + "(?:_\d+_text)?$"))
+
+    return list(variants)
 
 
 def parse_sdrf(sdrf_url: str) -> List:
@@ -393,7 +570,7 @@ class Harmonizer:
             "sex",
             "gender",
             "subject gender",
-            "subjext sex",
+            "subject sex",
             # This looks reduntant, but there are some samples which use
             # Characteristic[Characteristic[sex]]
             "characteristic [sex]",
@@ -442,9 +619,6 @@ class Harmonizer:
             "organ",
             "characteristic [organism part]",
             "characteristics [organism part]",
-            # SRA
-            "cell_type",
-            "organismpart",
             # GEO
             "isolation source",
             "tissue sampled",
@@ -452,7 +626,7 @@ class Harmonizer:
         ]
         self.specimen_part_fields = create_variants(specimen_part_fields)
 
-        genetic_information_fields = [
+        genotype_fields = [
             "strain/background",
             "strain",
             "strain or line",
@@ -465,7 +639,7 @@ class Harmonizer:
             "cultivar",
             "strain/genotype",
         ]
-        self.genetic_information_fields = create_variants(genetic_information_fields)
+        self.genotype_fields = create_variants(genotype_fields)
 
         disease_fields = [
             "disease",
@@ -493,8 +667,8 @@ class Harmonizer:
 
         cell_line_fields = [
             "cell line",
-            "sample strain",
         ]
+
         self.cell_line_fields = create_variants(cell_line_fields)
 
         treatment_fields = [
@@ -531,7 +705,7 @@ class Harmonizer:
             "donor id",
             "donor",
             # SRA
-            "sample_source_name",
+            "source name",
         ]
         self.subject_fields = create_variants(subject_fields)
 
@@ -539,6 +713,8 @@ class Harmonizer:
             "developmental stage",
             "development stage",
             "development stages",
+            # SRA.
+            "dev stage",
         ]
         self.developmental_stage_fields = create_variants(developmental_stage_fields)
 
@@ -585,25 +761,42 @@ class Harmonizer:
         else:
             return value.lower().strip()
 
-    def harmonize_field(self, sample_metadata: Dict, harmonized_sample: Dict, field: str):
-        field_name = field.split("_fields")[0]
+    def harmonize_field(
+        self, sample_metadata: Dict, harmonized_sample: Dict, variants_attribute: str
+    ):
+        sample_attribute = variants_attribute.split("_fields")[0]
+        harmonized_values = set()
+        key_variants = getattr(self, variants_attribute)
+        key_regexes = [r for r in key_variants if isinstance(r, RE_TYPE)]
+        key_strings = {s for s in key_variants if isinstance(s, str)}
 
         for key, value in sample_metadata.items():
             lower_key = key.lower().strip()
-
-            if lower_key in getattr(self, field):
-                harmonized_value = self.harmonize_value(field_name, value)
-
+            if lower_key in key_strings:
+                harmonized_value = self.harmonize_value(sample_attribute, value)
                 if harmonized_value:
-                    harmonized_sample[field_name] = harmonized_value
-                    break
+                    harmonized_values.add(harmonized_value)
+
+            for key_regex in key_regexes:
+                if key_regex.fullmatch(lower_key):
+                    harmonized_value = self.harmonize_value(sample_attribute, value)
+                    if harmonized_value:
+                        harmonized_values.add(harmonized_value)
+
+        # Age can only be one value in the database.
+        if sample_attribute == "age" and len(harmonized_values) > 0:
+            harmonized_sample[sample_attribute] = harmonized_values.pop()
+        else:
+            harmonized_sample[sample_attribute] = ";".join(
+                sorted([str(v) for v in harmonized_values])
+            )
 
     def harmonize_sample(self, sample_metadata: Dict, title_field: str = None) -> Dict:
-        fields = [
+        variants_attributes = [
             "sex_fields",
             "age_fields",
             "specimen_part_fields",
-            "genetic_information_fields",
+            "genotype_fields",
             "disease_fields",
             "disease_stage_fields",
             "cell_line_fields",
@@ -617,8 +810,8 @@ class Harmonizer:
 
         harmonized_sample = {}
         harmonized_sample["title"] = extract_title(sample_metadata, title_field)
-        for field in fields:
-            self.harmonize_field(sample_metadata, harmonized_sample, field)
+        for variants_attribute in variants_attributes:
+            self.harmonize_field(sample_metadata, harmonized_sample, variants_attribute)
 
         return harmonized_sample
 
