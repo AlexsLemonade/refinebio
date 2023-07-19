@@ -569,7 +569,7 @@ jobs:
 
       - name: Set the $MASTER_OR_DEV and $CI_TAG Environment Variables
         run: |
-          source scripts/common.sh
+          . scripts/common.sh
           echo "MASTER_OR_DEV=$(get_deploy_branch ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
           # Remove /ref/tags/ from the beginning of the tag name
           echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
@@ -631,7 +631,7 @@ jobs:
 
       - name: Set the $MASTER_OR_DEV and $CI_TAG Environment Variables
         run: |
-          source scripts/common.sh
+          . scripts/common.sh
           echo "MASTER_OR_DEV=$(get_deploy_branch ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
           # Remove /ref/tags/ from the beginning of the tag name
           echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
@@ -678,5 +678,5 @@ jobs:
       - id: set_branch
         name: Set the $CI_TAG Environment Variable
         run: |
-          source scripts/common.sh
+          . scripts/common.sh
           echo "branch=$(get_deploy_branch ${GITHUB_REF#refs/tags/})" >> $GITHUB_OUTPUT
