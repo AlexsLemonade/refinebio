@@ -28,6 +28,7 @@ if [ ! -d "$volume_directory" ]; then
 fi
 chmod -R a+rwX "$volume_directory"
 
+./scripts/prepare_image.sh -i base -s common
 ./scripts/prepare_image.sh -i common_tests -s common
 
 . ./scripts/common.sh
@@ -49,5 +50,5 @@ docker run \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
     $INTERACTIVE \
-    "$DOCKERHUB_REPO/dr_common_tests" \
+    "$DOCKERHUB_REPO/dr_common_tests:$SYSTEM_VERSION" \
     bash -c "$(run_tests_with_coverage "$@")" --parallel

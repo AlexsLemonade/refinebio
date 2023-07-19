@@ -66,4 +66,7 @@ RUN apt-get update && \
 
 ENV R_LIBS=/usr/local/lib/R/site-library
 
+COPY config/ config/
+COPY setup.cfg .
+
 ENTRYPOINT []

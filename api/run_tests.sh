@@ -35,6 +35,7 @@ if [ ! -d "$volume_directory" ]; then
 fi
 chmod -R a+rwX "$volume_directory"
 
+./scripts/prepare_image.sh -i api_base -s api
 ./scripts/prepare_image.sh -i api_local -s api
 
 . ./scripts/common.sh
@@ -56,5 +57,5 @@ docker run \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
     $INTERACTIVE \
-    "$DOCKERHUB_REPO/dr_api_local" \
+    "$DOCKERHUB_REPO/dr_api_local:$SYSTEM_VERSION" \
     bash -c "$(run_tests_with_coverage "$@")"

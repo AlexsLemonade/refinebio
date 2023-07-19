@@ -21,7 +21,6 @@ RUN pip3 install --ignore-installed --no-cache-dir \
         common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
-COPY config config
 COPY foreman/ .
 
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
