@@ -1329,6 +1329,10 @@ class SmasherTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
         self.assertTrue(final_context.get("success", True))
         mock_boto_client.assert_called_once_with("ses", region_name="dummy region")
         ses_client_mock.send_email.assert_called_once()
+        self.assertEqual(
+            ses_client_mock.send_email.call_args.kwargs["Source"],
+            "refine.bio Datasets <noreply@refine.bio>",
+        )
 
         # Now try explicitly setting notify_me false
         mock_boto_client.reset_mock()
@@ -1383,7 +1387,10 @@ class AggregationTestCase(TransactionTestCase):
             "experiments": {
                 "E-GEOD-44719": {
                     "accession_code": "E-GEOD-44719",
-                    "sample_accession_codes": ["IFNa DC_LB016_IFNa", "undefined_sample"],
+                    "sample_accession_codes": [
+                        "IFNa DC_LB016_IFNa",
+                        "undefined_sample",
+                    ],
                 }
             },
             "samples": {
@@ -1429,7 +1436,10 @@ class AggregationTestCase(TransactionTestCase):
                                         "name": "Sample_source_name",
                                         "value": "pineal glands at CT18, after light exposure",
                                     },
-                                    {"name": "Sample_title", "value": "Pineal_Light_CT18"},
+                                    {
+                                        "name": "Sample_title",
+                                        "value": "Pineal_Light_CT18",
+                                    },
                                 ],
                             },
                             # For single-key object whose key is "name",
@@ -1466,7 +1476,8 @@ class AggregationTestCase(TransactionTestCase):
 
         # Create a sample attribute to check for
         contribution, _ = Contribution.objects.get_or_create(
-            source_name="MetaSRA", methods_url="https://pubmed.ncbi.nlm.nih.gov/28535296/"
+            source_name="MetaSRA",
+            methods_url="https://pubmed.ncbi.nlm.nih.gov/28535296/",
         )
 
         s1 = Sample()
@@ -1518,7 +1529,10 @@ class AggregationTestCase(TransactionTestCase):
             "metadata": self.metadata,
             "dataset": Dataset.objects.create(
                 aggregate_by="ALL",
-                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"]},
+                data={
+                    "GSE56409": ["GSM1361050"],
+                    "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],
+                },
             ),
         }
         smashing_utils.write_tsv_json(job_context)
@@ -1562,7 +1576,10 @@ class AggregationTestCase(TransactionTestCase):
             "metadata": self.metadata,
             "dataset": Dataset.objects.create(
                 aggregate_by="EXPERIMENT",
-                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"]},
+                data={
+                    "GSE56409": ["GSM1361050"],
+                    "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],
+                },
             ),
         }
         smashing_utils.write_tsv_json(job_context)
@@ -1600,7 +1617,11 @@ class AggregationTestCase(TransactionTestCase):
                     "refinebio_accession_code": "eyy",
                     "refinebio_annotations": [
                         # annotation #1
-                        {"😎😎": "😎😎", "detection_percentage": 98.44078, "mapped_percentage": 100.0}
+                        {
+                            "😎😎": "😎😎",
+                            "detection_percentage": 98.44078,
+                            "mapped_percentage": 100.0,
+                        }
                     ],  # end of annotations
                 },  # end of sample #1
             },  # end of "samples"
@@ -1675,7 +1696,10 @@ class AggregationTestCase(TransactionTestCase):
             "metadata": self.metadata,
             "dataset": Dataset.objects.create(
                 aggregate_by="SPECIES",
-                data={"GSE56409": ["GSM1361050"], "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"]},
+                data={
+                    "GSE56409": ["GSM1361050"],
+                    "E-GEOD-44719": ["E-GEOD-44719-GSM1089311"],
+                },
             ),
             "group_by_keys": ["homo_sapiens", "fake_species"],
             "input_files": {
@@ -1738,14 +1762,14 @@ class AggregationTestCase(TransactionTestCase):
         self.assertEqual(species_metadada["species"], "fake_species")
         self.assertEqual(len(species_metadada["samples"]), 1)
         self.assertEqual(
-            species_metadada["samples"][0]["refinebio_accession_code"], "E-GEOD-44719-GSM1089311"
+            species_metadada["samples"][0]["refinebio_accession_code"],
+            "E-GEOD-44719-GSM1089311",
         )
         self.assertEqual(species_metadada["samples"][0]["MetaSRA_age"]["value"], 3.0)
         os.remove(json_filename)
 
     @tag("smasher")
     def test_bad_smash(self):
-
         pj = ProcessorJob()
         pj.pipeline_applied = "SMASHER"
         pj.save()
@@ -1852,7 +1876,6 @@ class AggregationTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_bad_overlap(self):
-
         homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606)
         homo_sapiens.save()
 
