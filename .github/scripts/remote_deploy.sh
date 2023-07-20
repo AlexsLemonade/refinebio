@@ -104,18 +104,18 @@ echo "Finished building new images, running run_terraform.sh."
 run_on_deploy_box "sudo touch /var/log/deploy_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/deploy_$CI_TAG.log"
 run_on_deploy_box ". env_vars && echo -e '######\nStarting new deploy for $CI_TAG\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
-run_on_deploy_box "sudo ./.github/scripts/update_ca_certificates.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
+run_on_deploy_box "sudo .github/scripts/update_ca_certificates.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
 
 # This should never be logged to Github Actions in case it exposes any secrets as terraform output.
-run_on_deploy_box ". env_vars && ./.github/scripts/run_terraform.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
+run_on_deploy_box ". env_vars && .github/scripts/run_terraform.sh >> /var/log/deploy_$CI_TAG.log 2>&1"
 
 run_on_deploy_box ". env_vars && echo -e '######\nDeploying $CI_TAG finished!\n######' >> /var/log/deploy_$CI_TAG.log 2>&1"
 
-./.github/scripts/slackpost_deploy.sh robots deploybot
+.github/scripts/slackpost_deploy.sh robots deploybot
 
 if [[ "$BRANCH" == "dev" ]]; then
     run_on_deploy_box ". env_vars && ./foreman/run_end_to_end_tests.sh"
-    ./.github/scripts/slackpost_end_to_end.sh robots deploybot
+    .github/scripts/slackpost_end_to_end.sh robots deploybot
 fi
 
 # Don't leave secrets lying around.

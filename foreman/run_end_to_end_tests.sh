@@ -31,9 +31,6 @@ if [ ! -e "$reference_file_dir/$quant_file" ]; then
         "$test_data_repo/$quant_file"
 fi
 
-# temp for testing locally.
-../scripts/prepare_image.sh -i foreman -s foreman
-
 while read -r row; do
     # Exporting an expansion rather than a variable, which is exactly what we want to do.
     # shellcheck disable=SC2163
@@ -50,5 +47,5 @@ docker run \
     --volume "$HOME/.aws":/home/user/.aws \
     --volume "$volume_directory":/home/user/data_store \
     --tty \
-    "$DOCKERHUB_REPO/dr_foreman" \
+    "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" \
     python3 manage.py test --no-input --parallel=2 --testrunner='tests.test_runner.NoDbTestRunner' tests.foreman.test_end_to_end
