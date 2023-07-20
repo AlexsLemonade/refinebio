@@ -5,7 +5,8 @@ FROM $DOCKERHUB_REPO/dr_api_base:$SYSTEM_VERSION
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN chmod +x /home/user/collect_and_run_uwsgi.sh && \
+RUN pip install --ignore-installed --no-cache-dir uwsgi && \
+    chmod +x /home/user/collect_and_run_uwsgi.sh && \
     mkdir -p /tmp/www/static && \
     chown user /tmp/www/static
 

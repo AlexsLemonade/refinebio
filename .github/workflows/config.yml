@@ -567,10 +567,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set the $MASTER_OR_DEV and $CI_TAG Environment Variables
+      - name: Set the $BRANCH and $CI_TAG Environment Variables
         run: |
           . scripts/common.sh
-          echo "MASTER_OR_DEV=$(get_deploy_branch ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
+          echo "BRANCH=$(get_deploy_branch ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
           # Remove /ref/tags/ from the beginning of the tag name
           echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
@@ -629,10 +629,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set the $MASTER_OR_DEV and $CI_TAG Environment Variables
+      - name: Set the $BRANCH and $CI_TAG Environment Variables
         run: |
           . scripts/common.sh
-          echo "MASTER_OR_DEV=$(get_deploy_branch ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
+          echo "BRANCH=$(get_deploy_branch ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
           # Remove /ref/tags/ from the beginning of the tag name
           echo "CI_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 

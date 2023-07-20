@@ -20,7 +20,7 @@ module "batch" {
     "workers-configuration/workers-instance-user-data.tpl.sh",
     {
       database_host     = aws_instance.pg_bouncer.private_ip
-      database_name     = aws_db_instance.postgres_db.name
+      database_name     = aws_db_instance.postgres_db.db_name
       database_password = var.database_password
       database_port     = var.database_port
       database_user     = var.database_user

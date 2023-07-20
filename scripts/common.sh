@@ -133,12 +133,6 @@ update_docker_image() {
     CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
     CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
 
-    if test "$GITHUB_ACTION"; then
-        CACHE_TO_LATEST="type=gha"
-        CACHE_TO_VERSION="type=gha"
-        DOCKER_ACTION="--push"
-    fi
-
     set_up_docker_builder
 
     docker buildx build \
@@ -155,6 +149,7 @@ update_docker_image() {
         "$DOCKER_ACTION" \
         .
 }
+
 # Default Docker registry.
 if [ -z "$DOCKERHUB_REPO" ]; then
     export DOCKERHUB_REPO="ccdlstaging"
