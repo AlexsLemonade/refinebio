@@ -255,7 +255,7 @@ jobs:
       IMAGES: migrations api_base api_local downloaders foreman
     needs:
       - test_base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     steps:
       - uses: actions/checkout@v3
 
