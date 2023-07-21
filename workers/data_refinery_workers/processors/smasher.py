@@ -431,7 +431,7 @@ def _notify_send_email(job_context):
     """Send email notification to the user if the dataset succeded or failed."""
     dataset_url = "https://www.refine.bio/dataset/" + str(job_context["dataset"].id)
 
-    SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
+    SENDER = "refine.bio Datasets <noreply@refine.bio>"
     RECIPIENT = job_context["dataset"].email_address
     SLACK_CCDL_EMAIL = "z7m4g8w4o6f5e0e7@alexslemonade.slack.com"
     CHARSET = "UTF-8"
