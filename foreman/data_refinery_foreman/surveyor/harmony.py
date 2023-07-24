@@ -784,8 +784,9 @@ class Harmonizer:
                         harmonized_values.add(harmonized_value)
 
         # Age can only be one value in the database.
-        if sample_attribute == "age" and len(harmonized_values) > 0:
-            harmonized_sample[sample_attribute] = harmonized_values.pop()
+        if sample_attribute == "age":
+            if len(harmonized_values) > 0:
+                harmonized_sample[sample_attribute] = harmonized_values.pop()
         else:
             harmonized_sample[sample_attribute] = ";".join(
                 sorted([str(v) for v in harmonized_values])

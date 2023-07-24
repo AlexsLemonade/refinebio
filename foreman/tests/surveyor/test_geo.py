@@ -84,6 +84,20 @@ class SurveyTestCase(TransactionTestCase):
 
         self.assertEqual(741, Sample.objects.all().count())
 
+    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_GSE94793.yaml")
+    @patch("data_refinery_foreman.surveyor.external_source.send_job")
+    def test_geo_survey_GSE94793(self, mock_send_task):
+        """This experiment revealed an issue with age being saved as a string.
+
+        Seemed like a good test to make permanent.
+        """
+        self.prep_test("GSE94793")
+
+        geo_surveyor = GeoSurveyor(self.survey_job)
+        geo_surveyor.survey()
+
+        self.assertEqual(24, Sample.objects.all().count())
+
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.geo.geo_survey_not_agilent.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
     def test_geo_survey_not_agilent(self, mock_send_task):
