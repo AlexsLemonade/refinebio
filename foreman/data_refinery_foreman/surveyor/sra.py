@@ -281,7 +281,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment_or_sample_accession
         )
 
-        experiment = self._generate_experment(experiment_metadata)
+        experiment = self._generate_experiment(experiment_metadata)
         samples = [
             self._generate_sample(experiment, sample_metadata)
             for sample_metadata in samples_metadata
