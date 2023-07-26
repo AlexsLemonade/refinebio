@@ -299,7 +299,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         # study_accession is PRJDB etc
         experiment_accession = experiment_metadata.get("secondary_study_accession")
 
-        experiment, is_created = Experiment.get_or_create(accession_code=experiment_accession)
+        experiment, is_created = Experiment.objects.get_or_create(
+            accession_code=experiment_accession
+        )
 
         if is_created:
             SraSurveyor._apply_metadata_to_experiment(experiment, experiment_metadata)
