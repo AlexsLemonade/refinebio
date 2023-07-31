@@ -57,7 +57,10 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def get_ena_json_api(endpoint: str, accession: str, params: dict = {}):
 
-        params.update({"format": "json", "includeAccessions": accession})
+        params.update({"format": "json"})
+
+        if "accession" not in params:
+            params.update({"includeAccessions": accession})
 
         return f"{ENA_API}{endpoint}/?{urlencode(params, )}"
 
@@ -114,6 +117,8 @@ class SraSurveyor(ExternalSourceSurveyor):
             "filereport",
             run_accession,
             {
+                "accession": run_accession,
+                "result": "read_run",
                 "fields": "all",
             },
         )
