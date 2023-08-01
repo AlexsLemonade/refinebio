@@ -217,7 +217,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         experiment.source_first_published = parse_date(metadata["first_public"])
         experiment.source_last_modified = parse_date(metadata["last_updated"])
         experiment.alternate_accession_code = utils.get_nonempty(metadata, "geo_accession", None)
-        experiment.protocol_description = utils.get_nonempty(metadata, "protocol", [])
+        experiment.protocol_description = utils.get_nonempty(
+            metadata, "protocol", "Protocol was never provided."
+        )
 
         experiment.pubmed_id = metadata.get("pubmed_id", "")
         experiment.has_publication = "pubmed_id" in metadata
@@ -375,13 +377,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                 survey_job=self.survey_job.id,
             )
 
-        # i think we should be collecting the sample protocols
-        # on the experiment here instead
-        protocol_info, protocol_updated = self.update_sample_protocol_info(
-            existing_protocols=sample.protocol_info,
-            experiment_protocol=experiment.protocol_description,
-            experiment_url=experiment.source_url,
-        )
+        protocol_info, protocol_updated = self.update_sample_protocol_info(sample, experiment)
 
         if sample_created or protocol_updated:
             sample.protocol_info = protocol_info
@@ -397,7 +393,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         return sample
 
     @staticmethod
-    def update_sample_protocol_info(existing_protocols, experiment_protocol, experiment_url):
+    def update_sample_protocol_info(sample: Sample, experiment: Experiment):
         """Compares experiment_protocol with a sample's
         existing_protocols and update the latter if the former is new.
 
@@ -407,21 +403,23 @@ class SraSurveyor(ExternalSourceSurveyor):
         """
         # ensure we are working with a list
         # since the default value for a JSON field is an empty dict
-        existing_protocols_list = []
-        if existing_protocols is not {}:
-            existing_protocols_list = existing_protocols
+        sample_protocols = sample.protocol_info if isinstance(sample.protocol_info, list) else []
 
+        # Exit if no protocol provided.
+        experiment_protocol = experiment.protocol_description
         if experiment_protocol == "Protocol was never provided.":
-            return (existing_protocols_list, False)
+            return sample_protocols, False
 
-        existing_descriptions = [protocol["Description"] for protocol in existing_protocols_list]
+        # Exit if protocol is already accounted for.
+        existing_descriptions = [protocol["Description"] for protocol in sample_protocols]
         if experiment_protocol in existing_descriptions:
-            return (existing_protocols_list, False)
+            return sample_protocols, False
 
-        existing_protocols_list.append(
-            {"Description": experiment_protocol, "Reference": experiment_url}
+        sample_protocols.append(
+            {"Description": experiment.protocol_description, "Reference": experiment.source_url}
         )
-        return (existing_protocols_list, True)
+
+        return sample_protocols, True
 
     def discover_experiment_and_samples(self):
         """Returns an experiment and a list of samples for an SRA accession"""
