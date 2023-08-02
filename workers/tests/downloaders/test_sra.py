@@ -26,17 +26,17 @@ class DownloadSraTestCase(TestCase):
     @tag("downloaders_sra")
     def test_download_file(self):
         dlj = DownloaderJob()
-        dlj.accession_code = "ERR036"
+        dlj.accession_code = "SRR24086949"
         dlj.save()
 
         og = OriginalFile()
-        og.source_filename = "ERR036000.fastq.gz"
-        og.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
+        og.source_filename = "SRR24086949.fastq.gz"
+        og.source_url = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR240/049/SRR24086949/SRR24086949_1.fastq.gz"
         og.is_archive = True
         og.save()
 
         sample = Sample()
-        sample.accession_code = "ERR036000"
+        sample.accession_code = "SRR24086949"
         sample.save()
 
         assoc = OriginalFileSampleAssociation()
@@ -52,7 +52,8 @@ class DownloadSraTestCase(TestCase):
         result, downloaded_files = sra.download_sra(dlj.pk)
 
         self.assertTrue(result)
-        self.assertEqual(downloaded_files[0].sha1, "1dfe5460a4101fe87feeffec0cb2e053f6695961")
+        self.assertEqual(downloaded_files[0].sha1, "ef52900be820e4001988e64b7d664f7af595e581")
+        print(downloaded_files[0].sha1)
         self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
 
     @tag("downloaders")
