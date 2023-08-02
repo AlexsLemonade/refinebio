@@ -100,11 +100,13 @@ def _download_file_aspera(
             # and we are not using any kind of rate limiting.
             command_str = "ascp -QT -l 300m -P 33001 -i keys/asperaweb_id_dsa.openssh {src} {dest}"
             formatted_command = command_str.format(src=download_url, dest=target_file_path)
+            logger.info("Starting ENA ascp", time=str(timezone.now()))
             completed_command = subprocess.run(
                 formatted_command.split(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
+            logger.info("Ending ENA ascp", time=str(timezone.now()))
         else:
             # NCBI requires encryption and recommends -k1 resume, as
             # well as the 450m limit and -Q (play fair).
