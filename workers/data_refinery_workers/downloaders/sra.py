@@ -147,7 +147,12 @@ def _download_file_aspera(
             else:
                 time.sleep(5)
                 return _download_file_aspera(
-                    download_url, downloader_job, target_file_path, attempt + 1, source
+                    download_url,
+                    downloader_job,
+                    target_file_path,
+                    attempt + 1,
+                    original_file,
+                    source,
                 )
     except Exception:
         logger.exception(
@@ -176,7 +181,7 @@ def _download_file_aspera(
         )
         time.sleep(10)
         return _download_file_aspera(
-            download_url, downloader_job, target_file_path, attempt + 1, source
+            download_url, downloader_job, target_file_path, attempt + 1, original_file, source
         )
     return True
 
