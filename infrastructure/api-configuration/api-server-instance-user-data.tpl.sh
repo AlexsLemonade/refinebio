@@ -151,7 +151,7 @@ docker run \
     --name=dr_api \
     --tty \
     --volume "$STATIC_VOLUMES":/tmp/www/static \
-    -publish 8081:8081 \
+    --publish 8081:8081 \
     "${dockerhub_repo}/${api_docker_image}" \
     /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
