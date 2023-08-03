@@ -54,6 +54,11 @@ RNA_SEQ_ACCESSION_CODES = [
     "SRP094706",  # 4 samples of SACCHAROMYCES_CEREVISIAE RNA-Seq data
 ]
 
+# TODO: remove after array express samples are enabled.
+ARRAY_EXPRESS_SAMPLES_COUNT = 39
+
+EXPECTED_TOTAL_SAMPLES_COUNT = 191 - ARRAY_EXPRESS_SAMPLES_COUNT
+
 EXPERIMENT_ACCESSION_CODES = MICROARRAY_ACCESSION_CODES + RNA_SEQ_ACCESSION_CODES
 
 TEST_DATA_BUCKET = "data-refinery-test-assets"
@@ -285,7 +290,9 @@ class FullFlowEndToEndTestCase(TestCase):
             experiment__accession_code__in=EXPERIMENT_ACCESSION_CODES
         ).values_list("id")
 
-        self.assertEqual(Sample.objects.filter(id__in=sample_id_list).count(), 191)
+        self.assertEqual(
+            Sample.objects.filter(id__in=sample_id_list).count(), EXPECTED_TOTAL_SAMPLES_COUNT
+        )
 
         samples = []
         for accession_code in EXPERIMENT_ACCESSION_CODES:
@@ -329,7 +336,11 @@ class FullFlowEndToEndTestCase(TestCase):
             self.assertTrue(wait_for_job(processor_job))
 
         # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
-        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 165)
+        EXPECTED_SAMPLE_FAILURES = 26
+        self.assertEqual(
+            Sample.processed_objects.filter(id__in=sample_id_list).count(),
+            EXPECTED_TOTAL_SAMPLES_COUNT - EXPECTED_SAMPLE_FAILURES,
+        )
 
         print("Finally, need to run tximport to finish an experiment with one bad sample.")
         tximport_jobs = run_tximport_for_all_eligible_experiments(dispatch_jobs=False)
@@ -338,7 +349,10 @@ class FullFlowEndToEndTestCase(TestCase):
         self.assertTrue(wait_for_job(tximport_jobs[0]))
 
         # This is the full total of jobs minus one.
-        self.assertEqual(Sample.processed_objects.filter(id__in=sample_id_list).count(), 190)
+        self.assertEqual(
+            Sample.processed_objects.filter(id__in=sample_id_list).count(),
+            EXPECTED_TOTAL_SAMPLES_COUNT - 1,
+        )
 
     def check_transcriptome_index(self):
         # Make sure that a processed file using our new transcriptome index is
