@@ -44,6 +44,7 @@ docker run \
     --env REFINEBIO_BASE_URL="http://$API_HOST/v1/" \
     --env RUNNING_IN_CLOUD=False \
     --env-file ../infrastructure/prod_env \
+    --platform linux/amd64 \
     --volume "$HOME/.aws":/home/user/.aws \
     --volume "$volume_directory":/home/user/data_store \
     --tty \
