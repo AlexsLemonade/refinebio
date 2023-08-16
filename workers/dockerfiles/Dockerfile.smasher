@@ -8,8 +8,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /home/user
 
 COPY workers/R/dependencies/smasher/renv.lock .
-COPY common/R/renv_load.R .
-RUN Rscript renv_load.R
+COPY common/R/renv_load.R renv_load_smasher.R
+RUN Rscript renv_load_smasher.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
