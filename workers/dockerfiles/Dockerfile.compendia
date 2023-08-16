@@ -68,8 +68,8 @@ WORKDIR /home/user
 ENV R_LIBS=/usr/local/lib/R/site-library
 
 COPY workers/R/dependencies/compendia/renv.lock .
-COPY common/R/renv_load.R .
-RUN Rscript renv_load.R
+COPY common/R/renv_load.R renv_load_compendia.R
+RUN Rscript renv_load_compendia.R
 
 COPY workers/data_refinery_workers/requirements/compendia.txt requirements.txt
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
