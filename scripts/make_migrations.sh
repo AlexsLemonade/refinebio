@@ -26,7 +26,7 @@ docker run \
     --interactive \
     --platform linux/amd64 \
     --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
-    "$DOCKERHUB_REPO/dr_migrations" \
+    "$DOCKERHUB_REPO/dr_migrations:$SYSTEM_VERSION" \
     python3 manage.py makemigrations data_refinery_common
 
 docker run \
@@ -34,7 +34,7 @@ docker run \
     --env-file ../common/environments/local \
     --platform linux/amd64 \
     --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
-    "$DOCKERHUB_REPO/dr_migrations" \
+    "$DOCKERHUB_REPO/dr_migrations:$SYSTEM_VERSION" \
     python3 manage.py migrate
 
 docker run \
@@ -42,5 +42,5 @@ docker run \
     --env-file ../common/environments/local \
     --platform linux/amd64 \
     --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
-    "$DOCKERHUB_REPO/dr_migrations" \
+    "$DOCKERHUB_REPO/dr_migrations:$SYSTEM_VERSION" \
     python3 manage.py createcachetable

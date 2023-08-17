@@ -76,6 +76,6 @@ chown ubuntu:ubuntu /var/log/deploy.log
 
 # Checkout the repo onto the box.
 cd /home/ubuntu
-umask 0022
+echo "umask 0022" > /home/ubuntu/.profile
 git clone https://github.com/AlexsLemonade/refinebio.git
 chown -R ubuntu:ubuntu refinebio
