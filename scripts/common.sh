@@ -112,8 +112,9 @@ EOF
         fi
     fi
 
-    echo "Using Docker builder $DOCKER_BUILDER."
     docker buildx use "$DOCKER_BUILDER"
+    echo "Using Docker builder $DOCKER_BUILDER:"
+    docker buildx inspect
 }
 
 update_docker_image() {
