@@ -267,7 +267,7 @@ done
 echo "Job registrations have been fired off."
 
 # Get an image to run the migrations with.
-docker pull "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
+docker pull --platform linux/amd64 "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
 
 # Test that the pg_bouncer instance is up. 15 minutes should be more than enough.
 start_time=$(date +%s)
@@ -288,6 +288,7 @@ docker run \
     --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
     --env RUNNING_IN_CLOUD=False \
     --env-file prod_env \
+    --platform linux/amd64 \
     "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" \
     python3 manage.py migrate auth
 
@@ -296,6 +297,7 @@ docker run \
     --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
     --env RUNNING_IN_CLOUD=False \
     --env-file prod_env \
+    --platform linux/amd64 \
     "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" \
     python3 manage.py migrate
 
@@ -304,6 +306,7 @@ docker run \
     --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
     --env RUNNING_IN_CLOUD=False \
     --env-file prod_env \
+    --platform linux/amd64 \
     "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" \
     python3 manage.py createcachetable
 

@@ -144,11 +144,11 @@ docker run \
     --env ELASTICSEARCH_PORT="${elasticsearch_port}" \
     --env-file environment \
     --interactive \
-    --log-driver=awslogs \
+    --log-driver awslogs \
     --log-opt awslogs-group="${log_group}" \
     --log-opt awslogs-region="${region}" \
     --log-opt awslogs-stream="${log_stream}" \
-    --name=dr_api \
+    --name dr_api \
     --tty \
     --volume "$STATIC_VOLUMES":/tmp/www/static \
     --publish 8081:8081 \
