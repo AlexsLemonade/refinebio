@@ -120,8 +120,11 @@ def _prepare_files(job_context: Dict) -> Dict:
         return job_context
 
     # Detect that this is an SRA file from the source URL
-    if ("ncbi.nlm.nih.gov" in job_context["original_files"][0].source_url) or (
-        job_context["input_file_path"][-4:].upper() == ".SRA"
+    source_url = job_context["original_files"][0].source_url
+    if (
+        ("ncbi.nlm.nih.gov" in source_url)
+        or ("sra-pub-run-odp.s3.amazonaws.com" in source_url)
+        or (job_context["input_file_path"][-4:].upper() == ".SRA")
     ):
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
@@ -461,7 +464,6 @@ def _find_or_download_index(job_context: Dict) -> Dict:
 def _run_tximport_for_experiment(
     job_context: Dict, experiment: Experiment, quant_files: List[ComputedFile]
 ) -> Dict:
-
     # Download all the quant.sf fles for this experiment. Write all
     # their paths to a file so we can pass a path to that to
     # tximport.R rather than having to pass in one argument per
@@ -688,10 +690,8 @@ def _run_salmon(job_context: Dict) -> Dict:
     # SRA files also get processed differently as we don't want to use fasterq-dump to extract
     # them to disk.
     if job_context.get("sra_input_file_path", None):
-
         # Single reads
         if job_context["sra_num_reads"] == 1:
-
             fifo = "/tmp/barney"
             os.mkfifo(fifo)
 
@@ -715,7 +715,6 @@ def _run_salmon(job_context: Dict) -> Dict:
             )
         # Paired are trickier
         else:
-
             # Okay, for some reason I can't explain, this only works
             # in the temp directory, otherwise the `tee` part will
             # only output to one or the other of the streams
