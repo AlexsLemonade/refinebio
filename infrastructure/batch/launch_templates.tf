@@ -16,7 +16,7 @@ resource "aws_launch_template" "data_refinery_worker" {
     device_name = "/dev/sdf"
     ebs {
       volume_type = "st1"
-      volume_size = 300
+      volume_size = 500
       encrypted = true
       delete_on_termination = true
     }

@@ -213,6 +213,7 @@ if [ "$project" = "workers" ]; then
                 echo "Made $FILEPATH"
             done
             echo "Made $output_dir/$OUTPUT_FILE"
+
         # From https://unix.stackexchange.com/a/111517
         elif (echo "$NO_RAM_JOB_FILES" | grep -Fqw "$OUTPUT_FILE"); then
             perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
@@ -220,6 +221,7 @@ if [ "$project" = "workers" ]; then
                 >"$output_dir/$OUTPUT_FILE" \
                 2>/dev/null
             echo "Made $output_dir/$OUTPUT_FILE"
+
         else
             rams="2048 4096 8192 12288 16384 32768 65536"
             for r in $rams; do
@@ -234,8 +236,8 @@ if [ "$project" = "workers" ]; then
             done
         fi
     done
-elif [ "$project" = "surveyor" ]; then
 
+elif [ "$project" = "surveyor" ]; then
     # Iterate over all the template files in the directory.
     for template in batch-job-templates/*.tpl.json; do
         template="$(basename "$template")"
@@ -271,6 +273,7 @@ elif [ "$project" = "foreman" ]; then
         <environment.tpl \
         >"$output_dir/environment" \
         2>/dev/null
+
 elif [ "$project" = "api" ]; then
     perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
         <environment.tpl \
