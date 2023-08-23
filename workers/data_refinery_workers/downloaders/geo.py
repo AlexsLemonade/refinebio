@@ -93,7 +93,6 @@ def _download_file_aspera(
 
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
-
             stderr = completed_command.stderr.decode().strip()
             logger.debug(
                 "Shell call of `%s` to ascp failed with error message: %s",
@@ -169,19 +168,17 @@ class ArchivedFile:
 
     def experiment_accession_code(self):
         """Tries to get an experiment accession code from the file name.
-        GEO experiment accession codes start with GSE and have between 5 and 9 characters"""
+        GEO experiment accession codes start with GSE and have between 5 and 9 characters
+        """
         match = re.match(r"(GSE\d{2,6})", self.filename)
-        if match:
-            return match.group(0)
-        return None
+        return match.group(0) if match else None
 
     def sample_accession_code(self):
         """Tries to get a sample accession code from the file name.
-        GEO sample accession codes start with GSM and have between 6 and 10 characters"""
+        GEO sample accession codes start with GSM and have between 6 and 10 characters
+        """
         match = re.match(r"(GSM\d{4,7})", self.filename)
-        if match:
-            return match.group(0)
-        return None
+        return match.group(0) if match else None
 
     def get_sample(self):
         """Tries to find the sample associated with this file, and returns None if unable."""

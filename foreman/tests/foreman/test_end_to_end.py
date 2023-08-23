@@ -59,9 +59,6 @@ ARRAY_EXPRESS_SAMPLES_COUNT = 39
 
 EXPECTED_TOTAL_SAMPLES_COUNT = 191 - ARRAY_EXPRESS_SAMPLES_COUNT
 
-print("Array Express samples count:", ARRAY_EXPRESS_SAMPLES_COUNT)
-print("Expected total samples count:", EXPECTED_TOTAL_SAMPLES_COUNT)
-
 EXPERIMENT_ACCESSION_CODES = MICROARRAY_ACCESSION_CODES + RNA_SEQ_ACCESSION_CODES
 
 TEST_DATA_BUCKET = "data-refinery-test-assets"
@@ -361,7 +358,7 @@ class FullFlowEndToEndTestCase(TestCase):
         # Make sure that a processed file using our new transcriptome index is
         # similar enough to a reference file
         print(
-            "Now we are going to verify that the outputs of salmon look okay with"
+            "Now we are going to verify that the outputs of salmon look okay with "
             "the transcriptome index we generated."
         )
 

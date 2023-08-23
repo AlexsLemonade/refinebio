@@ -60,7 +60,7 @@ docker run \
     --env AWS_ACCESS_KEY_ID \
     --env AWS_SECRET_ACCESS_KEY \
     --env-file workers/environments/local \
-    --ineractive \
+    --interactive \
     --link drdb:postgres \
     --tty \
     --volume "$volume_directory":/home/user/data_store \

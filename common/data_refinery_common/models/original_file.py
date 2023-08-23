@@ -31,7 +31,7 @@ class OriginalFile(models.Model):
         ]
 
     def __str__(self):
-        return "OriginalFile: " + self.get_display_name()
+        return f"OriginalFile: {self.get_display_name()}"
 
     # Managers
     objects = models.Manager()
@@ -242,7 +242,7 @@ class OriginalFile(models.Model):
         without getting processed.
         """
         # If the file is downloaded and the file actually exists on disk,
-        # then it doens't need to be downloaded.
+        # then it doesn't need to be downloaded.
         if self.absolute_file_path and os.path.exists(self.absolute_file_path):
             # ok a file exists, if this file has an SHA1 ensure that it's the same
             existing_file_sha1 = calculate_sha1(self.absolute_file_path)
