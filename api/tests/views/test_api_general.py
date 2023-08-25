@@ -219,7 +219,7 @@ class APITestCases(APITestCase):
     def test_all_endpoints(self):
         response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response["X-Source-Revision"], SYSTEM_VERSION)
+        self.assertEqual(response["X-Source-Revision"], SYSTEM_VERSION)
         self.assertEqual(response["X-Source-Revision"], get_env_variable("SYSTEM_VERSION"))
         cache.clear()
 
