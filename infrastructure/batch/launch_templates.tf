@@ -6,7 +6,7 @@ resource "aws_launch_template" "data_refinery_worker" {
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
-      volume_size = 64
+      volume_size = 128
       encrypted = true
       delete_on_termination = true
     }
@@ -43,7 +43,7 @@ resource "aws_launch_template" "data_refinery_compendia" {
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
-      volume_size = 64
+      volume_size = 128
       encrypted = true
       delete_on_termination = true
     }
