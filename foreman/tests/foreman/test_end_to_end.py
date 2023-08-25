@@ -24,6 +24,7 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
+from data_refinery_common.utils import get_env_variable
 from data_refinery_foreman.foreman.management.commands.create_compendia import create_compendia
 from data_refinery_foreman.foreman.management.commands.create_quantpendia import create_quantpendia
 from data_refinery_foreman.foreman.management.commands.run_tximport import (
@@ -63,6 +64,8 @@ EXPERIMENT_ACCESSION_CODES = MICROARRAY_ACCESSION_CODES + RNA_SEQ_ACCESSION_CODE
 
 TEST_DATA_BUCKET = "data-refinery-test-assets"
 
+SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
+
 
 def wait_for_job(job) -> bool:
     """Waits for a job and all of its retries."""
@@ -70,7 +73,6 @@ def wait_for_job(job) -> bool:
     is_done = False
 
     while not is_done:
-
         if job.end_time is None and job.success is None:
             print(f"Polling {type(job).__name__}s. Currently waiting for job id: {job.id}")
             sleep(20)
@@ -238,11 +240,8 @@ class FullFlowEndToEndTestCase(TestCase):
             purge_experiment(accession_code)
 
         self.process_experiments()
-
         self.check_transcriptome_index()
-
         self.create_qn_reference()
-
         self.create_compendia()
 
     def process_experiments(self):
@@ -315,6 +314,7 @@ class FullFlowEndToEndTestCase(TestCase):
 
         for downloader_job in downloader_jobs:
             self.assertTrue(wait_for_job(downloader_job))
+            self.assertEqual(downloader_job.worker_version, SYSTEM_VERSION)
 
         processor_jobs = []
         for sample in samples:
@@ -334,6 +334,7 @@ class FullFlowEndToEndTestCase(TestCase):
 
         for processor_job in processor_jobs:
             self.assertTrue(wait_for_job(processor_job))
+            self.assertEqual(downloader_job.worker_version, SYSTEM_VERSION)
 
         # Because SRR1583739 fails, the 26 samples from SRP047410 won't be processed
         EXPECTED_SAMPLE_FAILURES = 26
@@ -425,6 +426,7 @@ class FullFlowEndToEndTestCase(TestCase):
         self.assertIsNotNone(qn_job)
 
         self.assertTrue(wait_for_job(qn_job))
+        self.assertEqual(qn_job.worker_version, SYSTEM_VERSION)
 
     def create_compendia(self):
         """Create both a compendium and a quantpendium"""
@@ -433,3 +435,4 @@ class FullFlowEndToEndTestCase(TestCase):
 
         for job in compendia_jobs + quantpendia_jobs:
             self.assertTrue(wait_for_job(job))
+            self.assertEqual(job.worker_version, SYSTEM_VERSION)

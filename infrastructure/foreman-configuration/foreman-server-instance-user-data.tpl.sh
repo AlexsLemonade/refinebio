@@ -34,11 +34,11 @@ docker run \\
     --env ELASTICSEARCH_PORT="${elasticsearch_port}" \\
     --env-file /home/ubuntu/environment \\
     --interactive \\
-    --log-driver=awslogs \\
+    --log-driver awslogs \\
     --log-opt awslogs-group="${log_group}" \\
     --log-opt awslogs-region="${region}" \\
     --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \\
-    --name=dr_foreman \\
+    --name dr_foreman \\
     --tty \\
     --volume /tmp:/tmp \\
     "${dockerhub_repo}/${foreman_docker_image}" \\
@@ -140,11 +140,11 @@ docker run \
     --env DATABASE_USER="${database_user}" \
     --env-file /home/ubuntu/environment \
     --interactive \
-    --log-driver=awslogs \
+    --log-driver awslogs \
     --log-opt awslogs-group="${log_group}" \
     --log-opt awslogs-region="${region}" \
     --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \
-    --name=job_filler \
+    --name job_filler \
     --tty \
     --volume /tmp:/tmp \
     "${dockerhub_repo}/${foreman_docker_image}" \
