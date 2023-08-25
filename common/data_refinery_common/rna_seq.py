@@ -28,13 +28,16 @@ EARLY_TXIMPORT_MIN_SIZE = 25
 EARLY_TXIMPORT_MIN_PERCENT = 0.80
 
 
-def get_latest_organism_index(organism):
+def get_latest_organism_indices(organism):
     # Salmon version gets saved as what salmon outputs, which includes this prefix.
     current_salmon_version = "salmon " + get_env_variable("SALMON_VERSION", "0.13.1")
+    indices = OrganismIndex.objects.filter(
+        salmon_version=current_salmon_version, organism=organism
+    ).order_by("-created_at")
+
     return (
-        OrganismIndex.objects.filter(salmon_version=current_salmon_version, organism=organism)
-        .order_by("-created_at")
-        .first()
+        indices.filter(index_type="TRANSCRIPTOME_LONG").first(),
+        indices.filter(index_type="TRANSCRIPTOME_SHORT").first(),
     )
 
 
@@ -45,7 +48,7 @@ def get_tximport_inputs_if_eligible(experiment: Experiment, is_tximport_job: boo
     """
     organism_indices = {}
     for organism in experiment.organisms.all():
-        organism_indices[organism.id] = get_latest_organism_index(organism)
+        organism_indices[organism.id] = get_latest_organism_indices(organism)
 
     good_quant_files = []
     num_unprocessable_samples = 0
@@ -58,7 +61,7 @@ def get_tximport_inputs_if_eligible(experiment: Experiment, is_tximport_job: boo
             and sample.most_recent_quant_file.s3_key is not None
         ):
             sample_organism_index = sample.most_recent_quant_file.result.organism_index
-            if sample_organism_index == organism_indices[sample.organism.id]:
+            if sample_organism_index in organism_indices[sample.organism.id]:
                 good_quant_files.append(sample.most_recent_quant_file)
 
     num_quantified = len(good_quant_files)
