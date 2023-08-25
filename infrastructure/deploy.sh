@@ -256,7 +256,7 @@ python3 delete_batch_job_queue.py
 python3 deregister_batch_job_definitions.py
 
 # Re-register Batch jobs (skip those that end in .tpl)
-echo "Registering new job specifications.."
+echo "Registering new job specifications..."
 export AWS_DEFAULT_REGION=$AWS_REGION
 # SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
 # We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.

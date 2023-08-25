@@ -2,19 +2,22 @@ import os
 from time import sleep
 
 import boto3
+from botocore.exceptions import ClientError
 
-AWS_REGION = os.environ["AWS_REGION"]
 AWS_BATCH_QUEUE_ALL_NAMES = os.environ["REFINEBIO_JOB_QUEUE_ALL_NAMES"].split(",")
 
-batch = boto3.client("batch", region_name=AWS_REGION)
+batch = boto3.client("batch", region_name=os.environ["AWS_REGION"])
 
 # First disable each job queue.
 for batch_queue_name in AWS_BATCH_QUEUE_ALL_NAMES:
     try:
         batch.update_job_queue(jobQueue=batch_queue_name, state="DISABLED")
-    except Exception as e:
+    except ClientError as e:
         # If the job queue doesn't exist, that's cool, we were trying to delete it anyway.
-        pass
+        if str(e).endswith(" does not exist."):
+            pass
+        else:
+            raise e
 
 # Then wait for each one to be disabled so it can be deleted.
 for batch_queue_name in AWS_BATCH_QUEUE_ALL_NAMES:

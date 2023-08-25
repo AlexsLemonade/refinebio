@@ -71,7 +71,7 @@ fi
 
 terraform destroy -var-file="environments/$env.tfvars"
 
-# These aren't managed by terraform so we have to deregistr them manually..
+# These aren't managed by terraform so we have to deregistr them manually.
 export USER="$TF_VAR_user"
 export STAGE="$TF_VAR_stage"
 export AWS_REGION="$TF_VAR_region"
