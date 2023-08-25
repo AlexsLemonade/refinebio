@@ -109,6 +109,7 @@ fi
 # variable, which we then read in as json using the command line tool
 # `jq`, so that we can use them via bash.
 format_environment_variables() {
+    echo "SYSTEM_VERSION=$SYSTEM_VERSION" >>prod_env
     json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
     for row in $json_env_vars; do
         name=$(echo "$row" | jq -r ".name")
@@ -203,7 +204,7 @@ if terraform output | grep -q 'No outputs found'; then
     terraform apply -var-file="environments/$env.tfvars" -auto-approve
 fi
 
-# We have to do this once before the initial deploy..
+# We have to do this once before the initial deploy...
 rm -f prod_env
 format_environment_variables
 
@@ -212,7 +213,7 @@ format_environment_variables
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.
-    echo "Deploying with ingress.."
+    echo "Deploying with ingress..."
 
     # Output the plan for debugging deployments later.
     # Until terraform plan supports -var-file the plan is wrong.
@@ -226,7 +227,7 @@ fi
 # `docker run` commands when running migrations.
 rm -f prod_env
 
-# (cont'd) ..and once again after the update when this is re-run.
+# (cont'd) ...and once again after the update when this is re-run.
 format_environment_variables
 
 # Make sure to clear out any old batch job templates since we
@@ -273,7 +274,7 @@ docker pull --platform linux/amd64 "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
 start_time=$(date +%s)
 diff=0
 until pg_isready -d "$DATABASE_NAME" -h "$DATABASE_PUBLIC_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" &>/dev/null || [ "$diff" -gt "900" ]; do
-    echo "Waiting for the pg_bouncer instance to come online ..."
+    echo "Waiting for the pg_bouncer instance to come online..."
     sleep 10
     ((diff = $(date +%s) - start_time))
 done
@@ -327,7 +328,7 @@ terraform taint aws_instance.foreman_server_1
 # tests can run and have access to the database since they don't use
 # test databases.
 if [ "$env" = "prod" ]; then
-    echo "Removing ingress.."
+    echo "Removing ingress..."
     rm ci_ingress.tf
 fi
 

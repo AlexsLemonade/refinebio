@@ -1,4 +1,6 @@
 import json
+import os
+from unittest import mock
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -31,6 +33,7 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import get_env_variable
 
 API_VERSION = "v1"
+SYSTEM_VERSION = "v2.0.0"
 
 
 class APITestCases(APITestCase):
@@ -212,9 +215,11 @@ class APITestCases(APITestCase):
         Sample.objects.all().delete()
         SampleAnnotation.objects.all().delete()
 
+    @mock.patch.dict(os.environ, {"SYSTEM_VERSION": SYSTEM_VERSION})
     def test_all_endpoints(self):
         response = self.client.get(reverse("experiments", kwargs={"version": API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["X-Source-Revision"], SYSTEM_VERSION)
         self.assertEqual(response["X-Source-Revision"], get_env_variable("SYSTEM_VERSION"))
         cache.clear()
 
