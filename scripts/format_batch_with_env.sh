@@ -170,7 +170,7 @@ if [ "$project" = "workers" ]; then
         FILETYPE=".json"
         OUTPUT_FILE="$OUTPUT_BASE$FILETYPE"
 
-        NO_RAM_JOB_FILES="smasher.json tximport.json qn_dispatcher.json janitor.json"
+        NO_RAM_JOB_FILES="create_qn_target.json smasher.json tximport.json qn_dispatcher.json janitor.json"
 
         if [ "$OUTPUT_FILE" = "downloader.json" ]; then
             rams="1024 4096 16384"
