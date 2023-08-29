@@ -292,7 +292,7 @@ jobs:
       IMAGES: migrations foreman
     needs:
       - test_api
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     steps:
       - uses: actions/checkout@v3
 
