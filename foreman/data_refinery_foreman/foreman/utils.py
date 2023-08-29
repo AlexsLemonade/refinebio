@@ -91,6 +91,9 @@ def check_lost_jobs(object_list):
         # have yet gotten to that point.
         ignore = ["SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING"]
         ignore_job_batch_ids = {job["jobId"] for job in batch_jobs if job["status"] in ignore}
-        lost_jobs += [job for job in page if not job.batch_job_id or job.batch_job_id not in ignore_job_batch_ids]
+        lost_jobs += [
+            job for job in page 
+            if not job.batch_job_id or job.batch_job_id not in ignore_job_batch_ids
+        ]
 
     return lost_jobs
