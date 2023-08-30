@@ -66,10 +66,11 @@ def check_hung_jobs(object_list):
             batch_jobs = batch.describe_jobs(jobs=job_ids)["jobs"]
 
         running_job_batch_ids = {job["jobId"] for job in batch_jobs if job["status"] == "RUNNING"}
-
-        for job in page:
-            if job.batch_job_id and job.batch_job_id not in running_job_batch_ids:
-                hung_jobs.append(job)
+        hung_jobs += [
+            job
+            for job in page
+            if job.batch_job_id and job.batch_job_id not in running_job_batch_ids
+        ]
 
     return hung_jobs
 
@@ -91,9 +92,10 @@ def check_lost_jobs(object_list):
         # have yet gotten to that point.
         ignore = ["SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING"]
         ignore_job_batch_ids = {job["jobId"] for job in batch_jobs if job["status"] in ignore}
-
-        for job in page:
-            if not job.batch_job_id or job.batch_job_id not in ignore_job_batch_ids:
-                lost_jobs.append(job)
+        lost_jobs += [
+            job
+            for job in page
+            if not job.batch_job_id or job.batch_job_id not in ignore_job_batch_ids
+        ]
 
     return lost_jobs
