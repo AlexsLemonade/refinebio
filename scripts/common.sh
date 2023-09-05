@@ -75,41 +75,13 @@ run_tests_with_coverage() {
 # Set the builder as currently used.
 set_up_docker_builder() {
     if [ -z "$DOCKER_BUILDER" ]; then
-        echo "Setting up refine.bio Docker builder."
-
-        if test "$GITHUB_ACTION"; then
-            echo "$INSTANCE_SSH_KEY" >infrastructure/data-refinery-key.pem
-            chmod 600 infrastructure/data-refinery-key.pem
-
-            # shellcheck disable=SC2046
-            eval $(ssh-agent)
-            ssh-add infrastructure/data-refinery-key.pem
-
-            if [ ! -d ~/.ssh ]; then
-                mkdir -m 700 ~/.ssh
-            fi
-            cat >~/.ssh/config <<EOF
-Host "${DEPLOY_IP_ADDRESS}"
-    StrictHostKeyChecking no
-    UserKnownHostsFile=/dev/null
-EOF
-            DOCKER_BUILDER="refinebio_remote_builder"
-            echo "Creating Docker builder $DOCKER_BUILDER."
-            docker buildx create \
-                --driver=docker-container \
-                --name="$DOCKER_BUILDER" \
-                --platform=linux/amd64 \
-                "ssh://ubuntu@${DEPLOY_IP_ADDRESS}" 2>/dev/null ||
-                true
-        else
-            DOCKER_BUILDER="refinebio_local_builder"
-            echo "Creating Docker builder $DOCKER_BUILDER."
-            docker buildx create \
-                --driver=docker-container \
-                --name="$DOCKER_BUILDER" \
-                --platform=linux/amd64 2>/dev/null ||
-                true
-        fi
+        DOCKER_BUILDER="refinebio_local_builder"
+        echo "Creating Docker builder $DOCKER_BUILDER."
+        docker buildx create \
+            --driver=docker-container \
+            --name="$DOCKER_BUILDER" \
+            --platform=linux/amd64 2>/dev/null ||
+            true
     fi
 
     docker buildx use "$DOCKER_BUILDER"
