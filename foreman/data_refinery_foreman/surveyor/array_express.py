@@ -1,6 +1,6 @@
-from typing import Dict, List
-
-from django.utils.dateparse import parse_date
+from datetime import datetime
+from itertools import chain
+from typing import Dict, List, Tuple
 
 from data_refinery_common.enums import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -27,7 +27,9 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
-EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
+EXPERIMENTS_URL = "https://www.ebi.ac.uk/biostudies/api/v1/studies/"
+IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
+SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/biostudies/files/{code}/{code}.sdrf.txt"
 SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 UNKNOWN = "UNKNOWN"
 
@@ -40,37 +42,82 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
 
-    @staticmethod
-    def _get_last_update_date(parsed_json: Dict) -> str:
-        if "lastupdatedate" in parsed_json:
-            return parsed_json["lastupdatedate"]
-        else:
-            return parsed_json["releasedate"]
+    def _parse_api_info_response(data: Dict) -> Dict:
+        return {
+            "file_count": data["files"],
+            "ftp_link": data["ftpLink"],
+            "last_updated_at": datetime.fromtimestamp(data["modified"] / 1000),
+            "released_at": datetime.fromtimestamp(data["released"] / 1000),
+        }
 
     @classmethod
-    def _apply_metadata_to_experiment(cls, experiment_object: Experiment, parsed_json: Dict):
-        # We aren't sure these fields will be populated, or how many there will be.
-        # Try to join them all together, or set a sensible default.
-        experiment_descripton = ""
-        if "description" in parsed_json and len(parsed_json["description"]) > 0:
-            for description_item in parsed_json["description"]:
-                if "text" in description_item:
-                    experiment_descripton = experiment_descripton + description_item["text"] + "\n"
+    def _parse_api_data_response(cls, data: Dict) -> Dict:
+        parsed_data = {}
 
-        if experiment_descripton == "":
-            experiment_descripton = "Description not available.\n"
+        # Filter for supported section attributes.
+        attribute_filter = lambda attr: attr["name"] in {
+            "Description",
+            "Organism",
+            "Title",
+        }
+        attributes = data["section"]["attributes"]
+        for attribute in filter(attribute_filter, attributes):
+            parsed_data[attribute["name"].lower()] = attribute["value"]
 
-        experiment_object.source_database = "ARRAY_EXPRESS"
-        experiment_object.title = parsed_json["name"]
-        # This will need to be updated if we ever use Array
-        # Express to get other kinds of data.
-        experiment_object.technology = "MICROARRAY"
-        experiment_object.description = experiment_descripton
+        # Protocols.
+        parsed_data["protocols"] = []
+        protocol_filter = lambda entry: isinstance(entry, dict) and entry["type"] == "Protocols"
+        value_defined_filter = lambda attr: "value" in attr
+        subsections = data["section"]["subsections"]
+        for subsection in filter(protocol_filter, chain.from_iterable(subsections)):
+            # Protocols.
+            protocol = {}
+            for attribute in filter(value_defined_filter, subsection["attributes"]):
+                protocol[attribute["name"].lower()] = attribute["value"]
+            parsed_data["protocols"].append(protocol)
 
-        experiment_object.source_first_published = parse_date(parsed_json["releasedate"])
-        experiment_object.source_last_modified = parse_date(cls._get_last_update_date(parsed_json))
+        # Array Designs.
+        parsed_data["array_designs"] = []
+        assay_filter = lambda entry: isinstance(entry, list) and entry["type"] == "Assays and Data"
+        is_design = lambda entry: entry["type"] == "Array Designs"
+        for subsection in filter(assay_filter, chain.from_iterable(subsections)):
+            for assays_data_subsection in filter(is_design, subsection):
+                links = chain.from_iterable(assays_data_subsection["links"])
+                parsed_data["array_designs"].extend((link["url"] for link in links))
 
-    def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
+        return parsed_data
+
+    @classmethod
+    def _get_experiment_data(cls, accession_code: str) -> Dict:
+        experiment_url = f"{EXPERIMENTS_URL}{accession_code}"
+        data = {"url": experiment_url}
+
+        # Get experiment main data.
+        response = utils.requests_retry_session().get(experiment_url, timeout=60).json()
+        data.update(cls._parse_api_data_response(response))
+
+        # Get experiment info.
+        response = (
+            utils.requests_retry_session()
+            .get(f"{EXPERIMENTS_URL}{accession_code}/info", timeout=60)
+            .json()
+        )
+        info = cls._parse_api_info_response(response)
+
+        data.update(info)
+        return data
+
+    @classmethod
+    def _apply_metadata_to_experiment(cls, experiment: Experiment, metadata: Dict):
+        experiment.title = metadata["title"]
+        experiment.description = metadata.get("description", "Description not available.")
+        experiment.source_database = "ARRAY_EXPRESS"
+        # This will need to be updated if we ever use Array Express to get other kinds of data.
+        experiment.technology = "MICROARRAY"
+        experiment.source_first_published = metadata["released_at"]
+        experiment.source_last_modified = metadata["last_updated_at"]
+
+    def create_experiment_from_api(self, experiment_accession_code: str) -> Tuple[Experiment, Dict]:
         """Given an experiment accession code, create an Experiment object.
 
         Also returns a dictionary of additional information about the
@@ -78,184 +125,154 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         Will raise an UnsupportedPlatformException if this experiment was
         conducted using a platform which we don't support.
-
-        See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
         """
-        request_url = EXPERIMENTS_URL + experiment_accession_code
-        experiment_request = utils.requests_retry_session().get(request_url, timeout=60)
 
         try:
-            parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+            experiment_data = self._get_experiment_data(accession_code=experiment_accession_code)
         except KeyError:
             logger.error(
-                "Remote experiment has no Experiment data!",
+                "Could not collect data from remote experiment source!",
                 experiment_accession_code=experiment_accession_code,
                 survey_job=self.survey_job.id,
             )
             raise
 
-        experiment = {}
-        experiment["name"] = parsed_json["name"]
-        experiment["experiment_accession_code"] = experiment_accession_code
-
+        array_designs = experiment_data["array_designs"]
         # This experiment has no platform at all, and is therefore useless.
-        if "arraydesign" not in parsed_json or len(parsed_json["arraydesign"]) == 0:
+        if not array_designs:
             logger.warn(
-                "Remote experiment has no arraydesign listed.",
+                "Remote experiment has no array design listed.",
                 experiment_accession_code=experiment_accession_code,
                 survey_job=self.survey_job.id,
             )
             raise UnsupportedPlatformException
-        # If there is more than one arraydesign listed in the experiment
+
+        platforms = {}
+        # If there is more than one array design listed in the experiment
         # then there is no other way to determine which array was used
         # for which sample other than looking at the header of the CEL
         # file. That obviously cannot happen until the CEL file has been
         # downloaded so we can just mark it as UNKNOWN and let the
         # downloader inspect the downloaded file to determine the
         # array then.
-        elif (
-            len(parsed_json["arraydesign"]) != 1 or "accession" not in parsed_json["arraydesign"][0]
-        ):
-            experiment["platform_accession_code"] = UNKNOWN
-            experiment["platform_accession_name"] = UNKNOWN
-            experiment["manufacturer"] = UNKNOWN
+        if len(array_designs) != 1:
+            platforms["platform_accession_code"] = UNKNOWN
+            platforms["platform_accession_name"] = UNKNOWN
+            platforms["manufacturer"] = UNKNOWN
         else:
-            external_accession = parsed_json["arraydesign"][0]["accession"]
+            external_accession = array_designs[0]
             for platform in get_supported_microarray_platforms():
                 if platform["external_accession"] == external_accession:
-                    experiment["platform_accession_code"] = get_normalized_platform(
+                    platforms["platform_accession_code"] = get_normalized_platform(
                         platform["platform_accession"]
                     )
-
                     # Illumina appears in the accession codes for
                     # platforms manufactured by Illumina
-                    if "ILLUMINA" in experiment["platform_accession_code"].upper():
-                        experiment["manufacturer"] = "ILLUMINA"
-                        experiment["platform_accession_name"] = platform["platform_accession"]
+                    if "ILLUMINA" in platforms["platform_accession_code"].upper():
+                        platforms["manufacturer"] = "ILLUMINA"
+                        platforms["platform_accession_name"] = platform["platform_accession"]
+                    # It's not Illumina, the only other supported Microarray platform is
+                    # Affy. As our list of supported platforms grows this logic will
+                    # need to get more sophisticated.
                     else:
-                        # It's not Illumina, the only other supported Microarray platform is
-                        # Affy. As our list of supported platforms grows this logic will
-                        # need to get more sophisticated.
-                        experiment["manufacturer"] = "AFFYMETRIX"
+                        platforms["manufacturer"] = "AFFYMETRIX"
                         platform_mapping = get_readable_affymetrix_names()
-                        experiment["platform_accession_name"] = platform_mapping[
+                        platforms["platform_accession_name"] = platform_mapping[
                             platform["platform_accession"]
                         ]
 
-            if "platform_accession_code" not in experiment:
+            if "platform_accession_code" not in platforms:
                 # We don't know what platform this accession corresponds to.
-                experiment["platform_accession_code"] = external_accession
-                experiment["platform_accession_name"] = UNKNOWN
-                experiment["manufacturer"] = UNKNOWN
+                platforms["platform_accession_code"] = external_accession
+                platforms["platform_accession_name"] = UNKNOWN
+                platforms["manufacturer"] = UNKNOWN
 
-        experiment["release_date"] = parsed_json["releasedate"]
-        experiment["last_update_date"] = self._get_last_update_date(parsed_json)
-
-        # Create the experiment object
+        # Create the experiment.
         try:
-            experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
+            experiment = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.debug(
                 "Experiment already exists, skipping object creation.",
                 experiment_accession_code=experiment_accession_code,
                 survey_job=self.survey_job.id,
             )
         except Experiment.DoesNotExist:
-            experiment_object = Experiment()
-            experiment_object.accession_code = experiment_accession_code
-            experiment_object.source_url = request_url
-            ArrayExpressSurveyor._apply_metadata_to_experiment(experiment_object, parsed_json)
-            experiment_object.save()
+            experiment = Experiment()
+            experiment.accession_code = experiment_accession_code
+            experiment.source_url = experiment_data["url"]
+            self._apply_metadata_to_experiment(experiment, experiment_data)
+            experiment.save()
 
             json_xa = ExperimentAnnotation()
-            json_xa.experiment = experiment_object
-            json_xa.data = parsed_json
+            json_xa.experiment = experiment
+            json_xa.data = experiment_data
             json_xa.is_ccdl = False
             json_xa.save()
 
-            # Fetch and parse the IDF/SDRF file for any other fields
-            IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
+            # Fetch and parse the IDF/SDRF file for any other fields.
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
 
-            lines = idf_text.split("\n")
-            idf_dict = {}
-            for line in lines:
-                keyval = line.strip().split("\t")
-                if len(keyval) == 2:
-                    idf_dict[keyval[0]] = keyval[1]
-                elif len(keyval) > 2:
-                    idf_dict[keyval[0]] = keyval[1:]
+            idf_data = {}
+            for line in idf_text.split("\n"):
+                key_val = line.strip().split("\t")
+                if len(key_val) == 2:
+                    idf_data[key_val[0]] = key_val[1]
+                elif len(key_val) > 2:
+                    idf_data[key_val[0]] = key_val[1:]
 
             idf_xa = ExperimentAnnotation()
-            idf_xa.data = idf_dict
-            idf_xa.experiment = experiment_object
+            idf_xa.data = idf_data
+            idf_xa.experiment = experiment
             idf_xa.is_ccdl = False
             idf_xa.save()
 
-            if "Investigation Title" in idf_dict and isinstance(
-                idf_dict["Investigation Title"], str
+            if "Investigation Title" in idf_data and isinstance(
+                idf_data["Investigation Title"], str
             ):
-                experiment_object.title = idf_dict["Investigation Title"]
-            if "Person Affiliation" in idf_dict:
+                experiment.title = idf_data["Investigation Title"]
+
+            if "Person Affiliation" in idf_data:
                 # This is very rare, ex: E-MEXP-32
-                if isinstance(idf_dict["Person Affiliation"], list):
-
-                    unique_people = list(set(idf_dict["Person Affiliation"]))
-                    experiment_object.submitter_institution = ", ".join(unique_people)[:255]
+                if isinstance(idf_data["Person Affiliation"], list):
+                    unique_people = list(set(idf_data["Person Affiliation"]))
+                    experiment.submitter_institution = ", ".join(unique_people)[:255]
                 else:
-                    experiment_object.submitter_institution = idf_dict["Person Affiliation"]
+                    experiment.submitter_institution = idf_data["Person Affiliation"]
 
-            # Get protocol_description from "<experiment_url>/protocols"
-            # instead of from idf_dict, because the former provides more
-            # details.
-            protocol_url = request_url + "/protocols"
-            protocol_request = utils.requests_retry_session().get(protocol_url, timeout=60)
-            try:
-                experiment_object.protocol_description = protocol_request.json()["protocols"]
-            except KeyError:
-                logger.warning(
-                    "Remote experiment has no protocol data!",
-                    experiment_accession_code=experiment_accession_code,
-                    survey_job=self.survey_job.id,
-                )
-
-            if "Publication Title" in idf_dict:
+            if "Publication Title" in idf_data:
                 # This will happen for some superseries.
                 # Ex: E-GEOD-29536
                 # Assume most recent is "best:, store the rest in experiment annotation.
-                if isinstance(idf_dict["Publication Title"], list):
-                    experiment_object.publication_title = "; ".join(idf_dict["Publication Title"])
+                if isinstance(idf_data["Publication Title"], list):
+                    experiment.publication_title = "; ".join(idf_data["Publication Title"])
                 else:
-                    experiment_object.publication_title = idf_dict["Publication Title"]
-                experiment_object.has_publication = True
-            if "Publication DOI" in idf_dict:
-                if isinstance(idf_dict["Publication DOI"], list):
-                    experiment_object.publication_doi = ", ".join(idf_dict["Publication DOI"])
+                    experiment.publication_title = idf_data["Publication Title"]
+                experiment.has_publication = True
+
+            if "Publication DOI" in idf_data:
+                experiment.has_publication = True
+                if isinstance(idf_data["Publication DOI"], list):
+                    experiment.publication_doi = ", ".join(idf_data["Publication DOI"])
                 else:
-                    experiment_object.publication_doi = idf_dict["Publication DOI"]
-                experiment_object.has_publication = True
-            if "PubMed ID" in idf_dict:
-                if isinstance(idf_dict["PubMed ID"], list):
-                    experiment_object.pubmed_id = ", ".join(idf_dict["PubMed ID"])
+                    experiment.publication_doi = idf_data["Publication DOI"]
+
+            if "PubMed ID" in idf_data:
+                experiment.has_publication = True
+                if isinstance(idf_data["PubMed ID"], list):
+                    experiment.pubmed_id = ", ".join(idf_data["PubMed ID"])
                 else:
-                    experiment_object.pubmed_id = idf_dict["PubMed ID"]
-                experiment_object.has_publication = True
+                    experiment.pubmed_id = idf_data["PubMed ID"]
 
             # Scrape publication title and authorship from Pubmed
-            if experiment_object.pubmed_id:
-                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(
-                    experiment_object.pubmed_id
-                )
-                experiment_object.publication_title = pubmed_metadata[0]
-                experiment_object.publication_authors = pubmed_metadata[1]
+            if experiment.pubmed_id:
+                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment.pubmed_id)
+                experiment.publication_title = pubmed_metadata[0]
+                experiment.publication_authors = pubmed_metadata[1]
 
-            experiment_object.save()
+            experiment.protocol_description = experiment_data["protocols"]
+            experiment.save()
 
-        platform_dict = {}
-        for k in ("platform_accession_code", "platform_accession_name", "manufacturer"):
-            platform_dict[k] = experiment[k]
-
-        return experiment_object, platform_dict
+        return experiment, platforms
 
     def determine_sample_accession(
         self,
@@ -529,7 +546,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             sample_source_name = sample_data["source"].get("name", "")
             sample_assay_name = sample_data["assay"].get("name", "")
             sample_accession_code = self.determine_sample_accession(
-                experiment.accession_code, sample_source_name, sample_assay_name, filename
+                experiment.accession_code,
+                sample_source_name,
+                sample_assay_name,
+                filename,
             )
 
             # Figure out the Organism for this sample

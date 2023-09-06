@@ -6,7 +6,7 @@
 cd ~/refinebio || exit
 
 for key in keys/*; do
-    gpg --import "keys/$key"
+    gpg --import "$key"
 done
 
 # If it is not a good key then the exit code is 1, which will cause

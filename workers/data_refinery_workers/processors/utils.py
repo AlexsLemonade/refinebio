@@ -83,7 +83,7 @@ def prepare_original_files(job_context):
             )
 
         raise ProcessorJobError(
-            "We can not process the data because it is not on the disk",
+            "We cannot process the data because it is not on the disk",
             success=False,
             no_retry=True,  # this job should not be retried again
             abort=True,  # abort the job and don't do anything else

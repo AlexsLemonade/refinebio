@@ -268,7 +268,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         # Okay, here's the situation!
         # Sometimes, samples have a direct single representation for themselves.
-        # Othertimes, there is a single file with references to every sample in it.
+        # Other times, there is a single file with references to every sample in it.
         created_samples = []
         for sample_accession_code, sample in gse.gsms.items():
             try:

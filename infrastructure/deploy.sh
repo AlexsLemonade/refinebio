@@ -2,9 +2,10 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
 print_description() {
@@ -23,7 +24,7 @@ print_options() {
     echo '   "-e prod" will deploy the production stack. This should only be used from a CD machine.'
     echo '   "-e staging" will deploy the staging stack. This should only be used from a CD machine.'
     echo '   "-e dev" will deploy a dev stack which is appropriate for a single developer to use to test.'
-    echo '-d May be used to override the Dockerhub repo where the images will be pulled from.'
+    echo '-r May be used to override the Dockerhub repo where the images will be pulled from.'
     echo '   This may also be specified by setting the TF_VAR_dockerhub_repo environment variable.'
     echo '   If unset, defaults to "ccdlstaging" if the version contains "-dev" and "ccdl" otherwise.'
     echo '   for dev and staging environments and "ccdl" for prod.'
@@ -33,7 +34,7 @@ print_options() {
     echo '-v specifies the version of the system which is being deployed and is not optional.'
     echo "-u specifies the username of the deployer. Should be the developer's name in development stacks."
     echo '   This option may be omitted, in which case the TF_VAR_user variable MUST be set instead.'
-    echo '-r specifies the AWS region to deploy the stack to. Defaults to us-east-1.'
+    echo '-d specifies the AWS region to deploy the stack to. Defaults to us-east-1.'
 }
 
 while getopts ":e:d:i:v:u:r:h" opt; do
@@ -42,7 +43,7 @@ while getopts ":e:d:i:v:u:r:h" opt; do
         export env=$OPTARG
         export TF_VAR_stage=$OPTARG
         ;;
-    d)
+    r)
         export TF_VAR_dockerhub_repo=$OPTARG
         ;;
     i)
@@ -55,7 +56,7 @@ while getopts ":e:d:i:v:u:r:h" opt; do
     u)
         export TF_VAR_user=$OPTARG
         ;;
-    r)
+    d)
         export TF_VAR_region=$OPTARG
         ;;
     h)
@@ -104,31 +105,30 @@ if [[ -z $TF_VAR_region ]]; then
     TF_VAR_region=us-east-1
 fi
 
-
 # We have terraform output environment variables via a single output
 # variable, which we then read in as json using the command line tool
 # `jq`, so that we can use them via bash.
-format_environment_variables () {
-  json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
-  for row in $json_env_vars; do
-      name=$(echo "$row" | jq -r ".name")
-      value=$(echo "$row" | jq -r ".value")
-      env_var_assignment="$name=$value"
-      # Exporting an expansion rather than a variable, which is exactly what we want to do.
-      # shellcheck disable=SC2163
-      export "${env_var_assignment?}"
-      echo "$env_var_assignment" >> prod_env
-  done
+format_environment_variables() {
+    echo "SYSTEM_VERSION=$SYSTEM_VERSION" >>prod_env
+    json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
+    for row in $json_env_vars; do
+        name=$(echo "$row" | jq -r ".name")
+        value=$(echo "$row" | jq -r ".value")
+        env_var_assignment="$name=$value"
+        # Exporting an expansion rather than a variable, which is exactly what we want to do.
+        # shellcheck disable=SC2163
+        export "${env_var_assignment?}"
+        echo "$env_var_assignment" >>prod_env
+    done
 }
 
-
-# Load $ALL_CCDL_IMAGES and helper functions
-source ../scripts/common.sh
+# Load $ALL_IMAGES and helper functions.
+. ../scripts/common.sh
 # Make our IP address known to terraform.
 TF_VAR_host_ip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 export TF_VAR_host_ip
 
-for IMAGE in $ALL_CCDL_IMAGES; do
+for IMAGE in $ALL_IMAGES; do
     # For each image we need to set the env var that is used by our
     # scripts and the env var that gets picked up by terraform because
     # it is preceeded with TF_VAR.
@@ -142,27 +142,26 @@ cp deploy/ci_ingress.tf .
 
 # Check if a new ccdl-ubuntu ami will be needed for this region
 if [[ $(aws ec2 describe-images \
-            --region $TF_VAR_region --owners 589864003899 \
-            --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
-            --query 'length(Images)') \
-            -eq 0 ]]; then
+    --region "$TF_VAR_region" --owners 589864003899 \
+    --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
+    --query 'length(Images)') -eq 0 ]]; then
     echo "No ccdl-ubuntu-18.04 AMI found for this region, creating a new one"
 
     # Find most recent ccdl-ubuntu ami from us-east-1
     template_ami_id=$(aws ec2 describe-images \
-                          --region us-east-1 --owners 589864003899 \
-                          --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
-                          --query 'sort_by(Images,&CreationDate)[-1].ImageId' \
-                          --output text)
+        --region us-east-1 --owners 589864003899 \
+        --filters 'Name=name,Values=ccdl-ubuntu-18.04-*' \
+        --query 'sort_by(Images,&CreationDate)[-1].ImageId' \
+        --output text)
 
     # Make a copy into this region
     new_ami_name="ccdl-ubuntu-18.04-$(date "+%Y-%m-%dT%H.%M.%S")"
     new_ami_id=$(aws ec2 copy-image \
-                     --source-image-id "$template_ami_id" \
-                     --source-region us-east-1 \
-                     --region "$TF_VAR_region" \
-                     --name "$new_ami_name" \
-                     --output text)
+        --source-image-id "$template_ami_id" \
+        --source-region us-east-1 \
+        --region "$TF_VAR_region" \
+        --name "$new_ami_name" \
+        --output text)
     echo "Created new AMI for $TF_VAR_region"
     echo "    name: $new_ami_name"
     echo "    id:   $new_ami_id"
@@ -176,16 +175,16 @@ fi
 terraform taint module.batch.aws_launch_template.data_refinery_worker || true
 terraform taint module.batch.aws_launch_template.data_refinery_compendia || true
 if terraform state list | grep -q module.batch.aws_batch_job_queue.data_refinery_; then
-    terraform state list \
-        | grep module.batch.aws_batch_job_queue.data_refinery_ \
-        | xargs -L 1 terraform taint \
-        || true
+    terraform state list |
+        grep module.batch.aws_batch_job_queue.data_refinery_ |
+        xargs -L 1 terraform taint ||
+        true
 fi
 if terraform state list | grep -q module.batch.aws_batch_compute_environment.data_refinery__; then
-    terraform state list \
-        | grep module.batch.aws_batch_compute_environment.data_refinery_ \
-        | xargs -L 1 terraform taint \
-        || true
+    terraform state list |
+        grep module.batch.aws_batch_compute_environment.data_refinery_ |
+        xargs -L 1 terraform taint ||
+        true
 fi
 
 if terraform output | grep -q 'No outputs found'; then
@@ -205,7 +204,7 @@ if terraform output | grep -q 'No outputs found'; then
     terraform apply -var-file="environments/$env.tfvars" -auto-approve
 fi
 
-# We have to do this once before the initial deploy..
+# We have to do this once before the initial deploy...
 rm -f prod_env
 format_environment_variables
 
@@ -214,7 +213,7 @@ format_environment_variables
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.
-    echo "Deploying with ingress.."
+    echo "Deploying with ingress..."
 
     # Output the plan for debugging deployments later.
     # Until terraform plan supports -var-file the plan is wrong.
@@ -228,13 +227,13 @@ fi
 # `docker run` commands when running migrations.
 rm -f prod_env
 
-# (cont'd) ..and once again after the update when this is re-run.
+# (cont'd) ...and once again after the update when this is re-run.
 format_environment_variables
 
 # Make sure to clear out any old batch job templates since we
 # will register everything in this directory.
 if [ -e batch-job-templates ]; then
-  rm -r batch-job-templates
+    rm -r batch-job-templates
 fi
 
 # Template the environment variables for production into the Batch Job
@@ -257,7 +256,7 @@ python3 delete_batch_job_queue.py
 python3 deregister_batch_job_definitions.py
 
 # Re-register Batch jobs (skip those that end in .tpl)
-echo "Registering new job specifications.."
+echo "Registering new job specifications..."
 export AWS_DEFAULT_REGION=$AWS_REGION
 # SC2010: Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
 # We are using a glob, but we want to limit it to a specific directory. Seems like an over aggressive check.
@@ -269,52 +268,57 @@ done
 echo "Job registrations have been fired off."
 
 # Get an image to run the migrations with.
-docker pull "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
+docker pull --platform linux/amd64 "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
 
 # Test that the pg_bouncer instance is up. 15 minutes should be more than enough.
 start_time=$(date +%s)
 diff=0
-until pg_isready -d "$DATABASE_NAME" -h "$DATABASE_PUBLIC_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" &> /dev/null || [ "$diff" -gt "900" ]
-do
-    echo "Waiting for the pg_bouncer instance to come online ..."
+until pg_isready -d "$DATABASE_NAME" -h "$DATABASE_PUBLIC_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" &>/dev/null || [ "$diff" -gt "900" ]; do
+    echo "Waiting for the pg_bouncer instance to come online..."
     sleep 10
-    (( diff = $(date +%s) - start_time ))
+    ((diff = $(date +%s) - start_time))
 done
 
-if ! pg_isready -d "$DATABASE_NAME" -h "$DATABASE_PUBLIC_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" &> /dev/null; then
+if ! pg_isready -d "$DATABASE_NAME" -h "$DATABASE_PUBLIC_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" &>/dev/null; then
     echo "pg_bouncer instance failed to come up after 15 minutes."
     exit 1
 fi
 
 # Migrate auth.
 docker run \
-       --env-file prod_env \
-       --env RUNNING_IN_CLOUD=False \
-       --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
-       "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" python3 manage.py migrate auth
+    --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
+    --env RUNNING_IN_CLOUD=False \
+    --env-file prod_env \
+    --platform linux/amd64 \
+    "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" \
+    python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
-       --env-file prod_env \
-       --env RUNNING_IN_CLOUD=False \
-       --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
-       "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" python3 manage.py migrate
+    --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
+    --env RUNNING_IN_CLOUD=False \
+    --env-file prod_env \
+    --platform linux/amd64 \
+    "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" \
+    python3 manage.py migrate
 
 # Create the cache table if it does not already exist.
 docker run \
-       --env-file prod_env \
-       --env RUNNING_IN_CLOUD=False \
-       --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
-       "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" python3 manage.py createcachetable
+    --env DATABASE_HOST="$DATABASE_PUBLIC_HOST" \
+    --env RUNNING_IN_CLOUD=False \
+    --env-file prod_env \
+    --platform linux/amd64 \
+    "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE" \
+    python3 manage.py createcachetable
 
 # Terraform doesn't manage these well, so they need to be tainted to
 # ensure they won't require manual intervention.
 terraform taint module.batch.aws_launch_template.data_refinery_worker
 terraform taint module.batch.aws_launch_template.data_refinery_compendia
-terraform state list \
-    | grep module.batch.aws_batch_job_queue.data_refinery_ \
-    | xargs -L 1 terraform taint \
-    || true
+terraform state list |
+    grep module.batch.aws_batch_job_queue.data_refinery_ |
+    xargs -L 1 terraform taint ||
+    true
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1
@@ -324,7 +328,7 @@ terraform taint aws_instance.foreman_server_1
 # tests can run and have access to the database since they don't use
 # test databases.
 if [ "$env" = "prod" ]; then
-    echo "Removing ingress.."
+    echo "Removing ingress..."
     rm ci_ingress.tf
 fi
 
@@ -341,10 +345,10 @@ API_IP_ADDRESS=$(terraform output -json api_server_1_ip | tr -d '"')
 # it's not found then grep will return a non-zero exit code so in that
 # case return an empty string.
 container_running=$(ssh -o StrictHostKeyChecking=no \
-                        -o ServerAliveInterval=15 \
-                        -o ConnectTimeout=5 \
-                        -i data-refinery-key.pem \
-                        "ubuntu@$API_IP_ADDRESS"  "docker ps -a" 2> /dev/null | grep dr_api || echo "")
+    -o ServerAliveInterval=15 \
+    -o ConnectTimeout=5 \
+    -i data-refinery-key.pem \
+    "ubuntu@$API_IP_ADDRESS" "docker ps -a" 2>/dev/null | grep dr_api || echo "")
 
 # If $container_running is empty, then it's because the container isn't running.
 # If the container isn't running, then it's because the instance is spinning up.
@@ -379,21 +383,25 @@ if [[ -n $container_running ]]; then
         -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         "ubuntu@$API_IP_ADDRESS" "docker run \
-       --env-file environment \
-       -e DATABASE_HOST=$DATABASE_HOST \
-       -e DATABASE_NAME=$DATABASE_NAME \
-       -e DATABASE_USER=$DATABASE_USER \
-       -e DATABASE_PASSWORD=$DATABASE_PASSWORD \
-       -e ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST \
-       -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
-       -v /tmp/volumes_static:/tmp/www/static \
-       --log-driver=awslogs \
-       --log-opt awslogs-region=$AWS_REGION \
-       --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
-       --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
-       -p 8081:8081 \
-       --name=dr_api \
-       -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
+            --detach \
+            --env DATABASE_HOST=$DATABASE_HOST \
+            --env DATABASE_NAME=$DATABASE_NAME \
+            --env DATABASE_PASSWORD=$DATABASE_PASSWORD \
+            --env DATABASE_USER=$DATABASE_USER \
+            --env ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST \
+            --env ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
+            --env-file environment \
+            --interactive \
+            --log-driver=awslogs \
+            --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
+            --log-opt awslogs-region=$AWS_REGION \
+            --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
+            --name=dr_api \
+            --tty \
+            --volume /tmp/volumes_static:/tmp/www/static \
+            --publish 8081:8081 \
+            $DOCKERHUB_REPO/$API_DOCKER_IMAGE \
+            /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
     # Don't leave secrets lying around.
     ssh -o StrictHostKeyChecking=no \

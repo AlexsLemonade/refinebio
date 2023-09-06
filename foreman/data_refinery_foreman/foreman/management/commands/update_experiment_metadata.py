@@ -8,8 +8,7 @@ import GEOparse
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import Experiment
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator
-from data_refinery_foreman.surveyor import utils
-from data_refinery_foreman.surveyor.array_express import EXPERIMENTS_URL, ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor.sra import SraSurveyor
 
@@ -30,8 +29,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """Refreshes the metadata for all experiments, or experiments from a specific database
-        """
+        """Refreshes the metadata for all experiments, or experiments from a specific database"""
         possible_source_databases = ["ARRAY_EXPRESS", "GEO", "SRA"]
 
         if options.get("source_database", None) is None:
@@ -52,29 +50,30 @@ class Command(BaseCommand):
         while True:
             for experiment in page.object_list:
                 logger.debug(
-                    "Refreshing metadata for an experiment.", experiment=experiment.accession_code
+                    "Refreshing metadata for an experiment.",
+                    experiment=experiment.accession_code,
                 )
                 try:
                     if experiment.source_database == "SRA":
-                        metadata = SraSurveyor.gather_all_metadata(
+                        experiment_metadata, sample_metadata = SraSurveyor.gather_all_metadata(
                             experiment.samples.first().accession_code
                         )
-                        SraSurveyor._apply_metadata_to_experiment(experiment, metadata)
+                        SraSurveyor._apply_metadata_to_experiment(experiment, experiment_metadata)
 
                     elif experiment.source_database == "GEO":
                         gse = GEOparse.get_GEO(
-                            experiment.accession_code, destdir="/tmp/management", silent=True,
+                            experiment.accession_code,
+                            destdir="/tmp/management",
+                            silent=True,
                         )
 
                         GeoSurveyor._apply_metadata_to_experiment(experiment, gse)
 
                     elif experiment.source_database == "ARRAY_EXPRESS":
-                        request_url = EXPERIMENTS_URL + experiment.accession_code
-                        experiment_request = utils.requests_retry_session().get(
-                            request_url, timeout=60
-                        )
                         try:
-                            parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+                            metadata = ArrayExpressSurveyor._get_experiment_data(
+                                experiment.accession_code
+                            )
                         except KeyError:
                             logger.error(
                                 "Remote experiment has no Experiment data!",
@@ -82,7 +81,7 @@ class Command(BaseCommand):
                                 survey_job=self.survey_job.id,
                             )
                             continue
-                        ArrayExpressSurveyor._apply_metadata_to_experiment(experiment, parsed_json)
+                        ArrayExpressSurveyor._apply_metadata_to_experiment(experiment, metadata)
 
                     experiment.save()
 

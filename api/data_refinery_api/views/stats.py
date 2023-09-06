@@ -116,7 +116,9 @@ def get_jobs_in_queue(batch_job_queue: str) -> list:
 
         while "nextToken" in list_jobs_dict and list_jobs_dict["nextToken"]:
             list_jobs_dict = batch.list_jobs(
-                jobQueue=batch_job_queue, jobStatus=status, nextToken=list_jobs_dict["nextToken"],
+                jobQueue=batch_job_queue,
+                jobStatus=status,
+                nextToken=list_jobs_dict["nextToken"],
             )
             jobs.extend(list_jobs_dict["jobSummaryList"])
 

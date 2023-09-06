@@ -1,45 +1,29 @@
-FROM ubuntu:18.04
+ARG DOCKERHUB_REPO
+ARG SYSTEM_VERSION
+FROM $DOCKERHUB_REPO/dr_base:$SYSTEM_VERSION
 
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-RUN apt-get update -qq
-RUN apt-get -y install apt-fast
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-fast update -qq && \
-    apt-fast install -y \
-    python3 \
-    python3-pip
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-# Source: https://github.com/thisbejim/Pyrebase/issues/87#issuecomment-354452082
-# For whatever reason this worked and 'en_US.UTF-8' did not.
-ENV LANG C.UTF-8
-
-RUN pip3 install --upgrade pip
-
-COPY config config
-COPY .boto .boto
-
 COPY foreman/requirements.txt .
-
-# The base image does not have Python 2.X on it at all, so all calls
-# to pip or python are by default calls to pip3 or python3
-RUN pip3 install -r requirements.txt
-
-COPY common/dist/data-refinery-common-* common/
+RUN mkdir -p data/microarray && \
+    wget -q https://gbnci.cancer.gov/geo/GEOmetadb.sqlite.gz \
+        -O data/microarray/GEOmetadb.sqlite.gz && \
+    gunzip data/microarray/GEOmetadb.sqlite.gz && \
+    chmod 644 data/microarray/GEOmetadb.sqlite && \
+    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Get the latest version from the dist directory.
-RUN pip3 install \
-    common/$(ls common -1 | sort --version-sort | tail -1)
+COPY common/dist/data-refinery-common-* common/
+RUN pip3 install --ignore-installed --no-cache-dir \
+        common/$(ls common -1 | sort --version-sort | tail -1)
 
+COPY .boto .boto
 COPY foreman/ .
 
-ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 

@@ -28,7 +28,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"db_table": "experiment_result_associations",},
+            options={
+                "db_table": "experiment_result_associations",
+            },
         ),
         migrations.AddField(
             model_name="computationalresult",
@@ -47,6 +49,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterUniqueTogether(
-            name="experimentresultassociation", unique_together={("result", "experiment")},
+            name="experimentresultassociation",
+            unique_together={("result", "experiment")},
         ),
     ]

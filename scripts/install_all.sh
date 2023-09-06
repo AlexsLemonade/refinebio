@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Exit on error
+# Exit on error.
 set -e
 
 # Config variables
@@ -8,9 +8,10 @@ TERRAFORM_VERSION="0.13.5"
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
+script_directory="$(
+    cd "$(dirname "$0")" || exit
+    pwd
+)"
 cd "$script_directory" || exit
 
 print_description() {
@@ -39,117 +40,117 @@ confirm() {
     printf "%s [y/N] " "$1"
     read -r confirmation
     if ! [ "$confirmation" = "y" ]; then
-	echo "Confirmation failure" >&2
+        echo "Confirmation failure" >&2
         exit 1
     fi
 }
 
 while getopts "hv" opt; do
     case $opt in
-        h)
-            print_description
-            echo
-            print_usage
-            exit 0
-            ;;
-	v)
-	    OUTPUT="/dev/stdout"
-	    ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            print_usage >&2
-            exit 1
-            ;;
+    h)
+        print_description
+        echo
+        print_usage
+        exit 0
+        ;;
+    v)
+        OUTPUT="/dev/stdout"
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        print_usage >&2
+        exit 1
+        ;;
     esac
 done
 
 # Unless output was set to stdout by the verbose flag, set it to /dev/null
-# to hide the stdout of package management commands
+# to hide the stdout of package management commands.
 if [ -z "$OUTPUT" ]; then
     OUTPUT="/dev/null"
 fi
 
 if [ -z "$INSTALL_CMD" ]; then
     case "$(uname)" in
-        "Darwin")
-            if ! command -v brew >/dev/null; then
-                confirm "Would you like to install Homebrew?"
-                /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-            fi
+    "Darwin")
+        if ! command -v brew >/dev/null; then
+            confirm "Would you like to install Homebrew?"
+            /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        fi
 
-            INSTALL_CMD="brew install"
-            INSTALL_CASK_CMD="brew cask install"
-            BREW=true
-            ;;
-        "Linux")
-            if command -v apt >/dev/null; then
-                sudo apt-get update
-                INSTALL_CMD="sudo apt-get install --assume-yes"
-                APT=true
-            else
-                echo "Your Linux distribution is not officially supported," >&2
-                echo "but it *should* be able to run the required services. You need to manually" >&2
-                echo "install dependencies or give the command to install dependencies with \$INSTALL_CMD." >&2
-                exit 1
-            fi
-            ;;
-        *)
-            echo "$(uname) is an unsupported operating system." >&2
-            echo "You can try to provide a package manager command with \$INSTALL_CMD," >&2
-            echo "but your mileage may vary." >&2
+        INSTALL_CMD="brew install"
+        INSTALL_CASK_CMD="brew cask install"
+        BREW=true
+        ;;
+    "Linux")
+        if command -v apt >/dev/null; then
+            sudo apt-get update
+            INSTALL_CMD="sudo apt-get install --assume-yes"
+            APT=true
+        else
+            echo "Your Linux distribution is not officially supported," >&2
+            echo "but it *should* be able to run the required services. You need to manually" >&2
+            echo "install dependencies or give the command to install dependencies with \$INSTALL_CMD." >&2
             exit 1
-            ;;
+        fi
+        ;;
+    *)
+        echo "$(uname) is an unsupported operating system." >&2
+        echo "You can try to provide a package manager command with \$INSTALL_CMD," >&2
+        echo "but your mileage may vary." >&2
+        exit 1
+        ;;
     esac
 fi
 
-if ! command -v docker > /dev/null; then
+if ! command -v docker >/dev/null; then
     echo "Installing Docker..."
 
-    # On macOS, install docker desktop with Homebrew cask
-    if [ $BREW ]; then
-        $INSTALL_CASK_CMD docker > $OUTPUT
+    # On macOS, install docker desktop with Homebrew cask.
+    if [ "$BREW" ]; then
+        $INSTALL_CASK_CMD docker >"$OUTPUT"
     else
-        $INSTALL_CMD docker.io > $OUTPUT || (echo "You must manually install docker" && exit 1)
+        $INSTALL_CMD docker.io >"$OUTPUT" || (echo "You must manually install Docker" && exit 1)
 
-        echo "Fixing docker permissions..."
+        echo "Fixing Docker permissions..."
         sudo groupadd -f docker
         sudo usermod -aG docker "$USER"
 
-	echo
-	echo "Logout and log back in to apply the permissions changes, then execute this script again."
-	exit 0
+        echo
+        echo "Logout and log back in to apply the permissions changes, then execute this script again."
+        exit 0
     fi
 fi
 
-if ! command -v pip3 > /dev/null && ! [ $BREW ]; then # Don't reinstall python on macOS
-    echo "Installing python and pip..."
-    $INSTALL_CMD python3-pip > $OUTPUT || (echo "You must manually install python and pip" && exit 1)
+if ! command -v pip3 >/dev/null && ! [ "$BREW" ]; then # Don't reinstall python on macOS
+    echo "Installing Python and pip..."
+    $INSTALL_CMD python3-pip >"$OUTPUT" || (echo "You must manually install Python and pip" && exit 1)
 fi
 
-if ! command -v terraform > /dev/null; then
-    echo "Installing terraform..."
-    if [ $BREW ]; then
-        $INSTALL_CMD terraform > $OUTPUT
-    elif [ $APT ] || confirm "Would you like to automatically install Terraform for amd64 linux?"; then
-        $INSTALL_CMD unzip > $OUTPUT
+if ! command -v terraform >/dev/null; then
+    echo "Installing Terraform..."
+    if [ "$BREW" ]; then
+        $INSTALL_CMD terraform >"$OUTPUT"
+    elif [ "$APT" ] || confirm "Would you like to automatically install Terraform for amd64 Linux?"; then
+        $INSTALL_CMD unzip >"$OUTPUT"
         curl -0s "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" \
-             > "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            >"terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
         sudo unzip -d /usr/bin "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
         sudo chmod a+rx /usr/bin/terraform
-	rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+        rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
     else
         echo "You need to manually install Terraform before continuing..." >&2
         exit 1
     fi
 fi
 
-if ! command -v pre-commit > /dev/null; then
+if ! command -v pre-commit >/dev/null; then
     message="Would you like to automatically install pre-commit? \
 Note: This will install all the required dependencies (black, isort, etc) \
 using an additional ~185MB of disk space."
-    if [ $APT ] || confirm "$message"; then
+    if [ "$APT" ] || confirm "$message"; then
         echo "Installing pre-commit..."
-        $INSTALL_CMD shellcheck > $OUTPUT
+        $INSTALL_CMD shellcheck >"$OUTPUT"
         pip3 install pre-commit
         pre-commit install
     else
@@ -157,32 +158,32 @@ using an additional ~185MB of disk space."
     fi
 fi
 
-if ! command -v jq > /dev/null; then
+if ! command -v jq >/dev/null; then
     echo "Installing jq..."
-    $INSTALL_CMD jq > $OUTPUT || (echo "You must manually install jq" && exit 1)
+    $INSTALL_CMD jq >"$OUTPUT" || (echo "You must manually install jq" && exit 1)
 fi
 
-if ! command -v ip > /dev/null; then
-    if [ $BREW ]; then
-        $INSTALL_CMD iproute2mac > $OUTPUT
+if ! command -v ip >/dev/null; then
+    if [ "$BREW" ]; then
+        $INSTALL_CMD iproute2mac >"$OUTPUT"
     else
-        $INSTALL_CMD iproute2 > $OUTPUT || (echo "You must manually install iproute2" && exit 1)
+        $INSTALL_CMD iproute2 >"$OUTPUT" || (echo "You must manually install iproute2" && exit 1)
     fi
 fi
 
 echo "Starting postgres and installing the database..."
-./run_postgres.sh > $OUTPUT
-./install_db_docker.sh > $OUTPUT
+./run_postgres.sh >"$OUTPUT"
+./install_db_docker.sh >"$OUTPUT"
 
 echo "Starting elasticsearch and building the ES Indexes..."
-./run_es.sh > $OUTPUT
-./rebuild_es_index.sh > $OUTPUT
+./run_es.sh >"$OUTPUT"
+./rebuild_es_index.sh >"$OUTPUT"
 
 echo "Creating virtual environment..."
-./create_virtualenv.sh > $OUTPUT
+./create_virtualenv.sh >"$OUTPUT"
 echo "Run \`source dr_env/bin/activate\` to activate the virtual environment."
 
 echo "Updating common dependencies..."
-# Source the virtual environment first
+# Source the virtual environment first.
 . ../dr_env/bin/activate
-./update_models.sh > $OUTPUT
+./update_models.sh >"$OUTPUT"

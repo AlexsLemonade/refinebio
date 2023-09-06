@@ -1,4 +1,6 @@
 import os
+import re
+from datetime import datetime
 
 from setuptools import find_packages, setup
 
@@ -8,13 +10,23 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 VERSION_FILE = "version"
 try:
     with open(VERSION_FILE, "rt") as version_file:
-        version_string = version_file.read().strip()
+        version_string = version_file.read().strip().split("-")[0]
 except OSError:
     print(
-        "Cannot read version to determine System Version."
-        " Please create a file common/version containing an up to date System Version."
+        "Cannot read version file to determine system version. "
+        "Please create a file common/version containing an up to date system version."
     )
     raise
+
+version_re = re.compile(
+    r"^([1-9][0-9]*!)?(0|[1-9][0-9]*)"
+    "(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))"
+    "?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?$"
+)
+if not version_re.match(version_string):
+    # Generate version based on the datetime.now(): e.g., 2023.5.17.dev1684352560.
+    now = datetime.now()
+    version_string = f"{now.strftime('%Y.%-m.%-d.dev')}{int(datetime.timestamp(now))}"
 
 setup(
     name="data-refinery-common",
@@ -26,7 +38,7 @@ setup(
         "boto3>=1.9.16",
         "coverage>=4.5.1",
         "daiquiri>=1.5.0",
-        "django>=2.1.8",
+        "django>=3.2,<4",
         "raven>=6.9.0",
         "requests>=2.10.1",
         "retrying>=1.3.3",

@@ -16,17 +16,17 @@ from data_refinery_common.utils import queryset_page_iterator
 def mark_unprocessable_samples():
     """This function performs the function explained at the head of this file.
 
-        It does so by following this general strategy:
-        1. Find samples that have is_processed=True
-        2. Find the most recent processor job for that sample.
-        3. Check that processor job's failure reason and mark
-           the sample accordingly.
+    It does so by following this general strategy:
+    1. Find samples that have is_processed=True
+    2. Find the most recent processor job for that sample.
+    3. Check that processor job's failure reason and mark
+       the sample accordingly.
 
-        Along the way it will also populate the following fields:
-        * last_processor_job
-        * last_downloader_job
-        * most_recent_smashable_file
-        * most_recent_quant_file
+    Along the way it will also populate the following fields:
+    * last_processor_job
+    * last_downloader_job
+    * most_recent_smashable_file
+    * most_recent_quant_file
     """
     unprocessed_samples = Sample.objects.filter(is_processed=False).prefetch_related(
         "original_files__processor_jobs"

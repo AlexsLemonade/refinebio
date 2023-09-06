@@ -1,21 +1,19 @@
-FROM python:3.8.5-slim-buster
+ARG DOCKERHUB_REPO
+ARG SYSTEM_VERSION
+FROM $DOCKERHUB_REPO/dr_base:$SYSTEM_VERSION
 
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+# Fail in case of an error at any stage in the pipe.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 WORKDIR /home/user
 
-# Needed for migration 0006
-COPY config/ config
-
 COPY common/requirements.txt .
-
-RUN pip install -r requirements.txt
+RUN pip install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY common/ .
 
-ARG SYSTEM_VERSION
-
-ENV SYSTEM_VERSION $SYSTEM_VERSION
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
 
-ENTRYPOINT [""]
+ENTRYPOINT []

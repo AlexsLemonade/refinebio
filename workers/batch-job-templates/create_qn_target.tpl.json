@@ -28,6 +28,7 @@
         ],
         "jobRoleArn": "${{WORKER_ROLE_ARN}}",
         "environment": [
+            {"name": "SYSTEM_VERSION", "value": "${{SYSTEM_VERSION}}"},
             {"name": "DJANGO_DEBUG", "value": "${{DJANGO_DEBUG}}"},
             {"name": "DATABASE_NAME", "value": "${{DATABASE_NAME}}"},
             {"name": "DATABASE_USER", "value": "${{DATABASE_USER}}"},

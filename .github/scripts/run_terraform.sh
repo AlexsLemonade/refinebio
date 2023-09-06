@@ -1,16 +1,16 @@
-#!/bin/bash -e
+#!/bin/bash
 
-# Import Hashicorps' Key.
+set -e
+
+# Import Hashicorps' key.
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
-
-# Install terraform and nomad
+# Install Terraform.
 cd
 TERRAFORM_VERSION=0.13.5
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS
 wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig
-
 
 # Verify the signature file is untampered.
 gpg_ok=$(gpg --verify terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig terraform_${TERRAFORM_VERSION}_SHA256SUMS |& grep Good)
@@ -32,20 +32,21 @@ sudo mv terraform /usr/local/bin/
 cd ~/refinebio/infrastructure
 
 # Circle won't set the branch name for us, so do it ourselves.
-source ~/refinebio/scripts/common.sh
-branch=$(get_master_or_dev "$CI_TAG")
+# shellcheck disable=SC1090
+. ~/refinebio/scripts/common.sh
 
-if [[ $branch == "master" ]]; then
-    ENVIRONMENT=prod
+BRANCH=$(get_deploy_branch "$CI_TAG")
+if [[ $BRANCH == "master" ]]; then
     BATCH_USE_ON_DEMAND_INSTANCES="false"
-elif [[ $branch == "dev" ]]; then
-    ENVIRONMENT=staging
+    ENVIRONMENT=prod
+elif [[ $BRANCH == "dev" ]]; then
     BATCH_USE_ON_DEMAND_INSTANCES="true"
+    ENVIRONMENT=staging
 else
-    echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!?!?"
+    echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!"
     exit 1
 fi
 
 # New deployment (use -u circleci since we used to run on CircleCI and we don't
 # want to recreate all of our resources)
-./deploy.sh -e "$ENVIRONMENT" -v "$CI_TAG" -u circleci -i "$BATCH_USE_ON_DEMAND_INSTANCES"
+./deploy.sh -e "$ENVIRONMENT" -i "$BATCH_USE_ON_DEMAND_INSTANCES" -u circleci -v "$CI_TAG"

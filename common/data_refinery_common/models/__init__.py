@@ -45,6 +45,7 @@ from data_refinery_common.models.dataset import Dataset  # noqa
 from data_refinery_common.models.dataset_annotation import DatasetAnnotation  # noqa
 from data_refinery_common.models.experiment import Experiment  # noqa
 from data_refinery_common.models.experiment_annotation import ExperimentAnnotation  # noqa
+from data_refinery_common.models.gathered_accession import GatheredAccession  # noqa
 from data_refinery_common.models.jobs.downloader_job import DownloaderJob  # noqa
 from data_refinery_common.models.jobs.processor_job import ProcessorJob  # noqa
 from data_refinery_common.models.jobs.survey_job import SurveyJob  # noqa

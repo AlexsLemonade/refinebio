@@ -5,7 +5,7 @@
 # debugging. Long term we may want to remove this entirely.
 resource "aws_key_pair" "data_refinery" {
   key_name = "data-refinery-key-${var.user}-${var.stage}"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDCImXhaIS+uh0rJ6V88V1ZN6pH7pSXA22t7zYTnlRXXoHgKIUpc1iH07dDwrKIAYmwCO36H0dmlxymsEvnDJA2alPxic2GXe04ExGOEuFeemmdvmw9NUk+2vRNUPrKgRIsZZ2QSrXkvEyoFGgJQ1ywx4ZbkHxLaxgAr0wgzyv1bdOo3RiOPA3pSiN2hzATlxGx655fCPhjTTCsM9T7HzkF+UGY6tJ8z93aC3vDtAjBi9vpgrwEL/xv7l8lU0ECjfYKQFlHFncUrcMIs33MlkOk9e4VbD5lKzghCSaNV2+dBjxmWwCAIpmEag5/Y/07m7qg5NDhjJyB/BC9+f/2hu8lMR7IhZNDP7xhOs4X27R01huhJOdAV3dodb2BPWxRu2jlaaXHorfuH5ORV5csW6ubCMwl2HzF18bH3k87wvo37xvvh+YSeLQwrwaC/lPRU5f8j5AJynb3B/QeBR5RU/3b4TFdLvMakVs2dy5miQdwIuDRD49UYtRsJqaOtRbSPtgWLrsO1yT4yhQQCYXgTGwP8o2Jsnpm4+V1bFSzMNSwPpDa5jUVDGLLZ08ldfc6XiRnd2ATtcrs6Y/YqEbzyW6lv49lMQXqzwUx0OfnQ+vcWjaQmQRIfP6VmEYvBUrrBuxECLZD7w1IYB8+Dyi1JOSfm7n4uoW5kO/PsADA6UtAzQ=="
+  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEAsg062YxUo1ti8tT2gR63JVHpLI5jkxkADwEeVb79O"
 
 }
 

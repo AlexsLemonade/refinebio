@@ -16,7 +16,19 @@ module "batch" {
   data_refinery_keypair = aws_key_pair.data_refinery
   data_refinery_worker_security_group = aws_security_group.data_refinery_worker
 
-  data_refinery_worker_user_data = data.template_file.worker_script_smusher.rendered
+  data_refinery_worker_user_data = templatefile(
+    "workers-configuration/workers-instance-user-data.tpl.sh",
+    {
+      database_host     = aws_instance.pg_bouncer.private_ip
+      database_name     = aws_db_instance.postgres_db.db_name
+      database_password = var.database_password
+      database_port     = var.database_port
+      database_user     = var.database_user
+      region            = var.region
+      stage             = var.stage
+      user              = var.user
+    }
+  )
   data_refinery_worker_ami = var.worker_ami
 
   user = var.user

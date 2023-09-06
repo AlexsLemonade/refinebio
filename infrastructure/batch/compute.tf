@@ -1,5 +1,5 @@
-# This file creates the compute environments used by the queues
-# The default environment is a 2 vCPU spot cluster
+# This file creates the compute environments used by the queues.
+# The default environment is a 2 vCPU spot cluster.
 
 locals {
   on_demand_environment_type = "EC2"
@@ -26,7 +26,7 @@ resource "aws_batch_compute_environment" "data_refinery_workers" {
 
     max_vcpus = 32
     min_vcpus = 0
-    # standard launch template
+    # Standard launch template.
     launch_template {
       launch_template_id = aws_launch_template.data_refinery_worker.id
     }
@@ -53,15 +53,13 @@ resource "aws_batch_compute_environment" "data_refinery_workers" {
   tags = var.default_tags
 }
 
-# A separate queue for smasher jobs so they don't get stuck behind a
-# large backlog.
+# A separate queue for smasher jobs so they don't get stuck behind a large backlog.
 resource "aws_batch_compute_environment" "data_refinery_smasher" {
   compute_environment_name = "data-refinery-smasher-compute-${var.user}-${var.stage}"
   compute_resources {
     instance_role = aws_iam_instance_profile.ecs_instance_profile.arn
     instance_type = [
-      # Just large enough to run one job at a time. We haven't had a
-      # backlog yet.
+      # Just large enough to run one job at a time. We haven't had a backlog yet.
       "m5.2xlarge", "r5.xlarge"
     ]
 
@@ -72,7 +70,7 @@ resource "aws_batch_compute_environment" "data_refinery_smasher" {
 
     max_vcpus = 32
     min_vcpus = 0
-    # standard launch template
+    # Standard launch template.
     launch_template {
       launch_template_id = aws_launch_template.data_refinery_worker.id
     }
@@ -105,7 +103,7 @@ resource "aws_batch_compute_environment" "data_refinery_compendia" {
   compute_resources {
     instance_role = aws_iam_instance_profile.ecs_instance_profile.arn
     instance_type = [
-      # 976 GB RAM
+      # 976 GB RAM.
       "x1.16xlarge"
     ]
 
@@ -116,7 +114,7 @@ resource "aws_batch_compute_environment" "data_refinery_compendia" {
 
     max_vcpus = 64
     min_vcpus = 0
-    # standard launch template
+    # Standard launch template.
     launch_template {
       launch_template_id = aws_launch_template.data_refinery_compendia.id
     }

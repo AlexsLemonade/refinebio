@@ -20,7 +20,7 @@ logger = get_and_configure_logger(__name__)
 
 
 class OriginalFile(models.Model):
-    """ A representation of a file from an external source """
+    """A representation of a file from an external source"""
 
     class Meta:
         db_table = "original_files"
@@ -31,7 +31,7 @@ class OriginalFile(models.Model):
         ]
 
     def __str__(self):
-        return "OriginalFile: " + self.get_display_name()
+        return f"OriginalFile: {self.get_display_name()}"
 
     # Managers
     objects = models.Manager()
@@ -76,7 +76,7 @@ class OriginalFile(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        """ On save, update timestamps """
+        """On save, update timestamps"""
         current_time = timezone.now()
         if not self.id:
             self.created_at = current_time
@@ -84,8 +84,8 @@ class OriginalFile(models.Model):
         return super(OriginalFile, self).save(*args, **kwargs)
 
     def set_downloaded(self, absolute_file_path, filename=None):
-        """ Marks the file as downloaded, if `filename` is not provided it will
-        be parsed from the `absolute_file_path` """
+        """Marks the file as downloaded, if `filename` is not provided it will
+        be parsed from the `absolute_file_path`"""
         self.is_downloaded = True
         self.is_archive = FileUtils.is_archive(absolute_file_path)
         self.absolute_file_path = absolute_file_path
@@ -95,46 +95,42 @@ class OriginalFile(models.Model):
         self.save()
 
     def calculate_sha1(self) -> None:
-        """ Calculate the SHA1 value of a given file.
-        """
+        """Calculate the SHA1 value of a given file."""
         self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_md5(self) -> None:
-        """ Calculate the MD5 value of a given file.
-        """
+        """Calculate the MD5 value of a given file."""
         self.md5 = calculate_md5(self.absolute_file_path)
         return self.md5
 
     def calculate_sha1_and_md5(self) -> None:
-        """ Calculate the MD5 and SHA1 value of a given file at the same time.
-        """
+        """Calculate the MD5 and SHA1 value of a given file at the same time."""
         self.sha1, self.md5 = calculate_sha1_and_md5(self.absolute_file_path)
         return self.sha1, self.md5
 
     def calculate_size(self) -> None:
-        """ Calculate the number of bytes in a given file.
-        """
+        """Calculate the number of bytes in a given file."""
         self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def get_display_name(self):
-        """ For dev convenience """
+        """For dev convenience"""
         if not self.filename:
             return self.source_filename
         else:
             return self.filename
 
     def get_extension(self):
-        """ Returns the lowercased extension of the filename
-        Thanks to https://stackoverflow.com/a/541408/763705 """
+        """Returns the lowercased extension of the filename
+        Thanks to https://stackoverflow.com/a/541408/763705"""
         return FileUtils.get_extension(self.filename)
 
     def is_blacklisted(self):
         return self.get_extension() in [".xml", ".chp", ".exp"]
 
     def delete_local_file(self):
-        """ Deletes this file from the local file system."""
+        """Deletes this file from the local file system."""
         try:
             os.remove(self.absolute_file_path)
         except OSError:
@@ -246,7 +242,7 @@ class OriginalFile(models.Model):
         without getting processed.
         """
         # If the file is downloaded and the file actually exists on disk,
-        # then it doens't need to be downloaded.
+        # then it doesn't need to be downloaded.
         if self.absolute_file_path and os.path.exists(self.absolute_file_path):
             # ok a file exists, if this file has an SHA1 ensure that it's the same
             existing_file_sha1 = calculate_sha1(self.absolute_file_path)
@@ -276,8 +272,7 @@ class OriginalFile(models.Model):
         return self.needs_processing(own_processor_id)
 
     def is_affy_data(self) -> bool:
-        """Return true if original_file is a CEL file or a gzipped CEL file.
-        """
+        """Return true if original_file is a CEL file or a gzipped CEL file."""
         upper_name = self.source_filename.upper()
         return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") or (
             len(upper_name) > 7 and upper_name[-7:] == ".CEL.GZ"

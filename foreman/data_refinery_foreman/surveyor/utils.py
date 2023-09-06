@@ -1,4 +1,5 @@
 import collections
+from typing import Dict, List, Union
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -43,8 +44,29 @@ def flatten(d, parent_key="", sep="_"):
     return dict(items)
 
 
+# TODO: Merge this with above method after updating array express
+#       to support recursive flattening.
+def flatten_dict(data: Union[Dict, List], prefix: str = "", sep: str = "_") -> dict:
+    """Flattens a nested dictionary or list"""
+    flattened = {}
+    iterator = enumerate(data) if isinstance(data, list) else data.items()
+
+    for k, v in iterator:
+        key = (k if not prefix else f"{prefix}{sep}{k}").replace(" ", sep)
+        if isinstance(v, (dict, list)):
+            flattened.update(flatten_dict(v, key))
+        else:
+            flattened[key] = v
+
+    return flattened
+
+
+def get_nonempty(hash: dict, key: str, fallback):
+    return hash.get(key) or fallback
+
+
 def get_title_and_authors_for_pubmed_id(pmid):
-    """ Given a PMID, return that PMID's (title, [authors]). """
+    """Given a PMID, return that PMID's (title, [authors])."""
 
     try:
         j_url = (

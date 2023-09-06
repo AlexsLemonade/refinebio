@@ -15,7 +15,7 @@
 cd /home/ubuntu || exit
 
 # Install and configure Nginx.
-cat <<"EOF" > nginx.conf
+cat <<"EOF" >nginx.conf
 ${nginx_config}
 EOF
 apt-get update -y
@@ -107,7 +107,7 @@ echo "
     size 20k
     daily
     maxage 3
-}" >> /etc/logrotate.conf
+}" >>/etc/logrotate.conf
 echo "
 /tmp/access.log {
     missingok
@@ -116,10 +116,10 @@ echo "
     size 20k
     daily
     maxage 3
-}" >> /etc/logrotate.conf
+}" >>/etc/logrotate.conf
 
 # Install our environment variables
-cat <<"EOF" > environment
+cat <<"EOF" >environment
 ${api_environment}
 EOF
 
@@ -135,36 +135,40 @@ docker pull "${dockerhub_repo}/${api_docker_image}"
 # These database values are created after TF
 # is run, so we have to pass them in programatically
 docker run \
-       --env-file environment \
-       -e DATABASE_HOST="${database_host}" \
-       -e DATABASE_NAME="${database_name}" \
-       -e DATABASE_USER="${database_user}" \
-       -e DATABASE_PASSWORD="${database_password}" \
-       -e ELASTICSEARCH_HOST="${elasticsearch_host}" \
-       -e ELASTICSEARCH_PORT="${elasticsearch_port}" \
-       -v "$STATIC_VOLUMES":/tmp/www/static \
-       --log-driver=awslogs \
-       --log-opt awslogs-region="${region}" \
-       --log-opt awslogs-group="${log_group}" \
-       --log-opt awslogs-stream="${log_stream}" \
-       -p 8081:8081 \
-       --name=dr_api \
-       -it -d "${dockerhub_repo}/${api_docker_image}" /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+    --detach \
+    --env DATABASE_HOST="${database_host}" \
+    --env DATABASE_NAME="${database_name}" \
+    --env DATABASE_PASSWORD="${database_password}" \
+    --env DATABASE_USER="${database_user}" \
+    --env ELASTICSEARCH_HOST="${elasticsearch_host}" \
+    --env ELASTICSEARCH_PORT="${elasticsearch_port}" \
+    --env-file environment \
+    --interactive \
+    --log-driver awslogs \
+    --log-opt awslogs-group="${log_group}" \
+    --log-opt awslogs-region="${region}" \
+    --log-opt awslogs-stream="${log_stream}" \
+    --name dr_api \
+    --tty \
+    --volume "$STATIC_VOLUMES":/tmp/www/static \
+    --publish 8081:8081 \
+    "${dockerhub_repo}/${api_docker_image}" \
+    /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
 # Nuke and rebuild the search index. It shouldn't take too long.
 sleep 30
-docker exec dr_api python3 manage.py search_index --delete -f;
-docker exec dr_api python3 manage.py search_index --rebuild -f;
-docker exec dr_api python3 manage.py search_index --populate -f;
+docker exec dr_api python3 manage.py search_index --delete -f
+docker exec dr_api python3 manage.py search_index --rebuild -f
+docker exec dr_api python3 manage.py search_index --populate -f
 
 # Let's use this instance to call the populate command every twenty minutes.
-crontab -l > tempcron
+crontab -l >tempcron
 # echo new cron into cron file
 # TODO: stop logging this to api_cron.log once we figure out why it
 # hasn't been working.
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec dr_api python3 manage.py update_es_index >> /var/log/api_cron.log 2>&1" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec dr_api python3 manage.py update_es_index >> /var/log/api_cron.log 2>&1" >>tempcron
 # Post a summary of downloads every Monday at 12:00 UTC
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n0 12 * * MON docker exec dr_api python3 manage.py post_downloads_summary >> /var/log/api_cron.log 2>&1" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n0 12 * * MON docker exec dr_api python3 manage.py post_downloads_summary >> /var/log/api_cron.log 2>&1" >>tempcron
 # install new cron file
 crontab tempcron
 rm tempcron

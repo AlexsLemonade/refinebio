@@ -11,9 +11,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="surveyjob", name="num_retries", field=models.IntegerField(default=0),
+            model_name="surveyjob",
+            name="num_retries",
+            field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name="surveyjob", name="retried", field=models.BooleanField(default=False),
+            model_name="surveyjob",
+            name="retried",
+            field=models.BooleanField(default=False),
         ),
     ]

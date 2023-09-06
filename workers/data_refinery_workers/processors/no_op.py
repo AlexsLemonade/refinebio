@@ -22,8 +22,7 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """A processor which takes externally-processed sample data and makes it smashable.
-    """
+    """A processor which takes externally-processed sample data and makes it smashable."""
     try:
         original_file = job_context["original_files"][0]
         sample0 = job_context["samples"][0]
@@ -167,7 +166,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
 
 def _convert_genes(job_context: Dict) -> Dict:
-    """ Dispatches to the appropriate gene converter"""
+    """Dispatches to the appropriate gene converter"""
 
     sample0 = job_context["samples"][0]
     if sample0.manufacturer == "ILLUMINA":
@@ -177,7 +176,7 @@ def _convert_genes(job_context: Dict) -> Dict:
 
 
 def _convert_affy_genes(job_context: Dict) -> Dict:
-    """ Convert to Ensembl genes if we can"""
+    """Convert to Ensembl genes if we can"""
 
     if "internal_accession" not in job_context or not job_context["internal_accession"]:
         error_msg = (
@@ -258,7 +257,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
 
 
 def _convert_illumina_genes(job_context: Dict) -> Dict:
-    """ Convert to Ensembl genes if we can"""
+    """Convert to Ensembl genes if we can"""
 
     all_databases = {
         "HOMO_SAPIENS": [
@@ -267,7 +266,11 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
             "illuminaHumanv3",
             "illuminaHumanv4",
         ],
-        "MUS_MUSCULUS": ["illuminaMousev1", "illuminaMousev1p1", "illuminaMousev2",],
+        "MUS_MUSCULUS": [
+            "illuminaMousev1",
+            "illuminaMousev1p1",
+            "illuminaMousev2",
+        ],
         "RATTUS_NORVEGICUS": ["illuminaRatv1"],
     }
 
@@ -362,7 +365,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
 
 
 def _create_result(job_context: Dict) -> Dict:
-    """ Create the actual Result object"""
+    """Create the actual Result object"""
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
@@ -408,7 +411,7 @@ def _create_result(job_context: Dict) -> Dict:
 
 
 def check_output_quality(output_file_path: str):
-    """ Verify our output file meets spec """
+    """Verify our output file meets spec"""
     try:
         with open(output_file_path, "r") as tsv_in:
             tsv_in = csv.reader(tsv_in, delimiter="\t")
