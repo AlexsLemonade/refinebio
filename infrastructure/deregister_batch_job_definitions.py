@@ -1,4 +1,5 @@
 import os
+import time
 
 import boto3
 
@@ -35,3 +36,5 @@ for job_name in sorted(job_names):
         # There can be multiple revisions per job definition. We want them all gone.
         for job_definition in job_definitions:
             batch.deregister_job_definition(jobDefinition=job_definition["jobDefinitionArn"])
+
+        time.sleep(1)
