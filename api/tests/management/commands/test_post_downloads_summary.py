@@ -10,23 +10,37 @@ from data_refinery_common.models import Dataset, DatasetAnnotation
 
 class DownloadsPostTestCase(TestCase):
     @patch("data_refinery_api.management.commands.post_downloads_summary.requests.post")
+    def test_post_download_summary_no_downloads(self, requests_post):
+        Dataset(email_address="test@gmail.com", is_processed=True).save()
+
+        post_downloads_summary(7, "ccdl-general-test")
+        json = requests_post.mock_calls[0][2]["json"]
+
+        self.assertEqual("There were no downloads in the last 7 days.", json["text"])
+
+    @patch("data_refinery_api.management.commands.post_downloads_summary.requests.post")
     def test_post_download_summary_one_download(self, requests_post):
         dataset = Dataset(email_address="test@gmail.com", is_processed=True)
         dataset.save()
         DatasetAnnotation(dataset=dataset, data={"location": "Testyville, TSA"}).save()
 
+        # Shouldn't be counted with no annotation.
+        Dataset(email_address="test_nd@gmail.com", is_processed=True).save()
+
         post_downloads_summary(7, "ccdl-general-test")
         json = requests_post.mock_calls[0][2]["json"]
 
         self.assertEqual(
-            "In the last 7 days, 1 user downloaded 1 dataset from 1 location.", json["text"]
+            "In the last 7 days, 1 user downloaded 1 dataset from 1 location.",
+            json["text"],
         )
         self.assertEqual(
             "\n".join(("*New users*", "test@gmail.com | 1 download from Testyville, TSA")),
             json["blocks"][1]["text"]["text"],
         )
         self.assertEqual(
-            "\n".join(("*Top 1 country*", "TSA: 1 download")), json["blocks"][2]["text"]["text"]
+            "\n".join(("*Top 1 country*", "TSA: 1 download")),
+            json["blocks"][2]["text"]["text"],
         )
 
     @patch("data_refinery_api.management.commands.post_downloads_summary.requests.post")
@@ -47,7 +61,8 @@ class DownloadsPostTestCase(TestCase):
         json = requests_post.mock_calls[0][2]["json"]
 
         self.assertEqual(
-            "In the last 7 days, 2 users downloaded 3 datasets from 2 locations.", json["text"]
+            "In the last 7 days, 2 users downloaded 3 datasets from 2 locations.",
+            json["text"],
         )
         self.assertEqual(
             "\n".join(
@@ -89,7 +104,8 @@ class DownloadsPostTestCase(TestCase):
         json = requests_post.mock_calls[0][2]["json"]
 
         self.assertEqual(
-            "In the last 7 days, 4 users downloaded 8 datasets from 4 locations.", json["text"]
+            "In the last 7 days, 4 users downloaded 8 datasets from 4 locations.",
+            json["text"],
         )
         self.assertEqual(
             "\n".join(
@@ -132,7 +148,8 @@ class DownloadsPostTestCase(TestCase):
         post_downloads_summary(7, "ccdl-general-test")
         json = requests_post.mock_calls[0][2]["json"]
         self.assertEqual(
-            "In the last 7 days, 1 user downloaded 1 dataset from 1 location.", json["text"]
+            "In the last 7 days, 1 user downloaded 1 dataset from 1 location.",
+            json["text"],
         )
 
     @patch("data_refinery_api.management.commands.post_downloads_summary.requests.post")
