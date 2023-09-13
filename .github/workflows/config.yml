@@ -1,4 +1,4 @@
-name: refine.bio CI/CD
+name: CI/CD
 
 on: push
 
