@@ -98,7 +98,7 @@ def get_species_detail_by_assembly(assembly: str, division: str) -> str:
                 header = row
             else:
                 row_dict = {}
-                for (index, key) in enumerate(header):
+                for index, key in enumerate(header):
                     row_dict[key] = row[index]
 
                 if row_dict["assembly"] == assembly:
@@ -362,6 +362,61 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         return True
 
+    @staticmethod
+    def discover_division_species(
+        ensembl_division: str = "Ensembl", organism_name: str = None, strain_mapping: dict = None
+    ):
+        # The main division has a different base URL for its REST API.
+        if ensembl_division == "Ensembl":
+            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
+            all_species = r.json()["species"]
+        else:
+            formatted_division_url = DIVISION_URL_TEMPLATE.format(division=ensembl_division)
+            r = utils.requests_retry_session().get(formatted_division_url)
+            all_species = r.json()
+
+        # if no mapping find the specific species
+        if not strain_mapping and organism_name:
+            matches = [s for s in all_species if s["name"] == organism_name]
+            return matches[:1]
+
+        # This will exist for fungi or bacteria
+        if strain_mapping:
+            organism_strain_name = f"{organism_name}_{strain_mapping['strain'].lower()}"
+            assembly_matches = list(
+                filter(lambda s: s["assembly_name"] == strain_mapping["assembly"], all_species)
+            )
+
+            if len(assembly_matches) != 1:
+                # Currently we are unsure if there is always a 1:1 relationship
+                # between organism strain and assembly. So we can check if there
+                # is one in the entire division. Otherwise we throw an error to
+                # determine which species to use.
+                logger.error(
+                    "There were multiple matches for {} with assembly {}.",
+                    organism_name,
+                    strain_mapping["assembly"],
+                    matches=len(assembly_matches),
+                    organism_name=organism_strain_name,
+                    ensembl_division=ensembl_division,
+                    assembly=strain_mapping["assembly"],
+                )
+                return []
+
+            # Fungi and Bacteria have a strain identifier in their
+            # names. This is different than everything else,
+            # so we're going to handle this special case by
+            # just overwriting this. This is okay because we
+            # just have to discover one species for the
+            # organism, and then our strain mapping will make
+            # sure we use the correct strain and assembly.
+            assembly_matches[0]["name"] = organism_strain_name
+            # return the bacterium or fungus
+            return assembly_matches
+
+        # return the entire division
+        return all_species
+
     def discover_species(self):
         ensembl_division = SurveyJobKeyValue.objects.get(
             survey_job_id=self.survey_job.id, key__exact="ensembl_division"
@@ -382,6 +437,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             organism_name = None
 
         strain_mapping = None
+
         if ensembl_division in ["EnsemblFungi", "EnsemblBacteria"]:
             if organism_name is None:
                 logger.error(
@@ -403,51 +459,15 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                     )
                     return []
 
-        # The main division has a different base URL for its REST API.
-        if ensembl_division == "Ensembl":
-            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
+        discovered_species = TranscriptomeIndexSurveyor.discover_division_species(
+            ensembl_division, organism_name, strain_mapping
+        )
 
-            # Yes I'm aware that specieses isn't a word. However I need to
-            # distinguish between a singlular species and multiple species.
-            specieses = r.json()["species"]
-        else:
-            formatted_division_url = DIVISION_URL_TEMPLATE.format(division=ensembl_division)
-            r = utils.requests_retry_session().get(formatted_division_url)
-            specieses = r.json()
-
-        all_new_species = []
-        if organism_name:
-            if strain_mapping:
-                organism_name = organism_name + "_" + strain_mapping["strain"].lower()
-
-            for species in specieses:
-                if (
-                    ensembl_division in ["EnsemblFungi", "EnsemblBacteria"]
-                    and organism_name in species["name"]
-                ):
-                    # Fungi and Bacteria have a strain identifier in their
-                    # names. This is different than everything else,
-                    # so we're going to handle this special case by
-                    # just overwriting this. This is okay because we
-                    # just have to discover one species for the
-                    # organism, and then our strain mapping will make
-                    # sure we use the correct strain and assembly.
-                    species["name"] = organism_name
-
-                    all_new_species.append(self._generate_files(species))
-                    break
-                elif "name" in species and organism_name == species["name"]:
-                    all_new_species.append(self._generate_files(species))
-                    break
-        else:
-            for species in specieses:
-                all_new_species.append(self._generate_files(species))
-
-        if len(all_new_species) == 0:
+        if len(discovered_species) == 0:
             logger.error(
                 "Unable to find any species!",
                 ensembl_division=ensembl_division,
                 organism_name=organism_name,
             )
 
-        return all_new_species
+        return list(map(self._generate_files, discovered_species))
