@@ -125,10 +125,12 @@ update_docker_image() {
 
 # Default Docker registry.
 if [ -z "$DOCKERHUB_REPO" ]; then
-    export DOCKERHUB_REPO="ccdlstaging"
+    DOCKERHUB_REPO="ccdlstaging"
+    export DOCKERHUB_REPO
 fi
 
 # Defaults to commit hash value for if we're not running in the cloud.
 if [ -z "$SYSTEM_VERSION" ]; then
     SYSTEM_VERSION="$(get_branch_hash)"
+    export SYSTEM_VERSION
 fi
