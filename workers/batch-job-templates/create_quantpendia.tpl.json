@@ -56,8 +56,7 @@
         "secrets": [
             {"name": "DJANGO_SECRET_KEY", "valueFrom": "${{DJANGO_SECRET_KEY_ARN}}"},
             {"name": "DATABASE_PASSWORD", "valueFrom": "${{DATABASE_PASSWORD_ARN}}"},
-            {"name": "RAVEN_DSN", "valueFrom": "${{RAVEN_DSN_ARN}}"},
-            {"name": "RAVEN_DSN_API", "valueFrom": "${{RAVEN_DSN_API_ARN}}"}
+            {"name": "SENTRY_DSN", "valueFrom": "${{SENTRY_DSN_ARN}}"}
         ],
         "mountPoints": [
             {

@@ -177,7 +177,7 @@ def post_downloads_summary(days, channel, top_countries=5):
 
     # Post to Slack.
     requests.post(
-        settings.ENGAGEMENTBOT_WEBHOOK,
+        settings.SLACK_WEBHOOK_URL,
         json={
             "username": "EngagementBot",
             "icon_emoji": ":halal:",

@@ -4,11 +4,11 @@
 
 variable "default_tags" {
   default = {
-    team = "engineering"
+    team    = "engineering"
     project = "refine.bio"
   }
   description = "Default resource tags"
-  type = map(string)
+  type        = map(string)
 }
 
 # Annoyingly, TF can't have computed variables (${env.USER})
@@ -41,6 +41,10 @@ variable "region" {
 variable "host_ip" {
   # This will be overwritten.
   default = "127.0.0.1"
+}
+
+variable "ssh_public_key" {
+  default = "MISSING_VALUE"
 }
 
 variable "database_user" {
@@ -158,11 +162,7 @@ variable "spot_fleet_capacity" {
 
 # AWS Secrets manager won't allow these to be empty, so we make them
 # "None" and check for that string in the settings,
-variable "raven_dsn" {
-  default = "None"
-}
-
-variable "raven_dsn_api" {
+variable "sentry_dsn" {
   default = "None"
 }
 
@@ -194,7 +194,7 @@ variable "num_workers" {
 }
 
 variable "batch_use_on_demand_instances" {
-  type = bool
+  type    = bool
   default = false
 }
 
@@ -210,7 +210,7 @@ variable "elasticsearch_port" {
   default = "80"
 }
 
-variable "engagementbot_webhook" {
+variable "slack_webhook_url" {
   # Only necessary for TF, but will be overwritten.
   default = "DEFAULT"
 }
@@ -235,209 +235,207 @@ variable "max_accessions_gathered_per_run" {
 output "environment_variables" {
   value = [
     {
-      name = "AWS_REGION"
+      name  = "AWS_REGION"
       value = var.region
     },
     {
-      name = "USER"
+      name  = "USER"
       value = var.user
     },
     {
-      name = "STAGE"
+      name  = "STAGE"
       value = var.stage
     },
     {
-      name = "WORKER_ROLE_ARN"
+      name  = "SSH_PUBLIC_KEY"
+      value = var.ssh_public_key
+    },
+    {
+      name  = "WORKER_ROLE_ARN"
       value = aws_iam_role.data_refinery_worker.arn
     },
     {
-      name = "DJANGO_DEBUG"
+      name  = "DJANGO_DEBUG"
       value = var.django_debug
     },
     {
-      name = "DJANGO_SECRET_KEY"
+      name  = "DJANGO_SECRET_KEY"
       value = var.django_secret_key
     },
     {
-      name = "DJANGO_SECRET_KEY_ARN"
+      name  = "DJANGO_SECRET_KEY_ARN"
       value = aws_secretsmanager_secret.django_secret_key.arn
     },
     {
-      name = "DATABASE_NAME"
+      name  = "DATABASE_NAME"
       value = aws_db_instance.postgres_db.db_name
     },
     {
-      name = "DATABASE_HOST"
+      name  = "DATABASE_HOST"
       value = aws_instance.pg_bouncer.private_ip
     },
     {
       # We want to use the private IP from everywhere except wherever
       # deployment is happening, so we also need to expose this IP.
-      name = "DATABASE_PUBLIC_HOST"
+      name  = "DATABASE_PUBLIC_HOST"
       value = aws_instance.pg_bouncer.public_ip
     },
     {
-      name = "RDS_HOST"
+      name  = "RDS_HOST"
       value = aws_db_instance.postgres_db.address
     },
     {
-      name = "DATABASE_USER"
+      name  = "DATABASE_USER"
       value = var.database_user
     },
     {
-      name = "DATABASE_PASSWORD"
+      name  = "DATABASE_PASSWORD"
       value = var.database_password
     },
     {
-      name = "DATABASE_PASSWORD_ARN"
+      name  = "DATABASE_PASSWORD_ARN"
       value = aws_secretsmanager_secret.database_password.arn
     },
     {
-      name = "DATABASE_PORT"
+      name  = "DATABASE_PORT"
       value = var.database_port
     },
     {
-      name = "DATABASE_HIDDEN_PORT"
+      name  = "DATABASE_HIDDEN_PORT"
       value = var.database_hidden_port
     },
     {
-      name = "DATABASE_TIMEOUT"
+      name  = "DATABASE_TIMEOUT"
       value = var.database_timeout
     },
     {
-      name = "API_HOST"
+      name  = "API_HOST"
       value = aws_eip.data_refinery_api_ip.public_ip
     },
     {
-      name = "ELASTICSEARCH_HOST"
+      name  = "ELASTICSEARCH_HOST"
       value = aws_elasticsearch_domain.es.endpoint
     },
     {
-      name = "ELASTICSEARCH_PORT"
+      name  = "ELASTICSEARCH_PORT"
       value = var.elasticsearch_port
     },
     {
-      name = "RUNNING_IN_CLOUD"
+      name  = "RUNNING_IN_CLOUD"
       value = var.running_in_cloud
     },
     {
-      name = "LOG_LEVEL"
+      name  = "LOG_LEVEL"
       value = var.log_level
     },
     {
-      name = "USE_S3"
+      name  = "USE_S3"
       value = var.use_s3
     },
     {
-      name = "RAVEN_DSN"
-      value = var.raven_dsn
+      name  = "SENTRY_DSN"
+      value = var.sentry_dsn
     },
+
     {
-      name = "RAVEN_DSN_API"
-      value = var.raven_dsn_api
+      name  = "SENTRY_DSN_ARN"
+      value = aws_secretsmanager_secret.sentry_dsn.arn
     },
+
     {
-      name = "RAVEN_DSN_ARN"
-      value = aws_secretsmanager_secret.raven_dsn.arn
-    },
-    {
-      name = "RAVEN_DSN_API_ARN"
-      value = aws_secretsmanager_secret.raven_dsn_api.arn
-    },
-    {
-      name = "BATCH_EXECUTION_ROLE_ARN"
+      name  = "BATCH_EXECUTION_ROLE_ARN"
       value = aws_iam_role.data_refinery_batch_execution.arn
     },
     {
-      name = "S3_BUCKET_NAME"
+      name  = "S3_BUCKET_NAME"
       value = aws_s3_bucket.data_refinery_bucket.id
     },
     {
-      name = "S3_COMPENDIA_BUCKET_NAME"
+      name  = "S3_COMPENDIA_BUCKET_NAME"
       value = aws_s3_bucket.data_refinery_compendia_bucket.id
     },
     {
-      name = "S3_RESULTS_BUCKET_NAME"
+      name  = "S3_RESULTS_BUCKET_NAME"
       value = aws_s3_bucket.data_refinery_results_bucket.id
     },
     {
-      name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
+      name  = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
       value = aws_s3_bucket.data_refinery_transcriptome_index_bucket.id
     },
     {
-      name = "S3_QN_TARGET_BUCKET_NAME"
+      name  = "S3_QN_TARGET_BUCKET_NAME"
       value = aws_s3_bucket.data_refinery_qn_target_bucket.id
     },
     {
-      name = "LOCAL_ROOT_DIR"
+      name  = "LOCAL_ROOT_DIR"
       value = var.local_root_dir
     },
     {
-      name = "DOCKERHUB_REPO"
+      name  = "DOCKERHUB_REPO"
       value = var.dockerhub_repo
     },
     {
-      name = "DOWNLOADERS_DOCKER_IMAGE"
+      name  = "DOWNLOADERS_DOCKER_IMAGE"
       value = var.downloaders_docker_image
     },
     {
-      name = "TRANSCRIPTOME_DOCKER_IMAGE"
+      name  = "TRANSCRIPTOME_DOCKER_IMAGE"
       value = var.transcriptome_docker_image
     },
     {
-      name = "SALMON_DOCKER_IMAGE"
+      name  = "SALMON_DOCKER_IMAGE"
       value = var.salmon_docker_image
     },
     {
-      name = "AFFYMETRIX_DOCKER_IMAGE"
+      name  = "AFFYMETRIX_DOCKER_IMAGE"
       value = var.affymetrix_docker_image
     },
     {
-      name = "ILLUMINA_DOCKER_IMAGE"
+      name  = "ILLUMINA_DOCKER_IMAGE"
       value = var.illumina_docker_image
     },
     {
-      name = "NO_OP_DOCKER_IMAGE"
+      name  = "NO_OP_DOCKER_IMAGE"
       value = var.no_op_docker_image
     },
     {
-      name = "FOREMAN_DOCKER_IMAGE"
+      name  = "FOREMAN_DOCKER_IMAGE"
       value = var.foreman_docker_image
     },
     {
-      name = "SMASHER_DOCKER_IMAGE"
+      name  = "SMASHER_DOCKER_IMAGE"
       value = var.smasher_docker_image
     },
     {
-      name = "API_DOCKER_IMAGE"
+      name  = "API_DOCKER_IMAGE"
       value = var.api_docker_image
     },
     {
-      name = "MAX_JOBS_PER_NODE"
+      name  = "MAX_JOBS_PER_NODE"
       value = var.max_jobs_per_node
     },
     {
-      name = "MAX_DOWNLOADER_JOBS_PER_NODE"
+      name  = "MAX_DOWNLOADER_JOBS_PER_NODE"
       value = var.max_downloader_jobs_per_node
     },
     {
-      name = "ENGAGEMENTBOT_WEBHOOK"
-      value = var.engagementbot_webhook
+      name  = "SLACK_WEBHOOK_URL"
+      value = var.slack_webhook_url
     },
     {
-      name = "REFINEBIO_JOB_QUEUE_WORKERS_NAMES"
+      name  = "REFINEBIO_JOB_QUEUE_WORKERS_NAMES"
       value = module.batch.data_refinery_workers_queue_names
     },
     {
-      name = "REFINEBIO_JOB_QUEUE_SMASHER_NAME"
+      name  = "REFINEBIO_JOB_QUEUE_SMASHER_NAME"
       value = module.batch.data_refinery_smasher_queue_name
     },
     {
-      name = "REFINEBIO_JOB_QUEUE_COMPENDIA_NAME"
+      name  = "REFINEBIO_JOB_QUEUE_COMPENDIA_NAME"
       value = module.batch.data_refinery_compendia_queue_name
     },
     {
-      name = "REFINEBIO_JOB_QUEUE_ALL_NAMES"
+      name  = "REFINEBIO_JOB_QUEUE_ALL_NAMES"
       value = module.batch.data_refinery_all_queue_names
     },
   ]

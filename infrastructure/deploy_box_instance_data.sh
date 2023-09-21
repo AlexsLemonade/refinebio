@@ -34,11 +34,11 @@
 
 
 # Finally, go into the Github Actions's Secrets for the refinebio repo.
-# Click 'Add Secret' and set the name to DEPLOY_IP_ADDRESS and the value to the
+# Click 'Add Secret' and set the name to DEPLOY_BOX_IP and the value to the
 # IP address of the EC2 instance you created.
 
 # Also, if you want to be notified on slack after the deploy finishes, you can add
-# another environment variable named ENGAGEMENTBOT_WEBHOOK with the url to a slack webhook.
+# another environment variable named SLACK_WEBHOOK_URL with the url to a slack webhook.
 
 # Now any deploys that are triggered will run on the instance you created.
 

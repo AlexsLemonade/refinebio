@@ -131,22 +131,28 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
+ENVIRONMENT = get_env_variable_gracefully("ENVIRONMENT")
+SYSTEM_VERSION = get_env_variable_gracefully("SYSTEM_VERSION")
 
-# Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
+# Setting the RAVEN_CONFIG when SENTRY_DSN isn't set will cause the
 # following warning:
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-RAVEN_DSN = get_env_variable_gracefully("RAVEN_DSN", None)
+SENTRY_DSN = get_env_variable_gracefully("SENTRY_DSN", None)
 
 # AWS Secrets manager will not let us store an empty string.
-if RAVEN_DSN == "None":
-    RAVEN_DSN = None
+if SENTRY_DSN == "None":
+    SENTRY_DSN = None
 
-if RAVEN_DSN:
-    RAVEN_CONFIG = {"dsn": RAVEN_DSN}
+if SENTRY_DSN:
+    RAVEN_CONFIG = {
+        "dsn": SENTRY_DSN,
+        "environment": ENVIRONMENT,
+        "release": SYSTEM_VERSION,
+    }
 else:
-    # Preven raven from logging about how it's not configured...
+    # Prevent raven from logging about how it's not configured...
     import logging
 
     raven_logger = logging.getLogger("raven.contrib.django.client.DjangoClient")
@@ -155,9 +161,9 @@ else:
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
 # EngagementBot
-ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
-if ENGAGEMENTBOT_WEBHOOK == "DEFAULT":
-    ENGAGEMENTBOT_WEBHOOK = None
+SLACK_WEBHOOK_URL = get_env_variable_gracefully("SLACK_WEBHOOK_URL")
+if SLACK_WEBHOOK_URL == "DEFAULT":
+    SLACK_WEBHOOK_URL = None
 
 MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
 MAX_DOWNLOADER_JOBS_PER_NODE = int(get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE"))

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $ENGAGEMENTBOT_WEBHOOK == "" ]]; then
-    echo "No webhook url. Set ENGAGEMENTBOT_WEBHOOK in the environment variables if you want to be notified of deploys on slack"
+if [[ $SLACK_WEBHOOK_URL == "" ]]; then
+    echo "No webhook url. Set SLACK_WEBHOOK_URL in the environment variables if you want to be notified of deploys on slack"
     exit 0
 fi
 
@@ -26,4 +26,4 @@ escapedText=$(echo "$text" | sed 's/"/\"/g' | sed "s/'/\'/g")
 
 json="{\"channel\": \"$channel\", \"username\":\"$username\", \"icon_emoji\":\":tada:\", \"attachments\":[{\"color\":\"danger\" , \"text\": \"$escapedText\"}]}"
 
-curl -s -d "payload=$json" "$ENGAGEMENTBOT_WEBHOOK"
+curl -s -d "payload=$json" "$SLACK_WEBHOOK_URL"

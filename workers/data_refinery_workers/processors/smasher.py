@@ -394,7 +394,7 @@ def _notify_slack_failed_dataset(job_context: Dict):
     dataset_url = "https://www.refine.bio/dataset/" + str(job_context["dataset"].id)
 
     requests.post(
-        settings.ENGAGEMENTBOT_WEBHOOK,
+        settings.SLACK_WEBHOOK_URL,
         json={
             "username": "EngagementBot",
             "icon_emoji": ":halal:",

@@ -5,8 +5,7 @@
 # debugging. Long term we may want to remove this entirely.
 resource "aws_key_pair" "data_refinery" {
   key_name = "data-refinery-key-${var.user}-${var.stage}"
-  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEAsg062YxUo1ti8tT2gR63JVHpLI5jkxkADwEeVb79O"
-
+  public_key = var.ssh_public_key
 }
 
 ##

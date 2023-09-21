@@ -255,8 +255,7 @@ EOF
       "Resource": [
         "${aws_secretsmanager_secret.django_secret_key.arn}",
         "${aws_secretsmanager_secret.database_password.arn}",
-        "${aws_secretsmanager_secret.raven_dsn.arn}",
-        "${aws_secretsmanager_secret.raven_dsn_api.arn}"
+        "${aws_secretsmanager_secret.sentry_dsn.arn}"
       ]
     }
   ]
