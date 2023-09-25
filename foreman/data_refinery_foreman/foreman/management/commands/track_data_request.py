@@ -1,19 +1,21 @@
+import tempfile
 from collections import Counter
 
 from django.core.management.base import BaseCommand
 
-import requests
+import boto3
+import botocore
 
-from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import DownloaderJob, Experiment, ProcessorJob, SurveyJob
+from data_refinery_common.utils import parse_s3_url
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "--source-url",
+            "--file",
             type=str,
-            help="The experiment accessions source file URL",
+            help="A file listing accession codes. s3:// URLs only are accepted.",
         )
 
     def handle(self, *args, **options):
@@ -29,7 +31,8 @@ class Command(BaseCommand):
         samples_available = 0
         samples_available_by_source = Counter()
 
-        for accession in self.get_accessions(options["source_url"]):
+        accessions = self.get_accessions(options["file"])
+        for accession in accessions or ():
             experiment = Experiment.objects.filter(accession_code=accession).first()
             if not experiment:
                 continue
@@ -95,15 +98,29 @@ class Command(BaseCommand):
             output.append("")
 
             output.append(f"Total jobs: {total_jobs_created}")
-        else:
+        elif accessions is not None:
             output.append("No experiments found")
 
-        print("\n".join(output))
+        if output:
+            print("\n".join(output))
 
     @staticmethod
-    def get_accessions(url):
-        """Generates source experiment accessions."""
-        return (line.strip() for line in requests.get(url).text.split("\n") if line.strip())
+    def get_accessions(s3_url):
+        """Gets source experiment accessions."""
+        if not s3_url.startswith("s3://"):
+            print("Please provide a valid S3 URL")
+            return None
+
+        with tempfile.TemporaryFile() as tmp_file:
+            bucket, key = parse_s3_url(s3_url)
+            try:
+                boto3.resource("s3").meta.client.download_fileobj(bucket, key, tmp_file)
+            except botocore.exceptions.ClientError as e:
+                if e.response["Error"]["Code"] == "404":
+                    print("The S3 file does not exist.")
+                    return None
+
+            return (line.strip() for line in tmp_file.readlines() if line.strip())
 
     @staticmethod
     def get_downloader_jobs(sample_accessions):

@@ -47,7 +47,12 @@ class TestTrackDataRequest(TestCase):
             f"data_refinery_foreman.foreman.management.commands.track_data_request.Command.get_accessions",
             return_value=experiments,
         ):
-            call_command("track_data_request", (), **{"source_url": "https://some.url"})
+            call_command("track_data_request", (), **{"file": "s3://some/file.txt"})
+
+    @mock.patch("builtins.print")
+    def test_invalid_file(self, output):
+        call_command("track_data_request", (), **{"file": "s4://some/file.txt"})
+        output.assert_called_with("Please provide a valid S3 URL")
 
     @mock.patch("builtins.print")
     def test_no_experiments(self, output):
