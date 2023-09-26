@@ -21,6 +21,9 @@ if [ ! -d "$volume_directory" ]; then
 fi
 chmod -R a+rwX "$volume_directory"
 
+. ./scripts/common.sh
+
+./scripts/prepare_image.sh -i base -s common
 ./scripts/prepare_image.sh -i foreman -s foreman
 
 . ./scripts/common.sh
@@ -33,7 +36,8 @@ docker run \
     --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
     --env-file foreman/environments/local \
     --interactive \
+    --platform linux/amd64 \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
-    "$DOCKERHUB_REPO/dr_foreman" \
+    "$DOCKERHUB_REPO/dr_foreman:$SYSTEM_VERSION" \
     python3 manage.py "$@"
