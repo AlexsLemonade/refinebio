@@ -131,6 +131,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
+APP_NAME = "Refine.bio Workers"
 ENVIRONMENT = get_env_variable_gracefully("ENVIRONMENT")
 SYSTEM_VERSION = get_env_variable_gracefully("SYSTEM_VERSION")
 
@@ -148,7 +149,7 @@ if SENTRY_DSN == "None":
 if SENTRY_DSN:
     RAVEN_CONFIG = {
         "dsn": SENTRY_DSN,
-        "environment": ENVIRONMENT,
+        "environment": "-".join((ENVIRONMENT, *(APP_NAME.replace(".", "").lower().split()))),
         "release": SYSTEM_VERSION,
     }
 else:

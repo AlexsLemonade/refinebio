@@ -146,6 +146,7 @@ CACHES = {
     }
 }
 
+APP_NAME = "Refine.bio Common"
 ENVIRONMENT = get_env_variable_gracefully("ENVIRONMENT")
 SYSTEM_VERSION = get_env_variable_gracefully("SYSTEM_VERSION")
 
@@ -160,10 +161,10 @@ SENTRY_DSN = get_env_variable_gracefully("SENTRY_DSN", None)
 if SENTRY_DSN == "None":
     SENTRY_DSN = None
 
-if SENTRY_DSN != "not set":
+if SENTRY_DSN:
     RAVEN_CONFIG = {
         "dsn": SENTRY_DSN,
-        "environment": ENVIRONMENT,
+        "environment": "-".join((ENVIRONMENT, *(APP_NAME.replace(".", "").lower().split()))),
         "release": SYSTEM_VERSION,
     }
 else:

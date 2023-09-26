@@ -198,6 +198,7 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {},
 }
 
+APP_NAME = "Refine.bio API"
 ENVIRONMENT = get_env_variable_gracefully("ENVIRONMENT")
 SYSTEM_VERSION = get_env_variable_gracefully("SYSTEM_VERSION")
 
@@ -212,10 +213,10 @@ SENTRY_DSN = get_env_variable_gracefully("SENTRY_DSN", None)
 if SENTRY_DSN == "None":
     SENTRY_DSN = None
 
-if SENTRY_DSN != "not set":
+if SENTRY_DSN:
     RAVEN_CONFIG = {
         "dsn": SENTRY_DSN,
-        "environment": ENVIRONMENT,
+        "environment": "-".join((ENVIRONMENT, *(APP_NAME.replace(".", "").lower().split()))),
         "release": SYSTEM_VERSION,
         # Only send 5% of errors for the API, since we aren't going to
         # be interested in any single one.
