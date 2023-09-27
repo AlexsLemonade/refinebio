@@ -1,8 +1,9 @@
 import csv
 import re
-import urllib
 from abc import ABC
 from typing import Dict, List
+
+import requests
 
 from data_refinery_common.enums import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -61,14 +62,10 @@ def get_strain_mapping_for_organism(
     upper_name = species_name.upper()
     with open(config_file) as csvfile:
         reader = csv.DictReader(csvfile)
-        for row in reader:
-            if row["organism"] == upper_name:
-                return row
-
-    return None
+        return utils.find_first_dict("organism", upper_name, reader)
 
 
-def get_species_detail_by_assembly(assembly: str, division: str) -> str:
+def get_species_detail_by_assembly(assembly: str, division: str):
     """Returns additional detail about a species given an assembly and a division.
 
     These details are necessary because the FTP directory for
@@ -76,36 +73,22 @@ def get_species_detail_by_assembly(assembly: str, division: str) -> str:
     paths that can only be determined by parsing this file. I found
     this out via the Ensembl dev mailing list.
     """
-    bacteria_species_detail_url = SPECIES_DETAIL_URL_TEMPLATE.format(
+    species_detail_url = SPECIES_DETAIL_URL_TEMPLATE.format(
         short_division=DIVISION_LOOKUP[division], division=division
     )
 
-    urllib.request.urlcleanup()
+    with requests.Session():
+        species_detail_request = session.get(species_detail_url)
+        charset = species_detail_request.headers.get("charset", "utf-8")
+        species_detail_content = species_detail_request.content.decode(charset)
 
-    with urllib.request.urlopen(bacteria_species_detail_url) as request:
-        header = None
+        # Ths file may be malformed.
+        # Here we remove the leading `#` character in order to parse this as a TSV.
+        lines = species_detail_content.splitlines()
+        lines[0] = lines[0].replace("#", "", 1)
 
-        for line in request:
-            # Generally bad to roll your own CSV parser, but some
-            # encoding issue seemed to have been breaking the csv
-            # parser module and this works.
-            try:
-                row = line.decode("utf-8").strip().split("\t")
-            except UnicodeDecodeError:
-                row = line.decode("latin").strip().split("\t")
-
-            if not header:
-                header = row
-            else:
-                row_dict = {}
-                for (index, key) in enumerate(header):
-                    row_dict[key] = row[index]
-
-                if row_dict["assembly"] == assembly:
-                    return row_dict
-
-    # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
-    urllib.request.urlcleanup()
+        reader = csv.DictReader(lines, delimeter="\t")
+        return utils.find_first_dict("assembly", assembly, reader)
 
 
 class EnsemblUrlBuilder(ABC):
