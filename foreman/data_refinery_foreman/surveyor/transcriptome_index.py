@@ -127,10 +127,9 @@ class EnsemblUrlBuilder(ABC):
         # This field can be stored in multiple keys, but if
         # `species_taxonomy_id` is there it's the one we want because
         # it's not strain-specific.
-        if "species_taxonomy_id" in species:
-            self.taxonomy_id = species["species_taxonomy_id"]
-        else:
-            self.taxonomy_id = species["taxonomy_id"]
+        self.taxonomy_id = utils.get_nonempty(
+            species, "species_taxonomy_id", species["taxonomy_id"]
+        )
 
         # This field is only needed for EnsemblBacteria and EnsemblFungi.
         self.collection = ""
@@ -149,14 +148,12 @@ class EnsemblUrlBuilder(ABC):
         )
 
         # If the primary_assembly is not available use toplevel instead.
-        try:
-            # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
-            urllib.request.urlcleanup()
-            file_handle = urllib.request.urlopen(url)
-            file_handle.close()
-            urllib.request.urlcleanup()
-        except Exception:
+        if not utils.requests_has_content_length(url):
             url = url.replace("primary_assembly", "toplevel")
+
+        # Bacteria and Fugi divisions may have an underscore after assembly.
+        if not utils.requests_has_content_length(url):
+            url = url.replace(self.assembly, f"{self.assembly}_")
 
         return url
 
@@ -164,7 +161,7 @@ class EnsemblUrlBuilder(ABC):
         url_root = self.url_root.format(
             assembly_version=self.assembly_version, short_division=self.short_division
         )
-        return GTF_URL_TEMPLATE.format(
+        url = GTF_URL_TEMPLATE.format(
             url_root=url_root,
             species_sub_dir=self.species_sub_dir,
             collection=self.collection,
@@ -172,6 +169,12 @@ class EnsemblUrlBuilder(ABC):
             assembly=self.assembly,
             assembly_version=self.assembly_version,
         )
+
+        # Bacteria and Fugi divisions may have an underscore after assembly.
+        if not utils.requests_has_content_length(url):
+            url = url.replace(self.assembly, f"{self.assembly}_")
+
+        return url
 
 
 class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
