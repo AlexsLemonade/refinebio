@@ -13,7 +13,7 @@ export ALL_IMAGES="base api_base api foreman $WORKER_IMAGES"
 # https://stackoverflow.com/questions/32113330/check-if-imagetag-combination-already-exists-on-docker-hub
 docker_image_exists() {
     TOKEN=$(curl -s -H "Content-Type: application/json" -X POST \
-        -d '{"username": "'"${DOCKER_ID}"'", "password": "'"${DOCKER_PASSWD}"'"}' \
+        -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_PASSWORD}"'"}' \
         https://hub.docker.com/v2/users/login/ | jq -r .token)
     EXISTS=$(curl -s -H "Authorization: JWT ${TOKEN}" \
         "https://hub.docker.com/v2/repositories/$1/tags/?page_size=10000" |

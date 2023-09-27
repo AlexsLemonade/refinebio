@@ -47,7 +47,7 @@ def get_and_configure_logger(name: str) -> logging.Logger:
     logger.logger.addHandler(handler)
 
     # This is the Sentry handler
-    if settings.RAVEN_DSN:
+    if settings.SENTRY_DSN:
         from raven.contrib.django.handlers import SentryHandler
 
         handler = SentryHandler()

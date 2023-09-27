@@ -17,20 +17,11 @@ resource "aws_secretsmanager_secret_version" "database_password" {
   secret_string = var.database_password
 }
 
-resource "aws_secretsmanager_secret" "raven_dsn" {
+resource "aws_secretsmanager_secret" "sentry_dsn" {
   name_prefix = "data-refinery-${var.user}-${var.stage}-raven-dsn"
 }
 
-resource "aws_secretsmanager_secret_version" "raven_dsn" {
-  secret_id = aws_secretsmanager_secret.raven_dsn.id
-  secret_string = var.raven_dsn
-}
-
-resource "aws_secretsmanager_secret" "raven_dsn_api" {
-  name_prefix = "data-refinery-${var.user}-${var.stage}-raven-dsn-api"
-}
-
-resource "aws_secretsmanager_secret_version" "raven_dsn_api" {
-  secret_id = aws_secretsmanager_secret.raven_dsn_api.id
-  secret_string = var.raven_dsn_api
+resource "aws_secretsmanager_secret_version" "sentry_dsn" {
+  secret_id = aws_secretsmanager_secret.sentry_dsn.id
+  secret_string = var.sentry_dsn
 }

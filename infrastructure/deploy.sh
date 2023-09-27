@@ -110,8 +110,8 @@ fi
 # `jq`, so that we can use them via bash.
 format_environment_variables() {
     echo "SYSTEM_VERSION=$SYSTEM_VERSION" >>prod_env
-    json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
-    for row in $json_env_vars; do
+    local IFS=$'\n'
+    for row in $(terraform output -json environment_variables | jq -c '.[]'); do
         name=$(echo "$row" | jq -r ".name")
         value=$(echo "$row" | jq -r ".value")
         env_var_assignment="$name=$value"

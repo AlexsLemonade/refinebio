@@ -20,7 +20,7 @@ KS_TEST_THRESHOLD = 0.05
 
 
 def signal_failure(bad_organisms):
-    if not settings.RUNNING_IN_CLOUD or not settings.ENGAGEMENTBOT_WEBHOOK:
+    if not settings.RUNNING_IN_CLOUD or not settings.SLACK_WEBHOOK_URL:
         logger.info(
             "Some newly-generated QN references were not similar-enough to our references currently in use.",
             failing_organisms=", ".join(o.name for o in bad_organisms),
@@ -28,7 +28,7 @@ def signal_failure(bad_organisms):
         return
 
     requests.post(
-        settings.ENGAGEMENTBOT_WEBHOOK,
+        settings.SLACK_WEBHOOK_URL,
         json={
             "attachments": [
                 {
@@ -100,9 +100,9 @@ class Command(BaseCommand):
         try:
             check_qn_reference_agreement()
         except Exception as e:
-            if settings.ENGAGEMENTBOT_WEBHOOK:
+            if settings.SLACK_WEBHOOK_URL:
                 requests.post(
-                    settings.ENGAGEMENTBOT_WEBHOOK,
+                    settings.SLACK_WEBHOOK_URL,
                     json={
                         "attachments": [
                             {
