@@ -87,7 +87,7 @@ def get_species_detail_by_assembly(assembly: str, division: str):
         lines = species_detail_content.splitlines()
         lines[0] = lines[0].replace("#", "", 1)
 
-        reader = csv.DictReader(lines, delimeter="\t")
+        reader = csv.DictReader(lines, delimiter="\t")
         return utils.find_first_dict("assembly", assembly, reader)
 
 
