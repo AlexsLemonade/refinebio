@@ -77,7 +77,7 @@ def get_species_detail_by_assembly(assembly: str, division: str):
         short_division=DIVISION_LOOKUP[division], division=division
     )
 
-    with requests.Session():
+    with requests.Session() as session:
         species_detail_request = session.get(species_detail_url)
         charset = species_detail_request.headers.get("charset", "utf-8")
         species_detail_content = species_detail_request.content.decode(charset)
