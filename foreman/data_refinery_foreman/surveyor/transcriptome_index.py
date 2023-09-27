@@ -22,14 +22,14 @@ DIVISION_URL_TEMPLATE = (
 )
 
 SPECIES_DETAIL_URL_TEMPLATE = (
-    "ftp://ftp.ensemblgenomes.org/pub/{short_division}/current/species_{division}.txt"
+    "http://ftp.ensemblgenomes.org/pub/{short_division}/current/species_{division}.txt"
 )
 TRANSCRIPTOME_URL_TEMPLATE = (
-    "ftp://ftp.{url_root}/fasta/{collection}{species_sub_dir}/dna/"
+    "http://ftp.{url_root}/fasta/{collection}{species_sub_dir}/dna/"
     "{filename_species}.{assembly}.dna.{schema_type}.fa.gz"
 )
 GTF_URL_TEMPLATE = (
-    "ftp://ftp.{url_root}/gtf/{collection}{species_sub_dir}/"
+    "http://ftp.{url_root}/gtf/{collection}{species_sub_dir}/"
     "{filename_species}.{assembly}.{assembly_version}.gtf.gz"
 )
 
