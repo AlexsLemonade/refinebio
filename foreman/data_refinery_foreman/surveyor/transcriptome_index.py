@@ -287,7 +287,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.TRANSCRIPTOME_INDEX.value
 
-    def _generate_files(self, species: Dict) -> None:
+    def _generate_files(self, species: Dict) -> List:
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
