@@ -15,29 +15,33 @@ COPY workers/data_refinery_workers/downloaders/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Install Aspera.
-# Disable IPv6 to avoid "Cannot assign requested address" error.
-RUN mkdir -m 700 ~/.gnupg/ && \
-    echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf && \
-    gpg --keyserver keyserver.ubuntu.com --recv-keys \
-        409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
-    curl -sSL https://get.rvm.io | bash -s stable --ruby --gems=aspera-cli
+RUN <<EOF
+gpg --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+curl -sSL https://get.rvm.io | bash -s -- stable --gems=aspera-cli --path /home/user/rvm --ruby
+EOF
 
 USER user
-RUN . /usr/local/rvm/scripts/rvm && \
-    ascli conf ascp install
+
+RUN <<EOF
+mkdir -m 700 ~.gnupg/
+# Disable IPv6 to avoid "Cannot assign requested address" error.
+echo "disable-ipv6" >> ~.gnupg/dirmngr.conf
+. /home/user/rvm/scripts/rvm
+ascli conf ascp install
+EOF
+
 USER root
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY workers/ .
 
 RUN rm -rf /root/.cache/*
 
-ENV PATH="$PATH:/home/user/.aspera/ascli/sdk"
+ENV PATH="$PATH:/home/user/.aspera/sdk"
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 USER user
