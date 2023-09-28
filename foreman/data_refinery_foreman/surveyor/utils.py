@@ -11,8 +11,7 @@ def requests_has_content_length(url: str):
     Takes a url and performs a HEAD requests.
     Returns True if content-length header value is greater than 0.
     """
-    response = requests.head(url)
-    return int(response.headers.get("content-length", 0)) > 0
+    return int(requests.head(url).headers.get("content-length", 0)) > 0
 
 
 def find_first_dict(key: str, value: Any, iterable: Iterable) -> Optional[dict]:
