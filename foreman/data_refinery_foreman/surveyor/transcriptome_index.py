@@ -82,7 +82,7 @@ def get_species_detail_by_assembly(assembly: str, division: str):
         charset = species_detail_request.headers.get("charset", "utf-8")
         species_detail_content = species_detail_request.content.decode(charset)
 
-        # Ths file may be malformed.
+        # This file may be malformed.
         # Here we remove the leading `#` character in order to parse this as a TSV.
         lines = species_detail_content.splitlines()
         lines[0] = lines[0].replace("#", "", 1)
@@ -151,7 +151,7 @@ class EnsemblUrlBuilder(ABC):
         if not utils.requests_has_content_length(url):
             url = url.replace("primary_assembly", "toplevel")
 
-        # Bacteria and Fugi divisions may have an underscore after assembly.
+        # Bacteria and Fungi divisions may have an underscore after assembly.
         if not utils.requests_has_content_length(url):
             url = url.replace(self.assembly, f"{self.assembly}_")
 
