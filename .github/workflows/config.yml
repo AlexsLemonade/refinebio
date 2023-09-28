@@ -502,7 +502,7 @@ jobs:
       IMAGES: migrations smasher
     needs:
       - test_base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     steps:
       - uses: actions/checkout@v3
 
