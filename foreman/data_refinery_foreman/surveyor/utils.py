@@ -20,11 +20,9 @@ def find_first_dict(key: str, value: Any, iterable: Iterable) -> Optional[dict]:
     and returns first match on key and value.
     Returns None if there is no match.
     """
-    try:
-        found = next(filter(lambda s: s[key] == value, iterable))
-        return found
-    except StopIteration:
-        return None
+    for item in iterable:
+        if item.get(key) == value:
+            return item
 
 
 def requests_retry_session(
