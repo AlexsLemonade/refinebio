@@ -151,9 +151,9 @@ class EnsemblUrlBuilder(ABC):
         if not utils.requests_has_content_length(url):
             url = url.replace("primary_assembly", "toplevel")
 
-        # Bacteria and Fungi divisions may have an underscore after assembly.
-        if not utils.requests_has_content_length(url):
-            url = url.replace(self.assembly, f"{self.assembly}_")
+            # Bacteria and Fungi divisions may have an underscore after assembly.
+            if not utils.requests_has_content_length(url):
+                url = url.replace(self.assembly, f"{self.assembly}_")
 
         return url
 
