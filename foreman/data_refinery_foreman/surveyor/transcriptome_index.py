@@ -370,7 +370,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         if strain_mapping:
             organism_strain_name = f"{organism_name}_{strain_mapping['strain'].lower()}"
             assembly_matches = list(
-                filter(lambda s: s["assembly_name"] == strain_mapping["assembly"], all_species)
+                utils.filter_dicts_on_key("assembly_name", strain_mapping["assembly"], all_species)
             )
 
             if len(assembly_matches) != 1:
