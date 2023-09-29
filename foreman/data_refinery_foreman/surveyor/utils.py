@@ -1,5 +1,5 @@
 import collections
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Generator, Iterable, List, Optional, Union
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -23,6 +23,16 @@ def find_first_dict(key: str, value: Any, iterable: Iterable) -> Optional[dict]:
     for item in iterable:
         if item.get(key) == value:
             return item
+
+
+def filter_dicts_on_key(key: str, value: Any, iterable: Iterable) -> Generator:
+    """
+    Takes a key, value, and iterable of dictionaries and returns
+    a Generator that yields dictionaries that matched on key and value.
+    """
+    for item in iterable:
+        if item.get(key) == value:
+            yield item
 
 
 def requests_retry_session(
