@@ -48,15 +48,15 @@ class UtilsTestCase(TestCase):
 
         # Test when key exists, but no match.
         good_key_no_match = utils.find_first_dict("test_key", 5, iterable_of_dicts)
-        self.assertEqual(good_key_no_match, None)
+        self.assertIsNone(good_key_no_match)
 
         # Test when key does not exist.
         no_dict = utils.find_first_dict("another_key", 1, iterable_of_dicts)
-        self.assertEqual(no_dict, None)
+        self.assertIsNone(no_dict)
 
         # Test when iterable is empty.
         empty_iterable_dict = utils.find_first_dict("test_key", 1, [])
-        self.assertEqual(empty_iterable_dict, None)
+        self.assertIsNone(empty_iterable_dict)
 
     def test_filter_dicts_on_key(self):
         """
