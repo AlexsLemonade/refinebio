@@ -458,4 +458,4 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                 organism_name=organism_name,
             )
 
-        return list(map(self._generate_files, discovered_species))
+        return [self._generate_files(species) for species in discovered_species]
