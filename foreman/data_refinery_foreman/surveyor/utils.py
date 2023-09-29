@@ -27,8 +27,8 @@ def find_first_dict(key: str, value: Any, iterable: Iterable) -> Optional[dict]:
 
 def filter_dicts_on_key(key: str, value: Any, iterable: Iterable) -> Generator:
     """
-    Takes a key, value, and iterable of dictionaries and returns
-    a Generator that yields dictionaries that matched on key and value.
+    Takes a key, value, and iterable of dictionaries and yields
+    dictionaries that matched on key and value.
     """
     for item in iterable:
         if item.get(key) == value:
