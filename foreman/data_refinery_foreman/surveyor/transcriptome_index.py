@@ -361,12 +361,12 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             r = utils.requests_retry_session().get(formatted_division_url)
             all_species = r.json()
 
-        # if no mapping find the specific species
+        # If no mapping find the specific species.
         if not strain_mapping and organism_name:
             matches = [s for s in all_species if s["name"] == organism_name]
             return matches[:1]
 
-        # This will exist for fungi or bacteria
+        # This will exist for fungi or bacteria.
         if strain_mapping:
             organism_strain_name = f"{organism_name}_{strain_mapping['strain'].lower()}"
             assembly_matches = list(
@@ -399,10 +399,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             # The Organism will be created from the species_taxonomy_id.
             assembly_matches[0]["name"] = organism_strain_name
             assembly_matches[0]["species_taxonomy_id"] = strain_mapping["species_taxonomy_id"]
-            # return the bacterium or fungus
+            # Return the specific bacterium or fungus.
             return assembly_matches
 
-        # return the entire division
+        # The default is to return the entire division.
         return all_species
 
     def discover_species(self):
