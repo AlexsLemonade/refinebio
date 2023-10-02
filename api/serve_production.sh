@@ -27,6 +27,7 @@ docker run \
     --env-file api/environments/local \
     --interactive \
     --link drdb:postgres \
+    --platform linux/amd64 \
     --publish 8081:8081 \
     --tty \
     --volume "$STATIC_VOLUMES":/tmp/www/static \
