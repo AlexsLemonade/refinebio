@@ -1,9 +1,38 @@
 import collections
-from typing import Dict, List, Union
+from typing import Any, Dict, Generator, Iterable, List, Optional, Union
 
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+
+
+def requests_has_content_length(url: str):
+    """
+    Takes a url and performs a HEAD requests.
+    Returns True if content-length header value is greater than 0.
+    """
+    return int(requests.head(url).headers.get("content-length", 0)) > 0
+
+
+def find_first_dict(key: str, value: Any, iterable: Iterable) -> Optional[dict]:
+    """
+    Takes a key, value, and iterable of dictionaries
+    and returns first match on key and value.
+    Returns None if there is no match.
+    """
+    for item in iterable:
+        if item.get(key) == value:
+            return item
+
+
+def filter_dicts_on_key(key: str, value: Any, iterable: Iterable) -> Generator:
+    """
+    Takes a key, value, and iterable of dictionaries and yields
+    dictionaries that matched on key and value.
+    """
+    for item in iterable:
+        if item.get(key) == value:
+            yield item
 
 
 def requests_retry_session(
@@ -61,7 +90,10 @@ def flatten_dict(data: Union[Dict, List], prefix: str = "", sep: str = "_") -> d
     return flattened
 
 
-def get_nonempty(hash: dict, key: str, fallback):
+def get_nonempty(hash: dict, key: str, fallback: Any):
+    """
+    Similar to dict.get but will return fallback if the value at key is falsy.
+    """
     return hash.get(key) or fallback
 
 

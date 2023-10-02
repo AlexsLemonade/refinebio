@@ -1,4 +1,3 @@
-import urllib
 from unittest.mock import call, patch
 
 from django.test import TestCase
@@ -8,6 +7,7 @@ import vcr
 from data_refinery_common.enums import Downloaders
 from data_refinery_common.models import DownloaderJob, Organism, SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
+from data_refinery_foreman.surveyor.utils import requests_has_content_length
 
 
 class SurveyTestCase(TestCase):
@@ -33,123 +33,52 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
-    @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.transcriptome.correct_index_location.yaml"
-    )
-    def test_correct_index_location(self):
-        """Tests that the files returned actually exist.
-
-        Uses an organism in the main division.
+    def test_all_correct_index_location(self):
         """
-        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
-        survey_job.save()
-
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="ensembl_division", value="Ensembl"
-        )
-        key_value_pair.save()
-
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="organism_name", value="Danio rerio"
-        )
-        key_value_pair.save()
-
-        surveyor = TranscriptomeIndexSurveyor(survey_job)
-        files = surveyor.discover_species()[0]
-
-        # Make sure the organism object got created by making sure
-        # this doesn't raise an exception.
-        Organism.objects.get(name="DANIO_RERIO")
-
-        for file in files:
-            urllib.request.urlopen(file.source_url)
-
-    @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.transcriptome.correct_location_metazoa.yaml"
-    )
-    def test_correct_index_location_metazoa(self):
-        """Tests that the files returned actually exist.
-
-        Tests the Metazoa division instead of the main division.
+        Tests one organism from all supported Ensembl divisions.
+        Fungi and Bacteria organisms have mappings defined
+        in config/organism_strain_mapping.csv
         """
-        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
-        survey_job.save()
+        test_organisms = [
+            {"division": "Ensembl", "name": "Danio rerio"},
+            {"division": "EnsemblMetazoa", "name": "Octopus bimaculoides"},
+            {"division": "EnsemblPlants", "name": "Arabidopsis thaliana"},
+            {"division": "EnsemblProtists", "name": "Leishmania major"},
+            {"division": "EnsemblFungi", "name": "Candida albicans"},
+            {"division": "EnsemblBacteria", "name": "Pseudomonas aeruginosa"},
+        ]
 
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="ensembl_division", value="EnsemblMetazoa"
-        )
-        key_value_pair.save()
+        for organism in test_organisms:
+            scientific_name = organism["name"].upper().replace(" ", "_")
+            # Break up cassettes into multiple files.
+            with vcr.use_cassette(
+                f"/home/user/data_store/cassettes/surveyor.transcriptome.correct_index_location_{scientific_name.lower()}.yaml"
+            ):
+                survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+                survey_job.save()
+                key_value_pair = SurveyJobKeyValue(
+                    survey_job=survey_job, key="ensembl_division", value=organism["division"]
+                )
+                key_value_pair.save()
 
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="organism_name", value="Octopus bimaculoides"
-        )
-        key_value_pair.save()
+                key_value_pair = SurveyJobKeyValue(
+                    survey_job=survey_job, key="organism_name", value=organism["name"]
+                )
+                key_value_pair.save()
 
-        surveyor = TranscriptomeIndexSurveyor(survey_job)
-        files = surveyor.discover_species()[0]
+                surveyor = TranscriptomeIndexSurveyor(survey_job)
+                files = surveyor.discover_species()[0]
+                # Make sure the organism object got created by making sure
+                # this doesn't raise an exception.
+                Organism.objects.get(name=scientific_name)
 
-        for file in files:
-            urllib.request.urlopen(file.source_url)
+                # Assert that both Fasta and GTF files are found.
+                self.assertEqual(len(files), 2)
 
-        # Make sure the organism object got created by making sure
-        # this doesn't raise an exception.
-        Organism.objects.get(name="OCTOPUS_BIMACULOIDES")
-
-    @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.single_plant.yaml")
-    def test_single_plant(self):
-        """Tests that the files returned actually exist.
-
-        Tests the Metazoa division instead of the main division.
-        """
-        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
-        survey_job.save()
-
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="ensembl_division", value="EnsemblPlants"
-        )
-        key_value_pair.save()
-
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="organism_name", value="Arabidopsis thaliana"
-        )
-        key_value_pair.save()
-
-        surveyor = TranscriptomeIndexSurveyor(survey_job)
-        files = surveyor.discover_species()[0]
-
-        for file in files:
-            urllib.request.urlopen(file.source_url)
-
-        # Make sure the organism object got created by making sure
-        # this doesn't raise an exception.
-        Organism.objects.get(name="ARABIDOPSIS_THALIANA")
-
-    @vcr.use_cassette(
-        "/home/user/data_store/cassettes/surveyor.transcriptome.correct_location_protist.yaml"
-    )
-    def test_correct_index_location_protist(self):
-        """Tests that the files returned actually exist.
-
-        Tests the Metazoa division instead of the main division.
-        """
-        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
-        survey_job.save()
-
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="ensembl_division", value="EnsemblProtists"
-        )
-        key_value_pair.save()
-
-        key_value_pair = SurveyJobKeyValue(
-            survey_job=survey_job, key="organism_name", value="Leishmania major"
-        )
-        key_value_pair.save()
-
-        surveyor = TranscriptomeIndexSurveyor(survey_job)
-        files = surveyor.discover_species()[0]
-
-        for file in files:
-            urllib.request.urlopen(file.source_url)
+                # Ensure that the file exists at the location by performing
+                # a HEAD request and reading the content-length header.
+                checks = [requests_has_content_length(file.source_url) for file in files]
+                self.assertTrue(all(checks))
 
     @vcr.use_cassette("/home/user/data_store/cassettes/surveyor.transcriptome.survey_fungi.yaml")
     @patch("data_refinery_foreman.surveyor.external_source.send_job")
@@ -209,8 +138,8 @@ class SurveyTestCase(TestCase):
 
         mock_send_job.assert_has_calls(send_job_calls)
 
-        # Make sure the organism object got created with the correct
-        # taxonomy id by making sure this doesn't raise an exception.
+        # Make sure the organism object was created with the correct
+        # species taxonomy id by making sure this doesn't raise an exception.
         Organism.objects.get(name="PSEUDOMONAS_AERUGINOSA", taxonomy_id=287)
 
     @vcr.use_cassette(
