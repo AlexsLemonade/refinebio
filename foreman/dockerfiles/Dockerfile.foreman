@@ -8,17 +8,17 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /home/user
 
 COPY foreman/requirements.txt .
-RUN mkdir -p data/microarray && \
-    wget -q https://gbnci.cancer.gov/geo/GEOmetadb.sqlite.gz \
-        -O data/microarray/GEOmetadb.sqlite.gz && \
-    gunzip data/microarray/GEOmetadb.sqlite.gz && \
-    chmod 644 data/microarray/GEOmetadb.sqlite && \
-    pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+RUN <<EOF
+mkdir -p data/microarray
+wget -q https://gbnci.cancer.gov/geo/GEOmetadb.sqlite.gz -O data/microarray/GEOmetadb.sqlite.gz
+gunzip data/microarray/GEOmetadb.sqlite.gz
+chmod 644 data/microarray/GEOmetadb.sqlite
+pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+EOF
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY foreman/ .
