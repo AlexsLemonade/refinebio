@@ -14,7 +14,6 @@
 #         Will be used as the version for the system and the tag for Docker images.
 #     - DOCKER_USERNAME -- The username that will be used to log into Dockerhub.
 #     - DOCKER_PASSWORD -- The password that will be used to log into Dockerhub.
-#     - OPENSSL_KEY -- The OpenSSL key which will be used to decrypt the SSH key.
 #     - AWS_ACCESS_KEY_ID -- The AWS key id to use when interacting with AWS.
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
@@ -36,7 +35,6 @@ cat >>env_vars <<EOF
 export CI_TAG='$CI_TAG'
 export DOCKER_USERNAME='$DOCKER_USERNAME'
 export DOCKER_PASSWORD='$DOCKER_PASSWORD'
-export OPENSSL_KEY='$OPENSSL_KEY'
 export AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'
 export AWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY'
 export TF_VAR_database_password='$DATABASE_PASSWORD'
