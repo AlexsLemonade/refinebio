@@ -29,6 +29,7 @@ terraform.tfstate.backup
 infrastructure/batch-job-templates/
 infrastructure/ci_ingress.tf
 infrastructure/data-refinery-key.pem
+infrastructure/environments/dev.tfvars
 infrastructure/prod_env
 
 # We download a lot of files into the test_volume directory when
