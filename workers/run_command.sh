@@ -62,6 +62,7 @@ docker run \
     --env-file workers/environments/local \
     --interactive \
     --link drdb:postgres \
+    --platform linux/amd64 \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
     "$DOCKERHUB_REPO/dr_$IMAGE" \

@@ -149,9 +149,10 @@ docker run \
     --log-opt awslogs-region="${region}" \
     --log-opt awslogs-stream="${log_stream}" \
     --name dr_api \
+    --platform linux/amd64 \
+    --publish 8081:8081 \
     --tty \
     --volume "$STATIC_VOLUMES":/tmp/www/static \
-    --publish 8081:8081 \
     "${dockerhub_repo}/${api_docker_image}" \
     /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 

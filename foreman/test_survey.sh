@@ -88,6 +88,7 @@ docker run \
     --env SURVEYOR="$SURVEYOR" \
     --env-file foreman/environments/test \
     --interactive \
+    --platform linux/amd64 \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
     "$DOCKERHUB_REPO/dr_foreman" \

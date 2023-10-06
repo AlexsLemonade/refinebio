@@ -26,7 +26,8 @@ docker run \
     --add-host=elasticsearch:"$ES_HOST_IP" \
     --env-file api/environments/local \
     --interactive \
+    --platform linux/amd64 \
     --publish 8000:8000 \
     --tty \
-    "$DOCKERHUB_REPO/dr_api_local" \
+    "$DOCKERHUB_REPO/dr_api_local:$SYSTEM_VERSION" \
     python3 manage.py runserver 0.0.0.0:8000 "$@"
