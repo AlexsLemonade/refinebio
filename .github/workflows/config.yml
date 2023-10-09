@@ -680,7 +680,7 @@ jobs:
         run: |
           echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
           echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "SENTRY_DSN=${STAGING_SENTRY_DSN}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
           # Staging doesn't notify the engagementbot, so overwrite this to be blank.
           echo "SLACK_WEBHOOK_URL=" >> $GITHUB_ENV
 
@@ -689,7 +689,7 @@ jobs:
         run: |
           echo "DATABASE_PASSWORD=${PRODUCTION_DATABASE_PASSWORD}" >> $GITHUB_ENV
           echo "DJANGO_SECRET_KEY=${PRODUCTION_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "SENTRY_DSN=${PRODUCTION_SENTRY_DSN}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
           echo "SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}" >> $GITHUB_ENV
 
       - name: Deploy
@@ -743,7 +743,7 @@ jobs:
         run: |
           echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
           echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "SENTRY_DSN=${STAGING_SENTRY_DSN}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
           # Staging doesn't notify the engagementbot, so overwrite this to be blank.
           echo "SLACK_WEBHOOK_URL=" >> $GITHUB_ENV
 
@@ -752,7 +752,7 @@ jobs:
         run: |
           echo "DATABASE_PASSWORD=${PRODUCTION_DATABASE_PASSWORD}" >> $GITHUB_ENV
           echo "DJANGO_SECRET_KEY=${PRODUCTION_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "SENTRY_DSN=${PRODUCTION_SENTRY_DSN}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
           echo "SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}" >> $GITHUB_ENV
 
       - name: Deploy
