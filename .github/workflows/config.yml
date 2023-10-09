@@ -655,20 +655,18 @@ jobs:
           export-env: true
         env:
           DEPLOY_BOX_SSH_PRIVATE_KEY: ${{ secrets.OP_DEPLOY_BOX_SSH_PRIVATE_KEY }}
-          OPENSSL_KEY: ${{ secrets.OP_OPENSSL_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.OP_SSH_PUBLIC_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.OP_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.OP_AWS_SECRET_ACCESS_KEY }}
           DEPLOY_BOX_IP: ${{ secrets.OP_DEPLOY_BOX_IP }}
           DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+          SENTRY_DSN: ${{ secrets.OP_SENTRY_DSN }}
           SLACK_WEBHOOK_URL: ${{ secrets.OP_SLACK_WEBHOOK_URL }}
           STAGING_DATABASE_PASSWORD: ${{ secrets.OP_STAGING_DATABASE_PASSWORD }}
           STAGING_DJANGO_SECRET_KEY: ${{ secrets.OP_STAGING_DJANGO_SECRET_KEY }}
-          STAGING_SENTRY_DSN: ${{ secrets.OP_STAGING_SENTRY_DSN }}
           PRODUCTION_DATABASE_PASSWORD: ${{ secrets.OP_PRODUCTION_DATABASE_PASSWORD }}
           PRODUCTION_DJANGO_SECRET_KEY: ${{ secrets.OP_PRODUCTION_DJANGO_SECRET_KEY }}
-          PRODUCTION_SENTRY_DSN: ${{ secrets.OP_PRODUCTION_SENTRY_DSN }}
 
       - name: Set the $BRANCH and $CI_TAG Environment Variables
         run: |
@@ -720,20 +718,18 @@ jobs:
           export-env: true
         env:
           DEPLOY_BOX_SSH_PRIVATE_KEY: ${{ secrets.OP_DEPLOY_BOX_SSH_PRIVATE_KEY }}
-          OPENSSL_KEY: ${{ secrets.OP_OPENSSL_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.OP_SSH_PUBLIC_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.OP_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.OP_AWS_SECRET_ACCESS_KEY }}
           DEPLOY_BOX_IP: ${{ secrets.OP_DEPLOY_BOX_IP }}
           DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+          SENTRY_DSN: ${{ secrets.OP_SENTRY_DSN }}
           SLACK_WEBHOOK_URL: ${{ secrets.OP_SLACK_WEBHOOK_URL }}
           STAGING_DATABASE_PASSWORD: ${{ secrets.OP_STAGING_DATABASE_PASSWORD }}
           STAGING_DJANGO_SECRET_KEY: ${{ secrets.OP_STAGING_DJANGO_SECRET_KEY }}
-          STAGING_SENTRY_DSN: ${{ secrets.OP_STAGING_SENTRY_DSN }}
           PRODUCTION_DATABASE_PASSWORD: ${{ secrets.OP_PRODUCTION_DATABASE_PASSWORD }}
           PRODUCTION_DJANGO_SECRET_KEY: ${{ secrets.OP_PRODUCTION_DJANGO_SECRET_KEY }}
-          PRODUCTION_SENTRY_DSN: ${{ secrets.OP_PRODUCTION_SENTRY_DSN }}
 
       - name: Set the $BRANCH and $CI_TAG Environment Variables
         run: |
