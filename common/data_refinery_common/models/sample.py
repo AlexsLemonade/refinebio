@@ -59,7 +59,7 @@ class Sample(models.Model):
     sex = models.CharField(max_length=255, blank=True)
     age = models.DecimalField(max_length=255, blank=True, max_digits=8, decimal_places=3, null=True)
     specimen_part = models.CharField(max_length=255, blank=True)
-    genotype = models.CharField(max_length=255, blank=True)
+    genetic_information = models.CharField(max_length=255, blank=True)
     disease = models.CharField(max_length=255, blank=True)
     disease_stage = models.CharField(max_length=255, blank=True)
     cell_line = models.CharField(max_length=255, blank=True)
@@ -112,7 +112,7 @@ class Sample(models.Model):
         metadata["refinebio_sex"] = self.sex
         metadata["refinebio_age"] = self.age or ""
         metadata["refinebio_specimen_part"] = self.specimen_part
-        metadata["refinebio_genetic_information"] = self.genotype
+        metadata["refinebio_genetic_information"] = self.genetic_information
         metadata["refinebio_disease"] = self.disease
         metadata["refinebio_disease_stage"] = self.disease_stage
         metadata["refinebio_cell_line"] = self.cell_line
