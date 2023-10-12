@@ -147,7 +147,7 @@ CACHES = {
 }
 
 APP_NAME = "Refine.bio Common"
-ENVIRONMENT = get_env_variable_gracefully("ENVIRONMENT")
+STAGE = get_env_variable_gracefully("STAGE")
 SYSTEM_VERSION = get_env_variable_gracefully("SYSTEM_VERSION")
 
 # Setting the RAVEN_CONFIG when SENTRY_DSN isn't set will cause the
@@ -164,7 +164,7 @@ if SENTRY_DSN == "None":
 if SENTRY_DSN:
     RAVEN_CONFIG = {
         "dsn": SENTRY_DSN,
-        "environment": "-".join((ENVIRONMENT, *(APP_NAME.replace(".", "").lower().split()))),
+        "environment": "-".join((STAGE, *(APP_NAME.replace(".", "").lower().split()))),
         "release": SYSTEM_VERSION,
     }
 else:
