@@ -132,8 +132,11 @@ chmod a+rwx /tmp/volumes_static
 # Pull the API image.
 docker pull "${dockerhub_repo}/${api_docker_image}"
 
+# shellcheck disable=SC2046
+docker rm -f $(docker ps --quiet --all) || true
+
 # These database values are created after TF
-# is run, so we have to pass them in programatically
+# is run, so we have to pass them in programatically.
 docker run \
     --detach \
     --env DATABASE_HOST="${database_host}" \
