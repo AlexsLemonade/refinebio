@@ -101,7 +101,7 @@ resource "aws_db_subnet_group" "data_refinery" {
 
 # Get the API a static IP address.
 resource "aws_eip" "data_refinery_api_ip" {
-  domain = "vpc"
+  vpc = true
 
   tags = merge(
     var.default_tags,
