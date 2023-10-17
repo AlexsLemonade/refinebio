@@ -148,7 +148,7 @@ class Experiment(models.Model):
             "sex",
             "age",
             "specimen_part",
-            "genotype",
+            "genetic_information",
             "disease",
             "disease_stage",
             "cell_line",
