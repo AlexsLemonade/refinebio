@@ -17,6 +17,7 @@ class TestSample(TestCase):
                 "refinebio_annotations",
                 "refinebio_cell_line",
                 "refinebio_compound",
+                "refinebio_developmental_stage",
                 "refinebio_disease",
                 "refinebio_disease_stage",
                 "refinebio_genetic_information",

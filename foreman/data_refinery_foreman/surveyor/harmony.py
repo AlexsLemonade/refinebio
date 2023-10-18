@@ -6,6 +6,7 @@ Given a list of samples and their metadata, extract these common properties:
   `age`,
   `specimen_part`,
   `genetic_information`,
+  `developmental_stage`,
   `disease`,
   `disease_stage`,
   `cell_line`,
