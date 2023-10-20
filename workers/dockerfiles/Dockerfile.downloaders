@@ -24,9 +24,9 @@ EOF
 USER user
 
 RUN <<EOF
-mkdir -m 700 ~.gnupg/
+mkdir -m 700 /home/user/.gnupg
 # Disable IPv6 to avoid "Cannot assign requested address" error.
-echo "disable-ipv6" >> ~.gnupg/dirmngr.conf
+echo "disable-ipv6" >> /home/user/.gnupg/dirmngr.conf
 . /home/user/rvm/scripts/rvm
 ascli conf ascp install
 EOF
