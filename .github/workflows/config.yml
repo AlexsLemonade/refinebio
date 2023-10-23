@@ -299,8 +299,8 @@ jobs:
           files: ./test_volume/common_coverage.xml
           name: Common Tests
 
-  test_downloaders_no_op:
-    name: Test Downloaders and No-Op
+  test_downloaders:
+    name: Test Downloaders
     env:
       IMAGES: migrations api_base api_local downloaders foreman
     needs:
@@ -338,11 +338,6 @@ jobs:
       - name: Run Downloader Tests
         run: |
           .github/scripts/filter_tests.sh -t downloaders
-
-      - name: Run No-Op Tests
-        run: |
-          sudo -E chown -R $USER:$USER workers/test_volume
-          .github/scripts/filter_tests.sh -t no_op
 
   test_foreman:
     name: Test Foreman
@@ -447,6 +442,47 @@ jobs:
         with:
           files: ./workers/test_volume/workers_coverage.xml
           name: Illumina Tests
+
+  test_no_op:
+    name: Test No-Op
+    env:
+      IMAGES: migrations api_base api_local downloaders foreman
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Start Postgres
+        run: scripts/run_postgres.sh
+
+      - name: Pause for Initialization
+        run: sleep 15
+
+      - name: Install Database
+        run: scripts/install_db_docker.sh
+
+      - name: Update Models
+        run: scripts/update_models.sh
+
+      - name: Run No-Op Tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/scripts/filter_tests.sh -t no_op
 
   test_salmon:
     name: Test Salmon
@@ -637,9 +673,10 @@ jobs:
       - test_agilent
       - test_api
       - test_common
-      - test_downloaders_no_op
+      - test_downloaders
       - test_foreman
       - test_illumina
+      - test_no_op
       - test_salmon
       - test_smasher
       - test_transcriptome
