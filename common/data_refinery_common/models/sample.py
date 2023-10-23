@@ -60,6 +60,7 @@ class Sample(models.Model):
     age = models.DecimalField(max_length=255, blank=True, max_digits=8, decimal_places=3, null=True)
     specimen_part = models.CharField(max_length=255, blank=True)
     genetic_information = models.CharField(max_length=255, blank=True)
+    developmental_stage = models.CharField(max_length=255, blank=True)
     disease = models.CharField(max_length=255, blank=True)
     disease_stage = models.CharField(max_length=255, blank=True)
     cell_line = models.CharField(max_length=255, blank=True)
@@ -126,6 +127,7 @@ class Sample(models.Model):
         metadata["refinebio_annotations"] = [
             data for data in self.sampleannotation_set.all().values_list("data", flat=True)
         ]
+        metadata["refinebio_developmental_stage"] = self.developmental_stage
 
         if computed_file and computed_file.result and computed_file.result.processor:
             metadata["refinebio_processor_id"] = computed_file.result.processor.id
