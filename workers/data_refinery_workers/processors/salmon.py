@@ -403,7 +403,26 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             index_hard_dir = os.path.join(LOCAL_ROOT_DIR, job_context["job_dir_prefix"]) + "_index/"
             os.makedirs(index_hard_dir)
             with tarfile.open(index_tarball, "r:gz") as index_archive:
-                index_archive.extractall(index_hard_dir)
+                def is_within_directory(directory, target):
+                    
+                    abs_directory = os.path.abspath(directory)
+                    abs_target = os.path.abspath(target)
+                
+                    prefix = os.path.commonprefix([abs_directory, abs_target])
+                    
+                    return prefix == abs_directory
+                
+                def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+                
+                    for member in tar.getmembers():
+                        member_path = os.path.join(path, member.name)
+                        if not is_within_directory(path, member_path):
+                            raise Exception("Attempted Path Traversal in Tar File")
+                
+                    tar.extractall(path, members, numeric_owner=numeric_owner) 
+                    
+                
+                safe_extract(index_archive, index_hard_dir)
 
         if not os.path.exists(version_info_path):
             # Index is still not installed yet, so symlink the files we
