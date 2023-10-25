@@ -340,6 +340,17 @@ terraform apply -var-file="environments/$env.tfvars" -auto-approve
 chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | tr -d '"')
 
+# Check SSH connection.
+if ! ssh -o StrictHostKeyChecking=no \
+    -o ServerAliveInterval=15 \
+    -o ConnectTimeout=5 \
+    -i data-refinery-key.pem \
+    "ubuntu@$API_IP_ADDRESS" "exit"; then
+    exit_code=$?
+    echo "Could not SSH into the API server. Did you rotate the SSH keys recently?"
+    exit $exit_code;
+fi
+
 # To check to see if the docker container needs to be stopped before
 # it can be started, grep for the name of the container. However if
 # it's not found then grep will return a non-zero exit code so in that
