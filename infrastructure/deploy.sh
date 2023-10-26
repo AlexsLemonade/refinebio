@@ -423,3 +423,8 @@ if [[ -n $container_running ]]; then
 fi
 
 echo "Deploy completed successfully."
+
+# Remove Docker images created more than 30 days ago.
+echo "Cleaning up Docker images."
+docker image prune -a --force --filter "until=720h"
+echo "Cleanup completed."
