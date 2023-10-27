@@ -23,6 +23,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.OP_AWS_SECRET_ACCESS_KEY }}
 
       - uses: actions/setup-python@v3
+        with:
+          python-version: '3.11'
 
       - uses: hashicorp/setup-terraform@v2
         with:
