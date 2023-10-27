@@ -1240,10 +1240,10 @@ class SmasherTestCase(TransactionTestCase, ProcessorJobTestCaseMixin):
     def test_sanity_imports(self):
         """Sci imports can be tricky, make sure this works."""
 
-        import numpy  # noqa
-        import scipy  # noqa
         import matplotlib  # noqa
+        import numpy  # noqa
         import pandas  # noqa
+        import scipy  # noqa
         import sklearn  # noqa
         import sympy  # noqa
 
