@@ -15,8 +15,8 @@ repos:
       # - id: check-docstring-first # We can enable this rule once models.py is simplified
       - id: check-yaml
 
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v4.3.21
+  - repo: https://github.com/PyCQA/isort
+    rev: 4.3.21
     hooks:
       - id: isort
 
