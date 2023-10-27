@@ -19,7 +19,7 @@ RUN mkdir -p gene_indexes
 WORKDIR /home/user/gene_indexes
 ENV ID_REFINERY_URL=https://zenodo.org/record/1410647/files/all_1536267482.zip
 RUN <<EOF
-curl -O $ID_REFINERY_URL
+curl -OL $ID_REFINERY_URL
 echo $ID_REFINERY_URL > /etc/identifier_refinery_url
 unzip *.zip
 rm *.zip
