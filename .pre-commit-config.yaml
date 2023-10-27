@@ -15,10 +15,11 @@ repos:
       # - id: check-docstring-first # We can enable this rule once models.py is simplified
       - id: check-yaml
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 4.3.21
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.5
     hooks:
       - id: isort
+        name: isort (python)
 
   - repo: https://github.com/psf/black
     rev: 22.3.0
