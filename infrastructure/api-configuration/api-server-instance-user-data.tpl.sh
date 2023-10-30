@@ -154,6 +154,7 @@ docker run \
     --name dr_api \
     --platform linux/amd64 \
     --publish 8081:8081 \
+    --restart always \
     --tty \
     --volume "$STATIC_VOLUMES":/tmp/www/static \
     "${dockerhub_repo}/${api_docker_image}" \

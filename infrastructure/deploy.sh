@@ -408,9 +408,11 @@ if [[ -n $container_running ]]; then
             --log-opt awslogs-region=$AWS_REGION \
             --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
             --name=dr_api \
+            --platform linux/amd64 \
+            --publish 8081:8081 \
+            --restart always \
             --tty \
             --volume /tmp/volumes_static:/tmp/www/static \
-            --publish 8081:8081 \
             $DOCKERHUB_REPO/$API_DOCKER_IMAGE \
             /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
