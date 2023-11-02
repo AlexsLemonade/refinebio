@@ -7,24 +7,30 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY workers/R/dependencies/affymetrix/renv.lock .
-COPY common/R/renv_load.R renv_load_affymetrix.R
+COPY --chmod=644 workers/R/dependencies/affymetrix/renv.lock .
+COPY --chmod=644 common/R/renv_load.R renv_load_affymetrix.R
 RUN Rscript renv_load_affymetrix.R
 
-COPY workers/R/dependencies/affymetrix/install_ensg_pkgs.R .
+COPY --chmod=644 workers/R/dependencies/affymetrix/install_ensg_pkgs.R .
 RUN Rscript install_ensg_pkgs.R
 
-COPY workers/data_refinery_workers/processors/requirements.txt .
+COPY --chmod=644 workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+COPY --chmod=644 common/dist/data-refinery-common-* common/
+RUN <<EOF
+pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+rm -r common
+EOF
 
-COPY .boto .boto
-COPY workers/ .
+COPY --chmod=644 .boto .boto
+COPY --chmod=644 workers/ .
 
-RUN rm -rf /root/.cache/*
+RUN <<EOF
+find /home/user -type d ! -perm 755 -exec chmod 755 {} \;
+rm -rf /root/.cache/*
+EOF
 
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 

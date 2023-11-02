@@ -65,9 +65,13 @@ useradd --create-home --home-dir /home/user/ -g user user
 chown -R user /home/user/
 EOF
 
-ENV R_LIBS=/usr/local/lib/R/site-library
+COPY --chmod=644 config/ config/
+COPY --chmod=644 setup.cfg .
 
-COPY config/ config/
-COPY setup.cfg .
+RUN <<EOF
+find /home/user -type d ! -perm 755 -exec chmod 755 {} \;
+EOF
+
+ENV R_LIBS=/usr/local/lib/R/site-library
 
 ENTRYPOINT []

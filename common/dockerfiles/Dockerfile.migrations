@@ -7,10 +7,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY common/requirements.txt .
+COPY --chmod=644 common/requirements.txt .
 RUN pip install --ignore-installed --no-cache-dir -r requirements.txt
 
-COPY common/ .
+COPY --chmod=644 common/ .
+
+RUN <<EOF
+find /home/user -type d ! -perm 755 -exec chmod 755 {} \;
+rm -rf /root/.cache/*
+EOF
 
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 

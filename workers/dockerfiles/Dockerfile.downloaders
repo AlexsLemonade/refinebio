@@ -7,11 +7,11 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY workers/R/dependencies/downloaders/renv.lock .
-COPY common/R/renv_load.R renv_load_downloaders.R
+COPY --chmod=644 workers/R/dependencies/downloaders/renv.lock .
+COPY --chmod=644 common/R/renv_load.R renv_load_downloaders.R
 RUN Rscript renv_load_downloaders.R
 
-COPY workers/data_refinery_workers/downloaders/requirements.txt .
+COPY --chmod=644 workers/data_refinery_workers/downloaders/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Install Aspera.
@@ -23,8 +23,10 @@ EOF
 
 USER user
 
+ENV GNUPG_PATH=/home/user/.gnupg
+
 RUN <<EOF
-mkdir -m 700 /home/user/.gnupg
+mkdir -m 700 ${GNUPG_PATH}
 # Disable IPv6 to avoid "Cannot assign requested address" error.
 echo "disable-ipv6" >> /home/user/.gnupg/dirmngr.conf
 . /home/user/rvm/scripts/rvm
@@ -34,13 +36,19 @@ EOF
 USER root
 
 # Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+COPY --chmod=644 common/dist/data-refinery-common-* common/
+RUN <<EOF
+pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+rm -r common
+EOF
 
-COPY .boto .boto
-COPY workers/ .
+COPY --chmod=644 .boto .boto
+COPY --chmod=644 workers/ .
 
-RUN rm -rf /root/.cache/*
+RUN <<EOF
+rm -rf /root/.cache/*
+find /home/user -path ${GNUPG_PATH} -prune -type d ! -perm 755 -exec chmod 755 {} \;
+EOF
 
 ENV PATH="$PATH:/home/user/.aspera/sdk"
 ENV SYSTEM_VERSION=$SYSTEM_VERSION

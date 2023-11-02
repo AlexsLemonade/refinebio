@@ -7,9 +7,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY foreman/requirements.txt .
+COPY --chmod=644 foreman/requirements.txt .
 RUN <<EOF
-mkdir -p data/microarray
+mkdir -m 755 -p data/microarray
 wget -q https://gbnci.cancer.gov/geo/GEOmetadb.sqlite.gz -O data/microarray/GEOmetadb.sqlite.gz
 gunzip data/microarray/GEOmetadb.sqlite.gz
 chmod 644 data/microarray/GEOmetadb.sqlite
@@ -17,11 +17,19 @@ pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 EOF
 
 # Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+COPY --chmod=644 common/dist/data-refinery-common-* common/
+RUN <<EOF
+pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+rm -r common
+EOF
 
-COPY .boto .boto
-COPY foreman/ .
+COPY --chmod=644 .boto .boto
+COPY --chmod=644 foreman/ .
+
+RUN <<EOF
+find /home/user -type d ! -perm 755 -exec chmod 755 {} \;
+rm -rf /root/.cache/*
+EOF
 
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 

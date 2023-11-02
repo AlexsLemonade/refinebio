@@ -85,7 +85,7 @@ jobs:
     env:
       IMAGES: migrations affymetrix
     needs:
-      - test_affymetrix
+      - test_base
     runs-on: ubuntu-latest-m
     steps:
       - uses: actions/checkout@v3

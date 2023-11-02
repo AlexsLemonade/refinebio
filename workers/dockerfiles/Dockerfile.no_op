@@ -7,17 +7,17 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
 
-COPY workers/R/dependencies/no_op/renv.lock .
-COPY common/R/renv_load.R renv_load_no_op.R
+COPY --chmod=644 workers/R/dependencies/no_op/renv.lock .
+COPY --chmod=644 common/R/renv_load.R renv_load_no_op.R
 RUN Rscript renv_load_no_op.R
 
-COPY workers/data_refinery_workers/processors/requirements.txt .
+COPY --chmod=644 workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Noop-specific.
-RUN mkdir -p gene_indexes
+RUN mkdir -m 755 -p gene_indexes
 WORKDIR /home/user/gene_indexes
-ENV ID_REFINERY_URL=https://zenodo.org/record/1410647/files/all_1536267482.zip
+ENV ID_REFINERY_URL=https://zenodo.org/records/1410647/files/all_1536267482.zip
 RUN <<EOF
 echo $ID_REFINERY_URL > /etc/identifier_refinery_url
 wget $ID_REFINERY_URL
@@ -29,13 +29,19 @@ EOF
 WORKDIR /home/user
 
 # Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+COPY --chmod=644 common/dist/data-refinery-common-* common/
+RUN <<EOF
+pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+rm -r common
+EOF
 
-COPY .boto .boto
-COPY workers/ .
+COPY --chmod=644 .boto .boto
+COPY --chmod=644 workers/ .
 
-RUN rm -rf /root/.cache/*
+RUN <<EOF
+find /home/user -type d ! -perm 755 -exec chmod 755 {} \;
+rm -rf /root/.cache/*
+EOF
 
 ENV SYSTEM_VERSION=$SYSTEM_VERSION
 

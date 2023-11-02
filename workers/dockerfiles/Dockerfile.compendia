@@ -68,14 +68,14 @@ WORKDIR /home/user
 
 ENV R_LIBS=/usr/local/lib/R/site-library
 
-COPY workers/R/dependencies/compendia/renv.lock .
-COPY common/R/renv_load.R renv_load_compendia.R
+COPY --chmod=644 workers/R/dependencies/compendia/renv.lock .
+COPY --chmod=644 common/R/renv_load.R renv_load_compendia.R
 RUN Rscript renv_load_compendia.R
 
-COPY workers/data_refinery_workers/requirements/compendia.txt requirements.txt
+COPY --chmod=644 workers/data_refinery_workers/requirements/compendia.txt requirements.txt
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
-COPY workers/data_refinery_workers/processors/requirements.txt requirements.txt
+COPY --chmod=644 workers/data_refinery_workers/processors/requirements.txt requirements.txt
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 # Install phantomjs.
@@ -87,15 +87,21 @@ rm phantomjs-2.1.1-linux-x86_64.tar.bz2
 EOF
 
 # Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+COPY --chmod=644 common/dist/data-refinery-common-* common/
+RUN <<EOF
+pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+rm -r common
+EOF
 
-COPY .boto .boto
-COPY config/ config/
-COPY setup.cfg .
-COPY workers/ .
+COPY --chmod=644 .boto .boto
+COPY --chmod=644 config/ config/
+COPY --chmod=644 setup.cfg .
+COPY --chmod=644 workers/ .
 
-RUN rm -rf /root/.cache/*
+RUN <<EOF
+find /home/user -type d ! -perm 755 -exec chmod 755 {} \;
+rm -rf /root/.cache/*
+EOF
 
 ARG SYSTEM_VERSION
 ENV SYSTEM_VERSION=$SYSTEM_VERSION

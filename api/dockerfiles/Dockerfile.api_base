@@ -15,17 +15,24 @@ EOF
 
 WORKDIR /home/user
 
-COPY api/requirements.txt .
+COPY --chmod=644 api/requirements.txt .
 RUN <<EOF
 pip install --upgrade pip
 pip install --ignore-installed --no-cache-dir -r requirements.txt
 EOF
 
-COPY common/dist/data-refinery-common-* common/
-RUN pip install --ignore-installed common/$(ls common -1 | sort --version-sort | tail -1)
+COPY --chmod=644 common/dist/data-refinery-common-* common/
+RUN <<EOF
+pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
+rm -r common
+EOF
 
-COPY api/ .
-COPY config/ config/
-COPY setup.cfg .
+COPY --chmod=644 api/ .
+COPY --chmod=644 config/ config/
+COPY --chmod=644 setup.cfg .
+
+RUN <<EOF
+find /home/user -type d ! -perm 755 -exec chmod 755 {} \;
+EOF
 
 ENTRYPOINT []
