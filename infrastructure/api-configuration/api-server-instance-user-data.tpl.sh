@@ -83,13 +83,13 @@ cat <<EOF >awslogs.conf
 [general]
 state_file = /var/lib/awslogs/agent-state
 
-[/tmp/error.log]
-file = /tmp/error.log
+[/var/log/nginx/error.log]
+file = /var/log/nginx/error.log
 log_group_name = ${log_group}
 log_stream_name = log-stream-api-nginx-error-${user}-${stage}
 
-[/tmp/access.log]
-file = /tmp/access.log
+[/var/log/nginx/access.log]
+file = /var/log/nginx/access.log
 log_group_name = ${log_group}
 log_stream_name = log-stream-api-nginx-access-${user}-${stage}
 
@@ -100,7 +100,7 @@ wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setu
 python3.5 ./awslogs-agent-setup.py --region "${region}" --non-interactive --configfile awslogs.conf
 # Rotate the logs, delete after 3 days.
 echo "
-/tmp/error.log {
+/var/log/nginx/error.log {
     missingok
     notifempty
     compress
@@ -109,7 +109,7 @@ echo "
     maxage 3
 }" >>/etc/logrotate.conf
 echo "
-/tmp/access.log {
+/var/log/nginx/access.log {
     missingok
     notifempty
     compress
@@ -125,9 +125,9 @@ EOF
 
 chown -R ubuntu /home/ubuntu
 
-STATIC_VOLUMES=/tmp/volumes_static
-mkdir -p /tmp/volumes_static
-chmod a+rwx /tmp/volumes_static
+STATIC_VOLUMES=/var/www/volumes_static
+mkdir -p /var/www/volumes_static
+chmod a+rwx /var/www/volumes_static
 
 # Pull the API image.
 docker pull "${dockerhub_repo}/${api_docker_image}"
