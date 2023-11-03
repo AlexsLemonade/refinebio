@@ -125,9 +125,9 @@ EOF
 
 chown -R ubuntu /home/ubuntu
 
-STATIC_VOLUMES=/tmp/volumes_static
-mkdir -p /tmp/volumes_static
-chmod a+rwx /tmp/volumes_static
+STATIC_VOLUMES=/var/www/volumes_static
+mkdir -p /var/www/volumes_static
+chmod a+rwx /var/www/volumes_static
 
 # Pull the API image.
 docker pull "${dockerhub_repo}/${api_docker_image}"
