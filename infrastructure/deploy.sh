@@ -412,7 +412,7 @@ if [[ -n $container_running ]]; then
             --publish 8081:8081 \
             --restart always \
             --tty \
-            --volume /tmp/volumes_static:/tmp/www/static \
+            --volume /var/www/volumes_static:/tmp/www/static \
             $DOCKERHUB_REPO/$API_DOCKER_IMAGE \
             /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
