@@ -388,6 +388,13 @@ if [[ -n $container_running ]]; then
         -i data-refinery-key.pem \
         api-configuration/environment "ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment"
 
+    # Ensure the API's static file dir exists and is accessible.
+    ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
+        -i data-refinery-key.pem \
+        "ubuntu@$API_IP_ADDRESS" "mkdir -m a+rwx -p /var/www/volumes_static"
+
     # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
