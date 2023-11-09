@@ -87,7 +87,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             "sex",
             "age",
             "specimen_part",
-            "genotype",
+            "genetic_information",
+            "developmental_stage",
             "disease",
             "disease_stage",
             "cell_line",
@@ -158,7 +159,8 @@ class SampleListView(generics.ListAPIView):
         "sex",
         "age",
         "specimen_part",
-        "genotype",
+        "genetic_information",
+        "developmental_stage",
         "disease",
         "disease_stage",
         "cell_line",
@@ -217,7 +219,7 @@ class SampleListView(generics.ListAPIView):
                 | Q(sex__icontains=filter_by)
                 | Q(age__icontains=filter_by)
                 | Q(specimen_part__icontains=filter_by)
-                | Q(genotype__icontains=filter_by)
+                | Q(genetic_information__icontains=filter_by)
                 | Q(disease__icontains=filter_by)
                 | Q(disease_stage__icontains=filter_by)
                 | Q(cell_line__icontains=filter_by)

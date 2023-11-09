@@ -39,6 +39,7 @@ docker run \\
     --log-opt awslogs-region="${region}" \\
     --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \\
     --name dr_foreman \\
+    --platform linux/amd64 \\
     --tty \\
     --volume /tmp:/tmp \\
     "${dockerhub_repo}/${foreman_docker_image}" \\
@@ -64,6 +65,7 @@ docker run \\
     --env DATABASE_USER=${database_user} \\
     --env-file /home/ubuntu/environment \\
     --interactive \\
+    --platform linux/amd64 \\
     --tty \\
     --volume /tmp:/tmp \\
     ${dockerhub_repo}/${foreman_docker_image} \\
@@ -84,6 +86,7 @@ docker run \\
     --env DATABASE_USER=${database_user} \\
     --env-file /home/ubuntu/environment \\
     --interactive \\
+    --platform linux/amd64 \\
     --tty \\
     --volume /tmp:/tmp \\
     ${dockerhub_repo}/dr_\"\$1\" \\
@@ -145,6 +148,7 @@ docker run \
     --log-opt awslogs-region="${region}" \
     --log-opt awslogs-stream="log-stream-foreman-${user}-${stage}" \
     --name job_filler \
+    --platform linux/amd64 \
     --tty \
     --volume /tmp:/tmp \
     "${dockerhub_repo}/${foreman_docker_image}" \

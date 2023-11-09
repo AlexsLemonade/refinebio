@@ -5,6 +5,8 @@ FROM $DOCKERHUB_REPO/dr_api_base:$SYSTEM_VERSION
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+ENV SYSTEM_VERSION=$SYSTEM_VERSION
+
 USER user
 
 EXPOSE 8000

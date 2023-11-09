@@ -50,7 +50,7 @@ def get_scientific_name(taxonomy_id: int) -> str:
             "No names returned by ncbi.nlm.nih.gov for organism " + "with taxonomy ID %d.",
             taxonomy_id,
         )
-        raise InvalidNCBITaxonomyId
+        raise InvalidNCBITaxonomyId(taxonomy_id)
 
     return taxon_list[0].find("ScientificName").text.upper()
 

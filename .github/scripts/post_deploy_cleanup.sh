@@ -10,5 +10,5 @@ set -e
 ssh -o StrictHostKeyChecking=no \
     -o ServerAliveInterval=15 \
     -i infrastructure/data-refinery-key.pem \
-    "ubuntu@${DEPLOY_IP_ADDRESS}" \
+    "ubuntu@${DEPLOY_BOX_IP}" \
     "cd refinebio && git clean -f"

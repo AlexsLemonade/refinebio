@@ -32,6 +32,8 @@ fi
 chmod -R a+rwX "$volume_directory"
 
 docker build \
+    --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+    --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
     --file foreman/dockerfiles/Dockerfile.foreman \
     --tag dr_shell \
     .
@@ -44,6 +46,7 @@ docker run \
     --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
     --env-file foreman/environments/local \
     --interactive \
+    --platform linux/amd64 \
     --tty \
     --volume "$volume_directory":/home/user/data_store \
     --volume /tmp:/tmp \

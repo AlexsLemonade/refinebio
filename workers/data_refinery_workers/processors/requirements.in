@@ -1,5 +1,4 @@
 boto3>=1.9.199
-coveralls
 django>=3.2,<4
 rpy2===3.4.5
 matplotlib
@@ -32,3 +31,4 @@ django-computedfields>=0.1.5
 pyyaml>=5.4
 sqlparse>=0.4.2
 nose
+certifi==2023.7.22

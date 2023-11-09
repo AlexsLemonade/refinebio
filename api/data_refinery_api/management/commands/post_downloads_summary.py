@@ -66,7 +66,6 @@ def get_user_location(ip_address):
 
 def post_downloads_summary(days, channel, top_countries=5):
     """Posts downloads summary to Slack channel."""
-
     start_time = timezone.now() - datetime.timedelta(days=days)
     datasets = Dataset.processed_filtered_objects.filter(
         created_at__gt=start_time
@@ -75,7 +74,7 @@ def post_downloads_summary(days, channel, top_countries=5):
     users_emails = set(dataset.email_address for dataset in datasets)
 
     locations = set()
-    locations_cache = dict()
+    locations_cache = {}
     for annotation in annotations:
         if "location" not in annotation.data:
             ip_address = annotation.data["ip"]
@@ -94,8 +93,10 @@ def post_downloads_summary(days, channel, top_countries=5):
     for user_email in users_emails:
         user_annotations = annotations.filter(dataset__email_address=user_email)
         user_downloads = user_annotations.count()
-        downloads_total += user_downloads
+        if user_downloads == 0:
+            continue
 
+        downloads_total += user_downloads
         user_locations = set()
         for user_annotation in user_annotations:
             user_locations.add(user_annotation.data["location"])
@@ -110,18 +111,18 @@ def post_downloads_summary(days, channel, top_countries=5):
 
         is_returning_user = Dataset.processed_filtered_objects.filter(
             created_at__lt=start_time, email_address=user_email
-        )
+        ).exists()
         if is_returning_user:
             returning_users.append(user_data)
         else:
             new_users.append(user_data)
 
-    if downloads_total:
+    if downloads_total > 0:
         locations_count = len(locations)
-        users_emails_count = len(users_emails)
+        users_count = len(new_users) + len(returning_users)
         fallback_text = (
-            f"In the last {days} day{pluralize(days)}, {users_emails_count} "
-            f"user{pluralize(users_emails_count)} downloaded {downloads_total} "
+            f"In the last {days} day{pluralize(days)}, {users_count} "
+            f"user{pluralize(users_count)} downloaded {downloads_total} "
             f"dataset{pluralize(downloads_total)} from {locations_count} "
             f"location{pluralize(locations_count)}."
         )
@@ -129,14 +130,20 @@ def post_downloads_summary(days, channel, top_countries=5):
         fallback_text = f"There were no downloads in the last {days} day{pluralize(days)}."
 
     blocks = [
-        {"type": "section", "text": {"type": "plain_text", "emoji": True, "text": fallback_text}}
+        {
+            "type": "section",
+            "text": {"type": "plain_text", "emoji": True, "text": fallback_text},
+        }
     ]
 
     if new_users:
         blocks.append(
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": format_user_data("*New users*", new_users)},
+                "text": {
+                    "type": "mrkdwn",
+                    "text": format_user_data("*New users*", new_users),
+                },
             }
         )
 
@@ -170,7 +177,7 @@ def post_downloads_summary(days, channel, top_countries=5):
 
     # Post to Slack.
     requests.post(
-        settings.ENGAGEMENTBOT_WEBHOOK,
+        settings.SLACK_WEBHOOK_URL,
         json={
             "username": "EngagementBot",
             "icon_emoji": ":halal:",

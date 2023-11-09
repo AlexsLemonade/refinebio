@@ -6,8 +6,8 @@ provider "aws" {
 }
 
 resource "aws_vpc" "data_refinery_vpc" {
-  cidr_block = "10.0.0.0/16"
-  enable_dns_support = true
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = merge(
@@ -19,9 +19,9 @@ resource "aws_vpc" "data_refinery_vpc" {
 }
 
 resource "aws_subnet" "data_refinery_1a" {
-  availability_zone = "${var.region}a"
-  cidr_block = "10.0.0.0/17"
-  vpc_id = aws_vpc.data_refinery_vpc.id
+  availability_zone       = "${var.region}a"
+  cidr_block              = "10.0.0.0/17"
+  vpc_id                  = aws_vpc.data_refinery_vpc.id
   map_public_ip_on_launch = true
 
   tags = merge(
@@ -34,8 +34,8 @@ resource "aws_subnet" "data_refinery_1a" {
 
 resource "aws_subnet" "data_refinery_1b" {
   availability_zone = "${var.region}b"
-  cidr_block = "10.0.128.0/17"
-  vpc_id = aws_vpc.data_refinery_vpc.id
+  cidr_block        = "10.0.128.0/17"
+  vpc_id            = aws_vpc.data_refinery_vpc.id
 
   # Unsure if this should be set to true
   map_public_ip_on_launch = true
@@ -78,17 +78,17 @@ resource "aws_route_table" "data_refinery" {
 }
 
 resource "aws_route_table_association" "data_refinery_1a" {
-  subnet_id = aws_subnet.data_refinery_1a.id
+  subnet_id      = aws_subnet.data_refinery_1a.id
   route_table_id = aws_route_table.data_refinery.id
 }
 
 resource "aws_route_table_association" "data_refinery_1b" {
-  subnet_id = aws_subnet.data_refinery_1b.id
+  subnet_id      = aws_subnet.data_refinery_1b.id
   route_table_id = aws_route_table.data_refinery.id
 }
 
 resource "aws_db_subnet_group" "data_refinery" {
-  name = "data-refinery-${var.user}-${var.stage}"
+  name       = "data-refinery-${var.user}-${var.stage}"
   subnet_ids = [aws_subnet.data_refinery_1a.id, aws_subnet.data_refinery_1b.id]
 
   tags = merge(
@@ -125,13 +125,13 @@ resource "aws_eip" "data_refinery_api_ip" {
 # need a static IP address to point DNS to.
 resource "aws_lb" "data_refinery_api_load_balancer" {
   # Extra short because there is a 32 char limit on this name
-  name = "DR-api-${var.user}-${var.stage}"
-  internal = false
+  name               = "DR-api-${var.user}-${var.stage}"
+  internal           = false
   load_balancer_type = "network"
 
   # Only one subnet is allowed and the API lives in 1a.
   subnet_mapping {
-    subnet_id = aws_subnet.data_refinery_1a.id
+    subnet_id     = aws_subnet.data_refinery_1a.id
     allocation_id = aws_eip.data_refinery_api_ip.id
   }
 
@@ -139,53 +139,53 @@ resource "aws_lb" "data_refinery_api_load_balancer" {
 }
 
 resource "aws_lb_target_group" "api-http" {
-  name = "dr-api-${var.user}-${var.stage}-http"
-  port = 80
+  name     = "dr-api-${var.user}-${var.stage}-http"
+  port     = 80
   protocol = "TCP"
-  vpc_id = aws_vpc.data_refinery_vpc.id
+  vpc_id   = aws_vpc.data_refinery_vpc.id
 
   tags = var.default_tags
 }
 
 resource "aws_lb_listener" "api-http" {
   load_balancer_arn = aws_lb.data_refinery_api_load_balancer.arn
-  protocol = "TCP"
-  port = 80
+  protocol          = "TCP"
+  port              = 80
 
   default_action {
     target_group_arn = aws_lb_target_group.api-http.arn
-    type = "forward"
+    type             = "forward"
   }
 }
 
 resource "aws_lb_target_group_attachment" "api-http" {
   target_group_arn = aws_lb_target_group.api-http.arn
-  target_id = aws_instance.api_server_1.id
-  port = 80
+  target_id        = aws_instance.api_server_1.id
+  port             = 80
 }
 
 resource "aws_lb_target_group" "api-https" {
-  name = "dr-api-${var.user}-${var.stage}-https"
-  port = 443
+  name     = "dr-api-${var.user}-${var.stage}-https"
+  port     = 443
   protocol = "TCP"
-  vpc_id = aws_vpc.data_refinery_vpc.id
+  vpc_id   = aws_vpc.data_refinery_vpc.id
 
   tags = var.default_tags
 }
 
 resource "aws_lb_listener" "api-https" {
   load_balancer_arn = aws_lb.data_refinery_api_load_balancer.arn
-  protocol = "TCP"
-  port = 443
+  protocol          = "TCP"
+  port              = 443
 
   default_action {
     target_group_arn = aws_lb_target_group.api-https.arn
-    type = "forward"
+    type             = "forward"
   }
 }
 
 resource "aws_lb_target_group_attachment" "api-https" {
   target_group_arn = aws_lb_target_group.api-https.arn
-  target_id = aws_instance.api_server_1.id
-  port = 443
+  target_id        = aws_instance.api_server_1.id
+  port             = 443
 }

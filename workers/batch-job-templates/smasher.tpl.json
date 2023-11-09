@@ -29,6 +29,7 @@
         "jobRoleArn": "${{WORKER_ROLE_ARN}}",
         "environment": [
             {"name": "SYSTEM_VERSION", "value": "${{SYSTEM_VERSION}}"},
+            {"name": "STAGE", "value": "${{STAGE}}"},
             {"name": "DJANGO_DEBUG", "value": "${{DJANGO_DEBUG}}"},
             {"name": "DATABASE_NAME", "value": "${{DATABASE_NAME}}"},
             {"name": "DATABASE_USER", "value": "${{DATABASE_USER}}"},
@@ -36,7 +37,7 @@
             {"name": "DATABASE_PORT", "value": "${{DATABASE_PORT}}"},
             {"name": "DATABASE_TIMEOUT", "value": "${{DATABASE_TIMEOUT}}"},
             {"name": "RUNNING_IN_CLOUD", "value": "${{RUNNING_IN_CLOUD}}"},
-            {"name": "ENGAGEMENTBOT_WEBHOOK", "value": "${{ENGAGEMENTBOT_WEBHOOK}}"},
+            {"name": "SLACK_WEBHOOK_URL", "value": "${{SLACK_WEBHOOK_URL}}"},
             {"name": "USE_S3", "value": "${{USE_S3}}"},
             {"name": "S3_BUCKET_NAME", "value": "${{S3_BUCKET_NAME}}"},
             {"name": "S3_RESULTS_BUCKET_NAME", "value": "${{S3_RESULTS_BUCKET_NAME}}"},
@@ -57,8 +58,7 @@
         "secrets": [
             {"name": "DJANGO_SECRET_KEY", "valueFrom": "${{DJANGO_SECRET_KEY_ARN}}"},
             {"name": "DATABASE_PASSWORD", "valueFrom": "${{DATABASE_PASSWORD_ARN}}"},
-            {"name": "RAVEN_DSN", "valueFrom": "${{RAVEN_DSN_ARN}}"},
-            {"name": "RAVEN_DSN_API", "valueFrom": "${{RAVEN_DSN_API_ARN}}"}
+            {"name": "SENTRY_DSN", "valueFrom": "${{SENTRY_DSN_ARN}}"}
         ],
         "mountPoints": [
             {

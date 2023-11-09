@@ -3,10 +3,10 @@ requests>=2.23.0
 urllib3>=1.24.2
 psycopg2-binary>=2.8.4
 retrying
-coveralls
 psutil>=5.6.6
 vcrpy
 django-computedfields>=0.1.5
 pyyaml>=5.4
 sqlparse>=0.4.2
 rpy2==3.4.5
+certifi==2023.7.22

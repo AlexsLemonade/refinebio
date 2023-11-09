@@ -198,34 +198,38 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {},
 }
 
-# Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
+APP_NAME = "Refine.bio API"
+STAGE = get_env_variable_gracefully("STAGE")
+SYSTEM_VERSION = get_env_variable_gracefully("SYSTEM_VERSION")
+
+# Setting the RAVEN_CONFIG when SENTRY_DSN isn't set will cause the
 # following warning:
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-RAVEN_DSN = get_env_variable_gracefully("RAVEN_DSN_API", None)
+SENTRY_DSN = get_env_variable_gracefully("SENTRY_DSN", None)
 
 # AWS Secrets manager will not let us store an empty string.
-if RAVEN_DSN == "None":
-    RAVEN_DSN = None
+if SENTRY_DSN == "None":
+    SENTRY_DSN = None
 
-if RAVEN_DSN != "not set":
+if SENTRY_DSN:
     RAVEN_CONFIG = {
-        "dsn": RAVEN_DSN,
+        "dsn": SENTRY_DSN,
+        "environment": "-".join((STAGE, *(APP_NAME.replace(".", "").lower().split()))),
+        "release": SYSTEM_VERSION,
         # Only send 5% of errors for the API, since we aren't going to
         # be interested in any single one.
         "sampleRate": 0.25,
     }
 else:
-    # Preven raven from logging about how it's not configured...
+    # Prevent raven from logging about how it's not configured...
     import logging
 
     raven_logger = logging.getLogger("raven.contrib.django.client.DjangoClient")
     raven_logger.setLevel(logging.CRITICAL)
 
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
-
-ENVIRONMENT = get_env_variable_gracefully("ENVIRONMENT")
 
 # Elastic Search
 ELASTICSEARCH_DSL = {
@@ -354,7 +358,7 @@ Last Updated: March 2, 2018
 """
 
 # EngagementBot
-ENGAGEMENTBOT_WEBHOOK = get_env_variable_gracefully("ENGAGEMENTBOT_WEBHOOK")
+SLACK_WEBHOOK_URL = get_env_variable_gracefully("SLACK_WEBHOOK_URL")
 
 MAX_JOBS_PER_NODE = int(get_env_variable("MAX_JOBS_PER_NODE"))
 MAX_DOWNLOADER_JOBS_PER_NODE = int(get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE"))

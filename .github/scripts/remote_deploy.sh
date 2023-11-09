@@ -9,16 +9,15 @@
 # It has been written with the intention of being run from GitHub Actions as
 #   part of our CI/CD process. It therefore assumes that the following
 #   environment variables will be set:
-#     - DEPLOY_IP_ADDRESS --  The IP address of the instance to run the deploy on.
+#     - DEPLOY_BOX_IP --  The IP address of the instance to run the deploy on.
 #     - CI_TAG -- The tag that was pushed to GitHub to trigger the deploy.
 #         Will be used as the version for the system and the tag for Docker images.
-#     - DOCKER_ID -- The username that will be used to log into Dockerhub.
-#     - DOCKER_PASSWD -- The password that will be used to log into Dockerhub.
-#     - OPENSSL_KEY -- The OpenSSl key which will be used to decrypt the SSH key.
+#     - DOCKER_USERNAME -- The username that will be used to log into Dockerhub.
+#     - DOCKER_PASSWORD -- The password that will be used to log into Dockerhub.
 #     - AWS_ACCESS_KEY_ID -- The AWS key id to use when interacting with AWS.
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
-echo "$INSTANCE_SSH_KEY" >infrastructure/data-refinery-key.pem
+echo "$DEPLOY_BOX_SSH_PRIVATE_KEY" >infrastructure/data-refinery-key.pem
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box() {
@@ -26,7 +25,7 @@ run_on_deploy_box() {
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
         -i infrastructure/data-refinery-key.pem \
-        ubuntu@"${DEPLOY_IP_ADDRESS}" \
+        ubuntu@"${DEPLOY_BOX_IP}" \
         "cd refinebio && $1"
 }
 
@@ -34,16 +33,15 @@ run_on_deploy_box() {
 rm -f env_vars
 cat >>env_vars <<EOF
 export CI_TAG='$CI_TAG'
-export DOCKER_ID='$DOCKER_ID'
-export DOCKER_PASSWD='$DOCKER_PASSWD'
-export OPENSSL_KEY='$OPENSSL_KEY'
+export DOCKER_USERNAME='$DOCKER_USERNAME'
+export DOCKER_PASSWORD='$DOCKER_PASSWORD'
 export AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'
 export AWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY'
 export TF_VAR_database_password='$DATABASE_PASSWORD'
 export TF_VAR_django_secret_key='$DJANGO_SECRET_KEY'
-export TF_VAR_raven_dsn='$RAVEN_DSN'
-export TF_VAR_raven_dsn_api='$RAVEN_DSN_API'
-export TF_VAR_engagementbot_webhook='$ENGAGEMENTBOT_WEBHOOK'
+export TF_VAR_sentry_dsn='$SENTRY_DSN'
+export TF_VAR_slack_webhook_url='$SLACK_WEBHOOK_URL'
+export TF_VAR_ssh_public_key='$SSH_PUBLIC_KEY'
 EOF
 
 # And checkout the correct tag.
@@ -56,12 +54,12 @@ run_on_deploy_box "bash .github/scripts/verify_tag.sh $CI_TAG"
 # Copy the necessary environment variables over.
 scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
-    -r env_vars ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/env_vars
+    -r env_vars ubuntu@"$DEPLOY_BOX_IP":refinebio/env_vars
 
 # Along with the ssh key iself, which the deploy script will use.
 scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
-    -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/infrastructure/data-refinery-key.pem
+    -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_BOX_IP":refinebio/infrastructure/data-refinery-key.pem
 
 echo "Building new images"
 # Output to the docker update log.

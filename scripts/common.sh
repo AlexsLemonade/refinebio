@@ -13,7 +13,7 @@ export ALL_IMAGES="base api_base api foreman $WORKER_IMAGES"
 # https://stackoverflow.com/questions/32113330/check-if-imagetag-combination-already-exists-on-docker-hub
 docker_image_exists() {
     TOKEN=$(curl -s -H "Content-Type: application/json" -X POST \
-        -d '{"username": "'"${DOCKER_ID}"'", "password": "'"${DOCKER_PASSWD}"'"}' \
+        -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_PASSWORD}"'"}' \
         https://hub.docker.com/v2/users/login/ | jq -r .token)
     EXISTS=$(curl -s -H "Authorization: JWT ${TOKEN}" \
         "https://hub.docker.com/v2/repositories/$1/tags/?page_size=10000" |
@@ -100,17 +100,23 @@ update_docker_image() {
         DOCKER_ACTION="--load"
     fi
 
+    CCDL_STAGING_IMAGE="ccdlstaging/dr_$IMAGE_NAME"
     DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
+    CACHE_FROM_CCDL_STAGING_LATEST="type=registry,ref=${CCDL_STAGING_IMAGE}_cache:latest"
+    CACHE_FROM_CCDL_STAGING_VERSION="type=registry,ref=${CCDL_STAGING_IMAGE}_cache:$SYSTEM_VERSION"
     CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
     CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
     CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
     CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
+
 
     set_up_docker_builder
 
     docker buildx build \
         --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
         --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
+        --cache-from "$CACHE_FROM_CCDL_STAGING_LATEST" \
+        --cache-from "$CACHE_FROM_CCDL_STAGING_VERSION" \
         --cache-from "$CACHE_FROM_LATEST" \
         --cache-from "$CACHE_FROM_VERSION" \
         --cache-to "$CACHE_TO_LATEST" \
@@ -125,10 +131,12 @@ update_docker_image() {
 
 # Default Docker registry.
 if [ -z "$DOCKERHUB_REPO" ]; then
-    export DOCKERHUB_REPO="ccdlstaging"
+    DOCKERHUB_REPO="ccdlstaging"
+    export DOCKERHUB_REPO
 fi
 
 # Defaults to commit hash value for if we're not running in the cloud.
 if [ -z "$SYSTEM_VERSION" ]; then
     SYSTEM_VERSION="$(get_branch_hash)"
+    export SYSTEM_VERSION
 fi

@@ -16,7 +16,9 @@ resource "aws_launch_template" "data_refinery_worker" {
     device_name = "/dev/sdf"
     ebs {
       volume_type = "st1"
-      volume_size = 500
+      # Provide the workers with 1TB of storage
+      # for working with more experiments concurrently.
+      volume_size = 1000
       encrypted = true
       delete_on_termination = true
     }

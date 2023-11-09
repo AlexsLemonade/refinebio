@@ -122,7 +122,7 @@ def upload_new_platform_genes(platform, platform_genes):
 
 
 def signal_failure(bad_platforms):
-    if not settings.RUNNING_IN_CLOUD or not settings.ENGAGEMENTBOT_WEBHOOK:
+    if not settings.RUNNING_IN_CLOUD or not settings.SLACK_WEBHOOK_URL:
         logger.info(
             "Some Brainarray platforms did not have enough overlap with the previous run",
             bad_platforms=bad_platforms,
@@ -130,7 +130,7 @@ def signal_failure(bad_platforms):
         return
 
     requests.post(
-        settings.ENGAGEMENTBOT_WEBHOOK,
+        settings.SLACK_WEBHOOK_URL,
         json={
             "attachments": [
                 {
@@ -189,9 +189,9 @@ class Command(BaseCommand):
         try:
             check_brainarray_gene_agreement()
         except Exception as e:
-            if settings.ENGAGEMENTBOT_WEBHOOK:
+            if settings.SLACK_WEBHOOK_URL:
                 requests.post(
-                    settings.ENGAGEMENTBOT_WEBHOOK,
+                    settings.SLACK_WEBHOOK_URL,
                     json={
                         "attachments": [
                             {

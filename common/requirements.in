@@ -18,3 +18,4 @@ pyyaml>=5.4
 sqlparse>=0.4.2
 markupsafe==2.0.0
 rpy2==3.4.5
+certifi==2023.7.22

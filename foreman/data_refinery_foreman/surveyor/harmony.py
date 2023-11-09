@@ -5,7 +5,8 @@ Given a list of samples and their metadata, extract these common properties:
   `sex`,
   `age`,
   `specimen_part`,
-  `genotype`,
+  `genetic_information`,
+  `developmental_stage`,
   `disease`,
   `disease_stage`,
   `cell_line`,
@@ -626,7 +627,7 @@ class Harmonizer:
         ]
         self.specimen_part_fields = create_variants(specimen_part_fields)
 
-        genotype_fields = [
+        genetic_information_fields = [
             "strain/background",
             "strain",
             "strain or line",
@@ -639,7 +640,7 @@ class Harmonizer:
             "cultivar",
             "strain/genotype",
         ]
-        self.genotype_fields = create_variants(genotype_fields)
+        self.genetic_information_fields = create_variants(genetic_information_fields)
 
         disease_fields = [
             "disease",
@@ -797,7 +798,7 @@ class Harmonizer:
             "sex_fields",
             "age_fields",
             "specimen_part_fields",
-            "genotype_fields",
+            "genetic_information_fields",
             "disease_fields",
             "disease_stage_fields",
             "cell_line_fields",

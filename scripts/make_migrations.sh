@@ -14,6 +14,7 @@ script_directory="$(
 )"
 cd "$script_directory" || exit
 
+./prepare_image.sh -i base -s common
 ./prepare_image.sh -i migrations -s common
 
 . ./common.sh

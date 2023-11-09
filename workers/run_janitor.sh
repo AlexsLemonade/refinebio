@@ -31,6 +31,7 @@ docker run \
     --interactive \
     --link drdb:postgres \
     --memory 500m \
+    --platform linux/amd64 \
     --tty \
     --volume "$script_directory/volume":/home/user/data_store \
     "$DOCKERHUB_REPO/dr_smasher" \

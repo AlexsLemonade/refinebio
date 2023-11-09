@@ -110,8 +110,8 @@ fi
 # `jq`, so that we can use them via bash.
 format_environment_variables() {
     echo "SYSTEM_VERSION=$SYSTEM_VERSION" >>prod_env
-    json_env_vars=$(terraform output -json environment_variables | jq -c '.[]')
-    for row in $json_env_vars; do
+    local IFS=$'\n'
+    for row in $(terraform output -json environment_variables | jq -c '.[]'); do
         name=$(echo "$row" | jq -r ".name")
         value=$(echo "$row" | jq -r ".value")
         env_var_assignment="$name=$value"
@@ -340,6 +340,17 @@ terraform apply -var-file="environments/$env.tfvars" -auto-approve
 chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | tr -d '"')
 
+# Check SSH connection.
+if ! ssh -o StrictHostKeyChecking=no \
+    -o ServerAliveInterval=15 \
+    -o ConnectTimeout=5 \
+    -i data-refinery-key.pem \
+    "ubuntu@$API_IP_ADDRESS" "exit"; then
+    exit_code=$?
+    echo "Could not SSH into the API server. Did you rotate the SSH keys recently?"
+    exit $exit_code;
+fi
+
 # To check to see if the docker container needs to be stopped before
 # it can be started, grep for the name of the container. However if
 # it's not found then grep will return a non-zero exit code so in that
@@ -377,6 +388,13 @@ if [[ -n $container_running ]]; then
         -i data-refinery-key.pem \
         api-configuration/environment "ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment"
 
+    # Ensure the API's static file dir exists and is accessible.
+    ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
+        -i data-refinery-key.pem \
+        "ubuntu@$API_IP_ADDRESS" "mkdir -m a+rwx -p /var/www/volumes_static"
+
     # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
@@ -397,9 +415,11 @@ if [[ -n $container_running ]]; then
             --log-opt awslogs-region=$AWS_REGION \
             --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
             --name=dr_api \
-            --tty \
-            --volume /tmp/volumes_static:/tmp/www/static \
+            --platform linux/amd64 \
             --publish 8081:8081 \
+            --restart always \
+            --tty \
+            --volume /var/www/volumes_static:/tmp/www/static \
             $DOCKERHUB_REPO/$API_DOCKER_IMAGE \
             /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
@@ -412,3 +432,8 @@ if [[ -n $container_running ]]; then
 fi
 
 echo "Deploy completed successfully."
+
+# Remove Docker images created more than 30 days ago.
+echo "Cleaning up Docker images."
+docker image prune -a --force --filter "until=720h"
+echo "Cleanup completed."

@@ -1,27 +1,31 @@
-name: refine.bio CI/CD
+name: CI/CD
 
 on: push
 
 env:
-  DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
   DOCKER_BUILDKIT: 1
-  DOCKER_ID: ${{ secrets.DOCKER_ID }}
-  DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
-  DOCKER_IO_USERNAME: ${{ secrets.DOCKER_IO_USERNAME }}
-  DOCKER_IO_PASSWORD: ${{ secrets.DOCKER_IO_PASSWORD }}
-  INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
+  OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_ENGINEERING_AUTH_TOKEN }}
 
 jobs:
   # Code quality check jobs.
   check_syntax:
     name: Check Syntax
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.OP_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OP_AWS_SECRET_ACCESS_KEY }}
+
       - uses: actions/setup-python@v3
+        with:
+          python-version: '3.11'
+
       - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 0.13.5
@@ -45,11 +49,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -73,16 +85,24 @@ jobs:
     env:
       IMAGES: migrations affymetrix
     needs:
-      - test_base
+      - test_affymetrix
     runs-on: ubuntu-latest-m
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -112,11 +132,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -154,16 +182,24 @@ jobs:
     env:
       IMAGES: migrations api_base
     needs:
-      - check_syntax
+      - test_base
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -193,11 +229,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Build the Docker Image
         run: scripts/prepare_image.sh -i base -s common
@@ -212,11 +256,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -249,8 +301,8 @@ jobs:
           files: ./test_volume/common_coverage.xml
           name: Common Tests
 
-  test_downloaders_no_op:
-    name: Test Downloaders and No-Op
+  test_downloaders:
+    name: Test Downloaders
     env:
       IMAGES: migrations api_base api_local downloaders foreman
     needs:
@@ -259,11 +311,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -281,11 +341,6 @@ jobs:
         run: |
           .github/scripts/filter_tests.sh -t downloaders
 
-      - name: Run No-Op Tests
-        run: |
-          sudo -E chown -R $USER:$USER workers/test_volume
-          .github/scripts/filter_tests.sh -t no_op
-
   test_foreman:
     name: Test Foreman
     env:
@@ -296,11 +351,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -343,11 +406,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -374,6 +445,47 @@ jobs:
           files: ./workers/test_volume/workers_coverage.xml
           name: Illumina Tests
 
+  test_no_op:
+    name: Test No-Op
+    env:
+      IMAGES: migrations api_base api_local downloaders foreman
+    needs:
+      - test_base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
+      - name: Login to Packages Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Start Postgres
+        run: scripts/run_postgres.sh
+
+      - name: Pause for Initialization
+        run: sleep 15
+
+      - name: Install Database
+        run: scripts/install_db_docker.sh
+
+      - name: Update Models
+        run: scripts/update_models.sh
+
+      - name: Run No-Op Tests
+        run: |
+          sudo -E chown -R $USER:$USER workers/test_volume
+          .github/scripts/filter_tests.sh -t no_op
+
   test_salmon:
     name: Test Salmon
     env:
@@ -384,11 +496,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -420,15 +540,23 @@ jobs:
       IMAGES: migrations smasher
     needs:
       - test_base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     steps:
       - uses: actions/checkout@v3
+
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
 
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -496,11 +624,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+
       - name: Login to Packages Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_IO_USERNAME }}
-          password: ${{ secrets.DOCKER_IO_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
         run: scripts/run_postgres.sh
@@ -531,23 +667,7 @@ jobs:
   deploy:
     name: Deploy
     env:
-      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
-      DOCKER_ID: ${{ secrets.DOCKER_ID }}
-      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
-      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ENGAGEMENTBOT_WEBHOOK: ${{ secrets.ENGAGEMENTBOT_WEBHOOK }}
-      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
       CI_USERNAME: ${{ github.actor }}
-      STAGING_DATABASE_PASSWORD: ${{ secrets.STAGING_DATABASE_PASSWORD }}
-      STAGING_DJANGO_SECRET_KEY: ${{ secrets.STAGING_DJANGO_SECRET_KEY }}
-      STAGING_RAVEN_DSN: ${{ secrets.STAGING_RAVEN_DSN }}
-      STAGING_RAVEN_DSN_API: ${{ secrets.STAGING_RAVEN_DSN_API }}
-      PROD_DATABASE_PASSWORD: ${{ secrets.PROD_DATABASE_PASSWORD }}
-      PROD_DJANGO_SECRET_KEY: ${{ secrets.PROD_DJANGO_SECRET_KEY }}
-      PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
-      PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
     if: startsWith(github.ref, 'refs/tags/v') && ! endsWith(github.ref, '-hotfix')
     needs:
       - determine_branch
@@ -555,9 +675,10 @@ jobs:
       - test_agilent
       - test_api
       - test_common
-      - test_downloaders_no_op
+      - test_downloaders
       - test_foreman
       - test_illumina
+      - test_no_op
       - test_salmon
       - test_smasher
       - test_transcriptome
@@ -566,6 +687,25 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DEPLOY_BOX_SSH_PRIVATE_KEY: ${{ secrets.OP_DEPLOY_BOX_SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.OP_SSH_PUBLIC_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.OP_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OP_AWS_SECRET_ACCESS_KEY }}
+          DEPLOY_BOX_IP: ${{ secrets.OP_DEPLOY_BOX_IP }}
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+          SENTRY_DSN: ${{ secrets.OP_SENTRY_DSN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.OP_SLACK_WEBHOOK_URL }}
+          STAGING_DATABASE_PASSWORD: ${{ secrets.OP_STAGING_DATABASE_PASSWORD }}
+          STAGING_DJANGO_SECRET_KEY: ${{ secrets.OP_STAGING_DJANGO_SECRET_KEY }}
+          PRODUCTION_DATABASE_PASSWORD: ${{ secrets.OP_PRODUCTION_DATABASE_PASSWORD }}
+          PRODUCTION_DJANGO_SECRET_KEY: ${{ secrets.OP_PRODUCTION_DJANGO_SECRET_KEY }}
 
       - name: Set the $BRANCH and $CI_TAG Environment Variables
         run: |
@@ -579,19 +719,17 @@ jobs:
         run: |
           echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
           echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
           # Staging doesn't notify the engagementbot, so overwrite this to be blank.
-          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
+          echo "SLACK_WEBHOOK_URL=" >> $GITHUB_ENV
 
       - name: Set Production Specific Environment Variables
         if: ${{needs.determine_branch.outputs.branch == 'master'}}
         run: |
-          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
-          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
-          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
+          echo "DATABASE_PASSWORD=${PRODUCTION_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${PRODUCTION_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
+          echo "SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}" >> $GITHUB_ENV
 
       - name: Deploy
         run: .github/scripts/remote_deploy.sh
@@ -603,23 +741,7 @@ jobs:
   deploy_hotfix:
     name: Deploy Hotfix
     env:
-      DEPLOY_IP_ADDRESS: ${{ secrets.DEPLOY_IP_ADDRESS }}
-      DOCKER_ID: ${{ secrets.DOCKER_ID }}
-      DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
-      OPENSSL_KEY: ${{ secrets.OPENSSL_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ENGAGEMENTBOT_WEBHOOK: ${{ secrets.ENGAGEMENTBOT_WEBHOOK }}
-      INSTANCE_SSH_KEY: ${{ secrets.INSTANCE_SSH_KEY }}
       CI_USERNAME: ${{ github.actor }}
-      STAGING_DATABASE_PASSWORD: ${{ secrets.STAGING_DATABASE_PASSWORD }}
-      STAGING_DJANGO_SECRET_KEY: ${{ secrets.STAGING_DJANGO_SECRET_KEY }}
-      STAGING_RAVEN_DSN: ${{ secrets.STAGING_RAVEN_DSN }}
-      STAGING_RAVEN_DSN_API: ${{ secrets.STAGING_RAVEN_DSN_API }}
-      PROD_DATABASE_PASSWORD: ${{ secrets.PROD_DATABASE_PASSWORD }}
-      PROD_DJANGO_SECRET_KEY: ${{ secrets.PROD_DJANGO_SECRET_KEY }}
-      PROD_RAVEN_DSN: ${{ secrets.PROD_RAVEN_DSN }}
-      PROD_RAVEN_DSN_API: ${{ secrets.PROD_RAVEN_DSN_API }}
     if: startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-hotfix')
     needs:
       - determine_branch
@@ -628,6 +750,25 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Load secrets
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          DEPLOY_BOX_SSH_PRIVATE_KEY: ${{ secrets.OP_DEPLOY_BOX_SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.OP_SSH_PUBLIC_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.OP_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OP_AWS_SECRET_ACCESS_KEY }}
+          DEPLOY_BOX_IP: ${{ secrets.OP_DEPLOY_BOX_IP }}
+          DOCKER_USERNAME: ${{ secrets.OP_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.OP_DOCKER_PASSWORD }}
+          SENTRY_DSN: ${{ secrets.OP_SENTRY_DSN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.OP_SLACK_WEBHOOK_URL }}
+          STAGING_DATABASE_PASSWORD: ${{ secrets.OP_STAGING_DATABASE_PASSWORD }}
+          STAGING_DJANGO_SECRET_KEY: ${{ secrets.OP_STAGING_DJANGO_SECRET_KEY }}
+          PRODUCTION_DATABASE_PASSWORD: ${{ secrets.OP_PRODUCTION_DATABASE_PASSWORD }}
+          PRODUCTION_DJANGO_SECRET_KEY: ${{ secrets.OP_PRODUCTION_DJANGO_SECRET_KEY }}
 
       - name: Set the $BRANCH and $CI_TAG Environment Variables
         run: |
@@ -641,19 +782,17 @@ jobs:
         run: |
           echo "DATABASE_PASSWORD=${STAGING_DATABASE_PASSWORD}" >> $GITHUB_ENV
           echo "DJANGO_SECRET_KEY=${STAGING_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${STAGING_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${STAGING_RAVEN_DSN_API}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
           # Staging doesn't notify the engagementbot, so overwrite this to be blank.
-          echo "ENGAGEMENTBOT_WEBHOOK=" >> $GITHUB_ENV
+          echo "SLACK_WEBHOOK_URL=" >> $GITHUB_ENV
 
       - name: Set Production Specific Environment Variables
         if: ${{needs.determine_branch.outputs.branch == 'master'}}
         run: |
-          echo "DATABASE_PASSWORD=${PROD_DATABASE_PASSWORD}" >> $GITHUB_ENV
-          echo "DJANGO_SECRET_KEY=${PROD_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
-          echo "RAVEN_DSN=${PROD_RAVEN_DSN}" >> $GITHUB_ENV
-          echo "RAVEN_DSN_API=${PROD_RAVEN_DSN_API}" >> $GITHUB_ENV
-          echo "ENGAGEMENTBOT_WEBHOOK=${ENGAGEMENTBOT_WEBHOOK}" >> $GITHUB_ENV
+          echo "DATABASE_PASSWORD=${PRODUCTION_DATABASE_PASSWORD}" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=${PRODUCTION_DJANGO_SECRET_KEY}" >> $GITHUB_ENV
+          echo "SENTRY_DSN=${SENTRY_DSN}" >> $GITHUB_ENV
+          echo "SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}" >> $GITHUB_ENV
 
       - name: Deploy
         run: .github/scripts/remote_deploy.sh

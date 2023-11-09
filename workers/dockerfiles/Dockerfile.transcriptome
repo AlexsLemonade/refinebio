@@ -16,26 +16,25 @@ ENV SALMON_VERSION=0.13.1
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 # Salmon can extract to a different directory than the name of the tar file.
-RUN wget -q "https://github.com/COMBINE-lab/salmon/releases/download/\
-v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
-    tar -xzf "Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz" && \
-    cp "$(tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | \
-        head -1 | cut -f1 -d '/')/bin/salmon" /usr/local/bin && \
-    cp "$(tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | \
-        head -1 | cut -f1 -d '/')/lib/"* /usr/local/lib/ && \
-    rm -r Salmon*
+RUN <<EOF
+wget -q "https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz"
+tar -xzf "Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz"
+cp "$(tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | head -1 | cut -f1 -d '/')/bin/salmon" /usr/local/bin
+cp "$(tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | head -1 | cut -f1 -d '/')/lib/"* /usr/local/lib/
+rm -r Salmon*
+EOF
 # End Salmon installation.
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt && \
-    # It's annoying that this can only be installed via git.
-    git clone https://github.com/deweylab/RSEM.git && \
-    cd RSEM && make install && \
-    rm -rf RSEM
+RUN <<EOF
+pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+git clone https://github.com/deweylab/RSEM.git
+cd RSEM && make install
+rm -rf RSEM
+EOF
 
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY workers/ .

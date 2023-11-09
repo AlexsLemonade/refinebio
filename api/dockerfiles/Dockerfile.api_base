@@ -4,27 +4,28 @@ FROM python:3.8.5-buster
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install gcc and libpq-dev for psycopg2.
-RUN apt-get update -qq && \
-    apt-get install -y \
-        gcc \
-        libpq-dev && \
-    groupadd user && \
-    useradd --create-home --home-dir /home/user -g user user
+RUN <<EOF
+apt-get update -qq
+apt-get install -y \
+    gcc \
+    libpq-dev
+groupadd user
+useradd --create-home --home-dir /home/user -g user user
+EOF
 
 WORKDIR /home/user
 
 COPY api/requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --ignore-installed --no-cache-dir -r requirements.txt
+RUN <<EOF
+pip install --upgrade pip
+pip install --ignore-installed --no-cache-dir -r requirements.txt
+EOF
 
 COPY common/dist/data-refinery-common-* common/
-RUN pip install --ignore-installed \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip install --ignore-installed common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY api/ .
 COPY config/ config/
 COPY setup.cfg .
-
-ENV SYSTEM_VERSION=$SYSTEM_VERSION
 
 ENTRYPOINT []

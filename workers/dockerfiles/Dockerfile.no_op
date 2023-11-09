@@ -18,18 +18,19 @@ RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 RUN mkdir -p gene_indexes
 WORKDIR /home/user/gene_indexes
 ENV ID_REFINERY_URL=https://zenodo.org/record/1410647/files/all_1536267482.zip
-RUN curl -O $ID_REFINERY_URL && \
-    echo $ID_REFINERY_URL > /etc/identifier_refinery_url && \
-    unzip *.zip && \
-    rm *.zip
+RUN <<EOF
+echo $ID_REFINERY_URL > /etc/identifier_refinery_url
+wget $ID_REFINERY_URL
+unzip all_1536267482.zip
+rm all_1536267482.zip
+EOF
 # End Noop-specific.
 
 WORKDIR /home/user
 
 # Get the latest version from the dist directory.
 COPY common/dist/data-refinery-common-* common/
-RUN pip3 install --ignore-installed --no-cache-dir \
-        common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
 COPY workers/ .
