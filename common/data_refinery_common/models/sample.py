@@ -94,6 +94,10 @@ class Sample(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
+    # Auxiliary field for tracking latest metadata update time.
+    # Originally added to support Sample::developmental_stage values backfilling.
+    last_refreshed = models.DateTimeField(auto_now=True, null=True)
+
     def save(self, *args, **kwargs):
         """On save, update timestamps"""
         current_time = timezone.now()
