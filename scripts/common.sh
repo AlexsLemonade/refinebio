@@ -100,12 +100,12 @@ update_docker_image() {
         DOCKER_ACTION="--load"
     fi
 
-    CCDL_STAGING_IMAGE="ccdlstaging/dr_$IMAGE_NAME"
+    # CCDL_STAGING_IMAGE="ccdlstaging/dr_$IMAGE_NAME"
     DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
     # CACHE_FROM_CCDL_STAGING_LATEST="type=registry,ref=${CCDL_STAGING_IMAGE}_cache:latest"
-    CACHE_FROM_CCDL_STAGING_VERSION="type=registry,ref=${CCDL_STAGING_IMAGE}_cache:$SYSTEM_VERSION"
+    # CACHE_FROM_CCDL_STAGING_VERSION="type=registry,ref=${CCDL_STAGING_IMAGE}_cache:$SYSTEM_VERSION"
     # CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
-    CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
+    # CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
     CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
     CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
 
@@ -114,11 +114,11 @@ update_docker_image() {
 
         # --cache-from "$CACHE_FROM_CCDL_STAGING_LATEST" \
         # --cache-from "$CACHE_FROM_LATEST" \
+        # --cache-from "$CACHE_FROM_CCDL_STAGING_VERSION" \
+        # --cache-from "$CACHE_FROM_VERSION" \
     docker buildx build \
         --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
         --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-        --cache-from "$CACHE_FROM_CCDL_STAGING_VERSION" \
-        --cache-from "$CACHE_FROM_VERSION" \
         --cache-to "$CACHE_TO_LATEST" \
         --cache-to "$CACHE_TO_VERSION" \
         --file "$DOCKER_FILE_PATH" \
