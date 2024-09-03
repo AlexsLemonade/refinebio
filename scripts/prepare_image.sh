@@ -86,6 +86,8 @@ if [ -z "$SYSTEM_VERSION" ]; then
     SYSTEM_VERSION="$(get_branch_hash)"
 fi
 
+echo "Using SYSTEM_VERSION $SYSTEM_VERSION"
+
 if [ -z "$DOCKER_ACTION" ]; then
     DOCKER_ACTION="--push"
 fi
