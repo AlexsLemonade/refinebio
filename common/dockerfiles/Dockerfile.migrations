@@ -10,7 +10,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /home/user
 
 COPY common/requirements.txt .
-RUN pip install --ignore-installed --no-cache-dir -r requirements.txt
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY common/ .
 
