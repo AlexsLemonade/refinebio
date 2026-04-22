@@ -87,6 +87,7 @@ unsupported by this project.
 
 __Note__: The install_all.sh script will configure a git pre-commit hook to auto-format your python code.
 This will format your code in the same way as the rest of the project, allowing it to pass our linting check.
+This should be run from the `dev` branch first.
 
 #### Automatic
 
