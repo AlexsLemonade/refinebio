@@ -175,9 +175,8 @@ echo "Starting postgres and installing the database..."
 ./run_postgres.sh >"$OUTPUT"
 ./install_db_docker.sh >"$OUTPUT"
 
-echo "Starting elasticsearch and building the ES Indexes..."
+echo "Starting elasticsearch..."
 ./run_es.sh >"$OUTPUT"
-./rebuild_es_index.sh >"$OUTPUT"
 
 echo "Creating virtual environment..."
 ./create_virtualenv.sh >"$OUTPUT"
@@ -187,3 +186,6 @@ echo "Updating common dependencies..."
 # Source the virtual environment first.
 . ../dr_env/bin/activate
 ./update_models.sh >"$OUTPUT"
+
+echo "Building the ES Indexes..."
+./rebuild_es_index.sh >"$OUTPUT"
