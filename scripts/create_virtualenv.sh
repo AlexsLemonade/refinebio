@@ -9,12 +9,8 @@ cd "$script_directory" || exit
 # move up a level
 cd ..
 
-if ! command -v virtualenv >/dev/null; then
-  pip3 install virtualenv
-fi
-
-virtualenv -p python3 dr_env
+python3 -m venv dr_env
 
 . dr_env/bin/activate
 
-pip3 install pip-tools
+pip install pip-tools
