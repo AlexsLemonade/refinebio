@@ -20,8 +20,8 @@ except OSError:
 
 version_re = re.compile(
     r"^([1-9][0-9]*!)?(0|[1-9][0-9]*)"
-    "(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))"
-    "?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?$"
+    r"(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))"
+    r"?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?$"
 )
 if not version_re.match(version_string):
     # Generate version based on the datetime.now(): e.g., 2023.5.17.dev1684352560.
