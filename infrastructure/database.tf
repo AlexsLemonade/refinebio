@@ -1,5 +1,11 @@
 # This file contains the configuration for the database and related resources.
 
+data "aws_rds_certificate" "cert" {
+  id = "rds-ca-rsa2048-g1"
+  # This returns multiple certs and the aws provider throws an error.
+  # latest_valid_till = true
+}
+
 resource "aws_db_parameter_group" "postgres_parameters" {
   name = "postgres-parameters-${var.user}-${var.stage}"
   description = "Postgres Parameters ${var.user} ${var.stage}"
@@ -162,6 +168,8 @@ resource "aws_db_instance" "postgres_db" {
   vpc_security_group_ids = [aws_security_group.data_refinery_db.id]
   multi_az = true
   publicly_accessible = true
+
+  ca_cert_identifier = data.aws_rds_certificate.cert.id
 
   backup_retention_period = var.stage == "prod" ? "7" : "0"
 
