@@ -59,13 +59,15 @@ apt-get clean
 rm -rf /var/lib/apt/lists/*
 ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config
 update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
-# TODO: These are workarounds for build failures caused by Ubuntu 18.04's outdated
-# system packages. Remove this line when upgrading the base image.
-pip3 install "pip<24.1" wheel setuptools "cffi==1.15.1" "django-computedfields==0.2.1" "django-fast-update==0.2.1" pybind11
 groupadd user
 useradd --create-home --home-dir /home/user/ -g user user
 chown -R user /home/user/
 EOF
+
+# TODO: Remove when upgrading the base image (workarounds for Ubuntu 18.04's outdated system packages).
+# Upgrade pip first (system pip3 is 9.0.1 and can't install modern packages), then install deps.
+RUN pip3 install "pip<24.1" && \
+    pip3 install wheel setuptools "cffi==1.15.1" "django-computedfields==0.2.1" "django-fast-update==0.2.1" pybind11
 
 ENV R_LIBS=/usr/local/lib/R/site-library
 
