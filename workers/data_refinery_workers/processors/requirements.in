@@ -1,6 +1,6 @@
 boto3>=1.9.199
 django>=3.2,<4
-rpy2===3.4.5
+rpy2==3.4.5
 matplotlib
 numpy
 pandas
