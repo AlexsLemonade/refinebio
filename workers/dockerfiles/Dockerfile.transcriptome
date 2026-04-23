@@ -28,8 +28,8 @@ EOF
 # End Salmon installation.
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
+RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 RUN <<EOF
-pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 git clone https://github.com/deweylab/RSEM.git
 cd RSEM && make install
 rm -rf RSEM
