@@ -20,14 +20,16 @@ cd ..
 
 print_help() {
     cat <<EOF
-Build all docker images via 'docker buildx bake'.
+Build a group of docker images via 'docker buildx bake'.
 
-Usage: $(basename "$0") [-r REPO] [-v VERSION] [-a] [-u] [-h]
+Usage: $(basename "$0") [-r REPO] [-v VERSION] [-g GROUP] [-a] [-u] [-h]
 
 Options:
   -r REPO      Override DOCKERHUB_REPO (default: ccdlstaging).
   -v VERSION   Override SYSTEM_VERSION (default: a hash of the current branch).
-  -a           Also build affymetrix (uses bake's "all" group; default omits it).
+  -g GROUP     Bake group to build (default: 'default'). Available groups:
+               'default' (everything except affymetrix), 'all', 'workers', 'deploy'.
+  -a           Shortcut for '-g all'.
   -u           Push to DOCKERHUB_REPO instead of loading to the local daemon.
   -h           Print this help.
 EOF
@@ -36,10 +38,11 @@ EOF
 ACTION="--load"
 GROUP="default"
 
-while getopts ":r:v:auh" opt; do
+while getopts ":r:v:g:auh" opt; do
     case $opt in
     r) export DOCKERHUB_REPO="$OPTARG" ;;
     v) export SYSTEM_VERSION="$OPTARG" ;;
+    g) GROUP="$OPTARG" ;;
     a) GROUP="all" ;;
     u) ACTION="--push" ;;
     h)
