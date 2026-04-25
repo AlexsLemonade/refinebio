@@ -71,64 +71,6 @@ run_tests_with_coverage() {
     echo "$COVERAGE $PRINT_REPORT $SAVE_REPORT $RETURN"
 }
 
-# Create docker-container/desktop-linux Docker builder if none provided.
-# Set the builder as currently used.
-set_up_docker_builder() {
-    if [ -z "$DOCKER_BUILDER" ]; then
-        DOCKER_BUILDER="refinebio_local_builder"
-        echo "Creating Docker builder $DOCKER_BUILDER."
-        docker buildx create \
-            --driver=docker-container \
-            --name="$DOCKER_BUILDER" \
-            --platform=linux/amd64 2>/dev/null ||
-            true
-    fi
-
-    docker buildx use "$DOCKER_BUILDER"
-    echo "Using Docker builder $DOCKER_BUILDER:"
-    docker buildx inspect
-}
-
-update_docker_image() {
-    DOCKERHUB_REPO="$1"
-    IMAGE_NAME="$2"
-    SYSTEM_VERSION="$3"
-    DOCKER_FILE_PATH="$4"
-    DOCKER_ACTION="$5"
-
-    if [ -z "$DOCKER_ACTION" ]; then
-        DOCKER_ACTION="--load"
-    fi
-
-    CCDL_STAGING_IMAGE="ccdlstaging/dr_$IMAGE_NAME"
-    DOCKERHUB_IMAGE="$DOCKERHUB_REPO/dr_$IMAGE_NAME"
-    CACHE_FROM_CCDL_STAGING_LATEST="type=registry,ref=${CCDL_STAGING_IMAGE}_cache:latest"
-    CACHE_FROM_CCDL_STAGING_VERSION="type=registry,ref=${CCDL_STAGING_IMAGE}_cache:$SYSTEM_VERSION"
-    CACHE_FROM_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest"
-    CACHE_FROM_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION"
-    CACHE_TO_LATEST="type=registry,ref=${DOCKERHUB_IMAGE}_cache:latest,mode=max"
-    CACHE_TO_VERSION="type=registry,ref=${DOCKERHUB_IMAGE}_cache:$SYSTEM_VERSION,mode=max"
-
-
-    set_up_docker_builder
-
-    docker buildx build \
-        --build-arg DOCKERHUB_REPO="$DOCKERHUB_REPO" \
-        --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" \
-        --cache-from "$CACHE_FROM_CCDL_STAGING_LATEST" \
-        --cache-from "$CACHE_FROM_CCDL_STAGING_VERSION" \
-        --cache-from "$CACHE_FROM_LATEST" \
-        --cache-from "$CACHE_FROM_VERSION" \
-        --cache-to "$CACHE_TO_LATEST" \
-        --cache-to "$CACHE_TO_VERSION" \
-        --file "$DOCKER_FILE_PATH" \
-        --platform linux/amd64 \
-        --tag "$DOCKERHUB_IMAGE:latest" \
-        --tag "$DOCKERHUB_IMAGE:$SYSTEM_VERSION" \
-        "$DOCKER_ACTION" \
-        .
-}
-
 # Default Docker registry.
 if [ -z "$DOCKERHUB_REPO" ]; then
     DOCKERHUB_REPO="ccdlstaging"
