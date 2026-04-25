@@ -1,8 +1,7 @@
 #!/bin/sh
 
-# Script for executing Django management commands within a Docker container.
+# Run a command inside a worker container.
 
-# Exit on failure
 set -e
 
 while getopts "i:" opt; do
@@ -24,19 +23,13 @@ else
     shift
 fi
 
-# This script should always run as if it were being called from
-# the directory it lives in.
 script_directory="$(
     cd "$(dirname "$0")" || exit
     pwd
 )"
 cd "$script_directory" || exit
 
-# However in order to give Docker access to all the code we have to
-# move up a level
-cd ..
-
-# Ensure that postgres is running
+# Ensure that postgres is running.
 if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
     echo "./scripts/run_postgres.sh" >&2
@@ -49,21 +42,9 @@ if [ ! -d "$volume_directory" ]; then
 fi
 chmod -R a+rwX "$volume_directory"
 
-. ./scripts/common.sh
-
-DB_HOST_IP=$(get_docker_db_ip_address)
+# Run from the repo root so prepare_image.sh and compose.yml resolve.
+cd ..
 
 ./scripts/prepare_image.sh -i "$IMAGE" -s workers
 
-docker run \
-    --add-host=database:"$DB_HOST_IP" \
-    --env AWS_ACCESS_KEY_ID \
-    --env AWS_SECRET_ACCESS_KEY \
-    --env-file workers/environments/local \
-    --interactive \
-    --link drdb:postgres \
-    --platform linux/amd64 \
-    --tty \
-    --volume "$volume_directory":/home/user/data_store \
-    "$DOCKERHUB_REPO/dr_$IMAGE" \
-    bash -c "$@"
+exec docker compose run --rm "$IMAGE" bash -c "$@"
