@@ -1,9 +1,11 @@
 #!/bin/sh
 
+# Thin wrapper around `docker buildx bake` for building all images at once.
+# Build configuration lives in docker-bake.hcl. Also (re)builds the common
+# sdist that worker/foreman dockerfiles COPY in.
+
 set -e
 
-# This script should always run as if it were being called from
-# the directory it lives in.
 script_directory="$(
     cd "$(dirname "$0")" || exit
     pwd
@@ -13,102 +15,57 @@ cd "$script_directory" || exit
 # shellcheck disable=SC1091
 . ./common.sh
 
-# Get access to all of refinebio.
+# Run from the repo root so bake's relative context and sdist paths resolve.
 cd ..
 
-print_description() {
-    echo 'This script will re-build all refine.bio docker images and push '
-    echo 'them to the specified Dockerhub repository.'
-}
-
-print_options() {
+print_help() {
     cat <<EOF
-There are two required arguments for this script:
--r specifies the Dockerhub repository you would like to deploy to.
--v specifies the version you would like to build. This version will passed into
-    the Docker image as the environment variable SYSTEM_VERSION.
-    It also will be used as the tag for the Docker images built.
+Build all docker images via 'docker buildx bake'.
 
-There are also optional arguments:
--a also build the affymetrix image
-    (we normally don't because it is so intense to build)
+Usage: $(basename "$0") [-r REPO] [-v VERSION] [-a] [-u] [-h]
+
+Options:
+  -r REPO      Override DOCKERHUB_REPO (default: ccdlstaging).
+  -v VERSION   Override SYSTEM_VERSION (default: a hash of the current branch).
+  -a           Also build affymetrix (uses bake's "all" group; default omits it).
+  -u           Push to DOCKERHUB_REPO instead of loading to the local daemon.
+  -h           Print this help.
 EOF
 }
 
-while getopts ":r:v:ah" opt; do
+ACTION="--load"
+GROUP="default"
+
+while getopts ":r:v:auh" opt; do
     case $opt in
-    r)
-        export DOCKERHUB_REPO="$OPTARG"
-        ;;
-    v)
-        export SYSTEM_VERSION="$OPTARG"
-        ;;
-    a)
-        BUILD_AFFYMETRIX=true
-        ;;
+    r) export DOCKERHUB_REPO="$OPTARG" ;;
+    v) export SYSTEM_VERSION="$OPTARG" ;;
+    a) GROUP="all" ;;
+    u) ACTION="--push" ;;
     h)
-        print_description
-        echo
-        print_options
+        print_help
         exit 0
         ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
-        print_options >&2
+        print_help >&2
         exit 1
         ;;
     :)
         echo "Option -$OPTARG requires an argument." >&2
-        print_options >&2
         exit 1
         ;;
     esac
 done
 
-if [ -z "$DOCKERHUB_REPO" ]; then
-    echo 'Error: must specify the Dockerhub repository with -r'
-    exit 1
+if [ "$ACTION" = "--push" ]; then
+    export PUSH_CACHE=true
 fi
 
-if [ -z "$SYSTEM_VERSION" ]; then
-    SYSTEM_VERSION="$(get_branch_hash)"
-fi
-
-DOCKER_ACTION="--push"
-
-# Intentionally omit affymetrix unless specifically requested since it is so
-# intense to build.
-IMAGE_NAMES="base migrations common_tests foreman api_base api api_local \
-    transcriptome smasher salmon no_op illumina downloaders compendia"
-if [ "$BUILD_AFFYMETRIX" ]; then
-    IMAGE_NAMES="$IMAGE_NAMES affymetrix"
-fi
-
-# Set the version for the common project.
+# Set the version for the common project, then build the sdist that
+# worker/foreman dockerfiles COPY in. Both are preconditions for those builds.
 echo "$SYSTEM_VERSION" >common/version
-
-# Create common/dist/data-refinery-common-*.tar.gz, which is
-# required by the workers and data_refinery_foreman images.
-# Remove old common distributions if they exist.
 rm -f common/dist/*
-(cd common && python3 setup.py sdist 1>/dev/null) # Run quietly in a subshell.
+(cd common && python3 setup.py sdist 1>/dev/null)
 
-for IMAGE_NAME in $IMAGE_NAMES; do
-    case $IMAGE_NAME in
-    api_base | api | api_local)
-        DOCKER_FILE_PATH="api/dockerfiles/Dockerfile.$IMAGE_NAME"
-        ;;
-    base | common_tests | migrations)
-        DOCKER_FILE_PATH="common/dockerfiles/Dockerfile.$IMAGE_NAME"
-        ;;
-    foreman)
-        DOCKER_FILE_PATH="foreman/dockerfiles/Dockerfile.$IMAGE_NAME"
-        ;;
-    *)
-        DOCKER_FILE_PATH="workers/dockerfiles/Dockerfile.$IMAGE_NAME"
-        ;;
-    esac
-
-    echo "Building the $IMAGE_NAME:$SYSTEM_VERSION image from $DOCKER_FILE_PATH."
-    update_docker_image "$DOCKERHUB_REPO" "$IMAGE_NAME" "$SYSTEM_VERSION" "$DOCKER_FILE_PATH" "$DOCKER_ACTION"
-done
+docker buildx bake "$GROUP" "$ACTION"
