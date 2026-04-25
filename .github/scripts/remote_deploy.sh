@@ -73,14 +73,7 @@ run_on_deploy_box ". env_vars && echo -e '######\nFinished building new images f
 # shellcheck disable=1091
 . ./scripts/common.sh
 
-if [[ "$BRANCH" == "master" ]]; then
-    DOCKERHUB_REPO=ccdl
-elif [[ "$BRANCH" == "dev" ]]; then
-    DOCKERHUB_REPO=ccdlstaging
-else
-    echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!"
-    exit 1
-fi
+DOCKERHUB_REPO=$(get_deploy_repo "$BRANCH") || exit 1
 
 # It's somehow possible for Docker to sometimes not successfully push
 # an image but yet still exit successfully. See:
