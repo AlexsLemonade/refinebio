@@ -212,12 +212,35 @@ def check_missing_local_images(services):
     return [i for i in needed if i not in local]
 
 
+def cmd_dev_down(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio dev:down",
+        description=(
+            "Stop the local dev stack. Volumes are preserved by default — "
+            "your postgres data is safe."
+        ),
+        epilog="wraps: docker compose down",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument("-v", "--volumes", action="store_true", help="also remove volumes (DESTRUCTIVE — wipes the db)")
+    p.add_argument("--rmi", action="store_true", help="remove images built by compose")
+    args = p.parse_args(argv)
+
+    cmd = ["docker", "compose", "down"]
+    if args.volumes:
+        cmd.append("--volumes")
+    if args.rmi:
+        cmd.extend(["--rmi", "local"])
+    return run(cmd)
+
+
 # ─── dispatch ───────────────────────────────────────────────────────────
 
 
 COMMANDS = {
     "build": cmd_build,
     "dev:up": cmd_dev_up,
+    "dev:down": cmd_dev_down,
 }
 
 
@@ -230,6 +253,7 @@ usage:  rbio <command> [args...]
 commands:
   build           build one or more docker images
   dev:up          start the dev stack
+  dev:down        stop the dev stack
 
 global flags:
   -h, --help      show help for the current command
