@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+class Globals:
+    verbose = False
+    quiet = False
+    dry_run = False
+    no_color = False
+
+
+def stderr(msg):
+    print(msg, file=sys.stderr)
+
+
+def run(cmd):
+    """Run a subprocess; honor --verbose / --dry-run."""
+    rendered = " ".join(shlex.quote(c) for c in cmd)
+    if Globals.dry_run:
+        print(f"DRY RUN: {rendered}", file=sys.stderr)
+        return 0
+    if Globals.verbose:
+        print(f"+ {rendered}", file=sys.stderr)
+    return subprocess.call(cmd, cwd=str(REPO_ROOT))
+
+
+# ─── dispatch ───────────────────────────────────────────────────────────
+
+
+COMMANDS = {}
+
+
+TOP_HELP = """\
+rbio — refinebio dev tool.
+
+usage:  rbio <command> [args...]
+        rbio <command> --help             # detailed help for any command
+
+global flags:
+  -h, --help      show help for the current command
+      --verbose   echo every underlying command before running it
+      --quiet     suppress non-error output
+      --dry-run   print what would run; don't execute
+      --no-color  disable color (auto-detected when stdout isn't a TTY)
+"""
+
+
+def extract_globals(argv):
+    """Strip global flags out of argv (at any position); set Globals.* accordingly."""
+    remaining = []
+    for arg in argv:
+        if arg == "--verbose":
+            Globals.verbose = True
+        elif arg == "--quiet":
+            Globals.quiet = True
+        elif arg == "--dry-run":
+            Globals.dry_run = True
+        elif arg == "--no-color":
+            Globals.no_color = True
+        else:
+            remaining.append(arg)
+    return remaining
+
+
+def main():
+    argv = extract_globals(sys.argv[1:])
+
+    if not argv or argv[0] in ("-h", "--help"):
+        print(TOP_HELP)
+        return 0
+
+    cmd_name, cmd_args = argv[0], argv[1:]
+
+    if cmd_name not in COMMANDS:
+        stderr(f"rbio: unknown command '{cmd_name}'")
+        stderr("run 'rbio --help' to see available commands")
+        return 2
+
+    return COMMANDS[cmd_name](cmd_args) or 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
