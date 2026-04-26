@@ -134,11 +134,90 @@ def render_bake_targets_section():
     return "\n".join(lines)
 
 
+DEV_UP_DEFAULT_SERVICES = ["api", "postgres", "elasticsearch"]
+DEV_UP_OPTIONAL_SERVICES = {"foreman"}
+
+
+def cmd_dev_up(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio dev:up",
+        description="Start the local dev stack.",
+        epilog=(
+            "stack:\n"
+            f"  default:   {', '.join(DEV_UP_DEFAULT_SERVICES)}\n"
+            f"  optional:  {', '.join(sorted(DEV_UP_OPTIONAL_SERVICES))} (use --with NAME)\n"
+            "\n"
+            "  workers are not part of dev:up — they're ephemeral job\n"
+            "  containers, started on demand by other commands.\n"
+            "\n"
+            "wraps: docker compose up -d <services>"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument(
+        "--with",
+        dest="extras",
+        action="append",
+        default=[],
+        metavar="SERVICE",
+        choices=sorted(DEV_UP_OPTIONAL_SERVICES),
+        help="optional service to start (repeatable)",
+    )
+    p.add_argument("--wait", action="store_true", help="block until services pass their healthchecks")
+    args = p.parse_args(argv)
+
+    services = list(DEV_UP_DEFAULT_SERVICES)
+    for s in args.extras:
+        if s not in services:
+            services.append(s)
+
+    if not Globals.dry_run:
+        missing = check_missing_local_images(services)
+        if missing:
+            stderr("rbio dev:up: missing local image(s):")
+            for img in sorted(missing):
+                stderr(f"  {img}")
+            stderr("")
+            stderr("build them first:  rbio build")
+            return 1
+
+    cmd = ["docker", "compose", "up", "-d"]
+    if args.wait:
+        cmd.append("--wait")
+    cmd.extend(services)
+    return run(cmd)
+
+
+def check_missing_local_images(services):
+    """Return refinebio-built images that compose needs but aren't in the local daemon."""
+    cfg = subprocess.run(
+        ["docker", "compose", "config", "--format", "json"],
+        capture_output=True, text=True, cwd=str(REPO_ROOT),
+    )
+    if cfg.returncode != 0:
+        return []
+    try:
+        config = json.loads(cfg.stdout)
+    except json.JSONDecodeError:
+        return []
+    needed = [config.get("services", {}).get(s, {}).get("image", "") for s in services]
+    needed = [i for i in needed if "/dr_" in i]
+    if not needed:
+        return []
+    ls = subprocess.run(
+        ["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"],
+        capture_output=True, text=True,
+    )
+    local = set(ls.stdout.splitlines()) if ls.returncode == 0 else set()
+    return [i for i in needed if i not in local]
+
+
 # ─── dispatch ───────────────────────────────────────────────────────────
 
 
 COMMANDS = {
     "build": cmd_build,
+    "dev:up": cmd_dev_up,
 }
 
 
@@ -150,6 +229,7 @@ usage:  rbio <command> [args...]
 
 commands:
   build           build one or more docker images
+  dev:up          start the dev stack
 
 global flags:
   -h, --help      show help for the current command
