@@ -17,7 +17,7 @@ WORKDIR /home/user
 
 COPY api/requirements.txt .
 RUN <<EOF
-pip install --upgrade pip
+pip install --upgrade 'pip<24.1' setuptools wheel
 pip install --ignore-installed --no-cache-dir -r requirements.txt
 EOF
 
