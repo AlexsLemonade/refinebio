@@ -56,11 +56,22 @@ def cmd_build(argv):
         metavar="TARGET",
         help="image(s) or group(s) to build (see list below). default: 'default' group.",
     )
-    p.add_argument("--push", action="store_true", help="push to registry after build (requires creds)")
-    p.add_argument("--load", action="store_true", help="load into local docker (default for single-target builds)")
+    p.add_argument(
+        "--push", action="store_true", help="push to registry after build (requires creds)"
+    )
+    p.add_argument(
+        "--load",
+        action="store_true",
+        help="load into local docker (default for single-target builds)",
+    )
     p.add_argument("--no-cache", action="store_true", help="rebuild from scratch")
     p.add_argument("--pull", action="store_true", help="pull latest base images before building")
-    p.add_argument("--print", dest="print_only", action="store_true", help="resolve and print HCL; build nothing")
+    p.add_argument(
+        "--print",
+        dest="print_only",
+        action="store_true",
+        help="resolve and print HCL; build nothing",
+    )
     args = p.parse_args(argv)
 
     cmd = ["docker", "buildx", "bake", "-f", "docker-bake.hcl"]
@@ -91,8 +102,15 @@ def render_bake_targets_section():
     """Return formatted groups + targets sections as a string. Empty on failure."""
     try:
         result = subprocess.run(
-            ["docker", "buildx", "bake", "-f", "docker-bake.hcl",
-             "--list", "type=targets,format=json"],
+            [
+                "docker",
+                "buildx",
+                "bake",
+                "-f",
+                "docker-bake.hcl",
+                "--list",
+                "type=targets,format=json",
+            ],
             capture_output=True,
             text=True,
             cwd=str(REPO_ROOT),
@@ -163,7 +181,9 @@ def cmd_dev_up(argv):
         choices=sorted(DEV_UP_OPTIONAL_SERVICES),
         help="optional service to start (repeatable)",
     )
-    p.add_argument("--wait", action="store_true", help="block until services pass their healthchecks")
+    p.add_argument(
+        "--wait", action="store_true", help="block until services pass their healthchecks"
+    )
     args = p.parse_args(argv)
 
     services = list(DEV_UP_DEFAULT_SERVICES)
@@ -192,7 +212,9 @@ def check_missing_local_images(services):
     """Return refinebio-built images that compose needs but aren't in the local daemon."""
     cfg = subprocess.run(
         ["docker", "compose", "config", "--format", "json"],
-        capture_output=True, text=True, cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
     )
     if cfg.returncode != 0:
         return []
@@ -206,7 +228,8 @@ def check_missing_local_images(services):
         return []
     ls = subprocess.run(
         ["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     local = set(ls.stdout.splitlines()) if ls.returncode == 0 else set()
     return [i for i in needed if i not in local]
@@ -222,7 +245,12 @@ def cmd_dev_down(argv):
         epilog="wraps: docker compose down",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("-v", "--volumes", action="store_true", help="also remove volumes (DESTRUCTIVE — wipes the db)")
+    p.add_argument(
+        "-v",
+        "--volumes",
+        action="store_true",
+        help="also remove volumes (DESTRUCTIVE — wipes the db)",
+    )
     p.add_argument("--rmi", action="store_true", help="remove images built by compose")
     args = p.parse_args(argv)
 
