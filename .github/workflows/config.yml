@@ -243,8 +243,13 @@ jobs:
           username: ${{ env.DOCKER_USERNAME }}
           password: ${{ env.DOCKER_PASSWORD }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build the Docker Image
-        run: scripts/prepare_image.sh -u -i base -s common
+        env:
+          PUSH_CACHE: "true"
+        run: bin/rbio build base --push
 
   test_common:
     name: Test Common
