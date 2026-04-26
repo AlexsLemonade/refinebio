@@ -19,53 +19,99 @@ Refine.bio currently has four sub-projects contained within this repo:
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
 
-- [Refine.bio  ](#refinebio--)
-  - [Table of Contents](#table-of-contents)
-  - [Development](#development)
-    - [Git Workflow](#git-workflow)
-    - [Installation](#installation)
-      - [Automatic](#automatic)
-      - [Linux (Manual)](#linux-manual)
-      - [Mac (Manual)](#mac-manual)
-      - [Virtual Environment](#virtual-environment)
-      - [Services](#services)
-        - [Postgres](#postgres)
-      - [Common Dependecies](#common-dependecies)
-      - [ElasticSearch](#elasticsearch)
-    - [Testing](#testing)
-      - [API](#api)
-      - [Common](#common)
-      - [Foreman](#foreman)
-      - [Workers](#workers)
-    - [Style](#style)
-    - [Gotchas](#gotchas)
-      - [R](#r)
-  - [Running Locally](#running-locally)
-    - [API](#api-1)
-    - [Surveyor Jobs](#surveyor-jobs)
-      - [Sequence Read Archive](#sequence-read-archive)
-      - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
-    - [Downloader Jobs](#downloader-jobs)
-    - [Processor Jobs](#processor-jobs)
-    - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
-    - [Creating Compendia](#creating-compendia)
-    - [Running Tximport Early](#running-tximport-early)
-    - [Development Helpers](#development-helpers)
-  - [Cloud Deployment](#cloud-deployment)
-    - [Docker Images](#docker-images)
-    - [Terraform](#terraform)
-    - [AWS Batch](#aws-batch)
-    - [Running Jobs](#running-jobs)
-    - [Log Consumption](#log-consumption)
-    - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
-    - [Tearing Down](#tearing-down)
-  - [Support](#support)
-  - [Meta-README](#meta-readme)
-  - [License](#license)
+- [Development](#development)
+  - [Quick Start (local development)](#quick-start-local-development)
+  - [Git Workflow](#git-workflow)
+  - [Installation](#installation)
+    - [Automatic](#automatic)
+    - [Linux (Manual)](#linux-manual)
+    - [Mac (Manual)](#mac-manual)
+    - [Virtual Environment](#virtual-environment)
+    - [Services](#services)
+      - [Postgres](#postgres)
+    - [Common Dependecies](#common-dependecies)
+    - [ElasticSearch](#elasticsearch)
+  - [Testing](#testing)
+    - [API](#api)
+    - [Common](#common)
+    - [Foreman](#foreman)
+    - [Workers](#workers)
+  - [Style](#style)
+  - [Gotchas](#gotchas)
+    - [R](#r)
+- [Running Locally](#running-locally)
+  - [API](#api-1)
+  - [Surveyor Jobs](#surveyor-jobs)
+    - [Sequence Read Archive](#sequence-read-archive)
+    - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
+  - [Downloader Jobs](#downloader-jobs)
+  - [Processor Jobs](#processor-jobs)
+  - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
+  - [Creating Compendia](#creating-compendia)
+  - [Running Tximport Early](#running-tximport-early)
+  - [Development Helpers](#development-helpers)
+- [Cloud Deployment](#cloud-deployment)
+  - [Docker Images](#docker-images)
+  - [Terraform](#terraform)
+  - [AWS Batch](#aws-batch)
+  - [Running Jobs](#running-jobs)
+  - [Log Consumption](#log-consumption)
+  - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
+  - [Tearing Down](#tearing-down)
+- [Support](#support)
+- [Meta-README](#meta-readme)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Development
+
+### Quick Start (local development)
+
+`bin/rbio` is a small wrapper around `docker buildx bake` and
+`docker compose` that handles the order of operations for the common
+dev workflows. It needs only Docker — no other system dependencies.
+
+1. Add `bin/` to your `PATH` (recommend [direnv](https://direnv.net/)
+   to scope it per-project):
+
+   ```sh
+   export PATH="$PWD/bin:$PATH"
+   ```
+
+2. Build the images you'll need:
+
+   ```sh
+   rbio build              # default group: base + api_local + foreman + smasher
+   rbio build api_local    # one image
+   rbio build all          # everything
+   ```
+
+3. Start the dev stack:
+
+   ```sh
+   rbio dev:up                  # api + postgres + elasticsearch
+   rbio dev:up --with foreman   # add the foreman (optional)
+   ```
+
+   The API is reachable at `http://localhost:8000`.
+
+4. When you're done:
+
+   ```sh
+   rbio dev:down       # stop services, keep your db
+   rbio dev:down -v    # nuke everything including the db
+   ```
+
+For all available commands and per-command help:
+
+```sh
+rbio --help
+rbio <command> --help
+```
+
+The existing `scripts/*.sh` wrappers continue to work unchanged for
+anyone or anything (CI included) that already uses them.
 
 ### Git Workflow
 
