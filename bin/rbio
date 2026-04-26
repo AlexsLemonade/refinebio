@@ -152,6 +152,21 @@ def render_bake_targets_section():
     return "\n".join(lines)
 
 
+def cmd_common_update(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio common:update",
+        description=(
+            "Regenerate the data_refinery_common Django migrations, apply them "
+            "to the database, and rebuild the common sdist so downstream images "
+            "pick up the updated package."
+        ),
+        epilog="wraps: scripts/update_models.sh",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.parse_args(argv)
+    return run([str(REPO_ROOT / "scripts/update_models.sh")])
+
+
 DEV_UP_DEFAULT_SERVICES = ["api", "postgres", "elasticsearch"]
 DEV_UP_OPTIONAL_SERVICES = {"foreman"}
 
@@ -267,6 +282,7 @@ def cmd_dev_down(argv):
 
 COMMANDS = {
     "build": cmd_build,
+    "common:update": cmd_common_update,
     "dev:up": cmd_dev_up,
     "dev:down": cmd_dev_down,
 }
@@ -280,6 +296,7 @@ usage:  rbio <command> [args...]
 
 commands:
   build           build one or more docker images
+  common:update   regenerate migrations + apply + rebuild common sdist
   dev:up          start the dev stack
   dev:down        stop the dev stack
 
