@@ -41,7 +41,8 @@ def is_drdb_running():
     """True if the drdb container is up. Used as a pre-flight by common:*."""
     result = subprocess.run(
         ["docker", "container", "inspect", "drdb", "--format", "{{.State.Running}}"],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     return result.returncode == 0 and result.stdout.strip() == "true"
 
@@ -177,10 +178,18 @@ def render_bake_targets_section():
 
 def _compose_run_migrations(*manage_args):
     """`docker compose run --rm migrations python3 manage.py <args>`."""
-    return run([
-        "docker", "compose", "run", "--rm", "migrations",
-        "python3", "manage.py", *manage_args,
-    ])
+    return run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--rm",
+            "migrations",
+            "python3",
+            "manage.py",
+            *manage_args,
+        ]
+    )
 
 
 def cmd_common_make_migrations(argv):
