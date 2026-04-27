@@ -6,8 +6,8 @@ from pathlib import Path
 # Make `from lib import ...` work when this script is invoked directly.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import build, common, db, dev, es, test  # noqa: E402
-from lib._runtime import Globals, stderr  # noqa: E402
+from lib import build, common, db, dev, es, test
+from lib._runtime import Globals, stderr
 
 
 # Each namespace module exports a COMMANDS list of (name, fn, help) tuples;
