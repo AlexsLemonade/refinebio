@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import shlex
 import subprocess
 import sys
@@ -263,8 +264,10 @@ def cmd_common_update(argv):
     # Rebuild common sdist on the host so other images (built by bake) pick it
     # up via Dockerfile COPY common/dist/...
     common_dir = REPO_ROOT / "common"
-    for old in (common_dir / "dist").glob("*"):
-        if not Globals.dry_run:
+    if not Globals.dry_run:
+        # setup.py reads the version from this file
+        (common_dir / "version").write_text(os.environ.get("SYSTEM_VERSION", "local") + "\n")
+        for old in (common_dir / "dist").glob("*"):
             old.unlink()
     return run(["python3", "setup.py", "sdist"], cwd=common_dir)
 
