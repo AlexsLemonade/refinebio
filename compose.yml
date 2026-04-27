@@ -46,6 +46,9 @@ services:
     image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_api_local:${SYSTEM_VERSION:-local}
     platform: linux/amd64
     env_file: api/environments/local
+    # dr_api_local has empty ENTRYPOINT and no CMD — needs an explicit
+    # command for `compose up` to work.
+    command: python3 manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
 
