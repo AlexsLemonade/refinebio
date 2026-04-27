@@ -9,7 +9,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib import build, common, db, dev, es, test
 from lib._runtime import Globals, stderr
 
-
 # Each namespace module exports a COMMANDS list of (name, fn, help) tuples;
 # concatenating them gives the single registry that drives both dispatch and
 # the top-level help block. Adding a namespace is one line in NAMESPACES.
