@@ -6,6 +6,7 @@ import os
 import shlex
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -330,6 +331,47 @@ def cmd_es_rebuild(argv):
     )
 
 
+def _wait_for_es(timeout=30):
+    """Poll ES cluster health until reachable, up to `timeout` seconds."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        result = subprocess.run(
+            ["docker", "exec", "dres", "curl", "-sf", "http://localhost:9200/_cluster/health"],
+            capture_output=True,
+        )
+        if result.returncode == 0:
+            return 0
+        time.sleep(1)
+    stderr(f"rbio es:reset: elasticsearch did not become ready within {timeout}s")
+    return 1
+
+
+def cmd_es_reset(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio es:reset",
+        description=(
+            "Tear down + recreate the elasticsearch container (clears any stale "
+            "in-container state), then rebuild the search index."
+        ),
+        epilog=(
+            "wraps:\n"
+            "  docker compose rm -fsv elasticsearch\n"
+            "  docker compose up -d elasticsearch\n"
+            "  (poll until ready)\n"
+            "  rbio es:rebuild"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.parse_args(argv)
+    if (rc := run(["docker", "compose", "rm", "-fsv", "elasticsearch"])) != 0:
+        return rc
+    if (rc := run(["docker", "compose", "up", "-d", "elasticsearch"])) != 0:
+        return rc
+    if not Globals.dry_run and (rc := _wait_for_es()) != 0:
+        return rc
+    return cmd_es_rebuild([])
+
+
 # ─── db:* (state operations against the running drdb container) ─────────
 
 
@@ -648,6 +690,7 @@ COMMANDS = {
     "dev:up": cmd_dev_up,
     "dev:down": cmd_dev_down,
     "es:rebuild": cmd_es_rebuild,
+    "es:reset": cmd_es_reset,
     "test:api": cmd_test_api,
     "test:common": cmd_test_common,
     "test:foreman": cmd_test_foreman,
@@ -671,6 +714,7 @@ commands:
   dev:up                   start the dev stack
   dev:down                 stop the dev stack
   es:rebuild               rebuild the elasticsearch index
+  es:reset                 wipe + recreate the elasticsearch container then rebuild
   test:api                 run the api test suite
   test:common              run the common test suite
   test:foreman             run the foreman test suite
