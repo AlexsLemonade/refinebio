@@ -1,87 +1,27 @@
 #!/usr/bin/env python3
 
-import argparse
-import json
-import os
-import shlex
-import subprocess
 import sys
-import time
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# Make `from lib import ...` work when this script is invoked directly.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import argparse  # noqa: E402
+import json  # noqa: E402
+import os  # noqa: E402
+import shlex  # noqa: E402
+import subprocess  # noqa: E402
+import time  # noqa: E402
 
-class Globals:
-    verbose = False
-    quiet = False
-    dry_run = False
-    no_color = False
-
-
-def stderr(msg):
-    print(msg, file=sys.stderr)
-
-
-def run(cmd, cwd=None, env=None):
-    """Run a subprocess; honor --verbose / --dry-run."""
-    rendered = " ".join(shlex.quote(c) for c in cmd)
-    if Globals.dry_run:
-        print(f"DRY RUN: {rendered}", file=sys.stderr)
-        return 0
-    if Globals.verbose:
-        print(f"+ {rendered}", file=sys.stderr)
-    return subprocess.call(cmd, cwd=str(cwd or REPO_ROOT), env=env)
-
-
-def bake_target(target):
-    """Build a single bake target into the local docker daemon."""
-    return run(["docker", "buildx", "bake", "-f", "docker-bake.hcl", target, "--load"])
-
-
-def is_container_running(name):
-    """True if a container with this name is up."""
-    result = subprocess.run(
-        ["docker", "container", "inspect", name, "--format", "{{.State.Running}}"],
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0 and result.stdout.strip() == "true"
-
-
-def require_container(cmd_name, container, friendly):
-    """Pre-flight: error with a hint if the named container isn't running. Skipped under --dry-run."""
-    if Globals.dry_run or is_container_running(container):
-        return 0
-    stderr(f"rbio {cmd_name}: {friendly} ({container}) is not running")
-    stderr("start it with:  rbio dev:up")
-    return 1
-
-
-def require_drdb(cmd_name):
-    return require_container(cmd_name, "drdb", "postgres")
-
-
-def require_dres(cmd_name):
-    return require_container(cmd_name, "dres", "elasticsearch")
-
-
-def require_services(cmd_name, friendly_to_container):
-    """Pre-flight for commands needing multiple services up. Reports all missing in one message."""
-    if Globals.dry_run:
-        return 0
-    missing = [
-        name
-        for name, container in friendly_to_container.items()
-        if not is_container_running(container)
-    ]
-    if not missing:
-        return 0
-    required = " + ".join(friendly_to_container.keys())
-    missing_str = ", ".join(missing)
-    stderr(f"rbio {cmd_name}: requires {required} (not running: {missing_str})")
-    stderr("start them with:  rbio dev:up")
-    return 1
+from lib._docker import (  # noqa: E402
+    bake_target,
+    is_container_running,
+    require_container,
+    require_drdb,
+    require_dres,
+    require_services,
+)
+from lib._runtime import REPO_ROOT, Globals, run, stderr  # noqa: E402
 
 
 # ─── commands ───────────────────────────────────────────────────────────
