@@ -37,8 +37,6 @@ fi
 
 . ./scripts/common.sh
 
-DB_HOST_IP=$(get_docker_db_ip_address)
-
 # Only run interactively if we are on a TTY.
 if [ -t 1 ]; then
     INTERACTIVE="--interactive"
@@ -46,7 +44,7 @@ fi
 
 # shellcheck disable=SC2086
 docker run \
-    --add-host=database:"$DB_HOST_IP" \
+    --network refinebio_default \
     --env-file foreman/environments/test \
     --platform linux/amd64 \
     --tty \
