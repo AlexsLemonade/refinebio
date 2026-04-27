@@ -23,7 +23,6 @@ from lib._docker import (  # noqa: E402
 )
 from lib._runtime import REPO_ROOT, Globals, run, stderr  # noqa: E402
 
-
 # ─── commands ───────────────────────────────────────────────────────────
 
 
@@ -615,53 +614,41 @@ def cmd_dev_down(argv):
 # ─── dispatch ───────────────────────────────────────────────────────────
 
 
-COMMANDS = {
-    "build": cmd_build,
-    "common:make-migrations": cmd_common_make_migrations,
-    "common:apply": cmd_common_apply,
-    "common:update": cmd_common_update,
-    "db:init": cmd_db_init,
-    "db:psql": cmd_db_psql,
-    "db:reset": cmd_db_reset,
-    "dev:up": cmd_dev_up,
-    "dev:down": cmd_dev_down,
-    "es:rebuild": cmd_es_rebuild,
-    "es:reset": cmd_es_reset,
-    "test:api": cmd_test_api,
-    "test:common": cmd_test_common,
-    "test:foreman": cmd_test_foreman,
-}
+# Single source of truth: each tuple is (command name, dispatch fn, one-line help).
+# The dispatch dict and top-level help block are both derived from this.
+COMMAND_REGISTRY = [
+    ("build", cmd_build, "build one or more docker images"),
+    ("common:make-migrations", cmd_common_make_migrations, "generate Django migration files"),
+    ("common:apply", cmd_common_apply, "apply migrations to the database"),
+    ("common:update", cmd_common_update, "full chain: make + apply + rebuild common sdist"),
+    ("db:init", cmd_db_init, "bootstrap the data_refinery database + role"),
+    ("db:psql", cmd_db_psql, "open a psql shell against data_refinery"),
+    ("db:reset", cmd_db_reset, "drop + recreate data_refinery, then re-apply migrations"),
+    ("dev:up", cmd_dev_up, "start the dev stack"),
+    ("dev:down", cmd_dev_down, "stop the dev stack"),
+    ("es:rebuild", cmd_es_rebuild, "rebuild the elasticsearch index"),
+    ("es:reset", cmd_es_reset, "wipe + recreate the elasticsearch container then rebuild"),
+    ("test:api", cmd_test_api, "run the api test suite"),
+    ("test:common", cmd_test_common, "run the common test suite"),
+    ("test:foreman", cmd_test_foreman, "run the foreman test suite"),
+]
 
+COMMANDS = {name: fn for name, fn, _ in COMMAND_REGISTRY}
 
-TOP_HELP = """\
-rbio — refinebio dev tool.
-
-usage:  rbio <command> [args...]
-        rbio <command> --help             # detailed help for any command
-
-commands:
-  build                    build one or more docker images
-  common:make-migrations   generate Django migration files
-  common:apply             apply migrations to the database
-  common:update            full chain: make + apply + rebuild common sdist
-  db:init                  bootstrap the data_refinery database + role
-  db:psql                  open a psql shell against data_refinery
-  db:reset                 drop + recreate data_refinery, then re-apply migrations
-  dev:up                   start the dev stack
-  dev:down                 stop the dev stack
-  es:rebuild               rebuild the elasticsearch index
-  es:reset                 wipe + recreate the elasticsearch container then rebuild
-  test:api                 run the api test suite
-  test:common              run the common test suite
-  test:foreman             run the foreman test suite
-
-global flags:
-  -h, --help      show help for the current command
-      --verbose   echo every underlying command before running it
-      --quiet     suppress non-error output
-      --dry-run   print what would run; don't execute
-      --no-color  disable color (auto-detected when stdout isn't a TTY)
-"""
+TOP_HELP = (
+    "rbio — refinebio dev tool.\n"
+    "\n"
+    "usage:  rbio <command> [args...]\n"
+    "        rbio <command> --help             # detailed help for any command\n"
+    "\n"
+    "commands:\n" + "".join(f"  {name:<24} {desc}\n" for name, _, desc in COMMAND_REGISTRY) + "\n"
+    "global flags:\n"
+    "  -h, --help      show help for the current command\n"
+    "      --verbose   echo every underlying command before running it\n"
+    "      --quiet     suppress non-error output\n"
+    "      --dry-run   print what would run; don't execute\n"
+    "      --no-color  disable color (auto-detected when stdout isn't a TTY)\n"
+)
 
 
 def extract_globals(argv):
