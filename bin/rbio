@@ -22,7 +22,7 @@ def stderr(msg):
     print(msg, file=sys.stderr)
 
 
-def run(cmd, cwd=None):
+def run(cmd, cwd=None, env=None):
     """Run a subprocess; honor --verbose / --dry-run."""
     rendered = " ".join(shlex.quote(c) for c in cmd)
     if Globals.dry_run:
@@ -30,7 +30,7 @@ def run(cmd, cwd=None):
         return 0
     if Globals.verbose:
         print(f"+ {rendered}", file=sys.stderr)
-    return subprocess.call(cmd, cwd=str(cwd or REPO_ROOT))
+    return subprocess.call(cmd, cwd=str(cwd or REPO_ROOT), env=env)
 
 
 def bake_target(target):
@@ -424,6 +424,106 @@ def cmd_db_reset(argv):
     return cmd_common_apply([])
 
 
+# ─── test:* (per-subproject test runners) ───────────────────────────────
+
+
+# Per-subproject knobs for `rbio test:<name>`: which bake target supplies
+# the test image, whether the suite needs elasticsearch reachable, and any
+# default flags forwarded to manage.py test.
+TEST_SUBPROJECTS = {
+    "api": {
+        "image": "api_local",
+        "needs_es": True,
+        "default_args": [],
+    },
+    "common": {
+        "image": "common_tests",
+        "needs_es": True,
+        "default_args": ["--parallel"],
+    },
+    "foreman": {
+        "image": "foreman",
+        "needs_es": False,
+        "default_args": ["--exclude-tag=manual"],
+    },
+}
+
+
+def _coverage_command(extra_args):
+    """Bash one-liner: run manage.py under coverage, write XML, print report, preserve test exit code."""
+    args_str = " ".join(shlex.quote(a) for a in extra_args)
+    return (
+        f'coverage run --source="." manage.py test --settings=tests.settings --no-input {args_str}; '
+        "exit_code=$?; "
+        "coverage xml -o data_store/coverage.xml; "
+        "coverage report -m; "
+        "exit $exit_code"
+    )
+
+
+def _test_subproject(name, argv):
+    cfg = TEST_SUBPROJECTS[name]
+    p = argparse.ArgumentParser(
+        prog=f"rbio test:{name}",
+        description=(
+            f"Run the {name} test suite via docker compose. Any extra args "
+            "are forwarded to manage.py test (e.g. -t TAG, --keepdb)."
+        ),
+        epilog=(
+            "wraps:\n"
+            f"  docker buildx bake {cfg['image']}\n"
+            f"  docker compose run --rm test_{name} bash -c '<coverage runner>'"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    _, forwarded = p.parse_known_args(argv)
+
+    services = {"postgres": "drdb"}
+    if cfg["needs_es"]:
+        services["elasticsearch"] = "dres"
+    if (rc := require_services(f"test:{name}", services)) != 0:
+        return rc
+    if (rc := bake_target(cfg["image"])) != 0:
+        return rc
+
+    # Pre-create the bind-mount target so dockerd doesn't create it as root
+    # and prevent writing coverage.xml.
+    (REPO_ROOT / "test_volume").mkdir(exist_ok=True)
+
+    # Pass UID/GID through so the test_* compose services can run as the
+    # invoking user (avoids root-owned coverage.xml on Linux + CI).
+    env = os.environ.copy()
+    env.setdefault("UID", str(os.getuid()))
+    env.setdefault("GID", str(os.getgid()))
+
+    extra = cfg["default_args"] + forwarded
+    return run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--rm",
+            f"test_{name}",
+            "bash",
+            "-c",
+            _coverage_command(extra),
+        ],
+        env=env,
+    )
+
+
+def cmd_test_api(argv):
+    return _test_subproject("api", argv)
+
+
+def cmd_test_common(argv):
+    return _test_subproject("common", argv)
+
+
+def cmd_test_foreman(argv):
+    return _test_subproject("foreman", argv)
+
+
 DEV_UP_DEFAULT_SERVICES = ["api", "postgres", "elasticsearch"]
 DEV_UP_OPTIONAL_SERVICES = {"foreman"}
 
@@ -548,6 +648,9 @@ COMMANDS = {
     "dev:up": cmd_dev_up,
     "dev:down": cmd_dev_down,
     "es:rebuild": cmd_es_rebuild,
+    "test:api": cmd_test_api,
+    "test:common": cmd_test_common,
+    "test:foreman": cmd_test_foreman,
 }
 
 
@@ -568,6 +671,9 @@ commands:
   dev:up                   start the dev stack
   dev:down                 stop the dev stack
   es:rebuild               rebuild the elasticsearch index
+  test:api                 run the api test suite
+  test:common              run the common test suite
+  test:foreman             run the foreman test suite
 
 global flags:
   -h, --help      show help for the current command
