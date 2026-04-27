@@ -38,23 +38,31 @@ def bake_target(target):
     return run(["docker", "buildx", "bake", "-f", "docker-bake.hcl", target, "--load"])
 
 
-def is_drdb_running():
-    """True if the drdb container is up. Used as a pre-flight by common:*."""
+def is_container_running(name):
+    """True if a container with this name is up."""
     result = subprocess.run(
-        ["docker", "container", "inspect", "drdb", "--format", "{{.State.Running}}"],
+        ["docker", "container", "inspect", name, "--format", "{{.State.Running}}"],
         capture_output=True,
         text=True,
     )
     return result.returncode == 0 and result.stdout.strip() == "true"
 
 
-def require_drdb(cmd_name):
-    """Pre-flight: error with a hint if drdb isn't running. Skipped under --dry-run."""
-    if Globals.dry_run or is_drdb_running():
+def require_container(cmd_name, container, friendly, compose_service):
+    """Pre-flight: error with a hint if the named container isn't running. Skipped under --dry-run."""
+    if Globals.dry_run or is_container_running(container):
         return 0
-    stderr(f"rbio {cmd_name}: postgres (drdb) is not running")
-    stderr("start it first:  rbio dev:up  (or docker compose up -d postgres)")
+    stderr(f"rbio {cmd_name}: {friendly} ({container}) is not running")
+    stderr(f"start it first:  rbio dev:up  (or docker compose up -d {compose_service})")
     return 1
+
+
+def require_drdb(cmd_name):
+    return require_container(cmd_name, "drdb", "postgres", "postgres")
+
+
+def require_dres(cmd_name):
+    return require_container(cmd_name, "dres", "elasticsearch", "elasticsearch")
 
 
 # ─── commands ───────────────────────────────────────────────────────────
@@ -272,6 +280,28 @@ def cmd_common_update(argv):
     return run(["python3", "setup.py", "sdist"], cwd=common_dir)
 
 
+def cmd_es_rebuild(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio es:rebuild",
+        description="Rebuild the elasticsearch index from scratch.",
+        epilog=(
+            "wraps:\n"
+            "  docker buildx bake api_local\n"
+            "  docker compose run --rm api python3 manage.py search_index --rebuild -f"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.parse_args(argv)
+    if (rc := require_dres("es:rebuild")) != 0:
+        return rc
+    if (rc := bake_target("api_local")) != 0:
+        return rc
+    return run([
+        "docker", "compose", "run", "--rm", "api",
+        "python3", "manage.py", "search_index", "--rebuild", "-f",
+    ])
+
+
 DEV_UP_DEFAULT_SERVICES = ["api", "postgres", "elasticsearch"]
 DEV_UP_OPTIONAL_SERVICES = {"foreman"}
 
@@ -392,6 +422,7 @@ COMMANDS = {
     "common:update": cmd_common_update,
     "dev:up": cmd_dev_up,
     "dev:down": cmd_dev_down,
+    "es:rebuild": cmd_es_rebuild,
 }
 
 
@@ -408,6 +439,7 @@ commands:
   common:update            full chain: make + apply + rebuild common sdist
   dev:up                   start the dev stack
   dev:down                 stop the dev stack
+  es:rebuild               rebuild the elasticsearch index
 
 global flags:
   -h, --help      show help for the current command
