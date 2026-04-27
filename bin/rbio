@@ -10,16 +10,12 @@ from lib import build, common, db, dev, es, test  # noqa: E402
 from lib._runtime import Globals, stderr  # noqa: E402
 
 
-# Single source of truth: each tuple is (command name, dispatch fn, one-line help).
-# The dispatch dict and top-level help block are both derived from this.
-COMMAND_REGISTRY = [
-    *build.COMMANDS,
-    *common.COMMANDS,
-    *db.COMMANDS,
-    *dev.COMMANDS,
-    *es.COMMANDS,
-    *test.COMMANDS,
-]
+# Each namespace module exports a COMMANDS list of (name, fn, help) tuples;
+# concatenating them gives the single registry that drives both dispatch and
+# the top-level help block. Adding a namespace is one line in NAMESPACES.
+NAMESPACES = [build, common, db, dev, es, test]
+
+COMMAND_REGISTRY = [entry for ns in NAMESPACES for entry in ns.COMMANDS]
 
 COMMANDS = {name: fn for name, fn, _ in COMMAND_REGISTRY}
 
