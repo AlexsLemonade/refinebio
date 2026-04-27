@@ -62,6 +62,33 @@ services:
     volumes:
       - ./common/data_refinery_common:/home/user/data_refinery_common
 
+  # Per-subproject test services used by `rbio test:*`. Mirror the runtime
+  # services but with the test env_file so DJANGO_SETTINGS / DB names match
+  # what the test suites expect.
+  test_api:
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_api_local:${SYSTEM_VERSION:-local}
+    platform: linux/amd64
+    env_file: api/environments/test
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./test_volume:/home/user/data_store
+
+  test_common:
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_common_tests:${SYSTEM_VERSION:-local}
+    platform: linux/amd64
+    env_file: common/environments/test
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./test_volume:/home/user/data_store
+
+  test_foreman:
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_foreman:${SYSTEM_VERSION:-local}
+    platform: linux/amd64
+    env_file: foreman/environments/test
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./test_volume:/home/user/data_store
+
   foreman:
     image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_foreman:${SYSTEM_VERSION:-local}
     platform: linux/amd64
