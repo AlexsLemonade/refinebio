@@ -296,10 +296,20 @@ def cmd_es_rebuild(argv):
         return rc
     if (rc := bake_target("api_local")) != 0:
         return rc
-    return run([
-        "docker", "compose", "run", "--rm", "api",
-        "python3", "manage.py", "search_index", "--rebuild", "-f",
-    ])
+    return run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--rm",
+            "api",
+            "python3",
+            "manage.py",
+            "search_index",
+            "--rebuild",
+            "-f",
+        ]
+    )
 
 
 DEV_UP_DEFAULT_SERVICES = ["api", "postgres", "elasticsearch"]
