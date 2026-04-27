@@ -64,16 +64,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run Affymetrix Tests
         run: |
@@ -105,16 +105,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run Agilent Tests
         run: |
@@ -147,16 +147,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Start Elasticsearch
-        run: scripts/run_es.sh
+        run: bin/rbio dev:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
         run: bin/rbio common:update
@@ -200,16 +200,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Start Elasticsearch
-        run: scripts/run_es.sh
+        run: bin/rbio dev:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
         run: bin/rbio common:update
@@ -279,22 +279,22 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Start Elasticsearch
-        run: scripts/run_es.sh
+        run: bin/rbio dev:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Rebuild the Elasticsearch Index
-        run: scripts/rebuild_es_index.sh
+        run: bin/rbio es:rebuild
 
       - name: Run Common Tests
         run: |
@@ -332,16 +332,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run Downloader Tests
         run: |
@@ -372,22 +372,22 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Start Elasticsearch
-        run: scripts/run_es.sh
+        run: bin/rbio dev:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Rebuild the Elasticsearch Index
-        run: scripts/rebuild_es_index.sh
+        run: bin/rbio es:rebuild
 
       - name: Run Foreman Tests
         run: |
@@ -425,16 +425,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run Illumina Tests
         run: |
@@ -474,16 +474,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run No-Op Tests
         run: |
@@ -515,16 +515,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run Salmon Tests
         run: |
@@ -563,16 +563,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run Smasher Tests
         run: |
@@ -643,16 +643,16 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: scripts/run_postgres.sh
+        run: bin/rbio dev:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
 
       - name: Install Database
-        run: scripts/install_db_docker.sh
+        run: bin/rbio db:init
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Run Transcriptome Tests
         run: |

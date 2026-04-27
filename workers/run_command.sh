@@ -32,7 +32,7 @@ cd "$script_directory" || exit
 # Ensure that postgres is running.
 if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
-    echo "./scripts/run_postgres.sh" >&2
+    echo "./bin/rbio dev:up -s postgres" >&2
     exit 1
 fi
 

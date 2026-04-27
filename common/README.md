@@ -9,7 +9,7 @@ happen before you can utilize those changes in other projects that rely on the
 model. First you should make and run migrations:
 
 ```
-../scripts/make_migrations.sh
+../bin/rbio common:make-migrations
 ```
 
 Next you should generate the package:
