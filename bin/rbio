@@ -494,10 +494,13 @@ TEST_SUBPROJECTS = {
 def _coverage_command(extra_args):
     """Bash one-liner: run manage.py under coverage, write XML, print report, preserve test exit code."""
     args_str = " ".join(shlex.quote(a) for a in extra_args)
+    # chmod opens up the bind-mount output so the host (CI runner, dev user)
+    # can read coverage.xml regardless of which UID the container runs as.
     return (
         f'coverage run --source="." manage.py test --settings=tests.settings --no-input {args_str}; '
         "exit_code=$?; "
         "coverage xml -o data_store/coverage.xml; "
+        "chmod -R a+rw data_store; "
         "coverage report -m; "
         "exit $exit_code"
     )
@@ -532,12 +535,6 @@ def _test_subproject(name, argv):
     # and prevent writing coverage.xml.
     (REPO_ROOT / "test_volume").mkdir(exist_ok=True)
 
-    # Pass UID/GID through so the test_* compose services can run as the
-    # invoking user (avoids root-owned coverage.xml on Linux + CI).
-    env = os.environ.copy()
-    env.setdefault("UID", str(os.getuid()))
-    env.setdefault("GID", str(os.getgid()))
-
     extra = cfg["default_args"] + forwarded
     return run(
         [
@@ -549,8 +546,7 @@ def _test_subproject(name, argv):
             "bash",
             "-c",
             _coverage_command(extra),
-        ],
-        env=env,
+        ]
     )
 
 
