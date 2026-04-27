@@ -220,7 +220,7 @@ jobs:
       - name: Build the Docker Image
         env:
           PUSH_CACHE: "true"
-        run: bin/rbio build api_base --push
+        run: bin/rbio build api_base --push --retries 2
 
   test_base:
     name: Test Base
@@ -252,7 +252,7 @@ jobs:
       - name: Build the Docker Image
         env:
           PUSH_CACHE: "true"
-        run: bin/rbio build base --push
+        run: bin/rbio build base --push --retries 2
 
   test_common:
     name: Test Common

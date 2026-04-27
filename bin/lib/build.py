@@ -3,8 +3,11 @@
 import argparse
 import json
 import subprocess
+import time
 
-from lib._runtime import REPO_ROOT, run
+from lib._runtime import REPO_ROOT, run, stderr
+
+RETRY_BACKOFF_SECONDS = 5
 
 
 def cmd_build(argv):
@@ -44,6 +47,16 @@ def cmd_build(argv):
         action="store_true",
         help="resolve and print HCL; build nothing",
     )
+    p.add_argument(
+        "--retries",
+        type=int,
+        default=0,
+        metavar="N",
+        help=(
+            "retry up to N times after a failed bake (useful in CI for "
+            "transient registry push errors). default: 0."
+        ),
+    )
     args = p.parse_args(argv)
 
     cmd = ["docker", "buildx", "bake", "-f", "docker-bake.hcl"]
@@ -58,7 +71,21 @@ def cmd_build(argv):
     if args.print_only:
         cmd.append("--print")
     cmd.extend(args.targets)
-    return run(cmd)
+
+    attempts = args.retries + 1
+    for attempt in range(1, attempts + 1):
+        rc = run(cmd)
+        if rc == 0:
+            return 0
+        if attempt < attempts:
+            stderr(
+                f"rbio build: attempt {attempt}/{attempts} failed (exit {rc}), "
+                f"retrying in {RETRY_BACKOFF_SECONDS}s..."
+            )
+            time.sleep(RETRY_BACKOFF_SECONDS)
+    if attempts > 1:
+        stderr(f"rbio build: failed after {attempts} attempts")
+    return rc
 
 
 # Keep in sync with docker-bake.hcl group definitions.
