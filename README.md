@@ -289,14 +289,14 @@ To just run the foreman tests:
 To just run the workers tests:
 
 ```bash
-./workers/run_tests.sh
+./bin/rbio test:workers
 ```
 
 If you only want to run tests with a specific tag, you can do that too. For
 example, to run just the salmon tests:
 
 ```bash
-./workers/run_tests.sh -t salmon
+./bin/rbio test:workers -t salmon
 ```
 
 All of our worker tests are tagged, generally based on the Docker image required to run them.

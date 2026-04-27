@@ -33,4 +33,4 @@ mkdir -p test_volume && chmod -R a+rw test_volume
 ./bin/rbio test:api
 ./bin/rbio test:common
 ./bin/rbio test:foreman
-./workers/run_tests.sh
+./bin/rbio test:workers
