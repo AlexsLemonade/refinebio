@@ -214,21 +214,36 @@ def _fetch_compendia_data(test_volume):
     _fetch_smasher_data(test_volume)
     for kind, list_file in (("MICROARRAY", "microarray.txt"), ("RNASEQ", "rnaseq.txt")):
         list_dir = test_volume / f"raw/TEST/{kind}"
+        # Use the list-file presence as the "done" marker. Copy the list file
+        # only AFTER the wget succeeds so a partial download isn't cached as
+        # complete on the next run.
         if (list_dir / list_file).exists():
             continue
         list_dir.mkdir(parents=True, exist_ok=True)
         src_list = REPO_ROOT / "workers/tests/data" / list_file
-        shutil.copy(src_list, list_dir / list_file)
         stderr(f"Downloading {kind} files listed in {list_file}")
         if Globals.dry_run:
             continue
-        with (list_dir / list_file).open() as f:
-            for url in f:
-                url = url.strip()
-                if not url:
-                    continue
-                dest = list_dir / url.rsplit("/", 1)[-1]
-                _fetch_url(url, dest)
+        # Use wget — hundreds of URLs per file; wget's built-in retries +
+        # connection reuse handle S3 rate limits/resets better than urllib
+        # doing one-shot urlretrieve per URL. --tries=10 + --retry-connrefused
+        # so transient connection resets get retried instead of silently
+        # leaving us with a partial download.
+        subprocess.run(
+            [
+                "wget",
+                "--continue",
+                "--tries=10",
+                "--retry-connrefused",
+                "--waitretry=5",
+                "-i",
+                str(src_list),
+                "-P",
+                str(list_dir),
+            ],
+            check=True,
+        )
+        shutil.copy(src_list, list_dir / list_file)
     _fetch_if_missing("danio_target.tsv", test_volume / "QN/danio_target.tsv")
 
 
