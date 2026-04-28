@@ -73,6 +73,9 @@ COPY common/R/renv_load.R renv_load_compendia.R
 RUN Rscript renv_load_compendia.R
 
 COPY workers/data_refinery_workers/requirements/compendia.txt requirements.txt
+# Pin setuptools<70 (otherwise it tries to import wheel internals that
+# newer wheel releases moved) so fancySVD builds cleanly from sdist.
+RUN pip3 install --upgrade 'setuptools<70' 'wheel<0.42'
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
 COPY workers/data_refinery_workers/processors/requirements.txt requirements.txt
