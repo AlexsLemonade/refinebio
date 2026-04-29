@@ -49,6 +49,16 @@ services:
     ports:
       - "8000:8000"
 
+  # One-shot service used by `rbio common:*` (makemigrations / migrate / etc.).
+  # Mounts data_refinery_common back to the host so generated migration files
+  # land in the working tree.
+  migrations:
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_migrations:${SYSTEM_VERSION:-local}
+    platform: linux/amd64
+    env_file: common/environments/local
+    volumes:
+      - ./common/data_refinery_common:/home/user/data_refinery_common
+
   foreman:
     image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_foreman:${SYSTEM_VERSION:-local}
     platform: linux/amd64

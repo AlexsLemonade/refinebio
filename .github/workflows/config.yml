@@ -214,10 +214,15 @@ jobs:
         run: scripts/install_db_docker.sh
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build the Docker Image
-        run: scripts/prepare_image.sh -u -i api_base -s api
+        env:
+          PUSH_CACHE: "true"
+        run: bin/rbio build api_base --push
 
   test_base:
     name: Test Base
