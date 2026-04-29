@@ -1,3 +1,5 @@
+import unittest
+
 from django.test import TransactionTestCase
 
 from data_refinery_common.models import Experiment, ExperimentSampleAssociation, Sample
@@ -13,6 +15,7 @@ class SurveyTestCase(TransactionTestCase):
     def tearDown(self):
         Experiment.objects.all().delete()
 
+    @unittest.skip("ENA portal API has changed and will need to be updated")
     def test_sra_experiment_missing_metadata(self):
         """Tests that an SRA experiment has its missing metadata added."""
 
@@ -49,6 +52,7 @@ class SurveyTestCase(TransactionTestCase):
         command = Command()
         command.handle()
 
+    @unittest.skip("ENA portal API has changed and will need to be updated")
     def test_sra_experiment_missing_alternate_accession(self):
         """Tests that an SRA experiment has its missing alternate_accession_code added."""
 
