@@ -200,19 +200,19 @@ run in a local Docker container
 To start a local Postgres server in a Docker container, use:
 
 ```bash
-./scripts/run_postgres.sh
+./bin/rbio dev:up -s postgres
 ```
 
 Then, to initialize the database, run:
 
 ```bash
-./scripts/install_db_docker.sh
+./bin/rbio db:init
 ```
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
 ```bash
-./scripts/run_psql_shell.sh
+./bin/rbio db:psql
 ```
 
 or if you have `psql` installed this command will give you a better shell experience:
@@ -229,7 +229,7 @@ should prepare the distribution directory `common/dist` with this
 script:
 
 ```bash
-./scripts/update_models.sh
+./bin/rbio common:update
 ```
 
 (_Note:_ This step requires the postgres container to be running and initialized.)
@@ -243,13 +243,13 @@ then re-run the migrations.
 One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
 
 ```bash
-./scripts/run_es.sh
+./bin/rbio dev:up -s elasticsearch
 ```
 
 And then the ES Indexes (akin to Postgres 'databases') can be created with:
 
 ```bash
-./scripts/rebuild_es_index.sh
+./bin/rbio es:rebuild
 ```
 
 ### Testing
@@ -268,21 +268,21 @@ For more granular testing, you can just run the tests for specific parts of the 
 To just run the API tests:
 
 ```bash
-./api/run_tests.sh
+./bin/rbio test:api
 ```
 
 #### Common
 To just run the common tests:
 
 ```bash
-./common/run_tests.sh
+./bin/rbio test:common
 ```
 
 #### Foreman
 To just run the foreman tests:
 
 ```bash
-./foreman/run_tests.sh
+./bin/rbio test:foreman
 ```
 
 #### Workers
@@ -342,7 +342,7 @@ scripts with `shellcheck FILE`.
 During development, you make encounter some occasional strangeness. Here's
 some things to watch out for:
 
-  - Since we use multiple Docker instances, don't forget to `./scripts/update_models`
+  - Since we use multiple Docker instances, don't forget to `./bin/rbio common:update`
   - If builds are failing, increase the size of Docker's memory allocation. (Mac only.)
   - If Docker images are failing mysteriously during creation, it may
 be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You
