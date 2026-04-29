@@ -15,7 +15,7 @@ x-worker: &worker
 
 services:
   postgres:
-    image: postgres:9.6.6
+    image: postgres:17.9
     container_name: drdb
     environment:
       POSTGRES_PASSWORD: mysecretpassword
