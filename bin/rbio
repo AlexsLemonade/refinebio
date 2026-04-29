@@ -1,0 +1,330 @@
+#!/usr/bin/env python3
+
+import argparse
+import json
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+class Globals:
+    verbose = False
+    quiet = False
+    dry_run = False
+    no_color = False
+
+
+def stderr(msg):
+    print(msg, file=sys.stderr)
+
+
+def run(cmd):
+    """Run a subprocess; honor --verbose / --dry-run."""
+    rendered = " ".join(shlex.quote(c) for c in cmd)
+    if Globals.dry_run:
+        print(f"DRY RUN: {rendered}", file=sys.stderr)
+        return 0
+    if Globals.verbose:
+        print(f"+ {rendered}", file=sys.stderr)
+    return subprocess.call(cmd, cwd=str(REPO_ROOT))
+
+
+# ─── commands ───────────────────────────────────────────────────────────
+
+
+def cmd_build(argv):
+    needs_help = any(a in ("-h", "--help") for a in argv)
+    epilog = "wraps: docker buildx bake -f docker-bake.hcl <targets>"
+    if needs_help:
+        section = render_bake_targets_section()
+        if section:
+            epilog = section + "\n\n" + epilog
+
+    p = argparse.ArgumentParser(
+        prog="rbio build",
+        description="Build one or more docker images.",
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument(
+        "targets",
+        nargs="*",
+        default=["default"],
+        metavar="TARGET",
+        help="image(s) or group(s) to build (see list below). default: 'default' group.",
+    )
+    p.add_argument(
+        "--push", action="store_true", help="push to registry after build (requires creds)"
+    )
+    p.add_argument(
+        "--load",
+        action="store_true",
+        help="load into local docker (default for single-target builds)",
+    )
+    p.add_argument("--no-cache", action="store_true", help="rebuild from scratch")
+    p.add_argument("--pull", action="store_true", help="pull latest base images before building")
+    p.add_argument(
+        "--print",
+        dest="print_only",
+        action="store_true",
+        help="resolve and print HCL; build nothing",
+    )
+    args = p.parse_args(argv)
+
+    cmd = ["docker", "buildx", "bake", "-f", "docker-bake.hcl"]
+    if args.push:
+        cmd.append("--push")
+    if args.load:
+        cmd.append("--load")
+    if args.no_cache:
+        cmd.append("--no-cache")
+    if args.pull:
+        cmd.append("--pull")
+    if args.print_only:
+        cmd.append("--print")
+    cmd.extend(args.targets)
+    return run(cmd)
+
+
+# Keep in sync with docker-bake.hcl group definitions.
+GROUP_DESCRIPTIONS = {
+    "all": "every image",
+    "default": "all images except affymetrix (long build time)",
+    "deploy": "production images only (skips the local-dev variants)",
+    "workers": "only the worker images",
+}
+
+
+def render_bake_targets_section():
+    """Return formatted groups + targets sections as a string. Empty on failure."""
+    try:
+        result = subprocess.run(
+            [
+                "docker",
+                "buildx",
+                "bake",
+                "-f",
+                "docker-bake.hcl",
+                "--list",
+                "type=targets,format=json",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+        )
+        if result.returncode != 0:
+            return ""
+        entries = json.loads(result.stdout)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return ""
+
+    groups = sorted(e["name"] for e in entries if e.get("group"))
+    targets = sorted(e["name"] for e in entries if not e.get("group"))
+    if not (groups or targets):
+        return ""
+
+    lines = []
+
+    if groups:
+        lines.append("groups:")
+        col = max(len(g) for g in groups) + 2
+        for g in groups:
+            lines.append(f"  {g.ljust(col)}{GROUP_DESCRIPTIONS.get(g, '')}")
+
+    if targets:
+        if groups:
+            lines.append("")
+        lines.append("images:")
+        col_width = max(len(t) for t in targets) + 2
+        n_cols = max(1, 78 // col_width)
+        n_rows = (len(targets) + n_cols - 1) // n_cols
+        for r in range(n_rows):
+            row = []
+            for c in range(n_cols):
+                idx = c * n_rows + r
+                if idx < len(targets):
+                    row.append(targets[idx].ljust(col_width))
+            lines.append("  " + "".join(row).rstrip())
+
+    return "\n".join(lines)
+
+
+DEV_UP_DEFAULT_SERVICES = ["api", "postgres", "elasticsearch"]
+DEV_UP_OPTIONAL_SERVICES = {"foreman"}
+
+
+def cmd_dev_up(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio dev:up",
+        description="Start the local dev stack.",
+        epilog=(
+            "stack:\n"
+            f"  default:   {', '.join(DEV_UP_DEFAULT_SERVICES)}\n"
+            f"  optional:  {', '.join(sorted(DEV_UP_OPTIONAL_SERVICES))} (use --with NAME)\n"
+            "\n"
+            "  workers are not part of dev:up — they're ephemeral job\n"
+            "  containers, started on demand by other commands.\n"
+            "\n"
+            "wraps: docker compose up -d <services>"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument(
+        "--with",
+        dest="extras",
+        action="append",
+        default=[],
+        metavar="SERVICE",
+        choices=sorted(DEV_UP_OPTIONAL_SERVICES),
+        help="optional service to start (repeatable)",
+    )
+    p.add_argument(
+        "--wait", action="store_true", help="block until services pass their healthchecks"
+    )
+    args = p.parse_args(argv)
+
+    services = list(DEV_UP_DEFAULT_SERVICES)
+    for s in args.extras:
+        if s not in services:
+            services.append(s)
+
+    if not Globals.dry_run:
+        missing = check_missing_local_images(services)
+        if missing:
+            stderr("rbio dev:up: missing local image(s):")
+            for img in sorted(missing):
+                stderr(f"  {img}")
+            stderr("")
+            stderr("build them first:  rbio build")
+            return 1
+
+    cmd = ["docker", "compose", "up", "-d"]
+    if args.wait:
+        cmd.append("--wait")
+    cmd.extend(services)
+    return run(cmd)
+
+
+def check_missing_local_images(services):
+    """Return refinebio-built images that compose needs but aren't in the local daemon."""
+    cfg = subprocess.run(
+        ["docker", "compose", "config", "--format", "json"],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+    )
+    if cfg.returncode != 0:
+        return []
+    try:
+        config = json.loads(cfg.stdout)
+    except json.JSONDecodeError:
+        return []
+    needed = [config.get("services", {}).get(s, {}).get("image", "") for s in services]
+    needed = [i for i in needed if "/dr_" in i]
+    if not needed:
+        return []
+    ls = subprocess.run(
+        ["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"],
+        capture_output=True,
+        text=True,
+    )
+    local = set(ls.stdout.splitlines()) if ls.returncode == 0 else set()
+    return [i for i in needed if i not in local]
+
+
+def cmd_dev_down(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio dev:down",
+        description=(
+            "Stop the local dev stack. Volumes are preserved by default — "
+            "your postgres data is safe."
+        ),
+        epilog="wraps: docker compose down",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument(
+        "-v",
+        "--volumes",
+        action="store_true",
+        help="also remove volumes (DESTRUCTIVE — wipes the db)",
+    )
+    p.add_argument("--rmi", action="store_true", help="remove images built by compose")
+    args = p.parse_args(argv)
+
+    cmd = ["docker", "compose", "down"]
+    if args.volumes:
+        cmd.append("--volumes")
+    if args.rmi:
+        cmd.extend(["--rmi", "local"])
+    return run(cmd)
+
+
+# ─── dispatch ───────────────────────────────────────────────────────────
+
+
+COMMANDS = {
+    "build": cmd_build,
+    "dev:up": cmd_dev_up,
+    "dev:down": cmd_dev_down,
+}
+
+
+TOP_HELP = """\
+rbio — refinebio dev tool.
+
+usage:  rbio <command> [args...]
+        rbio <command> --help             # detailed help for any command
+
+commands:
+  build           build one or more docker images
+  dev:up          start the dev stack
+  dev:down        stop the dev stack
+
+global flags:
+  -h, --help      show help for the current command
+      --verbose   echo every underlying command before running it
+      --quiet     suppress non-error output
+      --dry-run   print what would run; don't execute
+      --no-color  disable color (auto-detected when stdout isn't a TTY)
+"""
+
+
+def extract_globals(argv):
+    """Strip global flags out of argv (at any position); set Globals.* accordingly."""
+    remaining = []
+    for arg in argv:
+        if arg == "--verbose":
+            Globals.verbose = True
+        elif arg == "--quiet":
+            Globals.quiet = True
+        elif arg == "--dry-run":
+            Globals.dry_run = True
+        elif arg == "--no-color":
+            Globals.no_color = True
+        else:
+            remaining.append(arg)
+    return remaining
+
+
+def main():
+    argv = extract_globals(sys.argv[1:])
+
+    if not argv or argv[0] in ("-h", "--help"):
+        print(TOP_HELP)
+        return 0
+
+    cmd_name, cmd_args = argv[0], argv[1:]
+
+    if cmd_name not in COMMANDS:
+        stderr(f"rbio: unknown command '{cmd_name}'")
+        stderr("run 'rbio --help' to see available commands")
+        return 2
+
+    return COMMANDS[cmd_name](cmd_args) or 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
