@@ -217,7 +217,7 @@ jobs:
         run: scripts/update_models.sh
 
       - name: Build the Docker Image
-        run: scripts/prepare_image.sh -i api_base -s api
+        run: scripts/prepare_image.sh -u -i api_base -s api
 
   test_base:
     name: Test Base
@@ -244,7 +244,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Build the Docker Image
-        run: scripts/prepare_image.sh -i base -s common
+        run: scripts/prepare_image.sh -u -i base -s common
 
   test_common:
     name: Test Common
