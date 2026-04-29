@@ -159,10 +159,10 @@ jobs:
         run: scripts/install_db_docker.sh
 
       - name: Update Models
-        run: scripts/update_models.sh
+        run: bin/rbio common:update
 
       - name: Rebuild the Elasticsearch Index
-        run: scripts/rebuild_es_index.sh
+        run: bin/rbio es:rebuild
 
       - name: Run API Tests
         run: |
