@@ -1,10 +1,10 @@
-"""test:* — per-subproject test runners (api / common / foreman)."""
+"""test:api / test:common / test:foreman — Django subproject test runners."""
 
 import argparse
-import shlex
 
 from lib._docker import bake_target, require_services
 from lib._runtime import REPO_ROOT, run
+from lib.test._shared import coverage_command
 
 # Per-subproject knobs for `rbio test:<name>`: which bake target supplies
 # the test image, whether the suite needs elasticsearch reachable, and any
@@ -26,21 +26,6 @@ TEST_SUBPROJECTS = {
         "default_args": ["--exclude-tag=manual"],
     },
 }
-
-
-def _coverage_command(extra_args):
-    """Bash one-liner: run manage.py under coverage, write XML, print report, preserve test exit code."""
-    args_str = " ".join(shlex.quote(a) for a in extra_args)
-    # chmod opens up the bind-mount output so the host (CI runner, dev user)
-    # can read coverage.xml regardless of which UID the container runs as.
-    return (
-        f'coverage run --source="." manage.py test --settings=tests.settings --no-input {args_str}; '
-        "exit_code=$?; "
-        "coverage xml -o data_store/coverage.xml; "
-        "chmod -R a+rw data_store; "
-        "coverage report -m; "
-        "exit $exit_code"
-    )
 
 
 def _test_subproject(name, argv):
@@ -82,7 +67,7 @@ def _test_subproject(name, argv):
             f"test_{name}",
             "bash",
             "-c",
-            _coverage_command(extra),
+            coverage_command(extra),
         ]
     )
 
