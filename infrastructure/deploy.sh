@@ -93,12 +93,17 @@ if [[ -z $SYSTEM_VERSION ]]; then
     exit 1
 fi
 
+# Load $ALL_IMAGES and helper functions.
+# shellcheck disable=SC1091
+. ../scripts/common.sh
+
 if [[ -z $TF_VAR_dockerhub_repo ]]; then
     if [[ $SYSTEM_VERSION == *"-dev" ]]; then
-        export TF_VAR_dockerhub_repo=ccdlstaging
+        TF_VAR_dockerhub_repo=$(get_deploy_repo dev)
     else
-        export TF_VAR_dockerhub_repo=ccdl
+        TF_VAR_dockerhub_repo=$(get_deploy_repo master)
     fi
+    export TF_VAR_dockerhub_repo
 fi
 
 if [[ -z $TF_VAR_region ]]; then
@@ -121,9 +126,6 @@ format_environment_variables() {
         echo "$env_var_assignment" >>prod_env
     done
 }
-
-# Load $ALL_IMAGES and helper functions.
-. ../scripts/common.sh
 # Make our IP address known to terraform.
 TF_VAR_host_ip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 export TF_VAR_host_ip

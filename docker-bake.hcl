@@ -313,3 +313,22 @@ group "all" {
     "affymetrix",
   ]
 }
+
+// `deploy` is the set CI builds and pushes during a tagged deploy.
+// Excludes test-only images (migrations, common_tests, api_local).
+group "deploy" {
+  targets = [
+    "base",
+    "api_base",
+    "api",
+    "foreman",
+    "smasher",
+    "compendia",
+    "illumina",
+    "affymetrix",
+    "salmon",
+    "transcriptome",
+    "no_op",
+    "downloaders",
+  ]
+}

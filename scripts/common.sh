@@ -57,6 +57,20 @@ get_deploy_branch() {
     fi
 }
 
+# Maps a branch ('master' or 'dev') to the corresponding deploy environment Dockerhub repo.
+# Errors out for any other branch since deploys only happen from master and dev.
+get_deploy_repo() {
+    branch="$1"
+    case "$branch" in
+        master) echo "ccdl" ;;
+        dev) echo "ccdlstaging" ;;
+        *)
+            echo "Error: get_deploy_repo requires 'master' or 'dev', got: '$branch'" >&2
+            return 1
+            ;;
+    esac
+}
+
 # `coverage report -m` will always have an exit code of 0 which makes
 # it seem like the test is passing. Therefore we store the exit code
 # of running the tests as $exit_code, then report the coverage, and
