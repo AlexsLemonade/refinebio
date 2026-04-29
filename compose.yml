@@ -2,6 +2,17 @@
 
 name: refinebio
 
+# Shared config for the worker app services. Each worker image gets its own
+# service so callers can `docker compose run --rm <worker> ...`.
+x-worker: &worker
+  platform: linux/amd64
+  env_file: workers/environments/local
+  environment:
+    AWS_ACCESS_KEY_ID:
+    AWS_SECRET_ACCESS_KEY:
+  volumes:
+    - ./workers/volume:/home/user/data_store
+
 services:
   postgres:
     image: postgres:9.6.6
@@ -9,6 +20,12 @@ services:
     environment:
       POSTGRES_PASSWORD: mysecretpassword
       PGDATA: /var/lib/postgresql/data/pgdata
+    networks:
+      # Reachable as `database` from app services (matches the env files'
+      # DATABASE_HOST=database) so env files don't need updating.
+      default:
+        aliases:
+          - database
     ports:
       - "5432:5432"
     volumes:
@@ -24,3 +41,53 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+
+  api:
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_api_local:${SYSTEM_VERSION:-local}
+    platform: linux/amd64
+    env_file: api/environments/local
+    ports:
+      - "8000:8000"
+
+  foreman:
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_foreman:${SYSTEM_VERSION:-local}
+    platform: linux/amd64
+    env_file: foreman/environments/local
+    environment:
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+    volumes:
+      - ./foreman/volume:/home/user/data_store
+      - /tmp:/tmp
+
+  smasher:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_smasher:${SYSTEM_VERSION:-local}
+
+  salmon:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_salmon:${SYSTEM_VERSION:-local}
+
+  no_op:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_no_op:${SYSTEM_VERSION:-local}
+
+  illumina:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_illumina:${SYSTEM_VERSION:-local}
+
+  downloaders:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_downloaders:${SYSTEM_VERSION:-local}
+
+  transcriptome:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_transcriptome:${SYSTEM_VERSION:-local}
+
+  compendia:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_compendia:${SYSTEM_VERSION:-local}
+
+  affymetrix:
+    <<: *worker
+    image: ${DOCKERHUB_REPO:-ccdlstaging}/dr_affymetrix:${SYSTEM_VERSION:-local}
