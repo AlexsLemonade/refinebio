@@ -166,9 +166,7 @@ jobs:
 
       - name: Run API Tests
         run: |
-          mkdir -p test_volume
-          sudo chmod -R a+rw test_volume
-          api/run_tests.sh
+          bin/rbio test:api
           .github/scripts/prepare_test_coverage.sh api
 
       - name: Upload Test Coverage to Codecov
@@ -300,9 +298,7 @@ jobs:
 
       - name: Run Common Tests
         run: |
-          mkdir -p workers/test_volume
-          sudo chmod -R a+rw workers/test_volume
-          common/run_tests.sh
+          bin/rbio test:common
           .github/scripts/prepare_test_coverage.sh common
 
       - name: Upload Test Coverage to Codecov
@@ -395,9 +391,7 @@ jobs:
 
       - name: Run Foreman Tests
         run: |
-          mkdir -p workers/test_volume
-          sudo chmod -R a+rw workers/test_volume
-          foreman/run_tests.sh --exclude-tag=end_to_end
+          bin/rbio test:foreman --exclude-tag=end_to_end
           .github/scripts/prepare_test_coverage.sh foreman
 
       - name: Upload Test Coverage to Codecov
