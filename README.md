@@ -19,53 +19,99 @@ Refine.bio currently has four sub-projects contained within this repo:
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
 
-- [Refine.bio  ](#refinebio--)
-  - [Table of Contents](#table-of-contents)
-  - [Development](#development)
-    - [Git Workflow](#git-workflow)
-    - [Installation](#installation)
-      - [Automatic](#automatic)
-      - [Linux (Manual)](#linux-manual)
-      - [Mac (Manual)](#mac-manual)
-      - [Virtual Environment](#virtual-environment)
-      - [Services](#services)
-        - [Postgres](#postgres)
-      - [Common Dependecies](#common-dependecies)
-      - [ElasticSearch](#elasticsearch)
-    - [Testing](#testing)
-      - [API](#api)
-      - [Common](#common)
-      - [Foreman](#foreman)
-      - [Workers](#workers)
-    - [Style](#style)
-    - [Gotchas](#gotchas)
-      - [R](#r)
-  - [Running Locally](#running-locally)
-    - [API](#api-1)
-    - [Surveyor Jobs](#surveyor-jobs)
-      - [Sequence Read Archive](#sequence-read-archive)
-      - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
-    - [Downloader Jobs](#downloader-jobs)
-    - [Processor Jobs](#processor-jobs)
-    - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
-    - [Creating Compendia](#creating-compendia)
-    - [Running Tximport Early](#running-tximport-early)
-    - [Development Helpers](#development-helpers)
-  - [Cloud Deployment](#cloud-deployment)
-    - [Docker Images](#docker-images)
-    - [Terraform](#terraform)
-    - [AWS Batch](#aws-batch)
-    - [Running Jobs](#running-jobs)
-    - [Log Consumption](#log-consumption)
-    - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
-    - [Tearing Down](#tearing-down)
-  - [Support](#support)
-  - [Meta-README](#meta-readme)
-  - [License](#license)
+- [Development](#development)
+  - [Quick Start (local development)](#quick-start-local-development)
+  - [Git Workflow](#git-workflow)
+  - [Installation](#installation)
+    - [Automatic](#automatic)
+    - [Linux (Manual)](#linux-manual)
+    - [Mac (Manual)](#mac-manual)
+    - [Virtual Environment](#virtual-environment)
+    - [Services](#services)
+      - [Postgres](#postgres)
+    - [Common Dependecies](#common-dependecies)
+    - [ElasticSearch](#elasticsearch)
+  - [Testing](#testing)
+    - [API](#api)
+    - [Common](#common)
+    - [Foreman](#foreman)
+    - [Workers](#workers)
+  - [Style](#style)
+  - [Gotchas](#gotchas)
+    - [R](#r)
+- [Running Locally](#running-locally)
+  - [API](#api-1)
+  - [Surveyor Jobs](#surveyor-jobs)
+    - [Sequence Read Archive](#sequence-read-archive)
+    - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
+  - [Downloader Jobs](#downloader-jobs)
+  - [Processor Jobs](#processor-jobs)
+  - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
+  - [Creating Compendia](#creating-compendia)
+  - [Running Tximport Early](#running-tximport-early)
+  - [Development Helpers](#development-helpers)
+- [Cloud Deployment](#cloud-deployment)
+  - [Docker Images](#docker-images)
+  - [Terraform](#terraform)
+  - [AWS Batch](#aws-batch)
+  - [Running Jobs](#running-jobs)
+  - [Log Consumption](#log-consumption)
+  - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
+  - [Tearing Down](#tearing-down)
+- [Support](#support)
+- [Meta-README](#meta-readme)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Development
+
+### Quick Start (local development)
+
+`bin/rbio` is a small wrapper around `docker buildx bake` and
+`docker compose` that handles the order of operations for the common
+dev workflows. It needs only Docker — no other system dependencies.
+
+1. Add `bin/` to your `PATH` (recommend [direnv](https://direnv.net/)
+   to scope it per-project):
+
+   ```sh
+   export PATH="$PWD/bin:$PATH"
+   ```
+
+2. Build the images you'll need:
+
+   ```sh
+   rbio build              # default group: base + api_local + foreman + smasher
+   rbio build api_local    # one image
+   rbio build all          # everything
+   ```
+
+3. Start the dev stack:
+
+   ```sh
+   rbio dev:up                  # api + postgres + elasticsearch
+   rbio dev:up --with foreman   # add the foreman (optional)
+   ```
+
+   The API is reachable at `http://localhost:8000`.
+
+4. When you're done:
+
+   ```sh
+   rbio dev:down       # stop services, keep your db
+   rbio dev:down -v    # nuke everything including the db
+   ```
+
+For all available commands and per-command help:
+
+```sh
+rbio --help
+rbio <command> --help
+```
+
+The existing `scripts/*.sh` wrappers continue to work unchanged for
+anyone or anything (CI included) that already uses them.
 
 ### Git Workflow
 
@@ -154,19 +200,19 @@ run in a local Docker container
 To start a local Postgres server in a Docker container, use:
 
 ```bash
-./scripts/run_postgres.sh
+./bin/rbio dev:up -s postgres
 ```
 
 Then, to initialize the database, run:
 
 ```bash
-./scripts/install_db_docker.sh
+./bin/rbio db:init
 ```
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
 ```bash
-./scripts/run_psql_shell.sh
+./bin/rbio db:psql
 ```
 
 or if you have `psql` installed this command will give you a better shell experience:
@@ -183,7 +229,7 @@ should prepare the distribution directory `common/dist` with this
 script:
 
 ```bash
-./scripts/update_models.sh
+./bin/rbio common:update
 ```
 
 (_Note:_ This step requires the postgres container to be running and initialized.)
@@ -197,13 +243,13 @@ then re-run the migrations.
 One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
 
 ```bash
-./scripts/run_es.sh
+./bin/rbio dev:up -s elasticsearch
 ```
 
 And then the ES Indexes (akin to Postgres 'databases') can be created with:
 
 ```bash
-./scripts/rebuild_es_index.sh
+./bin/rbio es:rebuild
 ```
 
 ### Testing
@@ -222,35 +268,35 @@ For more granular testing, you can just run the tests for specific parts of the 
 To just run the API tests:
 
 ```bash
-./api/run_tests.sh
+./bin/rbio test:api
 ```
 
 #### Common
 To just run the common tests:
 
 ```bash
-./common/run_tests.sh
+./bin/rbio test:common
 ```
 
 #### Foreman
 To just run the foreman tests:
 
 ```bash
-./foreman/run_tests.sh
+./bin/rbio test:foreman
 ```
 
 #### Workers
 To just run the workers tests:
 
 ```bash
-./workers/run_tests.sh
+./bin/rbio test:workers
 ```
 
 If you only want to run tests with a specific tag, you can do that too. For
 example, to run just the salmon tests:
 
 ```bash
-./workers/run_tests.sh -t salmon
+./bin/rbio test:workers -t salmon
 ```
 
 All of our worker tests are tagged, generally based on the Docker image required to run them.
@@ -296,7 +342,7 @@ scripts with `shellcheck FILE`.
 During development, you make encounter some occasional strangeness. Here's
 some things to watch out for:
 
-  - Since we use multiple Docker instances, don't forget to `./scripts/update_models`
+  - Since we use multiple Docker instances, don't forget to `./bin/rbio common:update`
   - If builds are failing, increase the size of Docker's memory allocation. (Mac only.)
   - If Docker images are failing mysteriously during creation, it may
 be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You

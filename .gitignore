@@ -6,7 +6,6 @@ test_volume/*
 !test_volume/cassettes
 !test_volume/externally_supplied_metadata
 workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz
-volumes_postgres/
 aspera*
 !workers/keys/asperaweb_id_dsa.openssh
 common/version
@@ -68,6 +67,7 @@ eggs/
 .eggs/
 lib/
 lib64/
+!bin/lib/
 parts/
 sdist/
 var/

@@ -30,8 +30,12 @@ save_chip_pkg <- function(row) {
     probe_pkg_url <- xml_attr(xml_child(source_pkgs, 2), "href")
 
     if (nzchar(chip_name) && nzchar(probe_pkg_url)) {
+        # The href is a path relative to the server root (e.g.
+        # "/customcdf/22.0.0/ensg.download/foo.tar.gz"); resolve it against
+        # the base URL so install.packages() gets a fetchable URL instead
+        # of treating it as a local filename.
         chips <<- c(chips, chip_name)
-        pkg_urls <<- c(pkg_urls, probe_pkg_url)
+        pkg_urls <<- c(pkg_urls, xml2::url_absolute(probe_pkg_url, ensg_url))
     }
 }
 

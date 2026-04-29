@@ -61,26 +61,20 @@ scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
     -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_BOX_IP":refinebio/infrastructure/data-refinery-key.pem
 
+# Load helper functions and $ALL_IMAGES, compute the deploy repo.
+# shellcheck disable=1091
+. ./scripts/common.sh
+DOCKERHUB_REPO=$(get_deploy_repo "$BRANCH") || exit 1
+
 echo "Building new images"
 # Output to the docker update log.
 run_on_deploy_box "sudo touch /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box ". env_vars && echo -e '######\nBuilding new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
-run_on_deploy_box ". env_vars && ./.github/scripts/update_docker_images.sh 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
+# DOCKER_IO_USERNAME / DOCKER_IO_PASSWORD are expected to be set in the deploy box's environment. They are probably legacy.
+run_on_deploy_box "docker login -u \"\$DOCKER_IO_USERNAME\" -p \"\$DOCKER_IO_PASSWORD\""
+run_on_deploy_box ". env_vars && ./scripts/update_docker_images.sh -u -g deploy -r $DOCKERHUB_REPO -v $CI_TAG 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
 run_on_deploy_box ". env_vars && echo -e '######\nFinished building new images for $CI_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CI_TAG.log"
-
-# Load docker_image_exists function and $ALL_IMAGES.
-# shellcheck disable=1091
-. ./scripts/common.sh
-
-if [[ "$BRANCH" == "master" ]]; then
-    DOCKERHUB_REPO=ccdl
-elif [[ "$BRANCH" == "dev" ]]; then
-    DOCKERHUB_REPO=ccdlstaging
-else
-    echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!"
-    exit 1
-fi
 
 # It's somehow possible for Docker to sometimes not successfully push
 # an image but yet still exit successfully. See:

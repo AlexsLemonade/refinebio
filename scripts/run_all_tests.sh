@@ -19,18 +19,18 @@ cd ..
 # First ensure postgres is running
 if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
-    echo "./scripts/run_postgres.sh" >&2
+    echo "./bin/rbio dev:up -s postgres" >&2
     exit 1
 # Then ensure elasticsearch is running
 elif ! [ "$(docker ps --filter name=dres -q)" ]; then
     echo "You must start Elasticsearch first with:" >&2
-    echo "./scripts/run_es.sh" >&2
+    echo "./bin/rbio dev:up -s elasticsearch" >&2
     exit 1
 fi
 
 mkdir -p test_volume && chmod -R a+rw test_volume
-./scripts/update_models.sh
-./api/run_tests.sh
-./common/run_tests.sh
-./foreman/run_tests.sh
-./workers/run_tests.sh
+./bin/rbio common:update
+./bin/rbio test:api
+./bin/rbio test:common
+./bin/rbio test:foreman
+./bin/rbio test:workers
