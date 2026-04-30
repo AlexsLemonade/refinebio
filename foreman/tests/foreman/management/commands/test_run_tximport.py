@@ -241,7 +241,9 @@ class RunTximportTestCase(TestCase):
 
         run_tximport.run_tximport_for_all_eligible_experiments()
 
-        pj = ProcessorJob.objects.all()[0]
+        pj = ProcessorJob.objects.filter(pipeline_applied=ProcessorPipeline.TXIMPORT.value).latest(
+            "created_at"
+        )
         self.assertEqual(pj.pipeline_applied, ProcessorPipeline.TXIMPORT.value)
 
         # Verify that we attempted to send the jobs off to Batch
@@ -255,7 +257,9 @@ class RunTximportTestCase(TestCase):
         # to verify that run_tximport_for_list also works.
         run_tximport.run_tximport_for_list("SRP095529,TO_BE_SKIPPED")
 
-        pj = ProcessorJob.objects.all()[1]
+        pj = ProcessorJob.objects.filter(pipeline_applied=ProcessorPipeline.TXIMPORT.value).latest(
+            "created_at"
+        )
         self.assertEqual(pj.pipeline_applied, ProcessorPipeline.TXIMPORT.value)
 
         # Verify that we attempted to send the jobs off to Batch
