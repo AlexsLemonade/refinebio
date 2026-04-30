@@ -17,35 +17,38 @@
 
 // Default matches the project's existing tag convention so local builds are
 // findable by tag without a registry round-trip.
+// TODO: the deploy box runs Ubuntu 18.04 with Buildx v0.10.5, which does not support
+// the `description` field in variable blocks (requires Buildx v0.13+). Once the deploy
+// box is upgraded to Ubuntu 22.04+, uncomment the description lines below.
 variable "DOCKERHUB_REPO" {
-  description = "Registry namespace used for image tags (e.g. <repo>/dr_base:<version>)."
-  default     = "ccdlstaging"
+  // description = "Registry namespace used for image tags (e.g. <repo>/dr_base:<version>)."
+  default = "ccdlstaging"
 }
 
 variable "SYSTEM_VERSION" {
-  description = "Tag suffix applied to every built image and cache ref."
-  default     = "local"
+  // description = "Tag suffix applied to every built image and cache ref."
+  default = "local"
 }
 
 // Default is the public read-only cache that CI pushes to.
 // Note: when DOCKERHUB_REPO differs, cache is also read from DOCKERHUB_REPO
 // so writers benefit from their own previously-pushed cache.
 variable "CACHE_FROM_REPO" {
-  description = "Registry to read cache layers from."
-  default     = "ccdlstaging"
+  // description = "Registry to read cache layers from."
+  default = "ccdlstaging"
 }
 
 // Default false so unauthed local builds don't fail trying to push cache.
 variable "PUSH_CACHE" {
-  description = "If true, write cache layers to DOCKERHUB_REPO. Requires push access."
-  default     = false
+  // description = "If true, write cache layers to DOCKERHUB_REPO. Requires push access."
+  default = false
 }
 
 // Default amd64 because some upstream bases (nvidia/cuda for compendia) and
 // apt packages have no arm64 variant.
 variable "PLATFORMS" {
-  description = "Comma-separated platforms to build for."
-  default     = "linux/amd64"
+  // description = "Comma-separated platforms to build for."
+  default = "linux/amd64"
 }
 
 // ---------------------------------------------------------------------------
