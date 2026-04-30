@@ -1,8 +1,8 @@
 options(warn = 2)
 options(repos = structure(c(
-    Bioconductor = "https://bioconductor.org/packages/3.6/bioc",
-    BioconductorAnnotation = "https://bioconductor.org/packages/3.6/data/annotation",
-    BioconductorExperiment = "https://bioconductor.org/packages/3.6/data/experiment",
+    Bioconductor = "https://mghp.osn.xsede.org/bir190004-bucket01/archive.bioconductor.org/packages/3.6/bioc",
+    BioconductorAnnotation = "https://mghp.osn.xsede.org/bir190004-bucket01/archive.bioconductor.org/packages/3.6/data/annotation",
+    BioconductorExperiment = "https://mghp.osn.xsede.org/bir190004-bucket01/archive.bioconductor.org/packages/3.6/data/experiment",
     CRAN = "https://cloud.r-project.org"
 )))
 options(Ncpus = parallel::detectCores())
