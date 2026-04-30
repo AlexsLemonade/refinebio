@@ -1,8 +1,13 @@
 options(warn = 2)
+# Bioconductor 3.6 (R 3.4.x era) is archived. The main bioconductor.org URLs
+# return 302 redirects that R 3.4.4's url() connections do not follow, causing
+# install.packages() to fail on the PACKAGES index check. Use the archive
+# mirror directly instead.
+BIOC_ARCHIVE <- "https://mghp.osn.xsede.org/bir190004-bucket01/archive.bioconductor.org/packages/3.6"
 options(repos = structure(c(
-    Bioconductor = "https://bioconductor.org/packages/3.6/bioc",
-    BioconductorAnnotation = "https://bioconductor.org/packages/3.6/data/annotation",
-    BioconductorExperiment = "https://bioconductor.org/packages/3.6/data/experiment",
+    Bioconductor = paste0(BIOC_ARCHIVE, "/bioc"),
+    BioconductorAnnotation = paste0(BIOC_ARCHIVE, "/data/annotation"),
+    BioconductorExperiment = paste0(BIOC_ARCHIVE, "/data/experiment"),
     CRAN = "https://cloud.r-project.org"
 )))
 options(Ncpus = parallel::detectCores())
