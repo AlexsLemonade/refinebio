@@ -272,17 +272,37 @@ echo "Job registrations have been fired off."
 # Get an image to run the migrations with.
 docker pull --platform linux/amd64 "$DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE"
 
-# Test that the pg_bouncer instance is up. 15 minutes should be more than enough.
+# Verify that pg_bouncer can reach the RDS backend by running a real query.
+# pg_isready only tests TCP connectivity to pg_bouncer itself and will pass
+# even when pg_bouncer cannot connect to postgres (e.g. during an RDS reboot
+# or parameter group modification).
+db_warn_after=900    # seconds before warning that something may be wrong
+db_timeout=2700      # seconds before giving up entirely
 start_time=$(date +%s)
 diff=0
-until pg_isready -d "$DATABASE_NAME" -h "$DATABASE_PUBLIC_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" &>/dev/null || [ "$diff" -gt "900" ]; do
-    echo "Waiting for the pg_bouncer instance to come online..."
+warned=false
+db_ready() {
+    PGPASSWORD="$DATABASE_PASSWORD" psql \
+        -h "$DATABASE_PUBLIC_HOST" \
+        -p "$DATABASE_PORT" \
+        -U "$DATABASE_USER" \
+        -d "$DATABASE_NAME" \
+        -c "SELECT 1" &>/dev/null
+}
+until db_ready || [ "$diff" -gt "$db_timeout" ]; do
+    echo "Waiting for pg_bouncer to connect to the database..."
+    if [ "$diff" -gt "$db_warn_after" ] && [ "$warned" = false ]; then
+        echo "WARNING: Database has been unreachable for 15 minutes. Unless a" \
+             "major version upgrade is in progress, there may be an issue." \
+             "Will wait up to another 30 minutes."
+        warned=true
+    fi
     sleep 10
     ((diff = $(date +%s) - start_time))
 done
 
-if ! pg_isready -d "$DATABASE_NAME" -h "$DATABASE_PUBLIC_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USER" &>/dev/null; then
-    echo "pg_bouncer instance failed to come up after 15 minutes."
+if ! db_ready; then
+    echo "pg_bouncer failed to connect to the database after 45 minutes."
     exit 1
 fi
 
