@@ -6,6 +6,12 @@ FROM nvidia/cuda:11.8.0-runtime-ubuntu18.04
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# Add MIT as a fallback mirror alongside archive.ubuntu.com.
+RUN grep '^deb ' /etc/apt/sources.list \
+    | sed -e 's|http://archive.ubuntu.com/ubuntu|http://mirrors.mit.edu/ubuntu|g' \
+          -e 's|http://security.ubuntu.com/ubuntu|http://mirrors.mit.edu/ubuntu|g' \
+    >> /etc/apt/sources.list
+
 # Prevent tzdata from prompting us for a timezone and hanging the build.
 ENV DEBIAN_FRONTEND=noninteractive
 
