@@ -47,6 +47,7 @@ server_reset_query = DISCARD ALL
 syslog = 1
 pidfile = /var/run/postgresql/pgbouncer.pid
 unix_socket_dir = /var/run/postgresql
+server_tls_sslmode = require
 FOE
 
 # Set up PG Bouncer
