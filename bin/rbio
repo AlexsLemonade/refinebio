@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+import sys
+from pathlib import Path
+
+# Make `from lib import ...` work when this script is invoked directly.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from lib import build, common, db, dev, es, test
+from lib._runtime import Globals, stderr
+
+# Each namespace module exports a COMMANDS list of (name, fn, help) tuples;
+# concatenating them gives the single registry that drives both dispatch and
+# the top-level help block. Adding a namespace is one line in NAMESPACES.
+NAMESPACES = [build, common, db, dev, es, test]
+
+COMMAND_REGISTRY = [entry for ns in NAMESPACES for entry in ns.COMMANDS]
+
+COMMANDS = {name: fn for name, fn, _ in COMMAND_REGISTRY}
+
+TOP_HELP = (
+    "rbio — refinebio dev tool.\n"
+    "\n"
+    "usage:  rbio <command> [args...]\n"
+    "        rbio <command> --help             # detailed help for any command\n"
+    "\n"
+    "commands:\n" + "".join(f"  {name:<24} {desc}\n" for name, _, desc in COMMAND_REGISTRY) + "\n"
+    "global flags:\n"
+    "  -h, --help      show help for the current command\n"
+    "      --verbose   echo every underlying command before running it\n"
+    "      --quiet     suppress non-error output\n"
+    "      --dry-run   print what would run; don't execute\n"
+    "      --no-color  disable color (auto-detected when stdout isn't a TTY)\n"
+)
+
+
+def extract_globals(argv):
+    """Strip global flags out of argv (at any position); set Globals.* accordingly."""
+    remaining = []
+    for arg in argv:
+        if arg == "--verbose":
+            Globals.verbose = True
+        elif arg == "--quiet":
+            Globals.quiet = True
+        elif arg == "--dry-run":
+            Globals.dry_run = True
+        elif arg == "--no-color":
+            Globals.no_color = True
+        else:
+            remaining.append(arg)
+    return remaining
+
+
+def main():
+    argv = extract_globals(sys.argv[1:])
+
+    if not argv or argv[0] in ("-h", "--help"):
+        print(TOP_HELP)
+        return 0
+
+    cmd_name, cmd_args = argv[0], argv[1:]
+
+    if cmd_name not in COMMANDS:
+        stderr(f"rbio: unknown command '{cmd_name}'")
+        stderr("run 'rbio --help' to see available commands")
+        return 2
+
+    return COMMANDS[cmd_name](cmd_args) or 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

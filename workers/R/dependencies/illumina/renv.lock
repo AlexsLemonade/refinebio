@@ -4,15 +4,15 @@
     "Repositories": [
       {
         "Name": "Bioconductor",
-        "URL": "https://bioconductor.org/packages/3.6/bioc"
+        "URL": "https://mghp.osn.xsede.org/bir190004-bucket01/archive.bioconductor.org/packages/3.6/bioc"
       },
       {
         "Name": "BioconductorAnnotation",
-        "URL": "https://bioconductor.org/packages/3.6/data/annotation"
+        "URL": "https://mghp.osn.xsede.org/bir190004-bucket01/archive.bioconductor.org/packages/3.6/data/annotation"
       },
       {
         "Name": "BioconductorExperiment",
-        "URL": "https://bioconductor.org/packages/3.6/data/experiment"
+        "URL": "https://mghp.osn.xsede.org/bir190004-bucket01/archive.bioconductor.org/packages/3.6/data/experiment"
       },
       {
         "Name": "CRAN",

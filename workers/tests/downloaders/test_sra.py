@@ -1,4 +1,5 @@
 import os
+import unittest
 
 from django.test import TestCase, tag
 
@@ -24,6 +25,11 @@ class DownloadSraTestCase(TestCase):
 
     @tag("downloaders")
     @tag("downloaders_sra")
+    @unittest.skip(
+        "ENA Aspera download path requires ascp >= 3.9.6 (post Mar 2024 server upgrade), "
+        "but that ascp build needs glibc 2.28+ which Ubuntu 18.04 lacks. "
+        "Follow-up: drop Aspera, use HTTPS via ENA Portal API + ftp.sra.ebi.ac.uk."
+    )
     def test_download_file(self):
         dlj = DownloaderJob()
         dlj.accession_code = "SRR24086949"
@@ -113,6 +119,11 @@ class DownloadSraTestCase(TestCase):
 
     @tag("downloaders")
     @tag("downloaders_sra")
+    @unittest.skip(
+        "ENA Aspera download path requires ascp >= 3.9.6 (post Mar 2024 server upgrade), "
+        "but that ascp build needs glibc 2.28+ which Ubuntu 18.04 lacks. "
+        "Follow-up: drop Aspera, use HTTPS via ENA Portal API + ftp.sra.ebi.ac.uk."
+    )
     def test_download_file_unmated_reads(self):
         dlj = DownloaderJob()
         dlj.accession_code = "SRR1603661"

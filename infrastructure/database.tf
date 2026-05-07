@@ -1,5 +1,11 @@
 # This file contains the configuration for the database and related resources.
 
+data "aws_rds_certificate" "cert" {
+  id = "rds-ca-rsa2048-g1"
+  # This returns multiple certs and the aws provider throws an error.
+  # latest_valid_till = true
+}
+
 resource "aws_db_parameter_group" "postgres_parameters" {
   name = "postgres-parameters-${var.user}-${var.stage}"
   description = "Postgres Parameters ${var.user} ${var.stage}"
@@ -132,12 +138,114 @@ resource "aws_db_parameter_group" "postgres_parameters" {
   tags = var.default_tags
 }
 
+# pg17 parameter group, mirror of the postgres11 group above.
+# Defined as a new resource (rather than changing family on the existing
+# group) so terraform creates it cleanly and AWS can attach it during
+# the major version upgrade without trying to mutate a parameter group
+# already in use. The legacy postgres_parameters (pg11) resource above
+# is kept in place for now so its detach happens cleanly during the
+# upgrade; remove it in a follow-up PR once the upgrade is verified.
+resource "aws_db_parameter_group" "postgres_parameters_pg17" {
+  name = "postgres-parameters-${var.user}-${var.stage}-pg17"
+  description = "Postgres Parameters ${var.user} ${var.stage} (pg17)"
+  family = "postgres17"
+
+  parameter {
+    name = "deadlock_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+
+  parameter {
+    name = "statement_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+
+  parameter {
+    name = "log_checkpoints"
+    value = false
+  }
+
+  parameter {
+    name = "work_mem"
+    value = 128000
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "shared_buffers"
+    value = "{DBInstanceClassMemory/20480}"
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "max_wal_size"
+    value = 4096
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "min_wal_size"
+    value = 1024
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "wal_buffers"
+    value = 16384
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "effective_cache_size"
+    value = "{DBInstanceClassMemory/10922}"
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "maintenance_work_mem"
+    value = 1048576
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "random_page_cost"
+    value = 1.1
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "effective_io_concurrency"
+    value = 200
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "max_worker_processes"
+    value = "{DBInstanceVCPU}"
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "max_parallel_workers"
+    value = "{DBInstanceVCPU}"
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "autovacuum_vacuum_scale_factor"
+    value = "0.01"
+    apply_method = "pending-reboot"
+  }
+
+  tags = var.default_tags
+}
+
 resource "aws_db_instance" "postgres_db" {
   identifier = "data-refinery-${var.user}-${var.stage}"
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
-  engine_version = "11.16"
+  engine_version = "17.9"
   allow_major_version_upgrade = true
   auto_minor_version_upgrade = false
   instance_class = "db.${var.database_instance_type}"
@@ -149,7 +257,7 @@ resource "aws_db_instance" "postgres_db" {
   apply_immediately = true
 
   db_subnet_group_name = aws_db_subnet_group.data_refinery.name
-  parameter_group_name = aws_db_parameter_group.postgres_parameters.name
+  parameter_group_name = aws_db_parameter_group.postgres_parameters_pg17.name
 
   # TF is broken, but we do want this protection in prod.
   # Related: https://github.com/hashicorp/terraform/issues/5417
@@ -162,6 +270,8 @@ resource "aws_db_instance" "postgres_db" {
   vpc_security_group_ids = [aws_security_group.data_refinery_db.id]
   multi_az = true
   publicly_accessible = true
+
+  ca_cert_identifier = data.aws_rds_certificate.cert.id
 
   backup_retention_period = var.stage == "prod" ? "7" : "0"
 

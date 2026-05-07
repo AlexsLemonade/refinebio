@@ -214,7 +214,8 @@ class IlluminaToPCLTestCase(TestCase, test_utils.ProcessorJobTestCaseMixin):
         self.assertSucceeded(pj)
         self.assertEqual(final_context["platform"], "illuminaHumanv3")
 
-        for key in final_context["samples"][0].sampleannotation_set.all()[0].data.keys():
+        ccdl_annotation = final_context["samples"][0].sampleannotation_set.get(is_ccdl=True)
+        for key in ccdl_annotation.data.keys():
             self.assertTrue(
                 key in ["detected_platform", "detection_percentage", "mapped_percentage"]
             )

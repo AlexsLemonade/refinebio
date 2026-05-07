@@ -131,9 +131,12 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
             # We currently aren't prepared to process Agilent because we don't have
             # whitelist of supported platforms for it. However this code works so
             # let's keep it around until we're ready for Agilent.
-            annotations = sample_object.sampleannotation_set.all()[0]
-            channel1_protocol = annotations.data.get("label_protocol_ch1", "").upper()
-            channel2_protocol = annotations.data.get("label_protocol_ch2", "").upper()
+            annotation = sample_object.sampleannotation_set.filter(
+                data__has_keys=["label_protocol_ch1", "label_protocol_ch2"]
+            ).first()
+            data = annotation.data if annotation else {}
+            channel1_protocol = data.get("label_protocol_ch1", "").upper()
+            channel2_protocol = data.get("label_protocol_ch2", "").upper()
             if ("AGILENT" in channel1_protocol) and ("AGILENT" in channel2_protocol):
                 return ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL
             else:

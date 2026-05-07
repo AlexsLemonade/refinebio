@@ -172,12 +172,12 @@ if ! command -v ip >/dev/null; then
 fi
 
 echo "Starting postgres and installing the database..."
-./run_postgres.sh >"$OUTPUT"
-./install_db_docker.sh >"$OUTPUT"
+../bin/rbio dev:up -s postgres >"$OUTPUT"
+../bin/rbio db:init >"$OUTPUT"
 
 echo "Starting elasticsearch and building the ES Indexes..."
-./run_es.sh >"$OUTPUT"
-./rebuild_es_index.sh >"$OUTPUT"
+../bin/rbio dev:up -s elasticsearch >"$OUTPUT"
+../bin/rbio es:rebuild >"$OUTPUT"
 
 echo "Creating virtual environment..."
 ./create_virtualenv.sh >"$OUTPUT"
