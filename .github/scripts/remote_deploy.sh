@@ -105,10 +105,11 @@ run_on_deploy_box ". env_vars && echo -e '######\nDeploying $CI_TAG finished!\n#
 
 .github/scripts/slackpost_deploy.sh robots deploybot
 
-if [[ "$BRANCH" == "dev" ]]; then
-    run_on_deploy_box ". env_vars && ./foreman/run_end_to_end_tests.sh"
-    .github/scripts/slackpost_end_to_end.sh robots deploybot
-fi
+# Temporarily disabled due to surveyor pipeline, only API + smasher are currently operational.
+# if [[ "$BRANCH" == "dev" ]]; then
+#     run_on_deploy_box ". env_vars && ./foreman/run_end_to_end_tests.sh"
+#     .github/scripts/slackpost_end_to_end.sh robots deploybot
+# fi
 
 # Don't leave secrets lying around.
 run_on_deploy_box "git clean -f"
