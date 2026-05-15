@@ -129,7 +129,11 @@ def cmd_ops_ram_hours(argv):
 
     utc_start = pytz.utc.localize(args.start_date)
 
-    print(", ".join(["accession_code", "downloader_ram_hours", "processor_ram_hours", "total_ram_hours"]))
+    print(
+        ", ".join(
+            ["accession_code", "downloader_ram_hours", "processor_ram_hours", "total_ram_hours"]
+        )
+    )
     if args.sample:
         row = _ram_hours_for_sample(pyrefinebio, args.accession_code, utc_start)
         print(", ".join(map(str, row)))

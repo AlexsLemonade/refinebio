@@ -126,14 +126,17 @@ def _install_homebrew():
     if not _confirm("Would you like to install Homebrew?"):
         stderr("rbio install:all: Homebrew is required on macOS")
         return False
-    return run(
-        [
-            "/bin/bash",
-            "-c",
-            'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL '
-            'https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
-        ]
-    ) == 0
+    return (
+        run(
+            [
+                "/bin/bash",
+                "-c",
+                'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL '
+                'https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+            ]
+        )
+        == 0
+    )
 
 
 def _install_docker(pm):
