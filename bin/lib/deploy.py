@@ -3,7 +3,6 @@
 import argparse
 import os
 import re
-import subprocess
 from pathlib import Path
 
 from lib._runtime import REPO_ROOT, Globals, stderr
@@ -119,10 +118,8 @@ def _build_env(args):
     env["project"] = args.project
     env["system_version"] = args.system_version
 
-    # Runtime-derived values. Set before prod_env so prod_env can override them.
-    env["DB_HOST_IP"] = _docker_db_ip()
+    # Mount path for the worker EBS volume — referenced by every worker template.
     env["VOLUME_DIR"] = "/var/ebs"
-    env["EXTRA_HOSTS"] = ""
 
     # Highest priority: deploy-time values from terraform.
     _load_env_file(REPO_ROOT / "infrastructure" / "prod_env", env)
@@ -141,24 +138,6 @@ def _load_env_file(path, env):
         key, _, value = line.partition("=")
         if key:
             env[key] = value
-
-
-def _docker_db_ip():
-    """IP of the drdb container, or empty string if not running."""
-    result = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "-f",
-            "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
-            "drdb",
-        ],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        return ""
-    return result.stdout.strip()
 
 
 def _render_project(project, env, output_dir):
