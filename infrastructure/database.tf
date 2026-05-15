@@ -306,6 +306,11 @@ resource "aws_instance" "pg_bouncer" {
     }
   )
 
+  # Force replacement when user_data changes so config updates actually take
+  # effect. Without this, AWS only runs user_data on first boot and changes
+  # are silently ignored.
+  user_data_replace_on_change = true
+
   tags = merge(
     var.default_tags,
     {
