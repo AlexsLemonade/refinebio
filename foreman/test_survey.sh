@@ -76,7 +76,7 @@ if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     exit 1
 fi
 
-./scripts/prepare_image.sh -i foreman -s foreman
+./bin/rbio build --load foreman
 
 . ./scripts/common.sh
 

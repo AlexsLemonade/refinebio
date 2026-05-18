@@ -14,7 +14,7 @@ cd "$script_directory" || exit
 # move up a level.
 cd ..
 
-./scripts/prepare_image.sh -i api -s api
+./bin/rbio build --load api
 
 . ./scripts/common.sh
 

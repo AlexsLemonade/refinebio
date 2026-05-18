@@ -73,10 +73,10 @@ cd ..
 
 # Agilent uses the same image as affymetrix
 if [[ "$IMAGE" == "affymetrix" || "$IMAGE" == "agilent" ]]; then
-    ./scripts/prepare_image.sh -i affymetrix
+    ./bin/rbio build --load affymetrix
     IMAGE_NAME="$DOCKERHUB_REPO/dr_affymetrix"
 else
-    ./scripts/prepare_image.sh -i "$IMAGE"
+    ./bin/rbio build --load "$IMAGE"
     IMAGE_NAME="$DOCKERHUB_REPO/dr_$IMAGE"
 fi
 

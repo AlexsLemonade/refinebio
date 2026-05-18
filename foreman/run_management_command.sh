@@ -17,9 +17,9 @@ if [ ! -d "$volume_directory" ]; then
 fi
 chmod -R a+rwX "$volume_directory"
 
-# Run from the repo root so prepare_image.sh and compose.yml resolve.
+# Run from the repo root so compose.yml resolves.
 cd ..
 
-./scripts/prepare_image.sh -i foreman -s foreman
+./bin/rbio build --load foreman
 
 exec docker compose run --rm foreman python3 manage.py "$@"

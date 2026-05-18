@@ -11,7 +11,7 @@ cd "$script_directory" || exit
 # move up a level.
 cd ..
 
-./scripts/prepare_image.sh -i smasher
+./bin/rbio build --load smasher
 
 . ./scripts/common.sh
 
