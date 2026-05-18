@@ -193,7 +193,7 @@ if terraform output | grep -q 'No outputs found'; then
     ran_init_build=true
     echo "No existing stack detected, applying initial terraform deployment."
 
-    # These files are inputs but are created by format_batch_with_env.sh
+    # These files are inputs but are created by `rbio deploy:format-batch`
     # based on outputs from terraform. Kinda a Catch 22, but we can
     # get around it by providing dummy files to get bootstrapped.
     touch api-configuration/environment
@@ -210,8 +210,8 @@ fi
 rm -f prod_env
 format_environment_variables
 
-../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
-../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration/"
+../bin/rbio deploy:format-batch -p api -e "$env" -o "$(pwd)/api-configuration/"
+../bin/rbio deploy:format-batch -p foreman -e "$env" -o "$(pwd)/foreman-configuration/"
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.
@@ -241,12 +241,12 @@ fi
 # Template the environment variables for production into the Batch Job
 # definitions and API confs.
 mkdir -p batch-job-templates
-../scripts/format_batch_with_env.sh -p workers -e "$env" -o "$(pwd)/batch-job-templates"
-../scripts/format_batch_with_env.sh -p surveyor -e "$env" -o "$(pwd)/batch-job-templates"
+../bin/rbio deploy:format-batch -p workers -e "$env" -o "$(pwd)/batch-job-templates"
+../bin/rbio deploy:format-batch -p surveyor -e "$env" -o "$(pwd)/batch-job-templates"
 
 # API and foreman aren't run as Batch jobs, but the templater still works.
-../scripts/format_batch_with_env.sh -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
-../scripts/format_batch_with_env.sh -p api -e "$env" -o "$(pwd)/api-configuration/"
+../bin/rbio deploy:format-batch -p foreman -e "$env" -o "$(pwd)/foreman-configuration"
+../bin/rbio deploy:format-batch -p api -e "$env" -o "$(pwd)/api-configuration/"
 
 # Remove all Batch jobs because it's the only way to be sure we don't
 # have any old ones. Deleting the job queue is the easiest way to do
