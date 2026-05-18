@@ -110,9 +110,6 @@ rbio --help
 rbio <command> --help
 ```
 
-The existing `scripts/*.sh` wrappers continue to work unchanged for
-anyone or anything (CI included) that already uses them.
-
 ### Git Workflow
 
 `refinebio` uses a
@@ -131,12 +128,12 @@ have been tested on Ubuntu 16.04 or later, but other Linux distributions
 _should_ be able to run the necessary services. Microsoft Windows is currently
 unsupported by this project.
 
-__Note__: The install_all.sh script will configure a git pre-commit hook to auto-format your python code.
+__Note__: The `rbio install:all` command will configure a git pre-commit hook to auto-format your python code.
 This will format your code in the same way as the rest of the project, allowing it to pass our linting check.
 
 #### Automatic
 
-The easiest way to run Refine.bio locally is to run `./scripts/install_all.sh`
+The easiest way to run Refine.bio locally is to run `./bin/rbio install:all`
 to install all of the necessary dependencies. As long as you are using a recent
 version of Ubuntu or macOS it should work. If you are using another version of
 Linux it should still install most of the dependencies as long as you give the
@@ -184,7 +181,7 @@ Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of
 
 #### Virtual Environment
 
-Run `./scripts/create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
+Run `./bin/rbio install:venv` to set up the virtualenv. It will activate the `dr_env`
 for you the first time. This virtualenv is valid for the entire `refinebio`
 repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
@@ -218,7 +215,7 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 or if you have `psql` installed this command will give you a better shell experience:
 
 ```
-source scripts/common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_address) -U postgres -d data_refinery
+PGPASSWORD=mysecretpassword psql -h localhost -p 5432 -U postgres -d data_refinery
 ```
 
 #### Common Dependecies
@@ -257,12 +254,18 @@ And then the ES Indexes (akin to Postgres 'databases') can be created with:
 To run the entire test suite:
 
 ```bash
-./scripts/run_all_tests.sh
+./bin/rbio test:all
 ```
 
-(_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
+This rebuilds the `common` sdist + applies migrations (`common:update`),
+then runs every subproject suite in sequence. (_Note:_ Running all the tests
+can take some time, especially the first time because it downloads a lot of
+files.)
 
-For more granular testing, you can just run the tests for specific parts of the system.
+For more granular testing you can run each subproject's suite individually.
+If `common/` source has changed since the last sdist build, each suite will
+fail fast and tell you to run `./bin/rbio common:update` (or bypass the check
+with `--allow-stale-common`).
 
 #### API
 To just run the API tests:
@@ -324,7 +327,7 @@ In addition to following pep8, python files must also conform to the formatting 
 (`black`'s highly opinionated style is a strict sub-set of pep8.)
 The easiest way to conform to this style is to run `black . --line-length=100`.
 This will auto-format your code.
-Running the `./scripts/install_all.sh` script will install a pre-commit git hook that will run this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/), which you can also install directly by running `pip3 install pre-commit & pre-commit install`. Then, if you want to run `pre-commit` without making a git commit, you can use `pre-commit run --all-files`.
+Running `./bin/rbio install:all` will install a pre-commit git hook that will run this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/), which you can also install directly by running `pip3 install pre-commit & pre-commit install`. Then, if you want to run `pre-commit` without making a git commit, you can use `pre-commit run --all-files`.
 To install `black` see the [installation instructions](#installation).
 Any Pull Requests that do not conform to the style enforced by `black` will be flagged by our continous integration and will not be accepted until that check passes.
 
@@ -633,13 +636,11 @@ Note that if the experiment does not have at least 25 samples with at least 80% 
 ### Development Helpers
 
 It can be useful to have an interactive Python interpreter running within the
-context of the Docker container. The `scripts/run_shell.sh` script has been provided
-for this purpose. It is in the top level directory so that if you wish to
-reference it in any integrations its location will be constant. However, it
-is configured by default for the Foreman project. The interpreter will
-have all the environment variables, dependencies, and Django configurations
-for the Foreman project. There are instructions within the script describing
-how to change this to another project.
+context of the Docker container. Run `./bin/rbio dev:shell` for this purpose.
+It opens an interactive Python shell inside the Foreman container, with all
+the environment variables, dependencies, and Django configurations for the
+Foreman project. For a shell in a different sub-project's container, use
+`./bin/rbio dev:manage -s <subproject> -i <image> shell`.
 
 ## Cloud Deployment
 
@@ -681,13 +682,15 @@ Refine.bio uses a number of different Docker images to run different pieces of t
 By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
 If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-r` option to the `deploy.sh` script.
 
-To make building and pushing your own images easier, the `scripts/update_docker_images.sh` has been provided.
-The `-r` option will allow you to specify which repo you'd like to push to.
-If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
-The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
+To make building and pushing your own images easier, use `./bin/rbio build`.
+Pass a group name (`default`, `all`, `workers`, `deploy`) or one or more image
+names. Pushing requires `--push` and a prior `docker login`; setting the
+`DOCKERHUB_REPO` and `SYSTEM_VERSION` env vars controls the registry namespace
+and tag respectively.
 
-`scripts/update_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
-It can instead be built with `./scripts/prepare_image.sh -i affymetrix -r <YOUR_DOCKERHUB_REPO>`.
+The `default` group skips the dr_affymetrix image, which requires a lot of
+resources and time to build. It can instead be built explicitly with
+`DOCKERHUB_REPO=<YOUR_DOCKERHUB_REPO> ./bin/rbio build --load affymetrix`.
 WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
 It's not recommended to build the image with less than 75GB of free space on the disk that Docker runs on.
 
@@ -700,7 +703,7 @@ There are a few extra things that you need to install before deploying the stack
 - [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html), which is necessary for some of our deployment scripts
 - [PostgreSQL](https://www.postgresql.org/), which is necessary for some of our deployment scripts
 
-The easiest way to install Terraform is by running `./scripts/install_all.sh`, or you can also install it manually by following the directions on the website. We currently use version 0.13.5.
+The easiest way to install Terraform is by running `./bin/rbio install:all`, or you can also install it manually by following the directions on the website. We currently use version 0.13.5.
 
 For awscli and boto3, _you need to install them using `pip3 install awscli boto3`_. Ubuntu's repositories contain outdated versions of both packages which do not work with our deploy script.
 
