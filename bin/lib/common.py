@@ -4,7 +4,35 @@ import argparse
 import os
 
 from lib._docker import bake_target, require_drdb
-from lib._runtime import REPO_ROOT, Globals, run
+from lib._runtime import REPO_ROOT, Globals, run, stderr
+
+
+def is_common_stale():
+    """True if any common/data_refinery_common/*.py is newer than the most recent common/dist sdist."""
+    sdist_dir = REPO_ROOT / "common" / "dist"
+    sdists = list(sdist_dir.glob("*.tar.gz"))
+    if not sdists:
+        return True
+    newest_sdist = max(s.stat().st_mtime for s in sdists)
+    src = REPO_ROOT / "common" / "data_refinery_common"
+    if not src.is_dir():
+        return False
+    newest_src = max((p.stat().st_mtime for p in src.rglob("*.py")), default=0)
+    return newest_src > newest_sdist
+
+
+def require_common_fresh(cmd_name):
+    """Pre-flight: fail with a hint if common/ source is newer than the last sdist build.
+
+    Caller is responsible for honoring a --allow-stale-common flag; this helper
+    is unconditional.
+    """
+    if not is_common_stale():
+        return 0
+    stderr(f"rbio {cmd_name}: common/ source has changed since the last sdist build")
+    stderr("  fix:    rbio common:update")
+    stderr(f"  bypass: rbio {cmd_name} --allow-stale-common")
+    return 1
 
 
 def _compose_run_migrations(*manage_args):

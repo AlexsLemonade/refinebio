@@ -10,6 +10,7 @@ import urllib.request
 
 from lib._docker import bake_target, require_drdb
 from lib._runtime import REPO_ROOT, Globals, run, stderr
+from lib.common import require_common_fresh
 from lib.test._shared import coverage_command
 
 # S3 bucket holding worker test fixtures (tarballs, fastq/sra/cel/PCL files).
@@ -324,9 +325,16 @@ def cmd_test_workers(argv):
         choices=WORKER_TAGS,
         help="run tests for a single worker tag (default: every tag in order).",
     )
+    p.add_argument(
+        "--allow-stale-common",
+        action="store_true",
+        help="skip the pre-flight check that common/dist is up to date with common/ source",
+    )
     args, forwarded = p.parse_known_args(argv)
 
     if (rc := require_drdb("test:workers")) != 0:
+        return rc
+    if not args.allow_stale_common and (rc := require_common_fresh("test:workers")) != 0:
         return rc
 
     # Workers have their own test_volume next to the worker code (matches the

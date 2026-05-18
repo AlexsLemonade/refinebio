@@ -4,6 +4,7 @@ import argparse
 
 from lib._docker import bake_target, require_services
 from lib._runtime import REPO_ROOT, run
+from lib.common import require_common_fresh
 from lib.test._shared import coverage_command
 
 # Per-subproject knobs for `rbio test:<name>`: which bake target supplies
@@ -43,12 +44,19 @@ def _test_subproject(name, argv):
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    _, forwarded = p.parse_known_args(argv)
+    p.add_argument(
+        "--allow-stale-common",
+        action="store_true",
+        help="skip the pre-flight check that common/dist is up to date with common/ source",
+    )
+    args, forwarded = p.parse_known_args(argv)
 
     services = {"postgres": "drdb"}
     if cfg["needs_es"]:
         services["elasticsearch"] = "dres"
     if (rc := require_services(f"test:{name}", services)) != 0:
+        return rc
+    if not args.allow_stale_common and (rc := require_common_fresh(f"test:{name}")) != 0:
         return rc
     if (rc := bake_target(cfg["image"])) != 0:
         return rc
