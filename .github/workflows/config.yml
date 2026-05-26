@@ -64,7 +64,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
@@ -105,7 +105,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
@@ -147,10 +147,10 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Start Elasticsearch
-        run: bin/rbio dev:up -s elasticsearch
+        run: bin/rbio compose:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
@@ -200,10 +200,10 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Start Elasticsearch
-        run: bin/rbio dev:up -s elasticsearch
+        run: bin/rbio compose:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
@@ -279,10 +279,10 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Start Elasticsearch
-        run: bin/rbio dev:up -s elasticsearch
+        run: bin/rbio compose:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
@@ -332,7 +332,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
@@ -372,10 +372,10 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Start Elasticsearch
-        run: bin/rbio dev:up -s elasticsearch
+        run: bin/rbio compose:up -s elasticsearch
 
       - name: Pause for Initialization
         run: sleep 15
@@ -425,7 +425,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
@@ -474,7 +474,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
@@ -515,7 +515,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
@@ -563,7 +563,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
@@ -643,7 +643,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Start Postgres
-        run: bin/rbio dev:up -s postgres
+        run: bin/rbio compose:up -s postgres
 
       - name: Pause for Initialization
         run: sleep 15
