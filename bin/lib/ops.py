@@ -18,6 +18,9 @@ _STATUSES = ["SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING"]
 @requires(
     env=["DEPLOY_USER"],
     env_optional={"DEPLOY_ENV": "dev"},
+    env_alternatives=[
+        ("AWS auth", [["AWS_PROFILE"], ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]]),
+    ],
     tools=["aws"],
 )
 def cmd_ops_kill_jobs(argv):

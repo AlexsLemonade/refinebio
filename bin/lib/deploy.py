@@ -12,6 +12,9 @@ _VALID_ENVS = ("dev", "staging", "prod")
 @requires(
     env=["DEPLOY_ENV", "DEPLOY_TAG", "DEPLOY_USER"],
     env_optional={"BATCH_USE_ON_DEMAND_INSTANCES": ""},
+    env_alternatives=[
+        ("AWS auth", [["AWS_PROFILE"], ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]]),
+    ],
     tools=["tfenv"],
 )
 def cmd_deploy_up(argv):

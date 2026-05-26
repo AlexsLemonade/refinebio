@@ -6,13 +6,13 @@ from pathlib import Path
 # Make `from lib import ...` work when this script is invoked directly.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import build, common, compose, db, deploy, dev, es, install, ops, test
+from lib import build, common, compose, db, debug, deploy, dev, es, install, ops, test
 from lib._runtime import Globals, stderr
 
 # Each namespace module exports a COMMANDS list of (name, fn, help) tuples;
 # concatenating them gives the single registry that drives both dispatch and
 # the top-level help block. Adding a namespace is one line in NAMESPACES.
-NAMESPACES = [build, common, compose, db, deploy, dev, es, install, ops, test]
+NAMESPACES = [build, common, compose, db, debug, deploy, dev, es, install, ops, test]
 
 COMMAND_REGISTRY = [entry for ns in NAMESPACES for entry in ns.COMMANDS]
 
