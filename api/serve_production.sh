@@ -1,6 +1,10 @@
 #!/bin/sh
 
-# Script for executing Django PyUnit tests within a Docker container.
+# Run the production API server locally using the uwsgi prod image
+# (dr_api). Mirrors what runs on the production API EC2 box.
+#
+# Requires: rbio compose:up postgres
+# (so the refinebio_default network and the `database` alias exist)
 
 # This script should always run as if it were being called from
 # the directory it lives in.
@@ -14,19 +18,15 @@ cd "$script_directory" || exit
 # move up a level.
 cd ..
 
-./scripts/prepare_image.sh -i api -s api
+./bin/rbio build api
 
-. ./scripts/common.sh
-
-DB_HOST_IP=$(get_docker_db_ip_address)
 STATIC_VOLUMES=/tmp/volumes_static
 
 docker run \
-    --add-host=database:"$DB_HOST_IP" \
     --detach \
     --env-file api/environments/local \
     --interactive \
-    --link drdb:postgres \
+    --network refinebio_default \
     --platform linux/amd64 \
     --publish 8081:8081 \
     --tty \

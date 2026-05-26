@@ -10,10 +10,10 @@ script_directory="$(
 )"
 cd "$script_directory" || exit
 
-# Run from the repo root so prepare_image.sh and compose.yml resolve.
+# Run from the repo root so bin/rbio and compose.yml resolve.
 cd ..
 
-./scripts/prepare_image.sh -i api_local -s api
+./bin/rbio build api_local
 
 exec docker compose run --rm --service-ports api \
     python3 manage.py runserver 0.0.0.0:8000 "$@"
