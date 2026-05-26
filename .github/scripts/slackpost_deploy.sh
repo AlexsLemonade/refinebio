@@ -21,16 +21,7 @@ if [[ $username == "" ]]; then
 fi
 
 # ------------
-master_check=$(git branch --contains "tags/$CI_TAG" | grep '^  master$' || true)
-dev_check=$(git branch --contains "tags/$CI_TAG" | grep '^  dev$' || true)
-
-if [[ -n $master_check ]]; then
-    CI_BRANCH=master
-elif [[ -n $dev_check ]]; then
-    CI_BRANCH=dev
-fi
-
-text="New deployment! Woo! $CI_USERNAME: $CI_BRANCH $CI_TAG"
+text="New deployment! Woo! $DEPLOY_USER: $BRANCH $DEPLOY_TAG"
 
 escapedText=$(echo "$text" | sed 's/"/\"/g' | sed "s/'/\'/g")
 
