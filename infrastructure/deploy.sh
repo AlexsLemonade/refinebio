@@ -93,15 +93,14 @@ if [[ -z $SYSTEM_VERSION ]]; then
     exit 1
 fi
 
-# Load $ALL_IMAGES and helper functions.
-# shellcheck disable=SC1091
-. ../scripts/common.sh
+ALL_IMAGES="base api_base api foreman smasher compendia illumina affymetrix salmon transcriptome no_op downloaders"
 
 if [[ -z $TF_VAR_dockerhub_repo ]]; then
+    # ccdlstaging hosts -dev images for staging; ccdl hosts the prod tag.
     if [[ $SYSTEM_VERSION == *"-dev" ]]; then
-        TF_VAR_dockerhub_repo=$(get_deploy_repo dev)
+        TF_VAR_dockerhub_repo=ccdlstaging
     else
-        TF_VAR_dockerhub_repo=$(get_deploy_repo master)
+        TF_VAR_dockerhub_repo=ccdl
     fi
     export TF_VAR_dockerhub_repo
 fi
