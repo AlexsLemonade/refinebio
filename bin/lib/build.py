@@ -5,14 +5,21 @@ import json
 import subprocess
 import time
 
+from lib._requirements import requires
 from lib._runtime import REPO_ROOT, run, stderr
+from lib.common import rebuild_common_sdist
 
 RETRY_BACKOFF_SECONDS = 5
 
 
+@requires(tools=["docker"])
 def cmd_build(argv):
     needs_help = any(a in ("-h", "--help") for a in argv)
-    epilog = "wraps: docker buildx bake -f docker-bake.hcl <targets>"
+    epilog = (
+        "wraps:\n"
+        "  rbio common:build-sdist  (mtime-gated; skipped when common source unchanged)\n"
+        "  docker buildx bake -f docker-bake.hcl <targets>"
+    )
     if needs_help:
         section = render_bake_targets_section()
         if section:
@@ -58,6 +65,14 @@ def cmd_build(argv):
         ),
     )
     args = p.parse_args(argv)
+
+    # Bake's worker/foreman/api targets COPY common/dist/data-refinery-common-*
+    # at image-build time. Make sure that tarball reflects current source
+    # before bake reads it. The helper short-circuits when nothing changed,
+    # preserving docker's COPY layer cache for downstream images.
+    if not args.print_only:
+        if (rc := rebuild_common_sdist()) != 0:
+            return rc
 
     cmd = ["docker", "buildx", "bake", "-f", "docker-bake.hcl"]
     if args.push:
