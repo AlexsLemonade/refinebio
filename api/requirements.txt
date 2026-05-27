@@ -6,7 +6,6 @@
 #
 apscheduler==3.10.0       # via -r requirements.in
 asgiref==3.6.0            # via django
-backports-zoneinfo==0.2.1  # via pytz-deprecation-shim, tzlocal
 boto3==1.26.68            # via -r requirements.in
 botocore==1.29.68         # via boto3, s3transfer
 certifi==2023.7.22        # via -r requirements.in, requests
