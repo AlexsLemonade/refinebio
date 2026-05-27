@@ -104,6 +104,12 @@ make -j"$(nproc)"
 make install
 cd /
 rm -rf /tmp/R-3.4.4*
+# --enable-R-shlib installs libR.so at /usr/local/lib/R/lib/libR.so, which is
+# NOT on ldconfig's default search path. R's own binary finds it via internal
+# rpath, but rpy2 calls dlopen() on R modules (methods.so, etc.) using the
+# system loader — without this hint dlopen fails with "libR.so: cannot open
+# shared object file" at rpy2 import time.
+echo "/usr/local/lib/R/lib" > /etc/ld.so.conf.d/R.conf
 ldconfig
 EOF
 
