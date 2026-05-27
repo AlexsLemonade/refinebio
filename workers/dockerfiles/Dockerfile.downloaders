@@ -15,19 +15,9 @@ RUN Rscript renv_load_downloaders.R
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
 
-# Install Aspera. Pin aspera-cli to 4.10.0 — newer versions' default SDK
-# installer downloads an ascp binary requiring glibc 2.28+, which fails its
-# own self-test on Ubuntu 18.04 (glibc 2.27) and breaks the image build.
-# See WORKSPACE_EXEC_SUMMARY.md / PR #3553 for the full diagnosis. The
-# tests that exercise ascp at runtime are skipped; this pin only needs to
-# get the image built.
-RUN <<EOF
-curl -sSL https://rvm.io/mpapis.asc | gpg --import -
-curl -sSL https://rvm.io/pkuczynski.asc | gpg --import -
-curl -sSL https://get.rvm.io | bash -s -- stable --path /home/user/rvm --ruby
-. /home/user/rvm/scripts/rvm
-gem install aspera-cli -v 4.10.0
-EOF
+# aspera-cli is published only as a Ruby gem — IBM doesn't ship a standalone
+# binary. The gem provides ascli, which then fetches ascp itself below.
+RUN gem install aspera-cli -v 4.10.0
 
 USER user
 
@@ -35,7 +25,6 @@ RUN <<EOF
 mkdir -m 700 /home/user/.gnupg
 # Disable IPv6 to avoid "Cannot assign requested address" error.
 echo "disable-ipv6" >> /home/user/.gnupg/dirmngr.conf
-. /home/user/rvm/scripts/rvm
 ascli conf ascp install
 EOF
 
