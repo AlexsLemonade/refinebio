@@ -7,11 +7,11 @@ os_distribution:   # DO NOT forget the trailing ':'
 os_pkg:
   - python3
   - python3-pip
-  - r-base
 
 # Command lines (commands whose outputs will be kept track of)
 cmd_line:
   - cat /etc/identifier_refinery_url
+  - R --version
 
 # Python pip packages
 python:
