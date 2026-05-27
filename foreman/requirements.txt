@@ -22,9 +22,9 @@ geoparse==2.0.3           # via -r requirements.in
 idna==3.4                 # via requests, yarl
 iso8601==1.1.0            # via pyrefinebio
 multidict==6.0.4          # via yarl
-numpy==1.19.5             # via -r requirements.in, geoparse, pandas, scipy
+numpy==1.26.4             # via -r requirements.in, geoparse, pandas, scipy
 packaging==23.0           # via django-nine
-pandas==1.1.5             # via -r requirements.in, geoparse
+pandas==1.5.3             # via -r requirements.in, geoparse
 psycopg2-binary==2.9.5    # via -r requirements.in
 pyrefinebio==0.4.9        # via -r requirements.in
 python-dateutil==2.8.2    # via -r requirements.in, elasticsearch-dsl, pandas

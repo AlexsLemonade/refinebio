@@ -18,8 +18,8 @@ vcrpy
 django-computedfields
 pyyaml
 # For end-to-end tests
-numpy==1.19.5
-pandas==1.1.5
+numpy==1.26.4
+pandas==1.5.3
 scipy
 sqlparse
 certifi==2023.7.22
