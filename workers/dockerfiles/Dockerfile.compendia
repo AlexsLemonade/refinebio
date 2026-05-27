@@ -96,7 +96,7 @@ rm phantomjs-2.1.1-linux-x86_64.tar.bz2
 EOF
 
 # Get the latest version from the dist directory.
-COPY common/dist/data-refinery-common-* common/
+COPY common/dist/data?refinery?common-* common/
 RUN pip3 install --ignore-installed --no-cache-dir common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY .boto .boto
