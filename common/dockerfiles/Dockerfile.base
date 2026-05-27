@@ -111,6 +111,10 @@ rm -rf /tmp/R-3.4.4*
 # shared object file" at rpy2 import time.
 echo "/usr/local/lib/R/lib" > /etc/ld.so.conf.d/R.conf
 ldconfig
+# glibc 2.34+ redefined SIGSTKSZ from a compile-time constant to a sysconf
+# call, breaking vendored Catch.h's static-array sizing in testthat. Pin
+# the old constant value so R package compiles see an integral expression.
+echo "CPPFLAGS += -DSIGSTKSZ=8192" >> /usr/local/lib/R/etc/Makevars.site
 EOF
 
 # Bioconductor 3.6's biocLite.R bootstrap URL is permanently 404 (Bioc
