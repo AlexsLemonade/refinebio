@@ -71,6 +71,16 @@ useradd --create-home --home-dir /home/user/ -g user user
 chown -R user /home/user/
 EOF
 
+# rpy2 3.4.5 (no pyproject.toml) builds via the legacy setup.py path, whose
+# setup_requires fetches cffi as a build egg — picking up cffi 2.0.0, whose
+# setuptools integration trips over rpy2's old ffi builder ('NoneType' object
+# is not callable). Constrain cffi<2 for every pip invocation, including
+# setuptools' build-egg fetch (pip propagates PIP_CONSTRAINT into build envs),
+# so the build uses the 1.x line rpy2 3.4.5 was written against. Inherited by
+# every downstream image that installs rpy2.
+RUN echo 'cffi<2' > /etc/pip-constraint.txt
+ENV PIP_CONSTRAINT=/etc/pip-constraint.txt
+
 # Build R 3.4.4 from source. The renv.lock files in workers/R/dependencies/
 # are hard-pinned to R 3.4.4 / Bioconductor 3.6; jammy's apt r-base-core
 # ships R 4.1.x and would silently break every renv restore. Source build
