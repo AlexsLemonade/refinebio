@@ -65,7 +65,7 @@ apt-get install --no-install-recommends -y \
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 ln -sf /usr/bin/llvm-config-14 /usr/bin/llvm-config
-pip3 install --break-system-packages --upgrade 'pip<24.1' setuptools wheel
+pip3 install --upgrade 'pip<24.1' setuptools wheel
 groupadd user
 useradd --create-home --home-dir /home/user/ -g user user
 chown -R user /home/user/
