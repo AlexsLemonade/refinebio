@@ -111,6 +111,15 @@ rm -rf /tmp/R-3.4.4*
 # shared object file" at rpy2 import time.
 echo "/usr/local/lib/R/lib" > /etc/ld.so.conf.d/R.conf
 ldconfig
+# glibc 2.34+ redefined SIGSTKSZ from a compile-time constant to a sysconf()
+# call (gated on _GNU_SOURCE, which R sets). Code using SIGSTKSZ as an array
+# size no longer compiles — notably testthat's vendored Catch.h, which every
+# worker's renv::restore rebuilds from source. A -D on the compiler line can't
+# fix it (signal.h's #define wins); patch the header back to the old constant
+# so every R package compile sees an integral value. The glob covers the
+# arch-specific multiarch path (x86_64 today, aarch64 for future ARM builds).
+sed -i -E 's/sysconf ?\(_SC_SIGSTKSZ\)/8192/; s/sysconf ?\(_SC_MINSIGSTKSZ\)/2048/' \
+    /usr/include/*/bits/sigstksz.h
 EOF
 
 # Bioconductor 3.6's biocLite.R bootstrap URL is permanently 404 (Bioc
@@ -119,23 +128,6 @@ EOF
 # the archived tarball still lives. With BiocInstaller already in the
 # library, renv::restore detects it and skips the dead bootstrap fetch.
 RUN R -e 'install.packages("https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz", repos = NULL, type = "source")'
-
-# testthat 2.3.2's vendored Catch.h declares `static char altStackMem[SIGSTKSZ]`,
-# which glibc 2.34+ broke by redefining SIGSTKSZ from a compile-time constant
-# to a sysconf() call. Pre-install testthat with both altStackMem decls patched
-# to a fixed 8192 (the old glibc constant, well above POSIX's MINSIGSTKSZ).
-# renv::restore then sees the lockfile-pinned version already installed and
-# skips the broken recompile.
-RUN <<EOF
-cd /tmp
-wget -q https://cran.r-project.org/src/contrib/Archive/testthat/testthat_2.3.2.tar.gz
-tar xzf testthat_2.3.2.tar.gz
-sed -i 's/altStackMem\[SIGSTKSZ\]/altStackMem[8192]/g' \
-    testthat/inst/include/testthat/vendor/catch.h
-R CMD INSTALL testthat
-cd /
-rm -rf /tmp/testthat*
-EOF
 
 ENV R_LIBS=/usr/local/lib/R/site-library
 
