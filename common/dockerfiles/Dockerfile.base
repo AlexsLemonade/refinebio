@@ -59,6 +59,7 @@ apt-get install --no-install-recommends -y \
     ruby-full \
     tcl-dev \
     tk-dev \
+    unzip \
     wget \
     zlib1g-dev
 apt-get clean
