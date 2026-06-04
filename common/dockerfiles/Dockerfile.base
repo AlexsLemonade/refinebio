@@ -16,6 +16,7 @@ ENV LANG=C.UTF-8
 # chain links against, plus everything R 3.4.4 needs to build from source
 # and to satisfy Bioconductor 3.6 package compiles at install time.
 RUN <<EOF
+set -e
 apt-get update -qq
 apt-get install --no-install-recommends -y \
     build-essential \
@@ -85,6 +86,7 @@ EOF
 #   -fallow-argument-mismatch  gfortran 10+ promoted these warnings to
 #                              errors; R 3.4.4's LAPACK glue has them.
 RUN <<EOF
+set -e
 cd /tmp
 wget -q https://cran.r-project.org/src/base/R-3/R-3.4.4.tar.gz
 tar xzf R-3.4.4.tar.gz
@@ -116,10 +118,15 @@ ldconfig
 # size no longer compiles — notably testthat's vendored Catch.h, which every
 # worker's renv::restore rebuilds from source. A -D on the compiler line can't
 # fix it (signal.h's #define wins); patch the header back to the old constant
-# so every R package compile sees an integral value. The glob covers the
-# arch-specific multiarch path (x86_64 today, aarch64 for future ARM builds).
-sed -i -E 's/sysconf ?\(_SC_SIGSTKSZ\)/8192/; s/sysconf ?\(_SC_MINSIGSTKSZ\)/2048/' \
-    /usr/include/*/bits/sigstksz.h
+# so every R package compile sees an integral value. The grep guards against a
+# silent no-op (header path/format drift), which would otherwise resurface as a
+# confusing testthat compile error at worker-build time.
+sigstksz=/usr/include/x86_64-linux-gnu/bits/sigstksz.h
+sed -i -E 's/sysconf ?\(_SC_SIGSTKSZ\)/8192/; s/sysconf ?\(_SC_MINSIGSTKSZ\)/2048/' "$sigstksz"
+if grep -Eq 'sysconf ?\(_SC_(MIN)?SIGSTKSZ\)' "$sigstksz"; then
+    echo "SIGSTKSZ patch did not apply to $sigstksz" >&2
+    exit 1
+fi
 EOF
 
 # Bioconductor 3.6's biocLite.R bootstrap URL is permanently 404 (Bioc
