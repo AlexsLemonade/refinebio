@@ -71,16 +71,6 @@ useradd --create-home --home-dir /home/user/ -g user user
 chown -R user /home/user/
 EOF
 
-# rpy2 3.4.5 (no pyproject.toml) builds via the legacy setup.py path, whose
-# setup_requires fetches cffi as a build egg — picking up cffi 2.0.0, whose
-# setuptools integration trips over rpy2's old ffi builder ('NoneType' object
-# is not callable). Constrain cffi<2 for every pip invocation, including
-# setuptools' build-egg fetch (pip propagates PIP_CONSTRAINT into build envs),
-# so the build uses the 1.x line rpy2 3.4.5 was written against. Inherited by
-# every downstream image that installs rpy2.
-RUN echo 'cffi<2' > /etc/pip-constraint.txt
-ENV PIP_CONSTRAINT=/etc/pip-constraint.txt
-
 # Build R 3.4.4 from source. The renv.lock files in workers/R/dependencies/
 # are hard-pinned to R 3.4.4 / Bioconductor 3.6; jammy's apt r-base-core
 # ships R 4.1.x and would silently break every renv restore. Source build
@@ -146,6 +136,22 @@ EOF
 # the archived tarball still lives. With BiocInstaller already in the
 # library, renv::restore detects it and skips the dead bootstrap fetch.
 RUN R -e 'install.packages("https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz", repos = NULL, type = "source")'
+
+# rpy2 3.4.5 has no pyproject.toml, so its legacy setup_requires fetches a cffi
+# build egg without pycparser; rpy2's cffi binding builder then returns None and
+# the build crashes ("'NoneType' object is not callable") — on a fresh build, in
+# every downstream image. Build the rpy2 wheel once here, where R 3.4.4 and the
+# cffi==1.15.1 (the pinned runtime version) + pycparser build deps are present
+# and build isolation is off (so setup_requires sees them already satisfied and
+# skips the broken egg fetch).
+# Expose it via PIP_FIND_LINKS so every downstream `pip install` picks up the
+# prebuilt wheel instead of recompiling from sdist.
+RUN <<EOF
+set -e
+pip3 install cffi==1.15.1 pycparser
+pip3 wheel --no-build-isolation --no-deps -w /opt/rpy2-wheel rpy2==3.4.5
+EOF
+ENV PIP_FIND_LINKS=/opt/rpy2-wheel
 
 ENV R_LIBS=/usr/local/lib/R/site-library
 
