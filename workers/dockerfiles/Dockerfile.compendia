@@ -1,6 +1,5 @@
 # This is very similar to the `smasher` image, but additionally installs
-# fancySVD for the compendia imputation step. The BLAS/LAPACK and gfortran
-# that fancySVD links against already ship in dr_base.
+# fancySVD, which provides the IterativeSVD imputation create_compendia uses.
 
 ARG DOCKERHUB_REPO
 ARG SYSTEM_VERSION
@@ -16,14 +15,14 @@ COPY workers/R/dependencies/compendia/renv.lock .
 COPY common/R/renv_load.R renv_load_compendia.R
 RUN Rscript renv_load_compendia.R
 
-COPY workers/data_refinery_workers/requirements/compendia.txt requirements.txt
-# Pin setuptools<70 (otherwise it tries to import wheel internals that
-# newer wheel releases moved) so fancySVD builds cleanly from sdist.
-RUN pip3 install --upgrade 'setuptools<70' 'wheel<0.42'
-RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
-
 COPY workers/data_refinery_workers/processors/requirements.txt requirements.txt
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt
+
+# fancySVD provides the IterativeSVD imputation create_compendia imports. It is
+# compendia-only and pure-Python, but its setup.py pins scikit-learn==0.24.2 and
+# an old numpy that have no Python 3.10 wheels (they'd build from sdist). Install
+# it without deps; the scikit-learn and numpy pinned above satisfy it at runtime.
+RUN pip3 install --no-deps --no-cache-dir fancySVD==0.1.3
 
 # Get the latest version from the dist directory.
 COPY common/dist/data?refinery?common-* common/
