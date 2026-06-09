@@ -389,7 +389,7 @@ def _detect_platform(job_context: Dict) -> Dict:
         try:
             result = subprocess.check_output(
                 [
-                    "/usr/bin/Rscript",
+                    "Rscript",
                     "--vanilla",
                     "/home/user/data_refinery_workers/processors/detect_database.R",
                     "--platform",
@@ -467,7 +467,7 @@ def _run_illumina(job_context: Dict) -> Dict:
         job_context["time_start"] = timezone.now()
 
         formatted_command = [
-            "/usr/bin/Rscript",
+            "Rscript",
             "--vanilla",
             "/home/user/data_refinery_workers/processors/illumina.R",
             "--probeId",

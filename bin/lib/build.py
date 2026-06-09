@@ -66,7 +66,7 @@ def cmd_build(argv):
     )
     args = p.parse_args(argv)
 
-    # Bake's worker/foreman/api targets COPY common/dist/data-refinery-common-*
+    # Bake's worker/foreman/api targets COPY common/dist/data?refinery?common-*
     # at image-build time. Make sure that tarball reflects current source
     # before bake reads it. The helper short-circuits when nothing changed,
     # preserving docker's COPY layer cache for downstream images.

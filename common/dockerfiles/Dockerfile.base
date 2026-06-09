@@ -1,13 +1,7 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Add MIT as a fallback mirror alongside archive.ubuntu.com.
-RUN grep '^deb ' /etc/apt/sources.list \
-    | sed -e 's|http://archive.ubuntu.com/ubuntu|http://mirrors.mit.edu/ubuntu|g' \
-          -e 's|http://security.ubuntu.com/ubuntu|http://mirrors.mit.edu/ubuntu|g' \
-    >> /etc/apt/sources.list
 
 WORKDIR /home/user
 
@@ -18,58 +12,146 @@ ENV DEBIAN_FRONTEND=noninteractive
 # For whatever reason this worked and 'en_US.UTF-8' did not.
 ENV LANG=C.UTF-8
 
+# System packages: dev headers + runtime libs that the rest of the dr_base
+# chain links against, plus everything R 3.4.4 needs to build from source
+# and to satisfy Bioconductor 3.6 package compiles at install time.
 RUN <<EOF
-apt-get update
-apt-get install --no-install-recommends -y software-properties-common
-add-apt-repository ppa:apt-fast/stable
-add-apt-repository ppa:deadsnakes/ppa
-add-apt-repository ppa:savoury1/llvm-defaults-10
+set -e
 apt-get update -qq
 apt-get install --no-install-recommends -y \
-    apt-fast \
-    apt-transport-https \
-    gpg-agent && \
-apt-fast update -qq && apt-fast install -y \
     build-essential \
+    ca-certificates \
     cmake \
     curl \
-    cython \
     cython3 \
     ed \
     file \
+    gfortran \
     git \
-    libcairo-dev \
+    libblas-dev \
+    libbz2-dev \
+    libcairo2-dev \
     libcurl4-gnutls-dev \
     libedit-dev \
     libfreetype6-dev \
     libfribidi-dev \
     libgit2-dev \
     libharfbuzz-dev \
+    libicu-dev \
     libjpeg-dev \
+    liblapack-dev \
+    liblzma-dev \
+    libpcre3-dev \
     libpng-dev \
     libpq-dev \
+    libreadline-dev \
     libssl-dev \
     libtiff5-dev \
     libxml2-dev \
-    llvm-10-dev \
+    llvm-14-dev \
     lsb-release \
     mercurial \
     pkg-config \
+    python3 \
+    python3-dev \
     python3-pip \
     python3-pybind11 \
-    python3.8 \
-    python3.8-dev \
-    r-base-core \
-    wget
+    ruby-full \
+    tcl-dev \
+    tk-dev \
+    unzip \
+    wget \
+    zlib1g-dev
 apt-get clean
 rm -rf /var/lib/apt/lists/*
-ln -s /usr/bin/llvm-config-10 /usr/bin/llvm-config
-update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+ln -sf /usr/bin/llvm-config-14 /usr/bin/llvm-config
 pip3 install --upgrade 'pip<24.1' setuptools wheel
 groupadd user
 useradd --create-home --home-dir /home/user/ -g user user
 chown -R user /home/user/
 EOF
+
+# Build R 3.4.4 from source. The renv.lock files in workers/R/dependencies/
+# are hard-pinned to R 3.4.4 / Bioconductor 3.6; jammy's apt r-base-core
+# ships R 4.1.x and would silently break every renv restore. Source build
+# keeps the R/Bioc surface frozen while the base OS and Python/LLVM bump.
+#
+# The compile flags handle gcc 11's stricter behavior vs the gcc 6/7 R 3.4.4
+# was originally tested against:
+#   -fPIC                      --enable-R-shlib requires every object
+#                              position-independent; configure didn't set
+#                              this consistently on the gcc 11 build path.
+#   -fcommon                   gcc 10+ flipped the default to -fno-common,
+#                              breaking R 3.4.4's many tentative defs of
+#                              R_OutputCon across translation units.
+#   -fallow-argument-mismatch  gfortran 10+ promoted these warnings to
+#                              errors; R 3.4.4's LAPACK glue has them.
+RUN <<EOF
+set -e
+cd /tmp
+wget -q https://cran.r-project.org/src/base/R-3/R-3.4.4.tar.gz
+tar xzf R-3.4.4.tar.gz
+cd R-3.4.4
+./configure \
+    CC="gcc -fPIC -fcommon" \
+    CXX="g++ -fPIC" \
+    F77="gfortran -fPIC -fallow-argument-mismatch" \
+    FC="gfortran -fPIC -fallow-argument-mismatch" \
+    CFLAGS="-O2" CXXFLAGS="-O2" FFLAGS="-O2" FCFLAGS="-O2" \
+    --libdir=/usr/local/lib \
+    --enable-R-shlib \
+    --with-blas --with-lapack \
+    --with-x=no \
+    --without-recommended-packages
+make -j"$(nproc)"
+make install
+cd /
+rm -rf /tmp/R-3.4.4*
+# --enable-R-shlib installs libR.so at /usr/local/lib/R/lib/libR.so, which is
+# NOT on ldconfig's default search path. R's own binary finds it via internal
+# rpath, but rpy2 calls dlopen() on R modules (methods.so, etc.) using the
+# system loader — without this hint dlopen fails with "libR.so: cannot open
+# shared object file" at rpy2 import time.
+echo "/usr/local/lib/R/lib" > /etc/ld.so.conf.d/R.conf
+ldconfig
+# glibc 2.34+ redefined SIGSTKSZ from a compile-time constant to a sysconf()
+# call (gated on _GNU_SOURCE, which R sets). Code using SIGSTKSZ as an array
+# size no longer compiles — notably testthat's vendored Catch.h, which every
+# worker's renv::restore rebuilds from source. A -D on the compiler line can't
+# fix it (signal.h's #define wins); patch the header back to the old constant
+# so every R package compile sees an integral value. The grep guards against a
+# silent no-op (header path/format drift), which would otherwise resurface as a
+# confusing testthat compile error at worker-build time.
+sigstksz=/usr/include/x86_64-linux-gnu/bits/sigstksz.h
+sed -i -E 's/sysconf ?\(_SC_SIGSTKSZ\)/8192/; s/sysconf ?\(_SC_MINSIGSTKSZ\)/2048/' "$sigstksz"
+if grep -Eq 'sysconf ?\(_SC_(MIN)?SIGSTKSZ\)' "$sigstksz"; then
+    echo "SIGSTKSZ patch did not apply to $sigstksz" >&2
+    exit 1
+fi
+EOF
+
+# Bioconductor 3.6's biocLite.R bootstrap URL is permanently 404 (Bioc
+# deprecated and removed it). Pre-install BiocInstaller_1.28.0 from the
+# Bioc 3.6 archive — the URL 302-redirects to mghp.osn.xsede.org where
+# the archived tarball still lives. With BiocInstaller already in the
+# library, renv::restore detects it and skips the dead bootstrap fetch.
+RUN R -e 'install.packages("https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz", repos = NULL, type = "source")'
+
+# rpy2 3.4.5 has no pyproject.toml, so its legacy setup_requires fetches a cffi
+# build egg without pycparser; rpy2's cffi binding builder then returns None and
+# the build crashes ("'NoneType' object is not callable") — on a fresh build, in
+# every downstream image. Build the rpy2 wheel once here, where R 3.4.4 and the
+# cffi==1.15.1 (the pinned runtime version) + pycparser build deps are present
+# and build isolation is off (so setup_requires sees them already satisfied and
+# skips the broken egg fetch).
+# Expose it via PIP_FIND_LINKS so every downstream `pip install` picks up the
+# prebuilt wheel instead of recompiling from sdist.
+RUN <<EOF
+set -e
+pip3 install cffi==1.15.1 pycparser
+pip3 wheel --no-build-isolation --no-deps -w /opt/rpy2-wheel rpy2==3.4.5
+EOF
+ENV PIP_FIND_LINKS=/opt/rpy2-wheel
 
 ENV R_LIBS=/usr/local/lib/R/site-library
 

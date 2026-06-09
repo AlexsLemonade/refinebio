@@ -109,6 +109,7 @@ class SurveyTestCase(TransactionTestCase):
         command = Command()
         command.handle()
 
+    @unittest.skip("EBI BioStudies API has changed and will need to be updated")
     def test_array_express_experiment_missing_metadata(self):
         """Tests that an ArrayExpress experiment has its missing metadata added."""
 

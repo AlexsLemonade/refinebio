@@ -471,7 +471,7 @@ class SalmonTestCase(TestCase):
                 rds_file_path = computed_file.absolute_file_path
 
         cmd_tokens = [
-            "/usr/bin/Rscript",
+            "Rscript",
             "--vanilla",
             "/home/user/tests/processors/test_tximport.R",
             "--txi_out",
@@ -704,10 +704,10 @@ class RuntimeProcessorTest(TestCase):
         )
         self.assertEqual(tximport_processor.environment["os_distribution"], utils.get_os_distro())
 
-        os_pkg_name = "r-base"
+        r_version_cmd = "R --version"
         self.assertEqual(
-            tximport_processor.environment["os_pkg"][os_pkg_name],
-            utils.get_os_pkgs([os_pkg_name])[os_pkg_name],
+            tximport_processor.environment["cmd_line"][r_version_cmd],
+            utils.get_cmd_lines([r_version_cmd])[r_version_cmd],
         )
 
         pip_pkg_name = "data-refinery-common"

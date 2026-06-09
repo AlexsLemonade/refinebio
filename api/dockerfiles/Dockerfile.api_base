@@ -29,7 +29,7 @@ pip install --upgrade 'pip<24.1' setuptools wheel
 pip install --ignore-installed --no-cache-dir -r requirements.txt
 EOF
 
-COPY common/dist/data-refinery-common-* common/
+COPY common/dist/data?refinery?common-* common/
 RUN pip install --ignore-installed common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY api/ .

@@ -494,7 +494,7 @@ def _run_tximport_for_experiment(
     tpm_file_path = job_context["work_dir"] + tpm_filename
     result = ComputationalResult()
     cmd_tokens = [
-        "/usr/bin/Rscript",
+        "Rscript",
         "--vanilla",
         "/home/user/data_refinery_workers/processors/tximport.R",
         "--file_list",
