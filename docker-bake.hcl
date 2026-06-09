@@ -44,8 +44,9 @@ variable "PUSH_CACHE" {
   default = false
 }
 
-// Default amd64 because some upstream bases (nvidia/cuda for compendia) and
-// apt packages have no arm64 variant.
+// Default amd64 because the Salmon / SRA Toolkit binaries (Dockerfile.salmon,
+// Dockerfile.transcriptome) are x86_64-only and some apt packages have no
+// arm64 variant.
 variable "PLATFORMS" {
   // description = "Comma-separated platforms to build for."
   default = "linux/amd64"
@@ -240,10 +241,10 @@ target "downloaders" {
   cache-to   = cache_to_for("downloaders")
 }
 
-// Compendia uses nvidia/cuda directly, not the shared base.
 target "compendia" {
   inherits   = ["_common"]
   dockerfile = "workers/dockerfiles/Dockerfile.compendia"
+  contexts   = from_target("base")
   tags       = tags_for("compendia")
   cache-from = cache_from_for("compendia")
   cache-to   = cache_to_for("compendia")

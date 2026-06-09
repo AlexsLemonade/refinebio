@@ -18,13 +18,6 @@ simplejson
 sympy
 unicodecsv
 untangle>=1.1.1
-# For visualization
-dask>=1.1.1
-xarray==0.16.2
-datashader==0.14.4
-datashape>=0.5.2
-holoviews>=1.11.2
-selenium==3.141.0
 # For mocking out S3 calls for the smasher.
 vcrpy==4.1.1
 django-computedfields>=0.1.5

@@ -278,10 +278,6 @@ def _filter_rows_and_columns(job_context: Dict) -> Dict:
 
     drop_na_genes_start = log_state("start drop NA genes", job_context["job"].id)
 
-    # # Visualize Prefiltered
-    # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
-    # visualized_prefilter = visualize.visualize(combined_matrix.copy(), output_path)
-
     combined_matrix = job_context.pop("combined_matrix")
 
     # Remove genes (rows) with <=70% present values in combined_matrix
@@ -296,10 +292,6 @@ def _filter_rows_and_columns(job_context: Dict) -> Dict:
 
     log_state("end drop NA genes", job_context["job"].id, drop_na_genes_start)
     drop_na_samples_start = log_state("start drop NA samples", job_context["job"].id)
-
-    # # Visualize Row Filtered
-    # output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
-    # visualized_rowfilter = visualize.visualize(row_filtered_matrix.copy(), output_path)
 
     # Remove samples (columns) with <50% present values in combined_matrix
     # XXX: Find better test data for this!
@@ -341,11 +333,6 @@ def _reset_zero_values(job_context: Dict) -> Dict:
     # We don't pop this one out of `job_context` because we need it again later
     row_col_filtered_matrix_index = job_context.get("row_col_filtered_matrix_index")
     cached_zeroes = job_context.pop("cached_zeroes")
-
-    # # Visualize Row and Column Filtered
-    # output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
-    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_matrix.copy(),
-    #                                               output_path)
 
     # "Reset" zero values that were set to NA in RNA-seq samples
     # (i.e., make these zero again) in combined_matrix
@@ -442,9 +429,6 @@ def _run_iterativesvd(job_context: Dict) -> Dict:
     del row_col_filtered_matrix_columns
 
     job_context["merged_no_qn"] = untransposed_imputed_matrix_df
-    # output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
-    # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(),
-    #                                               output_path)
 
     log_state("end untranspose", job_context["job"].id, untranspose_start)
 
@@ -510,10 +494,6 @@ def _quantile_normalize(job_context: Dict) -> Dict:
     job_context = smashing_utils.quantile_normalize(job_context)
 
     log_state("end quantile normalize", job_context["job"].id, quantile_start)
-
-    # Visualize Final Compendia
-    # output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
-    # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
     return job_context
 
