@@ -1,121 +1,223 @@
-"""dev:* — local dev stack lifecycle (compose up/down)."""
+"""dev:* — higher-level local dev workflows that orchestrate jobs."""
 
 import argparse
 import json
 import subprocess
 
-from lib._runtime import REPO_ROOT, Globals, run, stderr
+from lib._requirements import epilog_from, requires
+from lib._runtime import Globals, run, stderr
 
-DEV_UP_DEFAULT_SERVICES = ["api", "postgres", "elasticsearch"]
-DEV_UP_OPTIONAL_SERVICES = ["foreman"]
-DEV_UP_ALL_SERVICES = sorted(set(DEV_UP_DEFAULT_SERVICES) | set(DEV_UP_OPTIONAL_SERVICES))
+WORKER_IMAGES = [
+    "affymetrix",
+    "agilent",
+    "compendia",
+    "downloaders",
+    "illumina",
+    "no_op",
+    "salmon",
+    "smasher",
+    "transcriptome",
+]
+
+JOB_SUBCOMMANDS = ["run_downloader_job", "run_processor_job"]
 
 
-def cmd_dev_up(argv):
+# Maps processor job names to the worker image that handles them. Keep in sync
+# with workers/data_refinery_workers/processors/management/commands/run_processor_job.py.
+_PROCESSOR_JOB_IMAGE = {
+    "AFFY_TO_PCL": "affymetrix",
+    "AGILENT_TWOCOLOR_TO_PCL": "affymetrix",
+    "SALMON": "salmon",
+    "ILLUMINA_TO_PCL": "illumina",
+    "TRANSCRIPTOME_INDEX_LONG": "transcriptome",
+    "TRANSCRIPTOME_INDEX_SHORT": "transcriptome",
+    "NO_OP": "no_op",
+}
+
+
+@requires(tools=["docker"])
+def cmd_dev_pipeline(argv):
     p = argparse.ArgumentParser(
-        prog="rbio dev:up",
-        description="Start the local dev stack.",
-        epilog=(
-            "services:\n"
-            f"  default:   {', '.join(DEV_UP_DEFAULT_SERVICES)}\n"
-            f"  optional:  {', '.join(DEV_UP_OPTIONAL_SERVICES)}\n"
-            "\n"
-            "  workers are not part of dev:up — they're ephemeral job\n"
-            "  containers, started on demand by other commands.\n"
-            "\n"
-            "wraps: docker compose up -d <services>"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    p.add_argument(
-        "-s",
-        "--service",
-        dest="services",
-        action="append",
-        default=[],
-        metavar="SERVICE",
-        choices=DEV_UP_ALL_SERVICES,
-        help="service to start (repeatable). default: the full default stack.",
-    )
-    p.add_argument(
-        "--wait", action="store_true", help="block until services pass their healthchecks"
-    )
-    args = p.parse_args(argv)
-
-    services = list(args.services) if args.services else list(DEV_UP_DEFAULT_SERVICES)
-
-    if not Globals.dry_run:
-        missing = check_missing_local_images(services)
-        if missing:
-            stderr("rbio dev:up: missing local image(s):")
-            for img in sorted(missing):
-                stderr(f"  {img}")
-            stderr("")
-            stderr("build them first:  rbio build")
-            return 1
-
-    cmd = ["docker", "compose", "up", "-d"]
-    if args.wait:
-        cmd.append("--wait")
-    cmd.extend(services)
-    return run(cmd)
-
-
-def check_missing_local_images(services):
-    """Return refinebio-built images that compose needs but aren't in the local daemon."""
-    cfg = subprocess.run(
-        ["docker", "compose", "config", "--format", "json"],
-        capture_output=True,
-        text=True,
-        cwd=str(REPO_ROOT),
-    )
-    if cfg.returncode != 0:
-        return []
-    try:
-        config = json.loads(cfg.stdout)
-    except json.JSONDecodeError:
-        return []
-    needed = [config.get("services", {}).get(s, {}).get("image", "") for s in services]
-    needed = [i for i in needed if "/dr_" in i]
-    if not needed:
-        return []
-    ls = subprocess.run(
-        ["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"],
-        capture_output=True,
-        text=True,
-    )
-    local = set(ls.stdout.splitlines()) if ls.returncode == 0 else set()
-    return [i for i in needed if i not in local]
-
-
-def cmd_dev_down(argv):
-    p = argparse.ArgumentParser(
-        prog="rbio dev:down",
+        prog="rbio dev:pipeline",
         description=(
-            "Stop the local dev stack. Volumes are preserved by default — "
-            "your postgres data is safe."
+            "Survey an accession locally, then drain the resulting downloader "
+            "and processor jobs one at a time against the local stack."
         ),
-        epilog="wraps: docker compose down",
+        epilog=epilog_from(
+            cmd_dev_pipeline,
+            "wraps:\n"
+            "  docker compose run --rm foreman python3 manage.py survey_all --accession ACC\n"
+            "  (loop) docker compose run --rm foreman python3 manage.py get_job_to_be_run\n"
+            "  (loop) docker compose run --rm <worker> python3 manage.py run_{processor,downloader}_job ...",
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument("accession_code", help="experiment accession to survey")
+    args = p.parse_args(argv)
+
+    if (
+        rc := run(
+            [
+                "docker",
+                "compose",
+                "run",
+                "--rm",
+                "foreman",
+                "python3",
+                "manage.py",
+                "survey_all",
+                "--accession",
+                args.accession_code,
+            ]
+        )
+    ) != 0:
+        return rc
+
+    while True:
+        job = _get_job_to_run()
+        if not job:
+            return 0
+        if (rc := _run_job(job)) != 0:
+            return rc
+
+
+def _get_job_to_run():
+    if Globals.dry_run:
+        return None
+    # The management command prints the JSON as its last non-empty stdout line.
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--rm",
+            "foreman",
+            "python3",
+            "manage.py",
+            "get_job_to_be_run",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    lines = [ln for ln in result.stdout.splitlines() if ln.strip()]
+    if not lines:
+        return None
+    try:
+        return json.loads(lines[-1])
+    except json.JSONDecodeError:
+        return None
+
+
+def _run_job(job):
+    job_name = job["job_name"]
+    job_id = job["job_id"]
+    print(f"Running {job_name} Job with id {job_id}!")
+
+    if job["job_type"] == "DownloaderJob":
+        subcommand = "run_downloader_job"
+        image = "downloaders"
+    else:
+        subcommand = "run_processor_job"
+        image = _PROCESSOR_JOB_IMAGE.get(job_name, "downloaders")
+
+    return run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--rm",
+            image,
+            "python3",
+            "manage.py",
+            subcommand,
+            f"--job-name={job_name}",
+            f"--job-id={job_id}",
+        ]
+    )
+
+
+@requires(tools=["docker"])
+def cmd_dev_job(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio dev:job",
+        description="Run a single downloader/processor job in a worker container.",
+        epilog=epilog_from(
+            cmd_dev_job,
+            "examples:\n"
+            "  rbio dev:job downloaders run_downloader_job --job-name=SRA --job-id=12345\n"
+            "  rbio dev:job affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321\n"
+            "\n"
+            "agilent uses the affymetrix image (same binary).\n"
+            "\n"
+            "wraps: docker compose run --rm <image> python3 manage.py <subcommand> <args>",
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument(
-        "-v",
-        "--volumes",
-        action="store_true",
-        help="also remove volumes (DESTRUCTIVE — wipes the db)",
+        "image",
+        choices=WORKER_IMAGES,
+        help="worker image to run the job in",
     )
-    p.add_argument("--rmi", action="store_true", help="remove images built by compose")
+    p.add_argument(
+        "subcommand",
+        choices=JOB_SUBCOMMANDS,
+        help="management command to run",
+    )
+    p.add_argument(
+        "manage_args",
+        nargs=argparse.REMAINDER,
+        help="forwarded to manage.py (e.g. --job-name=SRA --job-id=12345)",
+    )
     args = p.parse_args(argv)
 
-    cmd = ["docker", "compose", "down"]
-    if args.volumes:
-        cmd.append("--volumes")
-    if args.rmi:
-        cmd.extend(["--rmi", "local"])
-    return run(cmd)
+    # agilent and affymetrix share the affymetrix image.
+    image = "affymetrix" if args.image == "agilent" else args.image
+
+    return run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--rm",
+            image,
+            "python3",
+            "manage.py",
+            args.subcommand,
+            *args.manage_args,
+        ]
+    )
+
+
+@requires(tools=["docker"])
+def cmd_dev_janitor(argv):
+    p = argparse.ArgumentParser(
+        prog="rbio dev:janitor",
+        description="Run the janitor (cleanup) management command in a smasher container.",
+        epilog=epilog_from(
+            cmd_dev_janitor,
+            "wraps: docker compose run --rm smasher python3 manage.py run_janitor",
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.parse_args(argv)
+    return run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--rm",
+            "smasher",
+            "python3",
+            "manage.py",
+            "run_janitor",
+        ]
+    )
 
 
 COMMANDS = [
-    ("dev:up", cmd_dev_up, "start the dev stack"),
-    ("dev:down", cmd_dev_down, "stop the dev stack"),
+    ("dev:pipeline", cmd_dev_pipeline, "survey an accession + drain its job queue locally"),
+    ("dev:job", cmd_dev_job, "run a single downloader/processor job"),
+    ("dev:janitor", cmd_dev_janitor, "run the janitor cleanup command in a smasher container"),
 ]
