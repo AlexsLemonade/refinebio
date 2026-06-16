@@ -1,10 +1,9 @@
 from re import match
 
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin
 from django.http import JsonResponse
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 from rest_framework import permissions
 
@@ -116,83 +115,91 @@ If you have a question or comment, please [file an issue on GitHub](https://gith
 )
 
 urlpatterns = [
-    url(
+    re_path(
         r"^(?P<version>v1)/",
         include(
             [
                 # Primary search and filter interface
-                url(r"^search/$", ExperimentDocumentView.as_view({"get": "list"}), name="search"),
-                url(r"^experiments/$", ExperimentListView.as_view(), name="experiments"),
-                url(
+                re_path(
+                    r"^search/$", ExperimentDocumentView.as_view({"get": "list"}), name="search"
+                ),
+                re_path(r"^experiments/$", ExperimentListView.as_view(), name="experiments"),
+                re_path(
                     r"^experiments/(?P<accession_code>.+)/$",
                     ExperimentDetailView.as_view(),
                     name="experiments_detail",
                 ),
-                url(r"^samples/$", SampleListView.as_view(), name="samples"),
-                url(
+                re_path(r"^samples/$", SampleListView.as_view(), name="samples"),
+                re_path(
                     r"^samples/(?P<accession_code>.+)/$",
                     SampleDetailView.as_view(),
                     name="samples_detail",
                 ),
-                url(r"^organisms/$", OrganismListView.as_view(), name="organisms"),
-                url(
+                re_path(r"^organisms/$", OrganismListView.as_view(), name="organisms"),
+                re_path(
                     r"^organisms/(?P<name>.+)/$",
                     OrganismDetailView.as_view(),
                     name="organisms_detail",
                 ),
-                url(r"^platforms/$", PlatformListView.as_view(), name="platforms"),
-                url(r"^institutions/$", InstitutionListView.as_view(), name="institutions"),
-                url(r"^processors/$", ProcessorListView.as_view(), name="processors"),
-                url(
+                re_path(r"^platforms/$", PlatformListView.as_view(), name="platforms"),
+                re_path(r"^institutions/$", InstitutionListView.as_view(), name="institutions"),
+                re_path(r"^processors/$", ProcessorListView.as_view(), name="processors"),
+                re_path(
                     r"^processors/(?P<id>[0-9a-f-]+)/$",
                     ProcessorDetailView.as_view(),
                     name="processors_detail",
                 ),
                 # Deliverables
-                url(r"^dataset/$", DatasetView.as_view({"post": "create"}), name="create_dataset"),
-                url(
+                re_path(
+                    r"^dataset/$", DatasetView.as_view({"post": "create"}), name="create_dataset"
+                ),
+                re_path(
                     r"^dataset/(?P<id>[0-9a-f-]+)/$",
                     DatasetView.as_view({"get": "retrieve", "put": "update"}),
                     name="dataset",
                 ),
-                url(r"^token/$", APITokenView.as_view({"post": "create"}), name="token"),
-                url(
+                re_path(r"^token/$", APITokenView.as_view({"post": "create"}), name="token"),
+                re_path(
                     r"^token/(?P<id>[0-9a-f-]+)/$",
                     APITokenView.as_view({"get": "retrieve", "put": "update"}),
                     name="token_id",
                 ),
                 # Jobs
-                url(r"^jobs/survey/$", SurveyJobListView.as_view(), name="survey_jobs"),
-                url(
+                re_path(r"^jobs/survey/$", SurveyJobListView.as_view(), name="survey_jobs"),
+                re_path(
                     r"^jobs/survey/(?P<id>[0-9a-f-]+)/$",
                     SurveyJobDetailView.as_view(),
                     name="survey_jobs_detail",
                 ),
-                url(r"^jobs/downloader/$", DownloaderJobListView.as_view(), name="downloader_jobs"),
-                url(
+                re_path(
+                    r"^jobs/downloader/$", DownloaderJobListView.as_view(), name="downloader_jobs"
+                ),
+                re_path(
                     r"^jobs/downloader/(?P<id>[0-9a-f-]+)/$",
                     DownloaderJobDetailView.as_view(),
                     name="downloader_jobs_detail",
                 ),
-                url(r"^jobs/processor/$", ProcessorJobListView.as_view(), name="processor_jobs"),
-                url(
+                re_path(
+                    r"^jobs/processor/$", ProcessorJobListView.as_view(), name="processor_jobs"
+                ),
+                re_path(
                     r"^jobs/processor/(?P<id>[0-9a-f-]+)/$",
                     ProcessorJobDetailView.as_view(),
                     name="processor_jobs_detail",
                 ),
                 # Dashboard Driver
-                url(r"^stats/$", Stats.as_view(), name="stats"),
-                url(
+                re_path(r"^stats/$", Stats.as_view(), name="stats"),
+                re_path(
                     r"^stats/failures/downloader$",
                     FailedDownloaderJobStats.as_view(),
                     name="stats_failed_downloader",
                 ),
-                url(
+                re_path(
                     r"^stats/failures/processor$",
                     FailedProcessorJobStats.as_view(),
                     name="stats_failed_processor",
                 ),
-                url(r"^stats-about/$", AboutStats.as_view(), name="stats_about"),
+                re_path(r"^stats-about/$", AboutStats.as_view(), name="stats_about"),
                 # Transcriptome Indices
                 path(
                     "transcriptome_indices/",
@@ -212,57 +219,65 @@ urlpatterns = [
                     ),
                 ),
                 # QN Targets
-                url(r"^qn_targets/$", QNTargetsAvailable.as_view(), name="qn_targets_available"),
-                url(
+                re_path(
+                    r"^qn_targets/$", QNTargetsAvailable.as_view(), name="qn_targets_available"
+                ),
+                re_path(
                     r"^qn_targets/(?P<organism_name>.+)$",
                     QNTargetsDetailView.as_view(),
                     name="qn_targets",
                 ),
                 # Computed Files
-                url(r"^computed_files/$", ComputedFileListView.as_view(), name="computed_files"),
-                url(
+                re_path(
+                    r"^computed_files/$", ComputedFileListView.as_view(), name="computed_files"
+                ),
+                re_path(
                     r"^computed_files/(?P<id>[0-9a-f-]+)/$",
                     ComputedFileDetailView.as_view(),
                     name="computed_files_detail",
                 ),
-                url(r"^original_files/$", OriginalFileListView.as_view(), name="original_files"),
-                url(
+                re_path(
+                    r"^original_files/$", OriginalFileListView.as_view(), name="original_files"
+                ),
+                re_path(
                     r"^original_files/(?P<id>[0-9a-f-]+)/$",
                     OriginalFileDetailView.as_view(),
                     name="original_files_detail",
                 ),
-                url(
+                re_path(
                     r"^computational_results/$",
                     ComputationalResultListView.as_view(),
                     name="results",
                 ),
-                url(
+                re_path(
                     r"^computational_results/(?P<id>[0-9a-f-]+)/$",
                     ComputationalResultDetailView.as_view(),
                     name="results_detail",
                 ),
                 # Compendia
-                url(r"^compendia/$", CompendiumResultListView.as_view(), name="compendium_results"),
-                url(
+                re_path(
+                    r"^compendia/$", CompendiumResultListView.as_view(), name="compendium_results"
+                ),
+                re_path(
                     r"^compendia/(?P<id>[0-9]+)/$",
                     CompendiumResultDetailView.as_view(),
                     name="compendium_result",
                 ),
                 # v1 api docs
-                url(
+                re_path(
                     r"^swagger/$",
                     schema_view.with_ui("swagger", cache_timeout=0),
                     name="schema_swagger_ui",
                 ),
-                url(r"^$", schema_view.with_ui("redoc", cache_timeout=0), name="schema_redoc"),
+                re_path(r"^$", schema_view.with_ui("redoc", cache_timeout=0), name="schema_redoc"),
             ]
         ),
     ),
     # Admin
-    url(r"^admin/", admin.site.urls),
+    re_path(r"^admin/", admin.site.urls),
     # Redirect root urls to latest version api docs
-    url(r"^swagger/$", RedirectView.as_view(url="/v1/swagger")),
-    url(r"^$", RedirectView.as_view(url="/v1")),
+    re_path(r"^swagger/$", RedirectView.as_view(url="/v1/swagger")),
+    re_path(r"^$", RedirectView.as_view(url="/v1")),
 ]
 
 # handle errors
