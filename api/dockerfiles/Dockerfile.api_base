@@ -1,15 +1,7 @@
-FROM python:3.8.5-buster
+FROM python:3.10
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Debian Buster packages moved to archive.debian.org after EOL (June 2024).
-# buster-updates does not exist in the archive so remove it entirely.
-RUN sed -i \
-    -e 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' \
-    -e 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' \
-    -e '/buster-updates/d' \
-    /etc/apt/sources.list
 
 # Install gcc and libpq-dev for psycopg2.
 RUN <<EOF
