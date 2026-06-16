@@ -8,7 +8,6 @@ Jinja2>=2.11.3
 # We need at least 1.1 because of https://github.com/pallets/markupsafe/issues/57
 markupsafe>=1.1
 djangorestframework<3.14.0
-djangorestframework-hstore
 django-cors-headers
 django-filter
 coreapi

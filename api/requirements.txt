@@ -13,17 +13,15 @@ charset-normalizer==3.0.1  # via requests
 coreapi==2.3.3            # via -r requirements.in, drf-yasg
 coreschema==0.0.4         # via coreapi, drf-yasg
 coverage==7.1.0           # via -r requirements.in
-django==3.2.17            # via -r requirements.in, django-computedfields, django-cors-headers, django-fast-update, django-filter, django-nine, djangorestframework, djangorestframework-hstore, drf-yasg
+django==3.2.17            # via -r requirements.in, django-computedfields, django-cors-headers, django-fast-update, django-filter, django-nine, djangorestframework, drf-yasg
 django-computedfields==0.2.1  # via -r requirements.in
 django-cors-headers==3.13.0  # via -r requirements.in
 django-elasticsearch-dsl==6.5.0  # via -r requirements.in, django-elasticsearch-dsl-drf
 django-elasticsearch-dsl-drf==0.22.5  # via -r requirements.in
 django-fast-update==0.2.1  # via django-computedfields
 django-filter==22.1       # via -r requirements.in
-django-hstore==1.4.2      # via djangorestframework-hstore
 django-nine==0.2.7        # via django-elasticsearch-dsl-drf
-djangorestframework==3.13.1  # via -r requirements.in, django-elasticsearch-dsl-drf, djangorestframework-hstore, drf-yasg
-djangorestframework-hstore==1.3  # via -r requirements.in
+djangorestframework==3.13.1  # via -r requirements.in, django-elasticsearch-dsl-drf, drf-yasg
 drf-yasg==1.21.5          # via -r requirements.in
 elasticsearch==6.8.2      # via django-elasticsearch-dsl-drf, elasticsearch-dsl
 elasticsearch-dsl==6.4.0  # via -r requirements.in, django-elasticsearch-dsl, django-elasticsearch-dsl-drf
@@ -34,7 +32,6 @@ jinja2==3.1.2             # via -r requirements.in, coreschema
 jmespath==1.0.1           # via boto3, botocore
 markupsafe==2.1.2         # via -r requirements.in, jinja2
 packaging==23.0           # via django-nine, drf-yasg
-psycopg2==2.9.5           # via djangorestframework-hstore
 psycopg2-binary==2.9.5    # via -r requirements.in
 python-dateutil==2.8.2    # via botocore, elasticsearch-dsl
 pytz==2022.7.1            # via apscheduler, django, djangorestframework, drf-yasg
