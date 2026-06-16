@@ -43,6 +43,10 @@ setup(
         "requests>=2.10.1",
         "retrying>=1.3.3",
         "psycopg2-binary>=2.7.5",
+        # urllib3 2.x drops connectionpool.VerifiedHTTPSConnection, which
+        # vcrpy 4.x imports. Every subproject pins urllib3<2; constrain it
+        # here too so installing common doesn't pull 2.x over that pin.
+        "urllib3<2",
     ],
     license="BSD License",
     description="Common functionality to be shared between Data Refinery sub-projects.",

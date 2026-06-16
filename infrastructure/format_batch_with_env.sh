@@ -121,14 +121,8 @@ fi
 # It's important that these are run first so they will be overwritten
 # by environment variables.
 
-# shellcheck disable=SC1091
-. ../scripts/common.sh
-DB_HOST_IP=$(get_docker_db_ip_address)
-export DB_HOST_IP
-
 export VOLUME_DIR=/var/ebs
 
-export EXTRA_HOSTS=""
 export AWS_CREDS="{\"name\": \"AWS_ACCESS_KEY_ID\", \"value\": \"$AWS_ACCESS_KEY_ID\"},
             {\"name\": \"AWS_SECRET_ACCESS_KEY\", \"value\": \"$AWS_SECRET_ACCESS_KEY\"},"
 # When deploying prod we write the output of Terraform to a

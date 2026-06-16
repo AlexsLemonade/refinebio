@@ -9,13 +9,20 @@ and managing those jobs.
 
 ### Running the surveyor
 
-To run the surveyor in a Docker container just run `./run_management_command.sh`.
+To run a surveyor job in a Docker container:
 
-You can also start an interactive python interpreter by running `../scripts/run_shell.sh`.
-This interpreter will actually be running within the surveyor Docker container
-with the environment configured appropriately.
+```sh
+rbio compose:manage foreman survey_all --accession <ACCESSION>
+```
+
+`compose:manage` runs any Django management command via
+`docker compose run --rm foreman python3 manage.py <cmd> ...`.
+
+You can also start an interactive python interpreter by running
+`rbio compose:manage foreman shell`. The interpreter runs inside the
+foreman container with the environment configured appropriately.
 
 ### Testing
 
-To run all tests for the project just run `./run_tests.sh`. This script will
-accept any arguments that are valid for `python -m unittest`.
+To run all foreman tests: `rbio test:foreman`. Pass `-t <tag>` to filter
+by Django test tag, or any other `manage.py test` argument.

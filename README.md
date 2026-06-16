@@ -90,8 +90,8 @@ dev workflows. It needs only Docker — no other system dependencies.
 3. Start the dev stack:
 
    ```sh
-   rbio dev:up                  # api + postgres + elasticsearch
-   rbio dev:up --with foreman   # add the foreman (optional)
+   rbio compose:up                  # api + postgres + elasticsearch
+   rbio compose:up -s foreman       # add the foreman (optional)
    ```
 
    The API is reachable at `http://localhost:8000`.
@@ -99,8 +99,8 @@ dev workflows. It needs only Docker — no other system dependencies.
 4. When you're done:
 
    ```sh
-   rbio dev:down       # stop services, keep your db
-   rbio dev:down -v    # nuke everything including the db
+   rbio compose:down       # stop services, keep your db
+   rbio compose:down -v    # nuke everything including the db
    ```
 
 For all available commands and per-command help:
@@ -109,9 +109,6 @@ For all available commands and per-command help:
 rbio --help
 rbio <command> --help
 ```
-
-The existing `scripts/*.sh` wrappers continue to work unchanged for
-anyone or anything (CI included) that already uses them.
 
 ### Git Workflow
 
@@ -131,51 +128,50 @@ have been tested on Ubuntu 16.04 or later, but other Linux distributions
 _should_ be able to run the necessary services. Microsoft Windows is currently
 unsupported by this project.
 
-__Note__: The install_all.sh script will configure a git pre-commit hook to auto-format your python code.
+__Note__: `rbio install:deps` configures a git pre-commit hook to auto-format your python code.
 This will format your code in the same way as the rest of the project, allowing it to pass our linting check.
 
 #### Automatic
 
-The easiest way to run Refine.bio locally is to run `./scripts/install_all.sh`
-to install all of the necessary dependencies. As long as you are using a recent
-version of Ubuntu or macOS it should work. If you are using another version of
-Linux it should still install most of the dependencies as long as you give the
-appropriate `INSTALL_CMD` environment variable, but some dependencies may be
-named differently in your package manager than in Ubuntu's.
+The easiest way to install dependencies is:
+
+```sh
+rbio install:deps     # docker, jq, aws, tfenv, pre-commit, shellcheck (idempotent)
+rbio install:venv     # dr_env/ with pip-tools + every subproject's requirements
+```
+
+`install:deps` detects macOS (homebrew) or Linux (apt) and skips anything already present.
+Check `rbio debug:deps` first to see what's missing.
 
 #### Linux (Manual)
 
-The following services will need to be installed:
+The following services need to be installed:
 - Python3 and Pip: `sudo apt-get -y install python3-pip`
 - [Docker](https://www.docker.com/community-edition): Be sure to follow the
-[post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
-so Docker does not need sudo permissions.
-- [Terraform](https://www.terraform.io/)
-- [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
-- [black](https://black.readthedocs.io/en/stable/) can be installed on Linux clients with `pip3 install black`
+  [post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
+  so Docker does not need sudo permissions.
+- [tfenv](https://github.com/tfutils/tfenv) (manages terraform; reads `infrastructure/.terraform-version`)
+- [aws CLI](https://aws.amazon.com/cli/) (v2)
 - [jq](https://stedolan.github.io/jq/)
-- [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
+- [pre-commit](https://pre-commit.com/) — `pip3 install pre-commit && pre-commit install`
 - [shellcheck](https://github.com/koalaman/shellcheck/)
 
-Instructions for installing Docker and Terraform can be found by
-following the link for each service. jq and iproute2 can be installed via
-`sudo apt-get install jq iproute2 shellcheck`.
+jq, shellcheck, and python3-pip are installable via `sudo apt-get install jq shellcheck python3-pip`.
+tfenv is installed via `git clone https://github.com/tfutils/tfenv ~/.tfenv` plus a PATH update.
 
 #### Mac (Manual)
 
-The following services will need to be installed:
+The following services need to be installed:
 - [Homebrew](https://brew.sh/)
 - [Docker for Mac](https://www.docker.com/docker-mac)
-- [Terraform](https://www.terraform.io/)
-- [iproute2mac](https://github.com/brona/iproute2mac)
-- [jq](https://stedolan.github.io/jq/)
-- [black](https://black.readthedocs.io/en/stable/)
-- [shellcheck](https://github.com/koalaman/shellcheck/)
+- [tfenv](https://github.com/tfutils/tfenv) — `brew install tfenv`
+- [aws CLI](https://aws.amazon.com/cli/) — `brew install awscli`
+- [jq](https://stedolan.github.io/jq/) — `brew install jq`
+- [pre-commit](https://pre-commit.com/) — `brew install pre-commit && pre-commit install`
+- [shellcheck](https://github.com/koalaman/shellcheck/) — `brew install shellcheck`
 
-Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
-on their respective homepages.
-
-Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac terraform jq black shellcheck`.
+Once Homebrew is installed, all of the above can be installed in one go via:
+`brew install tfenv awscli jq pre-commit shellcheck`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -184,11 +180,13 @@ Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of
 
 #### Virtual Environment
 
-Run `./scripts/create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
-for you the first time. This virtualenv is valid for the entire `refinebio`
-repo. Sub-projects each have their own environments managed by their
-containers. When returning to this project you should run
-`source dr_env/bin/activate` to reactivate the virtualenv.
+Run `rbio install:venv` to set up `dr_env/` — a virtualenv with `pip-tools` plus
+every subproject's requirements (api, foreman, common, workers/processors,
+workers/downloaders) installed. Point your IDE at `dr_env/bin/python3` for
+imports, autocomplete, and jump-to-def. Use it from your shell with
+`source dr_env/bin/activate` when you need `pip-compile` to regenerate a
+`requirements.txt` from `requirements.in`. `rbio debug:venv` verifies the
+installed packages match the declared requirements.
 
 #### Services
 
@@ -200,7 +198,7 @@ run in a local Docker container
 To start a local Postgres server in a Docker container, use:
 
 ```bash
-./bin/rbio dev:up -s postgres
+./bin/rbio compose:up -s postgres
 ```
 
 Then, to initialize the database, run:
@@ -218,7 +216,7 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 or if you have `psql` installed this command will give you a better shell experience:
 
 ```
-source scripts/common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_address) -U postgres -d data_refinery
+rbio db:psql
 ```
 
 #### Common Dependecies
@@ -243,7 +241,7 @@ then re-run the migrations.
 One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
 
 ```bash
-./bin/rbio dev:up -s elasticsearch
+./bin/rbio compose:up -s elasticsearch
 ```
 
 And then the ES Indexes (akin to Postgres 'databases') can be created with:
@@ -257,7 +255,7 @@ And then the ES Indexes (akin to Postgres 'databases') can be created with:
 To run the entire test suite:
 
 ```bash
-./scripts/run_all_tests.sh
+rbio test:all
 ```
 
 (_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
@@ -324,7 +322,7 @@ In addition to following pep8, python files must also conform to the formatting 
 (`black`'s highly opinionated style is a strict sub-set of pep8.)
 The easiest way to conform to this style is to run `black . --line-length=100`.
 This will auto-format your code.
-Running the `./scripts/install_all.sh` script will install a pre-commit git hook that will run this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/), which you can also install directly by running `pip3 install pre-commit & pre-commit install`. Then, if you want to run `pre-commit` without making a git commit, you can use `pre-commit run --all-files`.
+Running `rbio install:deps` will install a pre-commit git hook that runs this formatter on every commit you make locally. Under the hood this uses [pre-commit](https://pre-commit.com/), which you can also install directly by running `pip3 install pre-commit && pre-commit install`. Then, if you want to run `pre-commit` without making a git commit, you can use `pre-commit run --all-files`.
 To install `black` see the [installation instructions](#installation).
 Any Pull Requests that do not conform to the style enforced by `black` will be flagged by our continous integration and will not be accepted until that check passes.
 
@@ -387,13 +385,13 @@ A Surveyor Job should queue `Downloader Jobs` to download the data it discovers.
 However, at the moment there is no automated way for the downloader jobs to be run.
 This will be resolved ASAP, see https://github.com/AlexsLemonade/refinebio/issues/2775 for more information.
 
-The Surveyor can be run with the `./foreman/run_management_command.sh` script.
+The Surveyor can be run via `rbio compose:manage foreman survey_all`.
 The first argument to this script is the type of Surveyor Job to run, which will always be `survey_all`.
 
 Details on these expected arguments can be viewed by running:
 
 ```bash
-./foreman/run_management_command.sh survey_all -h
+rbio compose:manage foreman survey_all -h
 ```
 
 The Surveyor can accept a single accession code from any of the source
@@ -401,33 +399,33 @@ data repositories (e.g., Sequencing Read Archive,
  ArrayExpress, Gene Expression Omnibus):
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession <ACCESSION_CODE>
+rbio compose:manage foreman survey_all --accession <ACCESSION_CODE>
 ```
 
 Example for a GEO experiment:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession GSE85217
+rbio compose:manage foreman survey_all --accession GSE85217
 ```
 
 Example for an ArrayExpress experiment:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession E-MTAB-3050 # AFFY
-./foreman/run_management_command.sh survey_all --accession E-GEOD-3303 # NO_OP
+rbio compose:manage foreman survey_all --accession E-MTAB-3050 # AFFY
+rbio compose:manage foreman survey_all --accession E-GEOD-3303 # NO_OP
 ```
 
 Transcriptome indices are a bit special.
 For species within the "main" Ensembl division, the species name can be provided like so:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession "Homo sapiens"
+rbio compose:manage foreman survey_all --accession "Homo sapiens"
 ```
 
 However for species that are in other divisions, the division must follow the species name after a comma like so:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
+rbio compose:manage foreman survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
 ```
 The possible divisions that can be specified are:
 * Ensembl (this is the "main" division and is the default)
@@ -444,13 +442,13 @@ You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on accession codes like so:
 
 ```bash
-./foreman/run_management_command.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
+rbio compose:manage foreman survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
 
 The main foreman job loop can be started with:
 
 ```bash
-./foreman/run_management_command.sh retry_jobs
+rbio compose:manage foreman retry_jobs
 ```
 
 This must actually be running for jobs to move forward through the pipeline.
@@ -464,19 +462,19 @@ codes beginning in `SRR`, `DRR`, or `ERR`) or study accession codes
 Run example (single read):
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession DRR002116
+rbio compose:manage foreman survey_all --accession DRR002116
 ```
 
 Run example (paired read):
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession SRR6718414
+rbio compose:manage foreman survey_all --accession SRR6718414
 ```
 
 Study example:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession ERP006872
+rbio compose:manage foreman survey_all --accession ERP006872
 ```
 
 #### Ensembl Transcriptome Indices
@@ -487,7 +485,7 @@ us to retrieve genome information from
 scientific name in the main Ensembl division as the accession:
 
 ```bash
-./foreman/run_management_command.sh survey_all --accession "Homo Sapiens"
+rbio compose:manage foreman survey_all --accession "Homo Sapiens"
 ```
 
 See the [Ensembl Transcriptome Index section](#ensembl-transcriptome-indices) for additional usage examples inclduing surveying additional Ensembl divisions.
@@ -496,64 +494,64 @@ See the [Ensembl Transcriptome Index section](#ensembl-transcriptome-indices) fo
 
 Downloader Jobs will be queued automatically when `Surveyor Jobs`
 discover new samples. However, if you just want to queue a `Downloader Job`
-yourself rather than having the Surveyor do it for you, you can use the `./workers/run_job.sh`
-script:
+yourself rather than having the Surveyor do it for you, you can use `rbio dev:job`:
+
 ```bash
-./workers/run_job.sh run_downloader_job --job-name=<EXTERNAL_SOURCE> --job-id=<JOB_ID>
+rbio dev:job downloaders run_downloader_job --job-name=<EXTERNAL_SOURCE> --job-id=<JOB_ID>
 ```
 
 For example:
 ```bash
-./workers/run_job.sh run_downloader_job --job-name=SRA --job-id=12345
+rbio dev:job downloaders run_downloader_job --job-name=SRA --job-id=12345
 ```
 
 or
 
 ```bash
-./workers/run_job.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+rbio dev:job downloaders run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
 ```
 
-Or for more information run:
+For full help:
 ```bash
-./workers/run_job.sh -h
+rbio dev:job --help
 ```
 
 ### Processor Jobs
 
 Processor Jobs will be queued automatically by successful `Downloader Jobs`.
-However, if you just want to run a `Processor Job` without yourself without having
-a `Downloader Job` do it for you, the following command will do so:
+However, if you just want to run a `Processor Job` yourself without having a
+`Downloader Job` do it for you, the following command will do so:
 
 ```bash
-./workers/run_job.sh -i <IMAGE_NAME> run_processor_job --job-name=<JOB_NAME> --job-id=<JOB_ID>
+rbio dev:job <IMAGE> run_processor_job --job-name=<JOB_NAME> --job-id=<JOB_ID>
 ```
 
 For example
 ```bash
-./workers/run_job.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+rbio dev:job affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
 ```
 
 or
 
 ```bash
-./workers/run_job.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
+rbio dev:job no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
 or
 
 ```bash
-./workers/run_job.sh -i salmon run_processor_job --job-name=SALMON --job-id=1
+rbio dev:job salmon run_processor_job --job-name=SALMON --job-id=1
 ```
 
 or
 
 ```bash
-./workers/run_job.sh -i transcriptome run_processor_job --job-name=TRANSCRIPTOME_INDEX_LONG --job-id=1
+rbio dev:job transcriptome run_processor_job --job-name=TRANSCRIPTOME_INDEX_LONG --job-id=1
 ```
 
-Or for more information run:
+For full help:
 ```bash
-./workers/run_job.sh -h
+rbio dev:job --help
 ```
 
 ### Creating Quantile Normalization Reference Targets
@@ -633,13 +631,17 @@ Note that if the experiment does not have at least 25 samples with at least 80% 
 ### Development Helpers
 
 It can be useful to have an interactive Python interpreter running within the
-context of the Docker container. The `scripts/run_shell.sh` script has been provided
-for this purpose. It is in the top level directory so that if you wish to
-reference it in any integrations its location will be constant. However, it
-is configured by default for the Foreman project. The interpreter will
-have all the environment variables, dependencies, and Django configurations
-for the Foreman project. There are instructions within the script describing
-how to change this to another project.
+context of the Docker container. Use `rbio compose:manage <service> shell` —
+`shell` is itself a Django management command, so the same path that runs
+any other management command also opens an interpreter:
+
+```sh
+rbio compose:manage foreman shell   # foreman project (most common)
+rbio compose:manage api shell       # api project
+```
+
+The interpreter has all the environment variables, dependencies, and Django
+configurations for the selected project.
 
 ## Cloud Deployment
 
@@ -681,15 +683,23 @@ Refine.bio uses a number of different Docker images to run different pieces of t
 By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
 If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-r` option to the `deploy.sh` script.
 
-To make building and pushing your own images easier, the `scripts/update_docker_images.sh` has been provided.
-The `-r` option will allow you to specify which repo you'd like to push to.
-If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
-The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
+To build and push images:
 
-`scripts/update_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
-It can instead be built with `./scripts/prepare_image.sh -i affymetrix -r <YOUR_DOCKERHUB_REPO>`.
-WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
-It's not recommended to build the image with less than 75GB of free space on the disk that Docker runs on.
+```sh
+DOCKERHUB_REPO=<your-repo> SYSTEM_VERSION=<tag> rbio build --push deploy
+```
+
+`rbio build` reads `DOCKERHUB_REPO` (default `ccdlstaging`) and
+`SYSTEM_VERSION` (default `local`) from env. The image tag becomes
+`<DOCKERHUB_REPO>/dr_<name>:<SYSTEM_VERSION>`. Log into Dockerhub
+beforehand via `docker login` if your push target requires auth.
+
+The `deploy` group skips `dr_affymetrix` because that image takes hours to
+build (it installs a lot of data-as-R-packages). Build it on its own when
+needed: `rbio build affymetrix`.
+
+WARNING: The affymetrix image needs ~75GB of free disk space on the
+volume Docker is using.
 
 ### Terraform
 
@@ -700,7 +710,7 @@ There are a few extra things that you need to install before deploying the stack
 - [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html), which is necessary for some of our deployment scripts
 - [PostgreSQL](https://www.postgresql.org/), which is necessary for some of our deployment scripts
 
-The easiest way to install Terraform is by running `./scripts/install_all.sh`, or you can also install it manually by following the directions on the website. We currently use version 0.13.5.
+Terraform is managed via [tfenv](https://github.com/tfutils/tfenv), which reads `infrastructure/.terraform-version` (currently pinned to `0.13.5`). `rbio install:deps` installs tfenv as part of the bootstrap; otherwise install manually via `brew install tfenv` (macOS) or `git clone https://github.com/tfutils/tfenv ~/.tfenv` (Linux). After tfenv is on PATH, `rbio deploy:up` (or any direct `cd infrastructure && tfenv install`) fetches the pinned terraform version automatically.
 
 For awscli and boto3, _you need to install them using `pip3 install awscli boto3`_. Ubuntu's repositories contain outdated versions of both packages which do not work with our deploy script.
 

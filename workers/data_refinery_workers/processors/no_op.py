@@ -206,7 +206,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     try:
         subprocess.check_output(
             [
-                "/usr/bin/Rscript",
+                "Rscript",
                 "--vanilla",  # Shut up Rscript
                 "/home/user/data_refinery_workers/processors/" + job_context["script_name"],
                 "--geneIndexPath",
@@ -285,7 +285,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
         try:
             result = subprocess.check_output(
                 [
-                    "/usr/bin/Rscript",
+                    "Rscript",
                     "--vanilla",
                     "/home/user/data_refinery_workers/processors/detect_database.R",
                     "--platform",
@@ -326,7 +326,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
     try:
         subprocess.check_output(
             [
-                "/usr/bin/Rscript",
+                "Rscript",
                 "--vanilla",
                 "/home/user/data_refinery_workers/processors/" + job_context["script_name"],
                 "--platform",
