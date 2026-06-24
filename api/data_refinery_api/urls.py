@@ -5,10 +5,8 @@ from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path, re_path
 from django.views.generic import RedirectView
-from rest_framework import permissions
 
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 from data_refinery_api.views import (
     AboutStats,
@@ -87,32 +85,6 @@ class AccessUser:
 
 if settings.DEBUG:
     admin.site.has_permission = lambda r: setattr(r, "user", AccessUser()) or True
-
-schema_view = get_schema_view(
-    openapi.Info(
-        title="Refine.bio API",
-        default_version="v1",
-        description="""
-refine.bio is a multi-organism collection of genome-wide transcriptome or gene expression data that has been obtained from publicly available repositories and uniformly processed and normalized. refine.bio allows biologists, clinicians, and machine learning researchers to search for experiments from different source repositories all in one place and build custom data sets for their questions of interest.
-
-The swagger-ui view can be found [here](http://api.refine.bio/swagger/).
-
-The ReDoc view can be found [here](http://api.refine.bio/).
-
-Additional documentation can be found at [docs.refine.bio](http://docs.refine.bio/en/latest/).
-
-### Questions/Feedback?
-
-If you have a question or comment, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues) or send us an email at [requests@ccdatalab.org](mailto:requests@ccdatalab.org).
-        """,
-        terms_of_service="https://www.refine.bio/terms",
-        contact=openapi.Contact(email="requests@ccdatalab.org"),
-        license=openapi.License(name="BSD License"),
-    ),
-    public=True,
-    permission_classes=(permissions.AllowAny,),
-    url="https://api.refine.bio",
-)
 
 urlpatterns = [
     re_path(
@@ -264,12 +236,17 @@ urlpatterns = [
                     name="compendium_result",
                 ),
                 # v1 api docs
+                re_path(r"^schema/$", SpectacularAPIView.as_view(), name="schema"),
                 re_path(
                     r"^swagger/$",
-                    schema_view.with_ui("swagger", cache_timeout=0),
+                    SpectacularSwaggerView.as_view(url="/v1/schema/"),
                     name="schema_swagger_ui",
                 ),
-                re_path(r"^$", schema_view.with_ui("redoc", cache_timeout=0), name="schema_redoc"),
+                re_path(
+                    r"^$",
+                    SpectacularRedocView.as_view(url="/v1/schema/"),
+                    name="schema_redoc",
+                ),
             ]
         ),
     ),

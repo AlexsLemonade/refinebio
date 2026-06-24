@@ -6,8 +6,8 @@ from django.utils.decorators import method_decorator
 from rest_framework import generics, serializers
 from rest_framework.exceptions import NotFound
 
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 
 from data_refinery_api.views.relation_serializers import (
     ComputationalResultNoFilesRelationSerializer,
@@ -51,16 +51,16 @@ class QNTargetsAvailable(generics.ListAPIView):
 
 @method_decorator(
     name="get",
-    decorator=swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="organism_name",
-                in_=openapi.IN_PATH,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.PATH,
+                type=OpenApiTypes.STR,
                 description="Eg `DANIO_RERIO`, `MUS_MUSCULUS`",
             )
         ],
-        responses={404: "QN Target not found for the given organism."},
+        responses={404: OpenApiResponse(description="QN Target not found for the given organism.")},
     ),
 )
 class QNTargetsDetailView(generics.RetrieveAPIView):

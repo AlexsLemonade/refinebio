@@ -5,7 +5,7 @@
 from django.utils.decorators import method_decorator
 from rest_framework import mixins, serializers, viewsets
 
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 
 from data_refinery_common.models import APIToken
 
@@ -23,8 +23,8 @@ class APITokenSerializer(serializers.ModelSerializer):
 
 @method_decorator(
     name="create",
-    decorator=swagger_auto_schema(
-        operation_description="""
+    decorator=extend_schema(
+        description="""
     This endpoint can be used to create and activate tokens. These tokens can be used
     in requests that provide urls to download computed files. Setting `is_activated` to
     true indicates agreement with refine.bio's [Terms of Use](https://www.refine.bio/terms)
@@ -49,14 +49,14 @@ class APITokenSerializer(serializers.ModelSerializer):
 )
 @method_decorator(
     name="retrieve",
-    decorator=swagger_auto_schema(
-        operation_description="Return details about a specific token.",
+    decorator=extend_schema(
+        description="Return details about a specific token.",
     ),
 )
 @method_decorator(
     name="update",
-    decorator=swagger_auto_schema(
-        operation_description="""
+    decorator=extend_schema(
+        description="""
     This can be used to activate a specific token by sending `is_activated: true`.
     Setting `is_activated` to true indicates agreement with refine.bio's
     [Terms of Use](https://www.refine.bio/terms) and

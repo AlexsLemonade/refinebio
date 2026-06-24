@@ -9,8 +9,8 @@ from django.utils.decorators import method_decorator
 from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_api.utils import check_filters
@@ -116,24 +116,24 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 
 @method_decorator(
     name="get",
-    decorator=swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="dataset_id",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Filters the result and only returns samples that are added to a dataset.",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="experiment_accession_code",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Filters the result and only returns only the samples associated with an experiment accession code.",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="accession_codes",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Provide a list of sample accession codes separated by commas and the endpoint will only return information about these samples.",
             ),
         ]
