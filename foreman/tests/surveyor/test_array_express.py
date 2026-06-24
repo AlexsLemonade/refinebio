@@ -2,7 +2,6 @@ import datetime
 from unittest.mock import patch
 
 from django.test import TestCase
-from django.utils import timezone
 
 import requests
 import vcr
@@ -61,10 +60,12 @@ class SurveyTestCase(TestCase):
         experiment = Experiment.objects.first()
         self.assertEqual(experiment.accession_code, "E-MTAB-3050")
         self.assertEqual(
-            experiment.source_first_published, datetime.datetime(2014, 10, 31, tzinfo=timezone.utc)
+            experiment.source_first_published,
+            datetime.datetime(2014, 10, 31, tzinfo=datetime.timezone.utc),
         )
         self.assertEqual(
-            experiment.source_last_modified, datetime.datetime(2014, 10, 30, tzinfo=timezone.utc)
+            experiment.source_last_modified,
+            datetime.datetime(2014, 10, 30, tzinfo=datetime.timezone.utc),
         )
 
         sample = Sample.objects.first()

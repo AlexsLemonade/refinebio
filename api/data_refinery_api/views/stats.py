@@ -4,7 +4,7 @@
 
 import functools
 import itertools
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.cache import cache
@@ -12,7 +12,6 @@ from django.db.models import Count, DateTimeField
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.db.models.functions import Left, Trunc
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import status
@@ -215,7 +214,7 @@ class Stats(APIView):
         significantly reduce the request time by only crunching the stats the
         dashboard cares about"""
         data = {}
-        data["generated_on"] = timezone.now()
+        data["generated_on"] = datetime.now(timezone.utc)
         data["survey_jobs"] = cls._get_job_stats(SurveyJob.objects, range_param)
         data["downloader_jobs"] = cls._get_job_stats(DownloaderJob.objects, range_param)
         data["processor_jobs"] = cls._get_job_stats(ProcessorJob.objects, range_param)
