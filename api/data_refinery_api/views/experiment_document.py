@@ -380,7 +380,7 @@ class ExperimentDocumentView(DocumentViewSet):
     # Define a separate post method so that we can hide it in the
     # documentation. Otherwise, the auto-generated documentation for the post
     # method is incorrect
-    @extend_schema(auto_schema=None)
+    @extend_schema(exclude=True)
     def post(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
