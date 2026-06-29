@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils import timezone
 
-from data_refinery_common.models.computed_file import ComputedFile
 from data_refinery_common.models.managers import PublicObjectsManager
 
 
@@ -70,5 +69,6 @@ class CompendiumResult(models.Model):
 
     # helper
     def get_computed_file(self):
-        """Short hand method for getting the computed file for this compendium"""
-        return ComputedFile.objects.filter(result=self.result).first()
+        """Return this compendium's lowest-id computed file, or None if it has none."""
+        computed_files = sorted(self.result.computedfile_set.all(), key=lambda cf: cf.id)
+        return computed_files[0] if computed_files else None
