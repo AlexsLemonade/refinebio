@@ -110,7 +110,11 @@ class CompendiumResultListView(generics.ListAPIView):
         if invalid_filters:
             raise InvalidFilters(invalid_filters=invalid_filters)
 
-        public_result_queryset = CompendiumResult.objects.filter(result__is_public=True)
+        public_result_queryset = (
+            CompendiumResult.objects.filter(result__is_public=True)
+            .select_related("primary_organism", "result")
+            .prefetch_related("organisms", "result__computedfile_set")
+        )
         latest_version = self.request.query_params.get("latest_version", False)
         if latest_version:
             version_filter = Q(
