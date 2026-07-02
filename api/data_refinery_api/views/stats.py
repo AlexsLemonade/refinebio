@@ -20,8 +20,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import boto3
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -186,12 +186,12 @@ def get_batch_jobs_breakdown(force=False):
 class Stats(APIView):
     """Statistics about the health of the system."""
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="range",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Specify a range from which to calculate the possible options",
                 enum=("day", "week", "month", "year"),
             )
@@ -393,12 +393,12 @@ class Stats(APIView):
 
 
 class FailedDownloaderJobStats(APIView):
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="range",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Specify a range from which to calculate the possible options",
                 enum=("day", "week", "month", "year"),
             )
@@ -427,12 +427,12 @@ class FailedDownloaderJobStats(APIView):
 
 
 class FailedProcessorJobStats(APIView):
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="range",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Specify a range from which to calculate the possible options",
                 enum=("day", "week", "month", "year"),
             )

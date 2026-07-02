@@ -10,8 +10,8 @@ from django.utils.decorators import method_decorator
 from rest_framework import mixins, serializers, viewsets
 from rest_framework.exceptions import APIException
 
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from data_refinery_api.exceptions import BadRequest, InvalidData
 from data_refinery_common.enums import ProcessorPipeline
@@ -313,13 +313,13 @@ class DatasetSerializer(serializers.ModelSerializer):
 
 @method_decorator(
     name="retrieve",
-    decorator=swagger_auto_schema(
-        operation_description="View a single Dataset.",
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        description="View a single Dataset.",
+        parameters=[
+            OpenApiParameter(
                 name="details",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_BOOLEAN,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.BOOL,
                 description="When set to `True`, additional fields will be included in the response with details about the experiments in the dataset. This is used mostly on the dataset page in www.refine.bio",
             )
         ],
@@ -327,8 +327,8 @@ class DatasetSerializer(serializers.ModelSerializer):
 )
 @method_decorator(
     name="update",
-    decorator=swagger_auto_schema(
-        operation_description="""
+    decorator=extend_schema(
+        description="""
 Modify an existing Dataset.
 
 In order to begin smashing, an activated API key must be provided in the `API-KEY` header field of the request.

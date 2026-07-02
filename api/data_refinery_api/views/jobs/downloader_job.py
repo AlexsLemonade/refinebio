@@ -7,8 +7,8 @@ from rest_framework import filters, generics, serializers
 
 import boto3
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_api.utils import check_filters
@@ -55,12 +55,12 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
 
 @method_decorator(
     name="get",
-    decorator=swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="sample_accession_code",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="List the downloader jobs associated with a sample",
             ),
         ]

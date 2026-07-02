@@ -6,8 +6,8 @@ from django.utils.decorators import method_decorator
 from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_api.utils import check_filters
@@ -45,30 +45,30 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
 
 @method_decorator(
     name="get",
-    decorator=swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="organism__name",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Organism name. Eg. `MUS_MUSCULUS`",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="length",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Short hand for `index_type` Eg. `short` or `long`",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="salmon_version",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Eg. `salmon 0.13.1`",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="index_type",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Eg. `TRANSCRIPTOME_LONG`",
             ),
         ]
@@ -123,12 +123,12 @@ class TranscriptomeIndexListView(generics.ListAPIView):
 
 @method_decorator(
     name="get",
-    decorator=swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="id",
-                in_=openapi.IN_PATH,
-                type=openapi.TYPE_NUMBER,
+                location=OpenApiParameter.PATH,
+                type=OpenApiTypes.NUMBER,
                 description="Transcriptome Index Id eg `1`",
             ),
         ]
