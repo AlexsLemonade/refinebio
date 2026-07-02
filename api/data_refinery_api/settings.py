@@ -51,14 +51,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 3rd Party
     "rest_framework",
-    "rest_framework_hstore",
-    "coreapi",
     "django_filters",
     "corsheaders",
     "raven.contrib.django.raven_compat",
     "django_elasticsearch_dsl",
     "django_elasticsearch_dsl_drf",
-    "drf_yasg",
+    "drf_spectacular",
     # Local
     "data_refinery_common",
     "data_refinery_api",
@@ -185,12 +183,37 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "data_refinery_api.pagination.LimitedLimitOffsetPagination",
     "PAGE_SIZE": 25,
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "data_refinery_api.exceptions.custom_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"anon": "10/second", "user": "10/second"},
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Refine.bio API",
+    "VERSION": "v1",
+    "DESCRIPTION": """
+refine.bio is a multi-organism collection of genome-wide transcriptome or gene expression data that has been obtained from publicly available repositories and uniformly processed and normalized. refine.bio allows biologists, clinicians, and machine learning researchers to search for experiments from different source repositories all in one place and build custom data sets for their questions of interest.
+
+The swagger-ui view can be found [here](https://api.refine.bio/swagger/).
+
+The ReDoc view can be found [here](https://api.refine.bio/).
+
+Additional documentation can be found at [docs.refine.bio](https://docs.refine.bio/en/latest/).
+
+### Questions/Feedback?
+
+If you have a question or comment, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues) or send us an email at [requests@ccdatalab.org](mailto:requests@ccdatalab.org).
+        """,
+    "TOS": "https://www.refine.bio/terms",
+    "CONTACT": {"email": "requests@ccdatalab.org"},
+    "LICENSE": {"name": "BSD License"},
+    "SERVERS": [{"url": "https://api.refine.bio"}],
+    # Keep the schema endpoint pointed at v1 and don't split by version.
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 SWAGGER_SETTINGS = {

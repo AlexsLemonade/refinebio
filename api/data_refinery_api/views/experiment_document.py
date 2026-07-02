@@ -22,8 +22,8 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
 from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from elasticsearch_dsl import TermsFacet
 from six import iteritems
 
@@ -153,46 +153,46 @@ class ExperimentDocumentSerializer(DocumentSerializer):
 
 @method_decorator(
     name="list",
-    decorator=swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="accession_code",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Allows filtering the results by accession code, can have multiple values. Eg: `?accession_code=microarray&accession_code=rna-seq`",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="technology",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Allows filtering the results by technology, can have multiple values. Eg: `?technology=microarray&technology=rna-seq`",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="has_publication",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Filter the results that have associated publications with `?has_publication=true`",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="platform",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Allows filtering the results by platform, this parameter can have multiple values.",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="organism",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Allows filtering the results by organism, this parameter can have multiple values.",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="num_processed_samples",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_NUMBER,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.NUMBER,
                 description="Use ElasticSearch queries to specify the number of processed samples of the results",
             ),
         ],
-        operation_description="""
+        description="""
 Use this endpoint to search among the experiments.
 
 This is powered by ElasticSearch, information regarding advanced usages of the
@@ -380,7 +380,7 @@ class ExperimentDocumentView(DocumentViewSet):
     # Define a separate post method so that we can hide it in the
     # documentation. Otherwise, the auto-generated documentation for the post
     # method is incorrect
-    @swagger_auto_schema(auto_schema=None)
+    @extend_schema(exclude=True)
     def post(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 

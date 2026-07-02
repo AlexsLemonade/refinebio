@@ -5,7 +5,6 @@
 #    pip-compile --annotation-style=line requirements.in
 #
 asgiref==3.6.0            # via django
-backports-zoneinfo==0.2.1  # via pytz-deprecation-shim, tzlocal
 certifi==2023.7.22        # via -r requirements.in, requests
 cffi==1.15.1              # via rpy2
 charset-normalizer==3.0.1  # via requests

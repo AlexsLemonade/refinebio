@@ -2,11 +2,10 @@ import datetime
 
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
-from django.utils import timezone
 
 from data_refinery_common.models import Dataset
 
-START_DATE = datetime.datetime(2021, 1, 1, tzinfo=timezone.utc)
+START_DATE = datetime.datetime(2021, 1, 1, tzinfo=datetime.timezone.utc)
 
 qs = (
     Dataset.processed_filtered_objects.filter(created_at__gt=START_DATE)

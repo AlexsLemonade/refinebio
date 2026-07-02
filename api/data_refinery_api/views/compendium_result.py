@@ -9,8 +9,8 @@ from django.utils.decorators import method_decorator
 from rest_framework import filters, generics, serializers
 
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_api.utils import check_filters
@@ -67,18 +67,18 @@ class CompendiumResultWithUrlSerializer(serializers.ModelSerializer):
 
 @method_decorator(
     name="get",
-    decorator=swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    decorator=extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="latest_version",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_BOOLEAN,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.BOOL,
                 description="`True` will only return the highest `compendium_version` for each primary_organism.",
             ),
-            openapi.Parameter(
+            OpenApiParameter(
                 name="quant_sf_only",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_BOOLEAN,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.BOOL,
                 description="`True` for RNA-seq Sample Compendium results or `False` for quantile normalized.",
             ),
         ]
@@ -110,7 +110,11 @@ class CompendiumResultListView(generics.ListAPIView):
         if invalid_filters:
             raise InvalidFilters(invalid_filters=invalid_filters)
 
-        public_result_queryset = CompendiumResult.objects.filter(result__is_public=True)
+        public_result_queryset = (
+            CompendiumResult.objects.filter(result__is_public=True)
+            .select_related("primary_organism", "result")
+            .prefetch_related("organisms", "result__computedfile_set")
+        )
         latest_version = self.request.query_params.get("latest_version", False)
         if latest_version:
             version_filter = Q(

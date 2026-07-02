@@ -1,4 +1,4 @@
-from test.support import EnvironmentVarGuard
+from test.support.os_helper import EnvironmentVarGuard
 from unittest.mock import patch
 
 from django.conf import settings

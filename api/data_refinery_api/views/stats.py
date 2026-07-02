@@ -4,7 +4,7 @@
 
 import functools
 import itertools
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.cache import cache
@@ -12,7 +12,6 @@ from django.db.models import Count, DateTimeField
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.db.models.functions import Left, Trunc
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import status
@@ -21,8 +20,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import boto3
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -187,12 +186,12 @@ def get_batch_jobs_breakdown(force=False):
 class Stats(APIView):
     """Statistics about the health of the system."""
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="range",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Specify a range from which to calculate the possible options",
                 enum=("day", "week", "month", "year"),
             )
@@ -215,7 +214,7 @@ class Stats(APIView):
         significantly reduce the request time by only crunching the stats the
         dashboard cares about"""
         data = {}
-        data["generated_on"] = timezone.now()
+        data["generated_on"] = datetime.now(timezone.utc)
         data["survey_jobs"] = cls._get_job_stats(SurveyJob.objects, range_param)
         data["downloader_jobs"] = cls._get_job_stats(DownloaderJob.objects, range_param)
         data["processor_jobs"] = cls._get_job_stats(ProcessorJob.objects, range_param)
@@ -394,12 +393,12 @@ class Stats(APIView):
 
 
 class FailedDownloaderJobStats(APIView):
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="range",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Specify a range from which to calculate the possible options",
                 enum=("day", "week", "month", "year"),
             )
@@ -428,12 +427,12 @@ class FailedDownloaderJobStats(APIView):
 
 
 class FailedProcessorJobStats(APIView):
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
                 name="range",
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.STR,
                 description="Specify a range from which to calculate the possible options",
                 enum=("day", "week", "month", "year"),
             )
