@@ -671,7 +671,13 @@ jobs:
   deploy:
     name: Deploy
     env:
-      DEPLOY_USER: ${{ github.actor }}
+      # DEPLOY_USER is the Terraform stack identity: it names every resource and
+      # selects the remote state file (see TF_VAR_user). Keep it "circleci" to
+      # match the existing stacks — it was hardcoded under CircleCI, and if it
+      # became the pushing user (github.actor) every deploy would fork a new stack.
+      DEPLOY_USER: circleci
+      # Who actually triggered the deploy; shown in the Slack notification.
+      DEPLOY_NOTIFIER: ${{ github.actor }}
     if: startsWith(github.ref, 'refs/tags/v') && ! endsWith(github.ref, '-hotfix')
     needs:
       - determine_branch
@@ -743,7 +749,13 @@ jobs:
   deploy_hotfix:
     name: Deploy Hotfix
     env:
-      DEPLOY_USER: ${{ github.actor }}
+      # DEPLOY_USER is the Terraform stack identity: it names every resource and
+      # selects the remote state file (see TF_VAR_user). Keep it "circleci" to
+      # match the existing stacks — it was hardcoded under CircleCI, and if it
+      # became the pushing user (github.actor) every deploy would fork a new stack.
+      DEPLOY_USER: circleci
+      # Who actually triggered the deploy; shown in the Slack notification.
+      DEPLOY_NOTIFIER: ${{ github.actor }}
     if: startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-hotfix')
     needs:
       - determine_branch
