@@ -21,7 +21,7 @@ if [[ $username == "" ]]; then
 fi
 
 # ------------
-text="New deployment! Woo! $DEPLOY_USER: $BRANCH $DEPLOY_TAG"
+text="New deployment! Woo! $DEPLOY_NOTIFIER: $BRANCH $DEPLOY_TAG"
 
 escapedText=$(echo "$text" | sed 's/"/\"/g' | sed "s/'/\'/g")
 
