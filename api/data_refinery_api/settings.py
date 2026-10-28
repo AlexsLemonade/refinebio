@@ -54,8 +54,7 @@ INSTALLED_APPS = [
     "django_filters",
     "corsheaders",
     "raven.contrib.django.raven_compat",
-    "django_elasticsearch_dsl",
-    "django_elasticsearch_dsl_drf",
+    "django_opensearch_dsl",
     "drf_spectacular",
     # Local
     "data_refinery_common",
@@ -254,19 +253,20 @@ else:
 
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
-# Elastic Search
-ELASTICSEARCH_DSL = {
-    "default": {
-        "hosts": get_env_variable("ELASTICSEARCH_HOST")
-        + ":"
-        + get_env_variable("ELASTICSEARCH_PORT")
-    }
-}
+# OpenSearch (django-opensearch-dsl). ELASTICSEARCH_* env var names kept
+# until the AWS Terraform cutover renames them. If ELASTICSEARCH_HOST does
+# not already carry a scheme, default to https:// — AWS-managed OpenSearch
+# domains require TLS, and local dev hard-codes http:// explicitly.
+_es_host = get_env_variable("ELASTICSEARCH_HOST")
+if "://" not in _es_host:
+    _es_host = "https://" + _es_host
 
-ELASTICSEARCH_INDEX_NAMES = {
+OPENSEARCH_DSL = {"default": {"hosts": _es_host + ":" + get_env_variable("ELASTICSEARCH_PORT")}}
+
+OPENSEARCH_INDEX_NAMES = {
     "data_refinery_common.models.documents": "experiments",
 }
-ELASTICSEARCH_DSL_AUTOSYNC = False
+OPENSEARCH_DSL_AUTOSYNC = False
 
 # ToS
 TERMS_AND_CONDITIONS = """Welcome to the Alex’s Lemonade Childhood Cancer Data Lab, which is supported by Alex’s Lemonade Stand Foundation ("we," "our," or "us"). These Terms of Use (these "Terms") are a binding legal agreement between you and us regarding your access to and use of the websites located at https://www.ccdatalab.org, https://cognoma.org, http://www.refine.bio or any subdomains thereof and any embedded or associated software, applications, data or other content, provided or managed by us in connection with such websites (collectively, as may be updated, modified or replaced from time to time, the "CCDL").
