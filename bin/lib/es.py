@@ -15,7 +15,8 @@ def cmd_es_rebuild(argv):
         epilog=(
             "wraps:\n"
             "  docker buildx bake api_local\n"
-            "  docker compose run --rm api python3 manage.py search_index --rebuild -f"
+            "  docker compose run --rm api python3 manage.py opensearch index rebuild --force\n"
+            "  docker compose run --rm api python3 manage.py opensearch document index --force --refresh"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -23,6 +24,24 @@ def cmd_es_rebuild(argv):
     if (rc := require_dres("es:rebuild")) != 0:
         return rc
     if (rc := bake_target("api_local")) != 0:
+        return rc
+    if (
+        rc := run(
+            [
+                "docker",
+                "compose",
+                "run",
+                "--rm",
+                "api",
+                "python3",
+                "manage.py",
+                "opensearch",
+                "index",
+                "rebuild",
+                "--force",
+            ]
+        )
+    ) != 0:
         return rc
     return run(
         [
@@ -33,14 +52,16 @@ def cmd_es_rebuild(argv):
             "api",
             "python3",
             "manage.py",
-            "search_index",
-            "--rebuild",
-            "-f",
+            "opensearch",
+            "document",
+            "index",
+            "--force",
+            "--refresh",
         ]
     )
 
 
-def _wait_for_es(timeout=30):
+def _wait_for_es(timeout=90):
     """Poll ES cluster health until reachable, up to `timeout` seconds."""
     deadline = time.time() + timeout
     while time.time() < deadline:

@@ -130,7 +130,7 @@ def cmd_compose_manage(argv):
             "examples:\n"
             "  rbio compose:manage foreman shell\n"
             "  rbio compose:manage foreman clear_database\n"
-            "  rbio compose:manage api search_index --rebuild -f\n"
+            "  rbio compose:manage api opensearch index rebuild --force\n"
             "\n"
             "shell is just another management command (python3 manage.py shell),\n"
             "so it works through the same path as everything else.\n"
