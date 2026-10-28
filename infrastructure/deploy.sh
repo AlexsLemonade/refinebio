@@ -361,15 +361,18 @@ terraform apply -var-file="environments/$env.tfvars" -auto-approve
 chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | tr -d '"')
 
-# Check SSH connection.
-if ! ssh -o StrictHostKeyChecking=no \
+# Verify we can reach the API server before trying to update it. Capture
+# ssh's own exit status directly so a connection failure aborts the deploy
+# instead of leaving the API running its old image.
+ssh_exit_code=0
+ssh -o StrictHostKeyChecking=no \
     -o ServerAliveInterval=15 \
     -o ConnectTimeout=5 \
     -i data-refinery-key.pem \
-    "ubuntu@$API_IP_ADDRESS" "exit"; then
-    exit_code=$?
+    "ubuntu@$API_IP_ADDRESS" "exit" || ssh_exit_code=$?
+if [[ $ssh_exit_code -ne 0 ]]; then
     echo "Could not SSH into the API server. Did you rotate the SSH keys recently?"
-    exit $exit_code;
+    exit $ssh_exit_code
 fi
 
 # To check to see if the docker container needs to be stopped before
