@@ -1,33 +1,28 @@
-from django_elasticsearch_dsl import Document, Index, fields
-from elasticsearch_dsl import analyzer
-from elasticsearch_dsl.analysis import token_filter
+from django_opensearch_dsl import Document, fields
+from django_opensearch_dsl.registries import registry
+from opensearchpy import analyzer, token_filter
 
 from data_refinery_common.models.experiment import Experiment
 
-experiment_index = Index("experiments")
-experiment_index.settings(number_of_shards=1, number_of_replicas=0, max_result_window=9999999)
-
-# via https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.2/advanced_usage_examples.html?highlight=ngram#id8
-# via https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/issues/110
 edge_ngram_completion_filter = token_filter(
     "edge_ngram_completion_filter", type="edge_ngram", min_gram=3, max_gram=12
 )
 html_strip = analyzer(
     "html_strip",
     tokenizer="whitespace",
-    filter=[edge_ngram_completion_filter, "standard", "lowercase", "stop", "snowball"],
+    filter=[edge_ngram_completion_filter, "lowercase", "stop", "snowball"],
     char_filter=["html_strip"],
 )
 html_strip_no_ngram = analyzer(
     "html_strip_no_ngram",
     tokenizer="standard",
-    filter=["standard", "lowercase", "stop"],
+    filter=["lowercase", "stop"],
     char_filter=["html_strip"],
 )
 html_strip_no_stop = analyzer(
     "html_strip_no_stop",
     tokenizer="whitespace",
-    filter=["standard", "lowercase"],
+    filter=["lowercase"],
     char_filter=["html_strip"],
 )
 standard_keyword = analyzer(
@@ -37,10 +32,33 @@ standard_keyword = analyzer(
 )
 
 
-@experiment_index.doc_type
+def _collect_analysis(*analyzers):
+    """Merge each analyzer's analysis-definition fragments (analyzer, filter,
+    tokenizer, char_filter) into one settings-shaped dict. django-opensearch-
+    dsl's inner-class Index pattern does not auto-collect custom analyzers
+    from field definitions the way the old module-level Index.doc_type
+    decorator did, so we hand them to the index explicitly."""
+    merged = {}
+    for a in analyzers:
+        for key, defs in a.get_analysis_definition().items():
+            merged.setdefault(key, {}).update(defs)
+    return merged
+
+
+@registry.register_document
 class ExperimentDocument(Document):
-    """Our Experiment ElasticSearch Document, which
-    corresponds to our Experiment model."""
+    """OpenSearch document for the Experiment model."""
+
+    class Index:
+        name = "experiments"
+        settings = {
+            "number_of_shards": 1,
+            "number_of_replicas": 0,
+            "max_result_window": 9999999,
+            "analysis": _collect_analysis(
+                html_strip, html_strip_no_ngram, html_strip_no_stop, standard_keyword
+            ),
+        }
 
     # Keyword Fields
     title = fields.TextField(
@@ -99,6 +117,6 @@ class ExperimentDocument(Document):
             "id",
         ]
 
-    def get_queryset(self):
-        """Override default queryset"""
-        return super(ExperimentDocument, self).get_queryset().order_by("id")
+    def get_queryset(self, *args, **kwargs):
+        """Override default queryset to add deterministic ordering."""
+        return super().get_queryset(*args, **kwargs).order_by("id")
