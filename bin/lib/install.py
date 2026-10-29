@@ -3,7 +3,7 @@
 import argparse
 
 from lib._requirements import epilog_from, requires
-from lib._runtime import REPO_ROOT, run, stderr
+from lib._runtime import REPO_ROOT, Globals, run, stderr
 
 # Pip-compile runs inside this image so the lock resolves against the same
 # Python the service images use. Avoids host-python mismatches like a Mac
@@ -82,9 +82,12 @@ def cmd_install_compile(argv):
             "subprojects compiled (one pip-compile each):\n"
             + "".join(f"  {p}\n" for p in REQUIREMENTS_INS)
             + "\n"
-            "Any extra args after `--` are forwarded to pip-compile, e.g.\n"
-            "  rbio install:compile -- --upgrade\n"
-            "  rbio install:compile -- --upgrade-package django",
+            "No flags: pip-compile only resolves new/changed .in lines; every\n"
+            "other pin stays put. Use --package NAME to upgrade a single\n"
+            "package (repeatable). `--dry-run` prints what would run.\n"
+            "\n"
+            "Any extra args after `--` are forwarded to pip-compile. Bare\n"
+            "`-- --upgrade` upgrades every transitive dep and requires --yes.",
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -96,6 +99,20 @@ def cmd_install_compile(argv):
             "directory (`api`) or the file (`api/requirements.in`)."
         ),
     )
+    p.add_argument(
+        "-p",
+        "--package",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="Upgrade one package (repeatable); maps to --upgrade-package.",
+    )
+    p.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Acknowledge a blanket `-- --upgrade` (otherwise refused).",
+    )
     # Split on `--` before argparse runs: argparse would otherwise consume
     # the separator and treat the pip-compile flags as positional args.
     if "--" in argv:
@@ -105,11 +122,24 @@ def cmd_install_compile(argv):
         own_args, passthrough = argv, []
     args = p.parse_args(own_args)
 
+    if "--upgrade" in passthrough and not args.yes and not Globals.dry_run:
+        stderr(
+            "rbio install:compile: `--upgrade` upgrades every transitive dependency\n"
+            "across the touched subprojects, which usually isn't what you want.\n"
+            "Prefer `--package NAME` (repeatable) for targeted upgrades.\n"
+            "If you really want a blanket upgrade, rerun with `--yes`."
+        )
+        return 1
+
     targets = _resolve_targets(args.subproject)
     if not targets:
         return 1
 
-    passthrough_shell = " ".join(_shell_quote(a) for a in passthrough)
+    pip_compile_args = list(passthrough)
+    for name in args.package:
+        pip_compile_args.extend(["--upgrade-package", name])
+
+    passthrough_shell = " ".join(_shell_quote(a) for a in pip_compile_args)
     for in_path in targets:
         rel_in = str(in_path.relative_to(REPO_ROOT))
         rel_out = str(in_path.with_suffix(".txt").relative_to(REPO_ROOT))
