@@ -5,10 +5,13 @@ options(warn = 2)
 # PACKAGES index check. Point at the S3 bucket directly (path-style HTTPS so the
 # dotted bucket name doesn't break TLS; no redirect for url() to follow).
 BIOC_ARCHIVE <- "https://s3.amazonaws.com/archive.bioconductor.org/packages/3.6"
+# Repo names deliberately omit "Bioc" — renv's `renv_scope_bioconductor()`
+# strips any entry whose name matches /Bioc/ before adding its own canonical
+# `bioconductor.org` repositories, which would blow away these S3 overrides.
 options(repos = structure(c(
-    Bioconductor = paste0(BIOC_ARCHIVE, "/bioc"),
-    BioconductorAnnotation = paste0(BIOC_ARCHIVE, "/data/annotation"),
-    BioconductorExperiment = paste0(BIOC_ARCHIVE, "/data/experiment"),
+    Archive = paste0(BIOC_ARCHIVE, "/bioc"),
+    ArchiveAnnotation = paste0(BIOC_ARCHIVE, "/data/annotation"),
+    ArchiveExperiment = paste0(BIOC_ARCHIVE, "/data/experiment"),
     CRAN = "https://cloud.r-project.org"
 )))
 options(Ncpus = parallel::detectCores())
