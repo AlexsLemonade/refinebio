@@ -34,10 +34,9 @@ standard_keyword = analyzer(
 
 def _collect_analysis(*analyzers):
     """Merge each analyzer's analysis-definition fragments (analyzer, filter,
-    tokenizer, char_filter) into one settings-shaped dict. django-opensearch-
-    dsl's inner-class Index pattern does not auto-collect custom analyzers
-    from field definitions the way the old module-level Index.doc_type
-    decorator did, so we hand them to the index explicitly."""
+    tokenizer, char_filter) into one settings-shaped dict for the index.
+    Custom analyzers used in field definitions must be registered explicitly;
+    the index does not discover them automatically."""
     merged = {}
     for a in analyzers:
         for key, defs in a.get_analysis_definition().items():

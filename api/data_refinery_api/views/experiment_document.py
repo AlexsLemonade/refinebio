@@ -1,9 +1,5 @@
 ##
-# Experiment document view.
-#
-# Hand-rolled against opensearch-py + DRF: replaces the previous
-# django-elasticsearch-dsl-drf DocumentViewSet + filter-backend stack that
-# the OpenSearch migration abandoned.
+# Experiment document view — DRF APIView over an opensearch-py Search.
 ##
 
 from django.http import QueryDict
@@ -21,8 +17,8 @@ from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_common.models.documents import ExperimentDocument
 
 # ---------------------------------------------------------------------------
-# Config — mirrors the previous DocumentViewSet class attributes exactly.
-# Changing anything here changes the public API.
+# Public API configuration. Changing anything here changes the /search/
+# endpoint's accepted parameters or response shape.
 # ---------------------------------------------------------------------------
 
 # {public search param: boost (or None for unboosted)}.
@@ -102,7 +98,7 @@ MAX_LIMIT = 10000
 
 
 # ---------------------------------------------------------------------------
-# Serializer — flat DRF Serializer, replaces the old DocumentSerializer.
+# Serializer — flat DRF Serializer over a search hit's fields.
 # ---------------------------------------------------------------------------
 
 
@@ -214,15 +210,36 @@ def _apply_filters(search, params):
 
 
 def _apply_free_text_search(search, params):
-    """Apply the free-text `search=` param as a multi_match across the boosted
-    field set."""
-    text = params.get("search")
-    if not text:
+    """Apply one or more `?search=` values.
+
+    Each value may be plain text, or `field:value` where field is one of
+    SEARCH_FIELDS. Plain text runs as a `multi_match` across the full
+    boosted field set; `field:value` dispatches a `match` query on that
+    one field; `field:value` with an unknown field is dropped. Multiple
+    values combine via `bool should` (OR)."""
+    terms = params.getlist("search") if hasattr(params, "getlist") else []
+    terms = [t for t in terms if t]
+    if not terms:
         return search
-    fields = []
+
+    boosted_fields = []
     for field, boost in SEARCH_FIELDS.items():
-        fields.append(f"{field}^{boost}" if boost else field)
-    return search.query("multi_match", query=text, fields=fields)
+        boosted_fields.append(f"{field}^{boost}" if boost else field)
+
+    clauses = []
+    for term in terms:
+        if ":" in term:
+            field_name, value = term.split(":", 1)
+            if field_name in SEARCH_FIELDS:
+                clauses.append(Q("match", **{field_name: value}))
+            continue
+        clauses.append(Q("multi_match", query=term, fields=boosted_fields))
+
+    if not clauses:
+        return search
+    if len(clauses) == 1:
+        return search.query(clauses[0])
+    return search.query("bool", should=clauses, minimum_should_match=1)
 
 
 def _apply_ordering(search, params):

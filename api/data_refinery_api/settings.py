@@ -253,10 +253,9 @@ else:
 
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD") == "True"
 
-# OpenSearch (django-opensearch-dsl). ELASTICSEARCH_* env var names kept
-# until the AWS Terraform cutover renames them. If ELASTICSEARCH_HOST does
-# not already carry a scheme, default to https:// — AWS-managed OpenSearch
-# domains require TLS, and local dev hard-codes http:// explicitly.
+# OpenSearch connection. If ELASTICSEARCH_HOST does not carry an explicit
+# scheme, default to https:// — the AWS-managed domain requires TLS. Local
+# dev sets http:// explicitly in its env file.
 _es_host = get_env_variable("ELASTICSEARCH_HOST")
 if "://" not in _es_host:
     _es_host = "https://" + _es_host
