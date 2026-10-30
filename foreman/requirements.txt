@@ -22,7 +22,7 @@ numpy==1.26.4             # via -r foreman/requirements.in, geoparse, pandas, sc
 opensearch-py==2.6.0      # via -r foreman/requirements.in, django-opensearch-dsl
 pandas==1.5.3             # via -r foreman/requirements.in, geoparse
 psycopg2-binary==2.9.13   # via -r foreman/requirements.in
-pyrate-limiter==4.5.1     # via -r foreman/requirements.in
+pyrate-limiter==2.10.0    # via -r foreman/requirements.in
 pyrefinebio==0.4.11       # via -r foreman/requirements.in
 python-dateutil==3.0.0    # via -r foreman/requirements.in, django-opensearch-dsl, opensearch-py, pandas
 pytimeparse==1.1.8        # via pyrefinebio

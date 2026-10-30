@@ -8,8 +8,9 @@ python-dateutil
 raven
 pyrefinebio>=0.4.7
 # pyrefinebio 0.4.11 imports pyrate_limiter but doesn't declare it in its
-# install_requires. Pull it in explicitly until upstream fixes it.
-pyrate_limiter
+# install_requires. Pull it in explicitly until upstream fixes it. Capped
+# below 3.x — pyrefinebio imports `RequestRate`, which 3.x renamed to `Rate`.
+pyrate_limiter<3
 tblib
 # TODO(ark): make sure DRF is required.
 djangorestframework<3.14.0
