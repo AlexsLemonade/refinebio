@@ -92,9 +92,7 @@ urlpatterns = [
         include(
             [
                 # Primary search and filter interface
-                re_path(
-                    r"^search/$", ExperimentDocumentView.as_view({"get": "list"}), name="search"
-                ),
+                re_path(r"^search/$", ExperimentDocumentView.as_view(), name="search"),
                 re_path(r"^experiments/$", ExperimentListView.as_view(), name="experiments"),
                 re_path(
                     r"^experiments/(?P<accession_code>.+)/$",

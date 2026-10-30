@@ -1,204 +1,373 @@
 ##
-# Experiment document views
+# Experiment document view — DRF APIView over an opensearch-py Search.
 ##
 
 from django.http import QueryDict
 from django.utils.decorators import method_decorator
 from rest_framework import serializers
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from django_elasticsearch_dsl_drf.constants import (
-    LOOKUP_FILTER_RANGE,
-    LOOKUP_QUERY_GT,
-    LOOKUP_QUERY_IN,
-)
-from django_elasticsearch_dsl_drf.filter_backends import (
-    CompoundSearchFilterBackend,
-    DefaultOrderingFilterBackend,
-    FacetedSearchFilterBackend,
-    FilteringFilterBackend,
-    OrderingFilterBackend,
-)
-from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
-from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
-from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from elasticsearch_dsl import TermsFacet
-from six import iteritems
+from opensearchpy import A, Q
 
 from data_refinery_api.exceptions import InvalidFilters
 from data_refinery_common.models.documents import ExperimentDocument
 
+# ---------------------------------------------------------------------------
+# Public API configuration. Changing anything here changes the /search/
+# endpoint's accepted parameters or response shape.
+# ---------------------------------------------------------------------------
+
+# {public search param: boost (or None for unboosted)}.
+SEARCH_FIELDS = {
+    "title": 10,
+    "publication_authors": 8,  # "People will search themselves"
+    "sample_keywords": 7,
+    "publication_title": 5,
+    "submitter_institution": 3,
+    "description": 2,
+    "accession_code": None,
+    "alternate_accession_code": None,
+    "publication_doi": None,
+    "pubmed_id": None,
+    "sample_metadata_fields": None,
+    "platform_names": None,
+}
+
+# {public filter param: {"field": <es field>, "lookups": set(<suffixes>)}}.
+# Suffixes supported: "" (exact term), "in" (comma-separated terms), "gt",
+# "gte", "lt", "lte".
+FILTER_FIELDS = {
+    "id": {"field": "_id", "lookups": {"", "in"}},
+    "technology": {"field": "technology", "lookups": {""}},
+    "has_publication": {"field": "has_publication", "lookups": {""}},
+    "accession_code": {"field": "accession_code", "lookups": {"", "in"}},
+    "alternate_accession_code": {"field": "alternate_accession_code", "lookups": {"", "in"}},
+    "platform": {"field": "platform_accession_codes", "lookups": {""}},
+    "organism": {"field": "organism_names.raw", "lookups": {""}},
+    "downloadable_organism": {"field": "downloadable_organism_names.raw", "lookups": {""}},
+    "num_processed_samples": {
+        "field": "num_processed_samples",
+        "lookups": {"", "in", "gt", "gte", "lt", "lte"},
+    },
+    "num_downloadable_samples": {
+        "field": "num_downloadable_samples",
+        "lookups": {"", "in", "gt", "gte", "lt", "lte"},
+    },
+    "sample_keywords": {"field": "sample_keywords", "lookups": {""}},
+}
+
+# {public ordering alias: es field}.
+ORDERING_FIELDS = {
+    "id": "id",
+    "title": "title.raw",
+    "description": "description.raw",
+    "num_total_samples": "num_total_samples",
+    "num_downloadable_samples": "num_downloadable_samples",
+    "source_first_published": "source_first_published",
+}
+
+DEFAULT_ORDERING = (
+    "_score",
+    "-num_total_samples",
+    "id",
+    "title",
+    "description",
+    "-source_first_published",
+)
+
+# Facets kept as (public key, es field, options) tuples. All four are
+# enabled by default; "has_publication" uses the key_as_string shape in the
+# transform below.
+FACETS = (
+    ("technology", "technology", {}),
+    ("downloadable_organism_names", "downloadable_organism_names.raw", {"size": 999999}),
+    ("platform_accession_codes", "platform_accession_codes", {"size": 999999}),
+    ("has_publication", "has_publication", {}),
+)
+
+CARDINALITY_FIELD = "downloadable_samples"
+CARDINALITY_METRIC = "total_samples"
+CARDINALITY_PRECISION = 40000
+
+DEFAULT_LIMIT = 10
+MAX_LIMIT = 10000
+
+
+# ---------------------------------------------------------------------------
+# Serializer — flat DRF Serializer over a search hit's fields.
+# ---------------------------------------------------------------------------
+
+
+class ExperimentDocumentSerializer(serializers.Serializer):
+    """Serializes a hit from the Experiment index."""
+
+    id = serializers.CharField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    publication_title = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
+    technology = serializers.CharField(read_only=True)
+    accession_code = serializers.CharField(read_only=True)
+    alternate_accession_code = serializers.CharField(read_only=True)
+    submitter_institution = serializers.CharField(read_only=True)
+    has_publication = serializers.BooleanField(read_only=True)
+    publication_doi = serializers.CharField(read_only=True)
+    publication_authors = serializers.ListField(child=serializers.CharField(), read_only=True)
+    sample_metadata_fields = serializers.ListField(child=serializers.CharField(), read_only=True)
+    platform_names = serializers.ListField(child=serializers.CharField(), read_only=True)
+    platform_accession_codes = serializers.ListField(child=serializers.CharField(), read_only=True)
+    organism_names = serializers.ListField(child=serializers.CharField(), read_only=True)
+    downloadable_organism_names = serializers.ListField(
+        child=serializers.CharField(), read_only=True
+    )
+    pubmed_id = serializers.CharField(read_only=True)
+    num_total_samples = serializers.IntegerField(read_only=True)
+    num_processed_samples = serializers.IntegerField(read_only=True)
+    num_downloadable_samples = serializers.IntegerField(read_only=True)
+    source_first_published = serializers.DateTimeField(read_only=True)
+
+
+# ---------------------------------------------------------------------------
+# Renderer — the old view suppressed form rendering so the browsable API
+# would not try to render a POST form it cannot build. Keep it.
+# ---------------------------------------------------------------------------
+
 
 class FormlessBrowsableAPIRenderer(BrowsableAPIRenderer):
-    """A BrowsableAPIRenderer that never tries to display a form for any
-    method.
-
-    We use this in ExperimentDocumentView because otherwise we get an error
-    when trying to generate the form for POST requests.
-    """
-
     def show_form_for_method(self, view, method, request, instance):
         return False
 
 
-class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
-    def aggregate(self, request, queryset, view):
-        """Extends FacetedSearchFilterBackend to add additional metrics to each bucket
-        https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/master/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L19
-
-        We have the downloadable sample accession codes indexed for each experiment.
-        The cardinality metric, returns the number of unique samples for each bucket.
-        However it's just an approximate
-        https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html#_counts_are_approximate
-        I used the highest possible precision threshold, but this might increase the amount
-        of memory used.
-        """
-        facets = self.construct_facets(request, view)
-        for field, facet in iteritems(facets):
-            agg = facet["facet"].get_aggregation()
-            queryset.aggs.bucket(field, agg).metric(
-                "total_samples",
-                "cardinality",
-                field="downloadable_samples",
-                precision_threshold=40000,
-            )
-        return queryset
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 
-class POSTFilteringFilterBackend(FilteringFilterBackend):
-    """Adapts FilteringFilterBackend to take queries from POST requests"""
+def _coerce_param_value(value):
+    """Normalise a POST body value into a list of strings, matching the old
+    POSTFilteringFilterBackend.MockRequest adapter."""
+    if isinstance(value, list):
+        return [_coerce_param_value(v)[0] for v in value]
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, (int, bool)):
+        return [str(value)]
+    raise InvalidFilters(
+        message="Invalid type {} for filter value {}".format(type(value), str(value))
+    )
 
-    class MockRequest:
-        """A mock request object to give to FilteringFilterBackend that
-        only has a query_params field.
 
-        The purpose of this class is to convert the request data to a form
-        that can be understood by FilteringFilterBackend
-        """
+def _request_params(request):
+    """Return a QueryDict holding the filter/search params, pulled from the
+    query string for GET and the JSON body for POST."""
+    if request.method == "POST":
+        params = QueryDict(mutable=True)
+        for key, value in request.data.items():
+            for v in _coerce_param_value(value):
+                params.appendlist(key, v)
+        return params
+    return request.query_params
 
-        def add_to_params(self, key, value):
-            """Add to query params, converting to string if necessary"""
-            if type(value) == str:
-                self.query_params.appendlist(key, value)
-            elif type(value) == int or type(value) == bool:
-                self.query_params.appendlist(key, str(value))
-            else:
-                # We shouldn't be filtering on Null, lists, or dicts
-                raise InvalidFilters(
-                    message="Invalid type {} for filter value {}".format(type(value), str(value))
-                )
 
-        def __init__(self, request):
-            self.query_params = QueryDict(mutable=True)
+def _split_filter_key(key):
+    """Return (public_name, lookup_suffix) for a filter query-param key."""
+    if "__" in key:
+        name, _, suffix = key.rpartition("__")
+        return name, suffix
+    return key, ""
 
-            for key, value in request.data.items():
-                if type(value) == list:
-                    for item in value:
-                        self.add_to_params(key, item)
-                else:
-                    self.add_to_params(key, value)
 
-    def get_filter_query_params(self, request, view):
-        """Override get_filter_query_params to insert our own in POST requests."""
-        if request.method != "POST":
-            return {}
+def _build_filter_query(field, suffix, values):
+    """Build the opensearch-py Q for one filter param."""
+    if suffix == "in":
+        terms = []
+        for raw in values:
+            terms.extend(v for v in raw.split(",") if v)
+        return Q("terms", **{field: terms})
+    if suffix in {"gt", "gte", "lt", "lte"}:
+        return Q("range", **{field: {suffix: values[0]}})
+    # Exact term(s).
+    if len(values) == 1:
+        return Q("term", **{field: values[0]})
+    return Q("terms", **{field: list(values)})
 
-        return super(POSTFilteringFilterBackend, self).get_filter_query_params(
-            POSTFilteringFilterBackend.MockRequest(request), view
+
+def _apply_filters(search, params):
+    """Translate the public filter params into opensearch-py .filter() calls."""
+    for key in params:
+        name, suffix = _split_filter_key(key)
+        config = FILTER_FIELDS.get(name)
+        if not config:
+            continue
+        if suffix not in config["lookups"]:
+            continue
+        values = params.getlist(key)
+        search = search.filter(_build_filter_query(config["field"], suffix, values))
+    return search
+
+
+def _apply_free_text_search(search, params):
+    """Apply one or more `?search=` values.
+
+    Each value may be plain text, or `field:value` where field is one of
+    SEARCH_FIELDS. Plain text runs as a `multi_match` across the full
+    boosted field set; `field:value` dispatches a `match` query on that
+    one field; `field:value` with an unknown field is dropped. Multiple
+    values combine via `bool should` (OR)."""
+    terms = params.getlist("search") if hasattr(params, "getlist") else []
+    terms = [t for t in terms if t]
+    if not terms:
+        return search
+
+    boosted_fields = []
+    for field, boost in SEARCH_FIELDS.items():
+        boosted_fields.append(f"{field}^{boost}" if boost else field)
+
+    clauses = []
+    for term in terms:
+        if ":" in term:
+            field_name, value = term.split(":", 1)
+            if field_name in SEARCH_FIELDS:
+                clauses.append(Q("match", **{field_name: value}))
+            continue
+        clauses.append(Q("multi_match", query=term, fields=boosted_fields))
+
+    if not clauses:
+        return search
+    if len(clauses) == 1:
+        return search.query(clauses[0])
+    return search.query("bool", should=clauses, minimum_should_match=1)
+
+
+def _apply_ordering(search, params):
+    """Apply `ordering=field` (one or many, prefix `-` for desc), falling back
+    to the default when none is given."""
+    orderings = params.getlist("ordering") if hasattr(params, "getlist") else []
+    if orderings:
+        resolved = []
+        for raw in orderings:
+            desc = raw.startswith("-")
+            name = raw.lstrip("-")
+            field = ORDERING_FIELDS.get(name)
+            if field:
+                resolved.append(f"-{field}" if desc else field)
+        if resolved:
+            return search.sort(*resolved)
+    return search.sort(*DEFAULT_ORDERING)
+
+
+def _apply_facets(search):
+    """Attach the four default facets, each with the custom cardinality
+    sub-metric on downloadable_samples."""
+    for key, field, options in FACETS:
+        agg = A("terms", field=field, **options)
+        agg.metric(
+            CARDINALITY_METRIC,
+            "cardinality",
+            field=CARDINALITY_FIELD,
+            precision_threshold=CARDINALITY_PRECISION,
         )
-
-    def get_schema_fields(self, view):
-        """Return no schema fields since we don't use any query parameters.
-
-        This has to be defined, otherwise we get FilteringFilterBackend's
-        schema fields instead, which causes an error if both of them are used
-        in the same view."""
-        return []
+        search.aggs.bucket(key, agg)
+    return search
 
 
-class ExperimentDocumentSerializer(DocumentSerializer):
-    """Serializer for the Experiment document."""
+def _transform_facets(aggregations):
+    """Reshape raw aggregation buckets into the API's facet envelope:
+    {field: {bucket_key: total_samples}}."""
+    result = {}
+    for key, _field, _options in FACETS:
+        agg = aggregations.get(key, {})
+        buckets = agg.get("buckets", [])
+        group = {}
+        for bucket in buckets:
+            # has_publication is a boolean term; use the stringified key so
+            # consumers can address "true"/"false" directly.
+            label = bucket.get("key_as_string") if key == "has_publication" else bucket.get("key")
+            group[label] = bucket[CARDINALITY_METRIC]["value"]
+        result[key] = group
+    return result
 
-    class Meta(object):
-        """Meta options."""
 
-        document = ExperimentDocument
-        fields = (
-            "id",
-            "title",
-            "publication_title",
-            "description",
-            "technology",
-            "accession_code",
-            "alternate_accession_code",
-            "submitter_institution",
-            "has_publication",
-            "publication_doi",
-            "publication_authors",
-            "sample_metadata_fields",
-            "platform_names",
-            "platform_accession_codes",
-            "organism_names",
-            "downloadable_organism_names",
-            "pubmed_id",
-            "num_total_samples",
-            "num_processed_samples",
-            "num_downloadable_samples",
-            "source_first_published",
-        )
-        read_only_fields = fields
+def _hit_to_dict(hit):
+    """Convert a Hit into the dict the serializer expects. `meta.id` surfaces
+    as the top-level `id` the old view relied on."""
+    data = hit.to_dict()
+    data.setdefault("id", hit.meta.id)
+    return data
+
+
+def _parse_pagination(params):
+    """Return (limit, offset) with the same defaults the old
+    ESLimitOffsetPagination used."""
+    try:
+        limit = int(params.get("limit", DEFAULT_LIMIT))
+    except (TypeError, ValueError):
+        limit = DEFAULT_LIMIT
+    try:
+        offset = int(params.get("offset", 0))
+    except (TypeError, ValueError):
+        offset = 0
+    limit = max(0, min(limit, MAX_LIMIT))
+    offset = max(0, offset)
+    return limit, offset
+
+
+# ---------------------------------------------------------------------------
+# View
+# ---------------------------------------------------------------------------
 
 
 @method_decorator(
-    name="list",
+    name="get",
     decorator=extend_schema(
         parameters=[
             OpenApiParameter(
                 name="accession_code",
                 location=OpenApiParameter.QUERY,
                 type=OpenApiTypes.STR,
-                description="Allows filtering the results by accession code, can have multiple values. Eg: `?accession_code=microarray&accession_code=rna-seq`",
+                description="Filter by accession code; may be repeated.",
             ),
             OpenApiParameter(
                 name="technology",
                 location=OpenApiParameter.QUERY,
                 type=OpenApiTypes.STR,
-                description="Allows filtering the results by technology, can have multiple values. Eg: `?technology=microarray&technology=rna-seq`",
+                description="Filter by technology; may be repeated.",
             ),
             OpenApiParameter(
                 name="has_publication",
                 location=OpenApiParameter.QUERY,
                 type=OpenApiTypes.STR,
-                description="Filter the results that have associated publications with `?has_publication=true`",
+                description="Filter the results that have associated publications with `?has_publication=true`.",
             ),
             OpenApiParameter(
                 name="platform",
                 location=OpenApiParameter.QUERY,
                 type=OpenApiTypes.STR,
-                description="Allows filtering the results by platform, this parameter can have multiple values.",
+                description="Filter by platform; may be repeated.",
             ),
             OpenApiParameter(
                 name="organism",
                 location=OpenApiParameter.QUERY,
                 type=OpenApiTypes.STR,
-                description="Allows filtering the results by organism, this parameter can have multiple values.",
+                description="Filter by organism; may be repeated.",
             ),
             OpenApiParameter(
                 name="num_processed_samples",
                 location=OpenApiParameter.QUERY,
                 type=OpenApiTypes.NUMBER,
-                description="Use ElasticSearch queries to specify the number of processed samples of the results",
+                description="Filter by number of processed samples; supports __gt, __gte, __lt, __lte.",
             ),
         ],
         description="""
 Use this endpoint to search among the experiments.
 
-This is powered by ElasticSearch, information regarding advanced usages of the
-filters can be found in the [Django-ES-DSL-DRF docs](https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering)
+Powered by OpenSearch. Filter parameters support the suffixes `__in`, `__gt`,
+`__gte`, `__lt`, and `__lte`.
 
-There's an additional field in the response named `facets` that contain stats on the number of results per filter type.
+The response includes a `facets` field with per-filter bucket counts.
 
 Example Requests:
 ```
@@ -208,9 +377,9 @@ Example Requests:
 ?ordering=source_first_published
 ```
 
-This endpoint also accepts POST requests for larger queries. Any of the filters
-accepted as query parameters are also accepted in a JSON object in the request
-body.
+This endpoint also accepts POST requests for larger queries. Any of the
+filters accepted as query parameters are also accepted in a JSON object in
+the request body.
 
 Example Requests (from our tests):
 ```python
@@ -236,175 +405,57 @@ requests.post(host + '/v1/search/', json.dumps(search), headers=headers)
 """,
     ),
 )
-class ExperimentDocumentView(DocumentViewSet):
-    """ElasticSearch powered experiment search."""
+class ExperimentDocumentView(APIView):
+    """OpenSearch-backed experiment search."""
 
-    document = ExperimentDocument
-    serializer_class = ExperimentDocumentSerializer
-    pagination_class = ESLimitOffsetPagination
     renderer_classes = [JSONRenderer, FormlessBrowsableAPIRenderer]
+    serializer_class = ExperimentDocumentSerializer
 
-    # Filter backends provide different functionality we want
-    filter_backends = [
-        FilteringFilterBackend,
-        POSTFilteringFilterBackend,
-        OrderingFilterBackend,
-        DefaultOrderingFilterBackend,
-        CompoundSearchFilterBackend,
-        FacetedSearchFilterBackendExtended,
-    ]
+    def get(self, request, *args, **kwargs):
+        return self._search(request)
 
-    # Primitive
-    lookup_field = "id"
-
-    # Define search fields
-    # Is this exhaustive enough?
-    search_fields = {
-        "title": {"boost": 10},
-        "publication_authors": {"boost": 8},  # "People will search themselves"
-        "sample_keywords": {"boost": 7},
-        "publication_title": {"boost": 5},
-        "submitter_institution": {"boost": 3},
-        "description": {"boost": 2},
-        "accession_code": None,
-        "alternate_accession_code": None,
-        "publication_doi": None,
-        "pubmed_id": None,
-        "sample_metadata_fields": None,
-        "platform_names": None,
-    }
-
-    # Define filtering fields
-    filter_fields = {
-        "id": {
-            "field": "_id",
-            "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN],
-        },
-        "technology": "technology",
-        "has_publication": "has_publication",
-        "accession_code": "accession_code",
-        "alternate_accession_code": "alternate_accession_code",
-        "platform": "platform_accession_codes",
-        "organism": "organism_names.raw",
-        "downloadable_organism": "downloadable_organism_names.raw",
-        "num_processed_samples": {
-            "field": "num_processed_samples",
-            "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN, LOOKUP_QUERY_GT],
-        },
-        "num_downloadable_samples": {
-            "field": "num_downloadable_samples",
-            "lookups": [LOOKUP_FILTER_RANGE, LOOKUP_QUERY_IN, LOOKUP_QUERY_GT],
-        },
-        "sample_keywords": "sample_keywords",
-    }
-
-    # Define ordering fields
-    ordering_fields = {
-        "id": "id",
-        "title": "title.raw",
-        "description": "description.raw",
-        "num_total_samples": "num_total_samples",
-        "num_downloadable_samples": "num_downloadable_samples",
-        "source_first_published": "source_first_published",
-    }
-
-    # Specify default ordering
-    ordering = (
-        "_score",
-        "-num_total_samples",
-        "id",
-        "title",
-        "description",
-        "-source_first_published",
-    )
-
-    # Facets (aka Aggregations) provide statistics about the query result set in the API response.
-    # More information here: https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
-    faceted_search_fields = {
-        "technology": {
-            "field": "technology",
-            "facet": TermsFacet,
-            "enabled": True,  # These are enabled by default, which is more expensive but more simple.
-        },
-        "downloadable_organism_names": {
-            "field": "downloadable_organism_names.raw",
-            "facet": TermsFacet,
-            "enabled": True,
-            "options": {"size": 999999},
-        },
-        "platform_accession_codes": {
-            "field": "platform_accession_codes",
-            "facet": TermsFacet,
-            "enabled": True,
-            "global": False,
-            "options": {"size": 999999},
-        },
-        "has_publication": {
-            "field": "has_publication",
-            "facet": TermsFacet,
-            "enabled": True,
-            "global": False,
-        },
-        # We don't actually need any "globals" to drive our web frontend,
-        # but we'll leave them available but not enabled by default, as they're
-        # expensive.
-        "technology_global": {
-            "field": "technology",
-            "facet": TermsFacet,
-            "enabled": False,
-            "global": True,
-        },
-        "organism_names_global": {
-            "field": "organism_names",
-            "facet": TermsFacet,
-            "enabled": False,
-            "global": True,
-            "options": {"size": 999999},
-        },
-        "platform_names_global": {
-            "field": "platform_names",
-            "facet": TermsFacet,
-            "enabled": False,
-            "global": True,
-            "options": {"size": 999999},
-        },
-        "has_publication_global": {
-            "field": "platform_names",
-            "facet": TermsFacet,
-            "enabled": False,
-            "global": True,
-        },
-    }
-    faceted_search_param = "facet"
-
-    # Define a separate post method so that we can hide it in the
-    # documentation. Otherwise, the auto-generated documentation for the post
-    # method is incorrect
     @extend_schema(exclude=True)
     def post(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        return self._search(request)
 
-    def list(self, request, *args, **kwargs):
-        response = super(ExperimentDocumentView, self).list(request, args, kwargs)
-        response.data["facets"] = self.transform_es_facets(response.data["facets"])
-        return response
+    def _search(self, request):
+        params = _request_params(request)
+        limit, offset = _parse_pagination(params)
 
-    def transform_es_facets(self, facets):
-        """Transforms Elastic Search facets into a set of objects where each one corresponds
-        to a filter group. Example:
+        search = ExperimentDocument.search()
+        search = _apply_free_text_search(search, params)
+        search = _apply_filters(search, params)
+        search = _apply_ordering(search, params)
+        _apply_facets(search)
 
-        { technology: {rna-seq: 254, microarray: 8846, unknown: 0} }
+        # Force eager total so hits.total.value is populated on OS 7+/3.x
+        # defaults.
+        search = search.extra(track_total_hits=True)
 
-        Which means the users could attach `?technology=rna-seq` to the url and expect 254
-        samples returned in the results.
-        """
-        result = {}
-        for field, facet in iteritems(facets):
-            filter_group = {}
-            for bucket in facet["buckets"]:
-                if field == "has_publication":
-                    filter_group[bucket["key_as_string"]] = bucket["total_samples"]["value"]
-                else:
-                    filter_group[bucket["key"]] = bucket["total_samples"]["value"]
-            result[field] = filter_group
-        return result
+        response = search[offset : offset + limit].execute()
+        aggregations = response.aggregations.to_dict() if response.aggregations else {}
+
+        serializer = self.serializer_class([_hit_to_dict(hit) for hit in response.hits], many=True)
+
+        total = response.hits.total.value
+        return Response(
+            {
+                "count": total,
+                "next": self._page_url(request, limit, offset + limit)
+                if offset + limit < total
+                else None,
+                "previous": self._page_url(request, limit, max(0, offset - limit))
+                if offset > 0
+                else None,
+                "results": serializer.data,
+                "facets": _transform_facets(aggregations),
+            }
+        )
+
+    @staticmethod
+    def _page_url(request, limit, offset):
+        """Build a limit/offset-swapped URL for the next/previous links."""
+        query = request.query_params.copy()
+        query["limit"] = str(limit)
+        query["offset"] = str(offset)
+        return request.build_absolute_uri(f"{request.path}?{query.urlencode()}")

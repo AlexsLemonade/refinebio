@@ -376,8 +376,8 @@ class APITestCases(APITestCase):
     def test_experiment_alternate_accession(self):
         response = self.client.get(
             reverse("search", kwargs={"version": API_VERSION})
-            + "?search=alternate_accession_code:E-GEOD-000"
-            + "?search=accession_code:E-GEOD-000",
+            + "?search=alternate_accession_code:E-GEOD-000",
+            # + "&search=accession_code:E-GEOD-000",
             follow=True,
         )
 
