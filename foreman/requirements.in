@@ -7,6 +7,9 @@ geoparse
 python-dateutil
 raven
 pyrefinebio>=0.4.7
+# pyrefinebio 0.4.11 imports pyrate_limiter but doesn't declare it in its
+# install_requires. Pull it in explicitly until upstream fixes it.
+pyrate_limiter
 tblib
 # TODO(ark): make sure DRF is required.
 djangorestframework<3.14.0
