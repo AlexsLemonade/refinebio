@@ -96,8 +96,7 @@ echo "Building new images"
 run_on_deploy_box "sudo touch /var/log/docker_update_$DEPLOY_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$DEPLOY_TAG.log"
 run_on_deploy_box ". env_vars && echo -e '######\nBuilding new images for $DEPLOY_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$DEPLOY_TAG.log"
-# DOCKER_IO_USERNAME / DOCKER_IO_PASSWORD are expected to be set in the deploy box's environment. They are probably legacy.
-run_on_deploy_box "docker login -u \"\$DOCKER_IO_USERNAME\" -p \"\$DOCKER_IO_PASSWORD\""
+run_on_deploy_box ". env_vars && echo \"\$DOCKER_PASSWORD\" | docker login -u \"\$DOCKER_USERNAME\" --password-stdin"
 run_on_deploy_box ". env_vars && ./bin/rbio build --push deploy 2>&1 | tee -a /var/log/docker_update_$DEPLOY_TAG.log"
 run_on_deploy_box ". env_vars && echo -e '######\nFinished building new images for $DEPLOY_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$DEPLOY_TAG.log"
 
