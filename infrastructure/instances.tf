@@ -29,18 +29,20 @@ data "aws_ami" "ubuntu" {
 data "aws_caller_identity" "current" {
 }
 
-resource "aws_elasticsearch_domain" "es" {
-  domain_name           = "es-${var.user}-${var.stage}"
-  elasticsearch_version = "6.3"
+resource "aws_opensearch_domain" "os" {
+  # Keep the same domain_name prefix so DNS and historical references stay
+  # stable; AWS treats `aws_opensearch_domain` as the successor resource to
+  # `aws_elasticsearch_domain`.
+  domain_name    = "es-${var.user}-${var.stage}"
+  engine_version = "OpenSearch_3.7"
 
   advanced_options = {
     "indices.query.bool.max_clause_count" = 16384
   }
 
-  # TODO: Figure out the power/cost balance of this type.
-  # Prices are here: https://aws.amazon.com/elasticsearch-service/pricing/
+  # Prices: https://aws.amazon.com/opensearch-service/pricing/
   cluster_config {
-    instance_type = "m5.large.elasticsearch"
+    instance_type = "m5.large.search"
   }
 
   vpc_options {
@@ -55,8 +57,7 @@ resource "aws_elasticsearch_domain" "es" {
   ebs_options {
     ebs_enabled = true
 
-    # This depends on the instance type, else you'll get this error:
-    #   * aws_elasticsearch_domain.es: LimitExceededException: Volume size must be between 10 and 35 for t2.medium.elasticsearch instance type and elasticsearch version 6.3
+    # Volume size bounds depend on instance type.
     volume_size = 10
   }
 
@@ -91,8 +92,8 @@ CONFIG
   )
 }
 
-output "elasticsearch_endpoint" {
-  value = aws_elasticsearch_domain.es.endpoint
+output "opensearch_endpoint" {
+  value = aws_opensearch_domain.os.endpoint
 }
 
 ##
@@ -116,7 +117,7 @@ resource "aws_instance" "api_server_1" {
   subnet_id              = aws_subnet.data_refinery_1a.id
   depends_on = [
     aws_db_instance.postgres_db,
-    aws_elasticsearch_domain.es,
+    aws_opensearch_domain.os,
     aws_instance.pg_bouncer,
     aws_s3_bucket.data_refinery_cert_bucket,
     aws_security_group_rule.data_refinery_api_http,
@@ -133,8 +134,8 @@ resource "aws_instance" "api_server_1" {
       database_password         = var.database_password
       database_user             = var.database_user
       dockerhub_repo            = var.dockerhub_repo
-      elasticsearch_host        = aws_elasticsearch_domain.es.endpoint
-      elasticsearch_port        = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
+      elasticsearch_host        = aws_opensearch_domain.os.endpoint
+      elasticsearch_port        = "443" # AWS OpenSearch domains serve HTTPS on 443.
       log_group                 = aws_cloudwatch_log_group.data_refinery_log_group.name
       log_stream                = aws_cloudwatch_log_stream.log_stream_api.name
       nginx_config              = data.local_file.api_nginx_config.content
@@ -184,7 +185,7 @@ resource "aws_instance" "foreman_server_1" {
 
   depends_on = [
     aws_db_instance.postgres_db,
-    aws_elasticsearch_domain.es,
+    aws_opensearch_domain.os,
     aws_instance.pg_bouncer,
     aws_s3_bucket.data_refinery_cert_bucket,
     aws_security_group_rule.data_refinery_api_http,
@@ -199,7 +200,7 @@ resource "aws_instance" "foreman_server_1" {
       database_password = var.database_password
       database_user = var.database_user
       dockerhub_repo = var.dockerhub_repo
-      elasticsearch_host = aws_elasticsearch_domain.es.endpoint
+      elasticsearch_host = aws_opensearch_domain.os.endpoint
       elasticsearch_port = var.elasticsearch_port
       foreman_docker_image = var.foreman_docker_image
       foreman_environment = data.local_file.foreman_environment.content

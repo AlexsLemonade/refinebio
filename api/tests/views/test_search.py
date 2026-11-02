@@ -249,7 +249,8 @@ class ESTestCases(APITestCase):
         # clear default cache and reindex
         # otherwise the organisms with qn_targes will be cached.
         cache.clear()
-        call_command("search_index", "--rebuild", "-f")
+        call_command("opensearch", "index", "rebuild", "--force")
+        call_command("opensearch", "document", "index", "--force", "--refresh")
 
     def test_es_endpoint(self):
         """

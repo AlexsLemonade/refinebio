@@ -146,7 +146,12 @@ def cmd_install_compile(argv):
         shell = (
             "set -e; "
             "pip install --quiet --root-user-action=ignore pip-tools && "
-            f"pip-compile --output-file {_shell_quote(rel_out)} "
+            # --annotation-style=line matches the format the historic
+            # requirements.txt files were generated with (`# via X, Y`
+            # on the same line as the package). Dropping this makes
+            # every lock-file regeneration churn thousands of lines.
+            f"pip-compile --annotation-style=line "
+            f"--output-file {_shell_quote(rel_out)} "
             f"{passthrough_shell} {_shell_quote(rel_in)}"
         )
         rc = run(
