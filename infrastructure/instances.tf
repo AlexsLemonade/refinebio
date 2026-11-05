@@ -30,10 +30,7 @@ data "aws_caller_identity" "current" {
 }
 
 resource "aws_opensearch_domain" "os" {
-  # Keep the same domain_name prefix so DNS and historical references stay
-  # stable; AWS treats `aws_opensearch_domain` as the successor resource to
-  # `aws_elasticsearch_domain`.
-  domain_name    = "es-${var.user}-${var.stage}"
+  domain_name    = "os-${var.user}-${var.stage}"
   engine_version = "OpenSearch_3.7"
 
   advanced_options = {
@@ -71,7 +68,7 @@ resource "aws_opensearch_domain" "os" {
         "AWS": "*"
       },
       "Action": "es:*",
-      "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
+      "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/os-${var.user}-${var.stage}/*"
     }
   ]
 }
@@ -86,8 +83,8 @@ CONFIG
   tags = merge(
     var.default_tags,
     {
-      Domain = "es-${var.user}-${var.stage}"
-      Name   = "es-${var.user}-${var.stage}"
+      Domain = "os-${var.user}-${var.stage}"
+      Name   = "os-${var.user}-${var.stage}"
     }
   )
 }
