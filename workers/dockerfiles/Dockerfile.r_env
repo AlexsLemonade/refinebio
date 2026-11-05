@@ -1,7 +1,7 @@
 ARG DOCKERHUB_REPO
 ARG BASE_TAG
-ARG WORKER
 FROM $DOCKERHUB_REPO/dr_base:$BASE_TAG
+ARG WORKER
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
