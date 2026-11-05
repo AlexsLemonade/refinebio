@@ -2,14 +2,34 @@
 
 import argparse
 import json
+import os
 import subprocess
 import time
 
 from lib._requirements import requires
 from lib._runtime import REPO_ROOT, run, stderr
 from lib.common import rebuild_common_sdist
+from lib.image import WORKER_R_ENV_NAMES, resolve_base, resolve_worker_r_env
 
 RETRY_BACKOFF_SECONDS = 5
+
+# UBUNTU_DIGEST + BASE_HASH + every worker's <WORKER>_R_ENV_HASH are resolved
+# unconditionally. The bake file picks which build-args reach which target.
+def _resolve_hashes():
+    """Return (env_patch, ok) with every content-hash env var bake may reference."""
+    env = {}
+    ubuntu_digest = os.environ.get("UBUNTU_DIGEST")
+    base_hash, digest = resolve_base(ubuntu_digest=ubuntu_digest)
+    if base_hash is None:
+        return {}, False
+    env["UBUNTU_DIGEST"] = digest
+    env["BASE_HASH"] = base_hash
+
+    for worker in WORKER_R_ENV_NAMES:
+        var = f"{worker.upper()}_R_ENV_HASH"
+        env[var] = os.environ.get(var) or resolve_worker_r_env(worker, base_hash=base_hash)
+
+    return env, True
 
 
 @requires(tools=["docker"])
@@ -87,9 +107,14 @@ def cmd_build(argv):
         cmd.append("--print")
     cmd.extend(args.targets)
 
+    hash_env, ok = _resolve_hashes()
+    if not ok:
+        return 1
+    env = {**os.environ, **hash_env} if hash_env else None
+
     attempts = args.retries + 1
     for attempt in range(1, attempts + 1):
-        rc = run(cmd)
+        rc = run(cmd, env=env)
         if rc == 0:
             return 0
         if attempt < attempts:
