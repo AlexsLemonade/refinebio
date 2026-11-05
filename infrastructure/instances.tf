@@ -115,6 +115,12 @@ resource "aws_instance" "api_server_1" {
   vpc_security_group_ids = [aws_security_group.data_refinery_api.id]
   iam_instance_profile   = aws_iam_instance_profile.data_refinery_api.name
   subnet_id              = aws_subnet.data_refinery_1a.id
+
+  # Force instance replacement whenever user_data changes so templated values
+  # (OpenSearch endpoint, nginx.conf, container image tag) reach the running
+  # host instead of only landing in TF state.
+  user_data_replace_on_change = true
+
   depends_on = [
     aws_db_instance.postgres_db,
     aws_opensearch_domain.os,
@@ -182,6 +188,11 @@ resource "aws_instance" "foreman_server_1" {
   vpc_security_group_ids = [aws_security_group.data_refinery_foreman.id]
   iam_instance_profile   = aws_iam_instance_profile.data_refinery_foreman.name
   subnet_id              = aws_subnet.data_refinery_1a.id
+
+  # Force instance replacement whenever user_data changes so templated values
+  # (OpenSearch endpoint, container image tag) reach the running host instead
+  # of only landing in TF state.
+  user_data_replace_on_change = true
 
   depends_on = [
     aws_db_instance.postgres_db,
