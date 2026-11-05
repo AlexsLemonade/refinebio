@@ -291,11 +291,26 @@ def _transform_facets(aggregations):
     return result
 
 
+_LIST_FIELDS = (
+    "publication_authors",
+    "sample_metadata_fields",
+    "platform_names",
+    "platform_accession_codes",
+    "organism_names",
+    "downloadable_organism_names",
+    "sample_keywords",
+)
+
+
 def _hit_to_dict(hit):
     """Convert a Hit into the dict the serializer expects. `meta.id` surfaces
-    as the top-level `id` the old view relied on."""
+    as the top-level `id` the old view relied on. List-typed fields are
+    normalised to `[]` when absent so clients can treat them as always-array
+    (parity with the old django-elasticsearch-dsl-drf DocumentSerializer)."""
     data = hit.to_dict()
     data.setdefault("id", hit.meta.id)
+    for field in _LIST_FIELDS:
+        data.setdefault(field, [])
     return data
 
 

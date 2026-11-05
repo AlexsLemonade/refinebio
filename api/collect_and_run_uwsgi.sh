@@ -1,3 +1,3 @@
 #!/bin/sh
-python manage.py collectstatic --noinput
-uwsgi --ini uwsgi.ini --http 8081
+python manage.py collectstatic --noinput --clear
+uwsgi --ini uwsgi.ini

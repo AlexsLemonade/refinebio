@@ -30,10 +30,7 @@ data "aws_caller_identity" "current" {
 }
 
 resource "aws_opensearch_domain" "os" {
-  # Keep the same domain_name prefix so DNS and historical references stay
-  # stable; AWS treats `aws_opensearch_domain` as the successor resource to
-  # `aws_elasticsearch_domain`.
-  domain_name    = "es-${var.user}-${var.stage}"
+  domain_name    = "os-${var.user}-${var.stage}"
   engine_version = "OpenSearch_3.7"
 
   advanced_options = {
@@ -71,7 +68,7 @@ resource "aws_opensearch_domain" "os" {
         "AWS": "*"
       },
       "Action": "es:*",
-      "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
+      "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/os-${var.user}-${var.stage}/*"
     }
   ]
 }
@@ -86,8 +83,8 @@ CONFIG
   tags = merge(
     var.default_tags,
     {
-      Domain = "es-${var.user}-${var.stage}"
-      Name   = "es-${var.user}-${var.stage}"
+      Domain = "os-${var.user}-${var.stage}"
+      Name   = "os-${var.user}-${var.stage}"
     }
   )
 }
@@ -115,6 +112,12 @@ resource "aws_instance" "api_server_1" {
   vpc_security_group_ids = [aws_security_group.data_refinery_api.id]
   iam_instance_profile   = aws_iam_instance_profile.data_refinery_api.name
   subnet_id              = aws_subnet.data_refinery_1a.id
+
+  # Force instance replacement whenever user_data changes so templated values
+  # (OpenSearch endpoint, nginx.conf, container image tag) reach the running
+  # host instead of only landing in TF state.
+  user_data_replace_on_change = true
+
   depends_on = [
     aws_db_instance.postgres_db,
     aws_opensearch_domain.os,
@@ -182,6 +185,11 @@ resource "aws_instance" "foreman_server_1" {
   vpc_security_group_ids = [aws_security_group.data_refinery_foreman.id]
   iam_instance_profile   = aws_iam_instance_profile.data_refinery_foreman.name
   subnet_id              = aws_subnet.data_refinery_1a.id
+
+  # Force instance replacement whenever user_data changes so templated values
+  # (OpenSearch endpoint, container image tag) reach the running host instead
+  # of only landing in TF state.
+  user_data_replace_on_change = true
 
   depends_on = [
     aws_db_instance.postgres_db,
