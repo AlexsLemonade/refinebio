@@ -152,9 +152,6 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = "/tmp/www/static/"
-STATICFILES_DIRS = [
-    "",
-]
 
 
 # Caching
