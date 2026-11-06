@@ -20,14 +20,17 @@
 #     - AWS_ACCESS_KEY_ID -- The AWS key id to use when interacting with AWS.
 #     - AWS_SECRET_ACCESS_KEY -- The AWS secret key to use when interacting with AWS.
 
-echo "$DEPLOY_BOX_SSH_PRIVATE_KEY" >infrastructure/data-refinery-key.pem
+echo "$DEPLOY_BOX_SSH_PRIVATE_KEY" >infrastructure/deploy-box-key.pem
+chmod 600 infrastructure/deploy-box-key.pem
+
+echo "$SSH_PRIVATE_KEY" >infrastructure/data-refinery-key.pem
 chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box() {
     # shellcheck disable=SC2029
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \
-        -i infrastructure/data-refinery-key.pem \
+        -i infrastructure/deploy-box-key.pem \
         ubuntu@"${DEPLOY_BOX_IP}" \
         "cd refinebio && $1"
 }
@@ -84,12 +87,12 @@ run_on_deploy_box "bash .github/scripts/verify_tag.sh $DEPLOY_TAG"
 
 # Copy the necessary environment variables over.
 scp -o StrictHostKeyChecking=no \
-    -i infrastructure/data-refinery-key.pem \
+    -i infrastructure/deploy-box-key.pem \
     -r env_vars ubuntu@"$DEPLOY_BOX_IP":refinebio/env_vars
 
-# Along with the ssh key iself, which the deploy script will use.
+# Along with the refinebio ssh key, which deploy.sh uses.
 scp -o StrictHostKeyChecking=no \
-    -i infrastructure/data-refinery-key.pem \
+    -i infrastructure/deploy-box-key.pem \
     -r infrastructure/data-refinery-key.pem ubuntu@"$DEPLOY_BOX_IP":refinebio/infrastructure/data-refinery-key.pem
 
 echo "Building new images"
