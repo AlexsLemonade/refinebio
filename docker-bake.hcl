@@ -30,6 +30,29 @@ variable "SYSTEM_VERSION" {
   default = "local"
 }
 
+// Content-addressed tag inputs. All default to empty; the caller must set
+// them in the environment when building any content-hashed target,
+// otherwise the FROM lines parse to invalid references.
+variable "UBUNTU_DIGEST" {
+  // description = "sha256 digest of ubuntu:22.04 to pin dr_base's FROM to."
+  default = ""
+}
+
+variable "BASE_HASH" {
+  // description = "Content hash of dr_base inputs; drives dr_base's :r3.4.4-<hash> tag."
+  default = ""
+}
+
+// Per-worker content hashes. Each is independent; a change to one worker's
+// renv.lock invalidates only that worker's r_env image.
+variable "SMASHER_R_ENV_HASH"     { default = "" }
+variable "ILLUMINA_R_ENV_HASH"    { default = "" }
+variable "SALMON_R_ENV_HASH"      { default = "" }
+variable "NO_OP_R_ENV_HASH"       { default = "" }
+variable "DOWNLOADERS_R_ENV_HASH" { default = "" }
+variable "COMPENDIA_R_ENV_HASH"   { default = "" }
+variable "AFFYMETRIX_R_ENV_HASH"  { default = "" }
+
 // Default is the public read-only cache that CI pushes to.
 // Note: when DOCKERHUB_REPO differs, cache is also read from DOCKERHUB_REPO
 // so writers benefit from their own previously-pushed cache.
@@ -97,6 +120,23 @@ function "from_target" {
   }
 }
 
+// Same, for content-addressed parents whose tag is not SYSTEM_VERSION.
+// Example: from_target_hashed("base", base_tag())
+function "from_target_hashed" {
+  params = [parent, tag]
+  result = {
+    "${DOCKERHUB_REPO}/dr_${parent}:${tag}" = "target:${parent}"
+  }
+}
+
+// Single source of truth for the dr_base content-addressed tag. The r3.4.4
+// prefix documents the R version baked into dr_base; r_env Dockerfiles use
+// this tag (passed as BASE_TAG) rather than reconstructing it.
+function "base_tag" {
+  params = []
+  result = "r3.4.4-${BASE_HASH}"
+}
+
 // ---------------------------------------------------------------------------
 // Abstract base target - concrete targets inherit platform + build args.
 // ---------------------------------------------------------------------------
@@ -107,6 +147,8 @@ target "_common" {
   args = {
     DOCKERHUB_REPO = DOCKERHUB_REPO
     SYSTEM_VERSION = SYSTEM_VERSION
+    UBUNTU_DIGEST  = UBUNTU_DIGEST
+    BASE_TAG       = base_tag()
   }
 }
 
@@ -117,7 +159,13 @@ target "_common" {
 target "base" {
   inherits   = ["_common"]
   dockerfile = "common/dockerfiles/Dockerfile.base"
-  tags       = tags_for("base")
+  // The content-addressed tag r3.4.4-<BASE_HASH> is what downstream content-
+  // hashed targets (dr_<worker>_r_env) FROM. The legacy :$SYSTEM_VERSION and
+  // :latest tags are kept so untouched downstream images still resolve.
+  tags = concat(
+    tags_for("base"),
+    BASE_HASH != "" ? ["${DOCKERHUB_REPO}/dr_base:${base_tag()}"] : []
+  )
   cache-from = cache_from_for("base")
   cache-to   = cache_to_for("base")
 }
@@ -196,28 +244,93 @@ target "transcriptome" {
   cache-to   = cache_to_for("transcriptome")
 }
 
+// Content-addressed intermediates: the slow renv restore per worker, tagged
+// by content hash so they survive SYSTEM_VERSION bumps.
+
+target "smasher_r_env" {
+  inherits   = ["_common"]
+  dockerfile = "workers/dockerfiles/Dockerfile.r_env"
+  args       = { WORKER = "smasher" }
+  contexts   = from_target_hashed("base", base_tag())
+  tags       = SMASHER_R_ENV_HASH != "" ? ["${DOCKERHUB_REPO}/dr_smasher_r_env:${SMASHER_R_ENV_HASH}"] : []
+  cache-from = cache_from_for("smasher_r_env")
+  cache-to   = cache_to_for("smasher_r_env")
+}
+
 target "smasher" {
   inherits   = ["_common"]
   dockerfile = "workers/dockerfiles/Dockerfile.smasher"
-  contexts   = from_target("base")
+  args       = { R_ENV_HASH = SMASHER_R_ENV_HASH }
+  contexts   = from_target_hashed("smasher_r_env", SMASHER_R_ENV_HASH)
   tags       = tags_for("smasher")
   cache-from = cache_from_for("smasher")
   cache-to   = cache_to_for("smasher")
 }
 
-target "salmon" {
+target "illumina_r_env" {
   inherits   = ["_common"]
-  dockerfile = "workers/dockerfiles/Dockerfile.salmon"
-  contexts   = from_target("base")
-  tags       = tags_for("salmon")
-  cache-from = cache_from_for("salmon")
-  cache-to   = cache_to_for("salmon")
+  dockerfile = "workers/dockerfiles/Dockerfile.r_env"
+  args       = { WORKER = "illumina" }
+  contexts   = from_target_hashed("base", base_tag())
+  tags       = ILLUMINA_R_ENV_HASH != "" ? ["${DOCKERHUB_REPO}/dr_illumina_r_env:${ILLUMINA_R_ENV_HASH}"] : []
+  cache-from = cache_from_for("illumina_r_env")
+  cache-to   = cache_to_for("illumina_r_env")
+}
+
+target "salmon_r_env" {
+  inherits   = ["_common"]
+  dockerfile = "workers/dockerfiles/Dockerfile.r_env"
+  args       = { WORKER = "salmon" }
+  contexts   = from_target_hashed("base", base_tag())
+  tags       = SALMON_R_ENV_HASH != "" ? ["${DOCKERHUB_REPO}/dr_salmon_r_env:${SALMON_R_ENV_HASH}"] : []
+  cache-from = cache_from_for("salmon_r_env")
+  cache-to   = cache_to_for("salmon_r_env")
+}
+
+target "no_op_r_env" {
+  inherits   = ["_common"]
+  dockerfile = "workers/dockerfiles/Dockerfile.r_env"
+  args       = { WORKER = "no_op" }
+  contexts   = from_target_hashed("base", base_tag())
+  tags       = NO_OP_R_ENV_HASH != "" ? ["${DOCKERHUB_REPO}/dr_no_op_r_env:${NO_OP_R_ENV_HASH}"] : []
+  cache-from = cache_from_for("no_op_r_env")
+  cache-to   = cache_to_for("no_op_r_env")
+}
+
+target "downloaders_r_env" {
+  inherits   = ["_common"]
+  dockerfile = "workers/dockerfiles/Dockerfile.r_env"
+  args       = { WORKER = "downloaders" }
+  contexts   = from_target_hashed("base", base_tag())
+  tags       = DOWNLOADERS_R_ENV_HASH != "" ? ["${DOCKERHUB_REPO}/dr_downloaders_r_env:${DOWNLOADERS_R_ENV_HASH}"] : []
+  cache-from = cache_from_for("downloaders_r_env")
+  cache-to   = cache_to_for("downloaders_r_env")
+}
+
+target "compendia_r_env" {
+  inherits   = ["_common"]
+  dockerfile = "workers/dockerfiles/Dockerfile.r_env"
+  args       = { WORKER = "compendia" }
+  contexts   = from_target_hashed("base", base_tag())
+  tags       = COMPENDIA_R_ENV_HASH != "" ? ["${DOCKERHUB_REPO}/dr_compendia_r_env:${COMPENDIA_R_ENV_HASH}"] : []
+  cache-from = cache_from_for("compendia_r_env")
+  cache-to   = cache_to_for("compendia_r_env")
+}
+
+target "affymetrix_r_env" {
+  inherits   = ["_common"]
+  dockerfile = "workers/dockerfiles/Dockerfile.affymetrix_r_env"
+  contexts   = from_target_hashed("base", base_tag())
+  tags       = AFFYMETRIX_R_ENV_HASH != "" ? ["${DOCKERHUB_REPO}/dr_affymetrix_r_env:${AFFYMETRIX_R_ENV_HASH}"] : []
+  cache-from = cache_from_for("affymetrix_r_env")
+  cache-to   = cache_to_for("affymetrix_r_env")
 }
 
 target "no_op" {
   inherits   = ["_common"]
   dockerfile = "workers/dockerfiles/Dockerfile.no_op"
-  contexts   = from_target("base")
+  args       = { R_ENV_HASH = NO_OP_R_ENV_HASH }
+  contexts   = from_target_hashed("no_op_r_env", NO_OP_R_ENV_HASH)
   tags       = tags_for("no_op")
   cache-from = cache_from_for("no_op")
   cache-to   = cache_to_for("no_op")
@@ -226,16 +339,28 @@ target "no_op" {
 target "illumina" {
   inherits   = ["_common"]
   dockerfile = "workers/dockerfiles/Dockerfile.illumina"
-  contexts   = from_target("base")
+  args       = { R_ENV_HASH = ILLUMINA_R_ENV_HASH }
+  contexts   = from_target_hashed("illumina_r_env", ILLUMINA_R_ENV_HASH)
   tags       = tags_for("illumina")
   cache-from = cache_from_for("illumina")
   cache-to   = cache_to_for("illumina")
 }
 
+target "salmon" {
+  inherits   = ["_common"]
+  dockerfile = "workers/dockerfiles/Dockerfile.salmon"
+  args       = { R_ENV_HASH = SALMON_R_ENV_HASH }
+  contexts   = from_target_hashed("salmon_r_env", SALMON_R_ENV_HASH)
+  tags       = tags_for("salmon")
+  cache-from = cache_from_for("salmon")
+  cache-to   = cache_to_for("salmon")
+}
+
 target "downloaders" {
   inherits   = ["_common"]
   dockerfile = "workers/dockerfiles/Dockerfile.downloaders"
-  contexts   = from_target("base")
+  args       = { R_ENV_HASH = DOWNLOADERS_R_ENV_HASH }
+  contexts   = from_target_hashed("downloaders_r_env", DOWNLOADERS_R_ENV_HASH)
   tags       = tags_for("downloaders")
   cache-from = cache_from_for("downloaders")
   cache-to   = cache_to_for("downloaders")
@@ -244,7 +369,8 @@ target "downloaders" {
 target "compendia" {
   inherits   = ["_common"]
   dockerfile = "workers/dockerfiles/Dockerfile.compendia"
-  contexts   = from_target("base")
+  args       = { R_ENV_HASH = COMPENDIA_R_ENV_HASH }
+  contexts   = from_target_hashed("compendia_r_env", COMPENDIA_R_ENV_HASH)
   tags       = tags_for("compendia")
   cache-from = cache_from_for("compendia")
   cache-to   = cache_to_for("compendia")
@@ -254,7 +380,8 @@ target "compendia" {
 target "affymetrix" {
   inherits   = ["_common"]
   dockerfile = "workers/dockerfiles/Dockerfile.affymetrix"
-  contexts   = from_target("base")
+  args       = { R_ENV_HASH = AFFYMETRIX_R_ENV_HASH }
+  contexts   = from_target_hashed("affymetrix_r_env", AFFYMETRIX_R_ENV_HASH)
   tags       = tags_for("affymetrix")
   cache-from = cache_from_for("affymetrix")
   cache-to   = cache_to_for("affymetrix")
@@ -297,7 +424,7 @@ group "default" {
   ]
 }
 
-// `all` includes affymetrix.
+// `all` includes affymetrix and content-addressed intermediates.
 group "all" {
   targets = [
     "base",
@@ -308,12 +435,19 @@ group "all" {
     "api",
     "api_local",
     "transcriptome",
+    "smasher_r_env",
     "smasher",
-    "salmon",
-    "no_op",
+    "illumina_r_env",
     "illumina",
+    "salmon_r_env",
+    "salmon",
+    "no_op_r_env",
+    "no_op",
+    "downloaders_r_env",
     "downloaders",
+    "compendia_r_env",
     "compendia",
+    "affymetrix_r_env",
     "affymetrix",
   ]
 }

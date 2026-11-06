@@ -1,16 +1,12 @@
 ARG DOCKERHUB_REPO
-ARG SYSTEM_VERSION
-FROM $DOCKERHUB_REPO/dr_base:$SYSTEM_VERSION
+ARG R_ENV_HASH
+FROM $DOCKERHUB_REPO/dr_no_op_r_env:$R_ENV_HASH
 ARG SYSTEM_VERSION
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /home/user
-
-COPY workers/R/dependencies/no_op/renv.lock .
-COPY common/R/renv_load.R renv_load_no_op.R
-RUN Rscript renv_load_no_op.R
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 RUN pip3 install --ignore-installed --no-cache-dir -r requirements.txt

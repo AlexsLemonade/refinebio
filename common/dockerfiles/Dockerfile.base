@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+ARG UBUNTU_DIGEST
+FROM ubuntu:22.04@${UBUNTU_DIGEST}
 
 # Fail in case of an error at any stage in the pipe.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

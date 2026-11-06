@@ -2,9 +2,11 @@
 
 import argparse
 import json
+import os
 import subprocess
 import time
 
+from lib._docker import resolve_bake_env
 from lib._requirements import requires
 from lib._runtime import REPO_ROOT, run, stderr
 from lib.common import rebuild_common_sdist
@@ -87,9 +89,14 @@ def cmd_build(argv):
         cmd.append("--print")
     cmd.extend(args.targets)
 
+    hash_env, ok = resolve_bake_env()
+    if not ok:
+        return 1
+    env = {**os.environ, **hash_env}
+
     attempts = args.retries + 1
     for attempt in range(1, attempts + 1):
-        rc = run(cmd)
+        rc = run(cmd, env=env)
         if rc == 0:
             return 0
         if attempt < attempts:
