@@ -5,12 +5,27 @@ options(warn = 2)
 # PACKAGES index check. Point at the S3 bucket directly (path-style HTTPS so the
 # dotted bucket name doesn't break TLS; no redirect for url() to follow).
 BIOC_ARCHIVE <- "https://s3.amazonaws.com/archive.bioconductor.org/packages/3.6"
-options(repos = structure(c(
-    Bioconductor = paste0(BIOC_ARCHIVE, "/bioc"),
-    BioconductorAnnotation = paste0(BIOC_ARCHIVE, "/data/annotation"),
-    BioconductorExperiment = paste0(BIOC_ARCHIVE, "/data/experiment"),
+# Repo names deliberately omit "Bioc" — renv's `renv_scope_bioconductor()`
+# strips any entry whose name matches /Bioc/ before adding its own canonical
+# `bioconductor.org` repositories, which would blow away these S3 overrides.
+BIOC_REPOS <- c(
+    Archive = paste0(BIOC_ARCHIVE, "/bioc"),
+    ArchiveAnnotation = paste0(BIOC_ARCHIVE, "/data/annotation"),
+    ArchiveExperiment = paste0(BIOC_ARCHIVE, "/data/experiment"),
     CRAN = "https://cloud.r-project.org"
-)))
+)
+options(repos = structure(BIOC_REPOS))
+# `renv::restore()` otherwise clobbers options(repos) with the lockfile's own
+# `Repositories` section (which still points at the dead mghp.osn.xsede.org
+# mirror). `renv.config.repos.override` is consulted ahead of the lockfile's
+# Repositories, so it wins without us having to regenerate every renv.lock.
+#
+# Long-term, the lockfiles should be the source of truth: run
+# `renv::snapshot(prompt = FALSE)` in each worker's build context after a
+# successful restore and commit the regenerated `workers/R/dependencies/*/
+# renv.lock` files. Once the lockfiles carry Archive names + S3 URLs in
+# their `Repositories` block, this override line can be removed.
+options(renv.config.repos.override = BIOC_REPOS)
 options(Ncpus = parallel::detectCores())
 options(renv.r.version = "3.4.4")
 options(renv.settings.use.cache = FALSE)

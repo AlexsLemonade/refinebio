@@ -207,7 +207,7 @@ variable "max_downloader_jobs_per_node" {
 }
 
 variable "elasticsearch_port" {
-  default = "80"
+  default = "443"
 }
 
 variable "slack_webhook_url" {
@@ -314,7 +314,7 @@ output "environment_variables" {
     },
     {
       name  = "ELASTICSEARCH_HOST"
-      value = aws_elasticsearch_domain.es.endpoint
+      value = aws_opensearch_domain.os.endpoint
     },
     {
       name  = "ELASTICSEARCH_PORT"

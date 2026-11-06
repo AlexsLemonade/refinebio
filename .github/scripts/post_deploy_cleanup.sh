@@ -9,6 +9,6 @@ set -e
 # shellcheck disable=SC2029
 ssh -o StrictHostKeyChecking=no \
     -o ServerAliveInterval=15 \
-    -i infrastructure/data-refinery-key.pem \
+    -i infrastructure/deploy-box-key.pem \
     "ubuntu@${DEPLOY_BOX_IP}" \
     "cd refinebio && git clean -f"

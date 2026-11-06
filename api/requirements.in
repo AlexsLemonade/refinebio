@@ -10,12 +10,9 @@ markupsafe>=1.1
 djangorestframework<3.14.0
 django-cors-headers
 django-filter
-# For ElasticSearch support:
-django-elasticsearch-dsl-drf
-# Can't go above 6.X without upgrading elasticsearch
-django-elasticsearch-dsl==6.5.0
-elasticsearch-dsl<7.0.0
-six
+# OpenSearch client stack
+django-opensearch-dsl
+opensearch-py
 drf-spectacular
 apscheduler
 django-computedfields>=0.1.5

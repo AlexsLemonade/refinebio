@@ -7,13 +7,15 @@ geoparse
 python-dateutil
 raven
 pyrefinebio>=0.4.7
+# pyrefinebio 0.4.11 imports pyrate_limiter but doesn't declare it in its
+# install_requires. Pull it in explicitly until upstream fixes it. Capped
+# below 3.x — pyrefinebio imports `RequestRate`, which 3.x renamed to `Rate`.
+pyrate_limiter<3
 tblib
 # TODO(ark): make sure DRF is required.
 djangorestframework<3.14.0
-# Can't go above 6.X without upgrading elasticsearch
-django-elasticsearch-dsl==6.5.0
-django-elasticsearch-dsl-drf>=0.17.1
-elasticsearch-dsl>=6.1.0,<7.0.0
+django-opensearch-dsl
+opensearch-py
 vcrpy
 django-computedfields
 pyyaml
